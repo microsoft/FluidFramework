@@ -4,9 +4,9 @@
  */
 
 import {
+	DoublyLinkedList,
 	assert,
 	unreachableCase,
-	DoublyLinkedList,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -14,14 +14,14 @@ import { EndOfTreeSegment } from "./endOfTreeSegment.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { type MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import type { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
-import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import {
+	type ISegmentLeaf,
+	type ISegmentPrivate,
 	assertSegmentLeaf,
 	isSegmentLeaf,
 	toSegmentLeaf,
-	type ISegmentLeaf,
-	type ISegmentPrivate,
 } from "./mergeTreeNodes.js";
+import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import {
 	type ITrackingGroup,
 	type Trackable,

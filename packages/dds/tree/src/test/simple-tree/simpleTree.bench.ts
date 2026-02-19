@@ -12,13 +12,13 @@ import { configureBenchmarkHooks } from "../utils.js";
 
 import {
 	type DeepTreeNode,
+	type WideTreeNode,
 	generateDeepSimpleTree,
 	generateWideSimpleTree,
 	readDeepSimpleTree,
 	readWideSimpleTree,
 	writeDeepTree,
 	writeWideSimpleTreeNewValue,
-	type WideTreeNode,
 } from "./benchmarkUtilities.js";
 import { hydrate, hydrateUnsafe } from "./utils.js";
 

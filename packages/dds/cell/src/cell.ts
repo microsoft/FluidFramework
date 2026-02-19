@@ -6,18 +6,18 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
+	IChannelStorageService,
 	IFluidDataStoreRuntime,
 	Serializable,
-	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
-	ISummaryTreeWithStats,
 	AttributionKey,
 	IRuntimeMessageCollection,
-	ISequencedMessageEnvelope,
 	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {

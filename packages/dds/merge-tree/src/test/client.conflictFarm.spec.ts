@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
+import { StressMode, describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import {
 	type IConfigRange,

@@ -6,68 +6,68 @@
 export { mochaGlobalSetup } from "./compatConfig.js";
 export { CompatKind } from "./compatOptions.js";
 export {
+	ITestDataObject,
+	TestDataObjectType,
 	getDataStoreFactory,
 	getVersionedTestObjectProvider,
 	getVersionedTestObjectProviderFromApis,
-	ITestDataObject,
-	TestDataObjectType,
 } from "./compatUtils.js";
 export {
-	describeInstallVersions,
-	IRequestedFluidVersions,
-	DescribeWithVersions,
-	DescribeSuiteWithVersions,
-} from "./describeWithVersions.js";
-export {
+	type CompatType,
 	DescribeCompat,
 	DescribeCompatSuite,
-	describeCompat,
 	ITestObjectProviderOptions,
-	type CompatType,
+	describeCompat,
 } from "./describeCompat.js";
 export {
-	DescribeE2EDocSuite,
-	describeE2EDocs,
-	DocumentType,
-	DocumentTypeInfo,
-	DescribeE2EDocInfo,
 	BenchmarkType,
-	describeE2EDocsMemory,
-	describeE2EDocsRuntime,
-	describeE2EDocRun,
-	getCurrentBenchmarkType,
-	isMemoryTest,
+	DescribeE2EDocInfo,
+	DescribeE2EDocSuite,
 	DocumentMapInfo,
-	DocumentMultipleDataStoresInfo,
 	DocumentMatrixInfo,
 	DocumentMatrixPlainInfo,
+	DocumentMultipleDataStoresInfo,
+	DocumentType,
+	DocumentTypeInfo,
 	assertDocumentTypeInfo,
+	describeE2EDocRun,
+	describeE2EDocs,
+	describeE2EDocsMemory,
+	describeE2EDocsRuntime,
+	getCurrentBenchmarkType,
 	isDocumentMapInfo,
-	isDocumentMultipleDataStoresInfo,
 	isDocumentMatrixInfo,
 	isDocumentMatrixPlainInfo,
+	isDocumentMultipleDataStoresInfo,
+	isMemoryTest,
 } from "./describeE2eDocs.js";
+export {
+	DescribeSuiteWithVersions,
+	DescribeWithVersions,
+	IRequestedFluidVersions,
+	describeInstallVersions,
+} from "./describeWithVersions.js";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
+	SkippedErrorExpectingTestWithDriverBaseType,
+	SkippedErrorExpectingTestWithDriverType,
+	SkippedTestWithDriverBaseType,
+	SkippedTestWithDriverType,
+	itExpectsSkipsFailureOnSpecificDrivers,
+	itSkipsFailureOnSpecificDrivers,
+} from "./itSkipsOnFailure.js";
+export {
 	CompatApis,
+	CompatMode,
+	ContainerRuntimeApi,
+	DataRuntimeApi,
+	InstalledPackage,
+	LoaderApi,
 	ensurePackageInstalled,
+	getCompatModeFromKind,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,
 	getLoaderApi,
-	InstalledPackage,
-	DataRuntimeApi,
-	ContainerRuntimeApi,
-	LoaderApi,
-	CompatMode,
-	getCompatModeFromKind,
 } from "./testApi.js";
-export {
-	itExpectsSkipsFailureOnSpecificDrivers,
-	itSkipsFailureOnSpecificDrivers,
-	SkippedTestWithDriverType,
-	SkippedTestWithDriverBaseType,
-	SkippedErrorExpectingTestWithDriverType,
-	SkippedErrorExpectingTestWithDriverBaseType,
-} from "./itSkipsOnFailure.js";
 export { getRequestedVersion, versionToComparisonNumber } from "./versionUtils.js";

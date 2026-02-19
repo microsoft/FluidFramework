@@ -10,12 +10,12 @@ import { getOrCreate } from "../util/index.js";
 
 import {
 	Context,
-	getTreeNodeSchemaPrivateData,
-	UnhydratedContext,
 	type TreeNodeSchema,
 	type TreeNodeSchemaInitializedData,
+	UnhydratedContext,
+	getTreeNodeSchemaPrivateData,
 } from "./core/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import { type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js";
 import { toStoredSchema, toUnhydratedSchema } from "./toStoredSchema.js";
 
 const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();

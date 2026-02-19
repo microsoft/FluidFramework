@@ -6,9 +6,9 @@
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IDocumentDeltaConnection,
 	IAnyDriverError,
 	IConnect,
+	IDocumentDeltaConnection,
 } from "@fluidframework/driver-definitions/internal";
 import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";

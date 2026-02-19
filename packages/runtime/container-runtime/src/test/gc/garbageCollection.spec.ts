@@ -15,6 +15,7 @@ import type {
 	SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	type IGarbageCollectionData,
 	type IGarbageCollectionDetailsBase,
 	type ISummarizeResult,
 	channelsTreeName,
@@ -22,7 +23,6 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	type IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,

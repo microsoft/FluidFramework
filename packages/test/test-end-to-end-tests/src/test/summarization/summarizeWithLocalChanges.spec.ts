@@ -26,14 +26,14 @@ import {
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
-	MessageType,
 	ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	IFluidDataStoreFactory,
 	type IContainerRuntimeBase,
 	type IFluidDataStoreContext,
+	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {

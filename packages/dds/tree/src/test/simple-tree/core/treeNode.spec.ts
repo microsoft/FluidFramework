@@ -14,10 +14,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNode.js";
 import {
+	SchemaFactory,
+	type TreeNodeSchema,
 	typeNameSymbol,
 	typeSchemaSymbol,
-	type TreeNodeSchema,
-	SchemaFactory,
 } from "../../../simple-tree/index.js";
 
 describe("simple-tree core types", () => {

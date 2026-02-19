@@ -9,10 +9,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	createOdspCreateContainerRequest,
-	createOdspUrl,
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
+	createOdspCreateContainerRequest,
+	createOdspUrl,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/odsp-driver/internal";
 

@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import {
 	EmptyKey,
-	storedEmptyFieldSchema,
 	type TreeStoredSchema,
+	storedEmptyFieldSchema,
 } from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -16,10 +16,10 @@ import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompat
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
+	SchemaFactoryAlpha,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
-import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),

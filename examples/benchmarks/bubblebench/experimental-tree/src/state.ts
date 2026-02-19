@@ -5,11 +5,11 @@
 
 import {
 	type IAppState,
+	type IBubble,
 	type IClient,
+	type SimpleClient,
 	makeBubble,
 	makeClient,
-	type SimpleClient,
-	type IBubble,
 } from "@fluid-example/bubblebench-common";
 import type { Change, SharedTree } from "@fluid-experimental/tree";
 

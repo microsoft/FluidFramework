@@ -12,23 +12,23 @@ import {
 
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
 import {
-	inPrototypeChain,
+	CompatibilityLevel,
+	type InternalTreeNode,
 	NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+	UnhydratedFlexTreeNode,
+	inPrototypeChain,
+	privateDataSymbol,
 	typeNameSymbol,
 	typeSchemaSymbol,
-	type InternalTreeNode,
-	type TreeNodeSchema,
-	UnhydratedFlexTreeNode,
-	type TreeNodeSchemaInitializedData,
-	privateDataSymbol,
-	CompatibilityLevel,
-	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import {
-	createTreeNodeSchemaPrivateData,
 	type MostDerivedData,
 	TreeNodeValid,
+	createTreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/treeNodeValid.js";
 // eslint-disable-next-line import-x/no-internal-modules

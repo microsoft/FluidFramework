@@ -28,10 +28,10 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { createTestConfigProvider } from "./TestConfigs.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
+import { createTestConfigProvider } from "./TestConfigs.js";
 import {
 	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	createContainerRuntimeFactoryWithDefaultDataStore,

@@ -12,8 +12,8 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/create.js";
 import {
-	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactory,
+	restrictiveStoredSchemaGenerationOptions,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";

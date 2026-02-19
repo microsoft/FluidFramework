@@ -8,10 +8,10 @@ import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
+	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-	IAnyDriverError,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -24,8 +24,8 @@ import {
 	type HostStoragePolicy,
 	type IOdspError,
 	type IOdspResolvedUrl,
-	type ISocketStorageDiscovery,
 	type ISensitivityLabelsInfo,
+	type ISocketStorageDiscovery,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	type TokenFetchOptions,

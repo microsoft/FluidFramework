@@ -35,14 +35,14 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncoderContext,
-	type FieldEncoder,
 	type FieldEncodeBuilder,
+	type FieldEncoder,
 	IncrementalChunkShape,
 	InlineArrayEncoder,
 	NestedArrayEncoder,
 	NestedArrayShape,
-	type NodeEncoder,
 	type NodeEncodeBuilder,
+	type NodeEncoder,
 	anyFieldEncoder,
 	anyNodeEncoder,
 	asNodesEncoder,
@@ -76,8 +76,8 @@ import type {
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
-	emptyChunk,
 	defaultIncrementalEncodingPolicy,
+	emptyChunk,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";

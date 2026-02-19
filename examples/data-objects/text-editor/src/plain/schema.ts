@@ -6,6 +6,7 @@
 import { TreeViewConfiguration } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TextAsTree } from "@fluidframework/tree/internal";
+
 // eslint-disable-next-line import-x/no-internal-modules
 export { TextAsTree } from "@fluidframework/tree/internal";
 

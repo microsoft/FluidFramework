@@ -26,8 +26,8 @@ import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { combineChunks } from "../chunked-forest/index.js";
 import {
 	FieldKinds,
-	MappedEditBuilder,
 	type IDefaultEditBuilder,
+	MappedEditBuilder,
 	type OptionalFieldEditBuilder,
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import { StressMode, describeStress } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";

@@ -4,8 +4,8 @@
  */
 
 export { FileDeltaStorageService } from "./fileDeltaStorageService.js";
+export { ReplayFileDeltaConnection, Replayer } from "./fileDocumentDeltaConnection.js";
 export { FileDocumentServiceFactory } from "./fileDocumentServiceFactory.js";
-export { Replayer, ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection.js";
 export {
 	FileSnapshotWriterClassFactory,
 	FileStorageDocumentName,

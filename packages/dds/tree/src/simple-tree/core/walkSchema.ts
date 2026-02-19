@@ -4,12 +4,12 @@
  */
 
 import {
-	normalizeAndEvaluateAnnotatedAllowedTypes,
-	type AnnotatedAllowedType,
 	type AllowedTypesFullEvaluated,
+	type AnnotatedAllowedType,
 	markSchemaMostDerived,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
-import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
+import { type TreeNodeSchema, getTreeNodeSchemaPrivateData } from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.

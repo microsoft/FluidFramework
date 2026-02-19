@@ -5,13 +5,13 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { ExecOptions, execFileSync, execFile } from "node:child_process";
+import { ExecOptions, execFile, execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
-	rmdirSync,
-	readdirSync,
 	readFileSync,
+	readdirSync,
+	rmdirSync,
 	writeFileSync,
 } from "node:fs";
 import * as path from "node:path";

@@ -18,6 +18,7 @@ import {
 	type ChangeFamilyEditor,
 	CommitKind,
 	type GraphCommit,
+	type RebaseStatsWithDuration,
 	type RevisionTag,
 	type TaggedChange,
 	findAncestor,
@@ -25,9 +26,8 @@ import {
 	mintCommit,
 	rebaseBranch,
 	tagRollbackInverse,
-	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { hasSome, defineLazyCachedProperty } from "../util/index.js";
+import { defineLazyCachedProperty, hasSome } from "../util/index.js";
 
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;

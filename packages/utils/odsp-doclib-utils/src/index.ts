@@ -4,6 +4,10 @@
  */
 
 export {
+	type IOdspAuthRequestInfo,
+	type IOdspTokens,
+	type IPublicClientConfig,
+	type TokenRequestCredentials,
 	authRequestWithRetry,
 	fetchTokens,
 	getFetchTokenUrl,
@@ -12,12 +16,8 @@ export {
 	getOdspScope,
 	getPushRefreshTokenFn,
 	getRefreshTokenFn,
-	type IPublicClientConfig,
-	type IOdspAuthRequestInfo,
-	type IOdspTokens,
 	pushScope,
 	refreshTokens,
-	type TokenRequestCredentials,
 } from "./odspAuth.js";
 export {
 	getAadTenant,
@@ -28,24 +28,24 @@ export {
 	isPushChannelHostname,
 } from "./odspDocLibUtils.js";
 export {
+	type IOdspDriveItem,
 	getChildrenByDriveItem,
 	getDriveId,
 	getDriveItemByRootFileName,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
-	type IOdspDriveItem,
 } from "./odspDrives.js";
 export {
+	type OdspErrorResponse,
+	type OdspErrorResponseInnerError,
+	OdspRedirectError,
+	OdspServiceReadOnlyErrorCode,
 	createOdspNetworkError,
 	enrichOdspError,
 	fetchIncorrectResponse,
 	getSPOAndGraphRequestIdsFromResponse,
 	hasFacetCodes,
 	hasRedirectionLocation,
-	type OdspErrorResponse,
-	type OdspErrorResponseInnerError,
-	OdspRedirectError,
-	OdspServiceReadOnlyErrorCode,
 	parseFacetCodes,
 	throwOdspNetworkError,
 	tryParseErrorResponse,

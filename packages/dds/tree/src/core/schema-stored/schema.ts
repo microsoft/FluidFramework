@@ -26,8 +26,8 @@ import {
 import type {
 	FieldSchemaFormat as FieldSchemaFormatV2,
 	PersistedMetadataFormat,
-	TreeNodeSchemaUnionFormat,
 	TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV2,
+	TreeNodeSchemaUnionFormat,
 } from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
 

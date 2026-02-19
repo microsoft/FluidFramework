@@ -10,10 +10,10 @@ import { strict as assert } from "node:assert";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
+	type ISegmentPrivate,
 	Marker,
 	type SegmentGroup,
 	reservedMarkerIdKey,
-	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { type IMergeTreeOp, ReferenceType } from "../ops.js";
 import { clone } from "../properties.js";

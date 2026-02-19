@@ -6,30 +6,30 @@
 import { strict as assert } from "node:assert";
 
 import {
-	forEachNode,
 	type AnchorNode,
 	type FieldKey,
 	type IEditableForest,
 	type ITreeSubscriptionCursor,
 	type TreeValue,
+	forEachNode,
 } from "../../../core/index.js";
 import {
-	type FlexTreeNode,
 	AnchorTreeIndex,
+	type FlexTreeNode,
+	getOrCreateHydratedFlexTreeNode,
 	isTreeValue,
 } from "../../../feature-libraries/index.js";
-import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import {
-	getInnerNode,
 	SchemaFactory,
-	TreeViewConfiguration,
 	type TreeNode,
+	TreeViewConfiguration,
+	getInnerNode,
+	getOrCreateNodeFromInnerNode,
 } from "../../../simple-tree/index.js";
-import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/index.js";
 import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
-import { getView, TestTreeProviderLite } from "../../utils.js";
+import { TestTreeProviderLite, getView } from "../../utils.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);

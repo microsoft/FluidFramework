@@ -19,22 +19,24 @@ import type {
 	IClientDetails,
 } from "@fluidframework/driver-definitions";
 import {
-	type IDocumentDeltaConnection,
-	type IDocumentService,
 	DriverErrorTypes,
 	type IAnyDriverError,
 	type IClientConfiguration,
+	type IDocumentDeltaConnection,
 	type IDocumentMessage,
+	type IDocumentService,
 	type INack,
 	type INackContent,
+	type ISequencedDocumentMessage,
 	type ISequencedDocumentSystemMessage,
 	type ISignalClient,
+	type ISignalMessage,
 	MessageType,
 	ScopeType,
-	type ISequencedDocumentMessage,
-	type ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	type GenericNetworkError,
+	type ThrottlingError,
 	calculateMaxWaitTime,
 	canRetryOnError,
 	createGenericNetworkError,
@@ -42,12 +44,10 @@ import {
 	getRetryDelayFromError,
 	isRuntimeMessage,
 	logNetworkFailure,
-	type GenericNetworkError,
-	type ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	GenericError,
+	type ITelemetryLoggerExt,
 	UsageError,
 	formatTick,
 	generateStack,

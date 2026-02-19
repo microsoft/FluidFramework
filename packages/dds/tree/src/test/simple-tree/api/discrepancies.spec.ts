@@ -6,18 +6,18 @@
 import { strict as assert } from "node:assert";
 
 import {
-	forbiddenFieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	storedEmptyFieldSchema,
-	ValueSchema,
 	type TreeNodeSchemaIdentifier,
+	ValueSchema,
+	forbiddenFieldKindIdentifier,
+	storedEmptyFieldSchema,
 } from "../../../core/index.js";
 import {
-	defaultSchemaPolicy,
-	allowsRepoSuperset,
 	FieldKinds,
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
 	findExtraAllowedTypes,
@@ -25,12 +25,12 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/discrepancies.js";
 import {
-	SchemaFactoryAlpha,
 	type AnnotatedAllowedType,
-	type TreeNodeSchema,
-	SchemaFactory,
-	TreeViewConfigurationAlpha,
 	NodeKind,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	type TreeNodeSchema,
+	TreeViewConfigurationAlpha,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

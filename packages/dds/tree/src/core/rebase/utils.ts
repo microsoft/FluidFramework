@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { defineLazyCachedProperty, hasSome, type Mutable } from "../../util/index.js";
+import { type Mutable, defineLazyCachedProperty, hasSome } from "../../util/index.js";
 
 import {
 	type ChangeRebaser,

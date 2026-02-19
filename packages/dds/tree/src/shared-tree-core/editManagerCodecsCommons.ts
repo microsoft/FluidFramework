@@ -13,7 +13,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { mapIterable, type JsonCompatibleReadOnly, type Mutable } from "../util/index.js";
+import { type JsonCompatibleReadOnly, type Mutable, mapIterable } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import type { SharedBranchSummaryData } from "./editManager.js";

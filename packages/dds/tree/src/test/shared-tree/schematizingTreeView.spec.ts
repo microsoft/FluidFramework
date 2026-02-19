@@ -22,19 +22,19 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTypedNode,
-	type UnsafeUnknownSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	type TransactionResult,
 	type TransactionResultExt,
+	TreeViewConfiguration,
+	type UnsafeUnknownSchema,
 	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
-	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
@@ -43,13 +43,13 @@ import { fieldJsonCursor } from "../json/index.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import { testDocumentIndependentView } from "../testTrees.js";
 import {
+	TestTreeProviderLite,
+	type TreeStoredContentStrict,
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	fieldCursorFromInsertable,
 	getView,
-	TestTreeProviderLite,
 	validateViewConsistency,
-	type TreeStoredContentStrict,
 } from "../utils.js";
 
 const schema = new SchemaFactoryAlpha("com.example");

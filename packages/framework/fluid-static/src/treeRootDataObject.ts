@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import {
 	BaseContainerRuntimeFactory,
 	TreeDataObject,
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,

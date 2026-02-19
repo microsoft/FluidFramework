@@ -13,12 +13,12 @@ import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import type { FieldBatch } from "./fieldBatch.js";
 import {
-	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedFieldBatchV1,
 	type EncodedFieldBatchV2,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
+	FieldBatchFormatVersion,
 } from "./format.js";
 import type { ShapeIndex } from "./formatGeneric.js";
 

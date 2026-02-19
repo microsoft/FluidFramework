@@ -9,9 +9,9 @@ import type { TreeValue } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexTreeField,
-	isFlexTreeNode,
-	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 
 import { type TreeNode, getOrCreateNodeFromInnerNode } from "./core/index.js";

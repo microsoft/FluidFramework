@@ -4,6 +4,7 @@
  */
 
 import { EOL } from "node:os";
+
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
 import { afterEach, describe, it } from "mocha";

@@ -10,6 +10,7 @@ import ReactDOM from "react-dom";
 import { containerSchema, createFluidData, loadFluidData } from "./fluid.js";
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./output.css";
+
 import { ReactApp } from "./reactApp.js";
 import { Letter, treeConfiguration } from "./schema.js";
 

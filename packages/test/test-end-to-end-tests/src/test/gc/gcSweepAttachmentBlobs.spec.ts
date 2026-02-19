@@ -35,10 +35,10 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	createSummarizer,
 	createTestConfigProvider,
 	summarizeNow,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

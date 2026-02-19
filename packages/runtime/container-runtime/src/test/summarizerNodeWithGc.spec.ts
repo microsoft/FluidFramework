@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	type IGarbageCollectionData,
 	type IGarbageCollectionDetailsBase,
 	type ISummarizeInternalResult,
 	type ISummarizerNodeConfig,

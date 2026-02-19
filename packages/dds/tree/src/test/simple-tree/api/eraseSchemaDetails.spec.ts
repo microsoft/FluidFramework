@@ -13,19 +13,19 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import {
-	TreeBeta,
-	TreeViewConfiguration,
-	allowUnused,
-	eraseSchemaDetails,
-	eraseSchemaDetailsSubclassable,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type InternalTreeNode,
 	type NodeFromSchema,
+	TreeBeta,
 	type TreeFieldFromImplicitField,
 	type TreeNode,
 	type TreeNodeSchema,
+	TreeViewConfiguration,
 	type WithType,
+	allowUnused,
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
 	type typeSchemaSymbol,
 } from "../../../simple-tree/index.js";
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";

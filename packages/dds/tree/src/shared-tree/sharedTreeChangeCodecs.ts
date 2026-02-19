@@ -32,10 +32,10 @@ import {
 	makeSchemaChangeCodecs,
 } from "../feature-libraries/index.js";
 import {
-	strictEnum,
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	type Values,
+	strictEnum,
 } from "../util/index.js";
 
 import {

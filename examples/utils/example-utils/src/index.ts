@@ -16,10 +16,11 @@ export {
 
 export {
 	ContainerViewRuntimeFactory,
+	type IFluidMountableViewEntryPoint,
 	type ViewCallback,
 	getDataStoreEntryPoint,
-	type IFluidMountableViewEntryPoint,
 } from "./containerViewRuntimeFactory.js";
+export { getTinyliciousEndpoint } from "./getTinyliciousEndpoint.js";
 export type {
 	DataTransformationCallback,
 	IImportExportModel,
@@ -64,4 +65,3 @@ export {
 	type ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "./SharedStringHelper.js";
-export { getTinyliciousEndpoint } from "./getTinyliciousEndpoint.js";

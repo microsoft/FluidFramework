@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	authHeaderFromTokenResponse,
 	isTokenFromCache,
 	tokenFromResponse,
-	authHeaderFromTokenResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
 describe("tokenFromResponse", () => {

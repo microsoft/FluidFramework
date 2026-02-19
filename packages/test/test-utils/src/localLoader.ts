@@ -11,10 +11,10 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	createDetachedContainer,
-	Loader,
 	type ICreateDetachedContainerProps,
 	type ILoaderProps,
+	Loader,
+	createDetachedContainer,
 } from "@fluidframework/container-loader/internal";
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {

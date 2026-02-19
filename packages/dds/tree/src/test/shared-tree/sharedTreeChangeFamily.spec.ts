@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
-import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
+import { type CodecWriteOptions, currentVersion } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
 	type TreeStoredSchema,
@@ -20,13 +20,13 @@ import {
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
+	DefaultRevisionReplacer,
 	ModularChangeFamily,
 	type ModularChangeset,
+	type SchemaChange,
 	type TreeChunk,
 	fieldKinds,
-	type SchemaChange,
 	intoDelta,
-	DefaultRevisionReplacer,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,

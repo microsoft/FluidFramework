@@ -5,8 +5,8 @@
 
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
-	createDetachedContainer,
 	type ILoaderProps,
+	createDetachedContainer,
 } from "@fluidframework/container-loader/legacy";
 import type { IRequest } from "@fluidframework/core-interfaces";
 

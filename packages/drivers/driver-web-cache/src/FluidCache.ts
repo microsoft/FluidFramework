@@ -6,9 +6,9 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	IPersistedCache,
-	IFileEntry,
 	ICacheEntry,
+	IFileEntry,
+	IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getKeyForCacheEntry,

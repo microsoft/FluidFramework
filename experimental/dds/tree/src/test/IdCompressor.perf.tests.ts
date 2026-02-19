@@ -11,8 +11,8 @@ import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
 import { Mutable, fail } from '../Common.js';
 import { CompressedId, FinalCompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers.js';
 import { IdCompressor, defaultClusterCapacity, isFinalId, isLocalId } from '../id-compressor/IdCompressor.js';
-import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid.js';
 import { IdCreationRange, SerializedIdCompressorWithNoSession, UnackedLocalId } from '../id-compressor/index.js';
+import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid.js';
 
 import {
 	Client,

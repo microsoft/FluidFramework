@@ -19,6 +19,12 @@
  */
 
 export {
+	BaseContainerRuntimeFactory,
+	type BaseContainerRuntimeFactoryProps,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+} from "./container-runtime-factories/index.js";
+export {
 	DataObjectFactory,
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
@@ -33,9 +39,3 @@ export {
 	TreeDataObject,
 	createDataObjectKind,
 } from "./data-objects/index.js";
-export {
-	BaseContainerRuntimeFactory,
-	type BaseContainerRuntimeFactoryProps,
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-} from "./container-runtime-factories/index.js";

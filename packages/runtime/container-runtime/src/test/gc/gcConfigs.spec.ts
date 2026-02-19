@@ -34,6 +34,7 @@ import {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
+	disableThrowOnTombstoneLoadKey,
 	gcGenerationOptionName,
 	gcTestModeKey,
 	gcVersionUpgradeToV4Key,
@@ -41,7 +42,6 @@ import {
 	oneDayMs,
 	runSessionExpiryKey,
 	stableGCVersion,
-	disableThrowOnTombstoneLoadKey,
 } from "../../gc/index.js";
 import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";

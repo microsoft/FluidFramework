@@ -9,6 +9,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	type ISegmentInternal,
 	Marker,
 	MergeTreeDeltaRevertible,
 	ReferenceType,
@@ -19,7 +20,6 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
-	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -31,7 +31,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass, getTextAndMarkers } from "../sharedString.js";
 
 describe("SharedString", () => {

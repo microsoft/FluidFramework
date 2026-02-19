@@ -18,8 +18,8 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
-	InlineArrayDecoder,
 	IncrementalChunkDecoder,
+	InlineArrayDecoder,
 	NestedArrayDecoder,
 	NodeDecoder,
 	aggregateChunks,
@@ -38,10 +38,10 @@ import type {
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	type EncodedChunkShape,
-	SpecialField,
-	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedNodeShape,
+	FieldBatchFormatVersion,
+	SpecialField,
 	validVersions,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";

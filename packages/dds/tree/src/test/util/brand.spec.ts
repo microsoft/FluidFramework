@@ -17,12 +17,12 @@ import {
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/brand.js";
 import type {
-	requireAssignableTo,
+	Values,
 	areSafelyAssignable,
 	isAssignableTo,
+	requireAssignableTo,
 	requireFalse,
 	requireTrue,
-	Values,
 } from "../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 
 import {
+	type ChunkedCursor,
 	CursorLocationType,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
+	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
 	type TreeType,
 	type TreeValue,
 	type UpPath,
 	type Value,
-	type ChunkedCursor,
-	type TreeChunk,
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";

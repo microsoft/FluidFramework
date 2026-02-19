@@ -5,21 +5,21 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { TreeAlpha, Tree } from "./shared-tree/index.js";
+import { Tree, TreeAlpha } from "./shared-tree/index.js";
 import type {
-	TreeNodeSchema,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeFieldFromImplicitField,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	SchemaFactoryBeta,
+	TreeFieldFromImplicitField,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchema,
 } from "./simple-tree/index.js";
 import {
+	SchemaFactory,
+	TreeBeta,
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetailsSubclassable,
 	getInnerNode,
-	SchemaFactory,
-	TreeBeta,
 } from "./simple-tree/index.js";
 import type { UnionToIntersection } from "./util/index.js";
 

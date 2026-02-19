@@ -30,157 +30,47 @@ export {
 	StablePlace,
 	StableRange,
 } from './ChangeTypes.js';
-export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout.js';
-export { isSharedTreeEvent, sharedTreeAssertionErrorType, Result } from './Common.js';
+export { Checkout, CheckoutEvent, EditValidationResult, ICheckoutEvents } from './Checkout.js';
+export { Result, isSharedTreeEvent, sharedTreeAssertionErrorType } from './Common.js';
 export { EagerCheckout } from './EagerCheckout.js';
-export type { OrderedEditSet, EditHandle } from './EditLog.js';
+export type { EditHandle, OrderedEditSet } from './EditLog.js';
 export {
-	setTrait,
-	areRevisionViewsSemanticallyEqual,
 	BadPlaceValidationResult,
 	BadRangeValidationResult,
 	PlaceValidationResult,
 	RangeValidationResult,
 	RangeValidationResultKind,
+	areRevisionViewsSemanticallyEqual,
+	setTrait,
 } from './EditUtilities.js';
 export { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
 export { Delta, Forest, ForestNode, ParentData } from './Forest.js';
 export type {
+	AttributionId,
 	CompressedId,
 	Definition,
 	DetachedSequenceId,
 	EditId,
-	InternedStringId,
 	FinalCompressedId,
+	InternedStringId,
 	LocalCompressedId,
 	NodeId,
 	NodeIdBrand,
-	StableNodeId,
 	SessionSpaceCompressedId,
 	SessionUnique,
+	StableNodeId,
 	TraitLabel,
 	UuidString,
-	AttributionId,
 } from './Identifiers.js';
 export { isDetachedSequenceId } from './Identifiers.js';
 export { initialTree } from './InitialTree.js';
 export { LazyCheckout } from './LazyCheckout.js';
 export { LogViewer } from './LogViewer.js';
-export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities.js';
 export {
 	MergeHealthStats,
 	SharedTreeMergeHealthTelemetryHeartbeat,
 	useFailedSequencedEditTelemetry,
 } from './MergeHealth.js';
-export { comparePayloads } from './PayloadUtilities.js';
-export {
-	Side,
-	EditStatus,
-	TreeNode,
-	TreeNodeSequence,
-	Payload,
-	ConstraintEffect,
-	Edit,
-	ChangeInternal,
-	InternalizedChange,
-	ChangeNode,
-	ChangeNode_0_0_2,
-	EditLogSummary,
-	FluidEditHandle,
-	SharedTreeSummaryBase,
-	EditWithoutId,
-	PlaceholderTree,
-	EditBase,
-	HasTraits,
-	InsertInternal,
-	DetachInternal,
-	BuildInternal,
-	SetValueInternal,
-	ConstraintInternal,
-	BuildNodeInternal,
-	StablePlaceInternal_0_0_2,
-	StableRangeInternal_0_0_2,
-	NodeData,
-	TraitMap,
-	ChangeTypeInternal,
-	TraitLocationInternal_0_0_2,
-	WriteFormat,
-	ConstraintInternal_0_0_2,
-	StablePlaceInternal,
-	StableRangeInternal,
-	BuildNodeInternal_0_0_2,
-	BuildInternal_0_0_2,
-	InsertInternal_0_0_2,
-	DetachInternal_0_0_2,
-	SetValueInternal_0_0_2,
-	TraitLocationInternal,
-} from './persisted-types/index.js';
-export {
-	ReconciliationChange,
-	ReconciliationEdit,
-	ReconciliationPath,
-} from './ReconciliationPath.js';
-export { Revision } from './RevisionValueCache.js';
-export { RevisionView, TransactionView } from './RevisionView.js';
-export { TreeNodeHandle } from './TreeNodeHandle.js';
-export {
-	getTraitLocationOfRange,
-	placeFromStablePlace,
-	rangeFromStableRange,
-} from './TreeViewUtilities.js';
-export {
-	SharedTreeArgs,
-	SharedTreeOptions,
-	SharedTreeBaseOptions,
-	SharedTreeOptions_0_0_2,
-	SharedTreeOptions_0_1_1,
-	SharedTreeFactory,
-	SharedTree,
-	EditCommittedHandler,
-	SequencedEditAppliedHandler,
-	EditCommittedEventArguments,
-	SequencedEditAppliedEventArguments,
-	EditApplicationOutcome,
-	ISharedTreeEvents,
-	StashedLocalOpMetadata,
-} from './SharedTree.js';
-export { StringInterner } from './StringInterner.js';
-export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
-
-/**
- * TODO:#61413: Publish test utilities from a separate test package
- */
-export {
-	getSerializedUploadedEditChunkContents as getUploadedEditChunkContents,
-	getSerializedUploadedEditChunkContents,
-} from './SummaryTestUtilities.js';
-
-export { Transaction, TransactionEvent, TransactionEvents } from './Transaction.js';
-export {
-	TransactionInternal,
-	GenericTransaction,
-	GenericTransactionPolicy,
-	EditingResult,
-	EditingResultBase,
-	FailedEditingResult,
-	ValidEditingResult,
-	TransactionState,
-	TransactionFailure,
-	SucceedingTransactionState,
-	FailingTransactionState,
-	ChangeResult,
-} from './TransactionInternal.js';
-export {
-	NodeInTrait,
-	PlaceIndex,
-	TreeViewNode,
-	TreeView,
-	TraitNodeIndex,
-	TreeViewPlace,
-	TreeViewRange,
-	TraitLocation,
-} from './TreeView.js';
-
 export {
 	type IMigrationEvent,
 	type IShim,
@@ -189,5 +79,111 @@ export {
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from './migration-shim/index.js';
-
+export { NodeIdContext, NodeIdConverter, NodeIdGenerator } from './NodeIdUtilities.js';
+export { comparePayloads } from './PayloadUtilities.js';
+export {
+	BuildInternal,
+	BuildInternal_0_0_2,
+	BuildNodeInternal,
+	BuildNodeInternal_0_0_2,
+	ChangeInternal,
+	ChangeNode,
+	ChangeNode_0_0_2,
+	ChangeTypeInternal,
+	ConstraintEffect,
+	ConstraintInternal,
+	ConstraintInternal_0_0_2,
+	DetachInternal,
+	DetachInternal_0_0_2,
+	Edit,
+	EditBase,
+	EditLogSummary,
+	EditStatus,
+	EditWithoutId,
+	FluidEditHandle,
+	HasTraits,
+	InsertInternal,
+	InsertInternal_0_0_2,
+	InternalizedChange,
+	NodeData,
+	Payload,
+	PlaceholderTree,
+	SetValueInternal,
+	SetValueInternal_0_0_2,
+	SharedTreeSummaryBase,
+	Side,
+	StablePlaceInternal,
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal,
+	StableRangeInternal_0_0_2,
+	TraitLocationInternal,
+	TraitLocationInternal_0_0_2,
+	TraitMap,
+	TreeNode,
+	TreeNodeSequence,
+	WriteFormat,
+} from './persisted-types/index.js';
+export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
+export {
+	ReconciliationChange,
+	ReconciliationEdit,
+	ReconciliationPath,
+} from './ReconciliationPath.js';
+export { Revision } from './RevisionValueCache.js';
+export { RevisionView, TransactionView } from './RevisionView.js';
+export {
+	EditApplicationOutcome,
+	EditCommittedEventArguments,
+	EditCommittedHandler,
+	ISharedTreeEvents,
+	SequencedEditAppliedEventArguments,
+	SequencedEditAppliedHandler,
+	SharedTree,
+	SharedTreeArgs,
+	SharedTreeBaseOptions,
+	SharedTreeFactory,
+	SharedTreeOptions,
+	SharedTreeOptions_0_0_2,
+	SharedTreeOptions_0_1_1,
+	StashedLocalOpMetadata,
+} from './SharedTree.js';
+export { StringInterner } from './StringInterner.js';
+/**
+ * TODO:#61413: Publish test utilities from a separate test package
+ */
+export {
+	getSerializedUploadedEditChunkContents as getUploadedEditChunkContents,
+	getSerializedUploadedEditChunkContents,
+} from './SummaryTestUtilities.js';
+export { Transaction, TransactionEvent, TransactionEvents } from './Transaction.js';
+export {
+	ChangeResult,
+	EditingResult,
+	EditingResultBase,
+	FailedEditingResult,
+	FailingTransactionState,
+	GenericTransaction,
+	GenericTransactionPolicy,
+	SucceedingTransactionState,
+	TransactionFailure,
+	TransactionInternal,
+	TransactionState,
+	ValidEditingResult,
+} from './TransactionInternal.js';
+export { TreeNodeHandle } from './TreeNodeHandle.js';
+export {
+	NodeInTrait,
+	PlaceIndex,
+	TraitLocation,
+	TraitNodeIndex,
+	TreeView,
+	TreeViewNode,
+	TreeViewPlace,
+	TreeViewRange,
+} from './TreeView.js';
+export {
+	getTraitLocationOfRange,
+	placeFromStablePlace,
+	rangeFromStableRange,
+} from './TreeViewUtilities.js';
 export { IRevertible, IUndoConsumer, SharedTreeUndoRedoHandler } from './UndoRedoHandler.js';

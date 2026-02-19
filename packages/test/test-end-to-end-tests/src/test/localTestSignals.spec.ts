@@ -17,10 +17,10 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-	timeoutPromise as timeoutPromiseUnnamed,
 	TimeoutWithError,
 	TimeoutWithValue,
+	getContainerEntryPointBackCompat,
+	timeoutPromise as timeoutPromiseUnnamed,
 } from "@fluidframework/test-utils/internal";
 
 type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & {

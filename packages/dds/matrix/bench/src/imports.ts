@@ -5,4 +5,4 @@
 
 export { SharedMatrix, SharedMatrixFactory } from "../../src";
 export { SparseArray2D } from "../../src/sparsearray2d";
-export { fill, IMatrix } from "../../test/utils";
+export { IMatrix, fill } from "../../test/utils";

@@ -24,12 +24,12 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
-	getInnerNode,
+	type FieldProps,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeBeta,
-	type FieldProps,
 	type TreeNode,
+	getInnerNode,
 } from "../../simple-tree/index.js";
 import { singleJsonCursor } from "../json/index.js";
 

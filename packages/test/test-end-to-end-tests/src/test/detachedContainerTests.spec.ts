@@ -41,10 +41,10 @@ import {
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

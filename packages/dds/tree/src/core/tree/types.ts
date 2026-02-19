@@ -8,9 +8,9 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type Brand,
 	type Opaque,
+	type _InlineTrick,
 	brand,
 	extractFromOpaque,
-	type _InlineTrick,
 } from "../../util/index.js";
 import type {
 	FieldKey,

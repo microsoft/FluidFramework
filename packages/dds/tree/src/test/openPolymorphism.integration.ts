@@ -10,16 +10,16 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { Tree } from "../shared-tree/index.js";
 import {
-	allowUnused,
-	evaluateLazySchema,
-	SchemaFactory,
-	TreeBeta,
-	TreeViewConfiguration,
 	type NodeKind,
 	type ObjectFromSchemaRecord,
+	SchemaFactory,
+	TreeBeta,
 	type TreeNode,
 	type TreeNodeSchema,
+	TreeViewConfiguration,
 	type Unhydrated,
+	allowUnused,
+	evaluateLazySchema,
 } from "../simple-tree/index.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
 

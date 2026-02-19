@@ -13,12 +13,12 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
+import { EmptyKey, type NormalizedUpPath, rootFieldKey } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
+	type Context,
 	TreeCompressionStrategy,
 	jsonableTreeFromFieldCursor,
-	type Context,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -46,15 +46,15 @@ import {
 } from "../scalableTestTrees.js";
 import { insert } from "../sequenceRootUtils.js";
 import {
+	type SharedTreeWithContainerRuntime,
 	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
-	configureBenchmarkHooks,
 	chunkFromJsonTrees,
+	configureBenchmarkHooks,
+	fieldCursorFromInsertable,
 	flexTreeViewWithContent,
 	toJsonableTree,
-	type SharedTreeWithContainerRuntime,
-	fieldCursorFromInsertable,
 } from "../utils.js";
 
 // number of nodes in test for wide trees

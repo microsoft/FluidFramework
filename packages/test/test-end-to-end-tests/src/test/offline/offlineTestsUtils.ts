@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { type ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type {
@@ -17,11 +17,11 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITestFluidObject,
 	type ITestContainerConfig,
+	type ITestFluidObject,
 	type ITestObjectProvider,
-	waitForContainerConnection,
 	toIDeltaManagerFull,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";

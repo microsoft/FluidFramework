@@ -14,8 +14,8 @@ import type {
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import {
-	UsageError,
 	type ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -50,6 +50,7 @@ import {
 	DetachedFieldIndexSummarizer,
 	FieldKinds,
 	ForestSummarizer,
+	type IncrementalEncodingPolicy,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
 	buildChunkedForest,
@@ -63,28 +64,33 @@ import {
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
-	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { type FormatV1, schemaCodecBuilder } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
-	clientVersionToEditManagerFormatVersion,
-	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
-	getCodecTreeForEditManagerFormatWithChange,
-	getCodecTreeForMessageFormatWithChange,
-	type SharedTreeCoreOptionsInternal,
+	EditManagerFormatVersion,
 	MessageFormatVersion,
 	SharedTreeCore,
-	EditManagerFormatVersion,
+	type SharedTreeCoreOptionsInternal,
+	clientVersionToEditManagerFormatVersion,
+	clientVersionToMessageFormatVersion,
+	getCodecTreeForEditManagerFormatWithChange,
+	getCodecTreeForMessageFormatWithChange,
 } from "../shared-tree-core/index.js";
 import {
+	FieldKind,
 	type ITree,
+	type ITreeAlpha,
 	type ImplicitFieldSchema,
 	NodeKind,
 	type ReadSchema,
+	type SchemaType,
+	type SimpleAllowedTypeAttributes,
 	type SimpleFieldSchema,
+	type SimpleNodeSchema,
+	type SimpleObjectFieldSchema,
 	type SimpleTreeSchema,
 	type TreeView,
 	type TreeViewAlpha,
@@ -92,29 +98,23 @@ import {
 	type UnsafeUnknownSchema,
 	type VerboseTree,
 	tryStoredSchemaAsArray,
-	type SimpleNodeSchema,
-	FieldKind,
-	type ITreeAlpha,
-	type SimpleObjectFieldSchema,
-	type SimpleAllowedTypeAttributes,
-	type SchemaType,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
-	breakingClass,
 	type JsonCompatible,
+	breakingClass,
 	throwIfBroken,
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
-	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
+	getCodecTreeForChangeFormat,
 } from "./sharedTreeChangeCodecs.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
+import { type BranchableTree, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.

@@ -4,10 +4,9 @@
  */
 
 export {
-	SummaryCompressionAlgorithm,
-	type ICompressionStorageConfig,
 	DefaultCompressionStorageConfig,
+	type ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
 } from "./compression/index.js";
-
 export { applyStorageCompression } from "./predefinedAdapters.js";

@@ -5,7 +5,7 @@
 
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { SharedTree, type ITree } from "@fluidframework/tree/internal";
+import { type ITree, SharedTree } from "@fluidframework/tree/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";

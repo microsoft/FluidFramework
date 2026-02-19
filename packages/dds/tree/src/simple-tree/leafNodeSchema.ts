@@ -14,21 +14,21 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
+import { type JsonCompatibleReadOnlyObject, brand } from "../util/index.js";
 
 import {
-	NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaNonClass,
-	type NodeSchemaMetadata,
-	type TreeLeafValue,
-	type TreeNodeSchemaCorePrivate,
-	type TreeNodeSchemaPrivateData,
-	privateDataSymbol,
-	type TreeNodeSchemaInitializedData,
 	CompatibilityLevel,
 	type FlexContent,
+	NodeKind,
+	type NodeSchemaMetadata,
+	type TreeLeafValue,
+	type TreeNodeSchema,
+	type TreeNodeSchemaCorePrivate,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaNonClass,
+	type TreeNodeSchemaPrivateData,
 	type UnhydratedFlexTreeField,
+	privateDataSymbol,
 } from "./core/index.js";
 import { getTreeNodeSchemaInitializedData } from "./createContext.js";
 import type { SimpleLeafNodeSchema } from "./simpleSchema.js";

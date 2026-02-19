@@ -7,20 +7,20 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeNodeSchema } from "@fluidframework/tree/alpha";
 
 import type {
-	TypeFactoryType,
 	TypeFactoryArray,
-	TypeFactoryPromise,
-	TypeFactoryObject,
-	TypeFactoryTuple,
-	TypeFactoryRecord,
-	TypeFactoryMap,
-	TypeFactoryLiteral,
-	TypeFactoryOptional,
-	TypeFactoryReadonly,
-	TypeFactoryUnion,
-	TypeFactoryIntersection,
 	TypeFactoryFunction,
 	TypeFactoryInstanceOf,
+	TypeFactoryIntersection,
+	TypeFactoryLiteral,
+	TypeFactoryMap,
+	TypeFactoryObject,
+	TypeFactoryOptional,
+	TypeFactoryPromise,
+	TypeFactoryReadonly,
+	TypeFactoryRecord,
+	TypeFactoryTuple,
+	TypeFactoryType,
+	TypeFactoryUnion,
 } from "./treeAgentTypes.js";
 
 /**

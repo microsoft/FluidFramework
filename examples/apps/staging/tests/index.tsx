@@ -16,7 +16,6 @@ import {
 	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";

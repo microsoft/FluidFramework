@@ -8,6 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { globFn, loadModule, toPosixPath } from "../taskUtils";
+
 import { LeafWithDoneFileTask } from "./leafTask";
 
 interface DoneFileContent {

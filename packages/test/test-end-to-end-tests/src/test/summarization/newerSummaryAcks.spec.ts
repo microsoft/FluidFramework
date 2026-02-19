@@ -14,10 +14,10 @@ import type {
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -27,7 +27,7 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { createSandbox, SinonSandbox } from "sinon";
+import { SinonSandbox, createSandbox } from "sinon";
 
 import { reconnectSummarizerToBeElected } from "../gc/index.js";
 

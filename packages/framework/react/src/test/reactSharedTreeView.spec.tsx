@@ -14,7 +14,7 @@ import globalJsdom from "global-jsdom";
 import * as React from "react";
 
 import type { PropTreeNode } from "../propNode.js";
-import { treeDataObject, TreeViewComponent } from "../reactSharedTreeView.js";
+import { TreeViewComponent, treeDataObject } from "../reactSharedTreeView.js";
 
 describe("reactSharedTreeView", () => {
 	it("treeDataObject", async () => {

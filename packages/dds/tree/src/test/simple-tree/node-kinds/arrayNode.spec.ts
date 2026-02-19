@@ -11,25 +11,25 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	SchemaFactory,
-	TreeViewConfiguration,
 	type FixRecursiveArraySchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
+	SchemaFactory,
 	type TreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
+	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import type {
-	areSafelyAssignable,
 	Mutable,
+	UnionToIntersection,
+	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
-	UnionToIntersection,
 } from "../../../util/index.js";
 import { TestTreeProviderLite } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";

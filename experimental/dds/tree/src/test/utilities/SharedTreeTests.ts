@@ -27,15 +27,6 @@ import { initialTree } from '../../InitialTree.js';
 import { CachingLogViewer } from '../../LogViewer.js';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth.js';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities.js';
-import { getChangeNodeFromView } from '../../SerializationUtilities.js';
-import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder.js';
-import { MutableStringInterner } from '../../StringInterner.js';
-import { SummaryContents, serialize } from '../../Summary.js';
-import { deserialize } from '../../SummaryBackCompatibility.js';
-import { InterningTreeCompressor } from '../../TreeCompressor.js';
-import { TreeNodeHandle } from '../../TreeNodeHandle.js';
-import { generateStableId, nilUuid } from '../../UuidUtilities.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -48,6 +39,15 @@ import {
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
 } from '../../persisted-types/index.js';
+import { getChangeNodeFromView } from '../../SerializationUtilities.js';
+import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder.js';
+import { MutableStringInterner } from '../../StringInterner.js';
+import { SummaryContents, serialize } from '../../Summary.js';
+import { deserialize } from '../../SummaryBackCompatibility.js';
+import { InterningTreeCompressor } from '../../TreeCompressor.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { generateStableId, nilUuid } from '../../UuidUtilities.js';
 
 import { SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';

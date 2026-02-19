@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, createEmitter } from "@fluid-internal/client-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";

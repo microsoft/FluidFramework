@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
 import {
 	type DeltaRoot,

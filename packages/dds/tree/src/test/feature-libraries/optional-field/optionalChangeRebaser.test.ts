@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import { StressMode, describeStress } from "@fluid-private/stochastic-test-utils";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {

@@ -10,20 +10,20 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
-	forEachField,
-	inCursorField,
-	LeafNodeStoredSchema,
-	mapCursorField,
-	ObjectNodeStoredSchema,
 	type FieldKey,
 	type ITreeCursor,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeTypeSet,
+	forEachField,
+	inCursorField,
+	mapCursorField,
 } from "../../core/index.js";
 import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
-import type { TreeNodeSchema, TreeLeafValue } from "../core/index.js";
+import type { TreeLeafValue, TreeNodeSchema } from "../core/index.js";
 import {
 	booleanSchema,
 	handleSchema,

@@ -5,9 +5,9 @@
 
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
+	type ILoadExistingContainerProps,
 	createDetachedContainer,
 	loadExistingContainer,
-	type ILoadExistingContainerProps,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
@@ -17,7 +17,7 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { SharedMap, ISharedMap } from "@fluidframework/map/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 

@@ -6,11 +6,11 @@
 import { assert } from '@fluidframework/core-utils/internal';
 
 import { Mutable, fail } from './Common.js';
-import { isDetachedSequenceId } from './Identifiers.js';
 import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import { isDetachedSequenceId } from './Identifiers.js';
 import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
-import type { StringInterner } from './StringInterner.js';
 import type { CompressedPlaceholderTree, CompressedTraits, Payload, PlaceholderTree } from './persisted-types/index.js';
+import type { StringInterner } from './StringInterner.js';
 
 /**
  * Compresses a given {@link PlaceholderTree} into a more compact serializable format.

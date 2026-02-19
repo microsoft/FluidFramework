@@ -11,6 +11,7 @@ import type {
 	WebpackStatsProcessor,
 } from "../BundleBuddyTypes";
 import { runProcessorsOnStatsFile } from "../utilities/runProcessorOnStatsFile";
+
 import type { BundleFileData } from "./getBundleFilePathsFromFolder";
 
 export interface GetBundleSummariesArgs {

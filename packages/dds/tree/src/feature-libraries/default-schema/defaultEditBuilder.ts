@@ -36,8 +36,8 @@ import {
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
-import { optional, type OptionalChangeset, required } from "../optional-field/index.js";
-import { sequence, type CellId } from "../sequence-field/index.js";
+import { type OptionalChangeset, optional, required } from "../optional-field/index.js";
+import { type CellId, sequence } from "../sequence-field/index.js";
 
 import { fieldKinds } from "./defaultFieldKinds.js";
 

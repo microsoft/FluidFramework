@@ -30,20 +30,20 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
-	replaceChange,
 	type RevisionTag,
 	RevisionTagCodec,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 	type TreeStoredSchemaRepository,
+	replaceChange,
 } from "../core/index.js";
 import {
-	type JsonCompatibleReadOnly,
-	brand,
 	type Breakable,
+	type JsonCompatibleReadOnly,
 	type WithBreakable,
-	throwIfBroken,
+	brand,
 	breakingClass,
+	throwIfBroken,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -51,7 +51,7 @@ import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import type { ChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
-import { makeEditManagerCodec, type EditManagerCodecOptions } from "./editManagerCodecs.js";
+import { type EditManagerCodecOptions, makeEditManagerCodec } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import {
@@ -63,13 +63,13 @@ import type { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import {
-	minVersionToSharedTreeSummaryFormatVersion,
-	summarizablesTreeKey,
-	supportedSharedTreeSummaryFormatVersions,
 	type SharedTreeSummaryFormatVersion,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
+	minVersionToSharedTreeSummaryFormatVersion,
+	summarizablesTreeKey,
+	supportedSharedTreeSummaryFormatVersions,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
 

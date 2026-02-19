@@ -47,7 +47,6 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from './NumericUuid.js';
-import { SessionIdNormalizer } from './SessionIdNormalizer.js';
 import type {
 	IdCreationRange,
 	SerializedCluster,
@@ -60,6 +59,7 @@ import type {
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
 } from './persisted-types/index.js';
+import { SessionIdNormalizer } from './SessionIdNormalizer.js';
 
 /**
  * A cluster of final (sequenced via consensus), sequentially allocated compressed IDs.

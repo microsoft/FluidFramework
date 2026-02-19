@@ -9,8 +9,8 @@ import type { CodecTree } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
 	type FieldKindIdentifier,
-	forbiddenFieldKindIdentifier,
 	Multiplicity,
+	forbiddenFieldKindIdentifier,
 } from "../../core/index.js";
 import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
 import {

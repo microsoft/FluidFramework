@@ -7,8 +7,6 @@ import { Mutable, ReplaceRecursive, copyPropertyIfDefined, fail } from './Common
 import { convertStablePlaceIds, convertStableRangeIds } from './IdConversion.js';
 import { DetachedSequenceId, NodeId, OpSpaceNodeId } from './Identifiers.js';
 import { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
-import { StringInterner } from './StringInterner.js';
-import { TreeCompressor } from './TreeCompressor.js';
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -22,6 +20,8 @@ import {
 	InsertInternal,
 	SetValueInternal,
 } from './persisted-types/index.js';
+import { StringInterner } from './StringInterner.js';
+import { TreeCompressor } from './TreeCompressor.js';
 
 /**
  * Encapsulates knowledge of how to compress/decompress a change into a compressed change

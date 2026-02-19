@@ -18,12 +18,12 @@ import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/inter
 
 import {
 	SummaryTreeBuilder,
+	type SummaryTreeBuilderParams,
 	TelemetryContext,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
 	utf8ByteLength,
-	type SummaryTreeBuilderParams,
 } from "../summaryUtils.js";
 
 describe("Summary Utils", () => {

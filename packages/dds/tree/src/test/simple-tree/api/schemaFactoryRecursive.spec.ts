@@ -14,8 +14,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	allowUnused,
 	type ValidateRecursiveSchema,
+	allowUnused,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
@@ -23,31 +23,31 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import {
-	type FieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeFromSchema,
-	TreeViewConfiguration,
-	type TreeNodeFromImplicitAllowedTypes,
-	type TreeView,
-	SchemaFactory,
-	type InternalTreeNode,
-	type FlexListToUnion,
-	type ApplyKindInput,
-	type NodeBuilderData,
-	SchemaFactoryAlpha,
-	type AnnotatedAllowedType,
-	type TreeNodeSchema,
-	type AllowedTypesFull,
-	type ImplicitAllowedTypes,
 	type AllowedTypes,
+	type AllowedTypesFull,
+	type AnnotatedAllowedType,
+	type ApplyKindInput,
+	type FieldSchema,
+	type FlexListToUnion,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type InternalTreeNode,
+	type NodeBuilderData,
+	type NodeFromSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
+	type TreeView,
+	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
-	requireTrue,
 	requireFalse,
+	requireTrue,
 } from "../../../util/index.js";
 import { hydrate } from "../utils.js";
 

@@ -22,12 +22,12 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
+	type ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-	type ITestContainerConfig,
 } from "@fluidframework/test-utils/internal";
 
 /**

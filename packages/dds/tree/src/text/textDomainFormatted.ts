@@ -8,23 +8,23 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../core/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
-import {
-	enumFromStrings,
-	eraseSchemaDetails,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	TreeArrayNode,
-	TreeBeta,
-} from "../simple-tree/index.js";
 import type {
 	InsertableTypedNode,
 	TreeNode,
 	TreeNodeFromImplicitAllowedTypes,
 	WithType,
 } from "../simple-tree/index.js";
+import {
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeArrayNode,
+	TreeBeta,
+	enumFromStrings,
+	eraseSchemaDetails,
+} from "../simple-tree/index.js";
 import { mapIterable } from "../util/index.js";
 
-import { charactersFromString, type TextAsTree } from "./textDomain.js";
+import { type TextAsTree, charactersFromString } from "./textDomain.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 

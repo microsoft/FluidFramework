@@ -9,18 +9,18 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { Context } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
+	type TransactionConstraint,
 	type TreeNode,
 	type TreeNodeApi,
 	type TreeView,
 	getInnerNode,
-	treeNodeApi,
 	rollback,
-	type TransactionConstraint,
+	treeNodeApi,
 } from "../simple-tree/index.js";
 
 import {
-	addConstraintsToTransaction,
 	SchematizingSimpleTreeView,
+	addConstraintsToTransaction,
 } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
 

@@ -13,8 +13,8 @@ import {
 	type IErrorBase,
 } from "@fluidframework/container-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	FluidDataStoreMessage,
@@ -30,20 +30,20 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import {
-	addBatchMetadata,
 	BatchManager,
+	type InboundMessageResult,
 	type LocalBatchMessage,
 	OpGroupingManager,
-	type InboundMessageResult,
+	addBatchMetadata,
 } from "../opLifecycle/index.js";
 import {
-	findFirstCharacterMismatched,
-	type IPendingMessage,
-	PendingStateManager,
 	type IPendingLocalState,
+	type IPendingMessage,
 	type IRuntimeStateHandler,
 	type PendingBatchResubmitMetadata,
 	type PendingMessageResubmitData,
+	PendingStateManager,
+	findFirstCharacterMismatched,
 } from "../pendingStateManager.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;

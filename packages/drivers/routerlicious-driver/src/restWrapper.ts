@@ -26,13 +26,13 @@ import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
 import {
-	getUrlForTelemetry,
 	RouterliciousErrorTypes,
+	getUrlForTelemetry,
 	throwR11sNetworkError,
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
-import type { RequestConfig, RawRequestHeaders } from "./request.cjs";
+import { type QueryStringType, addOrUpdateQueryParams } from "./queryStringUtils.js";
+import type { RawRequestHeaders, RequestConfig } from "./request.cjs";
 import { RestWrapper } from "./restWrapperBase.js";
 import { ITokenProvider, ITokenResponse } from "./tokens.js";
 

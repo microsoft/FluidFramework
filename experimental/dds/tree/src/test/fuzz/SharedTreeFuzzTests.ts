@@ -8,19 +8,19 @@ import { join } from 'path';
 
 import {
 	AsyncGenerator,
+	type SaveInfo,
 	chainAsync as chain,
 	describeFuzz,
 	makeRandom,
 	performFuzzActionsAsync as performFuzzActionsBase,
 	takeAsync as take,
-	type SaveInfo,
 } from '@fluid-private/stochastic-test-utils';
 import { expect } from 'chai';
 
 import { fail } from '../../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
-import { SharedTree } from '../../SharedTree.js';
 import { WriteFormat } from '../../persisted-types/index.js';
+import { SharedTree } from '../../SharedTree.js';
 import {
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,

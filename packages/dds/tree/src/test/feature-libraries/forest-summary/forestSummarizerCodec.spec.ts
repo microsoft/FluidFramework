@@ -11,9 +11,9 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	currentVersion,
-	FluidClientVersion,
 	type CodecWriteOptions,
+	FluidClientVersion,
+	currentVersion,
 } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { newIntegerRangeMap, RangeMap } from "../../../util/index.js";
+import { RangeMap, newIntegerRangeMap } from "../../../util/index.js";
 
 function newRangeMap(): RangeMap<number, string> {
 	return newIntegerRangeMap<string>();

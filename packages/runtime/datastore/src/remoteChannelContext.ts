@@ -4,24 +4,24 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext,
-	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
+	IExperimentalIncrementalSummaryContext,
 	IFluidDataStoreContext,
-	ISummarizeInternalResult,
-	ISummarizeResult,
-	ISummarizerNodeWithGC,
+	IGarbageCollectionData,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
+	ISummarizeInternalResult,
+	ISummarizeResult,
+	ISummarizerNodeWithGC,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryLoggerExt,

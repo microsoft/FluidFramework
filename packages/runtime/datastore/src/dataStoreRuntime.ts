@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { type ILayerCompatDetails, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
@@ -17,19 +17,19 @@ import type {
 	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import {
-	assert,
-	debugAssert,
 	Deferred,
 	LazyPromise,
+	assert,
+	debugAssert,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
+	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeAlpha,
+	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -40,33 +40,33 @@ import {
 } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentMessage,
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
-	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	type IAttachMessage,
 	type IEnvelope,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
-	VisibilityState,
-	gcDataBlobKey,
+	type IFluidDataStorePolicies,
+	type IGarbageCollectionData,
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	notifiesReadOnlyState,
-	encodeHandlesInContainerRuntime,
-	type IFluidDataStorePolicies,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
 	type MinimumVersionForCollab,
+	VisibilityState,
 	asLegacyAlpha,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
+	encodeHandlesInContainerRuntime,
+	gcDataBlobKey,
+	notifiesReadOnlyState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -77,17 +77,17 @@ import {
 	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
+	encodeCompactIdToString,
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	toDeltaManagerErased,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
-	toDeltaManagerErased,
-	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
+	type ITelemetryLoggerExt,
 	LoggingError,
 	type MonitoringContext,
 	UsageError,

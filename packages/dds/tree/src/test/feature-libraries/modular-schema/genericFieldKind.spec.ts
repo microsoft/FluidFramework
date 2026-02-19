@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
+import type { CrossFieldManager, GenericChangeset } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
@@ -18,7 +18,7 @@ import {
 	genericChangeHandler,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {

@@ -11,10 +11,6 @@ import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
 import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
 import { comparePayloads } from './PayloadUtilities.js';
-import { TransactionView, iterateChildren } from './RevisionView.js';
-import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
-import { TraitLocation, TreeView } from './TreeView.js';
-import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -31,6 +27,10 @@ import {
 	TreeNode,
 	TreeNodeSequence,
 } from './persisted-types/index.js';
+import { TransactionView, iterateChildren } from './RevisionView.js';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { TraitLocation, TreeView } from './TreeView.js';
+import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
 
 /**
  * Functions for constructing and comparing Edits.

@@ -4,13 +4,13 @@
  */
 
 import React from "react";
-import RGL, { WidthProvider, type Layout } from "react-grid-layout";
+import RGL, { type Layout, WidthProvider } from "react-grid-layout";
 
 import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
 import {
 	type IDataObjectGridItemEntry,
-	dataObjectRegistry,
 	type ISingleHandleItem,
+	dataObjectRegistry,
 } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 

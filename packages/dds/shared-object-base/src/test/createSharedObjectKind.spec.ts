@@ -27,12 +27,12 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import type { IFluidSerializer } from "../serializer.js";
 import { createSharedObjectKind } from "../sharedObject.js";
 import {
-	makeSharedObjectKind,
 	type FactoryOut,
 	type KernelArgs,
 	type SharedKernel,
 	type SharedKernelFactory,
 	type SharedObjectOptions,
+	makeSharedObjectKind,
 } from "../sharedObjectKernel.js";
 
 interface IFoo {

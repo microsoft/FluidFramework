@@ -10,20 +10,20 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizeResults, ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { ISummaryContext, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree, ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
+	type ITestContainerConfig,
+	type ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-	type ITestContainerConfig,
-	type ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
-import { createSandbox, SinonSandbox } from "sinon";
+import { SinonSandbox, createSandbox } from "sinon";
 
 /**
  * Validates the scenario in which we always retrieve the latest snapshot.

@@ -9,6 +9,7 @@
 
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
+
 import { Biome2ConfigReader } from "../common/biome2Config";
 import {
 	BiomeConfigReaderV1,
@@ -21,6 +22,7 @@ import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTy
 import { createBiomeConfigReader } from "../common/biomeConfigUtils";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
+
 import { testDataPath } from "./init";
 
 describe("Biome config loading", () => {

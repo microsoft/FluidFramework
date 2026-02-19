@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { isISharedObjectHandle, SharedObjectHandle } from "../handle.js";
+import { SharedObjectHandle, isISharedObjectHandle } from "../handle.js";
 
 describe("isISharedObjectHandle", () => {
 	it("should return true for a SharedObjectHandle class instance", () => {

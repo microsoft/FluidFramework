@@ -40,7 +40,7 @@ import {
 	isRevertibleSharedString,
 	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
-import { hasIntervalCollectionOracles, type IChannelWithOracles } from "./oracleUtils.js";
+import { type IChannelWithOracles, hasIntervalCollectionOracles } from "./oracleUtils.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 

@@ -4,7 +4,12 @@
 	"assist": {
 		"actions": {
 			"source": {
-				"organizeImports": "on"
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"identifierOrder": "natural"
+					}
+				}
 			}
 		}
 	},

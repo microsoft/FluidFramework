@@ -13,11 +13,11 @@ import {
 import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	disabledCompressionConfig,
-	IGCRuntimeOptions,
-	ISummaryRuntimeOptions,
 	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
+	IGCRuntimeOptions,
+	ISummaryRuntimeOptions,
+	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";

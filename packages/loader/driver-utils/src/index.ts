@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
+export {
+	type ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
+	applyStorageCompression,
+	blobHeadersBlobName,
+} from "./adapters/index.js";
+export { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob.js";
 export { buildSnapshotTree } from "./buildSnapshotTree.js";
-export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob.js";
+export { getKeyForCacheEntry, maximumCacheDurationMs } from "./cacheUtils.js";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
 export { UsageError } from "./error.js";
 export { InsecureUrlResolver } from "./insecureUrlResolver.js";
@@ -14,36 +21,38 @@ export {
 } from "./messageRecognition.js";
 export {
 	AuthorizationError,
-	canRetryOnError,
-	createGenericNetworkError,
-	createWriteError,
 	DeltaStreamConnectionForbiddenError,
 	type DriverErrorTelemetryProps,
 	FluidInvalidSchemaError,
 	GenericNetworkError,
-	getRetryDelayFromError,
-	getRetryDelaySecondsFromError,
-	isOnline,
 	LocationRedirectionError,
 	NetworkErrorBasic,
 	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
 	ThrottlingError,
+	canRetryOnError,
+	createGenericNetworkError,
+	createWriteError,
+	getRetryDelayFromError,
+	getRetryDelaySecondsFromError,
+	isOnline,
 } from "./network.js";
 export { logNetworkFailure } from "./networkUtils.js";
 export {
-	emptyMessageStream,
 	ParallelRequests,
 	Queue,
+	emptyMessageStream,
 	requestOps,
 	streamFromMessages,
 	streamObserver,
 } from "./parallelRequests.js";
 export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService.js";
+export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";
 export { RateLimiter } from "./rateLimiter.js";
 export { readAndParse } from "./readAndParse.js";
-export { calculateMaxWaitTime, type IProgress, runWithRetry } from "./runWithRetry.js";
+export { type IProgress, calculateMaxWaitTime, runWithRetry } from "./runWithRetry.js";
+export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
 export {
 	type CombinedAppAndProtocolSummary,
 	getDocAttributesFromProtocolSummary,
@@ -51,12 +60,3 @@ export {
 	isCombinedAppAndProtocolSummary,
 } from "./summaryForCreateNew.js";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions.js";
-export {
-	applyStorageCompression,
-	type ICompressionStorageConfig,
-	SummaryCompressionAlgorithm,
-	blobHeadersBlobName,
-} from "./adapters/index.js";
-export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
-export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";
-export { getKeyForCacheEntry, maximumCacheDurationMs } from "./cacheUtils.js";

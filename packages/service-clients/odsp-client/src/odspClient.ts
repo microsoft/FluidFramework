@@ -9,9 +9,9 @@ import type {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
+	type ILoaderProps,
 	createDetachedContainer,
 	loadExistingContainer,
-	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
 	IConfigProviderBase,
@@ -38,12 +38,12 @@ import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/
 import { v4 as uuid } from "uuid";
 
 import type {
-	TokenResponse,
+	OdspContainerServices as IOdspContainerServices,
+	IOdspFluidContainer,
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-	OdspContainerServices as IOdspContainerServices,
-	IOdspFluidContainer,
+	TokenResponse,
 } from "./interfaces.js";
 import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";

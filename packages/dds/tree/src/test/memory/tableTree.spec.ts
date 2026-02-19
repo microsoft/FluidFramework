@@ -6,18 +6,18 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type IMemoryTestObject,
 	benchmarkMemory,
 	isInPerformanceTestingMode,
-	type IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import type { Test } from "mocha";
 
 import {
 	Column,
 	Row,
-	type UndoRedoManager,
 	type Table,
 	type TableBenchmarkOptions,
+	type UndoRedoManager,
 	createTableTree,
 } from "../tablePerformanceTestUtilities.js";
 

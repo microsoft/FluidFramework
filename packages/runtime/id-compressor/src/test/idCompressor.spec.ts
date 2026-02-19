@@ -7,16 +7,16 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
-import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	SerializedIdCompressorWithOngoingSession,
 } from "../index.js";
 import { createSessionId } from "../utilities.js";
 

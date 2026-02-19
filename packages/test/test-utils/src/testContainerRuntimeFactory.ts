@@ -25,8 +25,8 @@ import {
 } from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,
-	NamedFluidDataStoreRegistryEntries,
 	type MinimumVersionForCollab,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 

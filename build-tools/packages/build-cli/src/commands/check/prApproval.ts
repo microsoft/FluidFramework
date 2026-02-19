@@ -6,7 +6,6 @@
 import { Flags } from "@oclif/core";
 
 import { githubActionsFlag, githubTokenFlag } from "../../flags.js";
-
 import {
 	type GitHubProps,
 	isPrApprovedByTeam,

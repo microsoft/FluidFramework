@@ -8,8 +8,8 @@ import { Mutable, MutableMap, copyPropertyIfDefined, fail } from './Common.js';
 import { Forest } from './Forest.js';
 import { NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
 import { NodeIdConverter } from './NodeIdUtilities.js';
-import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView.js';
 import { Payload, TreeNode, TreeNodeSequence } from './persisted-types/index.js';
+import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView.js';
 
 /**
  * An immutable view of a distributed tree.

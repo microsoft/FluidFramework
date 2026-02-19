@@ -11,7 +11,7 @@ import { FieldKind, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
-import { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+import { type SimpleTreeIndex, createSimpleTreeIndex } from "./simpleTreeIndex.js";
 import type { TreeView } from "./tree.js";
 
 /**

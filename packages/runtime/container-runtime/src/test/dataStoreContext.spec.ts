@@ -20,16 +20,16 @@ import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datasto
 import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import type { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
+	IContainerRuntimeBase,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	SummarizeInternalFn,
-	IContainerRuntimeBase,
 	IRuntimeStorageService,
+	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	CreateSummarizerNodeSource,
@@ -53,8 +53,8 @@ import {
 
 import {
 	type ChannelCollection,
-	getLocalDataStoreType,
 	type IFluidParentContextPrivate,
+	getLocalDataStoreType,
 } from "../channelCollection.js";
 import { channelToDataStore } from "../dataStore.js";
 import {

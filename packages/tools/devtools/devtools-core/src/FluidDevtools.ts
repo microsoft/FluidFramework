@@ -26,10 +26,10 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	SetUnsampledTelemetry,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
+	SetUnsampledTelemetry,
 	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";

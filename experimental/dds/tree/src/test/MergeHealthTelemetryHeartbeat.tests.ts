@@ -9,10 +9,10 @@ import { expect } from 'chai';
 
 import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';
 import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
+import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
 import { RevisionView } from '../RevisionView.js';
 import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
 import { TransactionInternal } from '../TransactionInternal.js';
-import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
 
 import { TestTree, buildLeaf } from './utilities/TestNode.js';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';

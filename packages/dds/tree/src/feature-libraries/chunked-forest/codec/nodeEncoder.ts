@@ -10,8 +10,8 @@ import {
 	type FieldKey,
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
-	forEachField,
 	type Value,
+	forEachField,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 

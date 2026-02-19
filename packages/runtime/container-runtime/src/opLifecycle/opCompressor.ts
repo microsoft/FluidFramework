@@ -8,8 +8,8 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	DataProcessingError,
-	createChildLogger,
 	type ITelemetryLoggerExt,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 

@@ -10,10 +10,10 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
+	ICacheEntry,
+	IContainerPackageInfo,
 	IResolvedUrl,
 	ISnapshot,
-	IContainerPackageInfo,
-	ICacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
@@ -35,14 +35,14 @@ import {
 	type InstrumentedStorageTokenFetcher,
 	type InstrumentedTokenFetcher,
 	OdspErrorTypes,
-	authHeaderFromTokenResponse,
 	type OdspResourceTokenFetchOptions,
 	type TokenFetchOptions,
 	type TokenFetcher,
+	authHeaderFromTokenResponse,
 	isTokenFromCache,
 	snapshotKey,
-	tokenFromResponse,
 	snapshotWithLoadingGroupIdKey,
+	tokenFromResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IConfigProvider,

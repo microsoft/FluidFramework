@@ -7,8 +7,8 @@ export type { IAsyncCache, IResources } from "./fluidToolRc.js";
 export { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
 export type { IOdspTokenManagerCacheKey, OdspTokenConfig } from "./odspTokenManager.js";
 export {
-	getMicrosoftConfiguration,
 	OdspTokenManager,
+	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "./odspTokenManager.js";
 export type { ISnapshotNormalizerConfig } from "./snapshotNormalizer.js";

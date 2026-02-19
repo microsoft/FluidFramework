@@ -16,33 +16,33 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	type DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	registerOracle,
-	type DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
+	IChannelServices,
 	IFluidDataStoreRuntime,
 	type Serializable,
-	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	endpointPosAndSide,
-	PropertySet,
-	Side,
 	type AdjustParams,
 	type InteriorSequencePlace,
 	type MapLike,
+	PropertySet,
 	type SequencePlace,
+	Side,
+	endpointPosAndSide,
 } from "@fluidframework/merge-tree/internal";
 
 import {
+	type ISequenceIntervalCollection,
+	type IntervalCollection,
 	toOptionalSequencePlace,
 	toSequencePlace,
-	type IntervalCollection,
-	type ISequenceIntervalCollection,
 } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
@@ -50,7 +50,7 @@ import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
+import { type IChannelWithOracles, hasSharedStringOracle } from "./oracleUtils.js";
 import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {

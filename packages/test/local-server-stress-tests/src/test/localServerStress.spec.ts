@@ -6,17 +6,17 @@
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 
 import {
+	type StressOperations,
 	ddsModelMinimizers,
 	makeGenerator,
 	reducer,
 	saveFailures,
-	type StressOperations,
 } from "../baseModel.js";
 import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
 import { validateConsistencyOfAllDDS } from "../ddsOperations";
 import {
-	createLocalServerStressSuite,
 	LocalServerStressModel,
+	createLocalServerStressSuite,
 } from "../localServerStressHarness";
 
 describe("Local Server Stress", () => {

@@ -5,15 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	AnnotatedAllowedTypesInternal,
-	isAnnotatedAllowedType,
-	normalizeAllowedTypes,
-	normalizeAndEvaluateAnnotatedAllowedTypes,
-	normalizeToAnnotatedAllowedType,
 	type AllowedTypes,
 	type AllowedTypesFull,
 	type AllowedTypesFullEvaluated,
@@ -21,40 +18,45 @@ import {
 	type AnnotateAllowedTypesList,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
+	AnnotatedAllowedTypesInternal,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NumberKeys,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateAllowedTypesList,
+	isAnnotatedAllowedType,
+	normalizeAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/allowedTypes.js";
 import {
-	allowUnused,
-	numberSchema,
-	SchemaFactory,
-	stringSchema,
-	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type LazyItem,
 	type NodeKind,
 	type ObjectFromSchemaRecord,
+	SchemaFactory,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaNonClass,
+	allowUnused,
+	type booleanSchema,
+	numberSchema,
+	stringSchema,
 } from "../../../simple-tree/index.js";
 import type {
+	UnionToIntersection,
 	areSafelyAssignable,
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
-	UnionToIntersection,
 } from "../../../util/index.js";
 
 const schema = new SchemaFactory("com.example");

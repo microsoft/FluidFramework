@@ -6,7 +6,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 import { schemaFormatV1 } from "../../core/index.js";
-import { strictEnum, type Values, JsonCompatibleReadOnlySchema } from "../../util/index.js";
+import { JsonCompatibleReadOnlySchema, type Values, strictEnum } from "../../util/index.js";
 
 /**
  * The format version for the forest.

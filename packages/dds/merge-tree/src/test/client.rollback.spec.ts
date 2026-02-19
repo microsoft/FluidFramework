@@ -15,11 +15,11 @@ import {
 	type SegmentGroup,
 	reservedMarkerIdKey,
 } from "../mergeTreeNodes.js";
-import { MergeTreeDeltaType, ReferenceType, type IMergeTreeOp } from "../ops.js";
+import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 import { validatePartialLengths } from "./testUtils.js";
 
 describe("client.rollback", () => {

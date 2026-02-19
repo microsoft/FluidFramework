@@ -5,7 +5,7 @@
 
 import { strict } from "node:assert";
 
-import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import { StressMode, describeStress } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
@@ -46,25 +46,25 @@ import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils
 
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
+	type WrappedChange,
 	areRebasable,
 	assertChangesetsEqual,
-	testCompose,
-	testInvert,
-	prune,
-	rebaseOverChanges,
-	rebaseTagged,
-	composeShallow,
-	invertDeep,
-	rebaseDeepTagged,
-	withoutTombstonesDeep,
 	assertWrappedChangesetsEqual,
 	composeDeep,
-	pruneDeep,
-	type WrappedChange,
-	withoutTombstones,
-	tagChangeInline,
+	composeShallow,
 	inlineRevision,
+	invertDeep,
+	prune,
+	pruneDeep,
+	rebaseDeepTagged,
+	rebaseOverChanges,
+	rebaseTagged,
+	tagChangeInline,
+	testCompose,
+	testInvert,
 	toDeltaWrapped,
+	withoutTombstones,
+	withoutTombstonesDeep,
 } from "./utils.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.

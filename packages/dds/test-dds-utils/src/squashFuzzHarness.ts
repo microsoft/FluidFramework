@@ -20,8 +20,17 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { Client } from "./clientLoading.js";
 import { PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
 import {
-	setupClientContext,
+	type CleanupFunction,
+	type DDSFuzzHarnessModel,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
+	type DDSRandom,
+	type HarnessOperation,
+	ReducerPreconditionError,
+	convertOnlyAndSkip,
 	createSuite,
+	defaultDDSFuzzSuiteOptions,
 	handles,
 	mixinAttach,
 	mixinClientSelection,
@@ -30,17 +39,8 @@ import {
 	mixinReconnect,
 	mixinStashedClient,
 	mixinSynchronization,
-	convertOnlyAndSkip,
-	type DDSFuzzHarnessModel,
-	type DDSFuzzModel,
-	type DDSFuzzSuiteOptions,
-	type DDSFuzzTestState,
-	type DDSRandom,
-	type HarnessOperation,
-	defaultDDSFuzzSuiteOptions,
-	type CleanupFunction,
-	ReducerPreconditionError,
 	normalizeSeedOption,
+	setupClientContext,
 } from "./ddsFuzzHarness.js";
 import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";
 

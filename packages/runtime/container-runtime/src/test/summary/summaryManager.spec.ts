@@ -15,14 +15,15 @@ import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfac
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
 import {
+	DefaultSummaryConfiguration,
 	type IConnectedEvents,
 	type IConnectedState,
 	type ISummarizer,
@@ -31,14 +32,13 @@ import {
 	type ISummarizerRuntime,
 	type ISummaryManagerConfig,
 	type ISummaryOpMessage,
+	RunningSummarizer,
 	SummarizeHeuristicData,
 	type Summarizer,
 	SummaryCollection,
 	SummaryManager,
 	SummaryManagerState,
 	neverCancelledSummaryToken,
-	DefaultSummaryConfiguration,
-	RunningSummarizer,
 } from "../../summary/index.js";
 
 class MockRuntime {

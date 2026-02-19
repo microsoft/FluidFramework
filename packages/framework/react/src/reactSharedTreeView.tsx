@@ -12,17 +12,17 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type {
-	SchemaCompatibilityStatus,
-	TreeViewConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
+	SchemaCompatibilityStatus,
+	TreeFieldFromImplicitField,
+	TreeView,
+	TreeViewConfiguration,
 } from "@fluidframework/tree";
-import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
+import { FormatValidatorBasic, configuredSharedTree } from "@fluidframework/tree/internal";
 import * as React from "react";
 
-import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
+import { type PropTreeValue, toPropTreeNode } from "./propNode.js";
 
 /**
  * Opt into extra validation to detect encoding bugs and data corruption.

@@ -13,10 +13,10 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
 import {
-	deterministicIdCompressorFactory,
-	failureDirectory,
 	FuzzTestOnCreate,
 	SharedTreeFuzzTestFactory,
+	deterministicIdCompressorFactory,
+	failureDirectory,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 

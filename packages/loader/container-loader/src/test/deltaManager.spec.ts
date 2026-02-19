@@ -14,10 +14,10 @@ import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaStorageService,
 	type IDocumentMessage,
-	MessageType,
 	type ISequencedDocumentMessage,
 	type IStream,
 	type IStreamResult,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,

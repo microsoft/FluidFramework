@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import type { TreeValue, TreeChunk } from "../../../core/index.js";
+import type { TreeChunk, TreeValue } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
 

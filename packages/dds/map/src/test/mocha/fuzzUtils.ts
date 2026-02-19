@@ -29,7 +29,7 @@ import {
 } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
-import { hasSharedMapOracle, hasSharedDirectoryOracle } from "./oracleUtils.js";
+import { hasSharedDirectoryOracle, hasSharedMapOracle } from "./oracleUtils.js";
 
 /**
  * Represents a map clear operation.

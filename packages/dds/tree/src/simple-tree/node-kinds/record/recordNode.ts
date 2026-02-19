@@ -3,51 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { Lazy, assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import {
-	isTreeValue,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
+	isTreeValue,
 } from "../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
-	type TreeNodeSchema,
+	AnnotatedAllowedTypesInternal,
+	CompatibilityLevel,
+	type FlexContent,
+	type ImplicitAllowedTypes,
+	type InternalTreeNode,
+	type MostDerivedData,
 	NodeKind,
+	type NodeSchemaMetadata,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
+	type TreeNodeSchemaCorePrivate,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+	TreeNodeValid,
+	type UnhydratedFlexTreeNode,
+	createTreeNodeSchemaPrivateData,
+	getInnerNode,
+	getKernel,
+	normalizeAllowedTypes,
+	privateDataSymbol,
 	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
-	type UnhydratedFlexTreeNode,
-	getInnerNode,
-	getKernel,
-	type InternalTreeNode,
-	type NodeSchemaMetadata,
-	type ImplicitAllowedTypes,
-	normalizeAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	TreeNodeValid,
-	type MostDerivedData,
-	type TreeNodeSchemaInitializedData,
-	type TreeNodeSchemaCorePrivate,
-	privateDataSymbol,
-	createTreeNodeSchemaPrivateData,
-	type FlexContent,
-	CompatibilityLevel,
-	type TreeNodeSchemaPrivateData,
-	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
-import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
+import { FieldKind, createFieldSchema } from "../../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
-	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 

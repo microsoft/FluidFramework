@@ -27,29 +27,29 @@ import {
 	makeDetachedFieldIndex,
 } from "../../core/index.js";
 import {
-	VersionedSummarizer,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
+	VersionedSummarizer,
 } from "../../shared-tree-core/index.js";
 import {
+	type JsonCompatibleReadOnly,
 	idAllocatorFromMaxId,
 	readAndParseSnapshotBlob,
-	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
-	defaultIncrementalEncodingPolicy,
 	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import {
-	clientVersionToForestFormatVersion,
 	type ForestCodec,
+	clientVersionToForestFormatVersion,
 	makeForestSummarizerCodec,
 } from "./codec.js";
 import { ForestFormatVersion } from "./formatCommon.js";
@@ -63,8 +63,8 @@ import {
 	supportedForestSummaryFormatVersions,
 } from "./summaryFormatCommon.js";
 import {
-	minVersionToForestSummaryFormatVersion,
 	getForestRootSummaryContentKey,
+	minVersionToForestSummaryFormatVersion,
 } from "./summaryTypes.js";
 
 /**

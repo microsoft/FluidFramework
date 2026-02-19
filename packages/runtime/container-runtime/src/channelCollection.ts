@@ -15,12 +15,12 @@ import type {
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
+import { Lazy, LazyPromise, assert } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type {
+	ISequencedDocumentMessage,
 	ISnapshot,
 	ISnapshotTree,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
@@ -41,12 +41,12 @@ import type {
 	IFluidParentContext,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
-	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	InboundAttachMessage,
 	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
@@ -74,13 +74,13 @@ import {
 import {
 	DataCorruptionError,
 	DataProcessingError,
+	type ITelemetryPropertiesExt,
 	LoggingError,
 	type MonitoringContext,
 	createChildLogger,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
-	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

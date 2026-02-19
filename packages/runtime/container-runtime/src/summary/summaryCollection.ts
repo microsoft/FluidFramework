@@ -10,18 +10,18 @@ import type {
 	IEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { Deferred, assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
+	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**

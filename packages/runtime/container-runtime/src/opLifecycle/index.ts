@@ -4,48 +4,48 @@
  */
 
 export {
-	addBatchMetadata,
 	type BatchId,
 	BatchManager,
 	type BatchSequenceNumbers,
-	getEffectiveBatchId,
-	generateBatchId,
 	type IBatchManagerOptions,
+	addBatchMetadata,
+	generateBatchId,
+	getEffectiveBatchId,
 } from "./batchManager.js";
 export type {
+	IBatchCheckpoint,
+	IChunkedOp,
 	LocalBatch,
 	LocalBatchMessage,
 	LocalEmptyBatchPlaceholder,
 	OutboundBatch,
 	OutboundBatchMessage,
 	OutboundSingletonBatch,
-	IBatchCheckpoint,
-	IChunkedOp,
 } from "./definitions.js";
 export { DuplicateBatchDetector } from "./duplicateBatchDetector.js";
-export {
-	serializeOp,
-	ensureContentsDeserialized,
-} from "./opSerialization.js";
-export {
-	type BatchResubmitInfo,
-	estimateSocketSize,
-	localBatchToOutboundBatch,
-	Outbox,
-	getLongStack,
-} from "./outbox.js";
 export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";
-export { OpSplitter, splitOp, isChunkedMessage } from "./opSplitter.js";
-export {
-	type InboundMessageResult,
-	type BatchStartInfo,
-	RemoteMessageProcessor,
-	unpackRuntimeMessage,
-} from "./remoteMessageProcessor.js";
 export {
 	type EmptyGroupedBatch,
 	OpGroupingManager,
 	type OpGroupingManagerConfig,
 	isGroupedBatch,
 } from "./opGroupingManager.js";
+export {
+	ensureContentsDeserialized,
+	serializeOp,
+} from "./opSerialization.js";
+export { OpSplitter, isChunkedMessage, splitOp } from "./opSplitter.js";
+export {
+	type BatchResubmitInfo,
+	Outbox,
+	estimateSocketSize,
+	getLongStack,
+	localBatchToOutboundBatch,
+} from "./outbox.js";
+export {
+	type BatchStartInfo,
+	type InboundMessageResult,
+	RemoteMessageProcessor,
+	unpackRuntimeMessage,
+} from "./remoteMessageProcessor.js";

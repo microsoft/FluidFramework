@@ -6,8 +6,8 @@
 import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
-	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
+	ITelemetryLoggerExt,
 	createChildLogger,
 } from '@fluidframework/telemetry-utils/internal';
 
@@ -17,11 +17,11 @@ import { newEditId } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';
 import { EditId } from './Identifiers.js';
 import { CachingLogViewer } from './LogViewer.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 import { RevisionView } from './RevisionView.js';
 import { EditCommittedHandler, SharedTree } from './SharedTree.js';
 import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal.js';
 import { TreeView } from './TreeView.js';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.

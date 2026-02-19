@@ -7,16 +7,16 @@ import Path from "node:path";
 
 import {
 	ApiItemKind,
-	ReleaseTag,
 	type ApiModel,
 	type ApiPackage,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
-import { loadModel, MarkdownRenderer } from "../index.js";
+import { MarkdownRenderer, loadModel } from "../index.js";
 
 import {
-	compareDocumentationSuiteSnapshot,
 	HierarchyConfigurations,
+	compareDocumentationSuiteSnapshot,
 	snapshotsDirectoryPath as snapshotsDirectoryPathBase,
 	testDataDirectoryPath,
 	testTemporaryDirectoryPath as testTemporaryDirectoryPathBase,

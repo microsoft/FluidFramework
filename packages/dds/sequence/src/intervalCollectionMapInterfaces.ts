@@ -8,15 +8,15 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 
 import type {
-	IntervalCollection,
 	ISerializedIntervalCollectionV1,
 	ISerializedIntervalCollectionV2,
+	IntervalCollection,
 } from "./intervalCollection.js";
 import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
-	SerializedIntervalDelta,
 	type SequenceIntervalClass,
+	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
 export interface IntervalAddLocalMetadata {

@@ -14,26 +14,26 @@ import {
 	UniversalSequenceNumber,
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
-import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
+import { type ITrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import type { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
-import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
-import { type PropertySet, clone, createMap, type MapLike } from "./properties.js";
+import { LocalDefaultPerspective, type Perspective, PriorPerspective } from "./perspective.js";
+import { type MapLike, type PropertySet, clone, createMap } from "./properties.js";
 import type { ReferencePosition } from "./referencePositions.js";
 import type { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
+	type IHasInsertionInfo,
+	type IHasRemovalInfo,
+	type IMergeNodeInfo,
+	type ISegmentInsideObliterateInfo,
+	type SegmentWithInfo,
 	hasProp,
 	isInserted,
+	isInsideObliterate,
 	isMergeNodeInfo as isMergeNode,
 	isRemoved,
 	overwriteInfo,
-	type IHasInsertionInfo,
-	type IMergeNodeInfo,
-	type IHasRemovalInfo,
-	type SegmentWithInfo,
-	type ISegmentInsideObliterateInfo,
-	isInsideObliterate,
 } from "./segmentInfos.js";
 import type { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { Side } from "./sequencePlace.js";

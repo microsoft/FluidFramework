@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { type ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -28,16 +28,16 @@ import {
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import {
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 	CommitKind,
+	EmptyKey,
 	type Revertible,
 	type UpPath,
+	ValueSchema,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
-	type ChangeFamilyEditor,
-	EmptyKey,
-	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -45,10 +45,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	flexTreeSlot,
 	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
 	TreeStatus,
+	flexTreeSlot,
 } from "../../feature-libraries/index.js";
 import {
 	ObjectForest,
@@ -59,10 +59,10 @@ import {
 	ForestTypeExpensiveDebug,
 	ForestTypeOptimized,
 	ForestTypeReference,
-	getBranch,
 	type ITreePrivate,
 	Tree,
 	type TreeCheckout,
+	getBranch,
 } from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,
@@ -76,50 +76,52 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
+	FieldKind,
+	type ITree,
+	NodeKind,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SimpleLeafNodeSchema,
+	type SimpleTreeSchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
-	SchemaFactoryAlpha,
-	type ITree,
+	handleSchema,
+	numberSchema,
+	stringSchema,
 	toInitialSchema,
-	NodeKind,
-	type SimpleTreeSchema,
-	FieldKind,
-	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
+	type ISharedTree,
+	SharedTree as SharedTreeKind,
 	configuredSharedTree,
 	resolveOptions,
-	SharedTree as SharedTreeKind,
-	type ISharedTree,
 } from "../../treeFactory.js";
 import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { TestAnchor } from "../testAnchor.js";
 import {
+	DefaultTestSharedTreeKind,
 	type ITestTreeProvider,
+	NumberArray,
 	SharedTreeTestFactory,
+	type SharedTreeWithContainerRuntime,
+	StringArray,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	type TreeMockContainerRuntime,
+	chunkFromJsonableTrees,
+	createSnapshotCompressor,
 	createTestUndoRedoStacks,
+	expectEqualPaths,
 	expectSchemaEqual,
+	getView,
 	validateTreeConsistency,
 	validateTreeContent,
-	StringArray,
-	NumberArray,
 	validateViewConsistency,
-	chunkFromJsonableTrees,
-	expectEqualPaths,
-	type TreeMockContainerRuntime,
-	type SharedTreeWithContainerRuntime,
-	DefaultTestSharedTreeKind,
-	getView,
-	createSnapshotCompressor,
 } from "../utils.js";
 
 const enableSchemaValidation = true;

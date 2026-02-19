@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {

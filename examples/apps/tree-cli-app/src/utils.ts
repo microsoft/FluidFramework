@@ -16,26 +16,26 @@ import {
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
-import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
+import { type InsertableTypedNode, TreeArrayNode } from "@fluidframework/tree";
 import {
-	extractPersistedSchema,
+	type ConciseTree,
 	FluidClientVersion,
-	independentInitializedView,
-	FormatValidatorBasic,
 	type ForestOptions,
+	FormatValidatorBasic,
 	type ICodecOptions,
 	type JsonCompatible,
+	KeyEncodingOptions,
+	TreeAlpha,
 	type VerboseTree,
 	type ViewContent,
-	type ConciseTree,
-	TreeAlpha,
-	KeyEncodingOptions,
+	extractPersistedSchema,
+	independentInitializedView,
 } from "@fluidframework/tree/alpha";
 import { TreeBeta } from "@fluidframework/tree/beta";
 import { type Static, Type } from "@sinclair/typebox";
 
 import type { Item } from "./schema.js";
-import { config, List } from "./schema.js";
+import { List, config } from "./schema.js";
 
 /**
  * Examples showing how to import data in a variety of formats.

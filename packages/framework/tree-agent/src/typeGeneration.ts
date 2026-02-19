@@ -4,15 +4,15 @@
  */
 
 import type { TreeNodeSchema } from "@fluidframework/tree";
-import { walkFieldSchema } from "@fluidframework/tree/internal";
 import type { ImplicitFieldSchema, SimpleTreeSchema } from "@fluidframework/tree/internal";
+import { walkFieldSchema } from "@fluidframework/tree/internal";
 
 import type { BindableSchema } from "./methodBinding.js";
 import { getExposedMethods, isBindableSchema } from "./methodBinding.js";
 import { getExposedProperties } from "./propertyBinding.js";
 import {
-	renderSchemaTypeScript,
 	type SchemaTypeScriptRenderResult,
+	renderSchemaTypeScript,
 } from "./renderSchemaTypeScript.js";
 import { getOrCreate } from "./utils.js";
 

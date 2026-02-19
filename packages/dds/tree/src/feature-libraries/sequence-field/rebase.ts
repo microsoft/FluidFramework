@@ -10,8 +10,8 @@ import { type IdAllocator, type Mutable, brand } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,
-	type NodeChangeRebaser,
 	NodeAttachState,
+	type NodeChangeRebaser,
 	type NodeId,
 	type RebaseRevisionMetadata,
 } from "../modular-schema/index.js";

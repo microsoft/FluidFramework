@@ -14,9 +14,9 @@ import {
 } from "../../core/index.js";
 import type {
 	FieldKinds,
+	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
-	OptionalFieldEditBuilder,
 } from "../default-schema/index.js";
 import type {
 	MapTreeFieldViewGeneric,

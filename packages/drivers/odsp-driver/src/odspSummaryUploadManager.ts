@@ -7,8 +7,8 @@ import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ISummaryTree,
-	SummaryType,
 	type SummaryObject,
+	SummaryType,
 } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import {

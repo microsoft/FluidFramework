@@ -22,12 +22,12 @@ import {
 	type IFluidErrorAnnotations,
 	LoggingError,
 	extractLogSafeErrorProperties,
+	generateStack,
 	isExternalError,
 	isTaggedTelemetryPropertyValue,
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
-	generateStack,
 } from "../errorLogging.js";
 import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";

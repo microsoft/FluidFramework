@@ -7,8 +7,8 @@ import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
 import type {
 	BrandedType,
-	InternalUtilityTypes,
 	ITelemetryBaseLogger,
+	InternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 	Listenable,
@@ -17,8 +17,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
 import type {
-	ContainerExtensionId,
 	ContainerExtensionExpectations,
+	ContainerExtensionId,
 	ExtensionCompatibilityDetails,
 	UnknownExtensionInstantiation,
 } from "@fluidframework/runtime-definitions/internal";

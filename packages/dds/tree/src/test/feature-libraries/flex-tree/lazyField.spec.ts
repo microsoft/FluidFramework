@@ -27,30 +27,30 @@ import {
 	unboxedFlexNode,
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
+	Context,
 	FieldKinds,
 	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	Context,
 	isFlexTreeNode,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
-	numberSchema,
 	SchemaFactory,
+	numberSchema,
+	restrictiveStoredSchemaGenerationOptions,
 	stringSchema,
 	toInitialSchema,
-	restrictiveStoredSchemaGenerationOptions,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 import {
+	MockTreeCheckout,
 	fieldCursorFromInsertable,
 	flexTreeViewWithContent,
 	forestWithContent,
-	MockTreeCheckout,
 } from "../../utils.js";
 
 import {

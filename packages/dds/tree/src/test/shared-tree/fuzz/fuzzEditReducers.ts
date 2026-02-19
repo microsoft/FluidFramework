@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-utils";
-import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
+import type { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -14,13 +14,13 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree } from "../../../shared-tree/index.js";
-import { getInnerNode } from "../../../simple-tree/index.js";
 import {
 	SchemaFactory,
 	TreeArrayNode,
-	TreeViewConfiguration,
 	type TreeNode,
 	type TreeNodeSchema,
+	TreeViewConfiguration,
+	getInnerNode,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
@@ -35,32 +35,32 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
-	createTreeViewSchema,
-	type FuzzNode,
-	isRevertibleSharedTreeView,
 	type ArrayChildren,
-	nodeSchemaFromTreeSchema,
+	type FuzzNode,
 	type GUIDNode,
 	convertToFuzzView,
+	createTreeViewSchema,
+	isRevertibleSharedTreeView,
+	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
 import {
-	type FieldEdit,
 	type ClearField,
-	type Insert,
-	type Remove,
-	type SetField,
-	type IntraFieldMove,
-	type Operation,
-	type SchemaChange,
-	type TransactionBoundary,
-	type UndoRedo,
-	type CrossFieldMove,
 	type Constraint,
+	type CrossFieldMove,
+	type FieldEdit,
+	type ForkMergeOperation,
+	type GUIDNodeValue,
 	type GeneratedFuzzNode,
 	GeneratedFuzzValueType,
+	type Insert,
+	type IntraFieldMove,
 	type NodeObjectValue,
-	type GUIDNodeValue,
-	type ForkMergeOperation,
+	type Operation,
+	type Remove,
+	type SchemaChange,
+	type SetField,
+	type TransactionBoundary,
+	type UndoRedo,
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<

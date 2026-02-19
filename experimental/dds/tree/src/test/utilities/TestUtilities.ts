@@ -8,7 +8,7 @@ import { resolve } from 'path';
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { AttachState } from '@fluidframework/container-definitions';
 import type { IContainer, IFluidCodeDetails, IHostLoader } from '@fluidframework/container-definitions/internal';
-import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { Loader, asLegacyAlpha, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -48,6 +48,8 @@ import {
 	StableNodeId,
 } from '../../Identifiers.js';
 import { initialTree } from '../../InitialTree.js';
+import { IdCompressor } from '../../id-compressor/index.js';
+import { createSessionId } from '../../id-compressor/NumericUuid.js';
 import {
 	NodeIdContext,
 	NodeIdConverter,
@@ -55,11 +57,6 @@ import {
 	getNodeId,
 	getNodeIdContext,
 } from '../../NodeIdUtilities.js';
-import { getChangeNodeFromViewNode } from '../../SerializationUtilities.js';
-import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree.js';
-import { TraitLocation, TreeView } from '../../TreeView.js';
-import { createSessionId } from '../../id-compressor/NumericUuid.js';
-import { IdCompressor } from '../../id-compressor/index.js';
 import {
 	ChangeInternal,
 	Edit,
@@ -70,9 +67,12 @@ import {
 	WriteFormat,
 	reservedIdCount,
 } from '../../persisted-types/index.js';
+import { getChangeNodeFromViewNode } from '../../SerializationUtilities.js';
+import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree.js';
+import { TraitLocation, TreeView } from '../../TreeView.js';
 
-import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 import { _dirname } from './dirname.cjs';
+import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {

@@ -4,16 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import fs from "node:fs";
+import fs, { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
 import {
-	snapshotSchemaCompatibility,
 	type TreeViewConfiguration,
+	snapshotSchemaCompatibility,
 } from "../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";

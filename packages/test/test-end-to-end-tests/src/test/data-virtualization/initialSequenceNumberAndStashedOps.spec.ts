@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
+import { type ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
-	type ITestObjectProvider,
 	ITestContainerConfig,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

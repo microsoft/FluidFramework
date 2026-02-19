@@ -7,45 +7,42 @@ export {
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
+	type ArrayPlaceAnchor,
+	IterableTreeArrayContent,
+	type ReadonlyArrayNode,
+	TreeArrayNode,
 	arraySchema,
 	asIndex,
-	isArrayNodeSchema,
-	IterableTreeArrayContent,
-	TreeArrayNode,
-	type ReadonlyArrayNode,
-	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
+	isArrayNodeSchema,
 } from "./array/index.js";
-
 export {
-	isMapNodeSchema,
 	type MapNodeCustomizableSchema,
 	type MapNodeInsertableData,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
-	mapSchema,
 	type TreeMapNode,
+	isMapNodeSchema,
+	mapSchema,
 } from "./map/index.js";
-
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
-	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
+	type SimpleKeyMap,
+	type TreeObjectNode,
+	isObjectNodeSchema,
 	objectSchema,
 	setField,
-	type TreeObjectNode,
-	type SimpleKeyMap,
 } from "./object/index.js";
-
 export {
-	isRecordNodeSchema,
 	type RecordNodeCustomizableSchema,
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
-	recordSchema,
 	type TreeRecordNode,
+	isRecordNodeSchema,
+	recordSchema,
 } from "./record/index.js";

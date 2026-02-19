@@ -8,18 +8,19 @@
  * @packageDocumentation
  */
 export { type ICriticalContainerError } from "@fluidframework/container-definitions";
+
+export { AppInsightsTelemetryConsumer } from "./app-insights/index.js";
 export {
-	type IFluidTelemetry,
 	type FluidTelemetryEventName,
+	type IFluidTelemetry,
 	type ITelemetryConsumer,
 } from "./common/index.js";
 export {
-	type IContainerTelemetry,
-	type ContainerTelemetryEventName,
-	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
+	type ContainerTelemetryEventName,
+	ContainerTelemetryEventNames,
+	type IContainerTelemetry,
 } from "./container/index.js";
-export { AppInsightsTelemetryConsumer } from "./app-insights/index.js";
-export { startTelemetry, type TelemetryConfig } from "./factory/index.js";
+export { type TelemetryConfig, startTelemetry } from "./factory/index.js";

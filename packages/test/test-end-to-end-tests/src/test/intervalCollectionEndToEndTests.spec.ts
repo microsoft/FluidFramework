@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IHostLoader } from "@fluidframework/container-definitions/internal";
-import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -21,8 +21,8 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

@@ -16,9 +16,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/configuration.js";
 import {
-	type TreeNodeSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 
 const schema = new SchemaFactory("com.example");

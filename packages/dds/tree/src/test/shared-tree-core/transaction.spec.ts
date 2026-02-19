@@ -11,10 +11,10 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	findAncestor,
-	rootFieldKey,
 	type GraphCommit,
 	type RevisionTag,
+	findAncestor,
+	rootFieldKey,
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
@@ -23,8 +23,8 @@ import {
 } from "../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
-	SquashingTransactionStack,
 	SharedTreeBranch,
+	SquashingTransactionStack,
 	TransactionResult,
 	TransactionStack,
 } from "../../shared-tree-core/index.js";

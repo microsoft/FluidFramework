@@ -20,11 +20,11 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	asLegacyAlpha,
 	ConnectionState,
 	type ContainerAlpha,
 	type ILoaderProps,
 	Loader,
+	asLegacyAlpha,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -33,14 +33,12 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
-	IAnyDriverError,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	FiveDaysMs,
-	IDocumentServiceFactory,
-	IDocumentService,
+	IAnyDriverError,
 	type IDocumentDeltaConnection,
+	IDocumentService,
+	IDocumentServiceFactory,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,

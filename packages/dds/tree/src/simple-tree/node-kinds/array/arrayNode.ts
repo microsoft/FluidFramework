@@ -3,56 +3,56 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob, fail, assert } from "@fluidframework/core-utils/internal";
+import { Lazy, assert, fail, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
 import type {
-	FlexibleFieldContent,
 	FlexTreeNode,
 	FlexTreeSequenceField,
+	FlexibleFieldContent,
 } from "../../../feature-libraries/index.js";
 import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
+	type JsonCompatibleReadOnlyObject,
 	brand,
 	validateIndex,
 	validateIndexRange,
-	type JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
 import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
+	AnnotatedAllowedTypesInternal,
 	CompatibilityLevel,
-	type WithType,
-	// eslint-disable-next-line import-x/no-deprecated
-	typeNameSymbol,
-	NodeKind,
-	type TreeNode,
-	type InternalTreeNode,
-	type TreeNodeSchema,
-	typeSchemaSymbol,
-	getOrCreateNodeFromInnerNode,
-	getSimpleNodeSchemaFromInnerNode,
-	getInnerNode,
-	type TreeNodeSchemaClass,
-	getKernel,
-	type UnhydratedFlexTreeNode,
-	UnhydratedSequenceField,
-	getOrCreateNodeFromInnerUnboxedNode,
-	normalizeAllowedTypes,
+	type FlexContent,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type InternalTreeNode,
+	type MostDerivedData,
+	NodeKind,
 	type NodeSchemaMetadata,
 	type TreeLeafValue,
+	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
-	TreeNodeValid,
-	type MostDerivedData,
-	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
 	type TreeNodeSchemaCorePrivate,
-	privateDataSymbol,
-	createTreeNodeSchemaPrivateData,
-	type FlexContent,
+	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
-	AnnotatedAllowedTypesInternal,
+	TreeNodeValid,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
+	type WithType,
+	createTreeNodeSchemaPrivateData,
+	getInnerNode,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+	getSimpleNodeSchemaFromInnerNode,
+	normalizeAllowedTypes,
+	privateDataSymbol,
+	// eslint-disable-next-line import-x/no-deprecated
+	typeNameSymbol,
+	typeSchemaSymbol,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,

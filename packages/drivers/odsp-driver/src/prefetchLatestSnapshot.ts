@@ -5,7 +5,7 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { Deferred, assert } from "@fluidframework/core-utils/internal";
 import type {
 	IPersistedCache,
 	IResolvedUrl,
@@ -15,9 +15,9 @@ import type {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
 	ISnapshotOptions,
+	InstrumentedStorageTokenFetcher,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	PerformanceEvent,
@@ -34,12 +34,12 @@ import {
 import type { IPrefetchSnapshotContents } from "./odspCache.js";
 import type { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
 import {
+	type TokenFetchOptionsEx,
 	createCacheSnapshotKey,
 	createOdspLogger,
 	getOdspResolvedUrl,
 	snapshotWithLoadingGroupIdSupported,
 	toInstrumentedOdspStorageTokenFetcher,
-	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 
 /**

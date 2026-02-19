@@ -13,22 +13,22 @@ import {
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
+	getGCNodePathFromLocalId,
 } from "../../blobManager/index.js";
 
 import {
+	MockStorageAdapter,
+	type UnprocessedMessage,
 	attachHandle,
 	blobToText,
 	createTestMaterial,
 	ensureBlobsShared,
 	getSummaryContentsWithFormatValidation,
-	MockStorageAdapter,
 	simulateAttach,
 	textToBlob,
 	unpackHandle,
 	waitHandlePayloadShared,
-	type UnprocessedMessage,
 } from "./blobTestUtils.js";
 
 for (const createBlobPayloadPending of [false, true]) {

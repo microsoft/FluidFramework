@@ -4,9 +4,9 @@
  */
 
 import {
-	describeCompat,
-	TestDataObjectType,
 	type ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";

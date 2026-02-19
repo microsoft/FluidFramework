@@ -30,8 +30,8 @@ import {
 	ITestObjectProvider,
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
-	waitForContainerConnection,
 	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 

@@ -8,7 +8,7 @@ import type { AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { AzureClient } from "@fluidframework/azure-client";
 // eslint-disable-next-line import-x/no-internal-modules -- #26985: `test-runtime-utils` internal `InsecureTokenProvider` used in examples
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { type TreeView, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
 import { generateTable } from "./data.js";

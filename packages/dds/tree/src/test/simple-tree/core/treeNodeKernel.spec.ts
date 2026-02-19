@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { rootFieldKey, type UpPath } from "../../../core/index.js";
+import { type UpPath, rootFieldKey } from "../../../core/index.js";
 import {
 	getKernel,
 	isTreeNode,

@@ -29,9 +29,9 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
-	applyForkMergeOperation,
 	applyConstraint,
 	applyFieldEdit,
+	applyForkMergeOperation,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
 } from "./fuzzEditReducers.js";

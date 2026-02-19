@@ -5,9 +5,9 @@
 
 import {
 	IFluidHandle,
+	type IFluidLoadable,
 	IRequest,
 	IResponse,
-	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {

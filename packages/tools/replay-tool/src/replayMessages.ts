@@ -13,14 +13,14 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { Lazy, assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	type ISequencedDocumentMessage,
 	type ITree,
 	type ITreeEntry,
 	MessageType,
 	TreeEntry,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	FileDeltaStorageService,

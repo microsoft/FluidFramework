@@ -5,10 +5,10 @@
 
 import { Users } from "../domains/index.js";
 import {
-	fail,
-	scoreSymbol,
 	type LLMIntegrationTest,
 	type ScorableVerboseTree,
+	fail,
+	scoreSymbol,
 } from "../utils.js";
 
 // We start with two users (alpardes and mapardes) and edit the alpardes user.

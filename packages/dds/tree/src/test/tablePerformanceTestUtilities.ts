@@ -14,9 +14,9 @@ import { CommitKind, type Revertible } from "../core/index.js";
 import { Tree } from "../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
-	TreeViewConfiguration,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeView,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 

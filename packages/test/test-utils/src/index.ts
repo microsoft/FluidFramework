@@ -3,70 +3,69 @@
  * Licensed under the MIT License.
  */
 
+export {
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+	toIDeltaManagerFull,
+	waitForContainerConnection,
+} from "./containerUtils.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
-	fluidEntryPoint,
+	Factory,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
-	Factory,
 	createDataStoreFactory,
+	fluidEntryPoint,
 } from "./localCodeLoader.js";
 export {
 	createAndAttachContainer,
+	createAndAttachContainerUsingProps,
 	createLoader,
 	createLoaderProps,
-	createAndAttachContainerUsingProps,
 } from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
-export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
+export { ITestConfigProvider, createTestConfigProvider } from "./TestConfigs.js";
 export {
-	createTestContainerRuntimeFactory,
-	TestContainerRuntimeFactory,
-} from "./testContainerRuntimeFactory.js";
-export {
-	ChannelFactoryRegistry,
-	TestFluidObject,
-	TestFluidObjectFactory,
-	TestDataObjectKind,
-} from "./testFluidObject.js";
-export {
-	createDocumentId,
-	DataObjectFactoryType,
-	EventAndErrorTrackingLogger,
-	type IEventAndErrorTrackingLogger,
-	getUnexpectedLogErrorException,
-	IDocumentIdStrategy,
-	IOpProcessingController,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	TestObjectProvider,
-	TestObjectProviderWithVersionedLoad,
-} from "./testObjectProvider.js";
-export {
+	SummaryInfo,
 	createSummarizer,
 	createSummarizerCore,
 	createSummarizerFromFactory,
 	summarizeNow,
-	SummaryInfo,
 } from "./TestSummaryUtils.js";
 export {
-	timeoutAwait,
-	timeoutPromise,
-	type TimeoutDurationOption,
-	type TimeoutWithError,
-	type TimeoutWithValue,
-} from "./timeoutUtils.js";
-export {
-	toIDeltaManagerFull,
-	waitForContainerConnection,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-} from "./containerUtils.js";
+	TestContainerRuntimeFactory,
+	createTestContainerRuntimeFactory,
+} from "./testContainerRuntimeFactory.js";
 export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
-
+export {
+	ChannelFactoryRegistry,
+	TestDataObjectKind,
+	TestFluidObject,
+	TestFluidObjectFactory,
+} from "./testFluidObject.js";
 export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";
+export {
+	DataObjectFactoryType,
+	EventAndErrorTrackingLogger,
+	IDocumentIdStrategy,
+	type IEventAndErrorTrackingLogger,
+	IOpProcessingController,
+	ITestContainerConfig,
+	ITestObjectProvider,
+	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
+	createDocumentId,
+	getUnexpectedLogErrorException,
+} from "./testObjectProvider.js";
+export {
+	type TimeoutDurationOption,
+	type TimeoutWithError,
+	type TimeoutWithValue,
+	timeoutAwait,
+	timeoutPromise,
+} from "./timeoutUtils.js";

@@ -4,37 +4,37 @@
  */
 
 export {
-	createChildMonitoringContext,
-	type MonitoringContext,
-	sessionStorageConfigProvider,
-	mixinMonitoringContext,
 	type IConfigProvider,
-	loggerToMonitoringContext,
-	wrapConfigProviderWithDefaults,
-	createConfigBasedOptionsProxy,
+	type MonitoringContext,
 	type OptionConfigReaders,
+	createChildMonitoringContext,
+	createConfigBasedOptionsProxy,
+	loggerToMonitoringContext,
+	mixinMonitoringContext,
+	sessionStorageConfigProvider,
+	wrapConfigProviderWithDefaults,
 } from "./config.js";
 export {
 	DataCorruptionError,
 	DataProcessingError,
-	extractSafePropertiesFromMessage,
 	GenericError,
-	UsageError,
-	validatePrecondition,
 	LayerIncompatibilityError,
 	type MessageLike,
+	UsageError,
+	extractSafePropertiesFromMessage,
+	validatePrecondition,
 } from "./error.js";
 export {
+	type IFluidErrorAnnotations,
+	LoggingError,
+	NORMALIZED_ERROR_TYPE,
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
 	generateStack,
 	getCircularReplacer,
-	type IFluidErrorAnnotations,
 	isExternalError,
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
-	LoggingError,
-	NORMALIZED_ERROR_TYPE,
 	normalizeError,
 	overwriteStack,
 	wrapError,
@@ -48,55 +48,55 @@ export {
 	safeRaiseEvent,
 } from "./events.js";
 export {
-	hasErrorInstanceId,
 	type IFluidErrorBase,
+	hasErrorInstanceId,
 	isFluidError,
 	isLayerIncompatibilityError,
 } from "./fluidErrorBase.js";
+export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
 export {
-	eventNamespaceSeparator,
-	createChildLogger,
-	createMultiSinkLogger,
-	formatTick,
 	type IPerformanceEventMarkers,
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
 	type MultiSinkLoggerProperties,
-	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
-	tagData,
-	tagCodeArtifacts,
 	TelemetryDataTag,
 	type TelemetryEventPropertyTypes,
+	createChildLogger,
+	createMultiSinkLogger,
+	eventNamespaceSeparator,
+	formatTick,
+	numberFromString,
+	tagCodeArtifacts,
+	tagData,
 } from "./logger.js";
 export {
-	createMockLoggerExt,
 	type IMockLoggerExt,
 	MockLogger,
+	createMockLoggerExt,
 } from "./mockLogger.js";
-export { ThresholdCounter } from "./thresholdCounter.js";
 export {
-	SampledTelemetryHelper,
 	type CustomMetrics,
 	type ICustomData,
 	type MeasureReturnType,
+	SampledTelemetryHelper,
 } from "./sampledTelemetryHelper.js";
-export {
-	createSampledLogger,
-	type IEventSampler,
-	type ISampledTelemetryLogger,
-	measure,
-} from "./utils.js";
+export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
 export type {
-	TelemetryEventPropertyTypeExt,
+	ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
-	ITelemetryErrorEventExt,
-	ITelemetryPerformanceEventExt,
 	ITelemetryLoggerExt,
+	ITelemetryPerformanceEventExt,
 	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
+	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
-export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
-export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
+export { ThresholdCounter } from "./thresholdCounter.js";
+export {
+	type IEventSampler,
+	type ISampledTelemetryLogger,
+	createSampledLogger,
+	measure,
+} from "./utils.js";

@@ -4,7 +4,7 @@
  */
 
 import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { Deferred, assert } from "@fluidframework/core-utils/internal";
 
 import type { IConnectableRuntime, ISummaryCancellationToken } from "../summarizerTypes.js";
 

@@ -28,7 +28,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { createSandbox, SinonSandbox } from "sinon";
+import { SinonSandbox, createSandbox } from "sinon";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {

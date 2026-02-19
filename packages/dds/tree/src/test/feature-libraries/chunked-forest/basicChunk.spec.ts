@@ -6,19 +6,19 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type ChunkedCursor,
 	EmptyKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
-	type ChunkedCursor,
 } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
+	type ChunkCompressor,
 	basicChunkTree,
 	basicOnlyChunkPolicy,
 	chunkField,
-	type ChunkCompressor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import-x/no-internal-modules

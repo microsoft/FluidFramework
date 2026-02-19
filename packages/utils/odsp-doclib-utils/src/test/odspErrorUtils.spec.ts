@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	DriverErrorTypes,
 	type IGenericNetworkError,
 	type IThrottlingWarning,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 import { GenericNetworkError, createWriteError } from "@fluidframework/driver-utils/internal";
 import {

@@ -15,16 +15,16 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/
 import {
 	ContainerMessageType,
 	ContainerRuntime,
+	DeletedResponseHeaderKey,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
-	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
 import {
+	ISweepMessage,
 	computeTombstoneTimeout,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
-	ISweepMessage,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
@@ -40,17 +40,17 @@ import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
-	tagCodeArtifacts,
 	TelemetryDataTag,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	summarizeNow,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";

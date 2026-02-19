@@ -24,8 +24,8 @@ import {
 } from '../EditUtilities.js';
 import { Definition, NodeId } from '../Identifiers.js';
 import { comparePayloads } from '../PayloadUtilities.js';
-import { getChangeNodeFromView } from '../SerializationUtilities.js';
 import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types/index.js';
+import { getChangeNodeFromView } from '../SerializationUtilities.js';
 
 import { refreshTestTree } from './utilities/TestUtilities.js';
 

@@ -8,8 +8,8 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 

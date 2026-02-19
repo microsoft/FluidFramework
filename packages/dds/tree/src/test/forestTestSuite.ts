@@ -37,9 +37,9 @@ import {
 } from "../feature-libraries/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
+	SchemaFactory,
 	booleanSchema,
 	numberSchema,
-	SchemaFactory,
 	stringSchema,
 	toInitialSchema,
 } from "../simple-tree/index.js";
@@ -56,8 +56,8 @@ import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/in
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
 import {
 	applyTestDelta,
-	chunkFromJsonableTrees,
 	chunkFromJsonTrees,
+	chunkFromJsonableTrees,
 	expectEqualFieldPaths,
 	expectEqualPaths,
 	testIdCompressor,

@@ -6,15 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
+import { LazyPromise, isPromiseLike } from "@fluidframework/core-utils/internal";
 import type {
+	IContainerRuntimeBase,
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
-	IContainerRuntimeBase,
-	ISummarizerNodeWithGC,
 	IRuntimeStorageService,
+	ISummarizerNodeWithGC,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {

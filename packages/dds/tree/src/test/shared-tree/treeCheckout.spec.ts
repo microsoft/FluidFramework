@@ -13,37 +13,37 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { asAlpha } from "../../api.js";
 import {
-	type Revertible,
-	rootFieldKey,
-	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
 	type NormalizedFieldUpPath,
+	type Revertible,
+	RevertibleStatus,
 	TreeStoredSchemaRepository,
+	rootFieldKey,
 } from "../../core/index.js";
 import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
-	getBranch,
-	Tree,
-	TreeCheckout,
+	type BranchableTree,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
-	type BranchableTree,
-	createTreeCheckout,
 	type SharedTreeChange,
+	Tree,
+	TreeCheckout,
+	createTreeCheckout,
+	getBranch,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
-	getInnerNode,
-	SchemaFactory,
-	toUpgradeSchema,
-	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	SchemaFactory,
 	type TransactionResult,
 	type TreeBranch,
+	TreeViewConfiguration,
+	getInnerNode,
+	toUpgradeSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";

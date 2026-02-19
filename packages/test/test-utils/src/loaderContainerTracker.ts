@@ -4,8 +4,8 @@
  */
 
 import {
-	IDeltaQueue,
 	IContainer,
+	IDeltaQueue,
 	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -17,14 +17,14 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
-	MessageType,
 	ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
 import { toIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
-import { isNonEmptyArray, type NonEmptyArray } from "./nonEmptyArrayType.js";
+import { type NonEmptyArray, isNonEmptyArray } from "./nonEmptyArrayType.js";
 import type { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
 

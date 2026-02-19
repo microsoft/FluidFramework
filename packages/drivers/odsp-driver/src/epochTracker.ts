@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { Deferred, assert } from "@fluidframework/core-utils/internal";
 import type {
 	ICacheEntry,
 	IEntry,
@@ -12,10 +12,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	LocationRedirectionError,
-	maximumCacheDurationMs,
 	NonRetryableError,
 	RateLimiter,
 	ThrottlingError,
+	maximumCacheDurationMs,
 } from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspError,

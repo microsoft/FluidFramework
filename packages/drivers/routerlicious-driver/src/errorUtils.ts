@@ -10,10 +10,10 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
+	type DriverErrorTelemetryProps,
 	GenericNetworkError,
 	NonRetryableError,
 	createGenericNetworkError,
-	type DriverErrorTelemetryProps,
 } from "@fluidframework/driver-utils/internal";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 

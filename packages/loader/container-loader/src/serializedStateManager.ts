@@ -6,21 +6,21 @@
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IRuntime } from "@fluidframework/container-definitions/internal";
 import type {
-	IEventProvider,
 	IEvent,
+	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { IDisposable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
+	type IDocumentAttributes,
 	type IDocumentStorageService,
 	type IResolvedUrl,
+	type ISequencedDocumentMessage,
 	type ISnapshot,
-	type IDocumentAttributes,
 	type ISnapshotTree,
 	type IVersion,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree, isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
 import {
@@ -31,9 +31,9 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	getBlobContentsFromTree,
 	type ContainerStorageAdapter,
 	type ISerializableBlobContents,
+	getBlobContentsFromTree,
 } from "./containerStorageAdapter.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
 import {

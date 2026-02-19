@@ -18,7 +18,7 @@ import {
 
 import { NonCollabClient } from "./constants.js";
 import type { MergeTree } from "./mergeTree.js";
-import { isSegmentLeaf, type ISegmentPrivate } from "./mergeTreeNodes.js";
+import { type ISegmentPrivate, isSegmentLeaf } from "./mergeTreeNodes.js";
 import { PriorPerspective } from "./perspective.js";
 import { matchProperties } from "./properties.js";
 import {

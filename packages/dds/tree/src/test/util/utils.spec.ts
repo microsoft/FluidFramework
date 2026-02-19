@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { benchmark } from "@fluid-tools/benchmark";
 
-import { comparePartialRevisions, type RevisionTag } from "../../core/index.js";
+import { type RevisionTag, comparePartialRevisions } from "../../core/index.js";
 import {
 	balancedReduce,
 	capitalize,

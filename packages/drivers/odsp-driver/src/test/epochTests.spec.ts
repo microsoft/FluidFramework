@@ -25,7 +25,7 @@ import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
+import { createResponse, mockFetchOk, mockFetchSingle } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

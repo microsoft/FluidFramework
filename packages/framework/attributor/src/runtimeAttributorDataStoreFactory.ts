@@ -4,9 +4,9 @@
  */
 
 import type {
-	IFluidDataStoreFactory,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 

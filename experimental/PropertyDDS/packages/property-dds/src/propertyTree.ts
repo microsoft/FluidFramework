@@ -18,20 +18,20 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	MessageType,
 	ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ISummaryTreeWithStats,
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
 import lodash from "lodash";
 import { Packr } from "msgpackr";

@@ -14,6 +14,9 @@
  * @packageDocumentation
  */
 
+// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
+export type { CompatibilityMode } from "@fluidframework/fluid-static";
+
 export {
 	type ITinyliciousAudience,
 	type TinyliciousClientProps,
@@ -23,6 +26,3 @@ export {
 	type TinyliciousUser,
 } from "./interfaces.js";
 export { TinyliciousClient } from "./TinyliciousClient.js";
-
-// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
-export type { CompatibilityMode } from "@fluidframework/fluid-static";

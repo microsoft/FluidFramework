@@ -6,16 +6,16 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	LoggingError,
-	tagData,
 	TelemetryDataTag,
+	tagData,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { isContainerMessageDirtyable } from "../containerRuntime.js";
-import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
+import { type IBatchMetadata, asBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
-import type { LocalBatchMessage, IBatchCheckpoint, LocalBatch } from "./definitions.js";
+import type { IBatchCheckpoint, LocalBatch, LocalBatchMessage } from "./definitions.js";
 import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 

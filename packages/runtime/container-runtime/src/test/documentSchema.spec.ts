@@ -6,19 +6,19 @@
 import { strict as assert } from "node:assert";
 
 import {
-	defaultMinVersionForCollab,
 	type SemanticVersion,
+	defaultMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	createMockLoggerExt,
 	type IMockLoggerExt,
+	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { lt } from "semver-ts";
 
 import { pkgVersion } from "../packageVersion.js";
 import {
-	DocumentsSchemaController,
 	type DocumentSchemaValueType,
+	DocumentsSchemaController,
 	type IDocumentSchema,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,

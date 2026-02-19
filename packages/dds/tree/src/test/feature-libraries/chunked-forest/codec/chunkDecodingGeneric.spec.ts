@@ -31,7 +31,7 @@ import {
 	FieldBatchFormatVersion,
 	type TreeChunk,
 } from "../../../../feature-libraries/index.js";
-import { brand, ReferenceCountedBase } from "../../../../util/index.js";
+import { ReferenceCountedBase, brand } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 
 const Constant = Type.Literal(0);

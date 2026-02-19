@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { deepCopyMapTree, type ExclusiveMapTree } from "../../../core/index.js";
+import { type ExclusiveMapTree, deepCopyMapTree } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
 describe("mapTree", () => {

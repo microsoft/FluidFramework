@@ -11,10 +11,10 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	type TreeNodeSchemaIdentifier,
 	keyAsDetachedField,
 	mapCursorField,
 	mapCursorFields,
-	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import {
 	type CursorAdapter,
@@ -29,7 +29,7 @@ import {
 	stringSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/leafNodeSchema.js";
-import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
+import { type JsonCompatible, brand, isReadonlyArray } from "../../util/index.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>

@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { type FieldUpPath, type JsonableTree, rootFieldKey } from "../../../core/index.js";
 import {
-	jsonableTreeFromFieldCursor,
 	type TreeChunk,
+	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";

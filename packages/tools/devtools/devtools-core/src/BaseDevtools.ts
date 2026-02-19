@@ -12,9 +12,6 @@ import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInter
 import { ContainerStateChangeKind } from "./Container.js";
 import type { ContainerStateMetadata } from "./ContainerMetadata.js";
 import type { DecomposedContainer } from "./DecomposedContainer.js";
-import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
-import type { IContainerDevtools } from "./IContainerDevtools.js";
-import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	DataVisualizerGraph,
 	type FluidObjectNode,
@@ -22,6 +19,9 @@ import {
 	VisualNodeKind,
 	defaultVisualizers,
 } from "./data-visualization/index.js";
+import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
+import type { IContainerDevtools } from "./IContainerDevtools.js";
+import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	AudienceSummary,
 	ContainerDevtoolsFeatures,

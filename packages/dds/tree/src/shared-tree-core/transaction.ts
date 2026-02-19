@@ -9,15 +9,15 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type ChangeFamilyEditor,
+	type GraphCommit,
+	type RevisionTag,
 	diffHistories,
 	findAncestor,
 	findCommonAncestor,
 	mintCommit,
 	rebaseBranch,
 	tagChange,
-	type ChangeFamilyEditor,
-	type GraphCommit,
-	type RevisionTag,
 } from "../core/index.js";
 import { getLast, getOrCreate } from "../util/index.js";
 

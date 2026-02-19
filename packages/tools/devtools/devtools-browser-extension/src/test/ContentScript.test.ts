@@ -12,9 +12,9 @@ import {
 import { expect } from "chai";
 import { createSandbox } from "sinon";
 
-import type { Globals } from "../Globals.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { runContentScript } from "../content/ContentScriptContent.js";
+import type { Globals } from "../Globals.js";
 import { extensionViewMessageSource } from "../messaging/index.js";
 
 import { awaitListener, stubGlobals, stubPort } from "./Utilities.js";

@@ -14,17 +14,17 @@ import {
 	rootFieldKey,
 } from "../core/index.js";
 import {
-	FieldKinds,
-	isFlexTreeNode,
 	type Context,
+	FieldKinds,
 	type FlexTreeNode,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	SchemaFactory,
-	toInitialSchema,
 	type InsertableContent,
+	SchemaFactory,
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
@@ -32,7 +32,7 @@ import type {
 	TreeSimpleContent,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
-import { fieldCursorFromInsertable, type TreeStoredContentStrict } from "./utils.js";
+import { type TreeStoredContentStrict, fieldCursorFromInsertable } from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.

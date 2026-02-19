@@ -15,23 +15,23 @@ import {
 
 import { pkgVersion } from "../../../packageVersion.js";
 import {
-	checkCompatibility,
-	importCompatibilitySchemaSnapshot,
-	exportCompatibilitySchemaSnapshot,
 	type SnapshotFileSystem,
-	snapshotSchemaCompatibility,
+	checkCompatibility,
+	exportCompatibilitySchemaSnapshot,
 	getCompatibility,
+	importCompatibilitySchemaSnapshot,
+	snapshotSchemaCompatibility,
 	// Allow importing file which is being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
 import {
-	normalizeFieldSchema,
 	SchemaFactory,
-	TreeViewConfiguration,
 	SchemaFactoryBeta,
-	stringSchema,
-	numberSchema,
+	TreeViewConfiguration,
 	allowUnused,
+	normalizeFieldSchema,
+	numberSchema,
+	stringSchema,
 } from "../../../simple-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";

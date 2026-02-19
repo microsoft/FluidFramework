@@ -11,8 +11,8 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	loadExistingContainer,
 	type ILoaderProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { IUrlResolver, MessageType } from "@fluidframework/driver-definitions/internal";
 import {

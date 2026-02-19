@@ -8,17 +8,17 @@ import { strict as assert } from "node:assert";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	Multiplicity,
 	type MutableTreeStoredSchema,
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeTypeSet,
 	ValueSchema,
 	storedEmptyFieldSchema,
-	type TreeStoredSchema,
-	Multiplicity,
 } from "../../../core/index.js";
 import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {

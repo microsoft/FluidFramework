@@ -11,9 +11,9 @@ import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
+	type IIdCompressorCore,
 	createIdCompressor,
 	deserializeIdCompressor,
-	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -37,16 +37,16 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
 import {
+	type NodeBuilderData,
 	SchemaFactory,
-	TreeViewConfiguration,
 	type TreeNodeSchema,
+	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 	type ViewableTree,
-	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+import { SharedTreeTestFactory, expectEqualPaths } from "../../utils.js";
 
 import type { FuzzView } from "./fuzzEditGenerators.js";
 

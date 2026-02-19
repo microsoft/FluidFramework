@@ -11,16 +11,16 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	CompressionAlgorithms,
-	disabledCompressionConfig,
 	type IContainerRuntimeOptionsInternal,
+	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentDeltaConnectionEvents,
-	IDocumentServiceFactory,
 	IDocumentMessage,
-	ISequencedDocumentSystemMessage,
+	IDocumentServiceFactory,
 	ISequencedDocumentMessage,
+	ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import {

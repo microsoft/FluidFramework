@@ -4,13 +4,13 @@
  */
 
 import {
-	compareChangesetLocalIds,
-	comparePartialRevisions,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type RevisionTag,
+	compareChangesetLocalIds,
+	comparePartialRevisions,
 } from "../core/index.js";
-import { createTupleComparator, newTupleBTree, type TupleBTree } from "../util/index.js";
+import { type TupleBTree, createTupleComparator, newTupleBTree } from "../util/index.js";
 
 /**
  * A BTree which uses ChangeAtomId flattened into a tuple as the key.

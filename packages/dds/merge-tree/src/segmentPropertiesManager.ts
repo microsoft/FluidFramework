@@ -4,8 +4,8 @@
  */
 
 import {
-	assert,
 	DoublyLinkedList,
+	assert,
 	iterateListValuesWhile,
 } from "@fluidframework/core-utils/internal";
 

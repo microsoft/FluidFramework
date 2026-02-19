@@ -12,13 +12,13 @@ import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-sta
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import {
+	ScopeType,
 	createAzureClient,
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
-	ScopeType,
 } from "./AzureClientFactory.js";
-import { SignalerTestDataObject } from "./TestDataObject.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
+import { SignalerTestDataObject } from "./TestDataObject.js";
 import { configProvider, getTestMatrix } from "./utils.js";
 
 interface UserIdAndName {

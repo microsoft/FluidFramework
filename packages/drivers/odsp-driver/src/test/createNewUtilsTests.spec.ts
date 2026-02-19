@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import { bufferToString, fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	ISnapshot,
 	IDocumentAttributes,
 	IFileEntry,
+	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
@@ -18,7 +18,7 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { useCreateNewModule } from "../createFile/index.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
@@ -38,7 +38,7 @@ import {
 	getOdspResolvedUrl,
 } from "../odspUtils.js";
 
-import { mockFetchOk, mockFetchOKIf } from "./mockFetch.js";
+import { mockFetchOKIf, mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

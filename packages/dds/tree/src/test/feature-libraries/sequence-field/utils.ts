@@ -25,19 +25,16 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import {
-	addCrossFieldQuery,
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	DefaultRevisionReplacer,
 	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	setInCrossFieldMap,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import {
-	DefaultRevisionReplacer,
+	addCrossFieldQuery,
 	rebaseRevisionMetadataFromInfo,
+	setInCrossFieldMap,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -57,16 +54,16 @@ import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
 import {
-	type MarkEffect,
-	NoopMarkType,
 	CellId,
 	Changeset,
 	HasMarkFields,
-	MoveId,
-	type Remove,
 	type Mark,
-	type MoveOut,
+	type MarkEffect,
+	MoveId,
 	type MoveIn,
+	type MoveOut,
+	NoopMarkType,
+	type Remove,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 import {

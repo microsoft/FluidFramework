@@ -26,12 +26,12 @@ import type { ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
 import { offsetDetachId } from "./deltaUtil.js";
 import {
-	isDetachedUpPathRoot,
 	type INormalizedUpPath,
 	type NormalizedUpPath,
 	type PlaceIndex,
 	type Range,
 	type UpPath,
+	isDetachedUpPathRoot,
 } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";

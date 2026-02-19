@@ -11,29 +11,29 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	type FieldKey,
 	type JsonableTree,
-	mapCursorField,
 	RevisionTagCodec,
-	rootFieldKey,
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
+	mapCursorField,
+	rootFieldKey,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	Chunker,
+	type ShapeInfo,
 	defaultChunkPolicy,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
-	type ShapeInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
@@ -52,30 +52,30 @@ import {
 	DefaultChangeFamily,
 	DefaultEditBuilder,
 	ForestSummarizer,
+	MockNodeIdentifierManager,
 	type ModularChangeset,
 	TreeCompressionStrategy,
 	buildChunkedForest,
-	defaultSchemaPolicy,
-	fieldKindConfigurations,
-	makeFieldBatchCodec,
-	makeModularChangeCodecFamily,
-	MockNodeIdentifierManager,
-	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
 	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+	fieldKindConfigurations,
+	jsonableTreeFromCursor,
+	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
-	type ISharedTreeEditor,
-	Tree,
 	ForestTypeOptimized,
+	type ISharedTreeEditor,
 	type ITreePrivate,
+	Tree,
 } from "../../../shared-tree/index.js";
 import {
-	numberSchema,
 	SchemaFactory,
-	stringSchema,
 	TreeViewConfiguration,
+	numberSchema,
+	stringSchema,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";

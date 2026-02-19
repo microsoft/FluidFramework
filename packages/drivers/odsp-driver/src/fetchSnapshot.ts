@@ -51,6 +51,7 @@ import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.
 import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
 	type IOdspResponse,
+	type TokenFetchOptionsEx,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -59,7 +60,6 @@ import {
 	measure,
 	measureP,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
-	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 

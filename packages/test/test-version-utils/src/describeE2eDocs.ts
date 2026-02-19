@@ -8,9 +8,9 @@ import fs from "fs";
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
+	getUnexpectedLogErrorException,
 } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
@@ -28,12 +28,12 @@ import {
 } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
-	getDataRuntimeApi,
-	getLoaderApi,
-	getContainerRuntimeApi,
-	getDriverApi,
 	CompatApis,
 	getCompatModeFromKind,
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getDriverApi,
+	getLoaderApi,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 

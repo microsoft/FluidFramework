@@ -9,8 +9,8 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	ICreateBlobResponse,
+	IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 

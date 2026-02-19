@@ -30,24 +30,24 @@ import {
 } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
-	optionalIdentifier,
 	identifierFieldIdentifier,
+	optionalIdentifier,
 	requiredIdentifier,
 } from "../fieldKindIdentifiers.js";
 import {
+	type FieldChangeDelta,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
+	FlexFieldKind,
+	type NestedChangesIndices,
+	NodeAttachState,
 	type NodeChangeComposer,
 	type NodeChangePruner,
 	type NodeChangeRebaser,
-	NodeAttachState,
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	type NestedChangesIndices,
-	type FieldChangeDelta,
-	FlexFieldKind,
 } from "../modular-schema/index.js";
 
 import type {

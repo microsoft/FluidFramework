@@ -4,6 +4,7 @@
  */
 
 import { minimatch } from "minimatch";
+
 import type { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
 
 // Mapping of branch to a list of release groups/packages that should run policy by default.

@@ -4,7 +4,7 @@
  */
 
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
+import { Deferred, Lazy, assert } from "@fluidframework/core-utils/internal";
 import {
 	type ITelemetryLoggerExt,
 	createChildLogger,

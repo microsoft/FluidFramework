@@ -4,20 +4,20 @@
  */
 
 import {
+	type AuthenticationRecord,
 	InteractiveBrowserCredential,
 	useIdentityPlugin,
-	type AuthenticationRecord,
 } from "@azure/identity";
 import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	type IPublicClientConfig,
 	type IOdspAuthRequestInfo,
 	type IOdspDriveItem,
+	type IPublicClientConfig,
+	getAadTenant,
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
-	getAadTenant,
 	getOdspScope,
 } from "@fluidframework/odsp-doclib-utils/internal";
 

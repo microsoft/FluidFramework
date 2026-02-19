@@ -12,8 +12,8 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import {

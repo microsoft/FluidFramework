@@ -4,22 +4,22 @@
  */
 
 import type { IRequest } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import { LazyPromise, Timer, assert } from "@fluidframework/core-utils/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
+	type IGarbageCollectionData,
 	type IGarbageCollectionDetailsBase,
 	type ISummarizeResult,
-	gcTreeKey,
-	type IGarbageCollectionData,
 	type ITelemetryContext,
+	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createResponseError,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
+	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
 	createChildLogger,
@@ -39,6 +39,7 @@ import {
 	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	type IGCMetadata,
+	type IGCNodeUpdatedProps,
 	type IGCResult,
 	type IGCStats,
 	type IGarbageCollectionRuntime,
@@ -48,7 +49,6 @@ import {
 	type IMarkPhaseStats,
 	type ISweepPhaseStats,
 	UnreferencedState,
-	type IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,

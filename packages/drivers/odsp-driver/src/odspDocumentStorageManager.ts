@@ -10,17 +10,17 @@ import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
+	type ICreateBlobResponse,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
-	type ISummaryContext,
-	type ICreateBlobResponse,
-	type IVersion,
 	type ISnapshotTree,
+	type ISummaryContext,
+	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	getKeyForCacheEntry,
 	NonRetryableError,
 	RateLimiter,
+	getKeyForCacheEntry,
 } from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspResolvedUrl,
@@ -29,13 +29,13 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	type IConfigProvider,
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	generateStack,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-	type IConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -52,9 +52,9 @@ import {
 	type ISnapshotRequestAndResponseOptions,
 	type SnapshotFormatSupportType,
 	downloadSnapshot,
-	getTreeStats,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
+	getTreeStats,
 } from "./fetchSnapshot.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import type { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
@@ -63,13 +63,13 @@ import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
 import {
 	type IOdspResponse,
+	type TokenFetchOptionsEx,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	snapshotWithLoadingGroupIdSupported,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
-	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 

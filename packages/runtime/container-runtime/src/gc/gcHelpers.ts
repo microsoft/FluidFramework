@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
+	type IGarbageCollectionData,
 	type IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
-	type IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 

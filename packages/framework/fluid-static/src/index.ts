@@ -10,20 +10,20 @@
  */
 
 export {
-	createFluidContainer,
-	isInternalFluidContainer,
 	type IFluidContainer,
 	type IFluidContainerEvents,
 	type IFluidContainerInternal,
 	type InitialObjects,
+	createFluidContainer,
+	isInternalFluidContainer,
 } from "./fluidContainer.js";
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
 export { createTreeContainerRuntimeFactory } from "./treeRootDataObject.js";
 export type {
 	CompatibilityMode,
-	ContainerSchema,
 	ContainerAttachProps,
+	ContainerSchema,
 	IConnection,
 	IMember,
 	IServiceAudience,

@@ -9,8 +9,8 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -27,18 +27,18 @@ import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PriorPerspective } from "./perspective.js";
 import {
-	type IHasRemovalInfo,
-	overwriteInfo,
 	type IHasInsertionInfo,
+	type IHasRemovalInfo,
 	type SegmentWithInfo,
+	overwriteInfo,
 } from "./segmentInfos.js";
 import {
 	type IJSONSegmentWithMergeInfo,
 	type MergeTreeChunkV1,
 	hasMergeInfo,
 } from "./snapshotChunks.js";
-import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { SnapshotV1 } from "./snapshotV1.js";
 import type { RemoveOperationStamp } from "./stamps.js";
 import * as opstampUtils from "./stamps.js";
 

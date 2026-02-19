@@ -11,44 +11,44 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { deepCopyMapTree, EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
+import { EmptyKey, type FieldKey, type MapTree, deepCopyMapTree } from "../../core/index.js";
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	CompatibilityLevel,
-	contentSchemaSymbol,
-	privateDataSymbol,
-	UnhydratedFlexTreeNode,
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
+	UnhydratedFlexTreeNode,
+	contentSchemaSymbol,
+	privateDataSymbol,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
-	createFieldSchema,
-	FieldKind,
-	getDefaultProvider,
 	type DefaultProvider,
+	FieldKind,
+	createFieldSchema,
+	getDefaultProvider,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	type TreeNodeSchema,
+	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
 	booleanSchema,
-	tryGetTreeNodeForField,
+	getKernel,
 	handleSchema,
 	nullSchema,
 	numberSchema,
-	SchemaFactory,
-	SchemaFactoryAlpha,
 	stringSchema,
-	type TreeNodeSchema,
-	type ValidateRecursiveSchema,
-	getKernel,
-	TreeViewConfiguration,
+	tryGetTreeNodeForField,
 } from "../../simple-tree/index.js";
 import {
+	type InsertableContent,
 	getPossibleTypes,
 	unhydratedFlexTreeFromInsertable,
-	type InsertableContent,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/unhydratedFlexTreeFromInsertable.js";
 import { brand } from "../../util/index.js";

@@ -11,40 +11,40 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import {
 	Client,
 	ISegment,
+	type ISegmentInternal,
 	LocalReferencePosition,
 	PropertiesManager,
 	PropertySet,
 	ReferenceType,
+	SequencePlace,
+	Side,
 	SlidingPreference,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+	addProperties,
 	compareReferencePositions,
 	createDetachedLocalReferencePosition,
 	createMap,
+	endpointPosAndSide,
 	getSlideToSegoff,
 	maxReferencePosition,
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-	SequencePlace,
-	Side,
-	endpointPosAndSide,
-	addProperties,
-	type ISegmentInternal,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
+	type IInterval,
 	ISerializableInterval,
 	ISerializedInterval,
 	IntervalStickiness,
 	IntervalType,
+	type SerializedIntervalDelta,
 	computeStickinessFromSide,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-	type IInterval,
-	type SerializedIntervalDelta,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {

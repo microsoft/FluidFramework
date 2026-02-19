@@ -7,13 +7,13 @@ import Path from "node:path";
 
 import {
 	ApiItemKind,
-	ReleaseTag,
 	type ApiModel,
 	type ApiPackage,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
 import { checkForDuplicateDocumentPaths } from "../api-item-transforms/index.js";
-import { loadModel, transformApiModel, type ApiItemTransformationOptions } from "../index.js";
+import { type ApiItemTransformationOptions, loadModel, transformApiModel } from "../index.js";
 
 import { HierarchyConfigurations, testDataDirectoryPath } from "./EndToEndTestUtilities.js";
 

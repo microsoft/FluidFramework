@@ -12,11 +12,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {

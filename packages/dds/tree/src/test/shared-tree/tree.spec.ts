@@ -9,20 +9,20 @@ import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-uti
 
 import { asAlpha } from "../../api.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { runTransaction, Tree } from "../../shared-tree/tree.js";
+import { Tree, runTransaction } from "../../shared-tree/tree.js";
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
 import {
+	type InsertableTypedNode,
+	type NodeFromSchema,
 	SchemaFactory,
+	type TransactionConstraint,
+	type TreeNodeSchema,
+	type TreeView,
+	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
-	type TreeView,
-	type InsertableTypedNode,
-	type TreeNodeSchema,
-	type NodeFromSchema,
-	type TreeViewAlpha,
-	type TransactionConstraint,
 	type rollback,
 } from "../../simple-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";

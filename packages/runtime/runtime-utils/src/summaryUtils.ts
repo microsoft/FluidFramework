@@ -25,11 +25,11 @@ import {
 	TreeTreeEntry,
 } from "@fluidframework/driver-utils/internal";
 import type {
+	IGarbageCollectionData,
+	ISummarizeResult,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IGarbageCollectionData,
-	ISummarizeResult,
 	ITelemetryContextExt,
 } from "@fluidframework/runtime-definitions/internal";
 import {

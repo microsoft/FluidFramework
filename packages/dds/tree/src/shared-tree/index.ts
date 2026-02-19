@@ -4,70 +4,61 @@
  */
 
 export {
-	type ITreePrivate,
-	type SharedTreeOptionsInternal,
-	type SharedTreeOptions,
-	type SharedTreeOptionsBeta,
-	SharedTreeKernel,
-	getBranch,
+	type CreateIndependentTreeAlphaOptions,
+	type IndependentViewOptions,
+	type ViewContent,
+	createIndependentTreeAlpha,
+	createIndependentTreeBeta,
+	independentInitializedView,
+	independentView,
+} from "./independentView.js";
+export { initialize, initializerFromChunk } from "./schematizeTree.js";
+export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+export {
+	type ForestOptions,
 	type ForestType,
+	ForestTypeExpensiveDebug,
+	ForestTypeOptimized,
+	ForestTypeReference,
+	type ITreeInternal,
+	type ITreePrivate,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
+	SharedTreeKernel,
+	type SharedTreeKernelView,
+	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
+	type SharedTreeOptionsInternal,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
-	type ForestOptions,
-	type ITreeInternal,
-	ForestTypeOptimized,
-	ForestTypeExpensiveDebug,
-	ForestTypeReference,
 	exportSimpleSchema,
-	type SharedTreeKernelView,
-	persistedToSimpleSchema,
+	getBranch,
 	getCodecTreeForSharedTreeFormat,
+	persistedToSimpleSchema,
 } from "./sharedTree.js";
-
 export {
-	createTreeCheckout,
-	TreeCheckout,
-	type ITreeCheckout,
-	type CheckoutEvents,
-	type ITreeCheckoutFork,
-	type BranchableTree,
-	type TreeBranchFork,
-} from "./treeCheckout.js";
-
-export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-
-export { initialize, initializerFromChunk } from "./schematizeTree.js";
-
+	type SharedTreeChangeFormatVersion,
+	getCodecTreeForChangeFormat,
+} from "./sharedTreeChangeCodecs.js";
+export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 export type {
-	ISharedTreeEditor,
 	ISchemaEditor,
+	ISharedTreeEditor,
 	SharedTreeEditBuilder,
 } from "./sharedTreeEditBuilder.js";
-
-export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";
-
+export { Tree } from "./tree.js";
 export {
+	type ObservationResults,
 	TreeAlpha,
 	type TreeIdentifierUtils,
-	type ObservationResults,
 } from "./treeAlpha.js";
-
 export {
-	independentInitializedView,
-	type ViewContent,
-	independentView,
-	type IndependentViewOptions,
-	createIndependentTreeBeta,
-	createIndependentTreeAlpha,
-	type CreateIndependentTreeAlphaOptions,
-} from "./independentView.js";
-
-export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-
-export {
-	getCodecTreeForChangeFormat,
-	type SharedTreeChangeFormatVersion,
-} from "./sharedTreeChangeCodecs.js";
+	type BranchableTree,
+	type CheckoutEvents,
+	type ITreeCheckout,
+	type ITreeCheckoutFork,
+	type TreeBranchFork,
+	TreeCheckout,
+	createTreeCheckout,
+} from "./treeCheckout.js";

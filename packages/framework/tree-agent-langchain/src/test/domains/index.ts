@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { Conference, Day, Days, Session, SessionType, Sessions } from "./conference.js";
+export { Grocery, GroceryList } from "./groceries.js";
 export { Smoke } from "./smoke.js";
 export {
 	Comment,
@@ -12,6 +14,4 @@ export {
 	Span,
 	Word,
 } from "./text.js";
-export { Conference, Day, Days, Session, SessionType, Sessions } from "./conference.js";
 export { User, Users } from "./users.js";
-export { Grocery, GroceryList } from "./groceries.js";

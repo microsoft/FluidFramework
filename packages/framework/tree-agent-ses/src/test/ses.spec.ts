@@ -10,8 +10,8 @@ import {
 	TreeViewConfiguration,
 	independentView,
 } from "@fluidframework/tree/alpha";
-import { SharedTreeSemanticAgent } from "@fluidframework/tree-agent/alpha";
 import type { SharedTreeChatModel } from "@fluidframework/tree-agent/alpha";
+import { SharedTreeSemanticAgent } from "@fluidframework/tree-agent/alpha";
 
 import { createSesEditExecutor } from "../executor.js";
 

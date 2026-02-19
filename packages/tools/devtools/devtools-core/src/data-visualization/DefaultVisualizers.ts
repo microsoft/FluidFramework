@@ -8,18 +8,18 @@
  * implementations for our DDSs.
  */
 
-import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	type IDirectory,
-	type ISharedMap,
-	SharedMap,
 	type ISharedDirectory,
+	type ISharedMap,
 	SharedDirectory,
+	SharedMap,
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import type { ISharedObject, IChannelView } from "@fluidframework/shared-object-base/internal";
+import type { IChannelView, ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ITreeInternal } from "@fluidframework/tree/internal";
 import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 

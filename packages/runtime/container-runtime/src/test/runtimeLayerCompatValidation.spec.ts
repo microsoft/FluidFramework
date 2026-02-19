@@ -18,16 +18,16 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import {
+	MockLogger,
+	type MonitoringContext,
 	createChildLogger,
 	createChildMonitoringContext,
 	isLayerIncompatibilityError,
 	mixinMonitoringContext,
-	MockLogger,
-	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockDeltaManager,
 	MockAudience,
+	MockDeltaManager,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 import Sinon from "sinon";
@@ -35,12 +35,12 @@ import Sinon from "sinon";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
-	loaderSupportRequirementsForRuntime,
-	validateLoaderCompatibility,
-	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
-	runtimeCoreCompatDetails,
 	disableStrictLoaderLayerCompatibilityCheckKey,
+	loaderSupportRequirementsForRuntime,
+	runtimeCoreCompatDetails,
+	validateDatastoreCompatibility,
+	validateLoaderCompatibility,
 } from "../runtimeLayerCompatState.js";
 
 import { createLocalDataStoreContext } from "./dataStoreCreationHelper.js";

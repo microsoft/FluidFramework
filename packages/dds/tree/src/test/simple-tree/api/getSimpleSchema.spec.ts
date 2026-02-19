@@ -8,24 +8,24 @@ import { strict as assert } from "node:assert";
 import type { FormatValidator } from "../../../codec/index.js";
 import { ValueSchema } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
+import { Unchanged, createSchemaUpgrade } from "../../../simple-tree/core/index.js";
 import {
-	decodeSchemaCompatibilitySnapshot,
 	FieldKind,
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	encodeSchemaCompatibilitySnapshot,
-	stringSchema,
+	type SchemaType,
+	type SimpleFieldSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
 	type SimpleObjectNodeSchema,
 	type SimpleTreeSchema,
-	getSimpleSchema,
-	type SimpleFieldSchema,
 	createTreeSchema,
-	type SchemaType,
+	decodeSchemaCompatibilitySnapshot,
+	encodeSchemaCompatibilitySnapshot,
+	getSimpleSchema,
+	stringSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";

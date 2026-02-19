@@ -5,13 +5,13 @@
 
 export { MockNodeIdentifierManager } from "./mockNodeIdentifierManager.js";
 export {
-	compareLocalNodeIdentifiers,
 	type LocalNodeIdentifier,
 	type StableNodeIdentifier,
+	compareLocalNodeIdentifiers,
 	nodeKeyTreeIdentifier,
 } from "./nodeIdentifier.js";
 export {
+	type NodeIdentifierManager,
 	createNodeIdentifierManager,
 	isStableNodeIdentifier,
-	type NodeIdentifierManager,
 } from "./nodeIdentifierManager.js";

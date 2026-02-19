@@ -10,13 +10,13 @@ import {
 	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,
+	getOrCreateInNestedMap,
 	getOrDefaultInNestedMap,
+	mapNestedMap,
 	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
-	mapNestedMap,
-	getOrCreateInNestedMap,
 } from "../../util/index.js";
 
 describe("NestedMap unit tests", () => {

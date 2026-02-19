@@ -4,6 +4,7 @@
  */
 
 import type { BundleBuddyConfig } from "../BundleBuddyTypes";
+
 import type { BundleFileData } from "./getBundleFilePathsFromFolder";
 
 export interface GetBundleBuddyConfigMapArgs {

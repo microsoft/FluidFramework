@@ -22,6 +22,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
+	ICreateBlobResponse,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -31,9 +32,8 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";

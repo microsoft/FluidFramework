@@ -11,29 +11,29 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import { FluidClientVersion } from "../../codec/index.js";
 import {
 	EmptyKey,
-	TreeNavigationResult,
-	moveToDetachedField,
-	rootFieldKey,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
+	TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
+	moveToDetachedField,
+	rootFieldKey,
 } from "../../core/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
-import { numberSchema, SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
+import { SchemaFactory, numberSchema, toInitialSchema } from "../../simple-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import { fieldJsonCursor } from "../json/index.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import {
+	type TreeStoredContentStrict,
 	checkoutWithContent,
-	chunkFromJsonableTrees,
 	chunkFromJsonTrees,
+	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
-	type TreeStoredContentStrict,
 } from "../utils.js";
 
 const rootField: NormalizedFieldUpPath = {

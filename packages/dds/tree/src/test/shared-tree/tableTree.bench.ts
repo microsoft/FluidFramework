@@ -6,18 +6,18 @@
 import { strict as assert } from "node:assert";
 
 import {
-	benchmark,
-	BenchmarkType,
-	isInPerformanceTestingMode,
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
+	BenchmarkType,
+	benchmark,
+	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 
 import {
 	Column,
 	Row,
-	createTableTree,
 	type TableBenchmarkOptions,
+	createTableTree,
 } from "../tablePerformanceTestUtilities.js";
 
 /**

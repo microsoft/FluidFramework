@@ -17,16 +17,16 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
+	type AllowedTypes,
+	type ImplicitAllowedTypes,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	type AllowedTypes,
-	type booleanSchema,
-	type ImplicitAllowedTypes,
-	type numberSchema,
-	type stringSchema,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
+	type booleanSchema,
+	type numberSchema,
+	type stringSchema,
 } from "../../simple-tree/index.js";
 import type {
 	areSafelyAssignable,

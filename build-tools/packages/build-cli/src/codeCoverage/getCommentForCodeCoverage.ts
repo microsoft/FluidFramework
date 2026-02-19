@@ -4,6 +4,7 @@
  */
 
 import type { IBuildMetrics } from "../library/azureDevops/getBaselineBuildMetrics.js";
+
 import type {
 	CodeCoverageChangeForPackages,
 	CodeCoverageComparison,

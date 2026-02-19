@@ -9,9 +9,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
+	type ITelemetryLoggerExt,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
-	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {

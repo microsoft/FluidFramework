@@ -11,15 +11,15 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import { isTreeContainerSchema } from "@fluidframework/fluid-static/internal";
 import {
 	type ContainerSchema,
-	createTreeContainerRuntimeFactory,
 	type IFluidContainer,
+	createTreeContainerRuntimeFactory,
 } from "@fluidframework/fluid-static/legacy";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";

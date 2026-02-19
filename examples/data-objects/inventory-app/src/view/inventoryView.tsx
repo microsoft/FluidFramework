@@ -4,11 +4,11 @@
  */
 
 import {
+	type PropTreeNode,
 	objectIdNumber,
 	usePropTreeNode,
-	withTreeObservations,
 	withMemoizedTreeObservations,
-	type PropTreeNode,
+	withTreeObservations,
 } from "@fluidframework/react/alpha";
 import { Tree } from "fluid-framework";
 import * as React from "react";

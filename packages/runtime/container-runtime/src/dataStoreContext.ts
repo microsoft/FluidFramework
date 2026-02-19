@@ -4,36 +4,36 @@
  */
 
 import {
-	TypedEventEmitter,
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
+	TypedEventEmitter,
 } from "@fluid-internal/client-utils";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import {
 	type IDeltaManager,
-	isIDeltaManagerFull,
 	type IDeltaManagerFull,
 	type ReadOnlyInfo,
+	isIDeltaManagerFull,
 } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
-	ITelemetryBaseProperties,
 	IEvent,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import { LazyPromise, assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	ISnapshot,
 	IDocumentMessage,
+	ISequencedDocumentMessage,
+	ISnapshot,
 	ISnapshotTree,
 	ITreeEntry,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -42,34 +42,34 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	FluidDataStoreMessage,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
+	ContainerExtensionExpectations,
+	ContainerExtensionId,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreContextInternal,
+	FluidDataStoreMessage,
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContextDetached,
+	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
+	IInboundSignalMessage,
+	IPendingMessagesState,
 	IProvideFluidDataStoreFactory,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	SummarizeInternalFn,
-	IInboundSignalMessage,
-	IPendingMessagesState,
-	IRuntimeMessageCollection,
-	IFluidDataStoreFactory,
-	PackagePath,
-	IRuntimeStorageService,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 	MinimumVersionForCollab,
-	ContainerExtensionId,
-	ContainerExtensionExpectations,
+	PackagePath,
+	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {

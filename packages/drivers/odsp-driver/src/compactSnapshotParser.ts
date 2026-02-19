@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
+	ISequencedDocumentMessage,
 	ISnapshot,
 	ISnapshotTree,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";
+import { ReadBuffer } from "./ReadBufferUtils.js";
 import {
 	type NodeCore,
 	type NodeTypes,

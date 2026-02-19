@@ -16,9 +16,9 @@ import {
 	eventNamespaceSeparator,
 	formatTick,
 } from "@fluidframework/telemetry-utils/internal";
+import type { IDebugger } from "debug";
 // This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
 import debugPkg from "debug";
-import type { IDebugger } from "debug";
 
 const { debug: registerDebug } = debugPkg;
 

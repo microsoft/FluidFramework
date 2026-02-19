@@ -21,11 +21,11 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 
 import {
+	type TodoListContainerSchema,
 	connectionConfig,
-	todoListContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
-	type TodoListContainerSchema,
+	todoListContainerSchema,
 } from "./fluid.js";
 import type { TodoList } from "./schema.js";
 import { TodoListAppView } from "./view.js";

@@ -9,11 +9,11 @@ import type { TreeNodeSchema } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
 import {
-	getFriendlyName,
-	unqualifySchema,
-	findSchemas,
-	isNamedSchema,
 	IdentifierCollisionResolver,
+	findSchemas,
+	getFriendlyName,
+	isNamedSchema,
+	unqualifySchema,
 } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");

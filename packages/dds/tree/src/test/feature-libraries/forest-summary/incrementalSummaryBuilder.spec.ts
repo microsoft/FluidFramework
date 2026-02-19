@@ -8,15 +8,15 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import { SummaryType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { type ISnapshotTree, SummaryType } from "@fluidframework/driver-definitions/internal";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import {
-	type EncodedFieldBatch,
 	type ChunkReferenceId,
+	type EncodedFieldBatch,
 	type TreeChunk,
 	defaultIncrementalEncodingPolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -35,7 +35,7 @@ import {
 	summaryContentBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
-import { brand, type JsonCompatible } from "../../../util/index.js";
+import { type JsonCompatible, brand } from "../../../util/index.js";
 
 /**
  * Creates a mock incremental summary context for testing.

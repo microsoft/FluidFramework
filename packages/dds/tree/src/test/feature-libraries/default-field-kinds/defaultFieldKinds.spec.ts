@@ -17,8 +17,8 @@ import type {
 	FullSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
-	allowsMultiplicitySuperset,
 	type NodeId,
+	allowsMultiplicitySuperset,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";

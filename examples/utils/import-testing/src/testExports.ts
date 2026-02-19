@@ -40,19 +40,19 @@ however that is less representative of actual use, and thus fails to detect some
 /* eslint-disable jsdoc/require-jsdoc */
 
 import {
+	type NodeFromSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type NodeFromSchema,
 	type ValidateRecursiveSchema,
 	// To diagnose `error TS2742: The inferred type of ...` errors,
 	// enable this import then look for use of it in the generated d.ts file fo find what needs to be moved out of InternalTypes
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
-import { eraseSchemaDetails, SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
+import { SchemaFactoryAlpha, eraseSchemaDetails } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { requireAssignableTo, TreeNode, WithType } from "@fluidframework/tree/internal";
+import type { TreeNode, WithType, requireAssignableTo } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
 // error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.

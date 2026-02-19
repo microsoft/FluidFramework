@@ -33,10 +33,10 @@ import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryGenericEventExt,
-	createChildLogger,
-	createMultiSinkLogger,
 	type ITelemetryLoggerPropertyBags,
 	TelemetryDataTag,
+	createChildLogger,
+	createMultiSinkLogger,
 	tagData,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

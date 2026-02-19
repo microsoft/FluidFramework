@@ -5,8 +5,8 @@
 
 import { IsoBuffer, hashFile } from "@fluid-internal/client-utils";
 import type {
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

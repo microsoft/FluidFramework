@@ -10,8 +10,8 @@ import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitio
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
-	IUrlResolver,
 	type IPersistedCache,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IPublicClientConfig,

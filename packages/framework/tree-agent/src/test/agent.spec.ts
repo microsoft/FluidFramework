@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 /*
  * The unit tests in this file purposefully exercise dynamically generated / stringified code paths.
  * We disable the TypeScript ESLint unsafe access rules here to keep the test code concise while still
@@ -11,12 +12,12 @@ import { strict as assert } from "node:assert";
  */
 
 import {
-	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
+	independentView,
 } from "@fluidframework/tree/alpha";
 
-import { createContext, SharedTreeSemanticAgent } from "../agent.js";
+import { SharedTreeSemanticAgent, createContext } from "../agent.js";
 import type { EditResult, SharedTreeChatModel } from "../api.js";
 
 const sf = new SchemaFactory(undefined);

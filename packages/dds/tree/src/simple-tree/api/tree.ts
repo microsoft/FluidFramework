@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
+import type { IDisposable, IFluidLoadable, Listenable } from "@fluidframework/core-interfaces";
 
 import type {
 	ChangeMetadata,
@@ -21,8 +21,8 @@ import type {
 	ImplicitFieldSchema,
 	InsertableField,
 	InsertableTreeFieldFromImplicitField,
-	ReadableField,
 	ReadSchema,
+	ReadableField,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";

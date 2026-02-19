@@ -12,16 +12,16 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import {
-	LoaderHeader,
 	type IContainer,
 	type IRuntimeFactory,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	TestObjectProvider,
 	type ITestObjectProvider,
+	TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
@@ -29,12 +29,12 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import {
 	DOWithST,
 	DOWithST2,
+	type RootDO2,
 	newRuntimeFactory,
 	treeConfig1,
 	treeConfig2,
-	type RootDO2,
 } from "./newCode.js";
-import { oldRuntimeFactory, RootDO, setLSTQuantity } from "./oldCode.js";
+import { RootDO, oldRuntimeFactory, setLSTQuantity } from "./oldCode.js";
 import { runtimeOptions } from "./utils.js";
 
 const lstValue1 = 42;

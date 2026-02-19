@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 

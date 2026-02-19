@@ -30,8 +30,8 @@ import {
 import {
 	appendNavParam,
 	createOdspLogger,
-	getOdspResolvedUrl,
 	getContainerPackageName,
+	getOdspResolvedUrl,
 } from "./odspUtils.js";
 
 /**

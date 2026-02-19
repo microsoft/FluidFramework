@@ -8,8 +8,8 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { ConfigTypes } from "@fluidframework/core-interfaces";
 import type {
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 	ITree,
 } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -26,9 +26,9 @@ import {
 
 import {
 	ChannelCollection,
+	type IFluidRootParentContextPrivate,
 	detectOutboundReferences,
 	getSummaryForDatastores,
-	type IFluidRootParentContextPrivate,
 } from "../channelCollection.js";
 import type { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import type { DataStoreContexts } from "../dataStoreContexts.js";

@@ -10,7 +10,7 @@ import {
 	IAudienceEvents,
 	ISelf,
 } from "@fluidframework/container-definitions";
-import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import { IAudienceOwner, ILoader } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
@@ -25,14 +25,14 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	IChannel,
+	IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
-	IChannel,
-	IFluidDataStoreRuntime,
-	IChannelFactory,
 	type IDeltaManagerErased,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -42,27 +42,27 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	ITreeEntry,
-	MessageType,
 	ISequencedDocumentMessage,
 	type ISnapshotTree,
+	ITreeEntry,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	createIdCompressor,
 	type IIdCompressorCore,
 	type IdCreationRange,
+	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 import {
-	ISummaryTreeWithStats,
-	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
-	VisibilityState,
-	type ITelemetryContext,
+	IGarbageCollectionData,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	ISummaryTreeWithStats,
+	type ITelemetryContext,
 	type MinimumVersionForCollab,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,

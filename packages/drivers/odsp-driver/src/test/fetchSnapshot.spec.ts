@@ -26,8 +26,8 @@ import type { HostStoragePolicyInternal } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import {
-	downloadSnapshot,
 	type ISnapshotRequestAndResponseOptions,
+	downloadSnapshot,
 } from "../fetchSnapshot.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
@@ -41,11 +41,11 @@ import {
 } from "../odspUtils.js";
 
 import {
+	type MockResponse,
 	createResponse,
 	mockFetchMultiple,
 	notFound,
 	okResponse,
-	type MockResponse,
 } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();

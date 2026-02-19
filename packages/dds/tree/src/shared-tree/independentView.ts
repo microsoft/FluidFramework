@@ -11,8 +11,8 @@ import {
 } from "@fluidframework/id-compressor/internal";
 
 import {
-	FluidClientVersion,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type ICodecOptions,
 } from "../codec/index.js";
 import {
@@ -22,42 +22,42 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
+	type FieldBatchEncodingContext,
+	TreeCompressionStrategy,
+	combineChunks,
 	createNodeIdentifierManager,
+	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
 	makeFieldBatchCodec,
 	makeSchemaCodec,
-	type FieldBatchEncodingContext,
-	defaultSchemaPolicy,
-	TreeCompressionStrategy,
-	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-import { combineChunks } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
-	TreeViewConfiguration,
-	ImplicitFieldSchema,
-	TreeViewAlpha,
 	ITreeAlpha,
-	ViewableTree,
-	TreeView,
+	ImplicitFieldSchema,
 	ReadSchema,
-	VerboseTree,
 	SimpleTreeSchema,
+	TreeView,
+	TreeViewAlpha,
+	TreeViewConfiguration,
+	VerboseTree,
+	ViewableTree,
 } from "../simple-tree/index.js";
 import {
-	type JsonCompatibleReadOnly,
-	type JsonCompatible,
 	Breakable,
+	type JsonCompatible,
+	type JsonCompatibleReadOnly,
 	oneFromIterable,
 } from "../util/index.js";
 
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
+	type ForestOptions,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	exportSimpleSchema,
-	type ForestOptions,
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
 

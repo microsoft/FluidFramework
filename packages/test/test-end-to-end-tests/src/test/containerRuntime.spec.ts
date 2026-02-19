@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";

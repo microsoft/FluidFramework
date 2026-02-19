@@ -9,8 +9,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
-	loadContainerRuntime,
 	type IContainerRuntimeOptions,
+	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,

@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
+import { type ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
-	IContainerRuntimeOptions,
-	ISummarizer,
 	type ContainerRuntime,
+	IContainerRuntimeOptions,
 	type ISubmitSummaryOptions,
+	ISummarizer,
 	type SubmitSummaryResult,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -19,8 +19,8 @@ import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type {
-	IFluidDataStoreFactory,
 	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,

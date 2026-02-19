@@ -18,7 +18,6 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import JsDiff from "diff";
 
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
 	type KeyComparer,
 	type Property,
@@ -31,14 +30,15 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "../constants.js";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { MergeTree } from "../mergeTree.js";
 import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	type IJSONMarkerSegment,
+	type ISegmentPrivate,
 	compareNumbers,
 	compareStrings,
 	reservedMarkerIdKey,
-	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";

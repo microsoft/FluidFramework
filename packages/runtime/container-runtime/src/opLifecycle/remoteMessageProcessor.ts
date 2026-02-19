@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
 import {

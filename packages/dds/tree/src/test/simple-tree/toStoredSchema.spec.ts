@@ -9,9 +9,9 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { EmptyKey } from "../../core/index.js";
 import {
+	FieldKinds,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
-	FieldKinds,
 	isFieldInSchema,
 	mapTreeFieldFromCursor,
 } from "../../feature-libraries/index.js";
@@ -22,20 +22,20 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import {
-	generateSchemaFromSimpleSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	type SimpleAllowedTypeAttributes,
+	generateSchemaFromSimpleSchema,
 } from "../../simple-tree/index.js";
 import {
+	filterAllowedTypes,
 	getStoredSchema,
 	permissiveStoredSchemaGenerationOptions,
 	restrictiveStoredSchemaGenerationOptions,
-	toInitialSchema,
 	simpleStoredSchemaToStoredSchema,
+	toInitialSchema,
 	toStoredSchema,
 	transformSimpleNodeSchema,
-	filterAllowedTypes,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
 import { brand } from "../../util/index.js";

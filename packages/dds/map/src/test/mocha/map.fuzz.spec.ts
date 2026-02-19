@@ -6,7 +6,7 @@
 import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { createDDSFuzzSuite, type DDSFuzzHarnessEvents } from "@fluid-private/test-dds-utils";
+import { type DDSFuzzHarnessEvents, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedMapOracle } from "../mapOracle.js";

@@ -26,8 +26,8 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {

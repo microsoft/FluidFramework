@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
-	getRuntimeAttributor,
 	IRuntimeAttributor,
 	enableOnNewFileKey,
+	getRuntimeAttributor,
 } from "@fluid-experimental/attributor";
 import {
 	describeCompat,

@@ -6,9 +6,9 @@
 /* eslint-disable unicorn/consistent-function-scoping, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import {
+	type ILayerCompatDetails,
 	TypedEventEmitter,
 	performanceNow,
-	type ILayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -22,17 +22,17 @@ import type {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IContainerStorageService,
 	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
+	ILoader,
+	ILoaderOptions,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
 	ReadOnlyInfo,
-	ILoader,
-	ILoaderOptions,
-	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -53,53 +53,53 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	type IDocumentService,
-	type IDocumentServiceFactory,
-	type IResolvedUrl,
-	type ISnapshot,
-	type IThrottlingWarning,
-	type IUrlResolver,
+	type ConnectionMode,
 	type ICommittedProposal,
 	type IDocumentAttributes,
 	type IDocumentMessage,
+	type IDocumentService,
+	type IDocumentServiceFactory,
 	type IQuorumProposals,
+	type IResolvedUrl,
+	type ISequencedDocumentMessage,
 	type ISequencedProposal,
+	type ISignalMessage,
+	type ISnapshot,
 	type ISnapshotTree,
 	type ISummaryContent,
+	type IThrottlingWarning,
+	type IUrlResolver,
 	type IVersion,
 	MessageType,
-	type ISequencedDocumentMessage,
-	type ISignalMessage,
-	type ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	getSnapshotTree,
+	type CombinedAppAndProtocolSummary,
 	OnlineStatus,
+	getSnapshotTree,
 	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
 	isOnline,
 	readAndParse,
 	runWithRetry,
-	type CombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type TelemetryEventCategory,
-	type ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
 	type IFluidErrorBase,
+	type ITelemetryErrorEventExt,
+	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
+	type TelemetryEventCategory,
 	UsageError,
 	connectedEventName,
 	createChildLogger,
 	createChildMonitoringContext,
 	formatTick,
+	loggerToMonitoringContext,
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
-	loggerToMonitoringContext,
-	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
@@ -133,9 +133,9 @@ import {
 	validateRuntimeCompatibility,
 } from "./loaderLayerCompatState.js";
 import {
+	type MemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
-	type MemoryDetachedBlobStorage,
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -156,13 +156,13 @@ import {
 import {
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
-	getDetachedContainerStateFromSerializedContainer,
-	getDocumentAttributes,
-	getProtocolSnapshotTree,
-	getISnapshotFromSerializedContainer,
-	runSingle,
 	convertISnapshotToSnapshotWithBlobs,
 	convertSnapshotInfoToSnapshot,
+	getDetachedContainerStateFromSerializedContainer,
+	getDocumentAttributes,
+	getISnapshotFromSerializedContainer,
+	getProtocolSnapshotTree,
+	runSingle,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;

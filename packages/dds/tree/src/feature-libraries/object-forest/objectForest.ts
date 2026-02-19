@@ -41,16 +41,16 @@ import {
 	rootFieldKey,
 } from "../../core/index.js";
 import {
+	type Breakable,
+	type WithBreakable,
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
 	brand,
 	breakingMethod,
-	type Breakable,
-	type WithBreakable,
 } from "../../util/index.js";
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";

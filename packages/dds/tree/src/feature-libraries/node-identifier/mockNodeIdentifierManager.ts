@@ -12,8 +12,8 @@ import { brand, extractFromOpaque } from "../../util/index.js";
 
 import type { LocalNodeIdentifier, StableNodeIdentifier } from "./nodeIdentifier.js";
 import {
-	isStableNodeIdentifier,
 	type NodeIdentifierManager,
+	isStableNodeIdentifier,
 } from "./nodeIdentifierManager.js";
 
 /**

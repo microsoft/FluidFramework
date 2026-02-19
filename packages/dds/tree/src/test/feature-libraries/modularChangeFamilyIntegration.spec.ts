@@ -22,12 +22,12 @@ import {
 } from "../../core/index.js";
 import {
 	DefaultEditBuilder,
+	DefaultRevisionReplacer,
+	type EditDescription,
 	type FlexFieldKind,
 	type ModularChangeset,
-	type EditDescription,
-	genericFieldKind,
-	DefaultRevisionReplacer,
 	FieldKinds as defaultFieldKinds,
+	genericFieldKind,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
@@ -60,7 +60,7 @@ import {
 } from "../utils.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
-import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
+import { Change, assertEqual, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 

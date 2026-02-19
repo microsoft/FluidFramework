@@ -29,14 +29,14 @@ import {
 } from "../feature-libraries/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
+	SchemaFactory,
 	booleanSchema,
 	numberSchema,
-	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
+import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
 
-import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
+import { IdentifierSchema, expectEqualFieldPaths, expectEqualPaths } from "./utils.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 

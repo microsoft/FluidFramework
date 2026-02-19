@@ -8,18 +8,18 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	assert,
-	unreachableCase,
-	isObject,
 	type DoublyLinkedList,
+	assert,
+	isObject,
+	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -30,36 +30,36 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./constants.js";
 import { type LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import { type IMergeTreeTextHelper, MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import {
+	type IMergeTreeOptionsInternal,
 	MergeTree,
 	errorIfOptionNotTrue,
 	getSlideToSegoff,
 	isRemovedAndAcked,
-	type IMergeTreeOptionsInternal,
 } from "./mergeTree.js";
 import type {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 } from "./mergeTreeDeltaCallback.js";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	type CollaborationWindow,
 	type ISegment,
 	type ISegmentAction,
+	type ISegmentInternal,
+	type ISegmentLeaf,
 	type ISegmentPrivate,
 	type Marker,
+	type ObliterateInfo,
 	type SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
-	type ISegmentInternal,
-	type ISegmentLeaf,
-	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	createAdjustRangeOp,
 	createAnnotateMarkerOp,
@@ -71,7 +71,9 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
+	type AdjustParams,
 	type IJSONSegment,
+	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeAnnotateMsg,
 	type IMergeTreeDeltaOp,
 	// eslint-disable-next-line import-x/no-deprecated
@@ -79,35 +81,33 @@ import {
 	type IMergeTreeInsertMsg,
 	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeObliterateMsg,
+	type IMergeTreeObliterateSidedMsg,
 	type IMergeTreeOp,
 	type IMergeTreeRemoveMsg,
 	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	type AdjustParams,
-	type IMergeTreeAnnotateAdjustMsg,
-	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import {
-	createLocalReconnectingPerspective,
 	LocalReconnectingPerspective,
-	PriorPerspective,
 	type Perspective,
+	PriorPerspective,
+	createLocalReconnectingPerspective,
 } from "./perspective.js";
-import type { PropertySet, MapLike } from "./properties.js";
+import type { MapLike, PropertySet } from "./properties.js";
 import { DetachedReferencePosition, type ReferencePosition } from "./referencePositions.js";
 import {
+	type IHasInsertionInfo,
+	type IHasRemovalInfo,
 	isInserted,
 	isRemoved,
 	overwriteInfo,
 	toRemovalInfo,
-	type IHasInsertionInfo,
-	type IHasRemovalInfo,
 } from "./segmentInfos.js";
-import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
+import { type InteriorSequencePlace, Side } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
-import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { SnapshotV1 } from "./snapshotV1.js";
 import type { OperationStamp } from "./stamps.js";
 import * as opstampUtils from "./stamps.js";
 

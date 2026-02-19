@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
-	SummaryType,
 	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
@@ -29,10 +29,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
 import {
-	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
+	summarizablesMetadataKey,
 } from "../../shared-tree-core/index.js";
-import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import { type IdAllocator, brand, idAllocatorFromMaxId } from "../../util/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 function createDetachedFieldIndexSummarizer(options?: {

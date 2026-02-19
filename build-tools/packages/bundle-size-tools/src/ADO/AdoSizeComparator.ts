@@ -11,6 +11,7 @@ import { join } from "path";
 import type { BundleComparison, BundleComparisonResult } from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";
 import { getBaselineCommit, getBuilds, getPriorCommit } from "../utilities";
+
 import {
 	getBundlePathsFromZipObject,
 	getStatsFileFromZip,

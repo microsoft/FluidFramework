@@ -8,10 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { type TreeStoredSchema, rootFieldKey, schemaDataIsEmpty } from "../core/index.js";
 import {
 	FieldKinds,
-	allowsRepoSuperset,
-	defaultSchemaPolicy,
 	type IDefaultEditBuilder,
 	type TreeChunk,
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
 } from "../feature-libraries/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";

@@ -11,11 +11,11 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	asLegacyAlpha,
 	type ContainerRuntimeBaseAlpha,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
 	type IFluidDataStorePolicies,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getContainerEntryPointBackCompat,

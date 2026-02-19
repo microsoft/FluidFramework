@@ -32,37 +32,37 @@ import {
 	jsonableTreeFromFieldCursor,
 } from "../feature-libraries/index.js";
 import {
+	type ForestOptions,
+	ForestTypeExpensiveDebug,
+	SchematizingSimpleTreeView,
 	buildConfiguredForest,
 	createTreeCheckout,
 	defaultSharedTreeOptions,
-	ForestTypeExpensiveDebug,
 	initialize,
 	initializerFromChunk,
-	SchematizingSimpleTreeView,
-	type ForestOptions,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
 import {
-	numberSchema,
-	SchemaFactoryAlpha,
-	stringSchema,
-	toStoredSchema,
-	type UnsafeUnknownSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
-	type ValidateRecursiveSchema,
 	type LazyItem,
-	schemaStatics,
+	SchemaFactoryAlpha,
 	type TreeView,
-	TreeViewConfigurationAlpha,
-	toInitialSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	permissiveStoredSchemaGenerationOptions,
 	type TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
+	type UnsafeUnknownSchema,
+	type ValidateRecursiveSchema,
+	numberSchema,
+	permissiveStoredSchemaGenerationOptions,
+	restrictiveStoredSchemaGenerationOptions,
+	schemaStatics,
+	stringSchema,
+	toInitialSchema,
+	toStoredSchema,
 } from "../simple-tree/index.js";
-import { brand, Breakable } from "../util/index.js";
+import { Breakable, brand } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";

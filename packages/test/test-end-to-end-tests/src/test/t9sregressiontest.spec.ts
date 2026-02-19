@@ -13,8 +13,8 @@ import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
-	toIDeltaManagerFull,
 	createAndAttachContainer,
+	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
 const mapId = "map";

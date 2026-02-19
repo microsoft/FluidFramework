@@ -4,9 +4,9 @@
  */
 
 import {
-	assert,
 	DoublyLinkedList,
 	type ListNode,
+	assert,
 	walkList,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";

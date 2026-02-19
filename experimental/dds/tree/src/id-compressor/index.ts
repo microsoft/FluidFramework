@@ -8,14 +8,15 @@
  */
 
 export {
+	IdCompressor,
 	defaultClusterCapacity,
 	hasOngoingSession,
-	IdCompressor,
 	isFinalId,
 	isLocalId,
 	legacySharedTreeInitialTreeId,
 } from './IdCompressor.js';
 export { getIds } from './IdRange.js';
+export { createSessionId } from './NumericUuid.js';
 export {
 	IdCreationRange,
 	SerializedCluster,
@@ -30,4 +31,3 @@ export {
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
 } from './persisted-types/index.js';
-export { createSessionId } from './NumericUuid.js';

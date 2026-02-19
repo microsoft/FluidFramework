@@ -16,21 +16,21 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	createIdCompressor,
 	type IIdCompressor,
+	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 import type {
-	ISummaryTreeWithStats,
 	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext,
 	IRuntimeMessageCollection,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	SharedObject,
 	type IChannelView,
 	type IFluidSerializer,
 	type ISharedObject,
 	type ISharedObjectHandle,
+	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	MockFluidDataStoreRuntime,
@@ -38,15 +38,15 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	currentVersion,
-	DependentFormatVersion,
 	type CodecWriteOptions,
+	DependentFormatVersion,
+	currentVersion,
 } from "../../codec/index.js";
 import {
-	RevisionTagCodec,
-	TreeStoredSchemaRepository,
 	type GraphCommit,
+	RevisionTagCodec,
 	type TaggedChange,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -68,16 +68,16 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
 import {
-	SquashingTransactionStack,
+	type ChangeEnricher,
+	type EditManagerFormatVersion,
+	type EnrichmentConfig,
+	type MessageFormatVersion,
 	type SharedTreeBranch,
 	SharedTreeCore,
+	SquashingTransactionStack,
 	type Summarizable,
-	type EditManagerFormatVersion,
 	supportedEditManagerFormatVersions,
-	type MessageFormatVersion,
 	supportedMessageFormatVersions,
-	type EnrichmentConfig,
-	type ChangeEnricher,
 } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";

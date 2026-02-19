@@ -13,8 +13,8 @@ import {
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";

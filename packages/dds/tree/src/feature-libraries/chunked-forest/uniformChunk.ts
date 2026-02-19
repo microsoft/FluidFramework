@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays, oob, fail } from "@fluidframework/core-utils/internal";
-import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
+import { assert, compareArrays, fail, oob } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type ChunkedCursor,
 	CursorLocationType,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
+	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	type UpPath,
 	type Value,
-	type ChunkedCursor,
-	type TreeChunk,
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";

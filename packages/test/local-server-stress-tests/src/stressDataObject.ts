@@ -11,17 +11,17 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
+	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type {
-	IFluidHandle,
 	FluidObject,
+	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import { LazyPromise, assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import-x/no-internal-modules
@@ -30,8 +30,8 @@ import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
 	RuntimeHeaders,
-	toFluidHandleInternal,
 	asLegacyAlpha,
+	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 

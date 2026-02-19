@@ -9,9 +9,9 @@ import type { TUnsafe } from "@sinclair/typebox";
 
 import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {
-	makeDetachedNodeId,
-	Multiplicity,
 	type FieldKindIdentifier,
+	Multiplicity,
+	makeDetachedNodeId,
 } from "../../../core/index.js";
 import {
 	type FieldChangeDelta,
@@ -23,9 +23,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	brandConst,
 	JsonCompatibleReadOnlySchema,
 	type Mutable,
+	brandConst,
 } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 

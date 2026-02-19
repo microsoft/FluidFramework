@@ -54,15 +54,15 @@ import {
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeViewConfigurationAlpha,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	nullSchema,
 	numberSchema,
-	SchemaFactory,
-	SchemaFactoryAlpha,
 	stringSchema,
 	toInitialSchema,
-	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";

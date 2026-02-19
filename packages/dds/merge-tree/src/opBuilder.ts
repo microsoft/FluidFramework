@@ -5,6 +5,8 @@
 
 import type { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
+	type AdjustParams,
+	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeAnnotateMsg,
 	type IMergeTreeDeltaOp,
 	// eslint-disable-next-line import-x/no-deprecated
@@ -12,14 +14,12 @@ import {
 	type IMergeTreeInsertMsg,
 	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeObliterateMsg,
+	type IMergeTreeObliterateSidedMsg,
 	type IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
-	type AdjustParams,
-	type IMergeTreeAnnotateAdjustMsg,
-	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import type { PropertySet, MapLike } from "./properties.js";
-import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
+import type { MapLike, PropertySet } from "./properties.js";
+import { type SequencePlace, Side, normalizePlace } from "./sequencePlace.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties

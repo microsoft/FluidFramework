@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
@@ -11,19 +11,19 @@ import {
 	type FieldKey,
 	type ITreeCursorSynchronous,
 	LeafNodeStoredSchema,
+	Multiplicity,
 	ObjectNodeStoredSchema,
+	type SchemaAndPolicy,
+	type SchemaPolicy,
+	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
 	type Value,
-	mapCursorFields,
-	Multiplicity,
 	ValueSchema,
-	type TreeChunk,
+	mapCursorFields,
 	tryGetChunk,
-	type SchemaAndPolicy,
-	type SchemaPolicy,
 } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";

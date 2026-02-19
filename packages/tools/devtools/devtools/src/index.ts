@@ -194,6 +194,6 @@ function mapContainerProps(
 export {
 	type ContainerKey,
 	type HasContainerKey,
-	createDevtoolsLogger,
 	type IDevtoolsLogger,
+	createDevtoolsLogger,
 } from "@fluidframework/devtools-core/internal";

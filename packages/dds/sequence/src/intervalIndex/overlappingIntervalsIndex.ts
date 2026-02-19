@@ -9,12 +9,12 @@ import {
 	endpointPosAndSide,
 } from "@fluidframework/merge-tree/internal";
 
-import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	SequenceInterval,
 	SequenceIntervalClass,
 	createTransientInterval,
 } from "../intervals/index.js";
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";

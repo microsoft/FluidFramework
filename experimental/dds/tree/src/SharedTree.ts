@@ -10,15 +10,15 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions/internal';
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from '@fluidframework/runtime-definitions/internal';
 import {
 	IFluidSerializer,
@@ -28,8 +28,8 @@ import {
 } from '@fluidframework/shared-object-base/internal';
 import {
 	IEventSampler,
-	ITelemetryLoggerPropertyBags,
 	ITelemetryLoggerExt,
+	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
 	createChildLogger,
 	createSampledLogger,
@@ -61,6 +61,7 @@ import {
 	isDetachedSequenceId,
 } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
+import { IdCompressor, createSessionId } from './id-compressor/index.js';
 import {
 	CachingLogViewer,
 	EditCacheEntry,
@@ -70,15 +71,6 @@ import {
 	SequencedEditResultCallback,
 } from './LogViewer.js';
 import { NodeIdContext, NodeIdNormalizer, getNodeIdContext } from './NodeIdUtilities.js';
-import { ReconciliationPath } from './ReconciliationPath.js';
-import { RevisionView } from './RevisionView.js';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
-import { MutableStringInterner } from './StringInterner.js';
-import { SummaryContents, serialize } from './Summary.js';
-import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
-import { TransactionInternal } from './TransactionInternal.js';
-import { nilUuid } from './UuidUtilities.js';
-import { IdCompressor, createSessionId } from './id-compressor/index.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -105,6 +97,14 @@ import {
 	reservedIdCount,
 } from './persisted-types/index.js';
 import { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
+import { ReconciliationPath } from './ReconciliationPath.js';
+import { RevisionView } from './RevisionView.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
+import { MutableStringInterner } from './StringInterner.js';
+import { SummaryContents, serialize } from './Summary.js';
+import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { nilUuid } from './UuidUtilities.js';
 
 /**
  * The write format and associated options used to construct a `SharedTree`

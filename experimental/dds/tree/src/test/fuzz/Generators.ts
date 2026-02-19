@@ -18,9 +18,9 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { fail } from '../../Common.js';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { Side, TraitMap, WriteFormat } from '../../persisted-types/index.js';
 import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView.js';
 import { rangeFromStableRange } from '../../TreeViewUtilities.js';
-import { Side, TraitMap, WriteFormat } from '../../persisted-types/index.js';
 
 import {
 	EditGenerationConfig,

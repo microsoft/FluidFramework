@@ -7,25 +7,25 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { type ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import type {
-	IFluidHandle,
 	ConfigTypes,
 	IConfigProviderBase,
+	IFluidHandle,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
-	ITestFluidObject,
-	timeoutPromise,
+	type ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	ITestFluidObject,
+	type ITestObjectProvider,
 	createAndAttachContainer,
 	timeoutAwait,
+	timeoutPromise,
 	waitForContainerConnection,
-	type ChannelFactoryRegistry,
-	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";

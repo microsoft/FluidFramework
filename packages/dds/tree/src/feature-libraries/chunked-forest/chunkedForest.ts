@@ -5,13 +5,15 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type Anchor,
 	AnchorSet,
 	type AnnouncedVisitor,
+	type ChunkedCursor,
+	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
 	type FieldAnchor,
@@ -23,6 +25,7 @@ import {
 	ITreeSubscriptionCursorState,
 	type PlaceIndex,
 	type Range,
+	type TreeChunk,
 	TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
@@ -31,9 +34,6 @@ import {
 	detachedFieldAsKey,
 	mapCursorField,
 	rootFieldKey,
-	type ChunkedCursor,
-	type TreeChunk,
-	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
 	assertValidRange,

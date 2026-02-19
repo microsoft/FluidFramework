@@ -7,11 +7,11 @@ import { strict as assert } from "node:assert";
 
 import type {
 	BroadcastControlSettings,
-	LatestMapRaw,
+	LatestMap,
 	LatestMapItemUpdatedClientData,
+	LatestMapRaw,
 	Presence,
 	RawValueAccessor,
-	LatestMap,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
 

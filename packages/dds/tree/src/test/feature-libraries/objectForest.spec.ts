@@ -5,14 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldKey,
+	TreeStoredSchemaRepository,
 	moveToDetachedField,
 	rootFieldKey,
-	TreeStoredSchemaRepository,
 } from "../../core/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:

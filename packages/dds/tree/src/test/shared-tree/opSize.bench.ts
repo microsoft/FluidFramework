@@ -19,13 +19,13 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type { Value } from "../../core/index.js";
-import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
+import { type ITreePrivate, Tree } from "../../shared-tree/index.js";
 import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type ITree,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	SchemaFactory,
 	type TreeView,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
 import { DefaultTestSharedTreeKind } from "../utils.js";

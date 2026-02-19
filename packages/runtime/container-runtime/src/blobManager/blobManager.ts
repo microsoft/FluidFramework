@@ -26,9 +26,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
+	ISequencedMessageEnvelope,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
@@ -47,9 +47,9 @@ import { v4 as uuid } from "uuid";
 import { isBlobMetadata } from "../metadata.js";
 
 import {
+	type IBlobManagerLoadInfo,
 	summarizeBlobManagerState,
 	toRedirectTable,
-	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
 /**

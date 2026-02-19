@@ -7,28 +7,28 @@ import type { CodecWriteOptions } from "../../../codec/index.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
+	type FieldBatchEncodingContext,
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	makeFieldBatchCodec,
-	type FieldBatchEncodingContext,
 } from "../../../feature-libraries/index.js";
 import { ForestTypeOptimized, type TreeCheckout } from "../../../shared-tree/index.js";
 import {
+	SchemaFactoryAlpha,
+	TreeViewConfigurationAlpha,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	permissiveStoredSchemaGenerationOptions,
-	SchemaFactoryAlpha,
 	toStoredSchema,
-	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
+	type TreeStoredContentStrict,
 	checkoutWithContent,
 	fieldCursorFromInsertable,
 	testIdCompressor,
 	testRevisionTagCodec,
-	type TreeStoredContentStrict,
 } from "../../utils.js";
 
 const sf = new SchemaFactoryAlpha("IncrementalSummarization");

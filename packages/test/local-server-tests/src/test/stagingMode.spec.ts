@@ -29,9 +29,9 @@ import type {
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import {
-	asLegacyAlpha,
 	type IContainerRuntimeBase,
 	type StageControlsInternal,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -39,8 +39,8 @@ import {
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";

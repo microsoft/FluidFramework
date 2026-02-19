@@ -20,13 +20,6 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
 
-import { useMessageRelay } from "./MessageRelayContext.js";
-import {
-	ConsoleVerboseLogger,
-	LoggerContext,
-	TelemetryOptInLogger,
-} from "./TelemetryUtils.js";
-import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
 import {
 	ContainerDevtoolsView,
 	LandingView,
@@ -39,6 +32,13 @@ import {
 	TelemetryView,
 	Waiting,
 } from "./components/index.js";
+import { useMessageRelay } from "./MessageRelayContext.js";
+import {
+	ConsoleVerboseLogger,
+	LoggerContext,
+	TelemetryOptInLogger,
+} from "./TelemetryUtils.js";
+import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
 

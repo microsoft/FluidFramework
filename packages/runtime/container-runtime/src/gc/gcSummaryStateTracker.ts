@@ -5,8 +5,8 @@
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	type ISummaryTreeWithStats,
 	type ISummarizeResult,
+	type ISummaryTreeWithStats,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,

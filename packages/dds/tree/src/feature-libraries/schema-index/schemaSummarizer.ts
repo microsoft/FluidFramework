@@ -21,10 +21,10 @@ import {
 	schemaDataIsEmpty,
 } from "../../core/index.js";
 import {
-	VersionedSummarizer,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
+	VersionedSummarizer,
 } from "../../shared-tree-core/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 

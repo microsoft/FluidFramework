@@ -4,6 +4,7 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
+
 import type { IPackage } from "@fluid-tools/build-infrastructure";
 import {
 	bumpVersionScheme,

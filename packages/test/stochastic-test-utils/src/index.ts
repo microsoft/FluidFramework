@@ -4,27 +4,28 @@
  */
 
 export {
+	BaseOperation,
 	combineReducers,
 	combineReducersAsync,
-	BaseOperation,
 	isOperationType,
 } from "./combineReducers.js";
 export {
-	createFuzzDescribe,
 	CreateMochaSuite,
-	defaultOptions,
 	DescribeFuzz,
-	describeFuzz,
 	DescribeStress,
-	describeStress,
 	FuzzDescribeOptions,
 	FuzzSuiteArguments,
-	generateTestSeeds,
 	MochaSuiteWithArguments,
-	StressSuiteArguments,
 	StressMode,
+	StressSuiteArguments,
+	createFuzzDescribe,
+	defaultOptions,
+	describeFuzz,
+	describeStress,
+	generateTestSeeds,
 } from "./describeFuzz.js";
 export {
+	ExitBehavior,
 	asyncGeneratorFromArray,
 	chain,
 	chainAsync,
@@ -32,7 +33,6 @@ export {
 	chainIterables,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
-	ExitBehavior,
 	generatorFromArray,
 	interleave,
 	interleaveAsync,
@@ -55,10 +55,10 @@ export {
 } from "./performActions.js";
 export { makeRandom } from "./random.js";
 export {
-	SaveOptions,
-	getSaveInfo,
-	getSaveDirectory,
 	HasWorkloadName,
+	SaveOptions,
+	getSaveDirectory,
+	getSaveInfo,
 } from "./results.js";
 export {
 	AcceptanceCondition,
@@ -66,12 +66,12 @@ export {
 	AsyncReducer,
 	AsyncWeights,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	IRandom,
 	Reducer,
-	SaveInfo,
 	SaveDestination,
+	SaveInfo,
 	Weights,
+	done,
 } from "./types.js";
 export { XSadd, XSaddCtor } from "./xsadd.js";

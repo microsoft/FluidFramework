@@ -5,15 +5,15 @@
 
 import type { AsyncGenerator, AsyncReducer } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzTestState,
 	Client as DDSClient,
 	type DDSFuzzModel,
+	DDSFuzzTestState,
 } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import {
-	fluidHandleSymbol,
 	type IFluidHandle,
 	type IFluidHandleErased,
+	fluidHandleSymbol,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
@@ -24,7 +24,7 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
-import { LocalServerStressState, Client } from "./localServerStressHarness.js";
+import { Client, LocalServerStressState } from "./localServerStressHarness.js";
 import type { ContainerObjects } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 

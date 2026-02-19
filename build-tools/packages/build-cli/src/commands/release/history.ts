@@ -7,6 +7,7 @@ import { detectBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 import { table } from "table";
+
 import { findPackageOrReleaseGroup } from "../../args.js";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
 import {
@@ -17,6 +18,7 @@ import {
 	type VersionDetails,
 } from "../../library/index.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
+
 import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
 
 const DEFAULT_MIN_VERSION = "0.0.0";

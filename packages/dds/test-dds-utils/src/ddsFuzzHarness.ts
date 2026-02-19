@@ -48,15 +48,15 @@ import type {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
-	isISharedObjectHandle,
 	type IFluidSerializer,
+	isISharedObjectHandle,
 } from "@fluidframework/shared-object-base/internal";
+import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type Client,

@@ -35,8 +35,8 @@ import {
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type RevisionTag,
-	rootFieldKey,
 	type TaggedChange,
+	rootFieldKey,
 } from "../../core/index.js";
 import type {
 	DefaultChangeset,
@@ -52,17 +52,17 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
 import {
-	EditManagerFormatVersion,
-	SharedTreeSummaryFormatVersion,
-	summarizablesMetadataKey,
 	type ChangeEnricher,
 	type EditManager,
+	EditManagerFormatVersion,
 	type ResubmitMachine,
 	type SharedTreeCore,
 	type SharedTreeSummarizableMetadata,
+	SharedTreeSummaryFormatVersion,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
+	summarizablesMetadataKey,
 } from "../../shared-tree-core/index.js";
 import {
 	summarizablesTreeKey,
@@ -72,14 +72,14 @@ import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js
 import { brand } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import {
-	chunkFromJsonableTrees,
-	createTestUndoRedoStacks,
 	SharedTreeTestFactory,
 	StringArray,
 	TestTreeProviderLite,
+	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
 } from "../utils.js";
 
-import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
+import { TestSharedTreeCore, createTree, createTreeSharedObject } from "./utils.js";
 
 const enableSchemaValidation = true;
 

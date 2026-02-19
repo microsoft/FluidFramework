@@ -5,12 +5,12 @@
 
 export {
 	type MapNodeInsertableData,
-	mapSchema,
 	type TreeMapNode,
+	mapSchema,
 } from "./mapNode.js";
 export {
-	isMapNodeSchema,
 	type MapNodeCustomizableSchema,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,
+	isMapNodeSchema,
 } from "./mapNodeTypes.js";

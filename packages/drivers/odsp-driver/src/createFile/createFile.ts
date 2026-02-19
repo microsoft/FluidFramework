@@ -9,15 +9,15 @@ import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/i
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspResolvedUrl,
+	type IOdspUrlParts,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	type ShareLinkInfoType,
-	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	PerformanceEvent,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICreateFileResponse, IRenameFileResponse } from "./../contracts.js";

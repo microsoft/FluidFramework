@@ -4,10 +4,10 @@
  */
 
 import {
-	generation,
-	LayerCompatibilityPolicyWindowMonths,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
+	LayerCompatibilityPolicyWindowMonths,
+	generation,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
@@ -15,8 +15,8 @@ import {
 	notifiesReadOnlyState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	validateLayerCompatibility,
 	type MonitoringContext,
+	validateLayerCompatibility,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";

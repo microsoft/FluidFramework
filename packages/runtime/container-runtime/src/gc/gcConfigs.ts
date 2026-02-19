@@ -20,12 +20,12 @@ import {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
+	disableThrowOnTombstoneLoadKey,
 	gcGenerationOptionName,
 	gcTestModeKey,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runSessionExpiryKey,
-	disableThrowOnTombstoneLoadKey,
 } from "./gcDefinitions.js";
 import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 

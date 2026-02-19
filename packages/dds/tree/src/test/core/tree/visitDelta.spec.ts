@@ -24,13 +24,13 @@ import {
 import { mapTreeFromCursor } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import {
+	type DeltaParams,
 	chunkFromJsonTrees,
 	chunkToMapTreeField,
 	mintRevisionTag,
 	rootFromDeltaFieldMap,
 	testIdCompressor,
 	testRevisionTagCodec,
-	type DeltaParams,
 } from "../../utils.js";
 
 function visit(

@@ -16,15 +16,15 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
-	defaultSchemaPolicy,
 	MockNodeIdentifierManager,
+	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
-	toInitialSchema,
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableField,
 	type UnsafeUnknownSchema,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import {
 	MockTreeCheckout,

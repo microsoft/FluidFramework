@@ -5,7 +5,7 @@
 
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
-import { brandedNumberType, strictEnum, type Values } from "../../util/index.js";
+import { type Values, brandedNumberType, strictEnum } from "../../util/index.js";
 
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 

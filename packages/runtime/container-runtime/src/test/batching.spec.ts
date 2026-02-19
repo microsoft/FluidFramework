@@ -12,13 +12,13 @@ import {
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	type IFluidErrorBase,
 	MockLogger,
 	mixinMonitoringContext,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,

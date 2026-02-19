@@ -9,8 +9,8 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	getUnexpectedLogErrorException,
 	TestObjectProvider,
+	getUnexpectedLogErrorException,
 } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import-x/no-extraneous-dependencies
 import { Context } from "mocha";

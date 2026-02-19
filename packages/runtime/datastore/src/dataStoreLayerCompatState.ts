@@ -4,14 +4,14 @@
  */
 
 import {
-	generation,
-	LayerCompatibilityPolicyWindowMonths,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
+	LayerCompatibilityPolicyWindowMonths,
+	generation,
 } from "@fluid-internal/client-utils";
 import {
-	validateLayerCompatibility,
 	type MonitoringContext,
+	validateLayerCompatibility,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";

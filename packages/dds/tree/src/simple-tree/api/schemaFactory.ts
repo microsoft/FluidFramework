@@ -20,49 +20,49 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
-import { normalizeAllowedTypes, markSchemaMostDerived, isLazy } from "../core/index.js";
 import type {
-	NodeKind,
-	WithType,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	TreeNodeSchemaBoth,
-	UnhydratedFlexTreeNode,
-	NodeSchemaMetadata,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	NodeKind,
+	NodeSchemaMetadata,
+	TreeNodeSchema,
+	TreeNodeSchemaBoth,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	UnhydratedFlexTreeNode,
+	WithType,
 } from "../core/index.js";
+import { isLazy, markSchemaMostDerived, normalizeAllowedTypes } from "../core/index.js";
 import {
+	type DefaultProvider,
 	FieldKind,
-	type FieldSchema,
-	type ImplicitFieldSchema,
 	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
 	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 	type FieldProps,
+	type FieldSchema,
+	type ImplicitFieldSchema,
 	createFieldSchema,
-	type DefaultProvider,
 	getDefaultProvider,
 } from "../fieldSchema.js";
 import {
+	// This import prevents a large number of LeafSchema references in the API reports from showing up as LeafSchema_2.
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	type LeafSchema,
 	booleanSchema,
 	handleSchema,
 	nullSchema,
 	numberSchema,
 	stringSchema,
-	// This import prevents a large number of LeafSchema references in the API reports from showing up as LeafSchema_2.
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	type LeafSchema,
 } from "../leafNodeSchema.js";
 import {
-	arraySchema,
-	type MapNodeInsertableData,
-	mapSchema,
-	objectSchema,
-	type TreeArrayNode,
 	type InsertableObjectFromSchemaRecord,
+	type MapNodeInsertableData,
+	type TreeArrayNode,
 	type TreeMapNode,
 	type TreeObjectNode,
+	arraySchema,
+	mapSchema,
+	objectSchema,
 } from "../node-kinds/index.js";
 import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
 

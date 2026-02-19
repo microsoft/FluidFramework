@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 import { _dirname } from "./dirname.cjs";

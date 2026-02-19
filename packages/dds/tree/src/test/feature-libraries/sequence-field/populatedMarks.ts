@@ -7,8 +7,8 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ChangeAtomId } from "../../../core/index.js";
 import type {
-	CellMark,
 	Attach,
+	CellMark,
 	Detach,
 	MarkEffect,
 	// eslint-disable-next-line import-x/no-internal-modules

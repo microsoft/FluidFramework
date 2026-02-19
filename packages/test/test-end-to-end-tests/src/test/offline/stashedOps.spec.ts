@@ -11,11 +11,11 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
 	IHostLoader,
-	LoaderHeader,
 	type ILoaderHeader,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
@@ -30,19 +30,19 @@ import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	OperationType,
-	SharedArray,
-	SharedArrayRevertible,
-	SharedSignal,
 	type IRevertible,
 	type ISharedArray,
 	type ISharedSignal,
 	type IToggleOperation,
+	OperationType,
+	SharedArray,
+	SharedArrayRevertible,
+	SharedSignal,
 } from "@fluidframework/legacy-dds/internal";
 import type {
 	ISharedDirectory,
-	SharedDirectory,
 	ISharedMap,
+	SharedDirectory,
 } from "@fluidframework/map/internal";
 import {
 	ReferenceType,
@@ -64,12 +64,12 @@ import {
 	ITestObjectProvider,
 	createAndAttachContainer,
 	createDocumentId,
-	timeoutPromise,
-	waitForContainerConnection,
 	timeoutAwait,
+	timeoutPromise,
 	toIDeltaManagerFull,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";

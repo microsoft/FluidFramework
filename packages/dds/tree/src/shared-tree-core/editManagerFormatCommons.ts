@@ -12,7 +12,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
+import { type Brand, type Values, brandedNumberType, strictEnum } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 

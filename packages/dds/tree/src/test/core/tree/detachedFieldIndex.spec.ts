@@ -9,12 +9,12 @@ import path from "node:path";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index.js";
 import {
 	DetachedFieldIndex,
 	type ForestRootId,
-	makeDetachedNodeId,
 	RevisionTagCodec,
+	makeDetachedNodeId,
 } from "../../../core/index.js";
 import {
 	detachedFieldIndexCodecBuilder,
@@ -37,11 +37,11 @@ import {
 } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import {
+	assertIsSessionId,
+	createSnapshotCompressor,
+	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
-	createSnapshotCompressor,
-	assertIsSessionId,
-	mintRevisionTag,
 } from "../../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();

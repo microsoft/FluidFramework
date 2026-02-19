@@ -5,10 +5,10 @@
 
 import { Multiplicity, forbiddenFieldKindIdentifier } from "../../core/index.js";
 import {
-	sequenceIdentifier,
 	identifierFieldIdentifier,
-	requiredIdentifier,
 	optionalIdentifier,
+	requiredIdentifier,
+	sequenceIdentifier,
 } from "../fieldKindIdentifiers.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 

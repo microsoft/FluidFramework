@@ -10,11 +10,11 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { ITreeCursor } from "../../../core/index.js";
 import { cursorForJsonableTreeNode } from "../../../feature-libraries/index.js";
 import {
+	type VerboseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	replaceVerboseTreeHandles,
 	verboseFromCursor,
-	type VerboseTree,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -25,7 +25,7 @@ import {
 	type TreeEncodingOptions,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
-import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
+import { type TestTree, testSpecializedCursor } from "../../cursorTestSuite.js";
 
 const schema = new SchemaFactory("Test");
 

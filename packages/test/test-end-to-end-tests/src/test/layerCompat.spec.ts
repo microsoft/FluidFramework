@@ -12,9 +12,9 @@ import type {
 } from "@fluid-internal/client-utils";
 import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
+	type ExpectedEvents,
 	describeCompat,
 	itExpects,
-	type ExpectedEvents,
 } from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
@@ -43,13 +43,13 @@ import { localDriverCompatDetailsForLoader } from "@fluidframework/local-driver/
 import { odspDriverCompatDetailsForLoader } from "@fluidframework/odsp-driver/internal";
 import { r11sDriverCompatDetailsForLoader } from "@fluidframework/routerlicious-driver/internal";
 import {
+	MockLogger,
 	allowIncompatibleLayersKey,
 	isLayerIncompatibilityError,
-	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	createTestConfigProvider,
 	ITestObjectProvider,
+	createTestConfigProvider,
 } from "@fluidframework/test-utils/internal";
 
 type ILayerCompatSupportRequirementsOverride = Omit<

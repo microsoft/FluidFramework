@@ -4,13 +4,13 @@
  */
 
 import { EmptyKey } from "../core/index.js";
+import type { TreeNode, WithType } from "../simple-tree/index.js";
 import {
-	eraseSchemaDetails,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
+	eraseSchemaDetails,
 } from "../simple-tree/index.js";
-import type { TreeNode, WithType } from "../simple-tree/index.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 

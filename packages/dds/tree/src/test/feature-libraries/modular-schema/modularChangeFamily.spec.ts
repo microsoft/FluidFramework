@@ -11,55 +11,55 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {
 	type CodecWriteOptions,
-	currentVersion,
 	type IJsonCodec,
+	currentVersion,
 	makeCodecFamily,
 } from "../../../codec/index.js";
 import {
-	makeAnonChange,
-	makeDetachedNodeId,
-	type RevisionTag,
-	tagChange,
-	type TaggedChange,
-	type FieldKindIdentifier,
-	type FieldKey,
-	type UpPath,
-	revisionMetadataSourceFromInfo,
+	type ChangeAtomIdMap,
+	type ChangeEncodingContext,
+	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaRoot,
-	type DeltaDetachedNodeId,
-	type ChangeEncodingContext,
-	type ChangeAtomIdMap,
-	Multiplicity,
+	type FieldKey,
+	type FieldKindIdentifier,
 	type FieldUpPath,
+	Multiplicity,
 	type RevisionInfo,
+	type RevisionTag,
+	type TaggedChange,
+	type UpPath,
+	makeAnonChange,
+	makeDetachedNodeId,
+	revisionMetadataSourceFromInfo,
+	tagChange,
 } from "../../../core/index.js";
 import {
-	type FieldChangeHandler,
-	genericFieldKind,
-	type ModularChangeset,
-	FlexFieldKind,
-	type RelevantRemovedRootsFromChild,
-	defaultChunkPolicy,
-	type TreeChunk,
-	cursorForJsonableTreeField,
-	chunkFieldSingle,
-	makeFieldBatchCodec,
-	type NodeId,
-	type FieldKindConfiguration,
-	type FieldKindConfigurationEntry,
-	makeModularChangeCodecFamily,
-	ModularChangeFamily,
+	type ChangeAtomIdBTree,
+	DefaultRevisionReplacer,
+	type EditDescription,
 	type EncodedModularChangesetV2,
+	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
-	type EditDescription,
-	jsonableTreeFromFieldCursor,
-	DefaultRevisionReplacer,
-	type ChangeAtomIdBTree,
-	fieldKindConfigurations,
-	newChangeAtomIdBTree,
+	type FieldKindConfiguration,
+	type FieldKindConfigurationEntry,
+	FlexFieldKind,
+	ModularChangeFamily,
 	ModularChangeFormatVersion,
+	type ModularChangeset,
+	type NodeId,
+	type RelevantRemovedRootsFromChild,
+	type TreeChunk,
+	chunkFieldSingle,
+	cursorForJsonableTreeField,
+	defaultChunkPolicy,
+	fieldKindConfigurations,
+	genericFieldKind,
+	jsonableTreeFromFieldCursor,
+	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
+	newChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -71,16 +71,16 @@ import type {
 import {
 	getFieldKind,
 	intoDelta,
-	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	updateRefreshers,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,
 	type FieldChangeMap,
 	type FieldId,
 	type NodeChangeset,
+	newCrossFieldKeyTable,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
@@ -107,7 +107,7 @@ import {
 } from "../../utils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
-import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
+import { Change, assertEqual, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {

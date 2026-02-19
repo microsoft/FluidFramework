@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
-	getRuntimeAttributor,
 	IRuntimeAttributor,
 	enableOnNewFileKey,
+	getRuntimeAttributor,
 } from "@fluid-experimental/attributor";
 import {
 	describeCompat,
@@ -30,8 +30,8 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createSummarizer,
-	summarizeNow,
 	getContainerEntryPointBackCompat,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";

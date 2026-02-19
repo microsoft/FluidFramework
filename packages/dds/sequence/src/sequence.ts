@@ -8,14 +8,15 @@ import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	MessageType,
 	ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	type AdjustParams,
 	Client,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -29,7 +30,9 @@ import {
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
+	type InteriorSequencePlace,
 	LocalReferencePosition,
+	type MapLike,
 	MergeTreeDeltaType,
 	MergeTreeRevertibleDriver,
 	PropertySet,
@@ -42,16 +45,13 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
-	type AdjustParams,
-	type InteriorSequencePlace,
-	type MapLike,
 } from "@fluidframework/merge-tree/internal";
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
@@ -59,9 +59,9 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
+	type ISharedObject,
 	ISharedObjectEvents,
 	SharedObject,
-	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	LoggingError,

@@ -10,7 +10,7 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControlsTypes.js";
+import type { BroadcastControlSettings, BroadcastControls } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type {
 	LatestClientData,

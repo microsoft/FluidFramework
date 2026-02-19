@@ -13,20 +13,20 @@ import type {
 } from "../../core/index.js";
 import {
 	AnchorTreeIndex,
-	isTreeValue,
-	type TreeIndexNodes,
-	hasElement,
+	type KeyFinder,
 	type TreeIndex,
 	type TreeIndexKey,
-	type KeyFinder,
+	type TreeIndexNodes,
+	hasElement,
+	isTreeValue,
 } from "../../feature-libraries/index.js";
 import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
-	treeNodeFromAnchor,
+	type NodeFromSchema,
 	type TreeNode,
 	type TreeNodeSchema,
-	type NodeFromSchema,
+	treeNodeFromAnchor,
 } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";

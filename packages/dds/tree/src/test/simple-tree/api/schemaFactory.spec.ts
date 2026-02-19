@@ -17,52 +17,52 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import {
-	schemaStaticsStable,
 	type SchemaStatics,
+	schemaStaticsStable,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaStatics.js";
 import {
-	// Import directly to get the non-type import to allow testing of the package only instanceof
-	TreeNode,
 	type AllowedTypes,
 	type AllowedTypesFull,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	// Import directly to get the non-type import to allow testing of the package only instanceof
+	TreeNode,
 	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
+	type InsertableTreeFieldFromImplicitField,
+	type NodeFromSchema,
+	NodeKind,
 	type ObjectNodeSchema,
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	treeNodeApi as Tree,
-	TreeViewConfiguration,
 	type TreeArrayNode,
+	type TreeFieldFromImplicitField,
 	type TreeMapNode,
-	type TreeView,
-	typeSchemaSymbol,
-	type NodeFromSchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchema,
-	type WithType,
-	isTreeNode,
-	NodeKind,
-	type TreeFieldFromImplicitField,
+	type TreeView,
+	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	SchemaFactoryBeta,
+	type WithType,
 	allowUnused,
-	type InsertableTreeFieldFromImplicitField,
+	isTreeNode,
+	typeSchemaSymbol,
 } from "../../../simple-tree/index.js";
 import {
-	brand,
-	type areSafelyAssignable,
 	type IsUnion,
+	type areSafelyAssignable,
+	brand,
 	type requireAssignableTo,
 	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
-import { getView, TestTreeProviderLite } from "../../utils.js";
+import { TestTreeProviderLite, getView } from "../../utils.js";
 import { hydrate } from "../utils.js";
 
 // Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.

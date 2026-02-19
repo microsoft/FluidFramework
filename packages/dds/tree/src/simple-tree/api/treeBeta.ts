@@ -5,22 +5,22 @@
 
 import type { ITreeCursorSynchronous, TreeFieldStoredSchema } from "../../core/index.js";
 import {
-	defaultSchemaPolicy,
 	FieldKinds,
+	defaultSchemaPolicy,
 	isTreeValue,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	Context,
-	getKernel,
-	getOrCreateNodeFromInnerNode,
-	isTreeNode,
-	UnhydratedContext,
 	type NodeKind,
 	type TreeLeafValue,
 	type TreeNode,
 	type Unhydrated,
+	UnhydratedContext,
 	type WithType,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
+	isTreeNode,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
 import type {
@@ -29,12 +29,12 @@ import type {
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import {
-	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
 } from "../unhydratedFlexTreeFromInsertable.js";
 import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
-import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
+import { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";

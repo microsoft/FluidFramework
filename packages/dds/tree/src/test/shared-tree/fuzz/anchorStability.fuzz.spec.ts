@@ -28,13 +28,13 @@ import {
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
+	type FuzzNode,
 	type RevertibleSharedTreeView,
 	createAnchors,
+	createOnCreate,
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	validateAnchors,
-	type FuzzNode,
-	createOnCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 

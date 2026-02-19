@@ -10,11 +10,6 @@ import { StablePlace } from './ChangeTypes.js';
 import { fail } from './Common.js';
 import { RangeValidationResultKind, validateStableRange } from './EditUtilities.js';
 import { DetachedSequenceId, NodeId, isDetachedSequenceId } from './Identifiers.js';
-import { RevisionView } from './RevisionView.js';
-import { getChangeNodeFromViewNode } from './SerializationUtilities.js';
-import { TransactionInternal } from './TransactionInternal.js';
-import { TreeView } from './TreeView.js';
-import { rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -26,6 +21,11 @@ import {
 	Side,
 	StableRangeInternal,
 } from './persisted-types/index.js';
+import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromViewNode } from './SerializationUtilities.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { TreeView } from './TreeView.js';
+import { rangeFromStableRange } from './TreeViewUtilities.js';
 
 /**
  * Events emitted from the history edit factory

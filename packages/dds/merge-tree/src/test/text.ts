@@ -9,9 +9,9 @@ import { Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
 import {
-	overwriteInfo,
 	type IHasInsertionInfo,
 	type SegmentWithInfo,
+	overwriteInfo,
 } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 

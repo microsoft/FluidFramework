@@ -11,18 +11,18 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	getOrCreate,
-	isReadonlyArray,
 	type IsUnion,
 	type MakeNominal,
+	getOrCreate,
+	isReadonlyArray,
 } from "../../util/index.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../simpleSchema.js";
 
-import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
+import { type FlexListToUnion, type LazyItem, isLazy } from "./flexList.js";
 import {
-	NodeKind,
 	type InsertableTypedNode,
 	type NodeFromSchema,
+	NodeKind,
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";

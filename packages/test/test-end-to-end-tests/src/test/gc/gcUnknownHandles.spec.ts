@@ -9,8 +9,8 @@ import { ITestDataObject, describeCompat } from "@fluid-private/test-version-uti
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports

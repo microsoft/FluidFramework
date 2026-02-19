@@ -17,10 +17,6 @@ import {
 	validateStableRange,
 } from './EditUtilities.js';
 import { DetachedSequenceId, NodeId, TraitLabel, isDetachedSequenceId } from './Identifiers.js';
-import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
-import { RevisionView, TransactionView } from './RevisionView.js';
-import { TreeViewNode } from './TreeView.js';
-import { rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -35,6 +31,10 @@ import {
 	StablePlaceInternal,
 	StableRangeInternal,
 } from './persisted-types/index.js';
+import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
+import { RevisionView, TransactionView } from './RevisionView.js';
+import { TreeViewNode } from './TreeView.js';
+import { rangeFromStableRange } from './TreeViewUtilities.js';
 
 /**
  * Result of applying a transaction.

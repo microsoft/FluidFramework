@@ -20,7 +20,7 @@ import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { mintRevisionTag } from "../../utils.js";
 
-import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
+import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
 import {
 	areComposable,
 	assertChangesetsEqual,

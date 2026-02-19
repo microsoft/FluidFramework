@@ -6,8 +6,8 @@
 // eslint-disable-next-line import-x/no-internal-modules
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
-	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
+	createTinyliciousCreateNewRequest,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tinylicious-driver/internal";
 import { createInsecureTinyliciousTestUrlResolver } from "@fluidframework/tinylicious-driver/test-utils";

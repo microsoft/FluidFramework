@@ -28,9 +28,13 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from '../../Identifiers.js';
-import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities.js';
 import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor.js';
 import { getIds } from '../../id-compressor/IdRange.js';
+import type {
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from '../../id-compressor/index.js';
 import {
 	NumericUuid,
 	createSessionId,
@@ -38,11 +42,7 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid.js';
-import type {
-	IdCreationRange,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-} from '../../id-compressor/index.js';
+import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities.js';
 
 import { expectDefined } from './TestCommon.js';
 

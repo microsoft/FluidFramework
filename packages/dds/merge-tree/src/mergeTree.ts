@@ -7,11 +7,11 @@
 /* eslint-disable no-bitwise */
 
 import {
-	assert,
+	DoublyLinkedList,
 	Heap,
 	type IComparer,
-	DoublyLinkedList,
 	type ListNode,
+	assert,
 } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -38,22 +38,19 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
-	LeafAction,
-	NodeAction,
-	backwardExcursion,
-	depthFirstNodeWalk,
-	forwardExcursion,
-	walkAllChildSegments,
-} from "./mergeTreeNodeWalk.js";
-import {
 	CollaborationWindow,
 	type IMergeNode,
+	type IMergeNodeBuilder,
 	type ISegmentAction,
 	type ISegmentChanges,
+	type ISegmentInternal,
+	type ISegmentLeaf,
+	type ISegmentPrivate,
 	type InsertContext,
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
+	type ObliterateInfo,
 	type SegmentGroup,
 	assertSegmentLeaf,
 	assignChild,
@@ -61,30 +58,33 @@ import {
 	getMinSeqStamp,
 	isSegmentLeaf,
 	reservedMarkerIdKey,
-	type IMergeNodeBuilder,
-	type ISegmentInternal,
-	type ISegmentLeaf,
-	type ISegmentPrivate,
-	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
-import { UnorderedTrackingGroup, type TrackingGroup } from "./mergeTreeTracking.js";
+import {
+	LeafAction,
+	NodeAction,
+	backwardExcursion,
+	depthFirstNodeWalk,
+	forwardExcursion,
+	walkAllChildSegments,
+} from "./mergeTreeNodeWalk.js";
+import { type TrackingGroup, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
+	type IMergeTreeOp,
 	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	type IMergeTreeOp,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import {
-	PriorPerspective,
+	LocalDefaultPerspective,
 	LocalReconnectingPerspective,
 	type Perspective,
-	LocalDefaultPerspective,
+	PriorPerspective,
 	RemoteObliteratePerspective,
 	allAckedChangesPerspective,
 } from "./perspective.js";
@@ -98,28 +98,28 @@ import {
 } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
-	assertRemoved,
+	type IHasInsertionInfo,
+	type IHasRemovalInfo,
 	type ISegmentInsideObliterateInfo,
+	type SegmentWithInfo,
+	assertRemoved,
 	isInsideObliterate,
 	isMergeNodeInfo,
 	isRemoved,
 	overwriteInfo,
 	removeRemovalInfo,
 	toRemovalInfo,
-	type IHasInsertionInfo,
-	type IHasRemovalInfo,
-	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
-	copyPropertiesAndManager,
 	PropertiesManager,
 	type PropsOrAdjust,
+	copyPropertiesAndManager,
 } from "./segmentPropertiesManager.js";
-import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
+import { type InteriorSequencePlace, Side } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import type {
-	OperationStamp,
 	InsertOperationStamp,
+	OperationStamp,
 	RemoveOperationStamp,
 	SetRemoveOperationStamp,
 	SliceRemoveOperationStamp,

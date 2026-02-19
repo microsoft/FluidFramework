@@ -11,11 +11,11 @@ import {
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import {
-	LoaderHeader,
 	type IContainer,
 	type IHostLoader,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { type ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -24,21 +24,21 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
+	type ChannelFactoryRegistry,
+	DataObjectFactoryType,
 	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	createAndAttachContainer,
 	createSummarizer,
 	summarizeNow,
-	type ChannelFactoryRegistry,
-	createAndAttachContainer,
-	DataObjectFactoryType,
-	type ITestFluidObject,
-	waitForContainerConnection,
 	timeoutAwait,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
-import { loadContainerOffline, generatePendingState } from "./offlineTestsUtils.js";
+import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
 
 const loadSummarizerAndSummarize = async (
 	provider: ITestObjectProvider,

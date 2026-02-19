@@ -17,8 +17,8 @@ import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 
-import { Waiting } from "./Waiting.js";
 import { TreeDataView } from "./data-visualization/index.js";
+import { Waiting } from "./Waiting.js";
 
 const loggingContext = "INLINE(VIEW)";
 

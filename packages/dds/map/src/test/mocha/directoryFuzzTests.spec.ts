@@ -20,14 +20,14 @@ import { SharedDirectoryOracle } from "../directoryOracle.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 import {
+	type DirOperation,
+	type DirOperationGenerationConfig,
 	baseDirModel,
 	dirDefaultOptions,
 	makeDirOperationGenerator,
 	makeDirReducer,
-	type DirOperation,
-	type DirOperationGenerationConfig,
 } from "./fuzzUtils.js";
-import { hasSharedDirectoryOracle, type ISharedDirectoryWithOracle } from "./oracleUtils.js";
+import { type ISharedDirectoryWithOracle, hasSharedDirectoryOracle } from "./oracleUtils.js";
 
 const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 

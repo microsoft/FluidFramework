@@ -9,26 +9,15 @@
  */
 
 export type {
-	IReactTreeDataObject,
-	TreeViewProps,
-	SchemaIncompatibleProps,
-} from "./reactSharedTreeView.js";
-export {
-	treeDataObject,
-	treeDataObjectInternal,
-	TreeViewComponent,
-} from "./reactSharedTreeView.js";
-export type { ObservationOptions } from "./useObservation.js";
-export type {
+	IsMappableObjectType,
 	NodeRecord,
 	PropTreeNode,
 	PropTreeNodeRecord,
 	PropTreeValue,
 	UnwrapPropTreeNode,
 	UnwrapPropTreeNodeRecord,
-	WrapPropTreeNodeRecord,
 	WrapNodes,
-	IsMappableObjectType,
+	WrapPropTreeNodeRecord,
 } from "./propNode.js";
 export {
 	toPropTreeNode,
@@ -36,12 +25,23 @@ export {
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,
 } from "./propNode.js";
+export type {
+	IReactTreeDataObject,
+	SchemaIncompatibleProps,
+	TreeViewProps,
+} from "./reactSharedTreeView.js";
 export {
-	useTree,
+	TreeViewComponent,
+	treeDataObject,
+	treeDataObjectInternal,
+} from "./reactSharedTreeView.js";
+export { objectIdNumber } from "./simpleIdentifier.js";
+export type { ObservationOptions } from "./useObservation.js";
+export {
 	usePropTreeNode,
 	usePropTreeRecord,
+	useTree,
 	useTreeObservations,
-	withTreeObservations,
 	withMemoizedTreeObservations,
+	withTreeObservations,
 } from "./useTree.js";
-export { objectIdNumber } from "./simpleIdentifier.js";

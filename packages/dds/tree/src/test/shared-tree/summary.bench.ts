@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
-	benchmarkCustom,
-	benchmark,
 	type IMeasurementReporter,
+	benchmark,
+	benchmarkCustom,
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -22,15 +22,15 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+import { type ImplicitFieldSchema, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
 import {
 	LinkedList,
+	WideRoot,
 	makeJsDeepTree,
 	makeJsWideTreeWithEndValue,
-	WideRoot,
 } from "../scalableTestTrees.js";
 import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 
