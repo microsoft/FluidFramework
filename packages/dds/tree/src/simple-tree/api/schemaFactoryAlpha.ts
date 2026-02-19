@@ -10,7 +10,6 @@ import {
 	type ImplicitAllowedTypes,
 	type WithType,
 	normalizeAllowedTypes,
-	type TreeLeafValue,
 	isTreeNode,
 } from "../core/index.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
@@ -70,7 +69,7 @@ import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
  * the data is copied for each use to ensure independence between instances. The value must be of an allowed type for the field.
  *
  * 2. **A generator function**: A function that returns a value. The function is called each time a default is needed,
- * allowing for dynamic defaults or explicit control over value creation. The value must be of an allowed type for the field.
+ * allowing for dynamic defaults or explicit control over value creation. The return value must be of an allowed type for the field.
  *
  * @example
  * ```typescript
@@ -85,7 +84,7 @@ import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
  *
  * @alpha @sealed
  */
-export type NodeProvider<T> = TreeLeafValue | T | (() => T);
+export type NodeProvider<T> = T | (() => T);
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.

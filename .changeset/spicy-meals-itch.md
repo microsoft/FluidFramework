@@ -122,3 +122,39 @@ const doc2 = new Document({ title: "Second Document" });
 // doc1.id !== doc2.id (each gets a unique UUID)
 // doc1.createdAt !== doc2.createdAt (each gets a different timestamp)
 ```
+
+Generator functions work with all primitive types:
+
+```typescript
+let counter = 0;
+
+class GameState extends sf.object("GameState", {
+	playerId: sf.withDefault(sf.required(sf.string), () => `player-${counter++}`),
+	score: sf.withDefault(sf.required(sf.number), () => Math.floor(Math.random() * 100)),
+	isActive: sf.withDefault(sf.required(sf.boolean), () => counter % 2 === 0),
+}) {}
+```
+
+### Type Safety
+
+The default value (or the value returned by a generator function) must be of an allowed type for the field. TypeScript
+enforces this at compile time:
+
+```typescript
+class Config extends sf.object("Config", {
+	port: sf.optional(sf.number),
+	name: sf.optional(sf.string),
+}) {}
+
+// ✅ Valid: number default for number field
+sf.withDefault(sf.optional(sf.number), 8080);
+
+// ✅ Valid: generator returns string for string field
+sf.withDefault(sf.optional(sf.string), () => "localhost");
+
+// ❌ TypeScript error: string default for number field
+// sf.withDefault(sf.optional(sf.number), "8080");
+
+// ❌ TypeScript error: generator returns number for string field
+// sf.withDefault(sf.optional(sf.string), () => 8080);
+```

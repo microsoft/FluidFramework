@@ -157,7 +157,7 @@ export type TreeObjectNode<
  * @system @public
  */
 export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
-	FieldSchema<FieldKind.Optional | FieldKind.Identifier, infer _Types, infer _Meta>,
+	FieldSchema<FieldKind.Optional | FieldKind.Identifier>,
 ]
 	? true
 	: false;

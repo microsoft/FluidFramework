@@ -112,6 +112,39 @@ describe("withDefault", () => {
 				const obj = new TestSchema({ timestamp: explicitTimestamp });
 				assert.equal(obj.timestamp, explicitTimestamp);
 			});
+
+			it("generator functions for different primitive types", () => {
+				let counter = 0;
+				const TestSchema = factory.objectAlpha("TestObject", {
+					// String generator
+					id: SchemaFactoryAlpha.withDefault(
+						factory.optional(factory.string),
+						() => `id-${counter++}`,
+					),
+					// Number generator with Math
+					random: SchemaFactoryAlpha.withDefault(factory.optional(factory.number), () =>
+						Math.random(),
+					),
+					// Boolean generator
+					flag: SchemaFactoryAlpha.withDefault(
+						factory.optional(factory.boolean),
+						() => counter % 2 === 0,
+					),
+				});
+
+				const obj1 = new TestSchema({});
+				assert.equal(obj1.id, "id-0");
+				assert.equal(typeof obj1.random, "number");
+				assert.equal(obj1.flag, false); // counter was 1 after first increment
+
+				const obj2 = new TestSchema({});
+				assert.equal(obj2.id, "id-1");
+				assert.equal(typeof obj2.random, "number");
+				assert.equal(obj2.flag, true); // counter was 2 after second increment, 2 % 2 === 0
+
+				// Each object gets different random values
+				assert.notEqual(obj1.random, obj2.random);
+			});
 		});
 
 		describe("custom node types", () => {
@@ -345,6 +378,107 @@ describe("withDefault", () => {
 			assert.equal(typeof obj1.name, "string");
 			assert.equal(typeof obj1.count, "number");
 			assert.equal(typeof obj1.flag, "boolean");
+		});
+	});
+
+	describe("type validation", () => {
+		it("value default must match field's allowed types", () => {
+			const PersonSchema = factory.objectAlpha("Person", {
+				name: factory.string,
+				age: factory.number,
+			});
+
+			// Valid: number default for number field
+			const TestSchema1 = factory.objectAlpha("Test1", {
+				count: SchemaFactoryAlpha.withDefault(factory.optional(factory.number), 42),
+			});
+			const obj1 = new TestSchema1({});
+			assert.equal(obj1.count, 42);
+
+			// Valid: string default for string field
+			const TestSchema2 = factory.objectAlpha("Test2", {
+				name: SchemaFactoryAlpha.withDefault(factory.optional(factory.string), "default"),
+			});
+			const obj2 = new TestSchema2({});
+			assert.equal(obj2.name, "default");
+
+			// Valid: object default for object field
+			const TestSchema3 = factory.objectAlpha("Test3", {
+				person: SchemaFactoryAlpha.withDefault(
+					factory.optional(PersonSchema),
+					new PersonSchema({ name: "Alice", age: 30 }),
+				),
+			});
+			const obj3 = new TestSchema3({});
+			assert.equal(obj3.person?.name, "Alice");
+
+			// @ts-expect-error Type mismatch: string default for number field
+			SchemaFactoryAlpha.withDefault(factory.optional(factory.number), "string");
+			// @ts-expect-error Type mismatch: number default for object field
+			SchemaFactoryAlpha.withDefault(factory.optional(PersonSchema), 42);
+		});
+
+		it("generator function return type must match field's allowed types", () => {
+			const PersonSchema = factory.objectAlpha("Person", {
+				name: factory.string,
+				age: factory.number,
+			});
+
+			// Valid: generator returns number for number field
+			const TestSchema1 = factory.objectAlpha("Test1", {
+				count: SchemaFactoryAlpha.withDefault(factory.optional(factory.number), () => 42),
+			});
+			const obj1 = new TestSchema1({});
+			assert.equal(obj1.count, 42);
+
+			// Valid: generator returns string for string field
+			const TestSchema2 = factory.objectAlpha("Test2", {
+				id: SchemaFactoryAlpha.withDefault(
+					factory.optional(factory.string),
+					() => `id-${Math.random()}`,
+				),
+			});
+			const obj2 = new TestSchema2({});
+			assert(obj2.id !== undefined);
+			assert(obj2.id.startsWith("id-"));
+
+			// Valid: generator returns object for object field
+			const TestSchema3 = factory.objectAlpha("Test3", {
+				person: SchemaFactoryAlpha.withDefault(
+					factory.optional(PersonSchema),
+					() => new PersonSchema({ name: "Bob", age: 25 }),
+				),
+			});
+			const obj3 = new TestSchema3({});
+			assert.equal(obj3.person?.name, "Bob");
+
+			// @ts-expect-error Type mismatch: generator returns string for number field
+			SchemaFactoryAlpha.withDefault(factory.optional(factory.number), () => "string");
+			// @ts-expect-error Type mismatch: generator returns number for object field
+			SchemaFactoryAlpha.withDefault(factory.optional(PersonSchema), () => 42);
+		});
+
+		it("works with union types", () => {
+			const Cat = factory.objectAlpha("Cat", {
+				meow: factory.string,
+			});
+
+			const Dog = factory.objectAlpha("Dog", {
+				bark: factory.string,
+			});
+
+			// Field allows either Cat or Dog
+			const TestSchema = factory.objectAlpha("Test", {
+				pet: SchemaFactoryAlpha.withDefault(
+					factory.optional([Cat, Dog]),
+					new Cat({ meow: "default meow" }),
+				),
+			});
+
+			const obj = new TestSchema({});
+			assert(obj.pet !== undefined);
+			// The default is a Cat, so we can access the meow property
+			assert.equal((obj.pet as { meow: string }).meow, "default meow");
 		});
 	});
 
