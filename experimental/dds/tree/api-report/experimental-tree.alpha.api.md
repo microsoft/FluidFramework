@@ -147,7 +147,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
     revert(editId: EditId): void;
-    readonly tree: SharedTree;
+    readonly tree: ISharedTree;
     protected tryApplyChangesInternal(changes: readonly ChangeInternal[]): EditStatus;
     // (undocumented)
     protected tryApplyChangesInternal(...changes: readonly ChangeInternal[]): EditStatus;
@@ -895,8 +895,7 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
     get isOpen(): boolean;
     readonly startingView: TreeView;
     get status(): EditStatus;
-    // (undocumented)
-    readonly tree: SharedTree;
+    readonly tree: ISharedTree;
 }
 
 // @alpha
