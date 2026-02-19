@@ -3,25 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	createChildLogger,
 } from '@fluidframework/telemetry-utils/internal';
 
-import { Change } from './ChangeTypes.js';
-import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
+import type { Change } from './ChangeTypes.js';
+import { type RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';
-import { EditId } from './Identifiers.js';
+import type { ISharedTree } from './ISharedTree.js';
+import type { EditId } from './Identifiers.js';
 import { CachingLogViewer } from './LogViewer.js';
-import { RevisionView } from './RevisionView.js';
-import { EditCommittedHandler, SharedTree } from './SharedTree.js';
-import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal.js';
-import { TreeView } from './TreeView.js';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import type { RevisionView } from './RevisionView.js';
+import type { EditCommittedHandler, SharedTree } from './SharedTree.js';
+import {
+	type EditingResult,
+	type GenericTransaction,
+	TransactionInternal,
+	type ValidEditingResult,
+} from './TransactionInternal.js';
+import type { TreeView } from './TreeView.js';
+import { type ChangeInternal, type Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
@@ -104,7 +110,13 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	/**
 	 * The shared tree this checkout views/edits.
 	 */
-	public readonly tree: SharedTree;
+	public readonly tree: ISharedTree;
+
+	/**
+	 * Concrete reference to the tree for internal operations that require
+	 * access to SharedTree-specific implementation details (e.g. emit, instanceof checks).
+	 */
+	private readonly _concreteTree: SharedTree;
 
 	/**
 	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
@@ -127,9 +139,10 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 
 	protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler) {
 		super((_event, error: unknown) => {
-			this.tree.emit('error', error);
+			this._concreteTree.emit('error', error);
 		});
 		this.tree = tree;
+		this._concreteTree = tree;
 		this.logger = createChildLogger({ logger: this.tree.logger, namespace: 'Checkout' });
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;

@@ -4,16 +4,17 @@
  */
 
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
+import type { IErrorEvent } from '@fluidframework/core-interfaces';
 
-import { Change } from './ChangeTypes.js';
-import { RestOrArray, unwrapRestOrArray } from './Common.js';
+import type { Change } from './ChangeTypes.js';
+import { type RestOrArray, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { CachingLogViewer } from './LogViewer.js';
-import { SharedTree } from './SharedTree.js';
+import type { SharedTree } from './SharedTree.js';
 import { GenericTransaction, TransactionInternal } from './TransactionInternal.js';
-import { TreeView } from './TreeView.js';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import type { TreeView } from './TreeView.js';
+import { type ChangeInternal, type Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
@@ -40,6 +41,10 @@ export interface TransactionEvents extends IErrorEvent {
  * @alpha
  */
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
+	/** The tree that this transaction applies changes to. */
+	public readonly tree: ISharedTree;
+	/** Concrete reference for internal operations requiring SharedTree-specific details. */
+	private readonly _concreteTree: SharedTree;
 	/** The view of the tree when this transaction was created */
 	public readonly startingView: TreeView;
 	private readonly transaction: GenericTransaction;
@@ -49,8 +54,10 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 * transaction.
 	 * @param tree - the `SharedTree` that this transaction applies changes to
 	 */
-	public constructor(public readonly tree: SharedTree) {
+	public constructor(tree: SharedTree) {
 		super();
+		this.tree = tree;
+		this._concreteTree = tree;
 		const { currentView } = tree;
 		this.transaction = new GenericTransaction(currentView, new TransactionInternal.Policy());
 		this.startingView = currentView;
@@ -111,8 +118,8 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 			if (this.transaction.changes.length > 0) {
 				const result = this.transaction.close();
 				const edit: Edit<ChangeInternal> = { id: newEditId(), changes: result.changes };
-				if (this.tree.edits instanceof CachingLogViewer) {
-					this.tree.edits.setKnownEditingResult(edit, result);
+				if (this._concreteTree.edits instanceof CachingLogViewer) {
+					this._concreteTree.edits.setKnownEditingResult(edit, result);
 				}
 				this.tree.applyEditInternal(edit);
 			}
