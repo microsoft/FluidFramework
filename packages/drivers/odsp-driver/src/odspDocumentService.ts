@@ -42,6 +42,7 @@ import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
+import { SafeScope } from "./structuredConcurrency.js";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -52,6 +53,7 @@ export class OdspDocumentService
 	implements IDocumentService
 {
 	private readonly _policies: IDocumentServicePolicies;
+	private readonly _scope = new SafeScope();
 
 	// Promise to load socket module only once.
 	private socketModuleP: Promise<OdspDelayLoadedDeltaStream> | undefined;
@@ -313,6 +315,9 @@ export class OdspDocumentService
 		this._opsCache?.dispose();
 		// Only need to dipose this, if it is already loaded.
 		this.odspDelayLoadedDeltaStream?.dispose();
+		// Fire-and-forget: scope.close() is async but dispose() is synchronous; tears down
+		// any future scope-managed tasks added to this service.
+		this._scope.close().catch(() => {});
 	}
 
 	protected get opsCache(): OpsCache | undefined {

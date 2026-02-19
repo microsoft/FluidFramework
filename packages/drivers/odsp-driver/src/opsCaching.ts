@@ -6,6 +6,8 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import { SafeScope, SafeTimer } from "./structuredConcurrency.js";
+
 // ISequencedDocumentMessage
 export interface IMessage {
 	sequenceNumber: number;
@@ -30,7 +32,8 @@ export interface ICache {
 
 export class OpsCache {
 	private readonly batches: Map<number, null | IBatch> = new Map();
-	private timer: ReturnType<typeof setTimeout> | undefined;
+	private readonly _scope = new SafeScope();
+	private readonly _flushTimer: SafeTimer;
 
 	constructor(
 		startingSequenceNumber: number,
@@ -40,6 +43,9 @@ export class OpsCache {
 		private readonly timerGranularity: number,
 		private totalOpsToCache: number,
 	) {
+		this._flushTimer = new SafeTimer(this._scope, timerGranularity, () => {
+			this.flushOps();
+		});
 		/**
 		 * Initial batch is a special case because it will never be full - all ops prior (inclusive) to
 		 * `startingSequenceNumber` are never going to show up (undefined)
@@ -57,10 +63,11 @@ export class OpsCache {
 
 	public dispose(): void {
 		this.batches.clear();
-		if (this.timer !== undefined) {
-			clearTimeout(this.timer);
-			this.timer = undefined;
-		}
+		// Cancel any pending flush timer so no writes happen after dispose.
+		this._flushTimer.clear();
+		// Fire-and-forget: scope.close() is async but dispose() is synchronous; swallow errors
+		// since all managed tasks are already halted by timer.clear() above.
+		this._scope.close().catch(() => {});
 	}
 
 	public flushOps(): void {
@@ -211,11 +218,9 @@ export class OpsCache {
 	}
 
 	protected scheduleTimer(): void {
-		if (!this.timer && this.timerGranularity > 0) {
-			this.timer = setTimeout(() => {
-				this.timer = undefined;
-				this.flushOps();
-			}, this.timerGranularity);
+		if (!this._flushTimer.hasTimer && this.timerGranularity > 0) {
+			// Debounce: start a single flush timer; when it fires, all dirty batches are flushed.
+			this._flushTimer.start();
 		}
 	}
 

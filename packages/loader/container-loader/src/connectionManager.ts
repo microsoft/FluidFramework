@@ -65,6 +65,11 @@ import {
 import { DeltaQueue } from "./deltaQueue.js";
 import { FrozenDeltaStream, isFrozenDeltaStreamConnection } from "./frozenServices.js";
 import { SignalType } from "./protocol.js";
+import {
+	EffectionScope,
+	createScopedAbortController,
+	createScopedDelay,
+} from "./structuredConcurrency.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
@@ -191,6 +196,8 @@ export class ConnectionManager implements IConnectionManager {
 	private _connectionProps: ITelemetryBaseProperties = {};
 
 	private _disposed = false;
+
+	private readonly scope = new EffectionScope();
 
 	private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
@@ -389,6 +396,11 @@ export class ConnectionManager implements IConnectionManager {
 			// to switch to a mode where user edits are not accepted
 			this.set_readonlyPermissions(true, oldReadonlyValue, disconnectReason);
 		}
+
+		// Close the scope — this auto-aborts any scoped AbortControllers
+		// and cancels any pending scoped delays. Fire-and-forget since all
+		// registered cleanups are synchronous.
+		this.scope.close().catch(() => {});
 	}
 
 	/**
@@ -523,7 +535,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		let lastError: unknown;
 
-		const abortController = new AbortController();
+		const abortController = createScopedAbortController(this.scope);
 		const abortSignal = abortController.signal;
 		this.pendingConnection = {
 			abort: (): void => {
@@ -644,8 +656,8 @@ export class ConnectionManager implements IConnectionManager {
 					this.props.reconnectionDelayHandler(delayMs, origError);
 				}
 
-				await new Promise<void>((resolve) => {
-					setTimeout(resolve, delayMs);
+				await createScopedDelay(this.scope, delayMs).catch(() => {
+					// Swallow cancellation — scope was closed during delay (dispose)
 				});
 
 				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
@@ -999,8 +1011,8 @@ export class ConnectionManager implements IConnectionManager {
 		const delayMs = getRetryDelayFromError(reason.error);
 		if (reason.error !== undefined && delayMs !== undefined) {
 			this.props.reconnectionDelayHandler(delayMs, reason.error);
-			await new Promise<void>((resolve) => {
-				setTimeout(resolve, delayMs);
+			await createScopedDelay(this.scope, delayMs).catch(() => {
+				// Swallow cancellation — scope was closed during delay (dispose)
 			});
 		}
 

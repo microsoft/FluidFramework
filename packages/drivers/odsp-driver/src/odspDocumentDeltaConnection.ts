@@ -24,6 +24,7 @@ import {
 	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
+import { sleep } from "effection";
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
@@ -32,6 +33,7 @@ import type { EpochTracker } from "./epochTracker.js";
 import { errorObjectFromSocketError } from "./odspError.js";
 import { pkgVersion } from "./packageVersion.js";
 import { SocketIOClientStatic } from "./socketModule.js";
+import { SafeScope, SafeTimer } from "./structuredConcurrency.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -55,7 +57,8 @@ interface ISocketEvents extends IEvent {
 
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	private references: number = 1;
-	private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
+	private readonly _scope = new SafeScope();
+	private readonly _delayDeleteTimer: SafeTimer;
 	private _socket: Socket | undefined;
 
 	// When making decisions about socket reuse, we do not reuse disconnected socket.
@@ -102,12 +105,10 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 			return;
 		}
 
-		if (this.references === 0 && this.delayDeleteTimeout === undefined) {
-			this.delayDeleteTimeout = setTimeout(() => {
-				// We should not get here with active users.
-				assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
-				this.closeSocket();
-			}, socketReferenceBufferTime);
+		if (this.references === 0 && !this._delayDeleteTimer.hasTimer) {
+			// Start the grace period timer; if no new references arrive within
+			// socketReferenceBufferTime ms, the socket will be closed.
+			this._delayDeleteTimer.start();
 		}
 	}
 
@@ -125,6 +126,11 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		super();
 
 		this._socket = socket;
+		this._delayDeleteTimer = new SafeTimer(this._scope, socketReferenceBufferTime, () => {
+			// We should not get here with active users.
+			assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
+			this.closeSocket();
+		});
 		assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
 		SocketReference.socketIoSockets.set(key, this);
 
@@ -159,10 +165,8 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	};
 
 	private clearTimer(): void {
-		if (this.delayDeleteTimeout !== undefined) {
-			clearTimeout(this.delayDeleteTimeout);
-			this.delayDeleteTimeout = undefined;
-		}
+		// Cancel pending grace-period socket cleanup, if any.
+		this._delayDeleteTimer.clear();
 	}
 
 	public closeSocket(error?: IAnyDriverError): void {
@@ -172,6 +176,9 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 
 		this._socket.off("server_disconnect", this.serverDisconnectEventHandler);
 		this.clearTimer();
+		// Fire-and-forget: scope.close() is async but closeSocket() is synchronous; safe because
+		// the delay-delete timer is already cleared above.
+		this._scope.close().catch(() => {});
 
 		assert(
 			SocketReference.socketIoSockets.get(this.key) === this,
@@ -351,7 +358,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		new Map();
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
-	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
+	private readonly _connectionScope = new SafeScope();
+	private connectionNotYetDisposedDiagnosticStarted = false;
 	// Due to socket reuse(multiplexing), we can get "disconnect" event from other clients in the socket reference.
 	// So, a race condition could happen, where this client is establishing connection and listening for "connect_document_success"
 	// on the socket among other events, but we get "disconnect" event on the socket reference from other clients, in which case,
@@ -750,18 +758,27 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
 			// eslint-disable-next-line unicorn/no-lonely-if, @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
-			if (this.connectionNotYetDisposedTimeout === undefined) {
-				this.connectionNotYetDisposedTimeout = setTimeout(() => {
-					if (!this._disposed) {
-						this.logger.sendErrorEvent({
+			if (!this.connectionNotYetDisposedDiagnosticStarted) {
+				this.connectionNotYetDisposedDiagnosticStarted = true;
+				const logger = this.logger;
+				const isDisposed = (): boolean => this._disposed;
+				const getProps = (): Record<string, unknown> => this.getConnectionDetailsProps();
+				// Fire-and-forget diagnostic task: logs a warning if the connection hasn't been
+				// disposed 15 seconds after the socket disconnects. Automatically halted when
+				// _connectionScope is closed during disconnectCore().
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				this._connectionScope.run(function* () {
+					yield* sleep(15000);
+					if (!isDisposed()) {
+						logger.sendErrorEvent({
 							eventName: "ConnectionNotYetDisposed",
 							driverVersion: pkgVersion,
 							details: JSON.stringify({
-								...this.getConnectionDetailsProps(),
+								...getProps(),
 							}),
 						});
 					}
-				}, 15000);
+				});
 			}
 		}
 		return this._disposed;
@@ -832,6 +849,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;
+
+		// Fire-and-forget: scope.close() is async but disconnectCore() is synchronous; halts the
+		// diagnostic timer task if it was started.
+		this._connectionScope.close().catch(() => {});
 
 		socket.off("disconnect", this.disconnectHandler);
 		if (this.hasDetails) {

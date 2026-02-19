@@ -540,11 +540,11 @@ describe("Loader", () => {
 				mockLogger.assertMatch([
 					{
 						eventName: "DeltaManager_GetDeltasAborted",
-						reason: "DeltaManager is closed",
+						reason: "Scope closed",
 					},
 					{
 						eventName: "GetDeltas_Exception",
-						error: "DeltaManager is closed",
+						error: "Scope closed",
 					},
 				]);
 			});

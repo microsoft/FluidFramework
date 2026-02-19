@@ -47,6 +47,7 @@ import {
 	getWithRetryForTokenRefresh,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { SafeScope, SafeTimer } from "./structuredConcurrency.js";
 import { fetchJoinSession } from "./vroom.js";
 
 /**
@@ -54,8 +55,8 @@ import { fetchJoinSession } from "./vroom.js";
  * as they are not on critical path of loading a container.
  */
 export class OdspDelayLoadedDeltaStream {
-	// Timer which runs and executes the join session call after intervals.
-	private joinSessionRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+	private readonly _scope = new SafeScope();
+	private readonly _joinSessionRefreshTimer: SafeTimer;
 
 	private readonly joinSessionKey: string;
 
@@ -102,6 +103,8 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
 		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
+		// Default callback is a no-op; scheduleJoinSessionRefresh always supplies an explicit callback.
+		this._joinSessionRefreshTimer = new SafeTimer(this._scope, 0, () => {});
 	}
 
 	public get resolvedUrl(): IResolvedUrl {
@@ -291,10 +294,8 @@ export class OdspDelayLoadedDeltaStream {
 	};
 
 	private clearJoinSessionTimer(): void {
-		if (this.joinSessionRefreshTimer !== undefined) {
-			clearTimeout(this.joinSessionRefreshTimer);
-			this.joinSessionRefreshTimer = undefined;
-		}
+		// Cancel any pending join session refresh so stale refreshes don't fire after disconnect.
+		this._joinSessionRefreshTimer.clear();
 	}
 
 	private async scheduleJoinSessionRefresh(
@@ -303,7 +304,7 @@ export class OdspDelayLoadedDeltaStream {
 		clientId: string | undefined,
 		displayName: string | undefined,
 	): Promise<void> {
-		if (this.joinSessionRefreshTimer !== undefined) {
+		if (this._joinSessionRefreshTimer.hasTimer) {
 			this.clearJoinSessionTimer();
 			// TODO: use a stronger type
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -321,9 +322,7 @@ export class OdspDelayLoadedDeltaStream {
 		}
 
 		await new Promise<void>((resolve, reject) => {
-			this.joinSessionRefreshTimer = setTimeout(() => {
-				this.clearJoinSessionTimer();
-				// Clear the timer as it is going to be scheduled again as part of refreshing join session.
+			this._joinSessionRefreshTimer.start(delta, () => {
 				getWithRetryForTokenRefresh(async (options) => {
 					await this.joinSession(
 						requestSocketToken,
@@ -337,7 +336,7 @@ export class OdspDelayLoadedDeltaStream {
 					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 					reject(error);
 				});
-			}, delta);
+			});
 		});
 	}
 
@@ -579,6 +578,9 @@ export class OdspDelayLoadedDeltaStream {
 
 	public dispose(error?: unknown): void {
 		this.clearJoinSessionTimer();
+		// Fire-and-forget: scope.close() is async but dispose() is synchronous; safe because
+		// the join session refresh timer is already cleared above.
+		this._scope.close().catch(() => {});
 		this.currentConnection?.dispose();
 		this.currentConnection = undefined;
 	}

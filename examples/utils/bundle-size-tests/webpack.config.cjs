@@ -65,73 +65,84 @@ webpackModuleRules.push(
 	},
 );
 
-module.exports = {
-	entry: {
-		aqueduct: "./src/aqueduct",
-		azureClient: "./src/azureClient",
-		connectionState: "./src/connectionState",
-		containerRuntime: "./src/containerRuntimeBundle",
-		debugAssert: "./src/debugAssert",
-		directory: "./src/sharedDirectory",
-		experimentalSharedTree: "./src/experimentalSharedTree",
-		fluidFramework: "./src/fluidFramework",
-		loader: "./src/loader",
-		map: "./src/sharedMap",
-		matrix: "./src/sharedMatrix",
-		odspClient: "./src/odspClient",
-		odspDriver: "./src/odspDriver",
-		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
-		sharedString: "./src/sharedString",
-		sharedTree: "./src/sharedTree",
-		sharedTreeAttributes: "./src/sharedTreeAttributes",
-	},
-	mode: "production",
-	module: {
-		rules: webpackModuleRules,
-	},
-	resolve: {
-		extensions: [".tsx", ".ts", ".js"],
-	},
-	output: {
-		path: path.resolve(__dirname, "build"),
-		library: "bundle",
-	},
-	node: false,
-	plugins: [
-		new BannedModulesPlugin({
-			bannedModules: [
-				{
-					moduleName: "assert",
-					reason:
-						"This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
-				},
-			],
-		}),
-		new DuplicatePackageCheckerPlugin({
-			// Also show module that is requiring each duplicate package
-			verbose: true,
-			// Emit errors instead of warnings
-			emitError: true,
-			/**
-			 * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
-			 * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
-			 */
-			exclude: (instance) => false,
-		}),
-		new BundleAnalyzerPlugin({
-			analyzerMode: "static",
-			reportFilename: path.resolve(process.cwd(), "bundleAnalysis/report.html"),
-			openAnalyzer: false,
-			generateStatsFile: true,
-			statsFilename: path.resolve(process.cwd(), "bundleAnalysis/report.json"),
-		}),
-		// Plugin that generates a compressed version of the stats file that can be uploaded to blob storage
-		new BundleComparisonPlugin({
-			// File to create, relative to the webpack build output path:
-			file: path.resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
-		}),
-	],
-	// Enabling source maps allows using source-map-explorer to investigate bundle contents,
-	// which provides more fine grained details than BundleAnalyzerPlugin, so its nice for manual investigations.
-	devtool: "source-map",
+module.exports = async () => {
+	const { default: Sonda } = await import("sonda/webpack");
+	return {
+		entry: {
+			aqueduct: "./src/aqueduct",
+			azureClient: "./src/azureClient",
+			connectionState: "./src/connectionState",
+			containerRuntime: "./src/containerRuntimeBundle",
+			debugAssert: "./src/debugAssert",
+			directory: "./src/sharedDirectory",
+			experimentalSharedTree: "./src/experimentalSharedTree",
+			fluidFramework: "./src/fluidFramework",
+			loader: "./src/loader",
+			map: "./src/sharedMap",
+			matrix: "./src/sharedMatrix",
+			odspClient: "./src/odspClient",
+			odspDriver: "./src/odspDriver",
+			odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
+			sharedString: "./src/sharedString",
+			sharedTree: "./src/sharedTree",
+			sharedTreeAttributes: "./src/sharedTreeAttributes",
+		},
+		mode: "production",
+		module: {
+			rules: webpackModuleRules,
+		},
+		resolve: {
+			extensions: [".tsx", ".ts", ".js"],
+		},
+		output: {
+			path: path.resolve(__dirname, "build"),
+			library: "bundle",
+		},
+		node: false,
+		plugins: [
+			new BannedModulesPlugin({
+				bannedModules: [
+					{
+						moduleName: "assert",
+						reason:
+							"This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
+					},
+				],
+			}),
+			new DuplicatePackageCheckerPlugin({
+				// Also show module that is requiring each duplicate package
+				verbose: true,
+				// Emit errors instead of warnings
+				emitError: true,
+				/**
+				 * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
+				 * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
+				 */
+				exclude: (instance) => false,
+			}),
+			new BundleAnalyzerPlugin({
+				analyzerMode: "static",
+				reportFilename: path.resolve(process.cwd(), "bundleAnalysis/report.html"),
+				openAnalyzer: false,
+				generateStatsFile: true,
+				statsFilename: path.resolve(process.cwd(), "bundleAnalysis/report.json"),
+			}),
+			// Plugin that generates a compressed version of the stats file that can be uploaded to blob storage
+			new BundleComparisonPlugin({
+				// File to create, relative to the webpack build output path:
+				file: path.resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
+			}),
+			new Sonda({
+				open: false,
+				outputDir: path.resolve(process.cwd(), "bundleAnalysis"),
+				filename: "sonda",
+				format: "html",
+				gzip: true,
+				brotli: true,
+			}),
+		],
+		// Enabling source maps allows using source-map-explorer to investigate bundle contents,
+		// which provides more fine grained details than BundleAnalyzerPlugin, so its nice for manual investigations.
+		devtool: "source-map",
+	};
 };

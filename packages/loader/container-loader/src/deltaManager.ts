@@ -56,6 +56,7 @@ import type {
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { ThrottlingWarning } from "./error.js";
+import { EffectionScope, createScopedAbortController } from "./structuredConcurrency.js";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -231,7 +232,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private readonly throttlingIdSet = new Set<string>();
 	private timeTillThrottling: number = 0;
 
-	public readonly closeAbortController = new AbortController();
+	private readonly scope = new EffectionScope();
+	public readonly closeAbortController: AbortController;
 
 	private readonly deltaStorageDelayId = uuid();
 	private readonly deltaStreamDelayId = uuid();
@@ -434,6 +436,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			);
 			this.close(normalizeError(error));
 		});
+
+		// Create a scoped AbortController that auto-aborts when the scope closes.
+		// This replaces the plain `new AbortController()` so that scope-based
+		// cancellation cascades to all operations that use this signal.
+		this.closeAbortController = createScopedAbortController(this.scope);
+
 		const props: IConnectionManagerFactoryArgs = {
 			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
 				try {
@@ -708,7 +716,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				op.sequenceNumber >= lastExpectedOp;
 		}
 
-		const controller = new AbortController();
+		// Use a scoped AbortController — it will auto-abort when the scope
+		// closes, eliminating the need to manually chain it to closeAbortController.
+		const controller = createScopedAbortController(this.scope);
 		let opsFromFetch = false;
 
 		const opListener = (op: ISequencedDocumentMessage): void => {
@@ -724,10 +734,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		try {
 			this._inbound.on("push", opListener);
-			assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
-			this.closeAbortController.signal.addEventListener("abort", () =>
-				controller.abort(this.closeAbortController.signal.reason),
-			);
 
 			const stream = this.deltaStorage.fetchMessages(
 				from, // inclusive
@@ -759,8 +765,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					reason: controller.signal.reason,
 				});
 			}
-			// eslint-disable-next-line unicorn/no-null, unicorn/prefer-add-event-listener
-			this.closeAbortController.signal.onabort = null;
 			this._inbound.off("push", opListener);
 			assert(!opsFromFetch, 0x289 /* "logic error" */);
 		}
@@ -779,6 +783,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 		this._closed = true;
+
+		// Close the scope — auto-aborts all scoped AbortControllers and
+		// cancels any pending scoped operations. Fire-and-forget since
+		// registered cleanups are synchronous.
+		this.scope.close().catch(() => {});
 
 		this.connectionManager.dispose(error, true /* switchToReadonly */);
 		this.clearQueues();
@@ -803,6 +812,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		this._disposed = true;
 		this._closed = true; // We consider "disposed" as a further state than "closed"
+
+		// Close the scope — auto-aborts all scoped AbortControllers.
+		this.scope.close().catch(() => {});
 
 		this.connectionManager.dispose(error, false /* switchToReadonly */);
 		this.clearQueues();
