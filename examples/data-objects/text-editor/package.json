@@ -27,7 +27,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
-		"start": "webpack serve --config webpack.app.config.cjs",
+		"start": "webpack serve",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
