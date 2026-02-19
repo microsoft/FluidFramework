@@ -5,14 +5,14 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { VersionBumpType } from "@fluid-tools/version-tools";
-import type { Package } from "@fluidframework/build-tools";
 import { Flags, ux } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import { humanId } from "human-id";
 import chalk from "picocolors";
 // eslint-disable-next-line import-x/no-named-as-default -- prompts default export is the intended API
 import prompts from "prompts";
+import type { Package } from "../../../core/index.js";
+import type { VersionBumpType } from "../../../version-tools/index.js";
 
 import { releaseGroupFlag } from "../../flags.js";
 import {

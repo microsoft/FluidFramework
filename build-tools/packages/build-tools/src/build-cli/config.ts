@@ -4,13 +4,13 @@
  */
 
 import { statSync } from "node:fs";
+import { lilconfigSync } from "lilconfig";
+import { MonoRepo } from "../core/index.js";
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	type InterdependencyRange,
 	type VersionBumpType,
-} from "@fluid-tools/version-tools";
-import { MonoRepo } from "@fluidframework/build-tools";
-import { lilconfigSync } from "lilconfig";
+} from "../version-tools/index.js";
 import type { Context } from "./library/index.js";
 import type { ReleaseGroup } from "./releaseGroups.js";
 

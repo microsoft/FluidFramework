@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+import { rawlist } from "@inquirer/prompts";
+import type { Config } from "@oclif/core";
+import chalk from "picocolors";
 import {
 	bumpVersionScheme,
 	detectVersionScheme,
 	type VersionBumpType,
-} from "@fluid-tools/version-tools";
-import { rawlist } from "@inquirer/prompts";
-import type { Config } from "@oclif/core";
-import chalk from "picocolors";
+} from "../../version-tools/index.js";
 
 import { findPackageOrReleaseGroup } from "../args.js";
 import {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import type { Package } from "../../../core/index.js";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 import {

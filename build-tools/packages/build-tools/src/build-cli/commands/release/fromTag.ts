@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { Args } from "@oclif/core";
+import semver from "semver";
+import { sortPackageJson as sortJson } from "sort-package-json";
+import { type MonoRepo, Package } from "../../../core/index.js";
 import {
 	detectBumpType,
 	type ReleaseVersion,
 	type VersionBumpType,
-} from "@fluid-tools/version-tools";
-import { type MonoRepo, Package } from "@fluidframework/build-tools";
-import { Args } from "@oclif/core";
-import semver from "semver";
-import { sortPackageJson as sortJson } from "sort-package-json";
+} from "../../../version-tools/index.js";
 
 import { findPackageOrReleaseGroup } from "../../args.js";
 // eslint-disable-next-line import-x/no-deprecated

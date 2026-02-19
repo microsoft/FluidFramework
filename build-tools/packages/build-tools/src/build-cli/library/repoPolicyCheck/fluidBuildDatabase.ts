@@ -8,9 +8,8 @@
  */
 
 import path from "node:path";
-
-import { type Package, TscUtils } from "@fluidframework/build-tools";
 import type { TsConfigJson } from "type-fest";
+import { type Package, TscUtils } from "../../../core/index.js";
 
 import { getGenerateEntrypointsOutput } from "../commands/index.js";
 

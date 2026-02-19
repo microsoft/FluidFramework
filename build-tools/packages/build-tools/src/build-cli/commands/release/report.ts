@@ -5,15 +5,6 @@
 
 import { strict as assert } from "node:assert";
 import path from "node:path";
-
-import {
-	detectBumpType,
-	detectVersionScheme,
-	getPreviousVersions,
-	isVersionBumpType,
-	type ReleaseVersion,
-	type VersionBumpType,
-} from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import { type Command, Flags, ux } from "@oclif/core";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
@@ -21,6 +12,14 @@ import { writeJson } from "fs-extra/esm";
 import chalk from "picocolors";
 import sortJson from "sort-json";
 import { table } from "table";
+import {
+	detectBumpType,
+	detectVersionScheme,
+	getPreviousVersions,
+	isVersionBumpType,
+	type ReleaseVersion,
+	type VersionBumpType,
+} from "../../../version-tools/index.js";
 
 import { releaseGroupFlag } from "../../flags.js";
 import {

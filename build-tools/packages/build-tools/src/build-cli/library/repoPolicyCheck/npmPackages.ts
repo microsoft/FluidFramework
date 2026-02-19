@@ -9,16 +9,16 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
-import {
-	findGitRootSync,
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
-} from "@fluid-tools/build-infrastructure";
-import { getApiExtractorConfigFilePath, type PackageJson } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
+import {
+	findGitRootSync,
+	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
+} from "../../../build-infrastructure/index.js";
+import { getApiExtractorConfigFilePath, type PackageJson } from "../../../core/index.js";
 import {
 	getFlubConfig,
 	type PackageNamePolicyConfig,

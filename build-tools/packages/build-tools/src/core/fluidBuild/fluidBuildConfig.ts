@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { InterdependencyRange } from "@fluid-tools/version-tools";
+import type { InterdependencyRange } from "../../version-tools/index.js";
 import type {
 	GitIgnoreSetting,
 	TaskDefinitionsOnDisk,

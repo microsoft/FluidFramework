@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Logger } from "@fluidframework/build-tools";
+import type { Logger } from "../core/index.js";
 
 /**
  * An extension of the {@link Logger} interface that adds logging capabilities useful when writing terminal CLIs.

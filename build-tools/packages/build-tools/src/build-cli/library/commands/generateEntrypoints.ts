@@ -4,11 +4,11 @@
  */
 
 import path from "node:path";
-import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import fs from "fs-extra";
 import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
+import type { PackageJson } from "../../../core/index.js";
 
 import type { CommandLogger } from "../../logging.js";
 import { ApiLevel, isLegacy } from "../apiLevel.js";

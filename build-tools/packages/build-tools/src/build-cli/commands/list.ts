@@ -5,9 +5,9 @@
 
 import { writeFileSync } from "node:fs";
 import path from "node:path";
-import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { mkdirpSync } from "fs-extra";
+import { MonoRepo, Package } from "../../core/index.js";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
 import { filterPackages, parsePackageFilterFlags } from "../filter.js";
 import { filterFlags, releaseGroupFlag } from "../flags.js";

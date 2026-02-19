@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import * as semver from "semver";
 import {
 	detectVersionScheme,
 	getVersionRange,
 	type ReleaseVersion,
 	type VersionBumpType,
 	type VersionScheme,
-} from "@fluid-tools/version-tools";
-import * as semver from "semver";
+} from "../../version-tools/index.js";
 
 import type { ReleaseReportConfig } from "../config.js";
 import type { ReleaseGroup } from "../releaseGroups.js";

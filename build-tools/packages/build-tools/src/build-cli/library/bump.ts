@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Logger, MonoRepo, Package } from "../../core/index.js";
 import {
 	bumpVersionScheme,
 	DEFAULT_INTERDEPENDENCY_RANGE,
@@ -10,8 +11,7 @@ import {
 	isVersionBumpType,
 	type VersionChangeType,
 	type VersionScheme,
-} from "@fluid-tools/version-tools";
-import type { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
+} from "../../version-tools/index.js";
 import type { Context } from "./context.js";
 
 import { setVersion } from "./package.js";

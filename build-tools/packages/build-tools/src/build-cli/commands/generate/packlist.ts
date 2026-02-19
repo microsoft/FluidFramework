@@ -4,9 +4,9 @@
  */
 
 import path from "node:path";
-import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
+import type { Package } from "../../../core/index.js";
 import { PackageCommand } from "../../BasePackageCommand.js";
 // eslint-disable-next-line import-x/no-internal-modules -- AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 import { writeFileWithLineFeeds } from "../../library/text.js";

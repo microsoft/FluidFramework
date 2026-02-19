@@ -1,16 +1,28 @@
 {
-	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"include": ["./**/*"],
 	"exclude": ["./data/**/*"],
 	"compilerOptions": {
-		"rootDir": "./",
-		"outDir": "../../lib/test",
+		"rootDir": ".",
+		"outDir": "../../../dist/build-cli/test",
 		"types": ["node", "mocha", "chai"],
 		"exactOptionalPropertyTypes": false,
 	},
 	"references": [
 		{
-			"path": "../..",
+			"path": "..",
+		},
+		{
+			"path": "../../core",
+		},
+		{
+			"path": "../../version-tools",
+		},
+		{
+			"path": "../../build-infrastructure",
+		},
+		{
+			"path": "../../bundle-size-tools",
 		},
 	],
 }

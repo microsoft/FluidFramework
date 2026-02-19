@@ -1,18 +1,23 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../../../../common/build/build-common/tsconfig.base.json",
 	"compilerOptions": {
-		"declaration": true,
-		"importHelpers": true,
+		"composite": false,
+		"declaration": false,
 		"declarationMap": false,
-		"rootDir": "./",
-		"outDir": "../../lib/test",
+		"rootDir": ".",
+		"outDir": "../../../dist/version-tools/test",
+		"module": "commonjs",
+		"moduleResolution": "node",
 		"types": ["node", "mocha", "chai"],
 		"skipLibCheck": true,
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
+		"noUnusedLocals": false,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "..",
 		},
 	],
 }

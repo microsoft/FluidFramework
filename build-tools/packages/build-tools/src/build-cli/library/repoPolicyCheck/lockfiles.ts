@@ -5,8 +5,8 @@
 
 import { unlinkSync } from "node:fs";
 import path from "node:path";
-import type { IFluidBuildConfig } from "@fluidframework/build-tools";
-import { getFluidBuildConfig } from "@fluidframework/build-tools";
+import type { IFluidBuildConfig } from "../../../core/index.js";
+import { getFluidBuildConfig } from "../../../core/index.js";
 import { type FlubConfig, getFlubConfig } from "../../config.js";
 import type { Handler } from "./common.js";
 

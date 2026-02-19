@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
+import { isInternalVersionScheme } from "../../../../version-tools/index.js";
 
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
 import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";

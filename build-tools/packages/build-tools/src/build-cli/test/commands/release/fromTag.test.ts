@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { runCommand } from "@oclif/test";
 import * as chai from "chai";
 import { expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
+import type { ReleaseVersion, VersionBumpType } from "../../../../version-tools/index.js";
 
 import type { ReleaseGroup, ReleasePackage } from "../../../releaseGroups.js";
 

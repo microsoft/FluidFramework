@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
+import { isInternalVersionScheme } from "../../../version-tools/index.js";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
 import { BaseCommand, sortVersions } from "../../library/index.js";
 

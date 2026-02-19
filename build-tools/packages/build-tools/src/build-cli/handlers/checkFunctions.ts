@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo } from "@fluidframework/build-tools";
 import { confirm, rawlist } from "@inquirer/prompts";
 import execa from "execa";
 import type { Machine } from "jssm";
+import { FluidRepo } from "../../core/index.js";
+import { bumpVersionScheme } from "../../version-tools/index.js";
 
 import {
 	checkPackagesCompatLayerGeneration,

@@ -4,13 +4,13 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
-import type { IPackage } from "@fluid-tools/build-infrastructure";
+import { inc } from "semver";
+import type { IPackage } from "../../build-infrastructure/index.js";
 import {
 	bumpVersionScheme,
 	isInternalVersionScheme,
 	type VersionBumpType,
-} from "@fluid-tools/version-tools";
-import { inc } from "semver";
+} from "../../version-tools/index.js";
 
 /**
  * Escapes special regex characters in a string to make it safe for use in a RegExp.

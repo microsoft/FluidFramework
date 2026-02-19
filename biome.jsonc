@@ -50,7 +50,7 @@
 			// Test json
 			// Note: This ignore must remain in the root config because biome scans for config files
 			// regardless of includes patterns, and the test data contains Biome 1.x configs.
-			"!**/build-tools/packages/build-tools/src/test/data/**",
+			"!**/build-tools/packages/build-tools/src/*/test/data/**",
 			"!**/experimental/dds/tree/src/test/documents/**",
 			"!**/packages/dds/map/src/test/mocha/snapshots/**/*.json",
 			"!**/packages/dds/matrix/src/test/results/**/*.json",

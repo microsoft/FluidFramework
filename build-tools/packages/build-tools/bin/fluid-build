@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require("../dist/fluidBuild/fluidBuild.js");
+require("../dist/core/fluidBuild/fluidBuild.js");

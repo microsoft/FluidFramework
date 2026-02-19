@@ -5,10 +5,10 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isInternalTestVersion } from "@fluid-tools/version-tools";
-import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
+import type { Logger } from "../../../core/index.js";
+import { isInternalTestVersion } from "../../../version-tools/index.js";
 
 import { semverFlag } from "../../flags.js";
 import { BaseCommand, type ReleaseReport, toReportKind } from "../../library/index.js";

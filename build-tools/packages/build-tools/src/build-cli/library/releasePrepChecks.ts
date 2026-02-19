@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
+import { MonoRepo, type Package } from "../../core/index.js";
 import {
 	checkPackagesCompatLayerGeneration,
 	DEFAULT_GENERATION_DIR,

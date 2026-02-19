@@ -34,8 +34,8 @@ importers:
         specifier: ^20.1.0
         version: 20.1.0(@types/node@22.19.1)(commitizen@4.3.1(@types/node@22.19.1)(typescript@5.4.5))(inquirer@9.3.8(@types/node@22.19.1))(typescript@5.4.5)
       '@fluid-tools/build-cli':
-        specifier: ~0.63.0
-        version: 0.63.0(@types/node@22.19.1)
+        specifier: workspace:~
+        version: link:packages/build-cli
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -96,24 +96,35 @@ importers:
 
   packages/build-cli:
     dependencies:
-      '@andrewbranch/untar.js':
-        specifier: ^1.0.3
-        version: 1.0.3
-      '@fluid-tools/build-infrastructure':
-        specifier: workspace:~
-        version: link:../build-infrastructure
-      '@fluid-tools/version-tools':
-        specifier: workspace:~
-        version: link:../version-tools
       '@fluidframework/build-tools':
         specifier: workspace:~
         version: link:../build-tools
-      '@fluidframework/bundle-size-tools':
+    devDependencies:
+      rimraf:
+        specifier: ^6.1.2
+        version: 6.1.2
+
+  packages/build-infrastructure:
+    dependencies:
+      '@fluidframework/build-tools':
         specifier: workspace:~
-        version: link:../bundle-size-tools
+        version: link:../build-tools
+    devDependencies:
+      rimraf:
+        specifier: ^6.1.2
+        version: 6.1.2
+
+  packages/build-tools:
+    dependencies:
+      '@andrewbranch/untar.js':
+        specifier: ^1.0.3
+        version: 1.0.3
       '@inquirer/prompts':
         specifier: ^8.0.1
         version: 8.0.1(@types/node@22.19.1)
+      '@manypkg/get-packages':
+        specifier: ^2.2.2
+        version: 2.2.2
       '@microsoft/api-extractor':
         specifier: ^7.55.1
         version: 7.55.1(@types/node@22.19.1)
@@ -141,6 +152,9 @@ importers:
       '@rushstack/node-core-library':
         specifier: ^5.19.0
         version: 5.19.0(@types/node@22.19.1)
+      '@types/glob':
+        specifier: ^7.2.0
+        version: 7.2.0
       async:
         specifier: ^3.2.6
         version: 3.2.6
@@ -159,18 +173,27 @@ importers:
       debug:
         specifier: ^4.4.3
         version: 4.4.3(supports-color@8.1.1)
+      detect-indent:
+        specifier: ^6.1.0
+        version: 6.1.0
       execa:
         specifier: ^5.1.1
         version: 5.1.1
       fflate:
         specifier: ^0.8.2
         version: 0.8.2
+      find-up:
+        specifier: ^7.0.0
+        version: 7.0.0
       fs-extra:
         specifier: ^11.3.2
         version: 11.3.2
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
+      glob:
+        specifier: ^7.2.3
+        version: 7.2.3
       globby:
         specifier: ^11.1.0
         version: 11.1.0
@@ -180,6 +203,9 @@ importers:
       human-id:
         specifier: ^4.1.2
         version: 4.1.2
+      ignore:
+        specifier: ^7.0.5
+        version: 7.0.5
       issue-parser:
         specifier: ^7.0.1
         version: 7.0.1
@@ -198,6 +224,9 @@ importers:
       lilconfig:
         specifier: ^3.1.3
         version: 3.1.3
+      lodash.isequal:
+        specifier: ^4.5.0
+        version: 4.5.0
       mdast:
         specifier: ^3.0.0
         version: 3.0.0
@@ -207,9 +236,18 @@ importers:
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
+      micromatch:
+        specifier: ^4.0.8
+        version: 4.0.8
       minimatch:
         specifier: ^10.1.1
         version: 10.1.1
+      msgpack-lite:
+        specifier: ^0.1.26
+        version: 0.1.26
+      multimatch:
+        specifier: ^5.0.0
+        version: 5.0.0
       npm-check-updates:
         specifier: ^16.14.20
         version: 16.14.20
@@ -219,6 +257,12 @@ importers:
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
+      picomatch:
+        specifier: ^4.0.3
+        version: 4.0.3
+      picospinner:
+        specifier: ^2.1.0
+        version: 2.1.0
       prettier:
         specifier: ~3.2.5
         version: 3.2.5
@@ -249,6 +293,9 @@ importers:
       resolve.exports:
         specifier: ^2.0.3
         version: 2.0.3
+      rimraf:
+        specifier: ^6.1.2
+        version: 6.1.2
       semver:
         specifier: ^7.7.3
         version: 7.7.3
@@ -267,22 +314,43 @@ importers:
       table:
         specifier: ^6.9.0
         version: 6.9.0
+      ts-deepmerge:
+        specifier: ^7.0.3
+        version: 7.0.3
       ts-morph:
         specifier: ^22.0.0
         version: 22.0.0
+      type-fest:
+        specifier: ^2.19.0
+        version: 2.19.0
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
       unist-util-visit:
         specifier: ^5.0.0
         version: 5.0.0
+      webpack:
+        specifier: ^5.103.0
+        version: 5.103.0
       xml2js:
         specifier: ^0.6.2
         version: 0.6.2
+      yaml:
+        specifier: ^2.8.1
+        version: 2.8.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-tools/api-markdown-documenter':
+        specifier: ^0.23.0
+        version: 0.23.2(@types/node@22.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      '@fluidframework/build-tools-bin':
+        specifier: npm:@fluidframework/build-tools@~0.63.0
+        version: '@fluidframework/build-tools@0.63.0(@types/node@22.19.1)'
       '@oclif/test':
         specifier: ^4.1.15
         version: 4.1.15(@oclif/core@4.8.0)
@@ -307,12 +375,21 @@ importers:
       '@types/issue-parser':
         specifier: ^3.0.5
         version: 3.0.5
+      '@types/lodash.isequal':
+        specifier: ^4.5.8
+        version: 4.5.8
       '@types/mdast':
         specifier: ^4.0.4
         version: 4.0.4
+      '@types/micromatch':
+        specifier: ^4.0.10
+        version: 4.0.10
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
+      '@types/msgpack-lite':
+        specifier: ^0.1.12
+        version: 0.1.12
       '@types/node':
         specifier: ^22.19.1
         version: 22.19.1
@@ -352,9 +429,18 @@ importers:
       eslint:
         specifier: ~9.39.2
         version: 9.39.2(jiti@2.6.1)
+      eslint-plugin-chai-friendly:
+        specifier: ~1.1.0
+        version: 1.1.0(eslint@9.39.2(jiti@2.6.1))
+      json-schema-to-typescript:
+        specifier: ^15.0.4
+        version: 15.0.4
       jssm-viz-cli:
         specifier: ^5.101.0
         version: 5.101.0(jiti@2.6.1)
+      memfs:
+        specifier: ^4.51.0
+        version: 4.51.0
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
@@ -364,145 +450,12 @@ importers:
       mocked-env:
         specifier: ^1.3.5
         version: 1.3.5
-      rimraf:
-        specifier: ^6.1.2
-        version: 6.1.2
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.1)(typescript@5.4.5)
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
-      type-fest:
-        specifier: ^2.19.0
-        version: 2.19.0
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
-  packages/build-infrastructure:
-    dependencies:
-      '@fluid-tools/version-tools':
-        specifier: workspace:~
-        version: link:../version-tools
-      '@manypkg/get-packages':
-        specifier: ^2.2.2
-        version: 2.2.2
-      '@oclif/core':
-        specifier: ^4.8.0
-        version: 4.8.0
-      detect-indent:
-        specifier: ^6.1.0
-        version: 6.1.0
-      execa:
-        specifier: ^5.1.1
-        version: 5.1.1
-      fs-extra:
-        specifier: ^11.3.2
-        version: 11.3.2
-      globby:
-        specifier: ^11.1.0
-        version: 11.1.0
-      lilconfig:
-        specifier: ^3.1.3
-        version: 3.1.3
-      micromatch:
-        specifier: ^4.0.8
-        version: 4.0.8
-      oclif:
-        specifier: ^4.22.50
-        version: 4.22.50(@types/node@22.19.1)
-      picocolors:
-        specifier: ^1.1.1
-        version: 1.1.1
-      read-pkg-up:
-        specifier: ^7.0.1
-        version: 7.0.1
-      semver:
-        specifier: ^7.7.3
-        version: 7.7.3
-      simple-git:
-        specifier: ^3.30.0
-        version: 3.30.0
-      sort-package-json:
-        specifier: 1.57.0
-        version: 1.57.0
-      type-fest:
-        specifier: ^2.19.0
-        version: 2.19.0
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~2.3.11
-        version: 2.3.11
-      '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.23.0
-        version: 0.23.2(@types/node@22.19.1)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools-bin':
-        specifier: npm:@fluidframework/build-tools@~0.63.0
-        version: '@fluidframework/build-tools@0.63.0(@types/node@22.19.1)'
-      '@microsoft/api-extractor':
-        specifier: ^7.55.1
-        version: 7.55.1(@types/node@22.19.1)
-      '@types/chai':
-        specifier: ^5.2.3
-        version: 5.2.3
-      '@types/chai-arrays':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@types/fs-extra':
-        specifier: ^11.0.4
-        version: 11.0.4
-      '@types/micromatch':
-        specifier: ^4.0.10
-        version: 4.0.10
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^22.19.1
-        version: 22.19.1
-      '@types/semver':
-        specifier: ^7.7.1
-        version: 7.7.1
-      c8:
-        specifier: ^10.1.3
-        version: 10.1.3
-      chai:
-        specifier: ^6.2.1
-        version: 6.2.1
-      chai-arrays:
-        specifier: ^2.2.0
-        version: 2.2.0
-      concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      eslint:
-        specifier: ~9.39.2
-        version: 9.39.2(jiti@2.6.1)
-      eslint-plugin-chai-friendly:
-        specifier: ~1.1.0
-        version: 1.1.0(eslint@9.39.2(jiti@2.6.1))
-      memfs:
-        specifier: ^4.51.0
-        version: 4.51.0
-      mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
-      rimraf:
-        specifier: ^6.1.2
-        version: 6.1.2
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.19.1)(typescript@5.4.5)
       typedoc:
         specifier: ^0.28.14
         version: 0.28.15(typescript@5.4.5)
@@ -510,254 +463,25 @@ importers:
         specifier: ^4.9.0
         version: 4.9.0(typedoc@0.28.15(typescript@5.4.5))
 
-  packages/build-tools:
-    dependencies:
-      '@fluid-tools/version-tools':
-        specifier: workspace:~
-        version: link:../version-tools
-      '@manypkg/get-packages':
-        specifier: ^2.2.2
-        version: 2.2.2
-      '@types/glob':
-        specifier: ^7.2.0
-        version: 7.2.0
-      async:
-        specifier: ^3.2.6
-        version: 3.2.6
-      date-fns:
-        specifier: ^3.6.0
-        version: 3.6.0
-      debug:
-        specifier: ^4.4.3
-        version: 4.4.3(supports-color@8.1.1)
-      detect-indent:
-        specifier: ^6.1.0
-        version: 6.1.0
-      find-up:
-        specifier: ^7.0.0
-        version: 7.0.0
-      fs-extra:
-        specifier: ^11.3.2
-        version: 11.3.2
-      glob:
-        specifier: ^7.2.3
-        version: 7.2.3
-      globby:
-        specifier: ^11.1.0
-        version: 11.1.0
-      ignore:
-        specifier: ^7.0.5
-        version: 7.0.5
-      json5:
-        specifier: ^2.2.3
-        version: 2.2.3
-      lilconfig:
-        specifier: ^3.1.3
-        version: 3.1.3
-      lodash.isequal:
-        specifier: ^4.5.0
-        version: 4.5.0
-      multimatch:
-        specifier: ^5.0.0
-        version: 5.0.0
-      picocolors:
-        specifier: ^1.1.1
-        version: 1.1.1
-      picomatch:
-        specifier: ^4.0.3
-        version: 4.0.3
-      picospinner:
-        specifier: ^2.1.0
-        version: 2.1.0
-      rimraf:
-        specifier: ^6.1.2
-        version: 6.1.2
-      semver:
-        specifier: ^7.7.3
-        version: 7.7.3
-      sort-package-json:
-        specifier: 1.57.0
-        version: 1.57.0
-      ts-deepmerge:
-        specifier: ^7.0.3
-        version: 7.0.3
-      type-fest:
-        specifier: ^2.19.0
-        version: 2.19.0
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-      yaml:
-        specifier: ^2.8.1
-        version: 2.8.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~2.3.11
-        version: 2.3.11
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools-bin':
-        specifier: npm:@fluidframework/build-tools@~0.63.0
-        version: '@fluidframework/build-tools@0.63.0(@types/node@22.19.1)'
-      '@types/async':
-        specifier: ^3.2.25
-        version: 3.2.25
-      '@types/fs-extra':
-        specifier: ^11.0.4
-        version: 11.0.4
-      '@types/lodash.isequal':
-        specifier: ^4.5.8
-        version: 4.5.8
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^22.19.1
-        version: 22.19.1
-      '@types/semver':
-        specifier: ^7.7.1
-        version: 7.7.1
-      eslint:
-        specifier: ~9.39.2
-        version: 9.39.2(jiti@2.6.1)
-      json-schema-to-typescript:
-        specifier: ^15.0.4
-        version: 15.0.4
-      mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
-
   packages/bundle-size-tools:
     dependencies:
-      azure-devops-node-api:
-        specifier: ^11.2.0
-        version: 11.2.0
-      fflate:
-        specifier: ^0.8.2
-        version: 0.8.2
-      jszip:
-        specifier: ^3.10.1
-        version: 3.10.1
-      msgpack-lite:
-        specifier: ^0.1.26
-        version: 0.1.26
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-      webpack:
-        specifier: ^5.103.0
-        version: 5.103.0
+      '@fluidframework/build-tools':
+        specifier: workspace:~
+        version: link:../build-tools
     devDependencies:
-      '@biomejs/biome':
-        specifier: ~2.3.11
-        version: 2.3.11
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools-bin':
-        specifier: npm:@fluidframework/build-tools@~0.63.0
-        version: '@fluidframework/build-tools@0.63.0(@types/node@22.19.1)'
-      '@microsoft/api-extractor':
-        specifier: ^7.55.1
-        version: 7.55.1(@types/node@22.19.1)
-      '@types/msgpack-lite':
-        specifier: ^0.1.12
-        version: 0.1.12
-      '@types/node':
-        specifier: ^22.19.1
-        version: 22.19.1
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      eslint:
-        specifier: ~9.39.2
-        version: 9.39.2(jiti@2.6.1)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
 
   packages/version-tools:
     dependencies:
-      '@oclif/core':
-        specifier: ^4.8.0
-        version: 4.8.0
-      '@oclif/plugin-autocomplete':
-        specifier: ^3.2.39
-        version: 3.2.39
-      '@oclif/plugin-commands':
-        specifier: ^4.1.38
-        version: 4.1.38
-      '@oclif/plugin-help':
-        specifier: ^6.2.36
-        version: 6.2.36
-      '@oclif/plugin-not-found':
-        specifier: ^3.2.73
-        version: 3.2.73(@types/node@22.19.1)
-      semver:
-        specifier: ^7.7.3
-        version: 7.7.3
-      table:
-        specifier: ^6.9.0
-        version: 6.9.0
+      '@fluidframework/build-tools':
+        specifier: workspace:~
+        version: link:../build-tools
     devDependencies:
-      '@biomejs/biome':
-        specifier: ~2.3.11
-        version: 2.3.11
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools-bin':
-        specifier: npm:@fluidframework/build-tools@~0.63.0
-        version: '@fluidframework/build-tools@0.63.0(@types/node@22.19.1)'
-      '@microsoft/api-extractor':
-        specifier: ^7.55.1
-        version: 7.55.1(@types/node@22.19.1)
-      '@oclif/test':
-        specifier: ^4.1.15
-        version: 4.1.15(@oclif/core@4.8.0)
-      '@types/chai':
-        specifier: ^5.2.3
-        version: 5.2.3
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^22.19.1
-        version: 22.19.1
-      '@types/semver':
-        specifier: ^7.7.1
-        version: 7.7.1
-      c8:
-        specifier: ^10.1.3
-        version: 10.1.3
-      chai:
-        specifier: ^6.2.1
-        version: 6.2.1
-      eslint:
-        specifier: ~9.39.2
-        version: 9.39.2(jiti@2.6.1)
-      mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
-      mocha-multi-reporters:
-        specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
-      oclif:
-        specifier: ^4.22.50
-        version: 4.22.50(@types/node@22.19.1)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.19.1)(typescript@5.4.5)
-      tslib:
-        specifier: ^2.8.1
-        version: 2.8.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
 
 packages:
 
@@ -985,15 +709,6 @@ packages:
   '@fluid-tools/api-markdown-documenter@0.23.2':
     resolution: {integrity: sha512-TCAVqt3M9OdFZkL1JuhpAQAZRaF6Y6AB7XJuAKt94Ek9CBnDFZIwnpRS+ZRw74RkHB4cNaeXKtY0BP1W+Ha2RA==}
 
-  '@fluid-tools/build-cli@0.63.0':
-    resolution: {integrity: sha512-uojCOPIEhjtGCLd69RdQAvfJ55scFgyXaltTwoD19z6Q3JTn4FRnLfl2t00sAXHB5rCLoff6fDeIJ7blRElOpg==}
-    engines: {node: '>=20.19.0'}
-    hasBin: true
-
-  '@fluid-tools/build-infrastructure@0.63.0':
-    resolution: {integrity: sha512-YuOvII++mJ18PVTW8A1phqvk/6/NgKJ6n940exaXBgKiXqcumLWDKW5Bmlr0w9FK8+iYuvmjVcDJCKMof6CUlg==}
-    hasBin: true
-
   '@fluid-tools/version-tools@0.63.0':
     resolution: {integrity: sha512-XckRsHRPKunrcD4CtbqpHFbCrH/kIbRuyohSEckeTh2GVxaZW4eUj3NxyaKCn/hUq9qtGvhDhBbbfGlA/G2HiQ==}
     engines: {node: '>=20.19.0'}
@@ -1007,9 +722,6 @@ packages:
     resolution: {integrity: sha512-Zpp1X6gETBXSIP9mkhBjKTpY1qkNINQIdEhYRoo6bvnZ50mvSncEOBgHlEhS3vQh3vYc2XwUT8sGuVMVJCKhoA==}
     engines: {node: '>=20.19.0'}
     hasBin: true
-
-  '@fluidframework/bundle-size-tools@0.63.0':
-    resolution: {integrity: sha512-S6KbzJVfVOYAMWwrWOf05K/JWdpVt7b+hAdP2g8vC89hvwUcGjwtxxHEsZYcPJx/aQ+xtTPcjiqNCqnSxiEu3Q==}
 
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
@@ -6258,107 +5970,6 @@ snapshots:
       - '@types/node'
       - supports-color
 
-  '@fluid-tools/build-cli@0.63.0(@types/node@22.19.1)':
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.63.0(@types/node@22.19.1)
-      '@fluid-tools/version-tools': 0.63.0(@types/node@22.19.1)
-      '@fluidframework/build-tools': 0.63.0(@types/node@22.19.1)
-      '@fluidframework/bundle-size-tools': 0.63.0
-      '@inquirer/prompts': 8.0.1(@types/node@22.19.1)
-      '@microsoft/api-extractor': 7.55.1(@types/node@22.19.1)
-      '@oclif/core': 4.8.0
-      '@oclif/plugin-autocomplete': 3.2.39
-      '@oclif/plugin-commands': 4.1.38
-      '@oclif/plugin-help': 6.2.36
-      '@oclif/plugin-not-found': 3.2.73(@types/node@22.19.1)
-      '@octokit/core': 7.0.6
-      '@octokit/rest': 22.0.1
-      '@rushstack/node-core-library': 5.19.0(@types/node@22.19.1)
-      async: 3.2.6
-      azure-devops-node-api: 11.2.0
-      change-case: 5.4.4
-      danger: 13.0.5(encoding@0.1.13)
-      date-fns: 3.6.0
-      debug: 4.4.3(supports-color@8.1.1)
-      execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.3.2
-      github-slugger: 2.0.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.1.2
-      issue-parser: 7.0.1
-      json5: 2.2.3
-      jssm: 5.104.2
-      jszip: 3.10.1
-      latest-version: 9.0.0
-      lilconfig: 3.1.3
-      mdast: 3.0.0
-      mdast-util-heading-range: 4.0.0
-      mdast-util-to-string: 4.0.0
-      minimatch: 10.1.1
-      npm-check-updates: 16.14.20
-      oclif: 4.22.50(@types/node@22.19.1)
-      picocolors: 1.1.1
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      remark: 15.0.1
-      remark-gfm: 4.0.1
-      remark-github: 12.0.0
-      remark-github-beta-blockquote-admonitions: 3.1.1
-      remark-toc: 9.0.0
-      replace-in-file: 7.2.0
-      resolve.exports: 2.0.3
-      semver: 7.7.3
-      simple-git: 3.30.0
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 7.1.2
-      table: 6.9.0
-      ts-morph: 22.0.0
-      unist-util-visit: 5.0.0
-      xml2js: 0.6.2
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - bluebird
-      - bufferutil
-      - encoding
-      - esbuild
-      - react-devtools-core
-      - supports-color
-      - uglify-js
-      - utf-8-validate
-      - webpack-cli
-
-  '@fluid-tools/build-infrastructure@0.63.0(@types/node@22.19.1)':
-    dependencies:
-      '@fluid-tools/version-tools': 0.63.0(@types/node@22.19.1)
-      '@manypkg/get-packages': 2.2.2
-      '@oclif/core': 4.8.0
-      detect-indent: 6.1.0
-      execa: 5.1.1
-      fs-extra: 11.3.2
-      globby: 11.1.0
-      lilconfig: 3.1.3
-      micromatch: 4.0.8
-      oclif: 4.22.50(@types/node@22.19.1)
-      picocolors: 1.1.1
-      read-pkg-up: 7.0.1
-      semver: 7.7.3
-      simple-git: 3.30.0
-      sort-package-json: 1.57.0
-      type-fest: 2.19.0
-      typescript: 5.4.5
-    transitivePeerDependencies:
-      - '@types/node'
-      - bufferutil
-      - react-devtools-core
-      - supports-color
-      - utf-8-validate
-
   '@fluid-tools/version-tools@0.63.0(@types/node@22.19.1)':
     dependencies:
       '@oclif/core': 4.8.0
@@ -6411,20 +6022,6 @@ snapshots:
       - react-devtools-core
       - supports-color
       - utf-8-validate
-
-  '@fluidframework/bundle-size-tools@0.63.0':
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      fflate: 0.8.2
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      typescript: 5.4.5
-      webpack: 5.103.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-      - webpack-cli
 
   '@gar/promisify@1.1.3': {}
 

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { bumpVersionScheme, type VersionBumpType } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import type { Machine } from "jssm";
+import { bumpVersionScheme, type VersionBumpType } from "../../version-tools/index.js";
 
 import { getDefaultBumpTypeForBranch } from "../library/index.js";
 import type { CommandLogger } from "../logging.js";

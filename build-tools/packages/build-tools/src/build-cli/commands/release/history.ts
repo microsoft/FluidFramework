@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { detectBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 import { table } from "table";
+import { detectBumpType } from "../../../version-tools/index.js";
 import { findPackageOrReleaseGroup } from "../../args.js";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
 import {

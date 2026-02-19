@@ -4,6 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
+import { confirm } from "@inquirer/prompts";
+import { Flags } from "@oclif/core";
+import chalk from "picocolors";
+import * as semver from "semver";
+import { FluidRepo, MonoRepo, type Package } from "../../core/index.js";
 import {
 	bumpVersionScheme,
 	detectVersionScheme,
@@ -14,12 +19,7 @@ import {
 	type VersionChangeType,
 	type VersionScheme,
 	WorkspaceRanges,
-} from "@fluid-tools/version-tools";
-import { FluidRepo, MonoRepo, type Package } from "@fluidframework/build-tools";
-import { confirm } from "@inquirer/prompts";
-import { Flags } from "@oclif/core";
-import chalk from "picocolors";
-import * as semver from "semver";
+} from "../../version-tools/index.js";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
 import { getDefaultInterdependencyRange } from "../config.js";

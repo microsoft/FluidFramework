@@ -6,19 +6,6 @@
 import { strict as assert } from "node:assert";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
-import {
-	detectVersionScheme,
-	getVersionRange,
-	type InterdependencyRange,
-	isInterdependencyRange,
-	isInternalVersionRange,
-	isPrereleaseVersion,
-	isRangeOperator,
-	isWorkspaceRange,
-	type ReleaseVersion,
-} from "@fluid-tools/version-tools";
-import { type Logger, MonoRepo, Package, type PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
@@ -30,6 +17,19 @@ import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
 import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
+import { updatePackageJsonFile } from "../../build-infrastructure/index.js";
+import { type Logger, MonoRepo, Package, type PackageJson } from "../../core/index.js";
+import {
+	detectVersionScheme,
+	getVersionRange,
+	type InterdependencyRange,
+	isInterdependencyRange,
+	isInternalVersionRange,
+	isPrereleaseVersion,
+	isRangeOperator,
+	isWorkspaceRange,
+	type ReleaseVersion,
+} from "../../version-tools/index.js";
 import {
 	AllPackagesSelectionCriteria,
 	type PackageSelectionCriteria,

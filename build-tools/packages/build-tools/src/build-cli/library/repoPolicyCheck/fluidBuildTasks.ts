@@ -5,10 +5,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import * as semver from "semver";
+import type { TsConfigJson } from "type-fest";
 import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
-} from "@fluid-tools/build-infrastructure";
+} from "../../../build-infrastructure/index.js";
 import {
 	FluidRepo,
 	getFluidBuildConfig,
@@ -17,9 +19,7 @@ import {
 	type Package,
 	type PackageJson,
 	TscUtils,
-} from "@fluidframework/build-tools";
-import * as semver from "semver";
-import type { TsConfigJson } from "type-fest";
+} from "../../../core/index.js";
 import { getFlubConfig } from "../../config.js";
 import { type Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";

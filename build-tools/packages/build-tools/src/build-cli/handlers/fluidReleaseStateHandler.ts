@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { Command } from "@oclif/core";
+import type { Machine } from "jssm";
+import chalk from "picocolors";
 import type {
 	ReleaseVersion,
 	VersionBumpType,
 	VersionScheme,
-} from "@fluid-tools/version-tools";
-import type { Command } from "@oclif/core";
-import type { Machine } from "jssm";
-import chalk from "picocolors";
+} from "../../version-tools/index.js";
 
 import type { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
 import type { Context } from "../library/index.js";

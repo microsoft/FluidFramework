@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { PackageName } from "@rushstack/node-core-library";
+import * as semver from "semver";
 import {
 	bumpVersionScheme,
 	DEFAULT_PRERELEASE_IDENTIFIER,
@@ -15,9 +17,7 @@ import {
 	type VersionBumpType,
 	type VersionChangeTypeExtended,
 	type VersionScheme,
-} from "@fluid-tools/version-tools";
-import { PackageName } from "@rushstack/node-core-library";
-import * as semver from "semver";
+} from "../../version-tools/index.js";
 import {
 	isReleaseGroup,
 	type ReleaseGroup,

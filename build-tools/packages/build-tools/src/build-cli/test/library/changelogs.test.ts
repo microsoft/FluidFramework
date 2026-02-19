@@ -9,8 +9,8 @@ import { strict as assert } from "node:assert";
 import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { IPackage } from "@fluid-tools/build-infrastructure";
 import { afterEach, beforeEach, describe, it } from "mocha";
+import type { IPackage } from "../../../build-infrastructure/index.js";
 import { updateChangelogs } from "../../library/changelogs.js";
 
 describe("changelogs", () => {

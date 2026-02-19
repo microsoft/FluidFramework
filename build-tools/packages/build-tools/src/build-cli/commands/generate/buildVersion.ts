@@ -4,8 +4,8 @@
  */
 
 import * as fs from "node:fs";
-import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
+import { getIsLatest, getSimpleVersion } from "../../../version-tools/index.js";
 
 import { semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/index.js";

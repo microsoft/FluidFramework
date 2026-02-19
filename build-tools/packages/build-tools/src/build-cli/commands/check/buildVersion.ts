@@ -4,8 +4,8 @@
  */
 
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import { Package } from "../../../core/index.js";
 
 import { PackageCommand } from "../../BasePackageCommand.js";
 import { semverFlag } from "../../flags.js";

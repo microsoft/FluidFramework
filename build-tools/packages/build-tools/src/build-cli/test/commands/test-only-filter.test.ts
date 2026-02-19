@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { Package } from "@fluidframework/build-tools";
 import { runCommand } from "@oclif/test";
 import * as chai from "chai";
 import { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
+import type { Package } from "../../../core/index.js";
 
 chai.use(assertArrays);
 
@@ -40,8 +40,8 @@ describe("flub test-only-filter", () => {
 		const pkg = filtered[0];
 
 		assert(pkg !== undefined);
-		expect(pkg.name).to.equal("@fluid-tools/build-cli");
-		expect(pkg.directory).to.equal("build-tools/packages/build-cli");
+		expect(pkg.name).to.equal("@fluidframework/build-tools");
+		expect(pkg.directory).to.equal("build-tools/packages/build-tools");
 	});
 
 	it(`--releaseGroup selector`, async () => {

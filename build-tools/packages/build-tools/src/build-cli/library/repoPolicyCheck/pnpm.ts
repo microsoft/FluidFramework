@@ -5,7 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { PackageJson } from "@fluidframework/build-tools";
+import type { PackageJson } from "../../../core/index.js";
 import { getFlubConfig } from "../../config.js";
 import { type Handler, readFile } from "./common.js";
 

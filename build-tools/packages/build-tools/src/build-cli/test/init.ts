@@ -10,7 +10,7 @@ import { _dirname } from "./dirname.cjs";
 /**
  * Absolute path to the test data.
  */
-const testDataPath = path.resolve(_dirname, "../../../build-infrastructure/src/test/data");
+const testDataPath = path.resolve(_dirname, "../../../src/build-infrastructure/test/data");
 /**
  * Absolute path to the test repo.
  */

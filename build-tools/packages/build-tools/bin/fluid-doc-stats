@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require("../dist/docStats/docStats.js");
+require("../dist/core/docStats/docStats.js");

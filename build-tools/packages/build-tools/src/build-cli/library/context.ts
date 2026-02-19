@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { ReleaseVersion } from "@fluid-tools/version-tools";
 import {
 	FluidRepo,
 	getFluidBuildConfig,
 	type IFluidBuildConfig,
 	Package,
-} from "@fluidframework/build-tools";
+} from "../../core/index.js";
+import type { ReleaseVersion } from "../../version-tools/index.js";
 import { type FlubConfig, getFlubConfig } from "../config.js";
 import { Repository } from "./git.js";
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
+import type { MonoRepo, Package } from "../core/index.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { type Context, isMonoRepoKind } from "./library/index.js";
 

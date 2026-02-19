@@ -4,10 +4,9 @@
  */
 
 import path from "node:path";
-
-import type { InterdependencyRange } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 import { type SimpleGit, simpleGit } from "simple-git";
+import type { InterdependencyRange } from "../version-tools/index.js";
 
 import { type BuildProjectConfig, getBuildProjectConfig } from "./config.js";
 import { NotInGitRepository } from "./errors.js";

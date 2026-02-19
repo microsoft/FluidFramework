@@ -1,7 +1,7 @@
 {
 	"name": "@fluidframework/bundle-size-tools",
 	"version": "0.64.0",
-	"description": "Utility for analyzing bundle size regressions",
+	"description": "Utility for analyzing bundle size regressions (stub - re-exports from @fluidframework/build-tools)",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -21,41 +21,14 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "fluid-build --task build",
-		"build:compile": "fluid-build --task compile",
-		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
-		"build:docs": "api-extractor run --local",
-		"check:biome": "biome check .",
-		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp \"*.build.log\"",
-		"compile": "fluid-build . --task compile",
-		"eslint": "eslint --quiet --format stylish src",
-		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome",
-		"format:biome": "biome check --write .",
-		"lint": "npm run eslint",
-		"lint:fix": "npm run eslint:fix",
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"tsc": "tsc"
+		"build": "echo stub",
+		"clean": "rimraf lib dist",
+		"test": "echo stub"
 	},
 	"dependencies": {
-		"azure-devops-node-api": "^11.2.0",
-		"fflate": "^0.8.2",
-		"jszip": "^3.10.1",
-		"msgpack-lite": "^0.1.26",
-		"typescript": "~5.4.5",
-		"webpack": "^5.103.0"
+		"@fluidframework/build-tools": "workspace:~"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.4",
-		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.63.0",
-		"@microsoft/api-extractor": "^7.55.1",
-		"@types/msgpack-lite": "^0.1.12",
-		"@types/node": "^22.19.1",
-		"copyfiles": "^2.4.1",
-		"eslint": "~9.39.2",
 		"rimraf": "^6.1.2"
 	}
 }

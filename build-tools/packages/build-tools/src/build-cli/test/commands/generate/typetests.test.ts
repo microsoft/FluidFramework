@@ -41,7 +41,9 @@ describe("generate:typetests", () => {
 
 	// Test a file which looks like a rollup: a file that reexports content from other files.
 	it("rollup", () => {
-		const currentFile = loadTypesSourceFile("./src/test/data/exports/exports-rollup.d.ts");
+		const currentFile = loadTypesSourceFile(
+			"./src/build-cli/test/data/exports/exports-rollup.d.ts",
+		);
 
 		const types = forCompare(typeDataFromFile(currentFile, logger));
 		assert.deepEqual(types, [
@@ -65,7 +67,7 @@ describe("generate:typetests", () => {
 
 	// Test a file which directly includes several kinds of exports to ensure that various export types work correctly.
 	it("direct", () => {
-		const currentFile = loadTypesSourceFile("./src/test/data/exports/exports.d.ts");
+		const currentFile = loadTypesSourceFile("./src/build-cli/test/data/exports/exports.d.ts");
 
 		const types = forCompare(typeDataFromFile(currentFile, logger));
 		assert.deepEqual(types, [
@@ -98,7 +100,9 @@ describe("generate:typetests", () => {
 
 	describe("generateCompatibilityTestCase", () => {
 		it("sealed", () => {
-			const currentFile = loadTypesSourceFile("./src/test/data/exports/exports.d.ts");
+			const currentFile = loadTypesSourceFile(
+				"./src/build-cli/test/data/exports/exports.d.ts",
+			);
 			const typeData = typeDataFromFile(currentFile, logger);
 			const testType = typeData.get("TypeAlias_Sealed");
 			assert(testType !== undefined);
@@ -113,7 +117,9 @@ describe("generate:typetests", () => {
 			]);
 		});
 		it("input", () => {
-			const currentFile = loadTypesSourceFile("./src/test/data/exports/exports.d.ts");
+			const currentFile = loadTypesSourceFile(
+				"./src/build-cli/test/data/exports/exports.d.ts",
+			);
 			const typeData = typeDataFromFile(currentFile, logger);
 			const testType = typeData.get("TypeAlias_Input");
 			assert(testType !== undefined);
@@ -131,7 +137,7 @@ describe("generate:typetests", () => {
 
 	// Test classes generate both cases correctly
 	it("class", () => {
-		const currentFile = loadTypesSourceFile("./src/test/data/exports/class.d.ts");
+		const currentFile = loadTypesSourceFile("./src/build-cli/test/data/exports/class.d.ts");
 
 		const types = forCompare(typeDataFromFile(currentFile, logger), true);
 		assert.deepEqual(types, [
@@ -171,7 +177,7 @@ describe("generate:typetests", () => {
  * Current version: 2.0.0
  */
 
-import type { TypeOnly } from "@fluidframework/build-tools";
+import type { TypeOnly } from "../../../../core/index.js";
 `;
 			writeFileSync(testFile, content);
 
@@ -204,7 +210,7 @@ import type { TypeOnly } from "@fluidframework/build-tools";
  * Current version: 1.5.0
  */
 
-import type { TypeOnly } from "@fluidframework/build-tools";
+import type { TypeOnly } from "../../../../core/index.js";
 `;
 			writeFileSync(testFile, existingContent);
 

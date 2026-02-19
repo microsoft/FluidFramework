@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import type { Machine } from "jssm";
 import chalk from "picocolors";
+import { FluidRepo, MonoRepo } from "../../core/index.js";
+import { bumpVersionScheme, detectVersionScheme } from "../../version-tools/index.js";
 
 import { getDefaultInterdependencyRange } from "../config.js";
 import {

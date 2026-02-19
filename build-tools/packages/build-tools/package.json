@@ -10,78 +10,272 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "dist/core/index.js",
+	"types": "dist/core/index.d.ts",
+	"exports": {
+		".": {
+			"default": {
+				"types": "./dist/core/index.d.ts",
+				"default": "./dist/core/index.js"
+			}
+		},
+		"./build-cli": {
+			"import": {
+				"types": "./dist/build-cli/index.d.ts",
+				"default": "./dist/build-cli/index.js"
+			}
+		},
+		"./build-cli/policy": {
+			"import": {
+				"types": "./dist/build-cli/library/repoPolicyCheck/index.d.ts",
+				"default": "./dist/build-cli/library/repoPolicyCheck/index.js"
+			}
+		},
+		"./build-infrastructure": {
+			"import": {
+				"types": "./dist/build-infrastructure/index.d.ts",
+				"default": "./dist/build-infrastructure/index.js"
+			}
+		},
+		"./version-tools": {
+			"default": {
+				"types": "./dist/version-tools/index.d.ts",
+				"default": "./dist/version-tools/index.js"
+			}
+		},
+		"./bundle-size-tools": {
+			"default": {
+				"types": "./dist/bundle-size-tools/index.d.ts",
+				"default": "./dist/bundle-size-tools/index.js"
+			}
+		}
+	},
 	"bin": {
 		"fluid-build": "bin/fluid-build",
 		"fluid-doc-stats": "bin/fluid-doc-stats",
-		"fluid-tsc": "bin/fluid-tsc"
+		"fluid-tsc": "bin/fluid-tsc",
+		"flub": "bin/flub/run.mjs",
+		"fluv": "bin/fluv/run.js",
+		"buildProject": "bin/buildProject/run.mjs"
 	},
 	"scripts": {
 		"build": "fluid-build --task build",
-		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "fluid-build --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:copy": "copyfiles -u 2 \"src/build-cli/**/*.fsl\" \"src/build-cli/test/**/fixtures/**/*\" dist/build-cli && node -e \"const fs=require('fs');fs.mkdirSync('dist/build-infrastructure',{recursive:true});fs.mkdirSync('dist/build-cli',{recursive:true});fs.copyFileSync('src/build-infrastructure/package.json','dist/build-infrastructure/package.json');fs.copyFileSync('src/build-cli/package.json','dist/build-cli/package.json');\"",
+		"build:diagrams": "jssm-viz -i \"./src/build-cli/machines/*.fsl\"",
+		"build:manifest": "echo 'skipping oclif manifest generation'",
+		"build:test": "tsc --build src/core/test/tsconfig.json src/version-tools/test/tsconfig.json src/build-infrastructure/test/tsconfig.json src/build-cli/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check --write .",
-		"json-schema-to-typescript:biome2ConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/common/biome2ConfigTypes.d.ts",
-		"json-schema-to-typescript:biomeConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/common/biomeConfigTypes.d.ts",
+		"json-schema-to-typescript:biome2ConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/core/common/biome2ConfigTypes.d.ts",
+		"json-schema-to-typescript:biomeConfigTypes": "json2ts --input node_modules/@biomejs/biome/configuration_schema.json --output src/core/common/biomeConfigTypes.d.ts",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --recursive dist/test",
-		"tsc": "tsc"
+		"test:mocha": "mocha --recursive dist/core/test dist/version-tools/test dist/build-cli/test dist/build-infrastructure/test",
+		"tsc": "tsc --build"
 	},
 	"dependencies": {
-		"@fluid-tools/version-tools": "workspace:~",
+		"@andrewbranch/untar.js": "^1.0.3",
+		"@inquirer/prompts": "^8.0.1",
 		"@manypkg/get-packages": "^2.2.2",
+		"@microsoft/api-extractor": "^7.55.1",
+		"@oclif/core": "^4.8.0",
+		"@oclif/plugin-autocomplete": "^3.2.39",
+		"@oclif/plugin-commands": "^4.1.38",
+		"@oclif/plugin-help": "^6.2.36",
+		"@oclif/plugin-not-found": "^3.2.73",
+		"@octokit/core": "^7.0.6",
+		"@octokit/rest": "^22.0.1",
+		"@rushstack/node-core-library": "^5.19.0",
 		"@types/glob": "^7.2.0",
 		"async": "^3.2.6",
+		"azure-devops-node-api": "^11.2.0",
+		"change-case": "^5.4.4",
+		"danger": "^13.0.5",
 		"date-fns": "^3.6.0",
 		"debug": "^4.4.3",
 		"detect-indent": "^6.1.0",
+		"execa": "^5.1.1",
+		"fflate": "^0.8.2",
 		"find-up": "^7.0.0",
 		"fs-extra": "^11.3.2",
+		"github-slugger": "^2.0.0",
 		"glob": "^7.2.3",
 		"globby": "^11.1.0",
+		"gray-matter": "^4.0.3",
+		"human-id": "^4.1.2",
 		"ignore": "^7.0.5",
+		"issue-parser": "^7.0.1",
 		"json5": "^2.2.3",
+		"jssm": "^5.104.2",
+		"jszip": "^3.10.1",
+		"latest-version": "^9.0.0",
 		"lilconfig": "^3.1.3",
 		"lodash.isequal": "^4.5.0",
+		"mdast": "^3.0.0",
+		"mdast-util-heading-range": "^4.0.0",
+		"mdast-util-to-string": "^4.0.0",
+		"micromatch": "^4.0.8",
+		"minimatch": "^10.1.1",
+		"msgpack-lite": "^0.1.26",
 		"multimatch": "^5.0.0",
+		"npm-check-updates": "^16.14.20",
+		"oclif": "^4.22.50",
 		"picocolors": "^1.1.1",
 		"picomatch": "^4.0.3",
 		"picospinner": "^2.1.0",
+		"prettier": "~3.2.5",
+		"prompts": "^2.4.2",
+		"read-pkg-up": "^7.0.1",
+		"remark": "^15.0.1",
+		"remark-gfm": "^4.0.1",
+		"remark-github": "^12.0.0",
+		"remark-github-beta-blockquote-admonitions": "^3.1.1",
+		"remark-toc": "^9.0.0",
+		"replace-in-file": "^7.2.0",
+		"resolve.exports": "^2.0.3",
 		"rimraf": "^6.1.2",
 		"semver": "^7.7.3",
+		"simple-git": "^3.30.0",
+		"sort-json": "^2.0.1",
 		"sort-package-json": "1.57.0",
+		"strip-ansi": "^7.1.2",
+		"table": "^6.9.0",
 		"ts-deepmerge": "^7.0.3",
+		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5",
+		"unist-util-visit": "^5.0.0",
+		"webpack": "^5.103.0",
+		"xml2js": "^0.6.2",
 		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.4",
+		"@fluid-tools/api-markdown-documenter": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.63.0",
+		"@oclif/test": "^4.1.15",
 		"@types/async": "^3.2.25",
+		"@types/chai": "^5.2.3",
+		"@types/chai-arrays": "^2.0.3",
+		"@types/debug": "^4.1.12",
+		"@types/eslint": "^9.6.1",
 		"@types/fs-extra": "^11.0.4",
+		"@types/issue-parser": "^3.0.5",
 		"@types/lodash.isequal": "^4.5.8",
+		"@types/mdast": "^4.0.4",
+		"@types/micromatch": "^4.0.10",
 		"@types/mocha": "^10.0.10",
+		"@types/msgpack-lite": "^0.1.12",
 		"@types/node": "^22.19.1",
+		"@types/prettier": "^2.7.3",
+		"@types/prompts": "^2.4.9",
 		"@types/semver": "^7.7.1",
+		"@types/sort-json": "^2.0.3",
+		"@types/unist": "^3.0.3",
+		"@types/xml2js": "^0.4.14",
+		"c8": "^10.1.3",
+		"chai": "^6.2.1",
+		"chai-arrays": "^2.2.0",
+		"concurrently": "^9.2.1",
+		"copyfiles": "^2.4.1",
 		"eslint": "~9.39.2",
+		"eslint-plugin-chai-friendly": "~1.1.0",
 		"json-schema-to-typescript": "^15.0.4",
-		"mocha": "^11.7.5"
+		"jssm-viz-cli": "^5.101.0",
+		"memfs": "^4.51.0",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
+		"mocked-env": "^1.3.5",
+		"ts-node": "^10.9.2",
+		"tslib": "^2.8.1",
+		"typedoc": "^0.28.14",
+		"typedoc-plugin-markdown": "^4.9.0"
 	},
 	"engines": {
 		"node": ">=20.19.0"
+	},
+	"oclif": {
+		"bin": "flub",
+		"dirname": "flub",
+		"flexibleTaxonomy": true,
+		"commands": "./dist/build-cli/commands",
+		"additionalHelpFlags": [
+			"-h"
+		],
+		"additionalVersionFlags": [
+			"-V"
+		],
+		"plugins": [
+			"@oclif/plugin-autocomplete",
+			"@oclif/plugin-commands",
+			"@oclif/plugin-help",
+			"@oclif/plugin-not-found"
+		],
+		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-tools/<%- commandPath %>",
+		"topicSeparator": " ",
+		"topics": {
+			"bump": {
+				"description": "Bump the version of packages, release groups, and their dependencies."
+			},
+			"check": {
+				"description": "Check commands are used to verify repo state, apply policy, etc."
+			},
+			"generate": {
+				"description": "Generate commands are used to create/update code, docs, readmes, etc."
+			},
+			"modify": {
+				"description": "Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc."
+			},
+			"release": {
+				"description": "Release commands are used to manage the Fluid release process."
+			},
+			"publish": {
+				"description": "Publish commands are used to publish packages to an npm registry."
+			},
+			"promote": {
+				"description": "Promote commands are used to promote packages published to an npm registry."
+			},
+			"transform": {
+				"description": "Transform commands are used to transform code, docs, etc. into alternative forms."
+			},
+			"report": {
+				"description": "Report analysis about the codebase, like code coverage and bundle size measurements."
+			},
+			"vnext": {
+				"description": "Vnext commands are new implementations of standard flub commands using new infrastructure."
+			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"...",
+					"build:diagrams"
+				],
+				"script": false
+			},
+			"build:diagrams": [],
+			"build:manifest": [
+				"...",
+				"build:copy",
+				"build:diagrams"
+			],
+			"build:test": [
+				"tsc",
+				"build:copy"
+			],
+			"tsc": []
+		}
 	}
 }

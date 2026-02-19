@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import execa from "execa";
+import type { Package } from "../../core/index.js";
 
 import { PackageCommand } from "../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../flags.js";

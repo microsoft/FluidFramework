@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IFluidCompatibilityMetadata,
-	Logger,
-	PackageJson,
-} from "@fluidframework/build-tools";
 import { formatISO, isDate, isValid, parseISO } from "date-fns";
 import { diff, parse } from "semver";
+import type { IFluidCompatibilityMetadata, Logger, PackageJson } from "../../core/index.js";
 
 /**
  * Approximate month as 33 days to add some buffer and avoid over-counting months in longer spans.
@@ -450,7 +446,7 @@ export async function writePackageCompatLayerGeneration(
 ): Promise<void> {
 	const { writeFile } = await import("node:fs/promises");
 	const path = await import("node:path");
-	const { updatePackageJsonFile } = await import("@fluid-tools/build-infrastructure");
+	const { updatePackageJsonFile } = await import("../../build-infrastructure/index.js");
 
 	const generationFileFullPath = path.default.join(
 		pkg.directory,

@@ -5,10 +5,10 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getResolvedFluidRoot, type Package } from "@fluidframework/build-tools";
 import * as chai from "chai";
 import { expect } from "chai";
 import assertArrays from "chai-arrays";
+import { getResolvedFluidRoot, type Package } from "../../core/index.js";
 import {
 	AllPackagesSelectionCriteria,
 	filterPackages,
@@ -249,7 +249,7 @@ describe("selectAndFilterPackages", () => {
 			independentPackages: false,
 			releaseGroups: [],
 			releaseGroupRoots: [],
-			directory: [path.resolve(__dirname, "../..")],
+			directory: [path.resolve(__dirname, "../../..")],
 			changedSinceBranch: undefined,
 		};
 		const filters: PackageFilterOptions = {
@@ -268,9 +268,9 @@ describe("selectAndFilterPackages", () => {
 
 		const pkg = filtered[0];
 
-		expect(pkg?.name).to.equal("@fluid-tools/build-cli");
+		expect(pkg?.name).to.equal("@fluidframework/build-tools");
 		expect(context.repo.relativeToRepo(pkg?.directory ?? "")).to.equal(
-			"build-tools/packages/build-cli",
+			"build-tools/packages/build-tools",
 		);
 	});
 
@@ -377,7 +377,7 @@ describe("selectAndFilterPackages", () => {
 			independentPackages: false,
 			releaseGroups: [],
 			releaseGroupRoots: ["client"],
-			directory: [path.resolve(__dirname, "../..")],
+			directory: [path.resolve(__dirname, "../../..")],
 			changedSinceBranch: undefined,
 		};
 
@@ -385,7 +385,7 @@ describe("selectAndFilterPackages", () => {
 
 		expect(selected).to.be.ofSize(2);
 
-		expect(selected[0]?.name).to.equal("@fluid-tools/build-cli");
+		expect(selected[0]?.name).to.equal("@fluidframework/build-tools");
 		expect(selected[1]?.name).to.equal("client-release-group-root");
 	});
 });

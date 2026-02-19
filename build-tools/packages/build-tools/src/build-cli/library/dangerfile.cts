@@ -11,7 +11,7 @@ import {
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
 	totalSizeMetricName,
-} from "@fluidframework/bundle-size-tools";
+} from "../../bundle-size-tools/index.js";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
 // from using this file directly, and the js transpilation renames the danger

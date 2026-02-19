@@ -6,6 +6,6 @@
 import path from "node:path";
 
 /**
- * Path to the test data. It's rooted two directories up because the tests get executed from dist/.
+ * Path to the test data. It's rooted three directories up because the tests get executed from dist/core/test/.
  */
-export const testDataPath = path.resolve(__dirname, "../../src/test/data");
+export const testDataPath = path.resolve(__dirname, "../../../src/core/test/data");

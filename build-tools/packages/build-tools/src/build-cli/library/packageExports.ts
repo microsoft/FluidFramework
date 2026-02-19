@@ -4,9 +4,8 @@
  */
 
 import path from "node:path";
-
-import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import * as resolve from "resolve.exports";
+import type { Logger, PackageJson } from "../../core/index.js";
 import { ApiLevel } from "./apiLevel.js";
 
 /**
