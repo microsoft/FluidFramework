@@ -7,9 +7,9 @@ import {
 	type IMigrator,
 	type IMigratorEntryPoint,
 	type ImportDataCallback,
-	type SeparateContainerMigrationResult,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
+	type SeparateContainerMigrationResult,
 } from "@fluid-example/migration-tools/alpha";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
@@ -19,13 +19,13 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
+	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
-	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createElement } from "react";
-import { type Root, createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";

@@ -13,10 +13,10 @@ import type {
 import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type IProvideRuntimeAttributor,
-	type IRuntimeAttributor,
 	attributorDataStoreAlias,
 	enableOnNewFileKey,
+	type IProvideRuntimeAttributor,
+	type IRuntimeAttributor,
 } from "./attributorContracts.js";
 import { RuntimeAttributorFactory } from "./runtimeAttributorDataStoreFactory.js";
 

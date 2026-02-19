@@ -8,25 +8,34 @@
  */
 
 export {
+	createQualifiedDocumentNameForApiItem,
+	doesItemRequireOwnDocument,
+	doesItemKindRequireOwnDocument,
+	filterItems,
+	getHeadingForApiItem,
+	getLinkForApiItem,
+	shouldItemBeIncluded,
+} from "./utilities/index.js";
+export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationConfigurationBase,
 	type ApiItemTransformationOptions,
 	type ApiItemTransformations,
 	type DefaultDocumentationSuiteConfiguration,
 	type DocumentHierarchyConfiguration,
-	type DocumentationHierarchyConfiguration,
-	type DocumentationHierarchyConfigurationBase,
 	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	FolderDocumentPlacement,
 	type FolderHierarchyConfiguration,
-	type HierarchyConfiguration,
+	getApiItemTransformationConfigurationWithDefaults,
+	type DocumentationHierarchyConfiguration,
+	type DocumentationHierarchyConfigurationBase,
 	HierarchyKind,
+	type HierarchyConfiguration,
 	type HierarchyOptions,
 	type SectionHierarchyConfiguration,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
 export {
 	createBreadcrumbParagraph,
@@ -41,16 +50,7 @@ export {
 	createThrowsSection,
 	createTypeParametersSection,
 } from "./helpers/index.js";
+export { transformTsdoc } from "./TsdocNodeTransforms.js";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 export { transformApiModel } from "./TransformApiModel.js";
-export { transformTsdoc } from "./TsdocNodeTransforms.js";
-export {
-	checkForDuplicateDocumentPaths,
-	createQualifiedDocumentNameForApiItem,
-	doesItemKindRequireOwnDocument,
-	doesItemRequireOwnDocument,
-	filterItems,
-	getHeadingForApiItem,
-	getLinkForApiItem,
-	shouldItemBeIncluded,
-} from "./utilities/index.js";
+export { checkForDuplicateDocumentPaths } from "./utilities/index.js";

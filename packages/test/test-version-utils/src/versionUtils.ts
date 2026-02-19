@@ -9,8 +9,8 @@ import { ExecOptions, execFile, execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
-	readFileSync,
 	readdirSync,
+	readFileSync,
 	rmdirSync,
 	writeFileSync,
 } from "node:fs";
@@ -18,7 +18,7 @@ import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
-import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 

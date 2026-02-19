@@ -12,23 +12,23 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import {
-	IGCMetadata,
 	IGarbageCollector,
+	IGCMetadata,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestFluidObject,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
+	ITestFluidObject,
+	ITestObjectProvider,
 	summarizeNow,
+	TestFluidObjectFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SinonSandbox, createSandbox } from "sinon";
+import { createSandbox, SinonSandbox } from "sinon";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {

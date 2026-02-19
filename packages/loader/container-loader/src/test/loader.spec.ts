@@ -14,9 +14,9 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	MockLogger,
 	createChildLogger,
 	isFluidError,
+	MockLogger,
 	mixinMonitoringContext,
 	wrapConfigProviderWithDefaults,
 } from "@fluidframework/telemetry-utils/internal";

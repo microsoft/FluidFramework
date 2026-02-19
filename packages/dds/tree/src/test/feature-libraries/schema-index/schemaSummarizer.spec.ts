@@ -17,9 +17,9 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index.js";
 import {
 	SchemaFormatVersion,
+	storedEmptyFieldSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	storedEmptyFieldSchema,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

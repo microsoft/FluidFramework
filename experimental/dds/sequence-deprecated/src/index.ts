@@ -14,17 +14,17 @@ export { SharedObjectSequenceClass } from "./sharedObjectSequence.js";
 export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 export {
 	MatrixSegment,
-	PaddingSegment,
-	RunSegment,
-	SparseMatrix,
-	SparseMatrixClass,
-	SparseMatrixFactory,
-	SparseMatrixItem,
 	maxCellPosition,
 	maxCol,
 	maxCols,
 	maxRow,
 	maxRows,
+	PaddingSegment,
 	positionToRowCol,
+	RunSegment,
 	rowColToPosition,
+	SparseMatrix,
+	SparseMatrixClass,
+	SparseMatrixFactory,
+	SparseMatrixItem,
 } from "./sparsematrix.js";

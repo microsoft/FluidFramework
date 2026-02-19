@@ -8,13 +8,13 @@ import type {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { Lazy, assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
+	createChildLogger,
 	DataProcessingError,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	UsageError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";

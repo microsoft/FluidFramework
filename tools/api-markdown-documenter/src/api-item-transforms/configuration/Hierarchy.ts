@@ -6,9 +6,9 @@
 import { type ApiItem, ApiItemKind, type ApiPackage } from "@microsoft/api-extractor-model";
 
 import {
-	type ValidApiItemKind,
 	getApiItemKind,
 	getUnscopedPackageName,
+	type ValidApiItemKind,
 } from "../../utilities/index.js";
 import { createQualifiedDocumentNameForApiItem } from "../utilities/index.js";
 

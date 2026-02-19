@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import { LazyPromise, isPromiseLike } from "@fluidframework/core-utils/internal";
+import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
 import type {
 	IContainerRuntimeBase,
 	IFluidDataStoreChannel,

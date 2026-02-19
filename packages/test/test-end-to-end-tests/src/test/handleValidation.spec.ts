@@ -35,11 +35,11 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	type ITestObjectProvider,
-	createAndAttachContainer,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 import {

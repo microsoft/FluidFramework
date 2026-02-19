@@ -14,18 +14,18 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	IPublicClientConfig,
 	getDriveId,
 	getDriveItemByRootFileName,
+	IPublicClientConfig,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	getMicrosoftConfiguration,
 	OdspTokenConfig,
 	OdspTokenManager,
-	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
 import { compare } from "semver";

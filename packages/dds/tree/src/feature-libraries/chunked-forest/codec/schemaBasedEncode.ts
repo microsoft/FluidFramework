@@ -7,6 +7,7 @@ import { assert, fail, unreachableCase } from "@fluidframework/core-utils/intern
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
+	identifierFieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	Multiplicity,
@@ -16,21 +17,20 @@ import {
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	ValueSchema,
-	identifierFieldKindIdentifier,
 } from "../../../core/index.js";
 import { brand, oneFromIterable } from "../../../util/index.js";
 
 import type { IncrementalEncoder } from "./codecs.js";
 import {
-	EncoderContext,
-	type FieldEncodeBuilder,
-	type FieldEncoder,
-	type KeyedFieldEncoder,
-	type NodeEncodeBuilder,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
+	EncoderContext,
+	type FieldEncodeBuilder,
+	type FieldEncoder,
 	incrementalFieldEncoder,
+	type KeyedFieldEncoder,
+	type NodeEncodeBuilder,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {

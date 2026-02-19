@@ -17,9 +17,9 @@ import {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
-	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 interface ISequencedOpInfo<TOp> {

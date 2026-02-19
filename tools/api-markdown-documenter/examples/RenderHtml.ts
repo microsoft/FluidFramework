@@ -5,8 +5,8 @@
 
 import {
 	loadModel,
-	saveDocuments,
 	transformApiModel,
+	saveDocuments,
 } from "@fluid-tools/api-markdown-documenter";
 import { toHtml } from "hast-util-to-html";
 import { toHast } from "mdast-util-to-hast";

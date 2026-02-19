@@ -25,11 +25,11 @@ import type {
 import { isFluidHandlePayloadPending } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
 
 import { driverSupportsBlobs } from "./mockDetachedBlobStorage.js";

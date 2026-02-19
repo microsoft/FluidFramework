@@ -12,8 +12,8 @@ import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { NonCollabClient } from "./constants.js";

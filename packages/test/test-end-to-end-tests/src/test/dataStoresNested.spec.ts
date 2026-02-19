@@ -17,13 +17,13 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	createSummarizerCore,
 	ITestObjectProvider,
+	summarizeNow,
 	TestContainerRuntimeFactory,
 	TestFluidObject,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	createSummarizerCore,
-	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 /**

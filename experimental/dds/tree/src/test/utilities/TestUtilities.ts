@@ -8,7 +8,7 @@ import { resolve } from 'path';
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { AttachState } from '@fluidframework/container-definitions';
 import type { IContainer, IFluidCodeDetails, IHostLoader } from '@fluidframework/container-definitions/internal';
-import { Loader, asLegacyAlpha, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -22,18 +22,18 @@ import {
 } from '@fluidframework/test-runtime-utils/internal';
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	createAndAttachContainer,
 } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
 
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';
-import { ReplaceRecursive, fail, identity } from '../../Common.js';
+import { fail, identity, ReplaceRecursive } from '../../Common.js';
 import { OrderedEditSet } from '../../EditLog.js';
 import { newEdit, setTrait } from '../../EditUtilities.js';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
@@ -51,28 +51,28 @@ import { initialTree } from '../../InitialTree.js';
 import { IdCompressor } from '../../id-compressor/index.js';
 import { createSessionId } from '../../id-compressor/NumericUuid.js';
 import {
+	getNodeId,
+	getNodeIdContext,
 	NodeIdContext,
 	NodeIdConverter,
 	NodeIdNormalizer,
-	getNodeId,
-	getNodeIdContext,
 } from '../../NodeIdUtilities.js';
 import {
 	ChangeInternal,
 	Edit,
 	NodeData,
 	Payload,
+	reservedIdCount,
 	SharedTreeOp,
 	SharedTreeOp_0_0_2,
 	WriteFormat,
-	reservedIdCount,
 } from '../../persisted-types/index.js';
 import { getChangeNodeFromViewNode } from '../../SerializationUtilities.js';
 import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree.js';
 import { TraitLocation, TreeView } from '../../TreeView.js';
 
 import { _dirname } from './dirname.cjs';
-import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode.js';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {

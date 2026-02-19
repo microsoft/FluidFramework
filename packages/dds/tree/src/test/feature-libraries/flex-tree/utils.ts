@@ -9,27 +9,27 @@ import {
 	type FieldAnchor,
 	type IEditableForest,
 	type ITreeSubscriptionCursor,
+	rootFieldKey,
 	TreeNavigationResult,
 	TreeStoredSchemaRepository,
-	rootFieldKey,
 } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
-	MockNodeIdentifierManager,
 	defaultSchemaPolicy,
+	MockNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type InsertableContent,
 	type InsertableField,
-	type UnsafeUnknownSchema,
 	toInitialSchema,
+	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 import {
-	MockTreeCheckout,
 	fieldCursorFromInsertable,
 	forestWithContent,
+	MockTreeCheckout,
 } from "../../utils.js";
 
 export function getReadonlyContext(

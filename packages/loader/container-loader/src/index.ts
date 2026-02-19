@@ -4,15 +4,15 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { type ContainerAlpha, asLegacyAlpha, waitContainerToCatchUp } from "./container.js";
+export { asLegacyAlpha, type ContainerAlpha, waitContainerToCatchUp } from "./container.js";
 export {
+	createDetachedContainer,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
 	type ILoadFrozenContainerFromPendingStateProps,
 	type ILoadSummarizerContainerProps,
 	type IRehydrateDetachedContainerProps,
-	createDetachedContainer,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
 	loadSummarizerContainerAndMakeSummary,

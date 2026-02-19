@@ -19,9 +19,9 @@ export { Heap, NumberComparer } from "./heap.js";
 export { Lazy, LazyPromise } from "./lazy.js";
 export {
 	DoublyLinkedList,
+	iterateListValuesWhile,
 	type ListNode,
 	type ListNodeRange,
-	iterateListValuesWhile,
 	walkList,
 } from "./list.js";
 export { transformMapValues } from "./map.js";
@@ -31,6 +31,6 @@ export { PromiseCache } from "./promiseCache.js";
 export { Deferred } from "./promises.js";
 export { shallowCloneObject } from "./shallowClone.js";
 export type { IPromiseTimer, IPromiseTimerResult, ITimer } from "./timer.js";
-export { PromiseTimer, Timer, setLongTimeout } from "./timer.js";
+export { PromiseTimer, setLongTimeout, Timer } from "./timer.js";
 export { isObject, isPromiseLike } from "./typesGuards.js";
 export { unreachableCase } from "./unreachable.js";

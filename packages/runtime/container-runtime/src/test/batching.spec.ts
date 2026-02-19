@@ -26,7 +26,7 @@ import {
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { type SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+import { createSandbox, type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";

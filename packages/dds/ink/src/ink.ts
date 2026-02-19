@@ -17,9 +17,9 @@ import type {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
-	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
@@ -35,7 +35,7 @@ import type {
 	IPen,
 	IStylusOperation,
 } from "./interfaces.js";
-import { type ISerializableInk, InkData } from "./snapshot.js";
+import { InkData, type ISerializableInk } from "./snapshot.js";
 
 /**
  * Filename where the snapshot is stored.

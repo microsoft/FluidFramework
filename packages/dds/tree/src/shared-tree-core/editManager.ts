@@ -16,27 +16,27 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
-	type GraphCommit,
-	type RebaseStatsWithDuration,
-	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
+	type GraphCommit,
 	mintCommit,
+	type RebaseStatsWithDuration,
+	type RevisionTag,
 	tagChange,
 } from "../core/index.js";
-import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js";
+import { brand, getOrCreate, type Mutable, mapIterable } from "../util/index.js";
 
 import {
 	type BranchId,
 	type BranchTrimmingEvents,
-	SharedTreeBranch,
 	onForkTransitive,
+	SharedTreeBranch,
 } from "./branch.js";
 import type {
 	Commit,
 	SeqNumber,
-	SequenceId,
 	SequencedCommit,
+	SequenceId,
 	SummarySessionBranch,
 } from "./editManagerFormatCommons.js";
 import {

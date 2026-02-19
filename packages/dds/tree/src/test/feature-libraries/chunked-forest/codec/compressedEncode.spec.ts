@@ -34,21 +34,21 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
-	EncoderContext,
-	type FieldEncodeBuilder,
-	type FieldEncoder,
-	IncrementalChunkShape,
-	InlineArrayEncoder,
-	NestedArrayEncoder,
-	NestedArrayShape,
-	type NodeEncodeBuilder,
-	type NodeEncoder,
 	anyFieldEncoder,
 	anyNodeEncoder,
 	asNodesEncoder,
 	compressedEncode,
+	EncoderContext,
 	encodeValue,
+	type FieldEncodeBuilder,
+	type FieldEncoder,
+	IncrementalChunkShape,
+	InlineArrayEncoder,
 	incrementalFieldEncoder,
+	NestedArrayEncoder,
+	NestedArrayShape,
+	type NodeEncodeBuilder,
+	type NodeEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
@@ -74,14 +74,14 @@ import type {
 	FieldBatchEncodingContext,
 } from "../../../../feature-libraries/index.js";
 import {
-	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultIncrementalEncodingPolicy,
 	emptyChunk,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
+	TreeCompressionStrategy,
 } from "../../../../feature-libraries/index.js";
-import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import { testIdCompressor } from "../../../utils.js";

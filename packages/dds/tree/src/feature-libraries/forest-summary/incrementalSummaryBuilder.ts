@@ -15,9 +15,9 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { ITreeCursorSynchronous } from "../../core/index.js";
 import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
 import {
+	brand,
 	type JsonCompatible,
 	type NestedMap,
-	brand,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";

@@ -31,6 +31,7 @@ import {
 	type BatchSequenceNumbers,
 	type LocalBatchMessage,
 	type LocalEmptyBatchPlaceholder,
+	localBatchToOutboundBatch,
 	type OpCompressor,
 	OpGroupingManager,
 	type OpGroupingManagerConfig,
@@ -39,7 +40,6 @@ import {
 	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 	Outbox,
-	localBatchToOutboundBatch,
 	serializeOp,
 } from "../../opLifecycle/index.js";
 import type {

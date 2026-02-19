@@ -21,16 +21,15 @@ import type { Client } from "./clientLoading.js";
 import { PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
 import {
 	type CleanupFunction,
+	convertOnlyAndSkip,
+	createSuite,
 	type DDSFuzzHarnessModel,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 	type DDSFuzzTestState,
 	type DDSRandom,
-	type HarnessOperation,
-	ReducerPreconditionError,
-	convertOnlyAndSkip,
-	createSuite,
 	defaultDDSFuzzSuiteOptions,
+	type HarnessOperation,
 	handles,
 	mixinAttach,
 	mixinClientSelection,
@@ -40,6 +39,7 @@ import {
 	mixinStashedClient,
 	mixinSynchronization,
 	normalizeSeedOption,
+	ReducerPreconditionError,
 	setupClientContext,
 } from "./ddsFuzzHarness.js";
 import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";

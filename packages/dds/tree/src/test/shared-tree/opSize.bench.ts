@@ -21,13 +21,13 @@ import {
 import type { Value } from "../../core/index.js";
 import { type ITreePrivate, Tree } from "../../shared-tree/index.js";
 import {
-	type ITree,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type ITree,
 	SchemaFactory,
 	type TreeView,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
+import { getOrAddEmptyToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { DefaultTestSharedTreeKind } from "../utils.js";
 
 // Notes:

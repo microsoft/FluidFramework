@@ -14,10 +14,10 @@ import type { ContainerStateMetadata } from "./ContainerMetadata.js";
 import type { DecomposedContainer } from "./DecomposedContainer.js";
 import {
 	DataVisualizerGraph,
+	defaultVisualizers,
 	type FluidObjectNode,
 	type RootHandleNode,
 	VisualNodeKind,
-	defaultVisualizers,
 } from "./data-visualization/index.js";
 import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -33,13 +33,13 @@ import {
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
-	type IDevtoolsMessage,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	type MessageLoggingOptions,
-	RootDataVisualizations,
 	handleIncomingWindowMessage,
+	type IDevtoolsMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
+	RootDataVisualizations,
 } from "./messaging/index.js";
 
 /**

@@ -16,11 +16,11 @@ import type {
 } from "../../../simple-tree/core/treeNodeSchema.js";
 import {
 	type AllowedTypes,
-	SchemaFactory,
-	type TreeNode,
 	type booleanSchema,
 	type numberSchema,
+	SchemaFactory,
 	type stringSchema,
+	type TreeNode,
 } from "../../../simple-tree/index.js";
 import {
 	objectSchema,

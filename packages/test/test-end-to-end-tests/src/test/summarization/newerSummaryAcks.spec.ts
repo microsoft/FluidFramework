@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import type {
 	ISummaryAckMessage,
 	ISummaryOpMessage,
@@ -21,13 +21,13 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	ITestContainerConfig,
+	ITestObjectProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { SinonSandbox, createSandbox } from "sinon";
+import { createSandbox, SinonSandbox } from "sinon";
 
 import { reconnectSummarizerToBeElected } from "../gc/index.js";
 

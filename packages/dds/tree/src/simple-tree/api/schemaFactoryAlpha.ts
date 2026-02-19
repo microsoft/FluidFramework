@@ -22,12 +22,12 @@ import type {
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
 	type ArrayNodeCustomizableSchema,
-	type MapNodeCustomizableSchema,
-	type ObjectNodeSchema,
-	type RecordNodeCustomizableSchema,
 	arraySchema,
+	type MapNodeCustomizableSchema,
 	mapSchema,
+	type ObjectNodeSchema,
 	objectSchema,
+	type RecordNodeCustomizableSchema,
 	recordSchema,
 } from "../node-kinds/index.js";
 import type {
@@ -37,10 +37,10 @@ import type {
 } from "../simpleSchema.js";
 
 import {
+	defaultSchemaFactoryObjectOptions,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ScopedSchemaName,
-	defaultSchemaFactoryObjectOptions,
 	scoped,
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";

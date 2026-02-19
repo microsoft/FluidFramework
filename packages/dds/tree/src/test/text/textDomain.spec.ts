@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	allowUnused,
 	type NodeFromSchema,
 	TreeViewConfiguration,
-	allowUnused,
 } from "../../simple-tree/index.js";
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules

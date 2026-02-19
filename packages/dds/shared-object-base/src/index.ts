@@ -6,27 +6,27 @@
 export { type ISharedObjectHandle, isISharedObjectHandle } from "./handle.js";
 export { FluidSerializer, type IFluidSerializer } from "./serializer.js";
 export {
+	createSharedObjectKind,
 	type ISharedObjectKind,
 	SharedObject,
 	SharedObjectCore,
 	type SharedObjectKind,
-	createSharedObjectKind,
 } from "./sharedObject.js";
 export {
 	type FactoryOut,
 	type KernelArgs,
+	makeSharedObjectKind,
+	mergeAPIs,
 	type SharedKernel,
 	type SharedKernelFactory,
 	type SharedObjectOptions,
-	makeSharedObjectKind,
-	mergeAPIs,
 	thisWrap,
 } from "./sharedObjectKernel.js";
 export type { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {
-	type IChannelView,
 	bindHandles,
 	createSingleBlobSummary,
+	type IChannelView,
 	makeHandlesSerializable,
 	parseHandles,
 	serializeHandles,

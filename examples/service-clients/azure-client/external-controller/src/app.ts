@@ -11,8 +11,8 @@ import type { IFluidContainer } from "fluid-framework";
 
 import { DiceRollerController, type DieValue } from "./controller.js";
 import {
-	type DiceRollerContainerSchema,
 	connectionConfig,
+	type DiceRollerContainerSchema,
 	diceRollerContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,

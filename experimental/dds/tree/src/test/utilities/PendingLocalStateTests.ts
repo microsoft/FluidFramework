@@ -17,10 +17,10 @@ import { TreeView } from '../../TreeView.js';
 
 import { SimpleTestTree } from './TestNode.js';
 import {
-	LocalServerSharedTreeTestingComponents,
-	LocalServerSharedTreeTestingOptions,
 	applyNoop,
 	getEditLogInternal,
+	LocalServerSharedTreeTestingComponents,
+	LocalServerSharedTreeTestingOptions,
 	setUpTestTree,
 	stabilizeEdit,
 	withContainerOffline,

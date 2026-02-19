@@ -10,6 +10,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type AnchorEvents,
+	dummyRoot,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
@@ -21,11 +22,15 @@ import {
 	type TreeStoredSchema,
 	type TreeValue,
 	type Value,
-	dummyRoot,
 } from "../../core/index.js";
 import {
+	currentObserver,
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
 	FieldKinds,
 	type FlexFieldKind,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
 	type FlexTreeContext,
 	FlexTreeEntityKind,
 	type FlexTreeField,
@@ -37,20 +42,15 @@ import {
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
+	flexTreeMarker,
 	type HydratedFlexTreeNode,
+	indexForAt,
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
 	type MinimalFieldMap,
 	type OptionalFieldEditBuilder,
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
-	currentObserver,
-	cursorForMapTreeField,
-	cursorForMapTreeNode,
-	flexTreeMarker,
-	indexForAt,
 } from "../../feature-libraries/index.js";
 import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
 import type { ContextualFieldProvider } from "../fieldSchema.js";

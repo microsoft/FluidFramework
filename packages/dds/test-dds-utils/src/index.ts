@@ -27,11 +27,11 @@ export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
 export type { IGCTestProvider } from "./gcTestRunner.js";
 export { runGCTests } from "./gcTestRunner.js";
 export {
+	createSquashFuzzSuite,
 	type SquashClient,
 	type SquashFuzzHarnessModel,
 	type SquashFuzzModel,
 	type SquashFuzzSuiteOptions,
 	type SquashFuzzTestState,
 	type SquashRandom,
-	createSquashFuzzSuite,
 } from "./squashFuzzHarness.js";

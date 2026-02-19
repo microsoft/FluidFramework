@@ -9,6 +9,8 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	isTreeNode,
+	isTreeNodeSchemaClass,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
@@ -16,8 +18,6 @@ import {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
-	isTreeNode,
-	isTreeNodeSchemaClass,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 

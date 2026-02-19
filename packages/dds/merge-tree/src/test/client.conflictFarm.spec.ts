@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { StressMode, describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
-	type TestOperation,
 	annotateRange,
 	doOverRange,
 	generateClientNames,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	insertAtRefPos,
 	obliterateRange,
 	removeRange,
 	runMergeTreeOperationRunner,
+	type TestOperation,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 

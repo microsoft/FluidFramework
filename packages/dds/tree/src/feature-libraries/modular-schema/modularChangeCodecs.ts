@@ -16,7 +16,7 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { type Values, strictEnum } from "../../util/index.js";
+import { strictEnum, type Values } from "../../util/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 

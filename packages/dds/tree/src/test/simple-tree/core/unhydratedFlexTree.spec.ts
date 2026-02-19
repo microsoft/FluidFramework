@@ -12,7 +12,7 @@ import {
 	type MapTree,
 	type Value,
 } from "../../../core/index.js";
-import { FieldKinds, cursorForMapTreeNode } from "../../../feature-libraries/index.js";
+import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import {

@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
+	checkLayerCompatibility,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 	type LayerCompatCheckResult,
-	checkLayerCompatibility,
 } from "../../layerCompat.js";
 
 const pkgVersion = "1.0.0";

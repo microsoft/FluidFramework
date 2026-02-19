@@ -4,9 +4,9 @@
  */
 
 import {
-	Uint8ArrayToArrayBuffer,
 	bufferToString,
 	stringToBuffer,
+	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";

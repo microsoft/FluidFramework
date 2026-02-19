@@ -31,11 +31,11 @@ export {
 	TreeDataObjectFactory,
 } from "./data-object-factories/index.js";
 export {
+	createDataObjectKind,
 	DataObject,
 	type DataObjectKind,
 	type DataObjectTypes,
 	type IDataObjectProps,
 	PureDataObject,
 	TreeDataObject,
-	createDataObjectKind,
 } from "./data-objects/index.js";

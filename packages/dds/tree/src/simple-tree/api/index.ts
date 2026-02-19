@@ -20,12 +20,12 @@ export { createFromCursor } from "./create.js";
 export {
 	type CustomTreeNode,
 	type CustomTreeValue,
+	customFromCursorStored,
 	type HandleConverter,
 	KeyEncodingOptions,
+	replaceHandles,
 	type TreeEncodingOptions,
 	type TreeParsingOptions,
-	customFromCursorStored,
-	replaceHandles,
 	tryStoredSchemaAsArray,
 } from "./customTree.js";
 export {
@@ -41,8 +41,8 @@ export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
-	type IdentifierIndex,
 	createIdentifierIndex,
+	type IdentifierIndex,
 } from "./identifierIndex.js";
 export {
 	incrementalEncodingPolicyForAllowedTypes,
@@ -97,13 +97,13 @@ export {
 	decodeSchemaCompatibilitySnapshot,
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
-export { type SimpleTreeIndex, createSimpleTreeIndex } from "./simpleTreeIndex.js";
+export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 export {
-	type SnapshotFileSystem,
-	type SnapshotSchemaCompatibilityOptions,
 	checkCompatibility,
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
+	type SnapshotFileSystem,
+	type SnapshotSchemaCompatibilityOptions,
 	snapshotSchemaCompatibility,
 } from "./snapshotCompatibilityChecker.js";
 export {
@@ -114,6 +114,7 @@ export {
 	type NoChangeConstraint,
 	type NodeInDocumentConstraint,
 	type RunTransactionParams,
+	rollback,
 	type TransactionCallbackStatus,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
@@ -122,7 +123,6 @@ export {
 	type TransactionResultFailed,
 	type TransactionResultSuccess,
 	type VoidTransactionCallbackStatus,
-	rollback,
 } from "./transactionTypes.js";
 export type {
 	ITree,
@@ -139,19 +139,19 @@ export type {
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
 export {
-	type NodeChangedData,
-	TreeBeta,
-	type TreeChangeEventsBeta,
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
-	type TreeNodeApi,
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
+	type TreeNodeApi,
 	treeNodeApi,
 	tryGetSchema,
 } from "./treeNodeApi.js";
@@ -159,22 +159,22 @@ export type {
 	AllowedTypesFullFromMixedUnsafe,
 	AllowedTypesFullUnsafe,
 	AnnotateAllowedTypesListUnsafe,
-	AnnotatedAllowedTypeUnsafe,
 	AnnotatedAllowedTypesUnsafe,
+	AnnotatedAllowedTypeUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
 	FieldSchemaAlphaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
-	UnannotateAllowedTypeUnsafe,
 	UnannotateAllowedTypesListUnsafe,
+	UnannotateAllowedTypeUnsafe,
 	Unenforced,
 } from "./typesUnsafe.js";
 export {
-	type VerboseTree,
-	type VerboseTreeNode,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	replaceVerboseTreeHandles,
+	type VerboseTree,
+	type VerboseTreeNode,
 	verboseFromCursor,
 } from "./verboseTree.js";

@@ -11,8 +11,8 @@ import type { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";
 
 import {
-	type ISingleHandleItem,
 	dataObjectRegistry,
+	type ISingleHandleItem,
 	registryEntries,
 } from "./dataObjectRegistry.js";
 

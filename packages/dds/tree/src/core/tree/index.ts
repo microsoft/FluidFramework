@@ -15,27 +15,27 @@ export {
 } from "./anchorSet.js";
 export {
 	type ChunkedCursor,
-	type TreeChunk,
 	cursorChunk,
 	dummyRoot,
+	type TreeChunk,
 	tryGetChunk,
 } from "./chunk.js";
 export {
 	CursorLocationType,
 	CursorMarker,
-	type ITreeCursor,
-	type ITreeCursorSynchronous,
-	type PathRootPrefix,
 	castCursorToSynchronous,
 	forEachField,
 	forEachNode,
 	forEachNodeInSubtree,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
 	inCursorField,
 	inCursorNode,
 	isCursor,
 	iterateCursorField,
 	mapCursorField,
 	mapCursorFields,
+	type PathRootPrefix,
 } from "./cursor.js";
 export type {
 	DetachedNodeBuild as DeltaDetachedNodeBuild,
@@ -64,10 +64,16 @@ export { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 export { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 export { type FormatV1 } from "./detachedFieldIndexFormatV1.js";
 export { type ForestRootId } from "./detachedFieldIndexTypes.js";
-export { type ExclusiveMapTree, type MapTree, deepCopyMapTree } from "./mapTree.js";
+export { deepCopyMapTree, type ExclusiveMapTree, type MapTree } from "./mapTree.js";
 export {
+	clonePath,
+	compareFieldUpPaths,
+	compareUpPaths,
 	type FieldUpPath,
+	getDepth,
+	getDetachedFieldContainingPath,
 	type INormalizedUpPath,
+	isDetachedUpPathRoot as isDetachedUpPath,
 	type NodeIndex,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
@@ -75,43 +81,37 @@ export {
 	type PlaceUpPath,
 	type Range,
 	type RangeUpPath,
+	topDownPath,
 	type UpPath,
 	type UpPathDefault,
-	clonePath,
-	compareFieldUpPaths,
-	compareUpPaths,
-	getDepth,
-	getDetachedFieldContainingPath,
-	isDetachedUpPathRoot as isDetachedUpPath,
-	topDownPath,
 } from "./pathTree.js";
 export { EncodedJsonableTree } from "./persistedTreeTextFormat.js";
-export { SparseNode, getDescendant } from "./sparseTree.js";
+export { getDescendant, SparseNode } from "./sparseTree.js";
 export {
 	type FieldMapObject,
 	type GenericFieldsNode,
 	type GenericTreeNode,
-	type JsonableTree,
 	genericTreeDeleteIfEmpty,
 	genericTreeKeys,
 	getGenericTreeField,
+	type JsonableTree,
 	setGenericTreeField,
 } from "./treeTextFormat.js";
 export {
+	aboveRootPlaceholder,
 	type ChildCollection,
 	type ChildLocation,
 	type DetachedField,
+	detachedFieldAsKey,
 	EmptyKey,
+	keyAsDetachedField,
 	type NodeData,
 	type RootField,
+	rootField,
+	rootFieldKey,
 	type TreeType,
 	type TreeValue,
 	type Value,
-	aboveRootPlaceholder,
-	detachedFieldAsKey,
-	keyAsDetachedField,
-	rootField,
-	rootFieldKey,
 } from "./types.js";
 export { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 export {

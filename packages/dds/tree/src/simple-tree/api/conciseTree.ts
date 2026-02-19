@@ -9,11 +9,11 @@ import type { ITreeCursor, TreeNodeStoredSchema } from "../../core/index.js";
 import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
 
 import {
+	customFromCursor,
 	type HandleConverter,
 	KeyEncodingOptions,
-	type TreeEncodingOptions,
-	customFromCursor,
 	replaceHandles,
+	type TreeEncodingOptions,
 } from "./customTree.js";
 
 /**

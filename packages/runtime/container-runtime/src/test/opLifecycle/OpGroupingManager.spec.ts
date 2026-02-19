@@ -12,11 +12,11 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { ContainerMessageType } from "../../index.js";
 import {
 	type EmptyGroupedBatch,
+	isGroupedBatch,
 	type LocalEmptyBatchPlaceholder,
 	OpGroupingManager,
 	type OutboundBatch,
 	type OutboundBatchMessage,
-	isGroupedBatch,
 } from "../../opLifecycle/index.js";
 
 describe("OpGroupingManager", () => {

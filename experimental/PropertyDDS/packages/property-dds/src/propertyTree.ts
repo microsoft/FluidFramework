@@ -13,7 +13,7 @@ import {
 	NodeProperty,
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
-import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, IsoBuffer, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IChannelAttributes,

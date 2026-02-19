@@ -34,10 +34,10 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { MergeTree } from "../mergeTree.js";
 import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
-	type IJSONMarkerSegment,
-	type ISegmentPrivate,
 	compareNumbers,
 	compareStrings,
+	type IJSONMarkerSegment,
+	type ISegmentPrivate,
 	reservedMarkerIdKey,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
@@ -49,7 +49,7 @@ import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { type IJSONTextSegment, TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
-import { TestClient, getStats, specToSegment } from "./testClient.js";
+import { getStats, specToSegment, TestClient } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 

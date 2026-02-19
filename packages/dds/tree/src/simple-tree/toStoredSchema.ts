@@ -26,10 +26,10 @@ import {
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import {
-	type JsonCompatibleReadOnlyObject,
 	brand,
 	filterIterable,
 	getOrCreate,
+	type JsonCompatibleReadOnlyObject,
 	mapIterable,
 } from "../util/index.js";
 

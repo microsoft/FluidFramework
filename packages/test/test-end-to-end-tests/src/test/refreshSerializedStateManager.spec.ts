@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
 import {
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptions,
@@ -21,10 +21,10 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	createAndAttachContainer,
 	createDocumentId,
+	DataObjectFactoryType,
+	ITestFluidObject,
 	timeoutAwait,
 	timeoutPromise,
 	waitForContainerConnection,

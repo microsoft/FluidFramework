@@ -12,8 +12,8 @@ import {
 import { IJSONSegment } from "@fluidframework/merge-tree/internal";
 import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence/internal";
 import {
-	ISharedObject,
 	createSharedObjectKind,
+	ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";

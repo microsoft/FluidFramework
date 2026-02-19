@@ -37,9 +37,9 @@ export {
 } from "./deltaManager.js";
 export type { ISerializedHandle } from "./handles.js";
 export {
-	FluidHandleBase,
 	compareFluidHandles,
 	encodeHandleForSerialization,
+	FluidHandleBase,
 	isFluidHandle,
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
@@ -59,9 +59,6 @@ export { RequestParser } from "./requestParser.js";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
 export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
 export {
-	GCDataBuilder,
-	SummaryTreeBuilder,
-	TelemetryContext,
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	calculateStats,
@@ -69,15 +66,18 @@ export {
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
 	convertToSummaryTreeWithStats,
+	GCDataBuilder,
 	getBlobSize,
 	mergeStats,
 	processAttachMessageGCData,
+	SummaryTreeBuilder,
+	TelemetryContext,
 	utf8ByteLength,
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export type { ReadAndParseBlob } from "./utils.js";
 export {
-	RuntimeHeaders,
 	encodeCompactIdToString,
+	RuntimeHeaders,
 	seqFromTree,
 } from "./utils.js";

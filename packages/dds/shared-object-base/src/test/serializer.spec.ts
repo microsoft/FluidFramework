@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import {
-	RemoteFluidObjectHandle,
 	isFluidHandle,
+	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 
 import { FluidSerializer } from "../serializer.js";

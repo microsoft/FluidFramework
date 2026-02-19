@@ -14,8 +14,8 @@ import {
 import { FieldKinds } from "../../../../feature-libraries/index.js";
 import { Tree } from "../../../../shared-tree/index.js";
 import {
-	UnhydratedFlexTreeNode,
 	createField,
+	UnhydratedFlexTreeNode,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -39,10 +39,10 @@ import {
 	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
-	type ValidateRecursiveSchema,
 	typeNameSymbol,
 	typeSchemaSymbol,
 	unhydratedFlexTreeFromInsertable,
+	type ValidateRecursiveSchema,
 } from "../../../../simple-tree/index.js";
 import type {
 	FieldHasDefault,
@@ -51,9 +51,9 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
 import type {
-	RestrictiveStringRecord,
 	areSafelyAssignable,
 	isAssignableTo,
+	RestrictiveStringRecord,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,

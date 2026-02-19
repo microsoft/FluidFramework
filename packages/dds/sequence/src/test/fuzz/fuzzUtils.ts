@@ -10,9 +10,9 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
-	Reducer,
 	combineReducers,
 	createWeightedAsyncGenerator,
+	Reducer,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
@@ -30,27 +30,27 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type AdjustParams,
+	endpointPosAndSide,
 	type InteriorSequencePlace,
 	type MapLike,
 	PropertySet,
 	type SequencePlace,
 	Side,
-	endpointPosAndSide,
 } from "@fluidframework/merge-tree/internal";
 
 import {
-	type ISequenceIntervalCollection,
 	type IntervalCollection,
+	type ISequenceIntervalCollection,
 	toOptionalSequencePlace,
 	toSequencePlace,
 } from "../../intervalCollection.js";
-import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-import { type IChannelWithOracles, hasSharedStringOracle } from "./oracleUtils.js";
+import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
 import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {

@@ -27,10 +27,10 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { IFluidSerializer } from "./serializer.js";
 import {
+	createSharedObjectKind,
 	type ISharedObjectKind,
 	SharedObject,
 	type SharedObjectKind,
-	createSharedObjectKind,
 } from "./sharedObject.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import type { IChannelView } from "./utils.js";

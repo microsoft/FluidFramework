@@ -19,7 +19,7 @@ import {
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, brand } from "../../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { ForestFormatVersion, type Format, validVersions } from "./formatCommon.js";

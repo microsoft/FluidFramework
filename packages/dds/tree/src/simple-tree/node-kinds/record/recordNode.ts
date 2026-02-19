@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { MapNodeStoredSchema } from "../../../core/index.js";
@@ -12,35 +12,35 @@ import {
 	type FlexTreeOptionalField,
 	isTreeValue,
 } from "../../../feature-libraries/index.js";
-import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	AnnotatedAllowedTypesInternal,
 	CompatibilityLevel,
+	createTreeNodeSchemaPrivateData,
 	type FlexContent,
+	getInnerNode,
+	getKernel,
 	type ImplicitAllowedTypes,
 	type InternalTreeNode,
 	type MostDerivedData,
 	NodeKind,
 	type NodeSchemaMetadata,
+	normalizeAllowedTypes,
+	privateDataSymbol,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchema,
 	type TreeNodeSchemaCorePrivate,
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
 	TreeNodeValid,
-	type UnhydratedFlexTreeNode,
-	createTreeNodeSchemaPrivateData,
-	getInnerNode,
-	getKernel,
-	normalizeAllowedTypes,
-	privateDataSymbol,
 	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type UnhydratedFlexTreeNode,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
-import { FieldKind, createFieldSchema } from "../../fieldSchema.js";
+import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";

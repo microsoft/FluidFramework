@@ -22,6 +22,7 @@ import type {
 import {
 	BatchManager,
 	type BatchStartInfo,
+	ensureContentsDeserialized,
 	type InboundMessageResult,
 	OpCompressor,
 	OpDecompressor,
@@ -31,7 +32,6 @@ import {
 	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 	RemoteMessageProcessor,
-	ensureContentsDeserialized,
 } from "../../opLifecycle/index.js";
 
 import { compressMultipleMessageBatch } from "./legacyCompression.js";

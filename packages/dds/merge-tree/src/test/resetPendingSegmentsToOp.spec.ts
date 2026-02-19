@@ -12,15 +12,15 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import {
 	type ISegmentPrivate,
 	Marker,
-	type SegmentGroup,
 	reservedMarkerIdKey,
+	type SegmentGroup,
 } from "../mergeTreeNodes.js";
 import { type IMergeTreeOp, ReferenceType } from "../ops.js";
 import { clone } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 describe("resetPendingSegmentsToOp", () => {
 	let client: TestClient;

@@ -4,37 +4,37 @@
  */
 
 export {
-	type IConfigProvider,
-	type MonitoringContext,
-	type OptionConfigReaders,
 	createChildMonitoringContext,
 	createConfigBasedOptionsProxy,
+	type IConfigProvider,
 	loggerToMonitoringContext,
+	type MonitoringContext,
 	mixinMonitoringContext,
+	type OptionConfigReaders,
 	sessionStorageConfigProvider,
 	wrapConfigProviderWithDefaults,
 } from "./config.js";
 export {
 	DataCorruptionError,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	GenericError,
 	LayerIncompatibilityError,
 	type MessageLike,
 	UsageError,
-	extractSafePropertiesFromMessage,
 	validatePrecondition,
 } from "./error.js";
 export {
-	type IFluidErrorAnnotations,
-	LoggingError,
-	NORMALIZED_ERROR_TYPE,
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
 	generateStack,
 	getCircularReplacer,
+	type IFluidErrorAnnotations,
 	isExternalError,
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
+	LoggingError,
+	NORMALIZED_ERROR_TYPE,
 	normalizeError,
 	overwriteStack,
 	wrapError,
@@ -48,33 +48,33 @@ export {
 	safeRaiseEvent,
 } from "./events.js";
 export {
-	type IFluidErrorBase,
 	hasErrorInstanceId,
+	type IFluidErrorBase,
 	isFluidError,
 	isLayerIncompatibilityError,
 } from "./fluidErrorBase.js";
 export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
 export {
-	type IPerformanceEventMarkers,
-	type ITelemetryLoggerPropertyBag,
-	type ITelemetryLoggerPropertyBags,
-	type MultiSinkLoggerProperties,
-	PerformanceEvent,
-	TaggedLoggerAdapter,
-	TelemetryDataTag,
-	type TelemetryEventPropertyTypes,
 	createChildLogger,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,
 	formatTick,
+	type IPerformanceEventMarkers,
+	type ITelemetryLoggerPropertyBag,
+	type ITelemetryLoggerPropertyBags,
+	type MultiSinkLoggerProperties,
 	numberFromString,
+	PerformanceEvent,
+	TaggedLoggerAdapter,
+	TelemetryDataTag,
+	type TelemetryEventPropertyTypes,
 	tagCodeArtifacts,
 	tagData,
 } from "./logger.js";
 export {
+	createMockLoggerExt,
 	type IMockLoggerExt,
 	MockLogger,
-	createMockLoggerExt,
 } from "./mockLogger.js";
 export {
 	type CustomMetrics,
@@ -95,8 +95,8 @@ export type {
 } from "./telemetryTypes.js";
 export { ThresholdCounter } from "./thresholdCounter.js";
 export {
+	createSampledLogger,
 	type IEventSampler,
 	type ISampledTelemetryLogger,
-	createSampledLogger,
 	measure,
 } from "./utils.js";

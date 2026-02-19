@@ -13,9 +13,9 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
 	handleIncomingMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
@@ -38,7 +38,7 @@ import {
 	LoggerContext,
 	TelemetryOptInLogger,
 } from "./TelemetryUtils.js";
-import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
+import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
 

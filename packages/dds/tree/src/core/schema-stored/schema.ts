@@ -7,12 +7,12 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
-	type JsonCompatibleReadOnlyObject,
-	type MakeNominal,
-	type Values,
 	brandConst,
 	invertMap,
+	type JsonCompatibleReadOnlyObject,
+	type MakeNominal,
 	strictEnum,
+	type Values,
 } from "../../util/index.js";
 
 import {

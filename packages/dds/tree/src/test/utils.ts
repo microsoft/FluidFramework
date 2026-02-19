@@ -27,9 +27,9 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
-	type IIdCompressorCore,
 	assertIsStableId,
 	createIdCompressor,
+	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
@@ -42,8 +42,8 @@ import type {
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import {
-	type IMockLoggerExt,
 	createMockLoggerExt,
+	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
@@ -52,34 +52,37 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
+	createSummarizer,
 	type ITestObjectProvider,
 	type SummaryInfo,
+	summarizeNow,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestFluidObjectInternal,
 	TestObjectProvider,
-	createSummarizer,
-	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 import {
 	type CodecWriteOptions,
+	currentVersion,
 	FluidClientVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
-	currentVersion,
 	withSchemaValidation,
 } from "../codec/index.js";
 import {
 	type Anchor,
 	type AnchorNode,
 	type AnchorSetRootEvents,
+	applyDelta,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
 	type CommitMetadata,
 	CursorLocationType,
+	clonePath,
+	compareUpPaths,
 	type DeltaDetachedNodeBuild,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeDestruction,
@@ -98,6 +101,9 @@ import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
 	type MapTree,
+	makeDetachedFieldIndex,
+	mapCursorField,
+	moveToDetachedField,
 	type NormalizedFieldUpPath,
 	type RevertibleAlpha,
 	type RevertibleAlphaFactory,
@@ -105,6 +111,7 @@ import {
 	type RevisionMetadataSource,
 	type RevisionTag,
 	RevisionTagCodec,
+	revisionMetadataSourceFromInfo,
 	SchemaFormatVersion,
 	type TaggedChange,
 	type TreeFieldStoredSchema,
@@ -113,24 +120,10 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
-	applyDelta,
-	clonePath,
-	compareUpPaths,
-	makeDetachedFieldIndex,
-	mapCursorField,
-	moveToDetachedField,
-	revisionMetadataSourceFromInfo,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	Context,
-	type FullSchemaPolicy,
-	type IDefaultEditBuilder,
-	type IncrementalEncodingPolicy,
-	type MinimalMapTreeNodeView,
-	MockNodeIdentifierManager,
-	type NodeIdentifierManager,
-	type TreeChunk,
 	chunkFieldSingle,
 	cursorForJsonableTreeField,
 	cursorForMapTreeField,
@@ -138,14 +131,21 @@ import {
 	defaultChunkPolicy,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
+	type FullSchemaPolicy,
+	type IDefaultEditBuilder,
+	type IncrementalEncodingPolicy,
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
+	type MinimalMapTreeNodeView,
+	MockNodeIdentifierManager,
 	makeSchemaCodec,
 	mapRootChanges,
 	mapTreeFieldFromCursor,
 	mapTreeFromCursor,
 	mapTreeWithField,
+	type NodeIdentifierManager,
+	type TreeChunk,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
@@ -158,7 +158,9 @@ import {
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
+	buildConfiguredForest,
 	type CheckoutEvents,
+	createTreeCheckout,
 	type ForestOptions,
 	type ForestType,
 	ForestTypeReference,
@@ -166,19 +168,18 @@ import {
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
 	type ITreePrivate,
+	independentView,
 	SchematizingSimpleTreeView,
 	type SharedTreeContentSnapshot,
 	type SharedTreeOptionsInternal,
 	type TreeCheckout,
-	buildConfiguredForest,
-	createTreeCheckout,
-	independentView,
 } from "../shared-tree/index.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 import {
-	type ITree,
 	type ImplicitFieldSchema,
 	type InsertableField,
+	type ITree,
+	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	type SimpleNodeSchema,
 	type SnapshotFileSystem,
@@ -186,24 +187,23 @@ import {
 	type TreeNodeSchema,
 	type TreeView,
 	type TreeViewConfiguration,
-	type UnsafeUnknownSchema,
-	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	toStoredSchema,
+	type UnsafeUnknownSchema,
 	unhydratedFlexTreeFromInsertable,
 } from "../simple-tree/index.js";
 import {
-	type ISharedTree,
 	configuredSharedTree,
 	configuredSharedTreeInternal,
+	type ISharedTree,
 } from "../treeFactory.js";
 import {
 	Breakable,
-	type JsonCompatible,
-	type Mutable,
 	brand,
 	forEachInNestedMap,
 	isReadonlyArray,
+	type JsonCompatible,
+	type Mutable,
 	nestedMapFromFlatList,
 	tryGetFromNestedMap,
 } from "../util/index.js";

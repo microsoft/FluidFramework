@@ -14,8 +14,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type ValidateRecursiveSchema,
 	allowUnused,
+	type ValidateRecursiveSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {

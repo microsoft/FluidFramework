@@ -30,8 +30,8 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	createChildLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

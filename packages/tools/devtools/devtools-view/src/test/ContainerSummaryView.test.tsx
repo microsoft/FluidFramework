@@ -16,7 +16,7 @@ import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
 import { ContainerSummaryView } from "../components/index.js";
 import { MessageRelayContext } from "../MessageRelayContext.js";
 
-import { MockMessageRelay, assertNoAccessibilityViolations } from "./utils/index.js";
+import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
 
 describe("ContainerSummaryView Accessibility Check", () => {
 	const supportedFeatures: DevtoolsFeatureFlags = {

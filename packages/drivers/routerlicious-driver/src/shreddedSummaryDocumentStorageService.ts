@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
@@ -15,10 +15,10 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/driver-utils/internal";
 import {
+	createChildMonitoringContext,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICache, InMemoryCache } from "./cache.js";

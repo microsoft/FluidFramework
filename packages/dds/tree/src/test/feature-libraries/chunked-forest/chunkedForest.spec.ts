@@ -12,11 +12,11 @@ import type {
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	Chunker,
-	type IChunker,
-	type ShapeInfo,
 	defaultChunkPolicy,
+	type IChunker,
 	makeTreeChunker,
 	polymorphic,
+	type ShapeInfo,
 	tryShapeFromNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";

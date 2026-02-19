@@ -7,11 +7,11 @@
 /* eslint-disable no-bitwise */
 
 import {
+	assert,
 	DoublyLinkedList,
 	Heap,
 	type IComparer,
 	type ListNode,
-	assert,
 } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -24,11 +24,11 @@ import {
 } from "./constants.js";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
+	anyLocalReferencePosition,
+	filterLocalReferencePositions,
 	LocalReferenceCollection,
 	type LocalReferencePosition,
 	SlidingPreference,
-	anyLocalReferencePosition,
-	filterLocalReferencePositions,
 } from "./localReference.js";
 import {
 	type IMergeTreeDeltaOpArgs,
@@ -38,33 +38,33 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
+	assertSegmentLeaf,
+	assignChild,
 	CollaborationWindow,
+	getMinSeqPerspective,
+	getMinSeqStamp,
 	type IMergeNode,
 	type IMergeNodeBuilder,
+	type InsertContext,
 	type ISegmentAction,
 	type ISegmentChanges,
 	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ISegmentPrivate,
-	type InsertContext,
+	isSegmentLeaf,
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
 	type ObliterateInfo,
-	type SegmentGroup,
-	assertSegmentLeaf,
-	assignChild,
-	getMinSeqPerspective,
-	getMinSeqStamp,
-	isSegmentLeaf,
 	reservedMarkerIdKey,
+	type SegmentGroup,
 } from "./mergeTreeNodes.js";
 import {
-	LeafAction,
-	NodeAction,
 	backwardExcursion,
 	depthFirstNodeWalk,
 	forwardExcursion,
+	LeafAction,
+	NodeAction,
 	walkAllChildSegments,
 } from "./mergeTreeNodeWalk.js";
 import { type TrackingGroup, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
@@ -81,14 +81,14 @@ import {
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import {
+	allAckedChangesPerspective,
 	LocalDefaultPerspective,
 	LocalReconnectingPerspective,
 	type Perspective,
 	PriorPerspective,
 	RemoteObliteratePerspective,
-	allAckedChangesPerspective,
 } from "./perspective.js";
-import { type PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
+import { createMap, extend, extendIfUndefined, type PropertySet } from "./properties.js";
 import {
 	DetachedReferencePosition,
 	type ReferencePosition,
@@ -98,22 +98,22 @@ import {
 } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
+	assertRemoved,
 	type IHasInsertionInfo,
 	type IHasRemovalInfo,
 	type ISegmentInsideObliterateInfo,
-	type SegmentWithInfo,
-	assertRemoved,
 	isInsideObliterate,
 	isMergeNodeInfo,
 	isRemoved,
 	overwriteInfo,
 	removeRemovalInfo,
+	type SegmentWithInfo,
 	toRemovalInfo,
 } from "./segmentInfos.js";
 import {
+	copyPropertiesAndManager,
 	PropertiesManager,
 	type PropsOrAdjust,
-	copyPropertiesAndManager,
 } from "./segmentPropertiesManager.js";
 import { type InteriorSequencePlace, Side } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";

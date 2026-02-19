@@ -16,26 +16,26 @@ import type {
 	UpPath,
 } from "../core/index.js";
 import {
+	assertFlexTreeEntityNotFreed,
 	ContextSlot,
 	FieldKinds,
-	type FlexTreeContext,
-	type FlexTreeHydratedContextMinimal,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
-	assertFlexTreeEntityNotFreed,
+	type FlexTreeContext,
+	type FlexTreeHydratedContextMinimal,
 	flexTreeSlot,
 	getOrCreateHydratedFlexTreeNode,
 	getSchemaAndPolicy,
 	isFieldInSchema,
 	throwOutOfSchema,
 } from "../feature-libraries/index.js";
-import { type Mutable, brand } from "../util/index.js";
+import { brand, type Mutable } from "../util/index.js";
 
 import {
+	getKernel,
 	type ImplicitAllowedTypes,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
-	getKernel,
 } from "./core/index.js";
 import type { ImplicitFieldSchema } from "./fieldSchema.js";
 import {

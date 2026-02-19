@@ -7,15 +7,15 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ValueSchema } from "../../core/index.js";
-import { type Mutable, copyProperty, hasSingle } from "../../util/index.js";
+import { copyProperty, hasSingle, type Mutable } from "../../util/index.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { FieldKind } from "../fieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import {
 	ArrayNodeSchema,
-	ObjectNodeSchema,
 	isMapNodeSchema,
 	isRecordNodeSchema,
+	ObjectNodeSchema,
 } from "../node-kinds/index.js";
 import type {
 	SimpleArrayNodeSchema,

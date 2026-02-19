@@ -8,13 +8,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	DiscriminatedUnionDispatcher,
+	extractJsonValidator,
 	type FormatValidator,
 	FormatValidatorNoOp,
-	extractJsonValidator,
 } from "../../codec/index.js";
 import type { ValueSchema } from "../../core/index.js";
 import { type JsonCompatibleReadOnly, objectToMap } from "../../util/index.js";
-import { NodeKind, SchemaUpgrade, createSchemaUpgrade } from "../core/index.js";
+import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
 import type {
 	SimpleAllowedTypeAttributes,

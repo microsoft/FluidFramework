@@ -5,23 +5,29 @@
 
 export {
 	type CreateIndependentTreeAlphaOptions,
-	type IndependentViewOptions,
-	type ViewContent,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
+	type IndependentViewOptions,
 	independentInitializedView,
 	independentView,
+	type ViewContent,
 } from "./independentView.js";
 export { initialize, initializerFromChunk } from "./schematizeTree.js";
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 export {
+	buildConfiguredForest,
+	defaultSharedTreeOptions,
+	exportSimpleSchema,
 	type ForestOptions,
 	type ForestType,
 	ForestTypeExpensiveDebug,
 	ForestTypeOptimized,
 	ForestTypeReference,
+	getBranch,
+	getCodecTreeForSharedTreeFormat,
 	type ITreeInternal,
 	type ITreePrivate,
+	persistedToSimpleSchema,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeKernel,
@@ -29,16 +35,10 @@ export {
 	type SharedTreeOptions,
 	type SharedTreeOptionsBeta,
 	type SharedTreeOptionsInternal,
-	buildConfiguredForest,
-	defaultSharedTreeOptions,
-	exportSimpleSchema,
-	getBranch,
-	getCodecTreeForSharedTreeFormat,
-	persistedToSimpleSchema,
 } from "./sharedTree.js";
 export {
-	type SharedTreeChangeFormatVersion,
 	getCodecTreeForChangeFormat,
+	type SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 export type {
@@ -56,9 +56,9 @@ export {
 export {
 	type BranchableTree,
 	type CheckoutEvents,
+	createTreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
 	type TreeBranchFork,
 	TreeCheckout,
-	createTreeCheckout,
 } from "./treeCheckout.js";

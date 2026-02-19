@@ -4,7 +4,7 @@
  */
 
 import { HasVariadicTraits } from './ChangeTypes.js';
-import { Mutable, MutableMap, copyPropertyIfDefined, fail } from './Common.js';
+import { copyPropertyIfDefined, fail, Mutable, MutableMap } from './Common.js';
 import { Forest } from './Forest.js';
 import { NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
 import { NodeIdConverter } from './NodeIdUtilities.js';

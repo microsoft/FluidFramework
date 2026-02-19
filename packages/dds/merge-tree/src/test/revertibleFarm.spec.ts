@@ -15,9 +15,9 @@ import type {
 import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import {
+	appendToMergeTreeDeltaRevertibles,
 	type MergeTreeDeltaRevertible,
 	type MergeTreeWithRevert,
-	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
 
@@ -29,7 +29,7 @@ import {
 	removeRange,
 } from "./mergeTreeOperationRunner.js";
 import { createRevertDriver } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 const defaultOptions = {
 	initialOps: 5,

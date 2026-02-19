@@ -20,12 +20,12 @@ import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/intern
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	createLoaderProps,
+	createSummarizer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createLoaderProps,
-	createSummarizer,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

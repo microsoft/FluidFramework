@@ -5,13 +5,12 @@
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils/internal';
+import { createChildLogger, ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 // eslint-disable-next-line import-x/no-internal-modules
 import { diffAgainst } from '@tylerbu/sorted-btree-es6/extended/diffAgainst';
 
 import {
-	Mutable,
 	assertNotUndefined,
 	assertWithMessage,
 	compareFiniteNumbers,
@@ -21,6 +20,7 @@ import {
 	fail,
 	getOrCreate,
 	hasLength,
+	Mutable,
 	setPropertyIfDefined,
 } from '../Common.js';
 import {
@@ -39,10 +39,10 @@ import { assertIsStableId, assertIsUuidString, isStableId } from '../UuidUtiliti
 import { AppendOnlySortedMap } from './AppendOnlySortedMap.js';
 import { getIds } from './IdRange.js';
 import {
-	NumericUuid,
 	ensureSessionUuid,
 	getPositiveDelta,
 	incrementUuid,
+	NumericUuid,
 	numericUuidEquals,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,

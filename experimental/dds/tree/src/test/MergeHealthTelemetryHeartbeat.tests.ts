@@ -14,7 +14,7 @@ import { RevisionView } from '../RevisionView.js';
 import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
 import { TransactionInternal } from '../TransactionInternal.js';
 
-import { TestTree, buildLeaf } from './utilities/TestNode.js';
+import { buildLeaf, TestTree } from './utilities/TestNode.js';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 async function setupHeartbeat() {

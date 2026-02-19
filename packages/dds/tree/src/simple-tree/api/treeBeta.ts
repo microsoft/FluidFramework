@@ -5,22 +5,22 @@
 
 import type { ITreeCursorSynchronous, TreeFieldStoredSchema } from "../../core/index.js";
 import {
-	FieldKinds,
 	defaultSchemaPolicy,
+	FieldKinds,
 	isTreeValue,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	Context,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
+	isTreeNode,
 	type NodeKind,
 	type TreeLeafValue,
 	type TreeNode,
 	type Unhydrated,
 	UnhydratedContext,
 	type WithType,
-	getKernel,
-	getOrCreateNodeFromInnerNode,
-	isTreeNode,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
 import type {

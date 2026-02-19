@@ -6,18 +6,18 @@
 import { strict as assert } from "node:assert";
 
 import {
+	forbiddenFieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	type TreeNodeSchemaIdentifier,
 	ValueSchema,
-	forbiddenFieldKindIdentifier,
-	storedEmptyFieldSchema,
 } from "../../../core/index.js";
 import {
-	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	FieldKinds,
 } from "../../../feature-libraries/index.js";
 import {
 	findExtraAllowedTypes,

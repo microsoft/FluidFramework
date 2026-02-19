@@ -9,10 +9,10 @@ import type { FieldKey } from "../../core/index.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
-	type FlexContent,
-	type UnhydratedFlexTreeField,
 	createField,
+	type FlexContent,
 	normalizeAllowedTypes,
+	type UnhydratedFlexTreeField,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
 import {

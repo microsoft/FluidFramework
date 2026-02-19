@@ -6,15 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import {
+	getSimpleSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
+	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
-	getSimpleSchema,
-	independentView,
 } from "@fluidframework/tree/internal";
 
-import { type ExposedMethods, buildFunc, exposeMethodsSymbol } from "../methodBinding.js";
+import { buildFunc, type ExposedMethods, exposeMethodsSymbol } from "../methodBinding.js";
 import { fluidHandleTypeName } from "../prompt.js";
 import { type ExposedProperties, exposePropertiesSymbol } from "../propertyBinding.js";
 import { typeFactory } from "../treeAgentTypes.js";

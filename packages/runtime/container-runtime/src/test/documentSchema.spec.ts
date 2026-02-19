@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type SemanticVersion,
 	defaultMinVersionForCollab,
+	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type IMockLoggerExt,
 	createMockLoggerExt,
+	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { lt } from "semver-ts";
 

@@ -11,14 +11,14 @@ import { filterIterable, hasSingle, oneFromIterable } from "../util/index.js";
 
 import {
 	CompatibilityLevel,
-	type TreeNode,
-	type TreeNodeSchema,
-	type Unhydrated,
-	UnhydratedFlexTreeNode,
 	contentSchemaSymbol,
 	getKernel,
 	getTreeNodeSchemaPrivateData,
 	isTreeNode,
+	type TreeNode,
+	type TreeNodeSchema,
+	type Unhydrated,
+	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
 import { FieldKind, type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js";

@@ -13,18 +13,19 @@ import {
 	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type RevisionInfo,
-	type RevisionMetadataSource,
-	type RevisionTag,
-	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	newChangeAtomIdRangeMap,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	revisionMetadataSourceFromInfo,
+	type TaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import {
+	addCrossFieldQuery,
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
@@ -32,7 +33,6 @@ import {
 	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	addCrossFieldQuery,
 	rebaseRevisionMetadataFromInfo,
 	setInCrossFieldMap,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -81,12 +81,12 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	type IdAllocator,
-	type Mutable,
 	brand,
 	fakeIdAllocator,
 	getOrAddEmptyToMap,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type Mutable,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";

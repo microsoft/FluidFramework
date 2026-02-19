@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import {
 	EmptyKey,
 	type FieldKey,
-	type NormalizedUpPath,
-	type UpPath,
 	moveToDetachedField,
+	type NormalizedUpPath,
 	rootFieldKey,
+	type UpPath,
 } from "../core/index.js";
 import {
 	type Context,
@@ -22,9 +22,9 @@ import {
 import {
 	type InsertableContent,
 	SchemaFactory,
+	toInitialSchema,
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
-	toInitialSchema,
 } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
@@ -32,7 +32,7 @@ import type {
 	TreeSimpleContent,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
-import { type TreeStoredContentStrict, fieldCursorFromInsertable } from "./utils.js";
+import { fieldCursorFromInsertable, type TreeStoredContentStrict } from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.

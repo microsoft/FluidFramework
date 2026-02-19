@@ -12,12 +12,12 @@ import { expect } from "chai";
 
 import { EditType } from "../CommonInterfaces.js";
 import {
+	createHandleNode,
 	DataVisualizerGraph,
+	defaultVisualizers,
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
 	VisualNodeKind,
-	createHandleNode,
-	defaultVisualizers,
 } from "../data-visualization/index.js";
 import { getKeyForFluidObject } from "../FluidObjectKey.js";
 

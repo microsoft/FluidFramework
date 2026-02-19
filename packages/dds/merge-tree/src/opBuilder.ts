@@ -19,7 +19,7 @@ import {
 	MergeTreeDeltaType,
 } from "./ops.js";
 import type { MapLike, PropertySet } from "./properties.js";
-import { type SequencePlace, Side, normalizePlace } from "./sequencePlace.js";
+import { normalizePlace, type SequencePlace, Side } from "./sequencePlace.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties

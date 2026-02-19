@@ -7,12 +7,12 @@ import { strict as assert } from "node:assert";
 
 import {
 	type AsyncGenerator,
-	type Generator,
-	type Reducer,
 	combineReducers,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
+	type Generator,
 	isOperationType,
+	type Reducer,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";

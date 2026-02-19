@@ -15,8 +15,8 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
-	PerformanceEvent,
 	isFluidError,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";

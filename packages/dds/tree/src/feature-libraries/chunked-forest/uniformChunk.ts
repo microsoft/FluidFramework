@@ -10,6 +10,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ChunkedCursor,
 	CursorLocationType,
+	cursorChunk,
+	dummyRoot,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
@@ -18,11 +20,9 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
-	cursorChunk,
-	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, hasSome } from "../../util/index.js";
-import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
+import { hasSome, ReferenceCountedBase } from "../../util/index.js";
+import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
 
 /**
  * Create a tree chunk with ref count 1.

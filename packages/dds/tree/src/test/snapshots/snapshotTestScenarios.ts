@@ -9,10 +9,10 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { type SharedTreeOptions, Tree, getBranch } from "../../shared-tree/index.js";
+import { getBranch, type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { type ISharedTree, configuredSharedTree } from "../../treeFactory.js";
-import { TestTreeProviderLite, createSnapshotCompressor } from "../utils.js";
+import { configuredSharedTree, type ISharedTree } from "../../treeFactory.js";
+import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
 
 const enableSchemaValidation = true;
 

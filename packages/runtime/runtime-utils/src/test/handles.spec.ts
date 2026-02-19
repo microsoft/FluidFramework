@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { isFluidHandle, lookupTemporaryBlobStorageId } from "../handles.js";
 

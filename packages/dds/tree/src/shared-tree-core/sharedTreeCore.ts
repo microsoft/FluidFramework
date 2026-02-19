@@ -32,18 +32,18 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 	RevisionTagCodec,
+	replaceChange,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 	type TreeStoredSchemaRepository,
-	replaceChange,
 } from "../core/index.js";
 import {
 	type Breakable,
-	type JsonCompatibleReadOnly,
-	type WithBreakable,
 	brand,
 	breakingClass,
+	type JsonCompatibleReadOnly,
 	throwIfBroken,
+	type WithBreakable,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -63,11 +63,11 @@ import type { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import {
+	minVersionToSharedTreeSummaryFormatVersion,
 	type SharedTreeSummaryFormatVersion,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
-	minVersionToSharedTreeSummaryFormatVersion,
 	summarizablesTreeKey,
 	supportedSharedTreeSummaryFormatVersions,
 } from "./summaryTypes.js";

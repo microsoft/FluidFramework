@@ -18,9 +18,9 @@ import {
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
+	loggerToMonitoringContext,
 	type MonitoringContext,
 	PerformanceEvent,
-	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {

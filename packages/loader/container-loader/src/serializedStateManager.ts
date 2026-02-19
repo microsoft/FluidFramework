@@ -24,16 +24,16 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree, isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
 import {
+	createChildMonitoringContext,
 	type MonitoringContext,
 	PerformanceEvent,
 	UsageError,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ContainerStorageAdapter,
-	type ISerializableBlobContents,
 	getBlobContentsFromTree,
+	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
 import {

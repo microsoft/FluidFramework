@@ -14,10 +14,10 @@ import {
 import type { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import {
+	createSequenceInterval,
 	IntervalStickiness,
 	IntervalType,
 	type SequenceInterval,
-	createSequenceInterval,
 } from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
 

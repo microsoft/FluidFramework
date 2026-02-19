@@ -7,7 +7,7 @@ import { Side } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
-import { type Client, assertConsistent } from "./intervalTestUtils.js";
+import { assertConsistent, type Client } from "./intervalTestUtils.js";
 import { constructClients } from "./multiClientTestUtils.js";
 
 describe("Shared String Obliterate", () => {

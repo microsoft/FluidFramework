@@ -7,7 +7,7 @@ import { compareArrays } from '@fluidframework/core-utils/internal';
 import { v4 as uuidv4 } from 'uuid';
 
 import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
-import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
+import { copyPropertyIfDefined, fail, Mutable } from './Common.js';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
 import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
 import { comparePayloads } from './PayloadUtilities.js';
@@ -27,7 +27,7 @@ import {
 	TreeNode,
 	TreeNodeSequence,
 } from './persisted-types/index.js';
-import { TransactionView, iterateChildren } from './RevisionView.js';
+import { iterateChildren, TransactionView } from './RevisionView.js';
 import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
 import { TraitLocation, TreeView } from './TreeView.js';
 import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';

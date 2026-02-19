@@ -8,8 +8,8 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IPersistedCache } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	getUnexpectedLogErrorException,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";

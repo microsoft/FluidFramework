@@ -31,16 +31,16 @@ export {
 	StableRange,
 } from './ChangeTypes.js';
 export { Checkout, CheckoutEvent, EditValidationResult, ICheckoutEvents } from './Checkout.js';
-export { Result, isSharedTreeEvent, sharedTreeAssertionErrorType } from './Common.js';
+export { isSharedTreeEvent, Result, sharedTreeAssertionErrorType } from './Common.js';
 export { EagerCheckout } from './EagerCheckout.js';
 export type { EditHandle, OrderedEditSet } from './EditLog.js';
 export {
+	areRevisionViewsSemanticallyEqual,
 	BadPlaceValidationResult,
 	BadRangeValidationResult,
 	PlaceValidationResult,
 	RangeValidationResult,
 	RangeValidationResultKind,
-	areRevisionViewsSemanticallyEqual,
 	setTrait,
 } from './EditUtilities.js';
 export { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';

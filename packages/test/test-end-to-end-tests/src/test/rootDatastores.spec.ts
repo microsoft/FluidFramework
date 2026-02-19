@@ -12,12 +12,12 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import {
+	createSummarizer,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";

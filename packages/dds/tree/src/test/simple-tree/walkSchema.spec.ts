@@ -14,9 +14,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import {
+	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	type TreeNodeSchema,
-	normalizeFieldSchema,
 } from "../../simple-tree/index.js";
 
 function makeAnnotated(

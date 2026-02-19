@@ -4,13 +4,13 @@
  */
 
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { Lazy, assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
+	createChildLogger,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	type ITelemetryLoggerExt,
 	LoggingError,
-	createChildLogger,
-	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
@@ -26,10 +26,10 @@ import {
 	type BatchResubmitInfo,
 	type BatchStartInfo,
 	type EmptyGroupedBatch,
+	getEffectiveBatchId,
 	type InboundMessageResult,
 	type LocalBatchMessage,
 	type LocalEmptyBatchPlaceholder,
-	getEffectiveBatchId,
 	serializeOp,
 } from "./opLifecycle/index.js";
 

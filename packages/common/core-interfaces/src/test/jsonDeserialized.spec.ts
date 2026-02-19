@@ -37,18 +37,6 @@ import type {
 } from "./testValues.js";
 // This import list should be kept mostly in-sync with jsonSerializable.spec.ts. Deltas should be commented.
 import {
-	// These `ClassWith*` values are used to verify `instanceof` results of
-	// deserialization and not expected to be test cases themselves.
-	ClassWithPrivateData,
-	ClassWithPrivateGetter,
-	ClassWithPrivateMethod,
-	ClassWithPrivateSetter,
-	ClassWithPublicData,
-	ClassWithPublicMethod,
-	ComputedEnum,
-	ConstHeterogenousEnum,
-	NumericEnum,
-	StringEnum,
 	aFunction,
 	arrayOfBigintOrObjects,
 	arrayOfBigintOrSymbols,
@@ -81,6 +69,16 @@ import {
 	brandedStringIndexOfNumbers,
 	brandedStringRecordOfBooleans,
 	brandedStringRecordOfNumbers,
+	// These `ClassWith*` values are used to verify `instanceof` results of
+	// deserialization and not expected to be test cases themselves.
+	ClassWithPrivateData,
+	ClassWithPrivateGetter,
+	ClassWithPrivateMethod,
+	ClassWithPrivateSetter,
+	ClassWithPublicData,
+	ClassWithPublicMethod,
+	ComputedEnum,
+	ConstHeterogenousEnum,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateDataAndIsFunction,
 	classInstanceWithPrivateGetter,
@@ -107,6 +105,7 @@ import {
 	jsonStringOfUnknown,
 	mapOfStringsToNumbers,
 	mixedRecordOfUnknown,
+	NumericEnum,
 	number,
 	numberOrBigintOrSymbol,
 	numericEnumValue,
@@ -205,6 +204,7 @@ import {
 	readonlyArrayOfObjects,
 	readonlyMapOfStringsToNumbers,
 	readonlySetOfNumbers,
+	StringEnum,
 	selfRecursiveFunctionWithProperties,
 	selfRecursiveObjectAndFunction,
 	setOfNumbers,
@@ -213,8 +213,8 @@ import {
 	string,
 	stringEnumValue,
 	stringOrNumberRecordOfObjects,
-	stringOrNumberRecordOfStringWithKnownNumber,
 	stringOrNumberRecordOfStrings,
+	stringOrNumberRecordOfStringWithKnownNumber,
 	stringOrNumberRecordOfUndefinedWithKnownNumber,
 	stringOrSymbol,
 	stringRecordOfNumberOrUndefined,

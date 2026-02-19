@@ -8,6 +8,8 @@ import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import {
 	type ChunkedCursor,
 	CursorLocationType,
+	cursorChunk,
+	dummyRoot,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
@@ -17,11 +19,9 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
-	cursorChunk,
-	dummyRoot,
 } from "../../core/index.js";
 import { ReferenceCountedBase } from "../../util/index.js";
-import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
+import { prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
 
 /**
  * General purpose one node chunk.

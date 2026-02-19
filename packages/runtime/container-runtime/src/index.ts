@@ -12,19 +12,19 @@ export {
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
+	agentSchedulerId,
 	ContainerRuntime,
 	type ContainerRuntimeOptions,
 	type ContainerRuntimeOptionsInternal,
 	DeletedResponseHeaderKey,
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
-	type ISummaryRuntimeOptions,
 	InactiveResponseHeaderKey,
+	type ISummaryRuntimeOptions,
 	type LoadContainerRuntimeParams,
+	loadContainerRuntime,
 	type RuntimeHeaderData,
 	TombstoneResponseHeaderKey,
-	agentSchedulerId,
-	loadContainerRuntime,
 } from "./containerRuntime.js";
 export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -32,11 +32,11 @@ export {
 	type GCFeatureMatrix,
 	GCNodeType,
 	type GCVersion,
+	type IGarbageCollectionRuntime,
 	type IGCMetadata,
 	type IGCNodeUpdatedProps,
 	type IGCRuntimeOptions,
 	type IGCStats,
-	type IGarbageCollectionRuntime,
 	type IMarkPhaseStats,
 	type ISweepPhaseStats,
 } from "./gc/index.js";
@@ -57,12 +57,13 @@ export {
 	runtimeCoreCompatDetails,
 } from "./runtimeLayerCompatState.js";
 export {
+	currentDocumentVersionSchema,
 	DefaultSummaryConfiguration,
 	type DocumentSchemaValueType,
 	DocumentsSchemaController,
 	type EnqueueSummarizeResult,
-	type IAckSummaryResult,
 	type IAckedSummary,
+	type IAckSummaryResult,
 	type IBaseSummarizeResult,
 	type IBroadcastSummaryResult,
 	type ICancellableSummarizerController,
@@ -77,12 +78,13 @@ export {
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
 	type IDocumentSchemaInfo,
+	type IdCompressorMode,
 	type IEnqueueSummarizeOptions,
 	type IFluidDataStoreAttributes0,
 	type IFluidDataStoreAttributes1,
 	type IFluidDataStoreAttributes2,
-	type IGenerateSummaryTreeResult,
 	type IGeneratedSummaryStats,
+	type IGenerateSummaryTreeResult,
 	type INackSummaryResult,
 	type IOnDemandSummarizeOptions,
 	type IRefreshSummaryAckOptions,
@@ -110,7 +112,7 @@ export {
 	type ISummaryNackMessage,
 	type ISummaryOpMessage,
 	type IUploadSummaryResult,
-	type IdCompressorMode,
+	neverCancelledSummaryToken,
 	type OmitAttributesVersions,
 	type OpActionEventListener,
 	type OpActionEventName,
@@ -121,6 +123,4 @@ export {
 	Summarizer,
 	SummaryCollection,
 	type SummaryStage,
-	currentDocumentVersionSchema,
-	neverCancelledSummaryToken,
 } from "./summary/index.js";

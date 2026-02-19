@@ -26,9 +26,9 @@ import {
 
 import {
 	ChannelCollection,
-	type IFluidRootParentContextPrivate,
 	detectOutboundReferences,
 	getSummaryForDatastores,
+	type IFluidRootParentContextPrivate,
 } from "../channelCollection.js";
 import type { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import type { DataStoreContexts } from "../dataStoreContexts.js";

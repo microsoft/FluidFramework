@@ -15,9 +15,9 @@ import {
 	maximumCacheDurationMs,
 } from "@fluidframework/driver-utils/internal";
 import {
+	createChildLogger,
 	ITelemetryLoggerExt,
 	UsageError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { IDBPDatabase } from "idb";
 

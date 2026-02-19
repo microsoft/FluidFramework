@@ -7,8 +7,8 @@ import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
 import type {
 	BrandedType,
-	ITelemetryBaseLogger,
 	InternalUtilityTypes,
+	ITelemetryBaseLogger,
 	JsonDeserialized,
 	JsonSerializable,
 	Listenable,

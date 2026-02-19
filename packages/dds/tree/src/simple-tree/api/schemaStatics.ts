@@ -13,7 +13,7 @@ import type {
 	FieldSchema,
 	FieldSchemaAlpha,
 } from "../fieldSchema.js";
-import { FieldKind, createFieldSchema, getDefaultProvider } from "../fieldSchema.js";
+import { createFieldSchema, FieldKind, getDefaultProvider } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
 	booleanSchema,

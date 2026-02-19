@@ -8,9 +8,9 @@ import fs from "fs";
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-	getUnexpectedLogErrorException,
 } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";

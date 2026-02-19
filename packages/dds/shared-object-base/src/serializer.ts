@@ -10,12 +10,12 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
-	type ISerializedHandle,
-	RemoteFluidObjectHandle,
 	encodeHandleForSerialization,
 	generateHandleContextPath,
+	type ISerializedHandle,
 	isFluidHandle,
 	isSerializedHandle,
+	RemoteFluidObjectHandle,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 

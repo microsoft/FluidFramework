@@ -11,8 +11,8 @@ import type { BindableSchema } from "./methodBinding.js";
 import { getExposedMethods, isBindableSchema } from "./methodBinding.js";
 import { getExposedProperties } from "./propertyBinding.js";
 import {
-	type SchemaTypeScriptRenderResult,
 	renderSchemaTypeScript,
+	type SchemaTypeScriptRenderResult,
 } from "./renderSchemaTypeScript.js";
 import { getOrCreate } from "./utils.js";
 

@@ -10,9 +10,9 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { MockHandle } from "../mockHandle.js";
 import {
+	createSnapshotTreeFromContents,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
-	createSnapshotTreeFromContents,
 } from "../mocks.js";
 
 describe("MockContainerRuntime", () => {

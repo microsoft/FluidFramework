@@ -34,7 +34,7 @@ export { ContainerStateChangeKind } from "./Container.js";
 export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
 export type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
-export { type IDevtoolsLogger, createDevtoolsLogger } from "./DevtoolsLogger.js";
+export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
 export type {
 	FluidHandleNode,
 	FluidObjectNode,
@@ -68,8 +68,8 @@ export type {
 	IDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	ISourcedDevtoolsMessage,
 	InboundHandlers,
+	ISourcedDevtoolsMessage,
 	MessageLoggingOptions,
 } from "./messaging/index.js";
 export {
@@ -84,6 +84,7 @@ export {
 	DevtoolsDisposed,
 	DevtoolsFeatures,
 	DisconnectContainer,
+	devtoolsMessageSource,
 	GetAudienceSummary,
 	GetContainerDevtoolsFeatures,
 	GetContainerList,
@@ -92,13 +93,12 @@ export {
 	GetDevtoolsFeatures,
 	GetRootDataVisualizations,
 	GetTelemetryHistory,
+	handleIncomingMessage,
+	handleIncomingWindowMessage,
+	isDevtoolsMessage,
 	RootDataVisualizations,
 	SetUnsampledTelemetry,
 	TelemetryEvent,
 	TelemetryHistory,
-	devtoolsMessageSource,
-	handleIncomingMessage,
-	handleIncomingWindowMessage,
-	isDevtoolsMessage,
 } from "./messaging/index.js";
 export type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";

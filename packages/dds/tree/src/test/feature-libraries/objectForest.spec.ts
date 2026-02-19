@@ -12,16 +12,16 @@ import {
 
 import {
 	type FieldKey,
-	TreeStoredSchemaRepository,
 	moveToDetachedField,
 	rootFieldKey,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
 import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
-import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
+import { Breakable, brand, type JsonCompatible } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
 import { fieldJsonCursor } from "../json/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";

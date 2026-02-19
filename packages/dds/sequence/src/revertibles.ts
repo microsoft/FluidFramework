@@ -7,24 +7,24 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	getSlideToSegoff,
+	InteriorSequencePlace,
 	type ISegment,
 	type ISegmentInternal,
-	InteriorSequencePlace,
+	isMergeTreeDeltaRevertible,
 	LocalReferencePosition,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaRevertible,
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
+	refTypeIncludesFlag,
+	revertMergeTreeDeltaRevertibles,
 	Side,
 	SlidingPreference,
 	SortedSegmentSet,
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
-	getSlideToSegoff,
-	isMergeTreeDeltaRevertible,
-	refTypeIncludesFlag,
-	revertMergeTreeDeltaRevertibles,
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { join } from "path";
+
 import type { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import type JSZip from "jszip";
-import { join } from "path";
 
 import type { BundleComparison, BundleComparisonResult } from "../BundleBuddyTypes";
 import { compareBundles } from "../compareBundles";

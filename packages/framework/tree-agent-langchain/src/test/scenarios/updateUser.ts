@@ -5,9 +5,9 @@
 
 import { Users } from "../domains/index.js";
 import {
+	fail,
 	type LLMIntegrationTest,
 	type ScorableVerboseTree,
-	fail,
 	scoreSymbol,
 } from "../utils.js";
 

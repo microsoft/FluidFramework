@@ -7,8 +7,8 @@
 
 import {
 	type ILayerCompatDetails,
-	TypedEventEmitter,
 	performanceNow,
+	TypedEventEmitter,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -74,56 +74,56 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type CombinedAppAndProtocolSummary,
-	OnlineStatus,
 	getSnapshotTree,
 	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
 	isOnline,
+	OnlineStatus,
 	readAndParse,
 	runWithRetry,
 } from "@fluidframework/driver-utils/internal";
 import {
+	connectedEventName,
+	createChildLogger,
+	createChildMonitoringContext,
 	EventEmitterWithErrorHandling,
+	formatTick,
 	GenericError,
 	type IFluidErrorBase,
 	type ITelemetryErrorEventExt,
 	type ITelemetryLoggerExt,
+	loggerToMonitoringContext,
 	type MonitoringContext,
+	normalizeError,
 	PerformanceEvent,
+	raiseConnectedEvent,
 	type TelemetryEventCategory,
 	UsageError,
-	connectedEventName,
-	createChildLogger,
-	createChildMonitoringContext,
-	formatTick,
-	loggerToMonitoringContext,
-	normalizeError,
-	raiseConnectedEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
-	type AttachProcessProps,
 	type AttachmentData,
+	type AttachProcessProps,
 	runRetriableAttachProcess,
 } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import {
-	type IConnectionStateHandler,
 	createConnectionStateHandler,
+	type IConnectionStateHandler,
 } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
+	getPackageName,
 	type IConnectionDetailsInternal,
 	type IConnectionManagerFactoryArgs,
 	type IConnectionStateChangeReason,
 	ReconnectMode,
-	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
 import type { ILoaderServices } from "./loader.js";
@@ -133,8 +133,8 @@ import {
 	validateRuntimeCompatibility,
 } from "./loaderLayerCompatState.js";
 import {
-	type MemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
+	type MemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";

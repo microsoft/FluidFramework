@@ -8,10 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type AnnouncedVisitor,
 	CursorLocationType,
+	createAnnouncedVisitor,
 	type FieldKey,
 	type IEditableForest,
 	type UpPath,
-	createAnnouncedVisitor,
 } from "../../core/index.js";
 import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { TreeNode, treeNodeFromAnchor } from "../core/index.js";

@@ -10,13 +10,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { FieldKey } from "../core/index.js";
 import type { FlexTreeHydratedContextMinimal } from "../feature-libraries/index.js";
 import {
-	type JsonCompatibleReadOnlyObject,
-	type MakeNominal,
-	type UnionToIntersection,
 	type areOnlyKeys,
 	brand,
 	compareSets,
+	type JsonCompatibleReadOnlyObject,
+	type MakeNominal,
 	type requireTrue,
+	type UnionToIntersection,
 } from "../util/index.js";
 
 import type {

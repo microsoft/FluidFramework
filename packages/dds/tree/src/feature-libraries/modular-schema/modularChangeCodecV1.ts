@@ -7,10 +7,10 @@ import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
+	extractJsonValidator,
 	type ICodecOptions,
 	type IJsonCodec,
 	type SchemaValidationFunction,
-	extractJsonValidator,
 	withSchemaValidation,
 } from "../../codec/index.js";
 import type {
@@ -24,18 +24,18 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import {
+	brand,
 	type IdAllocator,
+	idAllocatorFromMaxId,
 	type JsonCompatibleReadOnly,
 	type Mutable,
-	brand,
-	idAllocatorFromMaxId,
 } from "../../util/index.js";
 import { type ChangeAtomIdBTree, newChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
-	type FieldBatchCodec,
-	type TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
+	type FieldBatchCodec,
+	type TreeChunk,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 

@@ -5,14 +5,14 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { ISummarizerEvents } from "@fluidframework/container-runtime-definitions/internal";
-import { type IPromiseTimer, Timer, assert } from "@fluidframework/core-utils/internal";
+import { assert, type IPromiseTimer, Timer } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITelemetryLoggerExt,
-	PerformanceEvent,
 	isFluidError,
+	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -26,10 +26,10 @@ import type {
 	SummaryGeneratorTelemetry,
 } from "../summarizerTypes.js";
 import {
-	RetriableSummaryError,
-	type SummarizeErrorCode,
 	getFailMessage,
+	RetriableSummaryError,
 	raceTimer,
+	type SummarizeErrorCode,
 } from "../summarizerUtils.js";
 import type { IClientSummaryWatcher } from "../summaryCollection.js";
 

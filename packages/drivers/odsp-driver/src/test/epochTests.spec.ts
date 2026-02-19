@@ -16,8 +16,8 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type IFluidErrorBase,
 	createChildLogger,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";

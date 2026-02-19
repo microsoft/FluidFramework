@@ -15,7 +15,7 @@ import {
 	type IContainerTelemetry,
 	IFluidContainerSystemEventNames,
 } from "../container/index.js";
-import { type TelemetryConfig, startTelemetry } from "../factory/index.js";
+import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import {
 	AppInsightsTelemetryConsumer,
 	type ContainerConnectedTelemetry,

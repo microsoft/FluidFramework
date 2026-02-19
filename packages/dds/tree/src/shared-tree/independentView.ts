@@ -6,8 +6,8 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type IIdCompressor,
 	createIdCompressor,
+	type IIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -22,20 +22,20 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
-	type FieldBatchEncodingContext,
-	TreeCompressionStrategy,
 	combineChunks,
 	createNodeIdentifierManager,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
+	type FieldBatchEncodingContext,
 	makeFieldBatchCodec,
 	makeSchemaCodec,
+	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
-	ITreeAlpha,
 	ImplicitFieldSchema,
+	ITreeAlpha,
 	ReadSchema,
 	SimpleTreeSchema,
 	TreeView,
@@ -54,10 +54,10 @@ import {
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
-	type ForestOptions,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	exportSimpleSchema,
+	type ForestOptions,
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
 

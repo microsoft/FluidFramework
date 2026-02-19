@@ -5,15 +5,15 @@
 
 import {
 	type JsonableTree,
+	rootFieldKey,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
-	rootFieldKey,
 } from "../core/index.js";
 import { FieldKinds } from "../feature-libraries/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import type { ITreeCheckout, TreeCheckout } from "../shared-tree/index.js";
 import { normalizeAllowedTypes, stringSchema, toInitialSchema } from "../simple-tree/index.js";
-import { type JsonCompatible, brand } from "../util/index.js";
+import { brand, type JsonCompatible } from "../util/index.js";
 
 import { fieldJsonCursor } from "./json/index.js";
 import { checkoutWithContent, chunkFromJsonableTrees } from "./utils.js";

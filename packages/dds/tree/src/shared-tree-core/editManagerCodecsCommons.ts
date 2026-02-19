@@ -21,8 +21,8 @@ import type {
 	Commit,
 	EncodedCommit,
 	EncodedSharedBranch,
-	SequenceId,
 	SequencedCommit,
+	SequenceId,
 } from "./editManagerFormatCommons.js";
 
 export interface EditManagerEncodingContext {

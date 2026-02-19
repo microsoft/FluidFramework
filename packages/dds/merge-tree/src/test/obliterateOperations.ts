@@ -13,7 +13,7 @@ import type { IRandom } from "@fluid-private/stochastic-test-utils";
 import type { IMergeTreeInsertMsg, IMergeTreeOp } from "../ops.js";
 import { type InteriorSequencePlace, Side } from "../sequencePlace.js";
 
-import { type TestOperation, annotateRange, removeRange } from "./mergeTreeOperationRunner.js";
+import { annotateRange, removeRange, type TestOperation } from "./mergeTreeOperationRunner.js";
 import type { TestClient } from "./testClient.js";
 
 const posInField = (

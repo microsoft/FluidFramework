@@ -18,7 +18,7 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { useCreateNewModule } from "../createFile/index.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
@@ -32,10 +32,10 @@ import {
 import { getLocatorFromOdspUrl } from "../odspFluidFileLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
-	type IExistingFileInfo,
-	type INewFileInfo,
 	createCacheSnapshotKey,
 	getOdspResolvedUrl,
+	type IExistingFileInfo,
+	type INewFileInfo,
 } from "../odspUtils.js";
 
 import { mockFetchOKIf, mockFetchOk } from "./mockFetch.js";

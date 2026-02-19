@@ -18,6 +18,11 @@ import {
 import {
 	type AdjustParams,
 	Client,
+	createAnnotateRangeOp,
+	createGroupOp,
+	createInsertOp,
+	createObliterateRangeOp,
+	createRemoveRangeOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -27,24 +32,19 @@ import {
 	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
+	type InteriorSequencePlace,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
-	type InteriorSequencePlace,
 	LocalReferencePosition,
 	type MapLike,
 	MergeTreeDeltaType,
 	MergeTreeRevertibleDriver,
+	matchProperties,
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
 	SlidingPreference,
-	createAnnotateRangeOp,
-	createGroupOp,
-	createInsertOp,
-	createObliterateRangeOp,
-	createRemoveRangeOp,
-	matchProperties,
 } from "@fluidframework/merge-tree/internal";
 import {
 	IRuntimeMessageCollection,
@@ -64,9 +64,9 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import {
-	LoggingError,
 	createChildLogger,
 	createConfigBasedOptionsProxy,
+	LoggingError,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";

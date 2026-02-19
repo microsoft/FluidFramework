@@ -36,7 +36,7 @@ import type {
 	ValueAccessor,
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
-import { type StateDatastore, datastoreFromHandle } from "./stateDatastore.js";
+import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import type { PostUpdateAction, ValueManager } from "./statesManagerTypes.js";
 import { createValidatedGetter } from "./validatedGetter.js";
 import { brandIVM } from "./valueManager.js";

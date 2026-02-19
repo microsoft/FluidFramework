@@ -8,9 +8,9 @@
  */
 
 export {
-	IdCompressor,
 	defaultClusterCapacity,
 	hasOngoingSession,
+	IdCompressor,
 	isFinalId,
 	isLocalId,
 	legacySharedTreeInitialTreeId,

@@ -38,7 +38,7 @@ import { RevisionView } from '../RevisionView.js';
 import { TransactionInternal } from '../TransactionInternal.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
-import { TestTree, buildLeaf } from './utilities/TestNode.js';
+import { buildLeaf, TestTree } from './utilities/TestNode.js';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities.js';
 
 /**

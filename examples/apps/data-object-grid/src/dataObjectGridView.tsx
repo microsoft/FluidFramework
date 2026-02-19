@@ -8,9 +8,9 @@ import RGL, { type Layout, WidthProvider } from "react-grid-layout";
 
 import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
 import {
+	dataObjectRegistry,
 	type IDataObjectGridItemEntry,
 	type ISingleHandleItem,
-	dataObjectRegistry,
 } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 

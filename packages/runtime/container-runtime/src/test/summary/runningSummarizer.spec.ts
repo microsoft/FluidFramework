@@ -32,20 +32,20 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
 import {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
+	getFailMessage,
 	type IGeneratedSummaryStats,
 	type ISummarizeHeuristicData,
 	type ISummarizerRuntime,
 	type ISummaryCancellationToken,
 	type ISummaryConfiguration,
+	neverCancelledSummaryToken,
 	RetriableSummaryError,
 	RunningSummarizer,
 	type SubmitSummaryResult,
 	SummarizeHeuristicData,
 	SummaryCollection,
-	defaultMaxAttempts,
-	defaultMaxAttemptsForSubmitFailures,
-	getFailMessage,
-	neverCancelledSummaryToken,
 } from "../../summary/index.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {

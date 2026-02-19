@@ -11,10 +11,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
-	type IRuntimeStorageService,
-	type ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
+	type IRuntimeStorageService,
+	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";

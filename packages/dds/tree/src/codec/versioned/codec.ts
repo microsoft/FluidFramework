@@ -6,10 +6,10 @@
 import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
-	type MinimumMinorSemanticVersion,
-	type SemanticVersion,
 	getConfigForMinVersionForCollabIterable,
 	lowestMinVersionForCollab,
+	type MinimumMinorSemanticVersion,
+	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { type TSchema, Type } from "@sinclair/typebox";

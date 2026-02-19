@@ -11,11 +11,11 @@ export {
 	allowsTreeSuperset,
 } from "./comparison.js";
 export {
+	addCrossFieldQuery,
 	type CrossFieldManager,
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
-	addCrossFieldQuery,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
@@ -33,8 +33,8 @@ export {
 	type NodeChangeRebaser,
 	type RebaseRevisionMetadata,
 	type RelevantRemovedRootsFromChild,
-	type ToDelta,
 	referenceFreeFieldChangeRebaser,
+	type ToDelta,
 } from "./fieldChangeHandler.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export type {
@@ -56,9 +56,9 @@ export {
 	type EditDescription,
 	type FieldEditDescription,
 	type GlobalEditDescription,
+	intoDelta,
 	ModularChangeFamily,
 	ModularEditBuilder,
-	intoDelta,
 	rebaseRevisionMetadataFromInfo,
 	relevantRemovedRoots,
 	updateRefreshers,

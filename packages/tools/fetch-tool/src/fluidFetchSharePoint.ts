@@ -11,14 +11,14 @@ import {
 import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	type IOdspAuthRequestInfo,
-	type IOdspDriveItem,
-	type IPublicClientConfig,
 	getAadTenant,
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
 	getOdspScope,
+	type IOdspAuthRequestInfo,
+	type IOdspDriveItem,
+	type IPublicClientConfig,
 } from "@fluidframework/odsp-doclib-utils/internal";
 
 import { loginHint } from "./fluidFetchArgs.js";

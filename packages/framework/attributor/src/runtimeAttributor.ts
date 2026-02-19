@@ -21,7 +21,7 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "./attributor.js";
 import { type IRuntimeAttributor, opBlobName } from "./attributorContracts.js";
-import { AttributorSerializer, type Encoder, chain, deltaEncoder } from "./encoders.js";
+import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";
 
 export class RuntimeAttributor implements IRuntimeAttributor {

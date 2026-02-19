@@ -15,7 +15,7 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
@@ -58,12 +58,12 @@ import type {
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
+	createDocumentId,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createAndAttachContainer,
-	createDocumentId,
 	timeoutAwait,
 	timeoutPromise,
 	toIDeltaManagerFull,

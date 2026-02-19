@@ -18,10 +18,10 @@ import {
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
 import {
-	FieldKinds,
-	type ModularChangeset,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	FieldKinds,
+	type ModularChangeset,
 } from "../../feature-libraries/index.js";
 import type {
 	CheckoutEvents,
@@ -48,8 +48,8 @@ import { fieldJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeTestDefaultChangeFamily } from "../shared-tree-core/utils.js";
 import {
-	type TreeStoredContentStrict,
 	mintRevisionTag,
+	type TreeStoredContentStrict,
 	treeChunkFromCursor,
 } from "../utils.js";
 

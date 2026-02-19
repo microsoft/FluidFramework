@@ -16,10 +16,10 @@ import {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
+	done,
 	Generator,
 	Reducer,
 	SaveInfo,
-	done,
 } from "./types.js";
 
 type RealOperation<T extends BaseOperation> = T & {

@@ -15,16 +15,16 @@ import type {
 	WithType,
 } from "../simple-tree/index.js";
 import {
+	enumFromStrings,
+	eraseSchemaDetails,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 	TreeBeta,
-	enumFromStrings,
-	eraseSchemaDetails,
 } from "../simple-tree/index.js";
 import { mapIterable } from "../util/index.js";
 
-import { type TextAsTree, charactersFromString } from "./textDomain.js";
+import { charactersFromString, type TextAsTree } from "./textDomain.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 

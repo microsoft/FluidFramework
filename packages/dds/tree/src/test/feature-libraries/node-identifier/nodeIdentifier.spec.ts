@@ -10,12 +10,12 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	compareLocalNodeIdentifiers,
+	createNodeIdentifierManager,
 	type LocalNodeIdentifier,
 	MockNodeIdentifierManager,
 	type NodeIdentifierManager,
 	type StableNodeIdentifier,
-	compareLocalNodeIdentifiers,
-	createNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
 import { TestTreeProvider } from "../../utils.js";
 

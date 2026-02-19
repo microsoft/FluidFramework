@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { type ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type {

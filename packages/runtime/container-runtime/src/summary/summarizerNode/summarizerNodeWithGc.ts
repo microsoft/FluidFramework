@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import type {
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionData,

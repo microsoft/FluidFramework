@@ -14,8 +14,8 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IAttributionCollection } from "./attributionCollection.js";
@@ -24,16 +24,16 @@ import type { MergeTree } from "./mergeTree.js";
 import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import type { IJSONSegment } from "./ops.js";
-import { type PropertySet, matchProperties } from "./properties.js";
+import { matchProperties, type PropertySet } from "./properties.js";
 import { assertInserted, isRemoved } from "./segmentInfos.js";
 import {
 	type IJSONSegmentWithMergeInfo,
 	type JsonSegmentSpecs,
 	type MergeTreeChunkV1,
 	type MergeTreeHeaderMetadata,
-	type VersionedMergeTreeChunk,
 	serializeAsMaxSupportedVersion,
 	toLatestVersion,
+	type VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 import type { OperationStamp } from "./stamps.js";

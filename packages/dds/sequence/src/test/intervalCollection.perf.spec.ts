@@ -8,8 +8,8 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import {
-	type ISequenceOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
+	type ISequenceOverlappingIntervalsIndex,
 } from "../intervalIndex/index.js";
 import { SharedString, SharedStringFactory } from "../sequenceFactory.js";
 

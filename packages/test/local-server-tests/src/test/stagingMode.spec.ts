@@ -29,9 +29,9 @@ import type {
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import {
+	asLegacyAlpha,
 	type IContainerRuntimeBase,
 	type StageControlsInternal,
-	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,

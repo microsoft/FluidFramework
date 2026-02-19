@@ -15,7 +15,7 @@ import {
 import type { DocComment, DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 
-import { type Logger, defaultConsoleLogger } from "./Logging.js";
+import { defaultConsoleLogger, type Logger } from "./Logging.js";
 import type { LoggingConfiguration } from "./LoggingConfiguration.js";
 
 /**

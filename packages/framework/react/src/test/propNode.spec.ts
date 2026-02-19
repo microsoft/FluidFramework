@@ -12,11 +12,11 @@ import { allowUnused } from "@fluidframework/tree/internal";
 import {
 	type IsMappableObjectType,
 	type PropTreeNode,
-	type WrapNodes,
-	type WrapPropTreeNodeRecord,
 	toPropTreeNode,
 	toPropTreeRecord,
 	unwrapPropTreeNode,
+	type WrapNodes,
+	type WrapPropTreeNodeRecord,
 } from "../propNode.js";
 
 describe("propNode", () => {

@@ -16,9 +16,9 @@ export {
 
 export {
 	ContainerViewRuntimeFactory,
+	getDataStoreEntryPoint,
 	type IFluidMountableViewEntryPoint,
 	type ViewCallback,
-	getDataStoreEntryPoint,
 } from "./containerViewRuntimeFactory.js";
 export { getTinyliciousEndpoint } from "./getTinyliciousEndpoint.js";
 export type {

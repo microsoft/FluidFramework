@@ -8,11 +8,11 @@ import { strict as assert } from "node:assert";
 import {
 	type AsyncGenerator,
 	type BaseFuzzTestState,
+	createWeightedGenerator,
+	done,
 	type Generator,
 	type IRandom,
 	type Weights,
-	createWeightedGenerator,
-	done,
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -30,19 +30,19 @@ import { type ITreePrivate, Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
 import {
+	getInnerNode,
 	SchemaFactory,
 	type TreeNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
-	getInnerNode,
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
+	createTreeViewSchema,
 	type FuzzNode,
 	type FuzzNodeSchema,
-	createTreeViewSchema,
 	type fuzzFieldSchema,
 	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";

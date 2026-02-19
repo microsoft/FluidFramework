@@ -4,26 +4,26 @@
  */
 
 import type { IRequest } from "@fluidframework/core-interfaces";
-import { LazyPromise, Timer, assert } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
+	gcTreeKey,
 	type IGarbageCollectionData,
 	type IGarbageCollectionDetailsBase,
 	type ISummarizeResult,
 	type ITelemetryContext,
-	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createResponseError,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildLogger,
+	createChildMonitoringContext,
 	DataProcessingError,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
-	createChildLogger,
-	createChildMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -35,17 +35,17 @@ import type { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
 import {
-	GCNodeType,
 	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
-	type IGCMetadata,
-	type IGCNodeUpdatedProps,
-	type IGCResult,
-	type IGCStats,
+	GCNodeType,
 	type IGarbageCollectionRuntime,
 	type IGarbageCollector,
 	type IGarbageCollectorConfigs,
 	type IGarbageCollectorCreateParams,
+	type IGCMetadata,
+	type IGCNodeUpdatedProps,
+	type IGCResult,
+	type IGCStats,
 	type IMarkPhaseStats,
 	type ISweepPhaseStats,
 	UnreferencedState,

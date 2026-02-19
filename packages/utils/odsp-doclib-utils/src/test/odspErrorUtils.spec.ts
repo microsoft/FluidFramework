@@ -10,7 +10,7 @@ import {
 	type IGenericNetworkError,
 	type IThrottlingWarning,
 } from "@fluidframework/driver-definitions/internal";
-import { GenericNetworkError, createWriteError } from "@fluidframework/driver-utils/internal";
+import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspError,
 	type OdspError,

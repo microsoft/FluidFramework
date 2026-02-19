@@ -6,8 +6,8 @@
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	type RevisionTag,
 	offsetChangeAtomId,
+	type RevisionTag,
 } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

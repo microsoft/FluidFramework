@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import {
 	EmptyKey,
-	type TreeStoredSchema,
 	storedEmptyFieldSchema,
+	type TreeStoredSchema,
 } from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

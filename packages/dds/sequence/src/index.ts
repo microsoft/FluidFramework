@@ -5,8 +5,8 @@
 
 export {
 	BaseSegment,
-	ISegment,
 	InteriorSequencePlace,
+	ISegment,
 	LocalReferencePosition,
 	MapLike,
 	Marker,
@@ -14,13 +14,13 @@ export {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
+	reservedMarkerIdKey,
+	reservedRangeLabelsKey,
+	reservedTileLabelsKey,
 	SequencePlace,
 	Side,
 	TextSegment,
 	TrackingGroup,
-	reservedMarkerIdKey,
-	reservedRangeLabelsKey,
-	reservedTileLabelsKey,
 } from "@fluidframework/merge-tree/internal";
 
 export {
@@ -42,32 +42,32 @@ export {
  */
 export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
+	createEndpointIndex,
+	createOverlappingIntervalsIndex,
 	IEndpointIndex,
 	ISequenceOverlappingIntervalsIndex,
 	SequenceIntervalIndex,
 	SequenceIntervalIndexes,
-	createEndpointIndex,
-	createOverlappingIntervalsIndex,
 } from "./intervalIndex/index.js";
 export {
 	IInterval,
-	ISerializedInterval,
 	IntervalOpType,
 	IntervalStickiness,
 	IntervalType,
+	ISerializedInterval,
 	SequenceInterval,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 export {
-	IntervalRevertible,
-	SharedStringRevertible,
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 	discardSharedStringRevertibles,
+	IntervalRevertible,
 	revertSharedStringRevertibles,
+	SharedStringRevertible,
 } from "./revertibles.js";
 export {
 	ISharedSegmentSequence,
@@ -83,8 +83,8 @@ export {
 export { SharedString } from "./sequenceFactory.js";
 export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 export {
+	getTextAndMarkers,
 	ISharedString,
 	SharedStringClass,
 	SharedStringSegment,
-	getTextAndMarkers,
 } from "./sharedString.js";

@@ -4,10 +4,10 @@
  */
 
 import {
-	type ISegment,
-	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
+	type ISegment,
+	type MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
 import type {

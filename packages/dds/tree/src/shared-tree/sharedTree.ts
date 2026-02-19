@@ -28,12 +28,15 @@ import {
 	type ICodecOptions,
 } from "../codec/index.js";
 import {
+	detachedFieldIndexCodecBuilder,
 	type FieldKey,
 	type GraphCommit,
 	type IEditableForest,
 	type JsonableTree,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	makeDetachedFieldIndex,
+	moveToDetachedField,
 	ObjectNodeStoredSchema,
 	RevisionTagCodec,
 	type TreeFieldStoredSchema,
@@ -42,48 +45,45 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type TreeTypeSet,
-	detachedFieldIndexCodecBuilder,
-	makeDetachedFieldIndex,
-	moveToDetachedField,
 } from "../core/index.js";
 import {
-	DetachedFieldIndexSummarizer,
-	FieldKinds,
-	ForestSummarizer,
-	type IncrementalEncodingPolicy,
-	SchemaSummarizer,
-	TreeCompressionStrategy,
 	buildChunkedForest,
 	buildForest,
+	DetachedFieldIndexSummarizer,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
+	FieldKinds,
+	ForestSummarizer,
 	getCodecTreeForFieldBatchFormat,
 	getCodecTreeForForestFormat,
+	type IncrementalEncodingPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
+	SchemaSummarizer,
+	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { type FormatV1, schemaCodecBuilder } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
 	type ClonableSchemaAndPolicy,
+	clientVersionToEditManagerFormatVersion,
+	clientVersionToMessageFormatVersion,
 	EditManagerFormatVersion,
+	getCodecTreeForEditManagerFormatWithChange,
+	getCodecTreeForMessageFormatWithChange,
 	MessageFormatVersion,
 	SharedTreeCore,
 	type SharedTreeCoreOptionsInternal,
-	clientVersionToEditManagerFormatVersion,
-	clientVersionToMessageFormatVersion,
-	getCodecTreeForEditManagerFormatWithChange,
-	getCodecTreeForMessageFormatWithChange,
 } from "../shared-tree-core/index.js";
 import {
 	FieldKind,
+	type ImplicitFieldSchema,
 	type ITree,
 	type ITreeAlpha,
-	type ImplicitFieldSchema,
 	NodeKind,
 	type ReadSchema,
 	type SchemaType,
@@ -95,26 +95,26 @@ import {
 	type TreeView,
 	type TreeViewAlpha,
 	type TreeViewConfiguration,
+	tryStoredSchemaAsArray,
 	type UnsafeUnknownSchema,
 	type VerboseTree,
-	tryStoredSchemaAsArray,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
-	type JsonCompatible,
 	breakingClass,
+	type JsonCompatible,
 	throwIfBroken,
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
-	SharedTreeChangeFormatVersion,
 	getCodecTreeForChangeFormat,
+	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type BranchableTree, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import { type BranchableTree, createTreeCheckout, type TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.

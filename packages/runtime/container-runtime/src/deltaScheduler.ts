@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
+import { performanceNow, type TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IContainerRuntimeBaseEvents } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	formatTick,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**

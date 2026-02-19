@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ILayerCompatDetails, generation } from "@fluid-internal/client-utils";
+import { generation, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 
 import { pkgVersion } from "./packageVersion.js";
 

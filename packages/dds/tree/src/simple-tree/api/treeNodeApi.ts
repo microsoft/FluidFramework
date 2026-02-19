@@ -9,20 +9,20 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { FieldKinds, type TreeStatus, isTreeValue } from "../../feature-libraries/index.js";
+import { FieldKinds, isTreeValue, type TreeStatus } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
 import {
+	getInnerNode,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
 	type ImplicitAllowedTypes,
+	isTreeNode,
 	NodeKind,
+	normalizeAllowedTypes,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchema,
-	getInnerNode,
-	getKernel,
-	getOrCreateNodeFromInnerNode,
-	isTreeNode,
-	normalizeAllowedTypes,
 	tryGetTreeNodeSchema,
 	typeSchemaSymbol,
 } from "../core/index.js";

@@ -6,8 +6,8 @@
 import { delay } from "@fluidframework/core-utils/internal";
 import {
 	CloseContainer,
-	TelemetryEvent,
 	devtoolsMessageSource,
+	TelemetryEvent,
 } from "@fluidframework/devtools-core/internal";
 import { expect } from "chai";
 import { createSandbox } from "sinon";

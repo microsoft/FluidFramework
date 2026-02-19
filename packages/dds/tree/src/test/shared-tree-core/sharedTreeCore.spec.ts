@@ -35,8 +35,8 @@ import {
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type RevisionTag,
-	type TaggedChange,
 	rootFieldKey,
+	type TaggedChange,
 } from "../../core/index.js";
 import type {
 	DefaultChangeset,
@@ -72,14 +72,14 @@ import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js
 import { brand } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import {
+	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
 	SharedTreeTestFactory,
 	StringArray,
 	TestTreeProviderLite,
-	chunkFromJsonableTrees,
-	createTestUndoRedoStacks,
 } from "../utils.js";
 
-import { TestSharedTreeCore, createTree, createTreeSharedObject } from "./utils.js";
+import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 
 const enableSchemaValidation = true;
 

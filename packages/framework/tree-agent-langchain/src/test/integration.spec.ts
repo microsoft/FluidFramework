@@ -15,7 +15,7 @@ import {
 	unlinkLinkedGroceriesTest,
 	updateUserTest,
 } from "./scenarios/index.js";
-import { type LLMIntegrationTest, describeIntegrationTests } from "./utils.js";
+import { describeIntegrationTests, type LLMIntegrationTest } from "./utils.js";
 
 describeIntegrationTests([
 	addCommentTest,

@@ -6,11 +6,11 @@
 /* eslint-disable import-x/no-internal-modules */
 export type { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
 export {
+	createContainerAndExecute,
+	exportFile,
 	type IExportFileResponse,
 	type IExportFileResponseFailure,
 	type IExportFileResponseSuccess,
-	createContainerAndExecute,
-	exportFile,
 } from "./exportFile.js";
 export { fluidRunner } from "./fluidRunner.js";
 export {

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { type ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
 import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {

@@ -11,9 +11,9 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import {
+	fluidHandleSymbol,
 	type IFluidHandle,
 	type IFluidHandleErased,
-	fluidHandleSymbol,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {

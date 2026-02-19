@@ -14,24 +14,24 @@ import {
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
-	RestLessClient,
 	getAuthorizationTokenFromCredentials,
+	RestLessClient,
 } from "@fluidframework/server-services-client";
 import {
 	ITelemetryLoggerExt,
-	PerformanceEvent,
 	numberFromString,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
 import {
-	RouterliciousErrorTypes,
 	getUrlForTelemetry,
+	RouterliciousErrorTypes,
 	throwR11sNetworkError,
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { type QueryStringType, addOrUpdateQueryParams } from "./queryStringUtils.js";
+import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
 import type { RawRequestHeaders, RequestConfig } from "./request.cjs";
 import { RestWrapper } from "./restWrapperBase.js";
 import { ITokenProvider, ITokenResponse } from "./tokens.js";

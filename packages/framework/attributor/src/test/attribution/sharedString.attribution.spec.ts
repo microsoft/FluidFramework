@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 
 import {
 	type AcceptanceCondition,
 	type BaseFuzzTestState,
-	type Generator,
-	type IRandom,
-	type Reducer,
 	chain,
 	createWeightedGenerator,
 	done,
+	type Generator,
 	generatorFromArray,
+	type IRandom,
 	interleave,
 	makeRandom,
 	performFuzzActions,
+	type Reducer,
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import type {
@@ -48,9 +48,9 @@ import {
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
-	type Encoder,
 	chain as chainEncoders,
 	deltaEncoder,
+	type Encoder,
 } from "../../encoders.js";
 import { makeLZ4Encoder } from "../../lz4Encoder.js";
 

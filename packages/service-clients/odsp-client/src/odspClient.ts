@@ -9,8 +9,8 @@ import type {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	createDetachedContainer,
+	type ILoaderProps,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -27,11 +27,11 @@ import {
 	isInternalFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 import {
-	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
+	OdspDocumentServiceFactory,
+	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";

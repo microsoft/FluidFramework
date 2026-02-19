@@ -26,19 +26,19 @@ import {
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
 	UsageError,
-	createGenericNetworkError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	EventEmitterWithErrorHandling,
-	type IFluidErrorBase,
-	ITelemetryLoggerExt,
-	MonitoringContext,
 	createChildMonitoringContext,
+	EventEmitterWithErrorHandling,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
+	type IFluidErrorBase,
+	ITelemetryLoggerExt,
 	isFluidError,
+	MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";

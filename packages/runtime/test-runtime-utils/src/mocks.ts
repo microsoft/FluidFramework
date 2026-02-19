@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import { EventEmitter, stringToBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -49,9 +49,9 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	type IIdCompressorCore,
-	type IdCreationRange,
 	createIdCompressor,
+	type IdCreationRange,
+	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 import {
 	FlushMode,

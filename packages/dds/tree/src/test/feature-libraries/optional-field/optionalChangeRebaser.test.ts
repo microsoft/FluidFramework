@@ -5,18 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { StressMode, describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
+	makeAnonChange,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
-	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -28,8 +28,8 @@ import {
 	type NodeChangeRebaser,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	type ToDelta,
 	rebaseRevisionMetadataFromInfo,
+	type ToDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -69,7 +69,7 @@ import {
 	isDeltaVisible,
 } from "../../utils.js";
 
-import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
+import { assertTaggedEqual, Change, verifyContextChain } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
 

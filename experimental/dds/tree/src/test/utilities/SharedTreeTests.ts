@@ -35,8 +35,8 @@ import {
 	EditStatus,
 	SharedTreeEditOp,
 	SharedTreeSummary,
-	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
+	SharedTreeSummaryBase,
 	WriteFormat,
 } from '../../persisted-types/index.js';
 import { getChangeNodeFromView } from '../../SerializationUtilities.js';
@@ -49,11 +49,9 @@ import { InterningTreeCompressor } from '../../TreeCompressor.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { generateStableId, nilUuid } from '../../UuidUtilities.js';
 
-import { SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { buildLeaf, SimpleTestTree, TestTree } from './TestNode.js';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';
 import {
-	SharedTreeTestingComponents,
-	SharedTreeTestingOptions,
 	areNodesEquivalent,
 	assertNoDelta,
 	getEditLogInternal,
@@ -61,6 +59,8 @@ import {
 	normalizeEdit,
 	normalizeId,
 	normalizeIds,
+	SharedTreeTestingComponents,
+	SharedTreeTestingOptions,
 	setUpTestTree,
 	spyOnSubmittedOps,
 	testTrait,

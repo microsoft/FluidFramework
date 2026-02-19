@@ -34,16 +34,16 @@ import {
 } from "@fluidframework/server-local-server";
 import {
 	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestObjectProvider,
 	createAndAttachContainerUsingProps,
 	createLoaderProps,
 	createSummarizer,
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
 	summarizeNow,
+	TestContainerRuntimeFactory,
+	TestFluidObjectFactory,
+	TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import lodash from "lodash";

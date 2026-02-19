@@ -13,12 +13,12 @@ import type {
 } from "../../core/index.js";
 import {
 	AnchorTreeIndex,
+	hasElement,
+	isTreeValue,
 	type KeyFinder,
 	type TreeIndex,
 	type TreeIndexKey,
 	type TreeIndexNodes,
-	hasElement,
-	isTreeValue,
 } from "../../feature-libraries/index.js";
 import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";

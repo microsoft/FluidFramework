@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
+	describeCompat,
 	ExpectedEvents,
 	ITestDataObject,
-	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -26,10 +26,10 @@ import { ReferenceType } from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
-	ITestContainerConfig,
-	ITestObjectProvider,
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
+	ITestContainerConfig,
+	ITestObjectProvider,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

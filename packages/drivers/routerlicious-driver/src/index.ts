@@ -7,9 +7,9 @@
 export { DefaultTokenProvider } from "./defaultTokenProvider.js";
 // Factory
 export {
+	createRouterliciousDocumentServiceFactory,
 	DocumentPostCreateError,
 	RouterliciousDocumentServiceFactory,
-	createRouterliciousDocumentServiceFactory,
 } from "./documentServiceFactory.js";
 // Errors
 export { RouterliciousErrorTypes } from "./errorUtils.js";

@@ -15,15 +15,15 @@ import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
+	createSummarizer,
+	createTestConfigProvider,
 	type ITestContainerConfig,
 	type ITestFluidObject,
 	ITestObjectProvider,
-	createSummarizer,
-	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SinonSandbox, createSandbox } from "sinon";
+import { createSandbox, SinonSandbox } from "sinon";
 
 /**
  * Validates the scenario in which we always retrieve the latest snapshot.

@@ -10,9 +10,9 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
+	createSharedObjectKind,
 	type ISharedObjectKind,
 	type SharedObjectKind,
-	createSharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "../packageVersion.js";

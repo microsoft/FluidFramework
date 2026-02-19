@@ -9,17 +9,17 @@ import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
+	compareFieldUpPaths,
 	EmptyKey,
 	type FieldKey,
 	type FieldUpPath,
 	type ITreeCursor,
 	type JsonableTree,
 	type PathRootPrefix,
-	type TreeNodeSchemaIdentifier,
-	type UpPath,
-	compareFieldUpPaths,
 	rootFieldKey,
 	setGenericTreeField,
+	type TreeNodeSchemaIdentifier,
+	type UpPath,
 } from "../core/index.js";
 import {
 	cursorForJsonableTreeNode,
@@ -29,14 +29,14 @@ import {
 } from "../feature-libraries/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
-	SchemaFactory,
 	booleanSchema,
 	numberSchema,
+	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
-import { IdentifierSchema, expectEqualFieldPaths, expectEqualPaths } from "./utils.js";
+import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 

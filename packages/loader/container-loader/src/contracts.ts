@@ -8,8 +8,8 @@ import {
 	type IConnectionDetails,
 	type IDeltaQueue,
 	type IFluidCodeDetails,
-	type ReadOnlyInfo,
 	isFluidPackage,
+	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { JsonString } from "@fluidframework/core-interfaces/internal";

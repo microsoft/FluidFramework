@@ -7,8 +7,8 @@ export {
 	type FieldLocation,
 	type ForestLocation,
 	type IEditableForest,
-	type TreeLocation,
 	isFieldLocation,
+	type TreeLocation,
 } from "./editableForest.js";
 export {
 	type FieldAnchor,
@@ -16,6 +16,6 @@ export {
 	type IForestSubscription,
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	TreeNavigationResult,
 	moveToDetachedField,
+	TreeNavigationResult,
 } from "./forest.js";

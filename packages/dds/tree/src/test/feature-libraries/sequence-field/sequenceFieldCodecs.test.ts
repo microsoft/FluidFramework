@@ -12,7 +12,7 @@ import type { FieldChangeEncodingContext } from "../../../feature-libraries/inde
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
-import { type JsonCompatibleReadOnly, brand } from "../../../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -24,7 +24,7 @@ import {
 } from "../../utils.js";
 
 import { generatePopulatedMarks } from "./populatedMarks.js";
-import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
+import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];

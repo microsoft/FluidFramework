@@ -18,24 +18,24 @@ import {
 	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	getKeyForCacheEntry,
 	NonRetryableError,
 	RateLimiter,
-	getKeyForCacheEntry,
 } from "@fluidframework/driver-utils/internal";
 import {
+	type InstrumentedStorageTokenFetcher,
 	type IOdspResolvedUrl,
 	type ISnapshotOptions,
-	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	generateStack,
 	type IConfigProvider,
 	type ITelemetryLoggerExt,
-	PerformanceEvent,
-	generateStack,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -49,12 +49,12 @@ import type {
 import { useCreateNewModule } from "./createFile/index.js";
 import type { EpochTracker } from "./epochTracker.js";
 import {
-	type ISnapshotRequestAndResponseOptions,
-	type SnapshotFormatSupportType,
 	downloadSnapshot,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 	getTreeStats,
+	type ISnapshotRequestAndResponseOptions,
+	type SnapshotFormatSupportType,
 } from "./fetchSnapshot.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import type { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
@@ -62,13 +62,13 @@ import type { FlushResult } from "./odspDocumentDeltaConnection.js";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
 import {
-	type IOdspResponse,
-	type TokenFetchOptionsEx,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
+	type IOdspResponse,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	snapshotWithLoadingGroupIdSupported,
+	type TokenFetchOptionsEx,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";

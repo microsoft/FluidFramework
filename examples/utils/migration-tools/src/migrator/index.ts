@@ -16,7 +16,7 @@ export { Migrator } from "./migrator.js";
 export {
 	type CreateDetachedContainerCallback,
 	type ImportDataCallback,
-	type SeparateContainerMigrationResult,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
+	type SeparateContainerMigrationResult,
 } from "./separateContainerCallbackHelpers.js";

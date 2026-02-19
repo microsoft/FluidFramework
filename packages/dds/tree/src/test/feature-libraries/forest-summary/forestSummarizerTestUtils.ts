@@ -7,26 +7,26 @@ import type { CodecWriteOptions } from "../../../codec/index.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
+	defaultSchemaPolicy,
 	type FieldBatchEncodingContext,
 	ForestSummarizer,
-	TreeCompressionStrategy,
-	defaultSchemaPolicy,
 	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import { ForestTypeOptimized, type TreeCheckout } from "../../../shared-tree/index.js";
 import {
-	SchemaFactoryAlpha,
-	TreeViewConfigurationAlpha,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	permissiveStoredSchemaGenerationOptions,
+	SchemaFactoryAlpha,
+	TreeViewConfigurationAlpha,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
-	type TreeStoredContentStrict,
 	checkoutWithContent,
 	fieldCursorFromInsertable,
+	type TreeStoredContentStrict,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";

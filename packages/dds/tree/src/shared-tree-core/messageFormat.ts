@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Values, strictEnum } from "../util/index.js";
+import { strictEnum, type Values } from "../util/index.js";
 
 /**
  * The format version for the message.

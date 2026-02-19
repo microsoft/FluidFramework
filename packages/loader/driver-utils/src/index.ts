@@ -4,10 +4,10 @@
  */
 
 export {
-	type ICompressionStorageConfig,
-	SummaryCompressionAlgorithm,
 	applyStorageCompression,
 	blobHeadersBlobName,
+	type ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
 } from "./adapters/index.js";
 export { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob.js";
 export { buildSnapshotTree } from "./buildSnapshotTree.js";
@@ -21,28 +21,28 @@ export {
 } from "./messageRecognition.js";
 export {
 	AuthorizationError,
+	canRetryOnError,
+	createGenericNetworkError,
+	createWriteError,
 	DeltaStreamConnectionForbiddenError,
 	type DriverErrorTelemetryProps,
 	FluidInvalidSchemaError,
 	GenericNetworkError,
+	getRetryDelayFromError,
+	getRetryDelaySecondsFromError,
+	isOnline,
 	LocationRedirectionError,
 	NetworkErrorBasic,
 	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
 	ThrottlingError,
-	canRetryOnError,
-	createGenericNetworkError,
-	createWriteError,
-	getRetryDelayFromError,
-	getRetryDelaySecondsFromError,
-	isOnline,
 } from "./network.js";
 export { logNetworkFailure } from "./networkUtils.js";
 export {
+	emptyMessageStream,
 	ParallelRequests,
 	Queue,
-	emptyMessageStream,
 	requestOps,
 	streamFromMessages,
 	streamObserver,
@@ -51,7 +51,7 @@ export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 export { buildGitTreeHierarchy, getGitMode, getGitType } from "./protocol/index.js";
 export { RateLimiter } from "./rateLimiter.js";
 export { readAndParse } from "./readAndParse.js";
-export { type IProgress, calculateMaxWaitTime, runWithRetry } from "./runWithRetry.js";
+export { calculateMaxWaitTime, type IProgress, runWithRetry } from "./runWithRetry.js";
 export { getSnapshotTree, isInstanceOfISnapshot } from "./storageUtils.js";
 export {
 	type CombinedAppAndProtocolSummary,

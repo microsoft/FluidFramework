@@ -10,8 +10,8 @@ import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
 import {
 	type IHasInsertionInfo,
-	type SegmentWithInfo,
 	overwriteInfo,
+	type SegmentWithInfo,
 } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 

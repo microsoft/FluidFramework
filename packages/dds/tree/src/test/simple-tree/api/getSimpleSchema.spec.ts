@@ -8,9 +8,13 @@ import { strict as assert } from "node:assert";
 import type { FormatValidator } from "../../../codec/index.js";
 import { ValueSchema } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { Unchanged, createSchemaUpgrade } from "../../../simple-tree/core/index.js";
+import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
 import {
+	createTreeSchema,
+	decodeSchemaCompatibilitySnapshot,
+	encodeSchemaCompatibilitySnapshot,
 	FieldKind,
+	getSimpleSchema,
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -21,10 +25,6 @@ import {
 	type SimpleObjectFieldSchema,
 	type SimpleObjectNodeSchema,
 	type SimpleTreeSchema,
-	createTreeSchema,
-	decodeSchemaCompatibilitySnapshot,
-	encodeSchemaCompatibilitySnapshot,
-	getSimpleSchema,
 	stringSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

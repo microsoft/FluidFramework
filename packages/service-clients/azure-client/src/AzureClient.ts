@@ -11,8 +11,8 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	createDetachedContainer,
+	type ILoaderProps,
 	loadContainerPaused,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";

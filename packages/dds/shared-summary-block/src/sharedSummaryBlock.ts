@@ -15,9 +15,9 @@ import type {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
-	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedSummaryBlock } from "./interfaces.js";

@@ -11,29 +11,29 @@ import {
 	type DeltaRoot,
 	type FieldKey,
 	type FieldKindIdentifier,
+	makeAnonChange,
 	type NormalizedUpPath,
 	type RevisionTag,
-	type TaggedChange,
-	type UpPath,
-	makeAnonChange,
 	revisionMetadataSourceFromInfo,
+	type TaggedChange,
 	tagChange,
 	tagRollbackInverse,
+	type UpPath,
 } from "../../core/index.js";
 import {
 	DefaultEditBuilder,
 	DefaultRevisionReplacer,
+	FieldKinds as defaultFieldKinds,
 	type EditDescription,
 	type FlexFieldKind,
-	type ModularChangeset,
-	FieldKinds as defaultFieldKinds,
 	genericFieldKind,
+	type ModularChangeset,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
-	ModularChangeFamily,
 	intoDelta,
+	ModularChangeFamily,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
@@ -44,10 +44,10 @@ import type {
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
-	type IdAllocator,
-	type Mutable,
 	brand,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type Mutable,
 } from "../../util/index.js";
 import {
 	assertDeltaEqual,
@@ -60,7 +60,7 @@ import {
 } from "../utils.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
-import { Change, assertEqual, removeAliases } from "./modular-schema/modularChangesetUtil.js";
+import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 

@@ -14,24 +14,24 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	type SchemaAndPolicy,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	ValueSchema,
-	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import {
+	defaultSchemaPolicy,
 	FieldKinds,
 	type FlexTreeHydratedContext,
 	MockNodeIdentifierManager,
-	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
 import {
-	SchemaFactory,
-	TreeArrayNode,
 	prepareForInsertionContextless,
 	restrictiveStoredSchemaGenerationOptions,
+	SchemaFactory,
 	stringSchema,
+	TreeArrayNode,
 	toStoredSchema,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";

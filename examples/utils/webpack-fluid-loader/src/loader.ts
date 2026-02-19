@@ -12,13 +12,13 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	createDetachedContainer,
+	type ILoaderProps,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
 } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { Deferred, assert } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IUser } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceFactory,

@@ -15,9 +15,9 @@ import {
 
 import {
 	Column,
+	createTableTree,
 	Row,
 	type TableBenchmarkOptions,
-	createTableTree,
 } from "../tablePerformanceTestUtilities.js";
 
 /**

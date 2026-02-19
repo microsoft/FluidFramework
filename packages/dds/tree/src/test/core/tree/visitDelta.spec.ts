@@ -17,16 +17,16 @@ import {
 	type DetachedFieldIndex,
 	type FieldKey,
 	type MapTree,
-	type RevisionTag,
 	makeDetachedFieldIndex,
+	type RevisionTag,
 	visitDelta,
 } from "../../../core/index.js";
 import { mapTreeFromCursor } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import {
-	type DeltaParams,
 	chunkFromJsonTrees,
 	chunkToMapTreeField,
+	type DeltaParams,
 	mintRevisionTag,
 	rootFromDeltaFieldMap,
 	testIdCompressor,

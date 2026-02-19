@@ -7,9 +7,9 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	createChildLogger,
 	DataProcessingError,
 	type ITelemetryLoggerExt,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 

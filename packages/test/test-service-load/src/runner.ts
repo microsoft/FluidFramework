@@ -12,8 +12,8 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	type ILoaderProps,
 	asLegacyAlpha,
+	type ILoaderProps,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";

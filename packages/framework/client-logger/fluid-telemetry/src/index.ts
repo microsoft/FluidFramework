@@ -23,4 +23,4 @@ export {
 	ContainerTelemetryEventNames,
 	type IContainerTelemetry,
 } from "./container/index.js";
-export { type TelemetryConfig, startTelemetry } from "./factory/index.js";
+export { startTelemetry, type TelemetryConfig } from "./factory/index.js";

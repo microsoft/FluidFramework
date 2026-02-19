@@ -19,9 +19,9 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	// eslint-disable-next-line import-x/no-deprecated
-	RuntimeRequestHandler,
-	// eslint-disable-next-line import-x/no-deprecated
 	buildRuntimeRequestHandler,
+	// eslint-disable-next-line import-x/no-deprecated
+	RuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,

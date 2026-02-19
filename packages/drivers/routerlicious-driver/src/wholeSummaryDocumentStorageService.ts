@@ -4,9 +4,9 @@
  */
 
 import {
-	Uint8ArrayToString,
 	performanceNow,
 	stringToBuffer,
+	Uint8ArrayToString,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
@@ -20,10 +20,10 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createChildMonitoringContext,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICache, InMemoryCache } from "./cache.js";

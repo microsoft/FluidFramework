@@ -12,11 +12,11 @@ export {
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
+	createDataStoreFactory,
 	Factory,
+	fluidEntryPoint,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
-	createDataStoreFactory,
-	fluidEntryPoint,
 } from "./localCodeLoader.js";
 export {
 	createAndAttachContainer,
@@ -25,17 +25,17 @@ export {
 	createLoaderProps,
 } from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
-export { ITestConfigProvider, createTestConfigProvider } from "./TestConfigs.js";
+export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
 export {
-	SummaryInfo,
 	createSummarizer,
 	createSummarizerCore,
 	createSummarizerFromFactory,
+	SummaryInfo,
 	summarizeNow,
 } from "./TestSummaryUtils.js";
 export {
-	TestContainerRuntimeFactory,
 	createTestContainerRuntimeFactory,
+	TestContainerRuntimeFactory,
 } from "./testContainerRuntimeFactory.js";
 export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
@@ -50,8 +50,10 @@ export {
 } from "./testFluidObject.js";
 export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";
 export {
+	createDocumentId,
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
+	getUnexpectedLogErrorException,
 	IDocumentIdStrategy,
 	type IEventAndErrorTrackingLogger,
 	IOpProcessingController,
@@ -59,8 +61,6 @@ export {
 	ITestObjectProvider,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-	createDocumentId,
-	getUnexpectedLogErrorException,
 } from "./testObjectProvider.js";
 export {
 	type TimeoutDurationOption,

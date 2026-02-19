@@ -16,9 +16,9 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import {
 	type ChunkReferenceId,
+	defaultIncrementalEncodingPolicy,
 	type EncodedFieldBatch,
 	type TreeChunk,
-	defaultIncrementalEncodingPolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import {
@@ -35,7 +35,7 @@ import {
 	summaryContentBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
-import { type JsonCompatible, brand } from "../../../util/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
 
 /**
  * Creates a mock incremental summary context for testing.

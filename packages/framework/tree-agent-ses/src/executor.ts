@@ -9,8 +9,8 @@ import "ses";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import {
 	type AsynchronousEditor,
-	type ViewOrTree,
 	createContext,
+	type ViewOrTree,
 } from "@fluidframework/tree-agent/alpha";
 
 /**

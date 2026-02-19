@@ -13,8 +13,8 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type JsonableTree,
-	TreeStoredSchemaRepository,
 	moveToDetachedField,
+	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import {
 	basicChunkTree,
@@ -35,7 +35,7 @@ import {
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
-import { type JsonCompatible, brand } from "../../../util/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
 import { initializeForest } from "../../feature-libraries/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import { buildTestForest, testIdCompressor, testRevisionTagCodec } from "../../utils.js";

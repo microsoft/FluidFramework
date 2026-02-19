@@ -10,11 +10,11 @@ import type {
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import {
-	type ITelemetryLoggerExt,
-	type ITelemetryLoggerPropertyBags,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,
 	formatTick,
+	type ITelemetryLoggerExt,
+	type ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils/internal";
 import type { IDebugger } from "debug";
 // This import style is necessary to ensure the emitted JS code works in both CJS and ESM.

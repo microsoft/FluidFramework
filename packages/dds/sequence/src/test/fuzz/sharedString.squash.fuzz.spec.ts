@@ -12,9 +12,9 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	createSquashFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type SquashFuzzTestState,
-	createSquashFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import {
 	type LocalReferencePosition,
@@ -27,12 +27,12 @@ import type { ISharedString } from "../../sharedString.js";
 
 import {
 	type AddPoisonedText,
-	type Operation,
-	type SharedStringOperationGenerationConfig,
 	baseSharedStringModel,
 	defaultFuzzOptions,
 	defaultIntervalOperationGenerationConfig,
 	makeSharedStringOperationGenerator,
+	type Operation,
+	type SharedStringOperationGenerationConfig,
 } from "./fuzzUtils.js";
 
 export type PoisonedSharedString = ISharedString & {

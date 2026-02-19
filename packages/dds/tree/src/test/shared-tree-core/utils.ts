@@ -16,8 +16,8 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	type IIdCompressor,
 	createIdCompressor,
+	type IIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -39,8 +39,8 @@ import {
 
 import {
 	type CodecWriteOptions,
-	DependentFormatVersion,
 	currentVersion,
+	DependentFormatVersion,
 } from "../../codec/index.js";
 import {
 	type GraphCommit,
@@ -53,12 +53,12 @@ import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
-	type ModularChangeFormatVersion,
-	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
+	type ModularChangeFormatVersion,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import {
 	changeFormatVersionForEditManager,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, assert } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
 import type {
 	IRetriableFailureError,

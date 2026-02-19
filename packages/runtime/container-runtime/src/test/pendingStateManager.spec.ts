@@ -20,7 +20,7 @@ import type {
 	FluidDataStoreMessage,
 	IEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import type Deque from "double-ended-queue";
 import Sinon from "sinon";
 
@@ -30,20 +30,20 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import {
+	addBatchMetadata,
 	BatchManager,
 	type InboundMessageResult,
 	type LocalBatchMessage,
 	OpGroupingManager,
-	addBatchMetadata,
 } from "../opLifecycle/index.js";
 import {
+	findFirstCharacterMismatched,
 	type IPendingLocalState,
 	type IPendingMessage,
 	type IRuntimeStateHandler,
 	type PendingBatchResubmitMetadata,
 	type PendingMessageResubmitData,
 	PendingStateManager,
-	findFirstCharacterMismatched,
 } from "../pendingStateManager.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;

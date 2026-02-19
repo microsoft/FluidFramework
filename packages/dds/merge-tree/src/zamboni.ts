@@ -9,13 +9,13 @@ import { UnassignedSequenceNumber } from "./constants.js";
 import type { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
+	assignChild,
+	getMinSeqStamp,
 	type IMergeNode,
 	type ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
 	type MergeBlock,
-	assignChild,
-	getMinSeqStamp,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import { removeMergeNodeInfo, toRemovalInfo } from "./segmentInfos.js";

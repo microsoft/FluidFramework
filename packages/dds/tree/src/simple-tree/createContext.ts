@@ -10,10 +10,10 @@ import { getOrCreate } from "../util/index.js";
 
 import {
 	Context,
+	getTreeNodeSchemaPrivateData,
 	type TreeNodeSchema,
 	type TreeNodeSchemaInitializedData,
 	UnhydratedContext,
-	getTreeNodeSchemaPrivateData,
 } from "./core/index.js";
 import { type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js";
 import { toStoredSchema, toUnhydratedSchema } from "./toStoredSchema.js";

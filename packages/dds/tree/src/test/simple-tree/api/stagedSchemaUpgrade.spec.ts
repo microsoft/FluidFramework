@@ -12,18 +12,18 @@ import { storedEmptyFieldSchema } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
-	TreeAlpha,
-	type ViewContent,
 	independentInitializedView,
 	independentView,
+	TreeAlpha,
+	type ViewContent,
 } from "../../../shared-tree/index.js";
 import {
+	extractPersistedSchema,
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
+	schemaStatics,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	extractPersistedSchema,
-	schemaStatics,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";

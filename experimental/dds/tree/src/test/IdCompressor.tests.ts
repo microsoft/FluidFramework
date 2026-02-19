@@ -21,8 +21,8 @@ import {
 	StableId,
 } from '../Identifiers.js';
 import {
-	IdCompressor,
 	hasOngoingSession,
+	IdCompressor,
 	isFinalId,
 	isLocalId,
 	legacySharedTreeInitialTreeId,
@@ -38,14 +38,14 @@ import {
 import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
 
 import {
-	Client,
-	DestinationClient,
-	IdCompressorTestNetwork,
-	MetaClient,
 	attributionIds,
+	Client,
 	createCompressor,
+	DestinationClient,
 	expectSerializes,
 	generateCompressedIds,
+	IdCompressorTestNetwork,
+	MetaClient,
 	makeOpGenerator,
 	performFuzzActions,
 	roundtrip,

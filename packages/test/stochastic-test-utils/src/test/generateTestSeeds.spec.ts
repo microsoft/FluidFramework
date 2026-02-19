@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { StressMode, generateTestSeeds } from "../describeFuzz.js";
+import { generateTestSeeds, StressMode } from "../describeFuzz.js";
 
 describe("generateTestSeeds", () => {
 	const testCount = 100;

@@ -31,16 +31,16 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	FluidHandleBase,
 	createResponseError,
+	FluidHandleBase,
 	generateHandleContextPath,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildMonitoringContext,
 	LoggingError,
 	type MonitoringContext,
 	PerformanceEvent,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

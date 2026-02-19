@@ -20,12 +20,12 @@ import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	type Attendee,
+	getPresence,
 	type LatestMapRaw,
 	type LatestRaw,
 	type Presence,
 	StateFactory,
 	type StatesWorkspace,
-	getPresence,
 } from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";

@@ -25,11 +25,11 @@ import type {
 } from "../../simple-tree/fieldSchema.js";
 import {
 	type FieldProps,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeBeta,
 	type TreeNode,
-	getInnerNode,
 } from "../../simple-tree/index.js";
 import { singleJsonCursor } from "../json/index.js";
 

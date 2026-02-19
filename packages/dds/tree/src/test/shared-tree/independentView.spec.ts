@@ -14,12 +14,12 @@ import {
 } from "../../shared-tree/independentView.js";
 import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
 import {
+	extractPersistedSchema,
 	FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	extractPersistedSchema,
 } from "../../simple-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor } from "../utils.js";

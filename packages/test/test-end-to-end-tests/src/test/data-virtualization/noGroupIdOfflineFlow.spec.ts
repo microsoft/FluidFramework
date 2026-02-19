@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { type ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";

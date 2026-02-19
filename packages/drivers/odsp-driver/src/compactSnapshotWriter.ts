@@ -15,11 +15,11 @@ import type {
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import {
-	type NodeCore,
 	addBoolProperty,
 	addDictionaryStringProperty,
 	addNumberProperty,
 	addStringProperty,
+	type NodeCore,
 } from "./zipItDataRepresentationUtils.js";
 
 /**

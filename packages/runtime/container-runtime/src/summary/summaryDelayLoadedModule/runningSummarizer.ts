@@ -11,19 +11,19 @@ import type {
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { Deferred, PromiseTimer, assert, delay } from "@fluidframework/core-utils/internal";
+import { assert, Deferred, delay, PromiseTimer } from "@fluidframework/core-utils/internal";
 import {
 	DriverErrorTypes,
 	type ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
-	type MonitoringContext,
-	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
+	type ITelemetryLoggerExt,
 	isFluidError,
+	type MonitoringContext,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { opSize } from "../../opProperties.js";
@@ -37,13 +37,13 @@ import type {
 	ISummarizeHeuristicRunner,
 	ISummarizeOptions,
 	ISummarizeRunnerTelemetry,
-	ISummarizeTelemetryProperties,
 	ISummarizerRuntime,
+	ISummarizeTelemetryProperties,
 	ISummaryCancellationToken,
 	ISummaryConfiguration,
 	SubmitSummaryResult,
 } from "../summarizerTypes.js";
-import { RetriableSummaryError, type SummarizeReason, raceTimer } from "../summarizerUtils.js";
+import { RetriableSummaryError, raceTimer, type SummarizeReason } from "../summarizerUtils.js";
 import type {
 	IAckedSummary,
 	IClientSummaryWatcher,

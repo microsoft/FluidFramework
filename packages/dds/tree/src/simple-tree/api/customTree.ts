@@ -11,15 +11,15 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	EmptyKey,
 	type FieldKey,
+	forEachField,
 	type ITreeCursor,
+	inCursorField,
 	LeafNodeStoredSchema,
+	mapCursorField,
 	ObjectNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeTypeSet,
-	forEachField,
-	inCursorField,
-	mapCursorField,
 } from "../../core/index.js";
 import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";

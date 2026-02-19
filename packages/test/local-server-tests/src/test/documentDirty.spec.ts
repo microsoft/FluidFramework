@@ -9,8 +9,8 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	type ILoaderProps,
 	createDetachedContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -24,11 +24,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingProps,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

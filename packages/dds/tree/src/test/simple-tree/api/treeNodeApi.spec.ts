@@ -15,12 +15,12 @@ import {
 import { FluidClientVersion } from "../../../codec/index.js";
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
+	defaultSchemaPolicy,
 	FieldKinds,
+	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
 	type StableNodeIdentifier,
 	TreeStatus,
-	defaultSchemaPolicy,
-	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
@@ -33,9 +33,9 @@ import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
 import {
 	Context,
+	createField,
 	UnhydratedContext,
 	UnhydratedFlexTreeNode,
-	createField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -48,8 +48,10 @@ import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	type InsertableField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	isTreeNode,
 	KeyEncodingOptions,
 	type NodeFromSchema,
+	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
@@ -58,13 +60,11 @@ import {
 	type TreeLeafValue,
 	type TreeNode,
 	TreeViewConfiguration,
-	type UnsafeUnknownSchema,
-	type VerboseTree,
-	isTreeNode,
-	permissiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	toStoredSchema,
+	type UnsafeUnknownSchema,
 	unhydratedFlexTreeFromInsertable,
+	type VerboseTree,
 } from "../../../simple-tree/index.js";
 import {
 	booleanSchema,
@@ -82,12 +82,12 @@ import {
 	testSimpleTrees,
 } from "../../testTrees.js";
 import {
-	TestTreeProviderLite,
-	type TreeStoredContentStrict,
 	checkoutWithContent,
 	chunkFromJsonableTrees,
 	fieldCursorFromInsertable,
 	getView,
+	TestTreeProviderLite,
+	type TreeStoredContentStrict,
 	testIdCompressor,
 } from "../../utils.js";
 import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";

@@ -8,24 +8,24 @@
 
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingBrowser.js";
 export {
-	IsoBuffer,
-	Uint8ArrayToString,
 	bufferToString,
+	IsoBuffer,
 	isArrayBuffer,
 	stringToBuffer,
+	Uint8ArrayToString,
 } from "./bufferBrowser.js";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
 export { createEmitter } from "./events/index.js";
 export { gitHashFile, hashFile } from "./hashFileBrowser.js";
 export {
+	checkLayerCompatibility,
 	type FluidLayer,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 	type IProvideLayerCompatDetails,
 	type LayerCompatCheckResult,
 	LayerCompatibilityPolicyWindowMonths,
-	checkLayerCompatibility,
 } from "./layerCompat.js";
 export { generation } from "./layerGenerationState.js";
 export { performanceNow } from "./performanceIsomorphic.js";

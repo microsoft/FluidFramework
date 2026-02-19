@@ -17,10 +17,10 @@ import type {
 	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import {
-	Deferred,
-	LazyPromise,
 	assert,
+	Deferred,
 	debugAssert,
+	LazyPromise,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
@@ -46,8 +46,13 @@ import type {
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	asLegacyAlpha,
 	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
+	encodeHandlesInContainerRuntime,
+	gcDataBlobKey,
 	type IAttachMessage,
 	type IEnvelope,
 	type IFluidDataStoreChannel,
@@ -60,18 +65,10 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 	type MinimumVersionForCollab,
-	VisibilityState,
-	asLegacyAlpha,
-	currentSummarizeStepPrefix,
-	currentSummarizeStepPropertyName,
-	encodeHandlesInContainerRuntime,
-	gcDataBlobKey,
 	notifiesReadOnlyState,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	GCDataBuilder,
-	RequestParser,
-	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
@@ -79,22 +76,25 @@ import {
 	createResponseError,
 	encodeCompactIdToString,
 	exceptionToResponse,
+	GCDataBuilder,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	RequestParser,
+	SummaryTreeBuilder,
 	toDeltaManagerErased,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildMonitoringContext,
 	DataProcessingError,
+	generateStack,
 	type ITelemetryLoggerExt,
 	LoggingError,
 	type MonitoringContext,
-	UsageError,
-	createChildMonitoringContext,
-	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

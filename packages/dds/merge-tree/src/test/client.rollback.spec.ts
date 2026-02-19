@@ -12,14 +12,14 @@ import { strict as assert } from "node:assert";
 import {
 	type ISegmentPrivate,
 	type Marker,
-	type SegmentGroup,
 	reservedMarkerIdKey,
+	type SegmentGroup,
 } from "../mergeTreeNodes.js";
 import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 import { validatePartialLengths } from "./testUtils.js";
 
 describe("client.rollback", () => {

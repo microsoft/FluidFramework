@@ -23,16 +23,16 @@ import {
 	ValueSchema,
 } from "../../core/index.js";
 import {
-	FieldKinds,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
+	FieldKinds,
 	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import {
-	SchemaValidationError,
 	compliesWithMultiplicity,
 	isFieldInSchema,
 	isNodeInSchema,
+	SchemaValidationError,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/schemaChecker.js";
 import { brand } from "../../util/index.js";

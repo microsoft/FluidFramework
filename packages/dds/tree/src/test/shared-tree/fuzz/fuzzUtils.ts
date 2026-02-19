@@ -11,20 +11,20 @@ import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
-	type IIdCompressorCore,
 	createIdCompressor,
 	deserializeIdCompressor,
+	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 
 import {
 	type Anchor,
+	clonePath,
+	forEachNodeInSubtree,
+	moveToDetachedField,
 	type Revertible,
 	TreeNavigationResult,
 	type UpPath,
 	type Value,
-	clonePath,
-	forEachNodeInSubtree,
-	moveToDetachedField,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type {
@@ -46,7 +46,7 @@ import {
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { SharedTreeTestFactory, expectEqualPaths } from "../../utils.js";
+import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
 
 import type { FuzzView } from "./fuzzEditGenerators.js";
 

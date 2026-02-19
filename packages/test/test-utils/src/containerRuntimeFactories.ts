@@ -20,9 +20,9 @@ import type {
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import-x/no-deprecated
-	type RuntimeRequestHandler,
-	// eslint-disable-next-line import-x/no-deprecated
 	buildRuntimeRequestHandler,
+	// eslint-disable-next-line import-x/no-deprecated
+	type RuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import type {
 	IFluidDataStoreFactory,

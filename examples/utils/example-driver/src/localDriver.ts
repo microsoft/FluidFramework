@@ -4,10 +4,10 @@
  */
 
 import {
+	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	LocalSessionStorageDbFactory,
-	createLocalResolverCreateNewRequest,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/local-driver/internal";
 import {

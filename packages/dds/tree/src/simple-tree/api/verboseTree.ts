@@ -9,14 +9,14 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	aboveRootPlaceholder,
 	EmptyKey,
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	keyAsDetachedField,
 	LeafNodeStoredSchema,
 	type TreeNodeStoredSchema,
-	aboveRootPlaceholder,
-	keyAsDetachedField,
 } from "../../core/index.js";
 import {
 	type CursorAdapter,
@@ -39,12 +39,12 @@ import { isObjectNodeSchema } from "../node-kinds/index.js";
 
 import {
 	type CustomTreeNode,
+	customFromCursor,
 	type HandleConverter,
 	KeyEncodingOptions,
+	replaceHandles,
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
-	customFromCursor,
-	replaceHandles,
 	unknownTypeError,
 } from "./customTree.js";
 

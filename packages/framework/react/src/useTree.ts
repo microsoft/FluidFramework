@@ -12,9 +12,9 @@ import {
 	type PropTreeNodeRecord,
 	type PropTreeValue,
 	type UnwrapPropTreeNodeRecord,
-	type WrapNodes,
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,
+	type WrapNodes,
 } from "./propNode.js";
 import { type ObservationOptions, useObservation } from "./useObservation.js";
 

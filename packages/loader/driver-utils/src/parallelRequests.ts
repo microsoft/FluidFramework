@@ -5,7 +5,7 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { Deferred, assert } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	IDeltasFetchResult,
 	ISequencedDocumentMessage,

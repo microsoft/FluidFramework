@@ -5,17 +5,17 @@
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IDisposable } from "@fluidframework/core-interfaces/internal";
-import { Timer, assert } from "@fluidframework/core-utils/internal";
+import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { FetchSource } from "@fluidframework/driver-definitions/internal";
 import {
-	type MonitoringContext,
 	createChildMonitoringContext,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	getLatestSnapshotInfo,
 	type ISerializedStateManagerDocumentStorageService,
 	type ISnapshotInfo,
-	getLatestSnapshotInfo,
 } from "./serializedStateManager.js";
 
 class RefreshPromiseTracker {

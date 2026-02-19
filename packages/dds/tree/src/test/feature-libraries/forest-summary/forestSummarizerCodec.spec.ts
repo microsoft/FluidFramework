@@ -12,8 +12,8 @@ import {
 
 import {
 	type CodecWriteOptions,
-	FluidClientVersion,
 	currentVersion,
+	FluidClientVersion,
 } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -36,10 +36,10 @@ import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV2 } from "../../../feature-libraries/forest-summary/formatV2.js";
 import {
-	FieldBatchFormatVersion,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	FieldBatchFormatVersion,
 	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";

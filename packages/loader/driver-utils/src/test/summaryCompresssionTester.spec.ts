@@ -39,10 +39,10 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 import {
-	ICompressionStorageConfig,
-	SummaryCompressionAlgorithm,
 	applyStorageCompression,
 	blobHeadersBlobName,
+	ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
 } from "../adapters/index.js";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";
 

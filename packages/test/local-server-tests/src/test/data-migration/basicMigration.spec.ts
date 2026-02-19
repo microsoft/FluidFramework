@@ -29,12 +29,12 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import {
 	DOWithST,
 	DOWithST2,
-	type RootDO2,
 	newRuntimeFactory,
+	type RootDO2,
 	treeConfig1,
 	treeConfig2,
 } from "./newCode.js";
-import { RootDO, oldRuntimeFactory, setLSTQuantity } from "./oldCode.js";
+import { oldRuntimeFactory, RootDO, setLSTQuantity } from "./oldCode.js";
 import { runtimeOptions } from "./utils.js";
 
 const lstValue1 = 42;

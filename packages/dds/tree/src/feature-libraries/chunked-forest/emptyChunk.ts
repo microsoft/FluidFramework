@@ -9,13 +9,13 @@ import {
 	type ChunkedCursor,
 	CursorLocationType,
 	CursorMarker,
+	cursorChunk,
+	dummyRoot,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
 	type TreeChunk,
 	type UpPath,
-	cursorChunk,
-	dummyRoot,
 } from "../../core/index.js";
 import { prefixFieldPath } from "../treeCursorUtils.js";
 

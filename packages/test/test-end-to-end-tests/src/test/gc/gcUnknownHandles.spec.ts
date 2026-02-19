@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
@@ -17,8 +17,8 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

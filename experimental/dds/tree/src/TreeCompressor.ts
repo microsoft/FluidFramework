@@ -5,7 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 
-import { Mutable, fail } from './Common.js';
+import { fail, Mutable } from './Common.js';
 import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
 import { isDetachedSequenceId } from './Identifiers.js';
 import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';

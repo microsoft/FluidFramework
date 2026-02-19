@@ -25,15 +25,15 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	parseHandles,
 	SharedObject,
 	ValueType,
-	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
+	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	UsageError,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 

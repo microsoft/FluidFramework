@@ -4,17 +4,17 @@
  */
 
 import {
+	describeCompat,
 	type ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	type ITestObjectProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

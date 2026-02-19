@@ -4,9 +4,9 @@
  */
 
 import {
+	createDataObjectKind,
 	PureDataObjectFactory,
 	TreeDataObject,
-	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
@@ -19,7 +19,7 @@ import type {
 	TreeView,
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
-import { FormatValidatorBasic, configuredSharedTree } from "@fluidframework/tree/internal";
+import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
 import * as React from "react";
 
 import { type PropTreeValue, toPropTreeNode } from "./propNode.js";

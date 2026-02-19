@@ -8,9 +8,9 @@ import {
 	AcceptanceCondition,
 	AsyncGenerator,
 	AsyncWeights,
-	IRandom,
 	createWeightedAsyncGenerator,
 	done,
+	IRandom,
 	makeRandom,
 } from '@fluid-private/stochastic-test-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';

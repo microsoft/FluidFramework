@@ -12,8 +12,8 @@ import { NodeKind, TreeNode } from "@fluidframework/tree";
 import type {
 	FactoryContentObject,
 	InsertableContent,
-	ReadSchema,
 	ReadableField,
+	ReadSchema,
 } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 

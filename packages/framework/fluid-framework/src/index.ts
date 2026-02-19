@@ -35,8 +35,8 @@ export type {
 	IFluidHandleErased,
 	IFluidLoadable,
 	IProvideFluidLoadable,
-	ITelemetryBaseProperties,
 	IsListener,
+	ITelemetryBaseProperties,
 	Listenable,
 	/* eslint-disable import-x/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
 	Listeners,
@@ -57,9 +57,9 @@ export type {
 	IFluidContainer,
 	IFluidContainerEvents,
 	IMember,
+	InitialObjects,
 	IServiceAudience,
 	IServiceAudienceEvents,
-	InitialObjects,
 	MemberChangedListener,
 	Myself,
 } from "@fluidframework/fluid-static";
@@ -84,8 +84,8 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
 import {
 	SharedTree as OriginalSharedTree,
-	type SharedTreeOptions,
 	configuredSharedTree as originalConfiguredSharedTree,
+	type SharedTreeOptions,
 } from "@fluidframework/tree/internal";
 
 /**
@@ -154,6 +154,9 @@ export { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 export type {
 	DeserializeCallback,
 	IInterval,
+	InteriorSequencePlace,
+	IntervalStickiness,
+	IntervalType,
 	ISequenceDeltaRange,
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
@@ -161,9 +164,6 @@ export type {
 	ISharedSegmentSequence,
 	ISharedSegmentSequenceEvents,
 	ISharedString,
-	InteriorSequencePlace,
-	IntervalStickiness,
-	IntervalType,
 	SequenceDeltaEvent,
 	SequenceEvent,
 	SequenceInterval,

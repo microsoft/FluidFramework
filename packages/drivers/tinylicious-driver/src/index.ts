@@ -5,8 +5,8 @@
 
 export { InsecureTinyliciousTokenProvider } from "./insecureTinyliciousTokenProvider.js";
 export {
-	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
 	defaultTinyliciousEndpoint,
 	defaultTinyliciousPort,
+	InsecureTinyliciousUrlResolver,
 } from "./insecureTinyliciousUrlResolver.js";

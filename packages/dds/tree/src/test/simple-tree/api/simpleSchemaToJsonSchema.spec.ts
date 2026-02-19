@@ -14,18 +14,18 @@ import {
 } from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
 import {
 	FieldKind,
+	generateSchemaFromSimpleSchema,
+	getJsonSchema,
 	type JsonObjectNodeSchema,
 	type JsonTreeSchema,
 	KeyEncodingOptions,
 	NodeKind,
-	SchemaFactoryAlpha,
-	TreeBeta,
-	type UnsafeUnknownSchema,
-	generateSchemaFromSimpleSchema,
-	getJsonSchema,
 	normalizeFieldSchema,
 	numberSchema,
+	SchemaFactoryAlpha,
 	stringSchema,
+	TreeBeta,
+	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 import type {
 	SimpleAllowedTypeAttributes,

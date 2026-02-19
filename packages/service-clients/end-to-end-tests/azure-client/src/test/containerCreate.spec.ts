@@ -18,8 +18,8 @@ import {
 import { isTreeContainerSchema } from "@fluidframework/fluid-static/internal";
 import {
 	type ContainerSchema,
-	type IFluidContainer,
 	createTreeContainerRuntimeFactory,
+	type IFluidContainer,
 } from "@fluidframework/fluid-static/legacy";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";

@@ -10,15 +10,15 @@ import {
 	CursorLocationType,
 	CursorMarker,
 	type DetachedField,
+	detachedFieldAsKey,
 	type FieldKey,
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
 	type PathRootPrefix,
+	rootField,
 	type TreeType,
 	type UpPath,
 	type Value,
-	detachedFieldAsKey,
-	rootField,
 } from "../core/index.js";
 
 /**

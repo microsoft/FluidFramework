@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-export { type TreeChunk, dummyRoot } from "../../core/index.js";
+export { dummyRoot, type TreeChunk } from "../../core/index.js";
 
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
-	type IChunker,
 	chunkField,
 	chunkFieldSingle,
 	chunkTree,
 	combineChunks,
 	defaultChunkPolicy,
+	type IChunker,
 	makeTreeChunker,
 } from "./chunkTree.js";
 export {
 	type ChunkReferenceId,
+	defaultIncrementalEncodingPolicy,
 	EncodedFieldBatch,
 	type FieldBatch,
 	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
+	getCodecTreeForFieldBatchFormat,
 	type IncrementalEncoderDecoder,
 	type IncrementalEncodingPolicy,
-	defaultIncrementalEncodingPolicy,
-	getCodecTreeForFieldBatchFormat,
 	makeFieldBatchCodec,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";

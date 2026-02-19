@@ -10,9 +10,9 @@ import {
 	type ISharedObject,
 	type ISharedObjectKind,
 	type KernelArgs,
+	makeSharedObjectKind,
 	type SharedKernelFactory,
 	type SharedObjectOptions,
-	makeSharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 

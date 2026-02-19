@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
-	type ContainerAlpha,
-	type ILoaderProps,
 	asLegacyAlpha,
+	type ContainerAlpha,
 	createDetachedContainer,
+	type ILoaderProps,
 	loadFrozenContainerFromPendingState,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";

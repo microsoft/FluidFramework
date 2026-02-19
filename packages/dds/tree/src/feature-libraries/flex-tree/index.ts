@@ -11,6 +11,8 @@ export {
 	type FlexTreeHydratedContextMinimal,
 } from "./context.js";
 export {
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
 	type FlexTreeEntity,
 	FlexTreeEntityKind,
 	type FlexTreeField,
@@ -20,19 +22,17 @@ export {
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
-	type HydratedFlexTreeNode,
-	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
+	type HydratedFlexTreeNode,
 	isFlexTreeNode,
+	TreeStatus,
 } from "./flexTreeTypes.js";
 export {
-	LazyEntity,
 	assertFlexTreeEntityNotFreed,
+	LazyEntity,
 } from "./lazyEntity.js";
 export { getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
-export { type Observer, currentObserver, withObservation } from "./observer.js";
+export { currentObserver, type Observer, withObservation } from "./observer.js";
 export { type FlexTreeNodeEvents } from "./treeEvents.js";
 export { getSchemaAndPolicy, indexForAt, treeStatusFromAnchorCache } from "./utilities.js";

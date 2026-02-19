@@ -13,7 +13,7 @@ import type {
 	MarkEffect,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
-import { type Populated, brand } from "../../../util/index.js";
+import { brand, type Populated } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 

@@ -17,8 +17,8 @@ import {
 import { asBatchMetadata } from "../metadata.js";
 
 import type { OpDecompressor } from "./opDecompressor.js";
-import { type OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
-import { type OpSplitter, isChunkedMessage } from "./opSplitter.js";
+import { isGroupedBatch, type OpGroupingManager } from "./opGroupingManager.js";
+import { isChunkedMessage, type OpSplitter } from "./opSplitter.js";
 /**
  * Info about the batch we learn when we process the first message
  */

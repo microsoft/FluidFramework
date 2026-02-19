@@ -6,9 +6,9 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
-	type IMeasurementReporter,
 	benchmark,
 	benchmarkCustom,
+	type IMeasurementReporter,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
@@ -21,8 +21,8 @@ import { TreeViewConfiguration } from "../../../simple-tree/index.js";
 import { configureBenchmarkHooks } from "../../utils.js";
 
 import {
-	Root,
 	createInitialBoard,
+	Root,
 	setupForestForIncrementalSummarization,
 } from "./forestSummarizerTestUtils.js";
 

@@ -10,9 +10,9 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { independentView } from "../../../shared-tree/index.js";
 import {
+	checkUnion,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	checkUnion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/configuration.js";
 import {

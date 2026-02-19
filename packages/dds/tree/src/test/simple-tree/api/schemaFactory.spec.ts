@@ -34,7 +34,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
+	allowUnused,
 	type InsertableTreeFieldFromImplicitField,
+	isTreeNode,
 	type NodeFromSchema,
 	NodeKind,
 	type ObjectNodeSchema,
@@ -49,20 +51,18 @@ import {
 	type TreeView,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	type WithType,
-	allowUnused,
-	isTreeNode,
 	typeSchemaSymbol,
+	type WithType,
 } from "../../../simple-tree/index.js";
 import {
-	type IsUnion,
 	type areSafelyAssignable,
 	brand,
+	type IsUnion,
 	type requireAssignableTo,
 	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
-import { TestTreeProviderLite, getView } from "../../utils.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 import { hydrate } from "../utils.js";
 
 // Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.

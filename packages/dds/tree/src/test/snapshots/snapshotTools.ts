@@ -11,8 +11,8 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
 import {
-	type TreeViewConfiguration,
 	snapshotSchemaCompatibility,
+	type TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";

@@ -5,22 +5,22 @@
 
 export {
 	CompressedSerializedInterval,
+	endReferenceSlidingPreference,
 	IInterval,
-	ISerializableInterval,
-	ISerializedInterval,
 	IntervalDeltaOpType,
 	IntervalOpType,
 	IntervalStickiness,
 	IntervalType,
+	ISerializableInterval,
+	ISerializedInterval,
 	SerializedIntervalDelta,
-	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 } from "./intervalUtils.js";
 export {
-	SequenceInterval,
-	SequenceIntervalClass,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
 	createTransientInterval,
 	getSerializedProperties,
+	SequenceInterval,
+	SequenceIntervalClass,
 } from "./sequenceInterval.js";

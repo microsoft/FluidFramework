@@ -11,8 +11,8 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	CompressionAlgorithms,
-	type IContainerRuntimeOptionsInternal,
 	disabledCompressionConfig,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {

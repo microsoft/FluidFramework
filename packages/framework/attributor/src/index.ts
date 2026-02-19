@@ -5,9 +5,9 @@
 
 export { type IAttributor } from "./attributor.js";
 export {
-	type IProvideRuntimeAttributor,
-	IRuntimeAttributor,
 	attributorDataStoreAlias,
 	enableOnNewFileKey,
+	type IProvideRuntimeAttributor,
+	IRuntimeAttributor,
 } from "./attributorContracts.js";
 export { getRuntimeAttributor, mixinAttributor } from "./mixinAttributor.js";

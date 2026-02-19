@@ -8,10 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { MergeTree } from "./mergeTree.js";
 import {
 	type CollaborationWindow,
+	getMinSeqStamp,
 	type IMergeNode,
 	type ISegmentPrivate,
 	type MergeBlock,
-	getMinSeqStamp,
 } from "./mergeTreeNodes.js";
 import {
 	LocalDefaultPerspective,

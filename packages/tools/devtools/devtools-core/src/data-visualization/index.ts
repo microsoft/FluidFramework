@@ -44,4 +44,4 @@ export type {
 	VisualTreeNode,
 	VisualValueNode,
 } from "./VisualTree.js";
-export { VisualNodeKind, createHandleNode } from "./VisualTree.js";
+export { createHandleNode, VisualNodeKind } from "./VisualTree.js";

@@ -6,7 +6,12 @@
 export type { FieldKey, FieldKindIdentifier, TreeNodeSchemaIdentifier } from "./formatV1.js";
 export { Multiplicity } from "./multiplicity.js";
 export {
+	decodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
 	type FieldKindData,
+	forbiddenFieldKindIdentifier,
+	identifierFieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
@@ -14,25 +19,20 @@ export {
 	SchemaFormatVersion,
 	type SchemaPolicy,
 	type StoredSchemaCollection,
+	storedEmptyFieldSchema,
+	storedSchemaDecodeDispatcher,
 	type TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	ValueSchema,
-	decodeFieldSchema,
-	encodeFieldSchemaV1,
-	encodeFieldSchemaV2,
-	forbiddenFieldKindIdentifier,
-	identifierFieldKindIdentifier,
-	storedEmptyFieldSchema,
-	storedSchemaDecodeDispatcher,
 } from "./schema.js";
 export {
 	type MutableTreeStoredSchema,
 	type SchemaEvents,
+	schemaDataIsEmpty,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
-	schemaDataIsEmpty,
 } from "./storedSchemaRepository.js";
 
 import * as schemaFormatV1 from "./formatV1.js";

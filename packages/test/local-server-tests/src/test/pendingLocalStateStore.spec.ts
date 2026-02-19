@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 
 import type { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
 import {
-	type ContainerAlpha,
-	type ILoaderProps,
-	PendingLocalStateStore,
 	asLegacyAlpha,
+	type ContainerAlpha,
 	createDetachedContainer,
+	type ILoaderProps,
 	loadFrozenContainerFromPendingState,
+	PendingLocalStateStore,
 } from "@fluidframework/container-loader/internal";
 import type { LocalResolver } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";

@@ -10,10 +10,10 @@ import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { SharedString, Side } from "@fluidframework/sequence/internal";
 import {
+	createTestConfigProvider,
 	type ITestFluidObject,
 	type ITestObjectProvider,
 	TestFluidObjectFactory,
-	createTestConfigProvider,
 } from "@fluidframework/test-utils/internal";
 
 const configProvider = createTestConfigProvider();

@@ -5,10 +5,10 @@
 
 import {
 	Button,
-	Tooltip,
 	makeStyles,
 	mergeClasses,
 	shorthands,
+	Tooltip,
 	tokens,
 } from "@fluentui/react-components";
 import {
@@ -31,8 +31,8 @@ import type {
 	ContainerStateMetadata,
 	DevtoolsFeatureFlags,
 	HasContainerKey,
-	ISourcedDevtoolsMessage,
 	InboundHandlers,
+	ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 import {
 	ContainerStateChange,

@@ -16,18 +16,18 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type AnchorEvents,
 	type AnchorNode,
+	anchorSlot,
 	type FieldKey,
 	type TreeValue,
-	anchorSlot,
 } from "../../core/index.js";
 import {
 	ContextSlot,
 	type FlexTreeNode,
+	flexTreeSlot,
+	getOrCreateHydratedFlexTreeNode,
 	type HydratedFlexTreeNode,
 	LazyEntity,
 	TreeStatus,
-	flexTreeSlot,
-	getOrCreateHydratedFlexTreeNode,
 	treeStatusFromAnchorCache,
 } from "../../feature-libraries/index.js";
 

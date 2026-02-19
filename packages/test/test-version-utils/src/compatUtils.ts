@@ -9,7 +9,7 @@ import {
 	type RouterliciousEndpoint,
 	TestDriverTypes,
 } from "@fluid-internal/test-driver-definitions";
-import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
+import { createFluidTestDriver, FluidTestDriverConfig } from "@fluid-private/test-drivers";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext, type IResponse } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
@@ -26,11 +26,11 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
+	createTestContainerRuntimeFactory,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-	createTestContainerRuntimeFactory,
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 

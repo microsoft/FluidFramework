@@ -10,6 +10,7 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 // TODO: import and unit test other things from "proxies" file.
 
 import {
+	type booleanSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeFromSchema,
 	type NodeKind,
@@ -17,7 +18,6 @@ import {
 	TreeArrayNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
-	type booleanSchema,
 } from "../../simple-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
 import { getView } from "../utils.js";

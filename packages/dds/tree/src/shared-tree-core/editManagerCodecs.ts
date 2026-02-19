@@ -30,7 +30,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { type JsonCompatibleReadOnly, brand, unbrand } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly, unbrand } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";

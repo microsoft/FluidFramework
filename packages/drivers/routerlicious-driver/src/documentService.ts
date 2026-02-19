@@ -17,9 +17,9 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	canRetryOnError,
 	NetworkErrorBasic,
 	RateLimiter,
-	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,

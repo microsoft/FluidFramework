@@ -10,13 +10,13 @@ import type {
 
 import {
 	GetTelemetryHistory,
+	handleIncomingWindowMessage,
 	type IDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
+	postMessagesToWindow,
 	TelemetryEvent,
 	TelemetryHistory,
-	handleIncomingWindowMessage,
-	postMessagesToWindow,
 } from "./messaging/index.js";
 import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
 

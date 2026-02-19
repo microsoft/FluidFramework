@@ -60,23 +60,23 @@ export type {
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,
+	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	IRuntimeStorageService,
 	ISequencedMessageEnvelope,
-	InboundAttachMessage,
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
 } from "./runtimeLayerCompatFeatureNames.js";
 export {
+	asLegacyAlpha,
 	type CommitStagedChangesOptionsInternal,
 	type ContainerRuntimeBaseAlpha,
 	type IContainerRuntimeBaseInternal,
 	type StageControlsAlpha,
 	type StageControlsInternal,
-	asLegacyAlpha,
 } from "./stagingMode.js";
 export type {
 	CreateChildSummarizerNodeParam,
@@ -94,8 +94,8 @@ export type {
 	SummarizeInternalFn,
 } from "./summary.js";
 export {
-	CreateSummarizerNodeSource,
 	blobCountPropertyName,
+	CreateSummarizerNodeSource,
 	channelsTreeName,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,

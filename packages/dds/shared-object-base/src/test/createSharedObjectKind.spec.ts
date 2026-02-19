@@ -29,10 +29,10 @@ import { createSharedObjectKind } from "../sharedObject.js";
 import {
 	type FactoryOut,
 	type KernelArgs,
+	makeSharedObjectKind,
 	type SharedKernel,
 	type SharedKernelFactory,
 	type SharedObjectOptions,
-	makeSharedObjectKind,
 } from "../sharedObjectKernel.js";
 
 interface IFoo {

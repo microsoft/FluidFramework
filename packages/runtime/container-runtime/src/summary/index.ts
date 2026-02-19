@@ -4,6 +4,7 @@
  */
 
 export {
+	currentDocumentVersionSchema,
 	type DocumentSchemaValueType,
 	DocumentsSchemaController,
 	type IDocumentSchema,
@@ -13,7 +14,6 @@ export {
 	type IDocumentSchemaFeatures,
 	type IDocumentSchemaInfo,
 	type IdCompressorMode,
-	currentDocumentVersionSchema,
 } from "./documentSchema.js";
 export {
 	type IOrderedClientCollection,
@@ -29,19 +29,19 @@ export {
 	SummarizerClientElection,
 } from "./summarizerClientElection.js";
 export {
+	createRootSummarizerNode,
+	createRootSummarizerNodeWithGC,
 	type IRefreshSummaryResult,
 	type IRootSummarizerNode,
 	type IRootSummarizerNodeWithGC,
-	createRootSummarizerNode,
-	createRootSummarizerNodeWithGC,
 } from "./summarizerNode/index.js";
 export {
 	type IBaseSummarizeResult,
 	type ICancellationToken,
 	type IConnectableRuntime,
 	type IEnqueueSummarizeOptions,
-	type IGenerateSummaryTreeResult,
 	type IGeneratedSummaryStats,
+	type IGenerateSummaryTreeResult,
 	type IOnDemandSummarizeOptions,
 	type IRefreshSummaryAckOptions,
 	type IRetriableFailureError,
@@ -69,9 +69,9 @@ export {
 	summarizerClientType,
 } from "./summarizerTypes.js";
 export {
+	getFailMessage,
 	RetriableSummaryError,
 	type SummarizeReason,
-	getFailMessage,
 } from "./summarizerUtils.js";
 export {
 	type IAckedSummary,
@@ -86,31 +86,22 @@ export {
 	SummaryCollection,
 } from "./summaryCollection.js";
 export {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
 	type EnqueueSummarizeResult,
 	type IAckSummaryResult,
 	type IBroadcastSummaryResult,
 	type ICancellableSummarizerController,
 	type INackSummaryResult,
 	type ISummarizeResults,
-	RunWhileConnectedCoordinator,
+	neverCancelledSummaryToken,
 	RunningSummarizer,
+	RunWhileConnectedCoordinator,
 	SummarizeHeuristicData,
 	SummarizeHeuristicRunner,
 	Summarizer,
-	defaultMaxAttempts,
-	defaultMaxAttemptsForSubmitFailures,
-	neverCancelledSummaryToken,
 } from "./summaryDelayLoadedModule/index.js";
 export {
-	type IContainerRuntimeMetadata,
-	type ICreateContainerMetadata,
-	type IFluidDataStoreAttributes0,
-	type IFluidDataStoreAttributes1,
-	type IFluidDataStoreAttributes2,
-	type ISummaryMetadataMessage,
-	type OmitAttributesVersions,
-	type ReadFluidDataStoreAttributes,
-	type WriteFluidDataStoreAttributes,
 	aliasBlobName,
 	chunksBlobName,
 	dataStoreAttributesBlobName,
@@ -119,11 +110,20 @@ export {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	hasIsolatedChannels,
+	type IContainerRuntimeMetadata,
+	type ICreateContainerMetadata,
+	type IFluidDataStoreAttributes0,
+	type IFluidDataStoreAttributes1,
+	type IFluidDataStoreAttributes2,
+	type ISummaryMetadataMessage,
 	idCompressorBlobName,
 	metadataBlobName,
 	nonDataStorePaths,
+	type OmitAttributesVersions,
+	type ReadFluidDataStoreAttributes,
 	recentBatchInfoBlobName,
 	rootHasIsolatedChannels,
+	type WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 } from "./summaryFormat.js";
 export {

@@ -6,13 +6,13 @@
 export { RunningSummarizer } from "./runningSummarizer.js";
 export {
 	type ICancellableSummarizerController,
-	RunWhileConnectedCoordinator,
 	neverCancelledSummaryToken,
+	RunWhileConnectedCoordinator,
 } from "./runWhileConnectedCoordinator.js";
 export {
-	Summarizer,
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
+	Summarizer,
 } from "./summarizer.js";
 export {
 	SummarizeHeuristicData,

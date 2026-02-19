@@ -10,25 +10,25 @@ export {
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./Configuration.js";
 export {
-	type DefaultDocumentationSuiteConfiguration,
 	type DocumentationSuiteConfiguration,
+	type DefaultDocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults as getDocumentationSuiteOptionsWithDefaults,
 } from "./DocumentationSuite.js";
 export {
-	type DocumentHierarchyConfiguration,
 	type DocumentationHierarchyConfiguration,
 	type DocumentationHierarchyConfigurationBase,
+	type DocumentHierarchyConfiguration,
 	FolderDocumentPlacement,
 	type FolderHierarchyConfiguration,
 	type HierarchyConfiguration,
-	HierarchyKind,
 	type HierarchyOptions,
+	HierarchyKind,
 	type SectionHierarchyConfiguration,
 } from "./Hierarchy.js";
 export {
 	type ApiItemTransformations,
+	getApiItemTransformationsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-	getApiItemTransformationsWithDefaults,
 } from "./Transformations.js";

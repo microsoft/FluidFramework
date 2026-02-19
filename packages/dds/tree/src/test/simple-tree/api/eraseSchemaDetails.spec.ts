@@ -13,6 +13,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import {
+	allowUnused,
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type InternalTreeNode,
@@ -22,11 +25,8 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
-	type WithType,
-	allowUnused,
-	eraseSchemaDetails,
-	eraseSchemaDetailsSubclassable,
 	type typeSchemaSymbol,
+	type WithType,
 } from "../../../simple-tree/index.js";
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 import { getView } from "../../utils.js";

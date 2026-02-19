@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
-	type IMeasurementReporter,
 	benchmark,
 	benchmarkCustom,
+	type IMeasurementReporter,
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -28,11 +28,11 @@ import { configuredSharedTree } from "../../treeFactory.js";
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
 import {
 	LinkedList,
-	WideRoot,
 	makeJsDeepTree,
 	makeJsWideTreeWithEndValue,
+	WideRoot,
 } from "../scalableTestTrees.js";
-import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
+import { configureBenchmarkHooks, TestTreeProviderLite, testIdCompressor } from "../utils.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.

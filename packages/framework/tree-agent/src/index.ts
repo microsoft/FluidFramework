@@ -10,8 +10,8 @@
  */
 
 export {
-	SharedTreeSemanticAgent,
 	createContext,
+	SharedTreeSemanticAgent,
 } from "./agent.js";
 export type {
 	AsynchronousEditor,
@@ -29,19 +29,19 @@ export {
 	type Arg,
 	type ArgsTuple,
 	type BindableSchema,
+	buildFunc,
 	type Ctor,
 	type ExposedMethods,
+	exposeMethodsSymbol,
 	type FunctionDef,
 	type IExposedMethods,
 	type MethodKeys,
-	buildFunc,
-	exposeMethodsSymbol,
 } from "./methodBinding.js";
 export type {
 	ExposedProperties,
+	exposePropertiesSymbol,
 	IExposedProperties,
 	PropertyDef,
-	exposePropertiesSymbol,
 } from "./propertyBinding.js";
 export type {
 	TypeFactoryArray,

@@ -15,9 +15,9 @@ import { LocalResolver } from "@fluidframework/local-driver/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+	getContainerEntryPointBackCompat,
 	type ITestFluidObject,
 	LoaderContainerTracker,
-	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import type { IPendingBlobs, SerializableLocalBlobRecord } from "../../blobManager/index.js";
 
 import {
-	MIN_TTL,
 	attachHandle,
 	blobToText,
 	createTestMaterial,
@@ -16,6 +15,7 @@ import {
 	getDedupedStorageIdForString,
 	getSerializedBlobForString,
 	getSummaryContentsWithFormatValidation,
+	MIN_TTL,
 	textToBlob,
 	unpackHandle,
 } from "./blobTestUtils.js";

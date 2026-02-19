@@ -7,13 +7,13 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
-	type SimpleKeyMap,
-	type TreeObjectNode,
 	objectSchema,
+	type SimpleKeyMap,
 	setField,
+	type TreeObjectNode,
 } from "./objectNode.js";
 export {
+	isObjectNodeSchema,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
-	isObjectNodeSchema,
 } from "./objectNodeTypes.js";

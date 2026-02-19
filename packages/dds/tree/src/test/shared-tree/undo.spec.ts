@@ -19,25 +19,25 @@ import {
 	type NormalizedUpPath,
 	type Revertible,
 	RevertibleStatus,
-	type TreeChunk,
 	rootFieldKey,
+	type TreeChunk,
 } from "../../core/index.js";
-import { FieldKinds, combineChunks } from "../../feature-libraries/index.js";
+import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { type JsonCompatible, brand } from "../../util/index.js";
+import { brand, type JsonCompatible } from "../../util/index.js";
 import { fieldJsonCursor } from "../json/index.js";
 import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
 import {
-	DefaultTestSharedTreeKind,
-	TestTreeProviderLite,
 	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
+	DefaultTestSharedTreeKind,
 	expectJsonTree,
 	getView,
 	moveWithin,
+	TestTreeProviderLite,
 } from "../utils.js";
 
 const rootPath: NormalizedUpPath = {

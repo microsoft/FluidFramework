@@ -32,8 +32,8 @@ import {
 } from "../../shared-tree-core/editManagerSummarizer.js";
 import {
 	EditManagerSummarizer,
-	type SharedTreeSummarizableMetadata,
 	makeEditManagerCodec,
+	type SharedTreeSummarizableMetadata,
 	summarizablesMetadataKey,
 } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

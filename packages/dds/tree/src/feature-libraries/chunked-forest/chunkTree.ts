@@ -12,6 +12,7 @@ import {
 	type ITreeCursorSynchronous,
 	LeafNodeStoredSchema,
 	Multiplicity,
+	mapCursorFields,
 	ObjectNodeStoredSchema,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
@@ -20,10 +21,9 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
+	tryGetChunk,
 	type Value,
 	ValueSchema,
-	mapCursorFields,
-	tryGetChunk,
 } from "../../core/index.js";
 import { getOrCreate } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";

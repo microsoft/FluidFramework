@@ -13,17 +13,17 @@ import { newGenericChangeset } from "../../../feature-libraries/modular-schema/g
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
+	genericChangeHandler,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	genericChangeHandler,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
-	type EncodingTestData,
 	defaultRevisionMetadataFromChanges,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,

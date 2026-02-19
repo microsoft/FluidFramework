@@ -23,14 +23,14 @@ import { Client } from "../client.js";
 import { UnassignedSequenceNumber } from "../constants.js";
 import type { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
-import { type MergeTree, getSlideToSegoff } from "../mergeTree.js";
+import { getSlideToSegoff, type MergeTree } from "../mergeTree.js";
 import {
+	assertSegmentLeaf,
 	type ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
 	type MergeBlock,
 	type SegmentGroup,
-	assertSegmentLeaf,
 } from "../mergeTreeNodes.js";
 import {
 	backwardExcursion,

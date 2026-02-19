@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type IMockLoggerExt,
 	createMockLoggerExt,
+	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -18,23 +18,24 @@ import {
 	type NormalizedFieldUpPath,
 	type Revertible,
 	RevertibleStatus,
-	TreeStoredSchemaRepository,
 	rootFieldKey,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
 import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
 	type BranchableTree,
+	createTreeCheckout,
+	getBranch,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
 	type SharedTreeChange,
 	Tree,
 	TreeCheckout,
-	createTreeCheckout,
-	getBranch,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
+	getInnerNode,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
@@ -42,20 +43,19 @@ import {
 	type TransactionResult,
 	type TreeBranch,
 	TreeViewConfiguration,
-	getInnerNode,
 	toUpgradeSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { brand } from "../../util/index.js";
 import {
-	TestTreeProviderLite,
 	buildTestForest,
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
 	getView,
 	mintRevisionTag,
+	TestTreeProviderLite,
 	testIdCompressor,
 	testRevisionTagCodec,
 	viewCheckout,

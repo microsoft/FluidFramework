@@ -16,12 +16,12 @@ import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/cod
 // eslint-disable-next-line import-x/no-internal-modules
 import type { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
 import {
+	defaultSchemaPolicy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
 	FieldKinds,
-	type ModularChangeset,
-	defaultSchemaPolicy,
 	fieldKindConfigurations,
+	type ModularChangeset,
 	makeModularChangeCodecFamily,
 	newChangeAtomIdBTree,
 } from "../../feature-libraries/index.js";

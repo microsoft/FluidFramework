@@ -9,7 +9,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { StablePlace } from './ChangeTypes.js';
 import { fail } from './Common.js';
 import { RangeValidationResultKind, validateStableRange } from './EditUtilities.js';
-import { DetachedSequenceId, NodeId, isDetachedSequenceId } from './Identifiers.js';
+import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,

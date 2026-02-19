@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { Conference, Day, Days, Session, SessionType, Sessions } from "./conference.js";
+export { Conference, Day, Days, Session, Sessions, SessionType } from "./conference.js";
 export { Grocery, GroceryList } from "./groceries.js";
 export { Smoke } from "./smoke.js";
 export {

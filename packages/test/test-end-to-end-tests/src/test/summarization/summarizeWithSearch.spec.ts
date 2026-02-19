@@ -11,8 +11,8 @@ import {
 	ContainerRuntime,
 	type ISummarizer,
 	type ISummaryNackMessage,
-	SummaryCollection,
 	neverCancelledSummaryToken,
+	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
@@ -27,8 +27,8 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createSummarizerFromFactory,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

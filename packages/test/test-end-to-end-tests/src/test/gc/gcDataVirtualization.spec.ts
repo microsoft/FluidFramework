@@ -6,18 +6,18 @@
 import { strict as assert } from "assert";
 
 import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
+	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
-	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

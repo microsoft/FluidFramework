@@ -27,13 +27,13 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	blobCountPropertyName,
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -41,16 +41,16 @@ import {
 	toDeltaManagerInternal,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildLogger,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	type ICustomData,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	LoggingError,
+	loggerToMonitoringContext,
 	type MonitoringContext,
 	SampledTelemetryHelper,
-	createChildLogger,
-	loggerToMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

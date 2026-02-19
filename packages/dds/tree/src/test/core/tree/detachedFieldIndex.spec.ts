@@ -13,8 +13,8 @@ import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index
 import {
 	DetachedFieldIndex,
 	type ForestRootId,
-	RevisionTagCodec,
 	makeDetachedNodeId,
+	RevisionTagCodec,
 } from "../../../core/index.js";
 import {
 	detachedFieldIndexCodecBuilder,
@@ -30,10 +30,10 @@ import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js"
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
-	type IdAllocator,
-	type JsonCompatibleReadOnly,
 	brand,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type JsonCompatibleReadOnly,
 } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import {

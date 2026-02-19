@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { type ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
@@ -23,9 +23,9 @@ import type {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

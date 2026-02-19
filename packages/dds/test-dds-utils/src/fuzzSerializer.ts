@@ -10,8 +10,8 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type ISerializedHandle,
-	RemoteFluidObjectHandle,
 	isSerializedHandle,
+	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	FluidSerializer,

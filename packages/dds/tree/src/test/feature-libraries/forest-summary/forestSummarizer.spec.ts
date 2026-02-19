@@ -34,14 +34,14 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
 import {
+	defaultSchemaPolicy,
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
 	ForestFormatVersion,
 	ForestSummarizer,
 	type IncrementalEncodingPolicy,
-	TreeCompressionStrategy,
-	defaultSchemaPolicy,
 	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import {
 	type ForestType,
@@ -56,28 +56,28 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type InsertableField,
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	incrementalEncodingPolicyForAllowedTypes,
-	incrementalSummaryHint,
-	permissiveStoredSchemaGenerationOptions,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
-	type TreeStoredContentStrict,
 	checkoutWithContent,
 	fieldCursorFromInsertable,
+	type TreeStoredContentStrict,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 
 import {
-	Root,
 	createInitialBoard,
+	Root,
 	setupForestForIncrementalSummarization,
 } from "./forestSummarizerTestUtils.js";
 

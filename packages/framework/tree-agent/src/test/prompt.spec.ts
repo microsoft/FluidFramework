@@ -10,13 +10,13 @@ import * as path from "node:path";
 import {
 	type ImplicitFieldSchema,
 	type InsertableField,
+	independentView,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
-	independentView,
 } from "@fluidframework/tree/internal";
 
 import type { TreeView } from "../api.js";
-import { type ExposedMethods, buildFunc, exposeMethodsSymbol } from "../methodBinding.js";
+import { buildFunc, type ExposedMethods, exposeMethodsSymbol } from "../methodBinding.js";
 import { fluidHandleTypeName, getPrompt } from "../prompt.js";
 import { type ExposedProperties, exposePropertiesSymbol } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";

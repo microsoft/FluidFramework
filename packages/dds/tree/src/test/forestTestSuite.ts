@@ -7,11 +7,14 @@ import { strict as assert } from "node:assert";
 
 import { FluidClientVersion } from "../codec/index.js";
 import {
+	clonePath,
+	createAnnouncedVisitor,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
 	type DetachedField,
 	DetachedFieldIndex,
+	detachedFieldAsKey,
 	EmptyKey,
 	type FieldKey,
 	type FieldUpPath,
@@ -19,16 +22,13 @@ import {
 	type IEditableForest,
 	type ITreeCursor,
 	type JsonableTree,
+	mapCursorField,
+	moveToDetachedField,
+	rootFieldKey,
 	TreeNavigationResult,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
-	clonePath,
-	createAnnouncedVisitor,
-	detachedFieldAsKey,
-	mapCursorField,
-	moveToDetachedField,
-	rootFieldKey,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -37,17 +37,17 @@ import {
 } from "../feature-libraries/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
-	SchemaFactory,
 	booleanSchema,
 	numberSchema,
+	SchemaFactory,
 	stringSchema,
 	toInitialSchema,
 } from "../simple-tree/index.js";
 import {
-	type IdAllocator,
-	type JsonCompatible,
 	brand,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type JsonCompatible,
 } from "../util/index.js";
 
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
@@ -56,8 +56,8 @@ import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/in
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
 import {
 	applyTestDelta,
-	chunkFromJsonTrees,
 	chunkFromJsonableTrees,
+	chunkFromJsonTrees,
 	expectEqualFieldPaths,
 	expectEqualPaths,
 	testIdCompressor,

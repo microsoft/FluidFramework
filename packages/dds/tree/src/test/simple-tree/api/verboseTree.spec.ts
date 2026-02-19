@@ -10,10 +10,10 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { ITreeCursor } from "../../../core/index.js";
 import { cursorForJsonableTreeNode } from "../../../feature-libraries/index.js";
 import {
-	type VerboseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	replaceVerboseTreeHandles,
+	type VerboseTree,
 	verboseFromCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";

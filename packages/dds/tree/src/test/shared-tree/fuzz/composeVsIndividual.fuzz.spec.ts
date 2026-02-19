@@ -12,10 +12,10 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzTestState,
-	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";

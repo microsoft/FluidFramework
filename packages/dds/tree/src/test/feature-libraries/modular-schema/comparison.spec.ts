@@ -11,6 +11,7 @@ import {
 	Multiplicity,
 	type MutableTreeStoredSchema,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -18,9 +19,8 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeTypeSet,
 	ValueSchema,
-	storedEmptyFieldSchema,
 } from "../../../core/index.js";
-import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsMultiplicitySuperset,

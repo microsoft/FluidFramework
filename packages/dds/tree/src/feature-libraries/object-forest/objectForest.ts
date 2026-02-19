@@ -11,10 +11,13 @@ import {
 	type Anchor,
 	AnchorSet,
 	type AnnouncedVisitor,
+	aboveRootPlaceholder,
 	type CursorLocationType,
+	combineVisitors,
 	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
+	deepCopyMapTree,
 	type FieldAnchor,
 	type FieldKey,
 	type FieldUpPath,
@@ -28,6 +31,7 @@ import {
 	type PathRootPrefix,
 	type PlaceIndex,
 	type Range,
+	rootFieldKey,
 	type TreeChunk,
 	type TreeFieldStoredSchema,
 	TreeNavigationResult,
@@ -35,22 +39,18 @@ import {
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	type Value,
-	aboveRootPlaceholder,
-	combineVisitors,
-	deepCopyMapTree,
-	rootFieldKey,
 } from "../../core/index.js";
 import {
-	type Breakable,
-	type WithBreakable,
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
+	type Breakable,
 	brand,
 	breakingMethod,
+	type WithBreakable,
 } from "../../util/index.js";
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
-import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";

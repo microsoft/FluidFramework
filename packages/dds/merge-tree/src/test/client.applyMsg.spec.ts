@@ -26,7 +26,7 @@ import { Side } from "../sequencePlace.js";
 import type { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 describe("client.applyMsg", () => {
 	const localUserLongId = "localUser";

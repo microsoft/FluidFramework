@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { type BenchmarkTimingOptions, benchmark } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {

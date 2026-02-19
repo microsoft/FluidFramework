@@ -19,7 +19,7 @@ import {
 import { type IMergeNode, type ISegmentPrivate, Marker, seqLTE } from "../mergeTreeNodes.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
 import { type IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
-import { type PropertySet, matchProperties } from "../properties.js";
+import { matchProperties, type PropertySet } from "../properties.js";
 import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
 import type { RemoveOperationStamp } from "../stamps.js";
 import { TextSegment, TextSegmentGranularity } from "../textSegment.js";

@@ -12,10 +12,13 @@ import {
 	type Anchor,
 	AnchorSet,
 	type AnnouncedVisitor,
+	aboveRootPlaceholder,
 	type ChunkedCursor,
+	combineVisitors,
 	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
+	detachedFieldAsKey,
 	type FieldAnchor,
 	type FieldKey,
 	type ForestEvents,
@@ -23,17 +26,14 @@ import {
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
+	mapCursorField,
 	type PlaceIndex,
 	type Range,
+	rootFieldKey,
 	type TreeChunk,
 	TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
-	aboveRootPlaceholder,
-	combineVisitors,
-	detachedFieldAsKey,
-	mapCursorField,
-	rootFieldKey,
 } from "../../core/index.js";
 import {
 	assertValidRange,
@@ -44,7 +44,7 @@ import {
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkField, chunkTree } from "./chunkTree.js";
+import { basicChunkTree, chunkField, chunkTree, type IChunker } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());

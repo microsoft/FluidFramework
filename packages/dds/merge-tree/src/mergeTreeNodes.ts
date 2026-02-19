@@ -19,21 +19,21 @@ import type { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 import { LocalDefaultPerspective, type Perspective, PriorPerspective } from "./perspective.js";
-import { type MapLike, type PropertySet, clone, createMap } from "./properties.js";
+import { clone, createMap, type MapLike, type PropertySet } from "./properties.js";
 import type { ReferencePosition } from "./referencePositions.js";
 import type { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
+	hasProp,
 	type IHasInsertionInfo,
 	type IHasRemovalInfo,
 	type IMergeNodeInfo,
 	type ISegmentInsideObliterateInfo,
-	type SegmentWithInfo,
-	hasProp,
 	isInserted,
 	isInsideObliterate,
 	isMergeNodeInfo as isMergeNode,
 	isRemoved,
 	overwriteInfo,
+	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import type { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { Side } from "./sequencePlace.js";

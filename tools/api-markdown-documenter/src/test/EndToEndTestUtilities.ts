@@ -6,15 +6,15 @@
 import Path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { type ApiItem, ApiItemKind, type ApiPackage } from "@microsoft/api-extractor-model";
+import { ApiItemKind, type ApiItem, type ApiPackage } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 
 import {
 	ApiItemUtilities,
-	type HierarchyConfiguration,
 	HierarchyKind,
+	type HierarchyConfiguration,
 	type HierarchyOptions,
 } from "../index.js";
 

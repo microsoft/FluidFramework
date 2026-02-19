@@ -18,15 +18,15 @@ import { TypeIdHelper } from "../helpers/typeidHelper.js";
 
 import {
 	ArrayChangeSetIterator,
+	arrayInsertList,
+	arrayModifyList,
+	arrayRemoveList,
 	GenericOperation,
 	InsertOperation,
 	ModifyOperation,
 	NOPOperation,
 	NoneNOPOperation,
 	RemoveOperation,
-	arrayInsertList,
-	arrayModifyList,
-	arrayRemoveList,
 } from "./arrayChangesetIterator.js";
 import { ConflictType } from "./changesetConflictTypes.js";
 

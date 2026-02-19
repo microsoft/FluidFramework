@@ -9,9 +9,9 @@ import type { TreeNodeSchema } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
 import {
-	IdentifierCollisionResolver,
 	findSchemas,
 	getFriendlyName,
+	IdentifierCollisionResolver,
 	isNamedSchema,
 	unqualifySchema,
 } from "../utils.js";

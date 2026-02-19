@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
 	getDataStoreFactory,
+	ITestDataObject,
 	itExpects,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import {
 	ContainerErrorTypes,
@@ -20,11 +20,11 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	asLegacyAlpha,
 	ConnectionState,
 	type ContainerAlpha,
 	type ILoaderProps,
 	Loader,
-	asLegacyAlpha,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";

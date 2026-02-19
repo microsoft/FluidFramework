@@ -7,11 +7,11 @@ import { strict as assert } from 'assert';
 
 import {
 	BaseFuzzTestState,
-	Generator,
-	IRandom,
 	chain,
 	createWeightedGenerator,
+	Generator,
 	generatorFromArray,
+	IRandom,
 	makeRandom,
 	performFuzzActions,
 	take,

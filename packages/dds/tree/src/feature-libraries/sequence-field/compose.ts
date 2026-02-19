@@ -7,9 +7,9 @@ import { assert, fail, unreachableCase } from "@fluidframework/core-utils/intern
 
 import {
 	type ChangeAtomId,
+	offsetChangeAtomId,
 	type RevisionMetadataSource,
 	type RevisionTag,
-	offsetChangeAtomId,
 } from "../../core/index.js";
 import type { IdAllocator } from "../../util/index.js";
 import {
@@ -23,14 +23,14 @@ import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	type MoveEffect,
-	type MoveEffectTable,
 	getCrossFieldTargetFromMove,
 	getMoveEffect,
 	getMoveIn,
 	isMoveIn,
 	isMoveMark,
 	isMoveOut,
+	type MoveEffect,
+	type MoveEffectTable,
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
@@ -46,11 +46,11 @@ import {
 	NoopMarkType,
 } from "./types.js";
 import {
-	CellOrder,
 	areEqualCellIds,
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	asAttachAndDetach,
+	CellOrder,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,

@@ -11,9 +11,9 @@
 
 export {
 	type CategoryFilter,
+	createLogger,
 	type FluidAppInsightsLoggerConfig,
 	type NamespaceFilter,
 	type TelemetryEventCategory,
 	type TelemetryFilter,
-	createLogger,
 } from "./fluidAppInsightsLogger.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail, Lazy } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -29,28 +29,28 @@ import { brand } from "../../../util/index.js";
 import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	CompatibilityLevel,
+	createField,
+	createTreeNodeSchemaPrivateData,
 	type FlexContent,
+	getInnerNode,
 	type ImplicitAllowedTypes,
 	type InternalTreeNode,
 	type MostDerivedData,
 	NodeKind,
 	type NodeSchemaMetadata,
+	privateDataSymbol,
 	type TreeNode,
 	type TreeNodeSchema,
 	type TreeNodeSchemaCorePrivate,
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
 	TreeNodeValid,
-	type UnhydratedFlexTreeField,
-	type UnhydratedFlexTreeNode,
-	type WithType,
-	createField,
-	createTreeNodeSchemaPrivateData,
-	getInnerNode,
-	privateDataSymbol,
 	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type UnhydratedFlexTreeField,
+	type UnhydratedFlexTreeNode,
+	type WithType,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,
@@ -58,18 +58,18 @@ import {
 } from "../../createContext.js";
 import {
 	type ContextualFieldProvider,
+	extractFieldProvider,
 	FieldKind,
 	type FieldProps,
 	type FieldSchema,
 	FieldSchemaAlpha,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeFieldFromImplicitField,
-	extractFieldProvider,
 	getExplicitStoredKey,
 	getStoredKey,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
 	isConstant,
 	normalizeFieldSchema,
+	type TreeFieldFromImplicitField,
 } from "../../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";

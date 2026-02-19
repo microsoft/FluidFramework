@@ -20,9 +20,9 @@ import {
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createChildLogger,
 	type ITelemetryLoggerExt,
 	MockLogger,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 

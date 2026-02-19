@@ -10,12 +10,12 @@ import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index
 
 import type { AllowedTypesFull } from "./allowedTypes.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
-import { TreeNode, inPrototypeChain, privateToken } from "./treeNode.js";
+import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
 import {
-	type InnerNode,
-	TreeNodeKernel,
 	getSimpleNodeSchemaFromInnerNode,
+	type InnerNode,
 	isTreeNode,
+	TreeNodeKernel,
 } from "./treeNodeKernel.js";
 import {
 	NodeKind,

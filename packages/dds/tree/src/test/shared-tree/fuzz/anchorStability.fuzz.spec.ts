@@ -8,17 +8,17 @@ import { strict as assert } from "node:assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzTestState,
-	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 import type { NodeBuilderData } from "../../../internalTypes.js";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+import { createTestUndoRedoStacks, SharedTreeTestFactory, validateTree } from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -28,12 +28,12 @@ import {
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
-	type FuzzNode,
-	type RevertibleSharedTreeView,
 	createAnchors,
 	createOnCreate,
 	deterministicIdCompressorFactory,
+	type FuzzNode,
 	failureDirectory,
+	type RevertibleSharedTreeView,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";

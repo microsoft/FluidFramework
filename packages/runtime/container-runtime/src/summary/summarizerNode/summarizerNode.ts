@@ -13,13 +13,13 @@ import type {
 import {
 	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	channelsTreeName,
 	type IExperimentalIncrementalSummaryContext,
 	type ISummarizeResult,
 	type ISummarizerNode,
 	type ISummarizerNodeConfig,
 	type ITelemetryContext,
 	type SummarizeInternalFn,
-	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -27,10 +27,10 @@ import type {
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
+	createChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
-	createChildLogger,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 

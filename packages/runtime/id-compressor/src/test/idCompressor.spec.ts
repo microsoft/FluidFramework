@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import { createIdCompressor, deserializeIdCompressor, IdCompressor } from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -24,21 +24,21 @@ import {
 	Client,
 	CompressorFactory,
 	DestinationClient,
-	IdCompressorTestNetwork,
-	MetaClient,
 	expectSerializes,
 	getClusterSize,
+	IdCompressorTestNetwork,
+	MetaClient,
 	makeOpGenerator,
 	performFuzzActions,
 	roundtrip,
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
 import {
-	type LocalCompressedId,
 	fail,
 	incrementStableId,
 	isFinalId,
 	isLocalId,
+	type LocalCompressedId,
 } from "./testCommon.js";
 
 describe("IdCompressor", () => {

@@ -27,8 +27,8 @@ export {
 	type ImportDataCallback,
 	type LoadSourceContainerCallback,
 	type MigrationCallback,
-	type SeparateContainerMigrationResult,
 	makeCreateDetachedContainerCallback,
 	makeMigratorEntryPointPiece,
 	makeSeparateContainerMigrationCallback,
+	type SeparateContainerMigrationResult,
 } from "./migrator/index.js";

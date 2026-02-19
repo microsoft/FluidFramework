@@ -33,18 +33,18 @@ export {
 } from "./collections/index.js";
 export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 export {
+	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
 	type LocalReferencePosition,
 	SlidingPreference,
-	createDetachedLocalReferencePosition,
 } from "./localReference.js";
 export type { IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 export {
 	type AttributionPolicy,
+	getSlideToSegoff,
 	type IMergeTreeAttributionOptions,
 	type IMergeTreeOptions,
 	type IMergeTreeOptionsInternal,
-	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
 	type IMergeTreeDeltaCallbackArgs,
@@ -99,20 +99,20 @@ export {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops.js";
-export { type Perspective, createLocalReconnectingPerspective } from "./perspective.js";
+export { createLocalReconnectingPerspective, type Perspective } from "./perspective.js";
 export {
-	type MapLike,
-	type PropertySet,
 	addProperties,
 	createMap,
+	type MapLike,
 	matchProperties,
+	type PropertySet,
 } from "./properties.js";
 export {
-	DetachedReferencePosition,
-	type ReferencePosition,
 	compareReferencePositions,
+	DetachedReferencePosition,
 	maxReferencePosition,
 	minReferencePosition,
+	type ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
 	refHasTileLabels,
@@ -121,23 +121,23 @@ export {
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
 export {
-	type MergeTreeDeltaRevertible,
-	type MergeTreeRevertibleDriver,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	isMergeTreeDeltaRevertible,
+	type MergeTreeDeltaRevertible,
+	type MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
 export {
+	copyPropertiesAndManager,
 	PropertiesManager,
 	type PropsOrAdjust,
-	copyPropertiesAndManager,
 } from "./segmentPropertiesManager.js";
 export {
+	endpointPosAndSide,
 	type InteriorSequencePlace,
 	type SequencePlace,
 	Side,
-	endpointPosAndSide,
 } from "./sequencePlace.js";
 export { SortedSegmentSet, type SortedSegmentSetItem } from "./sortedSegmentSet.js";
 export { SortedSet } from "./sortedSet.js";

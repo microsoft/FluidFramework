@@ -36,14 +36,14 @@ import {
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	GCDataBuilder,
 	convertSummaryTreeToITree,
+	GCDataBuilder,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	MockLogger,
-	TelemetryDataTag,
 	createChildLogger,
 	isFluidError,
+	MockLogger,
+	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
@@ -53,8 +53,8 @@ import {
 
 import {
 	type ChannelCollection,
-	type IFluidParentContextPrivate,
 	getLocalDataStoreType,
+	type IFluidParentContextPrivate,
 } from "../channelCollection.js";
 import { channelToDataStore } from "../dataStore.js";
 import {
@@ -64,12 +64,12 @@ import {
 } from "../dataStoreContext.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
-	type IRootSummarizerNodeWithGC,
-	type ReadFluidDataStoreAttributes,
-	type WriteFluidDataStoreAttributes,
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
+	type IRootSummarizerNodeWithGC,
+	type ReadFluidDataStoreAttributes,
 	summarizerClientType,
+	type WriteFluidDataStoreAttributes,
 } from "../summary/index.js";
 
 import {

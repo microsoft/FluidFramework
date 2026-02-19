@@ -15,7 +15,7 @@ import {
 	type IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { type ContainerAlpha, asLegacyAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -25,12 +25,12 @@ import type {
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	type ChannelFactoryRegistry,
+	createAndAttachContainer,
+	createSummarizer,
 	DataObjectFactoryType,
 	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
-	createAndAttachContainer,
-	createSummarizer,
 	summarizeNow,
 	timeoutAwait,
 	waitForContainerConnection,

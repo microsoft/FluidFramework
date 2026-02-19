@@ -5,17 +5,17 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
+	asLegacyAlpha,
 	type ContainerRuntimeBaseAlpha,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
 	type IFluidDataStorePolicies,
-	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getContainerEntryPointBackCompat,

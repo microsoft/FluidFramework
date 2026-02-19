@@ -17,13 +17,13 @@ import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal"
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { fluidHandleTypeName } from "./prompt.js";
-import { type PropertyDef, getExposedProperties } from "./propertyBinding.js";
+import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
 import { renderTypeFactoryTypeScript } from "./renderTypeFactoryTypeScript.js";
 import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
 import {
-	IdentifierCollisionResolver,
 	getFriendlyName,
+	IdentifierCollisionResolver,
 	isNamedSchema,
 	llmDefault,
 } from "./utils.js";

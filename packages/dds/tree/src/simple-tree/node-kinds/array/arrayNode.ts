@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, assert, fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, fail, Lazy, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
 import type {
+	FlexibleFieldContent,
 	FlexTreeNode,
 	FlexTreeSequenceField,
-	FlexibleFieldContent,
 } from "../../../feature-libraries/index.js";
 import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
-	type JsonCompatibleReadOnlyObject,
 	brand,
+	type JsonCompatibleReadOnlyObject,
 	validateIndex,
 	validateIndexRange,
 } from "../../../util/index.js";
@@ -23,13 +23,21 @@ import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
 	AnnotatedAllowedTypesInternal,
 	CompatibilityLevel,
+	createTreeNodeSchemaPrivateData,
 	type FlexContent,
+	getInnerNode,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+	getSimpleNodeSchemaFromInnerNode,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type InternalTreeNode,
 	type MostDerivedData,
 	NodeKind,
 	type NodeSchemaMetadata,
+	normalizeAllowedTypes,
+	privateDataSymbol,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -39,20 +47,12 @@ import {
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
 	TreeNodeValid,
-	type UnhydratedFlexTreeNode,
-	UnhydratedSequenceField,
-	type WithType,
-	createTreeNodeSchemaPrivateData,
-	getInnerNode,
-	getKernel,
-	getOrCreateNodeFromInnerNode,
-	getOrCreateNodeFromInnerUnboxedNode,
-	getSimpleNodeSchemaFromInnerNode,
-	normalizeAllowedTypes,
-	privateDataSymbol,
 	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
+	type WithType,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,

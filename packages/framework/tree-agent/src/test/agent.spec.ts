@@ -12,12 +12,12 @@ import { strict as assert } from "node:assert";
  */
 
 import {
+	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
-	independentView,
 } from "@fluidframework/tree/alpha";
 
-import { SharedTreeSemanticAgent, createContext } from "../agent.js";
+import { createContext, SharedTreeSemanticAgent } from "../agent.js";
 import type { EditResult, SharedTreeChatModel } from "../api.js";
 
 const sf = new SchemaFactory(undefined);

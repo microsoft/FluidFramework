@@ -16,13 +16,13 @@ import {
 import { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { IntervalStickiness } from "../intervals/index.js";
 import {
-	SharedStringRevertible,
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 	revertSharedStringRevertibles,
+	SharedStringRevertible,
 } from "../revertibles.js";
 import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";

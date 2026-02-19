@@ -9,9 +9,9 @@ import {
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 	BenchmarkType,
-	type IMemoryTestObject,
 	benchmark,
 	benchmarkMemory,
+	type IMemoryTestObject,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { unreachableCase } from "@fluidframework/core-utils/internal";

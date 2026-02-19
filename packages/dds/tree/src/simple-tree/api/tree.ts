@@ -21,8 +21,8 @@ import type {
 	ImplicitFieldSchema,
 	InsertableField,
 	InsertableTreeFieldFromImplicitField,
-	ReadSchema,
 	ReadableField,
+	ReadSchema,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";

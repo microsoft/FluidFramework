@@ -15,10 +15,10 @@ import type {
 import { v4 as uuid } from "uuid";
 
 import {
-	type AttachProcessProps,
 	type AttachingDataWithBlobs,
 	type AttachingDataWithoutBlobs,
 	type AttachmentData,
+	type AttachProcessProps,
 	type DetachedDataWithOutstandingBlobs,
 	type DetachedDefaultData,
 	runRetriableAttachProcess,

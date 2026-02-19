@@ -9,39 +9,39 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type FieldKindIdentifier,
+	forbiddenFieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
-	forbiddenFieldKindIdentifier,
-	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	type AnnotatedAllowedType,
 	NodeKind,
-	type TreeNodeSchema,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
+	type TreeNodeSchema,
 } from "../core/index.js";
 import {
+	createFieldSchema,
 	FieldKind,
 	type FieldSchema,
 	FieldSchemaAlpha,
-	createFieldSchema,
 } from "../fieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import {
-	type ObjectNodeSchemaPrivate,
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
 	isRecordNodeSchema,
+	type ObjectNodeSchemaPrivate,
 } from "../node-kinds/index.js";
 import { convertFieldKind } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";

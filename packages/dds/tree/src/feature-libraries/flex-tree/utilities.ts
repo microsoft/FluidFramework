@@ -5,11 +5,11 @@
 
 import {
 	type AnchorNode,
-	type DetachedField,
-	type SchemaAndPolicy,
 	anchorSlot,
+	type DetachedField,
 	getDetachedFieldContainingPath,
 	rootField,
+	type SchemaAndPolicy,
 } from "../../core/index.js";
 
 import type { FlexTreeContext } from "./context.js";

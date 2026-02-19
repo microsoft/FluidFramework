@@ -14,7 +14,7 @@ import {
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 
-import { type TreeNode, getOrCreateNodeFromInnerNode } from "./core/index.js";
+import { getOrCreateNodeFromInnerNode, type TreeNode } from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.

@@ -14,7 +14,7 @@ import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
-import { SharedTreeFuzzTestFactory, createOnCreate } from "./fuzzUtils.js";
+import { createOnCreate, SharedTreeFuzzTestFactory } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
 export const runsPerBatch = 50;

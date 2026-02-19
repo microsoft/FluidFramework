@@ -5,10 +5,10 @@
 
 export { recordSchema } from "./recordNode.js";
 export {
+	isRecordNodeSchema,
 	type RecordNodeCustomizableSchema,
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
-	isRecordNodeSchema,
 } from "./recordNodeTypes.js";

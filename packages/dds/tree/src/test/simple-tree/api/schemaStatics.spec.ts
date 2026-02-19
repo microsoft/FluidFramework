@@ -9,7 +9,7 @@ import {
 	schemaStatics,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaStatics.js";
-import { SchemaFactoryAlpha, allowUnused } from "../../../simple-tree/index.js";
+import { allowUnused, SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,

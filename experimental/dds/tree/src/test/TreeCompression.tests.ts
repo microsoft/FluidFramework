@@ -11,12 +11,12 @@ import {
 	Definition,
 	DetachedSequenceId,
 	InternedStringId,
+	isDetachedSequenceId,
 	NodeId,
 	OpSpaceNodeId,
 	TraitLabel,
-	isDetachedSequenceId,
 } from '../Identifiers.js';
-import { IdCompressor, createSessionId, isFinalId, isLocalId } from '../id-compressor/index.js';
+import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor/index.js';
 import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
 import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
 import { RevisionView } from '../RevisionView.js';

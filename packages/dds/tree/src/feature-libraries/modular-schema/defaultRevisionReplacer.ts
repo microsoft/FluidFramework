@@ -9,17 +9,17 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type RevisionReplacer,
-	type RevisionTag,
 	newChangeAtomIdRangeMap,
 	offsetChangeAtomId,
+	type RevisionReplacer,
+	type RevisionTag,
 } from "../../core/index.js";
 import {
-	type Mutable,
-	type RangeMap,
 	brand,
 	brandConst,
+	type Mutable,
 	newIntegerRangeMap,
+	type RangeMap,
 } from "../../util/index.js";
 
 const offsetChangesetLocalId = (value: ChangesetLocalId, offset: number): ChangesetLocalId =>

@@ -20,4 +20,4 @@ export type {
 	ScopedSchemaName,
 	typeNameSymbol,
 } from "./simple-tree/index.js";
-export type { FlattenKeys, _InlineTrick } from "./util/index.js";
+export type { _InlineTrick, FlattenKeys } from "./util/index.js";

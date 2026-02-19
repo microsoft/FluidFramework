@@ -8,6 +8,7 @@ import {
 	Combobox,
 	type ComboboxProps,
 	CounterBadge,
+	createTableColumn,
 	DataGrid,
 	DataGridBody,
 	DataGridCell,
@@ -16,22 +17,21 @@ import {
 	DataGridRow,
 	Dropdown,
 	type DropdownProps,
-	Option,
-	type TableColumnDefinition,
-	createTableColumn,
 	makeStyles,
+	Option,
 	shorthands,
+	type TableColumnDefinition,
 	tokens,
 } from "@fluentui/react-components";
 import {
 	DevtoolsDisposed,
 	GetTelemetryHistory,
+	handleIncomingMessage,
+	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 	type ITimestampedTelemetryEvent,
-	type InboundHandlers,
 	TelemetryEvent,
 	TelemetryHistory,
-	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React, { useRef, useState } from "react";
 

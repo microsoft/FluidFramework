@@ -26,9 +26,9 @@ import {
 } from "../../../core/index.js";
 import {
 	type Brand,
-	type JsonCompatibleReadOnly,
 	brand,
 	brandedNumberType,
+	type JsonCompatibleReadOnly,
 	unbrand,
 } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";

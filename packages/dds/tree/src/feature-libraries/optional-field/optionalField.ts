@@ -6,25 +6,25 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
 	type DeltaMark,
+	forbiddenFieldKindIdentifier,
 	Multiplicity,
+	makeChangeAtomId,
 	type RevisionReplacer,
 	type RevisionTag,
-	areEqualChangeAtomIds,
-	forbiddenFieldKindIdentifier,
-	makeChangeAtomId,
 	taggedAtomId,
 } from "../../core/index.js";
 import {
+	deleteFromNestedMap,
 	type IdAllocator,
 	type Mutable,
 	SizedNestedMap,
-	deleteFromNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";

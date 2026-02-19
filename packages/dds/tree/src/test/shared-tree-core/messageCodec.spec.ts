@@ -9,7 +9,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { DependentFormatVersion, currentVersion } from "../../codec/index.js";
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,

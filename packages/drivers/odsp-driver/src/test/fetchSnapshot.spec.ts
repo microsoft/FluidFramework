@@ -14,10 +14,10 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	createChildLogger,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	MockLogger,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
@@ -26,8 +26,8 @@ import type { HostStoragePolicyInternal } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import {
-	type ISnapshotRequestAndResponseOptions,
 	downloadSnapshot,
+	type ISnapshotRequestAndResponseOptions,
 } from "../fetchSnapshot.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
@@ -35,14 +35,14 @@ import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
+	createCacheSnapshotKey,
 	type INewFileInfo,
 	type IOdspResponse,
-	createCacheSnapshotKey,
 } from "../odspUtils.js";
 
 import {
-	type MockResponse,
 	createResponse,
+	type MockResponse,
 	mockFetchMultiple,
 	notFound,
 	okResponse,

@@ -23,10 +23,10 @@ import type {
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 

@@ -25,11 +25,11 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import type {
-	Mutable,
-	UnionToIntersection,
 	areSafelyAssignable,
+	Mutable,
 	requireAssignableTo,
 	requireTrue,
+	UnionToIntersection,
 } from "../../../util/index.js";
 import { TestTreeProviderLite } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";

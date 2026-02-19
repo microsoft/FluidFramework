@@ -4,7 +4,7 @@
  */
 
 import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { Lazy, LazyPromise, assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
@@ -26,8 +26,8 @@ import {
 
 import {
 	type ChannelServiceEndpoints,
-	type IChannelContext,
 	createChannelServiceEndpoints,
+	type IChannelContext,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,

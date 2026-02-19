@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { Deferred, assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, Deferred, unreachableCase } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions/internal";
 import type {
@@ -30,9 +30,9 @@ import {
 	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
-	createChildMonitoringContext,
 	raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils/internal";
 

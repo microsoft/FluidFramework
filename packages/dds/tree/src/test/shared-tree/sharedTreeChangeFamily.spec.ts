@@ -10,10 +10,10 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { type CodecWriteOptions, currentVersion } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
-	type TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
+	type TreeStoredSchema,
 	tagChange,
 } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -21,12 +21,12 @@ import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKi
 import {
 	DefaultEditBuilder,
 	DefaultRevisionReplacer,
+	fieldKinds,
+	intoDelta,
 	ModularChangeFamily,
 	type ModularChangeset,
 	type SchemaChange,
 	type TreeChunk,
-	fieldKinds,
-	intoDelta,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,

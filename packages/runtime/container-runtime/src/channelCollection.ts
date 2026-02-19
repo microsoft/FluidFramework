@@ -15,7 +15,7 @@ import type {
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
-import { Lazy, LazyPromise, assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type {
 	ISequencedDocumentMessage,
@@ -41,12 +41,12 @@ import type {
 	IFluidParentContext,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
+	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	InboundAttachMessage,
 	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
@@ -56,52 +56,52 @@ import {
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	GCDataBuilder,
-	RequestParser,
-	RuntimeHeaders,
-	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
 	encodeCompactIdToString,
+	GCDataBuilder,
 	isSerializedHandle,
 	processAttachMessageGCData,
+	RequestParser,
+	RuntimeHeaders,
 	responseToException,
+	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildLogger,
+	createChildMonitoringContext,
 	DataCorruptionError,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
 	type ITelemetryPropertiesExt,
 	LoggingError,
 	type MonitoringContext,
-	createChildLogger,
-	createChildMonitoringContext,
-	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
 	DeletedResponseHeaderKey,
-	type RuntimeHeaderData,
 	defaultRuntimeHeaderData,
+	type RuntimeHeaderData,
 } from "./containerRuntime.js";
 import {
-	type IDataStoreAliasMessage,
 	channelToDataStore,
+	type IDataStoreAliasMessage,
 	isDataStoreAliasMessage,
 } from "./dataStore.js";
 import {
+	createAttributesBlob,
 	FluidDataStoreContext,
 	type IFluidDataStoreContextPrivate,
 	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
-	createAttributesBlob,
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";

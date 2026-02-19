@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
@@ -24,15 +24,15 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildLogger,
 	type ITelemetryLoggerExt,
 	ThresholdCounter,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ChannelServiceEndpoints,
-	type IChannelContext,
 	createChannelServiceEndpoints,
+	type IChannelContext,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,

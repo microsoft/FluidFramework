@@ -12,7 +12,7 @@ import {
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { isContainerMessageDirtyable } from "../containerRuntime.js";
-import { type IBatchMetadata, asBatchMetadata } from "../metadata.js";
+import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
 
 import type { IBatchCheckpoint, LocalBatch, LocalBatchMessage } from "./definitions.js";

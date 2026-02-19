@@ -12,13 +12,13 @@ export {
 export {
 	type Brand,
 	BrandedType,
-	type NameFromBranded,
-	type ValueFromBranded,
-	type Values,
 	brand,
 	brandConst,
+	type NameFromBranded,
 	strictEnum,
 	unbrand,
+	type ValueFromBranded,
+	type Values,
 } from "./brand.js";
 export {
 	type BrandedKey,
@@ -29,76 +29,78 @@ export {
 } from "./brandedMap.js";
 export {
 	Breakable,
-	type WithBreakable,
 	breakingClass,
 	breakingMethod,
 	throwIfBroken,
+	type WithBreakable,
 } from "./breakable.js";
 export {
-	type TupleBTree,
 	createTupleComparator,
 	mergeTupleBTrees,
 	newTupleBTree,
+	type TupleBTree,
 } from "./bTreeUtils.js";
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 export {
+	fakeIdAllocator,
 	type IdAllocationState,
 	type IdAllocator,
-	fakeIdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 } from "./idAllocator.js";
 export {
-	type NestedMap,
-	type ReadonlyNestedMap,
-	SizedNestedMap,
 	deleteFromNestedMap,
 	forEachInNestedMap,
 	getOrAddInNestedMap,
 	getOrCreateInNestedMap,
 	getOrDefaultInNestedMap,
 	mapNestedMap,
+	type NestedMap,
 	nestedMapFromFlatList,
 	nestedMapToFlatList,
 	populateNestedMap,
+	type ReadonlyNestedMap,
+	SizedNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
 } from "./nestedMap.js";
-export { type NestedSet, addToNestedSet, nestedSetContains } from "./nestedSet.js";
+export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
 export {
-	type ExtractFromOpaque,
-	type Opaque,
 	brandOpaque,
+	type ExtractFromOpaque,
 	extractFromOpaque,
+	type Opaque,
 } from "./opaque.js";
 export {
+	newIntegerRangeMap,
 	RangeMap,
 	type RangeQueryResult,
-	newIntegerRangeMap,
 } from "./rangeMap.js";
 export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";
 export { type ReferenceCounted, ReferenceCountedBase } from "./referenceCounting.js";
 export { StackyIterator } from "./stackyIterator.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export type {
+	areOnlyKeys,
+	areSafelyAssignable,
 	Contravariant,
 	Covariant,
 	EnforceTypeCheckTests,
-	Invariant,
-	MakeNominal,
-	areOnlyKeys,
-	areSafelyAssignable,
 	eitherIsAny,
+	Invariant,
 	isAny,
 	isAssignableTo,
 	isStrictSubset,
+	MakeNominal,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
 } from "./typeCheck.js";
 export type {
+	_InlineTrick,
+	_RecursiveTrick,
 	FlattenKeys,
 	IsUnion,
 	PopUnion,
@@ -106,20 +108,9 @@ export type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 	UnionToTuple,
-	_InlineTrick,
-	_RecursiveTrick,
 } from "./typeUtils.js";
 export { unsafeArrayToTuple } from "./typeUtils.js";
 export {
-	type IDisposable,
-	type JsonCompatible,
-	type JsonCompatibleObject,
-	type JsonCompatibleReadOnly,
-	type JsonCompatibleReadOnlyObject,
-	JsonCompatibleReadOnlySchema,
-	type Mutable,
-	type Populated,
-	type RecursiveReadonly,
 	asMutable,
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
@@ -145,13 +136,22 @@ export {
 	getOrCreate,
 	hasSingle,
 	hasSome,
+	type IDisposable,
 	invertMap,
 	isJsonObject,
 	isReadonlyArray,
 	iterableHasSome,
+	type JsonCompatible,
+	type JsonCompatibleObject,
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
+	JsonCompatibleReadOnlySchema,
+	type Mutable,
 	makeArray,
 	mapIterable,
 	objectToMap,
 	oneFromIterable,
+	type Populated,
+	type RecursiveReadonly,
 	transformObjectMap,
 } from "./utils.js";

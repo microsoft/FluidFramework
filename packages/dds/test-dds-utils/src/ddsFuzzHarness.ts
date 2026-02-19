@@ -19,14 +19,14 @@ import type {
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	ExitBehavior,
-	FuzzTestMinimizer,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
 	createWeightedAsyncGenerator,
 	defaultOptions,
 	done,
+	ExitBehavior,
+	FuzzTestMinimizer,
 	generateTestSeeds,
 	getSaveDirectory,
 	getSaveInfo,
@@ -62,9 +62,9 @@ import {
 	type Client,
 	type ClientLoadData,
 	type ClientWithStashData,
-	type FuzzSerializedIdCompressor,
 	createLoadData,
 	createLoadDataFromStashData,
+	type FuzzSerializedIdCompressor,
 	hasStashData,
 } from "./clientLoading.js";
 import { DDSFuzzHandle } from "./ddsFuzzHandle.js";

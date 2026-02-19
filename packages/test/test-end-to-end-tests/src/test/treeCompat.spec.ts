@@ -9,10 +9,10 @@ import { type CompatApis, describeCompat } from "@fluid-private/test-version-uti
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree";
 import { lt } from "semver";

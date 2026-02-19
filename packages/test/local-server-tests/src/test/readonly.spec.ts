@@ -5,8 +5,8 @@
 
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoadExistingContainerProps,
 	createDetachedContainer,
+	type ILoadExistingContainerProps,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";

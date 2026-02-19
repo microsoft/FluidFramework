@@ -9,10 +9,10 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	ReferenceType,
+	reservedRangeLabelsKey,
 	type SequencePlace,
 	Side,
 	SlidingPreference,
-	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -32,9 +32,9 @@ import { ISharedString, SharedStringClass } from "../sharedString.js";
 
 import { assertInterval } from "./intervalIndexTestUtils.js";
 import {
-	type Client,
 	assertConsistent,
 	assertSequenceIntervals,
+	type Client,
 } from "./intervalTestUtils.js";
 import { constructClients, loadClient } from "./multiClientTestUtils.js";
 

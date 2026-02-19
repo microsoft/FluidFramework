@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, assert } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type * as Mocha from "mocha";
 
 const timeBuffer = 15; // leave 15 ms leeway for finish processing

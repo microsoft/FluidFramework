@@ -11,8 +11,8 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {
 	type CodecWriteOptions,
-	type IJsonCodec,
 	currentVersion,
+	type IJsonCodec,
 	makeCodecFamily,
 } from "../../../codec/index.js";
 import {
@@ -25,18 +25,21 @@ import {
 	type FieldKindIdentifier,
 	type FieldUpPath,
 	Multiplicity,
-	type RevisionInfo,
-	type RevisionTag,
-	type TaggedChange,
-	type UpPath,
 	makeAnonChange,
 	makeDetachedNodeId,
+	type RevisionInfo,
+	type RevisionTag,
 	revisionMetadataSourceFromInfo,
+	type TaggedChange,
 	tagChange,
+	type UpPath,
 } from "../../../core/index.js";
 import {
 	type ChangeAtomIdBTree,
+	chunkFieldSingle,
+	cursorForJsonableTreeField,
 	DefaultRevisionReplacer,
+	defaultChunkPolicy,
 	type EditDescription,
 	type EncodedModularChangesetV2,
 	type FieldChangeHandler,
@@ -45,21 +48,18 @@ import {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	FlexFieldKind,
-	ModularChangeFamily,
-	ModularChangeFormatVersion,
-	type ModularChangeset,
-	type NodeId,
-	type RelevantRemovedRootsFromChild,
-	type TreeChunk,
-	chunkFieldSingle,
-	cursorForJsonableTreeField,
-	defaultChunkPolicy,
 	fieldKindConfigurations,
 	genericFieldKind,
 	jsonableTreeFromFieldCursor,
+	ModularChangeFamily,
+	ModularChangeFormatVersion,
+	type ModularChangeset,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	type NodeId,
 	newChangeAtomIdBTree,
+	type RelevantRemovedRootsFromChild,
+	type TreeChunk,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -84,10 +84,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	type Mutable,
 	brand,
 	brandConst,
 	idAllocatorFromMaxId,
+	type Mutable,
 	nestedMapFromFlatList,
 	setInNestedMap,
 	tryGetFromNestedMap,
@@ -95,9 +95,9 @@ import {
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
-	type EncodingTestData,
 	assertDeltaEqual,
 	chunkFromJsonTrees,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -107,7 +107,7 @@ import {
 } from "../../utils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
-import { Change, assertEqual, removeAliases } from "./modularChangesetUtil.js";
+import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {

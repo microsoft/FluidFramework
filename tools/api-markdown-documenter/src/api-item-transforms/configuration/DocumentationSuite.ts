@@ -11,18 +11,18 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import {
-	type ReleaseLevel,
 	getApiItemKind,
 	getConciseSignature,
 	getEffectiveReleaseLevel,
 	getSingleLineExcerptText,
 	isDeprecated,
+	type ReleaseLevel,
 } from "../../utilities/index.js";
 
 import {
+	getHierarchyConfigurationWithDefaults,
 	type HierarchyConfiguration,
 	type HierarchyOptions,
-	getHierarchyConfigurationWithDefaults,
 } from "./Hierarchy.js";
 
 /**

@@ -15,9 +15,9 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
-	type ChunkCompressor,
 	basicChunkTree,
 	basicOnlyChunkPolicy,
+	type ChunkCompressor,
 	chunkField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
@@ -26,14 +26,14 @@ import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
-	type TreeChunk,
 	chunkTree,
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
+	type TreeChunk,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
-import { ReferenceCountedBase, brand } from "../../../util/index.js";
+import { brand, ReferenceCountedBase } from "../../../util/index.js";
 import {
 	type TestField,
 	testGeneralPurposeTreeCursor,

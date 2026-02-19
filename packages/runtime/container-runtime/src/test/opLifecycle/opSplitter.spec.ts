@@ -17,9 +17,9 @@ import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
 	type IChunkedOp,
+	isChunkedMessage,
 	OpSplitter,
 	type OutboundBatchMessage,
-	isChunkedMessage,
 	splitOp,
 } from "../../opLifecycle/index.js";
 

@@ -7,9 +7,9 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	type ChangesetLocalId,
+	makeChangeAtomId,
 	type RevisionReplacer,
 	type RevisionTag,
-	makeChangeAtomId,
 } from "../../core/index.js";
 
 import type { MoveMarkEffect } from "./helperTypes.js";

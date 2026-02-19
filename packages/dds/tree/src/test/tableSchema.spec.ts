@@ -8,30 +8,30 @@ import { strict as assert, fail } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	FluidClientVersion,
-	FormatValidatorBasic,
 	asAlpha,
 	configuredSharedTree,
+	FluidClientVersion,
+	FormatValidatorBasic,
 } from "../index.js";
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
+	allowUnused,
 	type ConciseTree,
+	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	TreeBeta,
 	type TreeNode,
 	TreeViewConfiguration,
-	allowUnused,
-	getJsonSchema,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 // We have to use disable twice this rule here and below, otherwise this rule gets in conflict with itself and ends up flagging imports as wrong, then flagging
 // the fixes made to resolve the error as wrong and demands the changes it demanded be reverted.
 // eslint-disable-next-line import-x/order
 import type {
-	JsonCompatibleReadOnly,
 	areSafelyAssignable,
+	JsonCompatibleReadOnly,
 	requireFalse,
 	requireTrue,
 } from "../util/index.js";
@@ -44,7 +44,7 @@ import {
 	testSchemaCompatibilitySnapshots,
 	useSnapshotDirectory,
 } from "./snapshots/index.js";
-import { TestTreeProviderLite, createTestUndoRedoStacks } from "./utils.js";
+import { createTestUndoRedoStacks, TestTreeProviderLite } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 

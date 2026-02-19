@@ -36,8 +36,8 @@ export type {
 } from "./odspCache.js";
 // Factory
 export {
-	OdspDocumentServiceFactory,
 	createLocalOdspDocumentServiceFactory,
+	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
 export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 // URI Resolver functionality, URI management
@@ -55,7 +55,7 @@ export {
 } from "./odspFluidFileLink.js";
 // Layer Compat details
 export { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
-export { type ISnapshotContents, getHashedDocumentId } from "./odspPublicUtils.js";
+export { getHashedDocumentId, type ISnapshotContents } from "./odspPublicUtils.js";
 export { getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
 export { type IOdspResponse, isOdspResolvedUrl } from "./odspUtils.js";
 // prefetch latest snapshot before container load

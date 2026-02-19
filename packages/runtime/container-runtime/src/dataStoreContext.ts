@@ -12,8 +12,8 @@ import { AttachState, type IAudience } from "@fluidframework/container-definitio
 import {
 	type IDeltaManager,
 	type IDeltaManagerFull,
-	type ReadOnlyInfo,
 	isIDeltaManagerFull,
+	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
@@ -26,7 +26,7 @@ import type {
 	IFluidHandleInternal,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
-import { LazyPromise, assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentMessage,
@@ -77,15 +77,15 @@ import {
 	isSnapshotFetchRequiredForLoadingGroupId,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildMonitoringContext,
 	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	generateStack,
 	LoggingError,
 	type MonitoringContext,
 	ThresholdCounter,
-	UsageError,
-	createChildMonitoringContext,
-	extractSafePropertiesFromMessage,
-	generateStack,
 	tagCodeArtifacts,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidParentContextPrivate } from "./channelCollection.js";
@@ -95,13 +95,13 @@ import {
 	validateDatastoreCompatibility,
 } from "./runtimeLayerCompatState.js";
 import {
-	// eslint-disable-next-line import-x/no-deprecated
-	type ReadFluidDataStoreAttributes,
-	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	hasIsolatedChannels,
+	// eslint-disable-next-line import-x/no-deprecated
+	type ReadFluidDataStoreAttributes,
+	type WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 

@@ -11,9 +11,9 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	findAncestor,
 	type GraphCommit,
 	type RevisionTag,
-	findAncestor,
 	rootFieldKey,
 } from "../../core/index.js";
 import {

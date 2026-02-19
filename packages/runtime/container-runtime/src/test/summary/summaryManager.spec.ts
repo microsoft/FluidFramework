@@ -32,13 +32,13 @@ import {
 	type ISummarizerRuntime,
 	type ISummaryManagerConfig,
 	type ISummaryOpMessage,
+	neverCancelledSummaryToken,
 	RunningSummarizer,
 	SummarizeHeuristicData,
 	type Summarizer,
 	SummaryCollection,
 	SummaryManager,
 	SummaryManagerState,
-	neverCancelledSummaryToken,
 } from "../../summary/index.js";
 
 class MockRuntime {

@@ -11,12 +11,12 @@ import {
 	type FieldKey,
 	type FieldKindData,
 	type FieldKindIdentifier,
+	forEachNode,
 	type ITreeCursorSynchronous,
 	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
-	forEachNode,
 } from "../../../core/index.js";
 import { getOrCreate } from "../../../util/index.js";
 

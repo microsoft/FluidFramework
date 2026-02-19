@@ -7,11 +7,11 @@ import { Tree as FluentTree } from "@fluentui/react-components";
 import {
 	GetRootDataVisualizations,
 	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
+	handleIncomingMessage,
 	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 	RootDataVisualizations,
 	type RootHandleNode,
-	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 

@@ -27,11 +27,11 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	AnyShape,
+	anyFieldEncoder,
 	EncoderContext,
 	type FieldEncoder,
-	type NodeEncoder,
-	anyFieldEncoder,
 	incrementalFieldEncoder,
+	type NodeEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
@@ -52,19 +52,19 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import {
-	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
 	emptyChunk,
 	jsonableTreeFromFieldCursor,
+	TreeCompressionStrategy,
 } from "../../../../feature-libraries/index.js";
 import {
-	SchemaFactoryAlpha,
-	TreeViewConfigurationAlpha,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	numberSchema,
+	SchemaFactoryAlpha,
 	stringSchema,
+	TreeViewConfigurationAlpha,
 } from "../../../../simple-tree/index.js";
 import {
 	restrictiveStoredSchemaGenerationOptions,
@@ -72,7 +72,7 @@ import {
 	toStoredSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
-import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import {

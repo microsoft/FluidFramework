@@ -24,13 +24,13 @@ import { SequenceChunk } from "../sequenceChunk.js";
 
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	getChecked,
 	readStream,
 	readStreamBoolean,
 	readStreamNumber,
 	readStreamStream,
 	readStreamValue,
+	type StreamCursor,
 } from "./chunkCodecUtilities.js";
 import {
 	DecoderContext,

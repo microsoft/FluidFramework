@@ -29,8 +29,8 @@ import {
 	LocalFluidDataStoreContext,
 } from "../dataStoreContext.js";
 import {
-	type IRootSummarizerNodeWithGC,
 	createRootSummarizerNodeWithGC,
+	type IRootSummarizerNodeWithGC,
 } from "../summary/index.js";
 
 export function createParentContext(

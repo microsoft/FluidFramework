@@ -6,7 +6,7 @@
 import { assert, expect } from 'chai';
 
 import { StablePlace, StableRange } from '../ChangeTypes.js';
-import { PlaceValidationResult, RangeValidationResultKind, deepCompareNodes } from '../EditUtilities.js';
+import { deepCompareNodes, PlaceValidationResult, RangeValidationResultKind } from '../EditUtilities.js';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers.js';
 import {
 	ChangeInternal,

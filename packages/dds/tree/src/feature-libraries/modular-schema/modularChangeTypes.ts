@@ -11,7 +11,7 @@ import {
 	type RevisionInfo,
 	subtractChangeAtomIds,
 } from "../../core/index.js";
-import { type Brand, RangeMap, brand } from "../../util/index.js";
+import { type Brand, brand, RangeMap } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 

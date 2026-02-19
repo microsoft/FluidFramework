@@ -5,7 +5,7 @@
 
 import { type BaseOperation, ReducerPreconditionError } from "./combineReducers.js";
 import { makeRandom } from "./random.js";
-import { type AsyncGenerator, type SaveInfo, done } from "./types.js";
+import { type AsyncGenerator, done, type SaveInfo } from "./types.js";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more

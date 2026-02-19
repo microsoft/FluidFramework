@@ -13,7 +13,7 @@ import React from "react";
 import { OpLatencyView } from "../components/index.js";
 import { MessageRelayContext } from "../MessageRelayContext.js";
 
-import { MockMessageRelay, assertNoAccessibilityViolations } from "./utils/index.js";
+import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any

@@ -4,10 +4,10 @@
  */
 
 import {
+	generation,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 	LayerCompatibilityPolicyWindowMonths,
-	generation,
 } from "@fluid-internal/client-utils";
 import {
 	type MonitoringContext,

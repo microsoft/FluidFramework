@@ -17,7 +17,7 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
+import { brand, type JsonCompatibleReadOnly, type Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,

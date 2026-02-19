@@ -23,7 +23,7 @@ import type {
 	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError, isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
+import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";

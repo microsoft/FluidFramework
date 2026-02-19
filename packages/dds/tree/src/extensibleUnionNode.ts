@@ -15,11 +15,11 @@ import type {
 	TreeNodeSchema,
 } from "./simple-tree/index.js";
 import {
-	SchemaFactory,
-	TreeBeta,
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetailsSubclassable,
 	getInnerNode,
+	SchemaFactory,
+	TreeBeta,
 } from "./simple-tree/index.js";
 import type { UnionToIntersection } from "./util/index.js";
 

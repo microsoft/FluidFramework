@@ -9,7 +9,7 @@ import { StablePlace, StableRange } from '../ChangeTypes.js';
 import { detachRange, insertIntoTrait } from '../EditUtilities.js';
 import { TraitLabel } from '../Identifiers.js';
 import { ChangeNode } from '../persisted-types/index.js';
-import { RevisionView, convertTreeNodesToViewNodes } from '../RevisionView.js';
+import { convertTreeNodesToViewNodes, RevisionView } from '../RevisionView.js';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
 
 import { expectDefined } from './utilities/TestCommon.js';

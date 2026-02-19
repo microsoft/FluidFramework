@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/tinylicious-driver/test-utils";
 import { createElement } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
-import { type Root, createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
 import { DemoCodeLoader } from "./demoCodeLoader.js";

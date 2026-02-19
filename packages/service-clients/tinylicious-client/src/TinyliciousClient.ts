@@ -9,8 +9,8 @@ import type {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	createDetachedContainer,
+	type ILoaderProps,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -32,9 +32,9 @@ import {
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
+	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
-	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
 
 import type { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces.js";

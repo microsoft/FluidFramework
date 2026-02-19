@@ -27,15 +27,15 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
+	createDataStoreFactory,
+	createDocumentId,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObject,
-	createDataStoreFactory,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 

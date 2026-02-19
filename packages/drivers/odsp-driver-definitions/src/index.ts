@@ -36,14 +36,14 @@ export {
 	ISocketStorageDiscovery,
 } from "./sessionProvider.js";
 export {
+	authHeaderFromTokenResponse,
 	IdentityType,
 	InstrumentedStorageTokenFetcher,
 	InstrumentedTokenFetcher,
-	OdspResourceTokenFetchOptions,
-	TokenFetchOptions,
-	TokenFetcher,
-	TokenResponse,
-	authHeaderFromTokenResponse,
 	isTokenFromCache,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+	TokenFetchOptions,
+	TokenResponse,
 	tokenFromResponse,
 } from "./tokenFetch.js";

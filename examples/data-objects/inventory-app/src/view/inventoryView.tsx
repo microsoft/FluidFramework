@@ -4,8 +4,8 @@
  */
 
 import {
-	type PropTreeNode,
 	objectIdNumber,
+	type PropTreeNode,
 	usePropTreeNode,
 	withMemoizedTreeObservations,
 	withTreeObservations,

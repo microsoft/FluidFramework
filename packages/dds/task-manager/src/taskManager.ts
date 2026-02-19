@@ -24,8 +24,8 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	SharedObject,
 	createSingleBlobSummary,
+	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ITaskManager, ITaskManagerEvents } from "./interfaces.js";

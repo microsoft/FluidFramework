@@ -5,22 +5,22 @@
 
 export {
 	type BranchId,
+	onForkTransitive,
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
-	onForkTransitive,
 } from "./branch.js";
 export { type ChangeEnricher } from "./changeEnricher.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 export {
 	EditManager,
+	minimumPossibleSequenceNumber,
 	type SharedBranchSummaryData,
 	type SummaryData,
-	minimumPossibleSequenceNumber,
 } from "./editManager.js";
 export {
-	type EditManagerCodecOptions,
 	clientVersionToEditManagerFormatVersion,
+	type EditManagerCodecOptions,
 	editManagerFormatVersionSelectorForSharedBranches,
 	getCodecTreeForEditManagerFormatWithChange,
 	makeEditManagerCodec,
@@ -38,9 +38,9 @@ export {
 } from "./editManagerFormatCommons.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
-	type MessageEncodingContext,
 	clientVersionToMessageFormatVersion,
 	getCodecTreeForMessageFormatWithChange,
+	type MessageEncodingContext,
 	makeMessageCodec,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./messageCodecs.js";

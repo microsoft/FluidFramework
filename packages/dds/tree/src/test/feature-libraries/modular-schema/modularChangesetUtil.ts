@@ -38,10 +38,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	type IdAllocator,
-	type Mutable,
 	brand,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type Mutable,
 } from "../../../util/index.js";
 import { assertStructuralEquality } from "../../objMerge.js";
 

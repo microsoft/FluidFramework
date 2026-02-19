@@ -15,10 +15,10 @@ import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 

@@ -13,12 +13,12 @@ export {
 	getCodecTreeForForestFormat,
 } from "./forest-summary/index.js";
 export {
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
 	type MinimalFieldMap,
 	type MinimalMapTreeNodeView,
-	cursorForMapTreeField,
-	cursorForMapTreeNode,
 	mapTreeFieldFromCursor,
 	mapTreeFieldsWithField,
 	mapTreeFromCursor,
@@ -26,8 +26,8 @@ export {
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
 export {
-	SchemaSummarizer,
 	makeSchemaCodec,
+	SchemaSummarizer,
 	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
@@ -58,12 +58,6 @@ export {
 	setInChangeAtomIdMap,
 } from "./changeAtomIdBTree.js";
 export {
-	type FieldBatch,
-	type FieldBatchCodec,
-	type FieldBatchEncodingContext,
-	FieldBatchFormatVersion,
-	type IncrementalEncodingPolicy,
-	type TreeChunk,
 	buildChunkedForest,
 	chunkField,
 	chunkFieldSingle,
@@ -72,31 +66,41 @@ export {
 	defaultChunkPolicy,
 	defaultIncrementalEncodingPolicy,
 	emptyChunk,
+	type FieldBatch,
+	type FieldBatchCodec,
+	type FieldBatchEncodingContext,
+	FieldBatchFormatVersion,
 	getCodecTreeForFieldBatchFormat,
+	type IncrementalEncodingPolicy,
 	makeFieldBatchCodec,
 	makeTreeChunker,
+	type TreeChunk,
 } from "./chunked-forest/index.js";
 export {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	DefaultEditBuilder,
-	FieldKinds,
-	type IDefaultEditBuilder,
-	type OptionalFieldEditBuilder,
-	type SequenceFieldEditBuilder,
-	type ValueFieldEditBuilder,
 	defaultSchemaPolicy,
+	FieldKinds,
 	fieldKindConfigurations,
 	fieldKinds,
 	getCodecTreeForModularChangeFormat,
+	type IDefaultEditBuilder,
 	intoDelta,
+	type OptionalFieldEditBuilder,
 	relevantRemovedRoots,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "./default-schema/index.js";
 export { mapRootChanges } from "./deltaUtils.js";
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 export {
+	assertFlexTreeEntityNotFreed,
 	Context,
 	ContextSlot,
+	currentObserver,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
 	type FlexTreeContext,
 	type FlexTreeEntity,
 	FlexTreeEntityKind,
@@ -110,34 +114,31 @@ export {
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
-	type HydratedFlexTreeNode,
-	LazyEntity,
-	type Observer,
-	TreeStatus,
-	assertFlexTreeEntityNotFreed,
-	currentObserver,
 	// Internal
 	flexTreeMarker,
 	flexTreeSlot,
 	getOrCreateHydratedFlexTreeNode,
 	getSchemaAndPolicy,
+	type HydratedFlexTreeNode,
 	indexForAt,
 	isFlexTreeNode,
+	LazyEntity,
+	type Observer,
+	TreeStatus,
 	treeStatusFromAnchorCache,
 	withObservation,
 } from "./flex-tree/index.js";
 export {
 	AnchorTreeIndex,
+	hasElement,
 	type KeyFinder,
 	type TreeIndex,
 	type TreeIndexKey,
 	type TreeIndexNodes,
-	hasElement,
 } from "./indexing/index.js";
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 export {
+	allowsRepoSuperset,
 	type CrossFieldManager,
 	CrossFieldTarget,
 	DefaultRevisionReplacer,
@@ -156,11 +157,15 @@ export {
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	type GenericChangeset,
+	genericFieldKind,
 	type HasFieldChanges,
+	isNeverField,
+	isNeverTree,
 	ModularChangeFamily,
 	ModularChangeFormatVersion,
 	type ModularChangeset,
 	ModularEditBuilder,
+	makeModularChangeCodecFamily,
 	type NodeChangeComposer,
 	type NodeChangeInverter,
 	type NodeChangePruner,
@@ -169,33 +174,28 @@ export {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	allowsRepoSuperset,
-	genericFieldKind,
-	isNeverField,
-	isNeverTree,
-	makeModularChangeCodecFamily,
 	updateRefreshers,
 } from "./modular-schema/index.js";
 export {
-	type LocalNodeIdentifier,
-	MockNodeIdentifierManager,
-	type NodeIdentifierManager,
-	type StableNodeIdentifier,
 	compareLocalNodeIdentifiers,
 	createNodeIdentifierManager,
 	isStableNodeIdentifier,
+	type LocalNodeIdentifier,
+	MockNodeIdentifierManager,
+	type NodeIdentifierManager,
 	nodeKeyTreeIdentifier,
+	type StableNodeIdentifier,
 } from "./node-identifier/index.js";
 export {
 	EncodedSchemaChange,
-	type SchemaChange,
 	getCodecTreeForSchemaChangeFormat,
 	makeSchemaChangeCodecs,
+	type SchemaChange,
 } from "./schema-edits/index.js";
 export {
-	SchemaValidationError,
 	isFieldInSchema,
 	isNodeInSchema,
+	SchemaValidationError,
 	throwOutOfSchema,
 } from "./schemaChecker.js";
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";

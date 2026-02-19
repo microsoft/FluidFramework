@@ -8,27 +8,27 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
+	assert,
 	DoublyLinkedList,
 	type ListNode,
-	assert,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
+	createLocalReconnectingPerspective,
+	endpointPosAndSide,
+	getSlideToSegoff,
 	ISegment,
 	type ISegmentInternal,
 	LocalReferencePosition,
 	PropertySet,
 	ReferenceType,
+	refTypeIncludesFlag,
+	reservedRangeLabelsKey,
 	SequencePlace,
 	Side,
 	SlidingPreference,
-	createLocalReconnectingPerspective,
-	endpointPosAndSide,
-	getSlideToSegoff,
-	refTypeIncludesFlag,
-	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -41,25 +41,25 @@ import {
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import {
+	createIdIntervalIndex,
 	EndpointIndex,
 	type IEndpointIndex,
 	type IIdIntervalIndex,
 	type ISequenceOverlappingIntervalsIndex,
 	OverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
-	createIdIntervalIndex,
 } from "./intervalIndex/index.js";
 import {
 	CompressedSerializedInterval,
-	ISerializedInterval,
-	IntervalStickiness,
-	IntervalType,
-	SequenceInterval,
-	SequenceIntervalClass,
-	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
 	getSerializedProperties,
+	IntervalStickiness,
+	IntervalType,
+	ISerializedInterval,
+	SequenceInterval,
+	SequenceIntervalClass,
+	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];

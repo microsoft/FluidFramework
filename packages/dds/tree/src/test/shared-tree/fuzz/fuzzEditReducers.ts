@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-utils";
+import { combineReducers, type Reducer } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
@@ -15,12 +15,12 @@ import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import {
+	getInnerNode,
 	SchemaFactory,
 	TreeArrayNode,
 	type TreeNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
-	getInnerNode,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
@@ -36,10 +36,10 @@ import {
 } from "./fuzzEditGenerators.js";
 import {
 	type ArrayChildren,
-	type FuzzNode,
-	type GUIDNode,
 	convertToFuzzView,
 	createTreeViewSchema,
+	type FuzzNode,
+	type GUIDNode,
 	isRevertibleSharedTreeView,
 	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
@@ -49,9 +49,9 @@ import {
 	type CrossFieldMove,
 	type FieldEdit,
 	type ForkMergeOperation,
-	type GUIDNodeValue,
 	type GeneratedFuzzNode,
 	GeneratedFuzzValueType,
+	type GUIDNodeValue,
 	type Insert,
 	type IntraFieldMove,
 	type NodeObjectValue,

@@ -21,7 +21,7 @@ import type {
 	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { LazyPromise, assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import-x/no-internal-modules
@@ -29,8 +29,8 @@ import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-u
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
-	RuntimeHeaders,
 	asLegacyAlpha,
+	RuntimeHeaders,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";

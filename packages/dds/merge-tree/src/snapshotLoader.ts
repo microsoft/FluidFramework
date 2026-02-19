@@ -15,9 +15,9 @@ import type {
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	createChildLogger,
 	type ITelemetryLoggerExt,
 	UsageError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { Client } from "./client.js";
@@ -29,13 +29,13 @@ import { PriorPerspective } from "./perspective.js";
 import {
 	type IHasInsertionInfo,
 	type IHasRemovalInfo,
-	type SegmentWithInfo,
 	overwriteInfo,
+	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
+	hasMergeInfo,
 	type IJSONSegmentWithMergeInfo,
 	type MergeTreeChunkV1,
-	hasMergeInfo,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 import { SnapshotV1 } from "./snapshotV1.js";

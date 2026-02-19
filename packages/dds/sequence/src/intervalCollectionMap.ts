@@ -12,9 +12,9 @@ import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base/
 
 import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
+	IntervalCollection,
 	type ISerializedIntervalCollectionV1,
 	type ISerializedIntervalCollectionV2,
-	IntervalCollection,
 } from "./intervalCollection.js";
 import {
 	IIntervalCollectionTypeOperationValue,

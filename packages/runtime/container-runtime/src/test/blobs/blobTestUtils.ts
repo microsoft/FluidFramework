@@ -6,11 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import {
-	IsoBuffer,
-	TypedEventEmitter,
 	bufferToString,
 	createEmitter,
 	gitHashFile,
+	IsoBuffer,
+	TypedEventEmitter,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,

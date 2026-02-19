@@ -15,9 +15,9 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
 import {
-	IR11sSocketError,
 	errorObjectFromSocketError,
 	getUrlForTelemetry,
+	IR11sSocketError,
 	socketIoPath,
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";

@@ -16,7 +16,7 @@ import React from "react";
 import { Menu, type MenuSelection } from "../components/index.js";
 import { MessageRelayContext } from "../MessageRelayContext.js";
 
-import { MockMessageRelay, assertNoAccessibilityViolations } from "./utils/index.js";
+import { assertNoAccessibilityViolations, MockMessageRelay } from "./utils/index.js";
 
 describe("Menu Accessibility Check", () => {
 	const supportedFeatures: DevtoolsFeatureFlags = {

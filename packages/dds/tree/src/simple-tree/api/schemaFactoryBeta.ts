@@ -5,53 +5,53 @@
 
 // eslint-disable-next-line unused-imports/no-unused-imports, import-x/no-duplicates -- This import prevents a large number of type references in the API reports from showing up as *_2.
 import type {
-	RestrictiveStringRecord,
 	RestrictiveStringRecord as _RestrictiveStringRecord,
+	RestrictiveStringRecord,
 } from "../../util/index.js";
 import {
 	type AllowedTypesFullFromMixed,
 	type AllowedTypesMetadata,
 	type AnnotatedAllowedType,
 	AnnotatedAllowedTypesInternal,
+	createSchemaUpgrade,
 	type ImplicitAllowedTypes,
 	type LazyItem,
 	type NodeKind,
+	normalizeToAnnotatedAllowedType,
 	type TreeNodeSchema,
 	type TreeNodeSchemaBoth,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type WithType,
-	createSchemaUpgrade,
-	normalizeToAnnotatedAllowedType,
 } from "../core/index.js";
 /* eslint-disable unused-imports/no-unused-imports, import-x/no-duplicates -- These imports prevent a large number of type references in the API reports from showing up as *_2. */
 import type {
-	ImplicitFieldSchema,
 	FieldKind as _FieldKind,
 	FieldProps as _FieldProps,
 	FieldPropsAlpha as _FieldPropsAlpha,
 	FieldSchemaAlpha as _FieldSchemaAlpha,
 	ImplicitFieldSchema as _ImplicitFieldSchema,
+	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import type { LeafSchema as _LeafSchema } from "../leafNodeSchema.js";
 /* eslint-enable unused-imports/no-unused-imports, import-x/no-duplicates */
 import {
 	type InsertableObjectFromSchemaRecord,
+	objectSchema,
 	type RecordNodeInsertableData,
+	recordSchema,
 	type TreeObjectNode,
 	type TreeRecordNode,
-	objectSchema,
-	recordSchema,
 } from "../node-kinds/index.js";
 // eslint-disable-next-line unused-imports/no-unused-imports -- This import prevents a large number of type references in the API reports from showing up as *_2.
 import type { SimpleLeafNodeSchema as _SimpleLeafNodeSchema } from "../simpleSchema.js";
 
 import {
+	defaultSchemaFactoryObjectOptions,
 	type NodeSchemaOptions,
 	type ObjectSchemaOptions,
 	SchemaFactory,
 	type ScopedSchemaName,
-	defaultSchemaFactoryObjectOptions,
 	scoped,
 	structuralName,
 } from "./schemaFactory.js";

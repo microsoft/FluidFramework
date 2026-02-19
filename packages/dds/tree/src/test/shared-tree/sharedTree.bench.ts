@@ -17,19 +17,18 @@ import { EmptyKey, type NormalizedUpPath, rootFieldKey } from "../../core/index.
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	type Context,
-	TreeCompressionStrategy,
 	jsonableTreeFromFieldCursor,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 import {
+	deepPath,
 	type JSDeepTree,
 	type JSWideTree,
 	LinkedList,
-	WideRoot,
-	deepPath,
 	localFieldKey,
 	makeDeepContentSimple,
 	makeDeepStoredContent,
@@ -43,17 +42,18 @@ import {
 	readWideCursorTree,
 	readWideFlexTree,
 	readWideTreeAsJSObject,
+	WideRoot,
 } from "../scalableTestTrees.js";
 import { insert } from "../sequenceRootUtils.js";
 import {
-	type SharedTreeWithContainerRuntime,
-	StringArray,
-	TestTreeProviderLite,
 	checkoutWithContent,
 	chunkFromJsonTrees,
 	configureBenchmarkHooks,
 	fieldCursorFromInsertable,
 	flexTreeViewWithContent,
+	type SharedTreeWithContainerRuntime,
+	StringArray,
+	TestTreeProviderLite,
 	toJsonableTree,
 } from "../utils.js";
 

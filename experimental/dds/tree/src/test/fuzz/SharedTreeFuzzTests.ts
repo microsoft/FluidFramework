@@ -8,11 +8,11 @@ import { join } from 'path';
 
 import {
 	AsyncGenerator,
-	type SaveInfo,
 	chainAsync as chain,
 	describeFuzz,
 	makeRandom,
 	performFuzzActionsAsync as performFuzzActionsBase,
+	type SaveInfo,
 	takeAsync as take,
 } from '@fluid-private/stochastic-test-utils';
 import { expect } from 'chai';

@@ -5,18 +5,18 @@
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	type ISummarizeResult,
-	type ISummaryTreeWithStats,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
+	type ISummarizeResult,
+	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
+import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IRefreshSummaryResult } from "../summary/index.js";
 
-import type { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
+import type { IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import type {
 	IGarbageCollectionSnapshotData,

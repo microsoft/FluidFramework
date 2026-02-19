@@ -16,20 +16,20 @@ import {
 	type ChangesetLocalId,
 	type FieldKey,
 	type JsonableTree,
+	mapCursorField,
 	RevisionTagCodec,
+	rootFieldKey,
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
-	mapCursorField,
-	rootFieldKey,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	Chunker,
-	type ShapeInfo,
 	defaultChunkPolicy,
+	type ShapeInfo,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -49,20 +49,20 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import {
-	DefaultChangeFamily,
-	DefaultEditBuilder,
-	ForestSummarizer,
-	MockNodeIdentifierManager,
-	type ModularChangeset,
-	TreeCompressionStrategy,
 	buildChunkedForest,
 	cursorForJsonableTreeNode,
+	DefaultChangeFamily,
+	DefaultEditBuilder,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
+	ForestSummarizer,
 	fieldKindConfigurations,
 	jsonableTreeFromCursor,
+	MockNodeIdentifierManager,
+	type ModularChangeset,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
@@ -72,20 +72,20 @@ import {
 	Tree,
 } from "../../../shared-tree/index.js";
 import {
-	SchemaFactory,
-	TreeViewConfiguration,
 	numberSchema,
+	SchemaFactory,
 	stringSchema,
+	TreeViewConfiguration,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
-	MockTreeCheckout,
 	checkoutWithContent,
 	forestWithContent,
 	getView,
+	MockTreeCheckout,
 	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";

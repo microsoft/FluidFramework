@@ -14,8 +14,8 @@ import {
 	type SharedTreeSummarizableMetadata,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
-	VersionedSummarizer,
 	summarizablesMetadataKey,
+	VersionedSummarizer,
 } from "../../shared-tree-core/index.js";
 
 class TestUnversionedSummarizer {

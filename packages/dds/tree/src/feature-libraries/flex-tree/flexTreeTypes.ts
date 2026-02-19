@@ -5,12 +5,12 @@
 
 import {
 	type AnchorNode,
+	anchorSlot,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type NormalizedFieldUpPath,
 	type TreeValue,
-	anchorSlot,
 } from "../../core/index.js";
 import type {
 	FieldKinds,

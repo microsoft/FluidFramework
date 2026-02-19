@@ -16,8 +16,8 @@ import { Tree } from "../../../shared-tree/index.js";
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 import {
 	type ConstantFieldProvider,
-	FieldKind,
 	createFieldSchema,
+	FieldKind,
 	getDefaultProvider,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/fieldSchema.js";

@@ -18,11 +18,11 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import {
-	MockLogger,
-	type MonitoringContext,
 	createChildLogger,
 	createChildMonitoringContext,
 	isLayerIncompatibilityError,
+	MockLogger,
+	type MonitoringContext,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {

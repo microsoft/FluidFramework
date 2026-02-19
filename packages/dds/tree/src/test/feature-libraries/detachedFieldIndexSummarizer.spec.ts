@@ -32,7 +32,7 @@ import {
 	type SharedTreeSummarizableMetadata,
 	summarizablesMetadataKey,
 } from "../../shared-tree-core/index.js";
-import { type IdAllocator, brand, idAllocatorFromMaxId } from "../../util/index.js";
+import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 function createDetachedFieldIndexSummarizer(options?: {

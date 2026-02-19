@@ -4,13 +4,13 @@
  */
 
 export {
+	addBatchMetadata,
 	type BatchId,
 	BatchManager,
 	type BatchSequenceNumbers,
-	type IBatchManagerOptions,
-	addBatchMetadata,
 	generateBatchId,
 	getEffectiveBatchId,
+	type IBatchManagerOptions,
 } from "./batchManager.js";
 export type {
 	IBatchCheckpoint,
@@ -27,21 +27,21 @@ export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";
 export {
 	type EmptyGroupedBatch,
+	isGroupedBatch,
 	OpGroupingManager,
 	type OpGroupingManagerConfig,
-	isGroupedBatch,
 } from "./opGroupingManager.js";
 export {
 	ensureContentsDeserialized,
 	serializeOp,
 } from "./opSerialization.js";
-export { OpSplitter, isChunkedMessage, splitOp } from "./opSplitter.js";
+export { isChunkedMessage, OpSplitter, splitOp } from "./opSplitter.js";
 export {
 	type BatchResubmitInfo,
-	Outbox,
 	estimateSocketSize,
 	getLongStack,
 	localBatchToOutboundBatch,
+	Outbox,
 } from "./outbox.js";
 export {
 	type BatchStartInfo,

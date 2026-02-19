@@ -7,16 +7,16 @@ import { strict as assert } from "node:assert";
 
 import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import {
+	generateSchemaFromSimpleSchema,
+	getSimpleSchema,
 	type ImplicitFieldSchema,
+	isObjectNodeSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	SchemaUpgrade,
 	type SimpleObjectNodeSchema,
-	type ValidateRecursiveSchema,
-	generateSchemaFromSimpleSchema,
-	getSimpleSchema,
-	isObjectNodeSchema,
 	toInitialSchema,
+	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
 import { HasUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";

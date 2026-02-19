@@ -11,7 +11,7 @@ import {
 	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
+import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**

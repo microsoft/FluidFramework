@@ -7,19 +7,19 @@
 
 import {
 	BaseFuzzTestState,
-	Generator,
-	SaveInfo,
 	createWeightedGenerator,
+	Generator,
 	interleave,
 	makeRandom,
 	performFuzzActions as performFuzzActionsBase,
 	repeat,
+	SaveInfo,
 	take,
 } from '@fluid-private/stochastic-test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert, expect } from 'chai';
 
-import { ClosedMap, assertNotUndefined, fail, getOrCreate } from '../../Common.js';
+import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common.js';
 import {
 	AttributionId,
 	FinalCompressedId,
@@ -36,9 +36,9 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 } from '../../id-compressor/index.js';
 import {
-	NumericUuid,
 	createSessionId,
 	ensureSessionUuid,
+	NumericUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid.js';

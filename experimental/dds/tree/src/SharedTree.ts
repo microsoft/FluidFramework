@@ -21,22 +21,22 @@ import {
 	ITelemetryContext,
 } from '@fluidframework/runtime-definitions/internal';
 import {
+	createSingleBlobSummary,
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
-	createSingleBlobSummary,
 } from '@fluidframework/shared-object-base/internal';
 import {
+	createChildLogger,
+	createSampledLogger,
 	IEventSampler,
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
-	createChildLogger,
-	createSampledLogger,
 } from '@fluidframework/telemetry-utils/internal';
 
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
-import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
+import { copyPropertyIfDefined, fail, RestOrArray, unwrapRestOrArray } from './Common.js';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';
 import {
 	areRevisionViewsSemanticallyEqual,
@@ -54,14 +54,14 @@ import {
 	AttributionId,
 	DetachedSequenceId,
 	EditId,
+	isDetachedSequenceId,
 	NodeId,
 	OpSpaceNodeId,
 	SessionId,
 	StableNodeId,
-	isDetachedSequenceId,
 } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
-import { IdCompressor, createSessionId } from './id-compressor/index.js';
+import { createSessionId, IdCompressor } from './id-compressor/index.js';
 import {
 	CachingLogViewer,
 	EditCacheEntry,
@@ -70,7 +70,7 @@ import {
 	SequencedEditResult,
 	SequencedEditResultCallback,
 } from './LogViewer.js';
-import { NodeIdContext, NodeIdNormalizer, getNodeIdContext } from './NodeIdUtilities.js';
+import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -81,20 +81,20 @@ import {
 	Edit,
 	EditLogSummary,
 	EditStatus,
+	ghostSessionId,
 	InternalizedChange,
+	reservedIdCount,
 	SharedTreeEditOp,
 	SharedTreeEditOp_0_0_2,
 	SharedTreeOp,
-	SharedTreeOpType,
 	SharedTreeOp_0_0_2,
+	SharedTreeOpType,
 	SharedTreeSummary,
-	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
+	SharedTreeSummaryBase,
 	TreeNode,
 	TreeNodeSequence,
 	WriteFormat,
-	ghostSessionId,
-	reservedIdCount,
 } from './persisted-types/index.js';
 import { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 import { ReconciliationPath } from './ReconciliationPath.js';

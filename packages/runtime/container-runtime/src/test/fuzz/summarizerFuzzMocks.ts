@@ -16,8 +16,8 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 	raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import {

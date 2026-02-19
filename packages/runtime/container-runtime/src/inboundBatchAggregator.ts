@@ -11,8 +11,8 @@ import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
-	type ITelemetryLoggerExt,
 	extractSafePropertiesFromMessage,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IBatchMetadata } from "./metadata.js";

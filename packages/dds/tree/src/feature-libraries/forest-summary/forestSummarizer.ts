@@ -14,17 +14,17 @@ import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal"
 
 import type { CodecWriteOptions } from "../../codec/index.js";
 import {
+	applyDelta,
 	type DeltaDetachedNodeBuild,
 	type DeltaFieldChanges,
 	type FieldKey,
+	forEachField,
 	type IEditableForest,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	makeDetachedFieldIndex,
 	type RevisionTagCodec,
 	TreeNavigationResult,
-	applyDelta,
-	forEachField,
-	makeDetachedFieldIndex,
 } from "../../core/index.js";
 import {
 	type Summarizable,
@@ -33,23 +33,23 @@ import {
 	VersionedSummarizer,
 } from "../../shared-tree-core/index.js";
 import {
-	type JsonCompatibleReadOnly,
 	idAllocatorFromMaxId,
+	type JsonCompatibleReadOnly,
 	readAndParseSnapshotBlob,
 } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
+	defaultIncrementalEncodingPolicy,
 	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
-	defaultIncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import {
-	type ForestCodec,
 	clientVersionToForestFormatVersion,
+	type ForestCodec,
 	makeForestSummarizerCodec,
 } from "./codec.js";
 import { ForestFormatVersion } from "./formatCommon.js";

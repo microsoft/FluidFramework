@@ -16,13 +16,13 @@ import {
 import { FieldKind, type FieldSchemaAlpha, type ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	type ArrayNodeSchema,
-	type MapNodeSchema,
-	type ObjectNodeSchema,
-	type RecordNodeSchema,
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
 	isRecordNodeSchema,
+	type MapNodeSchema,
+	type ObjectNodeSchema,
+	type RecordNodeSchema,
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
 import {
@@ -30,7 +30,7 @@ import {
 	toUnhydratedSchema,
 	transformSimpleSchema,
 } from "../toStoredSchema.js";
-import { type TreeSchema, createTreeSchema } from "../treeSchema.js";
+import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
 /**

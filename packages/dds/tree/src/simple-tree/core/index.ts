@@ -24,7 +24,6 @@ export type {
 } from "./allowedTypes.js";
 export {
 	AnnotatedAllowedTypesInternal,
-	SchemaUpgrade,
 	createSchemaUpgrade,
 	evaluateLazySchema,
 	isAnnotatedAllowedType,
@@ -34,6 +33,7 @@ export {
 	normalizeAllowedTypesInternal,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
+	SchemaUpgrade,
 } from "./allowedTypes.js";
 export { Context, HydratedContext } from "./context.js";
 export type {
@@ -56,18 +56,18 @@ export {
 	Unchanged,
 } from "./toStored.js";
 export {
-	TreeNode,
 	inPrototypeChain,
 	privateToken,
+	TreeNode,
 } from "./treeNode.js";
 export {
-	type InnerNode,
-	SimpleContextSlot,
-	TreeNodeKernel,
 	getInnerNode,
 	getKernel,
 	getSimpleNodeSchemaFromInnerNode,
+	type InnerNode,
 	isTreeNode,
+	SimpleContextSlot,
+	TreeNodeKernel,
 	treeNodeFromAnchor,
 	tryDisposeTreeNode,
 	tryGetTreeNodeSchema,
@@ -91,32 +91,32 @@ export type {
 } from "./treeNodeSchema.js";
 export {
 	CompatibilityLevel,
-	NodeKind,
 	getTreeNodeSchemaPrivateData,
 	isTreeNodeSchemaClass,
+	NodeKind,
 	privateDataSymbol,
 } from "./treeNodeSchema.js";
 export {
-	type MostDerivedData,
-	TreeNodeValid,
 	createTreeNodeSchemaPrivateData,
 	isClassBasedSchema,
+	type MostDerivedData,
+	TreeNodeValid,
 } from "./treeNodeValid.js";
 export {
 	type InternalTreeNode,
 	type Unhydrated,
 } from "./types.js";
 export {
+	createField,
 	UnhydratedContext,
 	UnhydratedFlexTreeField,
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
-	createField,
 } from "./unhydratedFlexTree.js";
 export { type SchemaVisitor, walkAllowedTypes, walkNodeSchema } from "./walkSchema.js";
 export {
-	type WithType,
 	contentSchemaSymbol,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type WithType,
 } from "./withType.js";

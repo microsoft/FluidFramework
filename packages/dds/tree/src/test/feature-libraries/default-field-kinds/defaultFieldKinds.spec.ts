@@ -17,8 +17,8 @@ import type {
 	FullSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
-	type NodeId,
 	allowsMultiplicitySuperset,
+	type NodeId,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -34,9 +34,9 @@ import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/inde
 import { TestNodeId } from "../../testNodeId.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
-	Change,
 	assertEqual,
 	assertTaggedEqual,
+	Change,
 	tagChangeInline,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";

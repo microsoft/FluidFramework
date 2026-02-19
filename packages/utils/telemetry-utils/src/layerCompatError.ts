@@ -4,10 +4,10 @@
  */
 
 import {
+	checkLayerCompatibility,
 	type FluidLayer,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
-	checkLayerCompatibility,
 } from "@fluid-internal/client-utils";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 

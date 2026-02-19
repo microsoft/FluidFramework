@@ -8,5 +8,5 @@ export {
 	type NormalizedTree,
 	normalizeDocumentContents,
 } from "./Normalize.js";
-export { type Section, type SectionContent, createSection } from "./Section.js";
+export { createSection, type Section, type SectionContent } from "./Section.js";
 export type { SectionHeading } from "./SectionHeading.js";

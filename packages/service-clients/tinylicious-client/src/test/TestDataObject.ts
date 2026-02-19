@@ -4,10 +4,10 @@
  */
 
 import {
+	createDataObjectKind,
 	DataObject,
 	DataObjectFactory,
 	type IDataObjectProps,
-	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 
 /**

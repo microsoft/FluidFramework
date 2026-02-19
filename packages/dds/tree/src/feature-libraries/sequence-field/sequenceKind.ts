@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Multiplicity, forbiddenFieldKindIdentifier } from "../../core/index.js";
+import { forbiddenFieldKindIdentifier, Multiplicity } from "../../core/index.js";
 import {
 	identifierFieldIdentifier,
 	optionalIdentifier,

@@ -26,9 +26,9 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 
 import {
-	type TodoListContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
+	type TodoListContainerSchema,
 	todoListContainerSchema,
 } from "../src/fluid.js";
 import type { TodoList } from "../src/schema.js";

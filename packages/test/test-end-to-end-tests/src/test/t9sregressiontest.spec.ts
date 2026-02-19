@@ -10,10 +10,10 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
-	createAndAttachContainer,
 	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 

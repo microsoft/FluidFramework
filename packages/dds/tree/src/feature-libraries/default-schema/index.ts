@@ -8,15 +8,15 @@ export {
 	type DefaultChangeset,
 	DefaultEditBuilder,
 	type IDefaultEditBuilder,
+	intoDelta,
 	type OptionalFieldEditBuilder,
+	relevantRemovedRoots,
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
-	intoDelta,
-	relevantRemovedRoots,
 } from "./defaultEditBuilder.js";
 export {
-	FieldKinds,
 	defaultSchemaPolicy,
+	FieldKinds,
 	fieldKindConfigurations,
 	fieldKinds,
 	getCodecTreeForModularChangeFormat,

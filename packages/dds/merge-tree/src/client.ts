@@ -8,8 +8,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	type DoublyLinkedList,
 	assert,
+	type DoublyLinkedList,
 	isObject,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
@@ -35,11 +35,11 @@ import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./consta
 import { type LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import { type IMergeTreeTextHelper, MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import {
-	type IMergeTreeOptionsInternal,
-	MergeTree,
 	errorIfOptionNotTrue,
 	getSlideToSegoff,
+	type IMergeTreeOptionsInternal,
 	isRemovedAndAcked,
+	MergeTree,
 } from "./mergeTree.js";
 import type {
 	IMergeTreeDeltaCallbackArgs,
@@ -48,16 +48,16 @@ import type {
 } from "./mergeTreeDeltaCallback.js";
 import {
 	type CollaborationWindow,
+	compareStrings,
 	type ISegment,
 	type ISegmentAction,
 	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ISegmentPrivate,
+	isSegmentLeaf,
 	type Marker,
 	type ObliterateInfo,
 	type SegmentGroup,
-	compareStrings,
-	isSegmentLeaf,
 } from "./mergeTreeNodes.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
@@ -89,10 +89,10 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import {
+	createLocalReconnectingPerspective,
 	LocalReconnectingPerspective,
 	type Perspective,
 	PriorPerspective,
-	createLocalReconnectingPerspective,
 } from "./perspective.js";
 import type { MapLike, PropertySet } from "./properties.js";
 import { DetachedReferencePosition, type ReferencePosition } from "./referencePositions.js";

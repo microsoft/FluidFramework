@@ -35,24 +35,24 @@ import {
 	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type GenericNetworkError,
-	type ThrottlingError,
 	calculateMaxWaitTime,
 	canRetryOnError,
 	createGenericNetworkError,
 	createWriteError,
+	type GenericNetworkError,
 	getRetryDelayFromError,
 	isRuntimeMessage,
 	logNetworkFailure,
+	type ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	GenericError,
-	type ITelemetryLoggerExt,
-	UsageError,
 	formatTick,
+	GenericError,
 	generateStack,
+	type ITelemetryLoggerExt,
 	isFluidError,
 	normalizeError,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {

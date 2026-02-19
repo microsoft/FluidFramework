@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ISegmentPrivate, MergeBlock, assignChild } from "../mergeTreeNodes.js";
+import { assignChild, type ISegmentPrivate, MergeBlock } from "../mergeTreeNodes.js";
 import { SegmentGroupCollection } from "../segmentGroupCollection.js";
 import { type IHasInsertionInfo, overwriteInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";

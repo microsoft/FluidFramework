@@ -4,9 +4,9 @@
  */
 
 import {
+	assert,
 	DoublyLinkedList,
 	type ListNode,
-	assert,
 	walkList,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -14,7 +14,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ISegmentInternal } from "./mergeTreeNodes.js";
 import { type TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
-import { type PropertySet, addProperties } from "./properties.js";
+import { addProperties, type PropertySet } from "./properties.js";
 import { type ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js";
 
 /**

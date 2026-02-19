@@ -64,11 +64,11 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
-	type IFluidErrorBase,
-	MockLogger,
 	createChildLogger,
+	type IFluidErrorBase,
 	isFluidError,
 	isILoggingError,
+	MockLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -84,12 +84,12 @@ import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionD
 import {
 	ContainerRuntime,
 	type ContainerRuntimeOptionsInternal,
+	defaultPendingOpsWaitTimeoutMs,
+	getSingleUseLegacyLogCallback,
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 	type IPendingRuntimeState,
 	type UnknownIncomingTypedMessage,
-	defaultPendingOpsWaitTimeoutMs,
-	getSingleUseLegacyLogCallback,
 } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import {

@@ -8,8 +8,8 @@ import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	SummaryTreeBuilder,
 	isFluidHandle,
+	SummaryTreeBuilder,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 

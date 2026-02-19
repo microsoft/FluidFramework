@@ -5,14 +5,14 @@
 
 import {
 	Client,
-	SequencePlace,
 	endpointPosAndSide,
+	SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 
 import {
+	createTransientInterval,
 	SequenceInterval,
 	SequenceIntervalClass,
-	createTransientInterval,
 } from "../intervals/index.js";
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import { ISharedString } from "../sharedString.js";

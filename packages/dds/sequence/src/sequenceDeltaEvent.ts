@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	Client,
 	IMergeTreeDeltaCallbackArgs,

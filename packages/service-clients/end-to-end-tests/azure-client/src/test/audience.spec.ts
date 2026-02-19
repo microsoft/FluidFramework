@@ -13,10 +13,10 @@ import { SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import {
-	ScopeType,
 	createAzureClient,
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
+	ScopeType,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { configProvider, getTestMatrix, waitForMember } from "./utils.js";

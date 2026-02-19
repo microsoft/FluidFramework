@@ -24,9 +24,9 @@ import { applyTestEdits } from '../Summary.tests.js';
 
 import { buildLeaf } from './TestNode.js';
 import {
+	applyNoop,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
-	applyNoop,
 	setUpLocalServerTestSharedTree,
 	setUpTestTree,
 	spyOnSubmittedOps,

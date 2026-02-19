@@ -9,8 +9,8 @@ import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-defin
 import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";

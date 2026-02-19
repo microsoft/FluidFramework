@@ -8,8 +8,8 @@ import { type FlexTreeUnknownUnboxed, isFlexTreeNode } from "../../feature-libra
 
 import type { TreeNode } from "./treeNode.js";
 import {
-	type InnerNode,
 	createTreeNodeFromInner,
+	type InnerNode,
 	simpleTreeNodeSlot,
 	splitInnerNodeType,
 } from "./treeNodeKernel.js";

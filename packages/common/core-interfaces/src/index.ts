@@ -57,7 +57,7 @@ export type {
 	IProvideFluidHandleContext,
 	PayloadState,
 } from "./handles.js";
-export { IFluidHandle, IFluidHandleContext, fluidHandleSymbol } from "./handles.js";
+export { fluidHandleSymbol, IFluidHandle, IFluidHandleContext } from "./handles.js";
 export type {
 	ILoggingError,
 	ITelemetryBaseEvent,

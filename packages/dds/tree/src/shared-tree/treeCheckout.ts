@@ -29,59 +29,60 @@ import {
 	type ChangeFamily,
 	type ChangeMetadata,
 	CommitKind,
+	combineVisitors,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
+	diffHistories,
 	type GraphCommit,
 	type IEditableForest,
 	type IForestSubscription,
 	type ITreeCursor,
+	isAncestor,
 	type JsonableTree,
 	LeafNodeStoredSchema,
+	makeAnonChange,
+	makeDetachedFieldIndex,
+	moveToDetachedField,
 	type ReadOnlyDetachedFieldIndex,
 	type RevertibleAlpha,
 	type RevertibleAlphaFactory,
 	RevertibleStatus,
 	type RevisionTag,
 	type RevisionTagCodec,
+	rebaseChange,
+	rootFieldKey,
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
-	combineVisitors,
-	diffHistories,
-	isAncestor,
-	makeAnonChange,
-	makeDetachedFieldIndex,
-	moveToDetachedField,
-	rebaseChange,
-	rootFieldKey,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
 import {
-	type FieldBatchCodec,
-	type TreeCompressionStrategy,
 	allowsRepoSuperset,
 	buildForest,
 	createNodeIdentifierManager,
 	defaultSchemaPolicy,
+	type FieldBatchCodec,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
+	type TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import {
+	onForkTransitive,
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	SquashingTransactionStack,
 	TransactionResult,
 	type Transactor,
-	onForkTransitive,
 } from "../shared-tree-core/index.js";
 import {
 	type CustomTreeNode,
 	type CustomTreeValue,
+	customFromCursorStored,
 	type ImplicitFieldSchema,
 	type ReadSchema,
 	type TreeBranch,
@@ -91,20 +92,19 @@ import {
 	type UnsafeUnknownSchema,
 	type VerboseTree,
 	type ViewableTree,
-	customFromCursorStored,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
-	type JsonCompatibleReadOnly,
-	type WithBreakable,
 	disposeSymbol,
 	getOrCreate,
 	hasSome,
+	type JsonCompatibleReadOnly,
+	type WithBreakable,
 } from "../util/index.js";
 
-import { SchematizingSimpleTreeView, getCheckout } from "./schematizingTreeView.js";
+import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
-import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
+import { hasSchemaChange, SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 

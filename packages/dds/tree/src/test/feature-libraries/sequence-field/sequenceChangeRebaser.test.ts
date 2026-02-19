@@ -5,17 +5,17 @@
 
 import { strict } from "node:assert";
 
-import { StressMode, describeStress } from "@fluid-private/stochastic-test-utils";
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangesetLocalId,
+	emptyDelta,
+	makeAnonChange,
 	type RevisionInfo,
 	type RevisionTag,
 	type TaggedChange,
-	emptyDelta,
-	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -29,8 +29,8 @@ import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modul
 // eslint-disable-next-line import-x/no-internal-modules
 import type * as SF from "../../../feature-libraries/sequence-field/types.js";
 import {
-	type IdAllocator,
 	brand,
+	type IdAllocator,
 	idAllocatorFromMaxId,
 	makeArray,
 } from "../../../util/index.js";
@@ -46,7 +46,6 @@ import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils
 
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
-	type WrappedChange,
 	areRebasable,
 	assertChangesetsEqual,
 	assertWrappedChangesetsEqual,
@@ -63,6 +62,7 @@ import {
 	testCompose,
 	testInvert,
 	toDeltaWrapped,
+	type WrappedChange,
 	withoutTombstones,
 	withoutTombstonesDeep,
 } from "./utils.js";

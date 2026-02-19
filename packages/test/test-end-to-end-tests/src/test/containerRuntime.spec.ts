@@ -5,15 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	getContainerEntryPointBackCompat,
 	type ITestContainerConfig,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import semverGt from "semver/functions/gt.js";

@@ -7,15 +7,15 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	AsyncGenerator as Generator,
 	createWeightedAsyncGenerator as createWeightedGenerator,
+	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
-	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
@@ -29,18 +29,18 @@ import {
 import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 
 import {
-	FuzzTestState,
-	IntervalOperationGenerationConfig,
-	RevertOperation,
-	RevertSharedStringRevertibles,
-	RevertibleSharedString,
-	SharedStringFuzzFactory,
 	baseModel,
 	defaultFuzzOptions,
+	FuzzTestState,
+	IntervalOperationGenerationConfig,
 	isRevertibleSharedString,
 	makeIntervalOperationGenerator,
+	RevertibleSharedString,
+	RevertOperation,
+	RevertSharedStringRevertibles,
+	SharedStringFuzzFactory,
 } from "./fuzzUtils.js";
-import { type IChannelWithOracles, hasIntervalCollectionOracles } from "./oracleUtils.js";
+import { hasIntervalCollectionOracles, type IChannelWithOracles } from "./oracleUtils.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 

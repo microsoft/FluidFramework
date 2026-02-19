@@ -36,11 +36,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingProps,
-	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import lodash from "lodash";

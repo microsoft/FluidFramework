@@ -32,19 +32,19 @@ import {
 	type ISignalMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
+import { isRuntimeMessage, NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
+	extractSafePropertiesFromMessage,
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	type ITelemetryLoggerExt,
-	UsageError,
-	extractSafePropertiesFromMessage,
 	isFluidError,
 	normalizeError,
 	safeRaiseEvent,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

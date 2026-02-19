@@ -4,9 +4,9 @@
  */
 
 import {
-	type ITreeCursorSynchronous,
 	forEachField,
 	forEachNode,
+	type ITreeCursorSynchronous,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import type { FluidSerializableReadOnly } from "../../valueUtilities.js";

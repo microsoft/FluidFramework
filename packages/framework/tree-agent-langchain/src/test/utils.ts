@@ -13,13 +13,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { type ImplicitFieldSchema, TreeViewConfiguration } from "@fluidframework/tree";
 import {
 	type InsertableField,
+	independentView,
 	type ReadableField,
 	TreeAlpha,
 	type TreeNode,
 	type UnsafeUnknownSchema,
 	type VerboseTree,
 	type VerboseTreeNode,
-	independentView,
 } from "@fluidframework/tree/internal";
 import { SharedTreeSemanticAgent, type TreeView } from "@fluidframework/tree-agent/alpha";
 import { ChatAnthropic } from "@langchain/anthropic";

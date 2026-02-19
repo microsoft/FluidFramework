@@ -9,9 +9,9 @@
 
 export { createIdCompressor, deserializeIdCompressor } from "./idCompressor.js";
 export type {
+	IdCreationRange,
 	IIdCompressor,
 	IIdCompressorCore,
-	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,

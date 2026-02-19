@@ -10,12 +10,12 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ChangeFamilyEditor,
-	type GraphCommit,
-	type RevisionTag,
 	diffHistories,
 	findAncestor,
 	findCommonAncestor,
+	type GraphCommit,
 	mintCommit,
+	type RevisionTag,
 	rebaseBranch,
 	tagChange,
 } from "../core/index.js";

@@ -9,13 +9,13 @@ import type {
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import { Deferred, assert } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
+	createChildLogger,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
-	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
