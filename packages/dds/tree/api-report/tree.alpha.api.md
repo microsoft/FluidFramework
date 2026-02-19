@@ -1454,13 +1454,11 @@ export namespace TableSchema {
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
 // @alpha
-export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ((WithValue<TSuccessValue> & {
     rollback?: false;
-    value: TSuccessValue;
-} | {
+}) | (WithValue<TFailureValue> & {
     rollback: true;
-    value: TFailureValue;
-}) & {
+})) & {
     preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
@@ -1477,15 +1475,13 @@ export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value">
 export type TransactionResultExt<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
 
 // @alpha
-export interface TransactionResultFailed<TFailureValue> {
+export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
     success: false;
-    value: TFailureValue;
 }
 
 // @alpha
-export interface TransactionResultSuccess<TSuccessValue> {
+export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
     success: true;
-    value: TSuccessValue;
 }
 
 // @public @sealed
@@ -1499,9 +1495,11 @@ export const Tree: Tree;
 
 // @alpha @sealed
 export interface TreeAlpha {
+    // @deprecated
     branch(node: TreeNode): TreeBranchAlpha | undefined;
     child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
     children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+    context(node: TreeNode): TreeContextAlpha;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         idCompressor?: IIdCompressor;
@@ -1574,7 +1572,7 @@ export interface TreeBranch extends IDisposable {
 }
 
 // @alpha @sealed
-export interface TreeBranchAlpha extends TreeBranch {
+export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     applyChange(change: JsonCompatibleReadOnly): void;
     readonly events: Listenable_2<TreeBranchEvents>;
     // (undocumented)
@@ -1613,6 +1611,15 @@ export enum TreeCompressionStrategy {
     Compressed = 0,
     CompressedIncremental = 2,
     Uncompressed = 1
+}
+
+// @alpha
+export interface TreeContextAlpha {
+    isBranch(): this is TreeBranchAlpha;
+    runTransaction<TValue>(transaction: () => WithValue<TValue>): TransactionResultExt<TValue, TValue>;
+    runTransaction(transaction: () => void): TransactionResult;
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>): Promise<TransactionResultExt<TValue, TValue>>;
+    runTransactionAsync(transaction: () => Promise<void>): Promise<TransactionResult>;
 }
 
 // @beta @input
@@ -1910,6 +1917,11 @@ export interface WithType<out TName extends string = string, out TKind extends N
     // @deprecated
     get [typeNameSymbol](): TName;
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
+}
+
+// @alpha
+export interface WithValue<TValue> {
+    value: TValue;
 }
 
 // (No @packageDocumentation comment for this package)
