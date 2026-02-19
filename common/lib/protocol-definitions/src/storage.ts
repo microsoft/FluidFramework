@@ -132,8 +132,10 @@ export interface ITree {
  */
 export interface ISnapshotTree {
 	id?: string;
-	blobs: Record<string, string>;
-	trees: Record<string, ISnapshotTree>;
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- use `[path: string]` to clarity that it should be a path
+	blobs: { [path: string]: string };
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- use `[path: string]` to clarity that it should be a path
+	trees: { [path: string]: ISnapshotTree };
 
 	/**
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
@@ -154,7 +156,8 @@ export interface ISnapshotTree {
  */
 export interface ISnapshotTreeEx extends ISnapshotTree {
 	id: string;
-	trees: Record<string, ISnapshotTreeEx>;
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- use `[path: string]` to clarity that it should be a path
+	trees: { [path: string]: ISnapshotTreeEx };
 }
 
 /**
