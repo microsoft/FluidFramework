@@ -12,13 +12,13 @@ import { Tree } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	evaluateLazySchema,
-	type NodeKind,
-	type ObjectFromSchemaRecord,
 	SchemaFactory,
 	TreeBeta,
+	TreeViewConfiguration,
+	type NodeKind,
+	type ObjectFromSchemaRecord,
 	type TreeNode,
 	type TreeNodeSchema,
-	TreeViewConfiguration,
 	type Unhydrated,
 } from "../simple-tree/index.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";

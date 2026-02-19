@@ -5,21 +5,21 @@
 
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
@@ -35,7 +35,7 @@ import type {
 	IPen,
 	IStylusOperation,
 } from "./interfaces.js";
-import { InkData, type ISerializableInk } from "./snapshot.js";
+import { type ISerializableInk, InkData } from "./snapshot.js";
 
 /**
  * Filename where the snapshot is stored.

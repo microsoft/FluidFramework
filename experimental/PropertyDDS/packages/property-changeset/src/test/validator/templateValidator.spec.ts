@@ -20,6 +20,7 @@ import semver from "semver";
 
 import { TemplateValidator } from "../../templateValidator.js";
 import type { SchemaValidationResult } from "../../validationResultBuilder.js";
+import { SchemaValidator } from "../schemaValidator.js";
 import {
 	badInvalidSemverInTypeid,
 	badMissingSemverInTypeid,
@@ -28,7 +29,6 @@ import {
 	goodReservedTypes,
 	goodUIBorder,
 } from "../schemas/index.js";
-import { SchemaValidator } from "../schemaValidator.js";
 
 (function () {
 	const MSG = constants.MSG;

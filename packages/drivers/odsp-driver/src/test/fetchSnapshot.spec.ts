@@ -14,10 +14,10 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	createChildLogger,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	MockLogger,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
@@ -35,17 +35,17 @@ import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
-	createCacheSnapshotKey,
 	type INewFileInfo,
 	type IOdspResponse,
+	createCacheSnapshotKey,
 } from "../odspUtils.js";
 
 import {
 	createResponse,
-	type MockResponse,
 	mockFetchMultiple,
 	notFound,
 	okResponse,
+	type MockResponse,
 } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();

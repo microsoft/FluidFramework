@@ -22,47 +22,47 @@ import {
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
+	FieldKinds,
+	type FullSchemaPolicy,
 	combineChunks,
 	createNodeIdentifierManager,
 	cursorForJsonableTreeField,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
-	FieldKinds,
-	type FullSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 } from "../feature-libraries/index.js";
 import {
 	buildConfiguredForest,
 	createTreeCheckout,
 	defaultSharedTreeOptions,
-	type ForestOptions,
 	ForestTypeExpensiveDebug,
 	initialize,
 	initializerFromChunk,
 	SchematizingSimpleTreeView,
+	type ForestOptions,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
 import {
+	numberSchema,
+	SchemaFactoryAlpha,
+	stringSchema,
+	toStoredSchema,
+	type UnsafeUnknownSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type ValidateRecursiveSchema,
 	type LazyItem,
-	numberSchema,
-	permissiveStoredSchemaGenerationOptions,
-	restrictiveStoredSchemaGenerationOptions,
-	SchemaFactoryAlpha,
 	schemaStatics,
-	stringSchema,
 	type TreeView,
-	type TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toStoredSchema,
-	type UnsafeUnknownSchema,
-	type ValidateRecursiveSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	permissiveStoredSchemaGenerationOptions,
+	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
-import { Breakable, brand } from "../util/index.js";
+import { brand, Breakable } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";

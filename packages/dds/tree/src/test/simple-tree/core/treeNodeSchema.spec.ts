@@ -8,17 +8,17 @@ import type {
 	InsertableTypedNode,
 	NodeBuilderData,
 	NodeFromSchema,
-	NodeKind,
 	TreeLeafValue,
 	TreeNodeSchema,
+	NodeKind,
 	TreeNodeSchemaClass,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeSchema.js";
 import {
+	SchemaFactory,
 	type AllowedTypes,
 	type booleanSchema,
 	type numberSchema,
-	SchemaFactory,
 	type stringSchema,
 	type TreeNode,
 } from "../../../simple-tree/index.js";

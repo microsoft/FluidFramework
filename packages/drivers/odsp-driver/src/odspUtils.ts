@@ -10,18 +10,18 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	ICacheEntry,
-	IContainerPackageInfo,
 	IResolvedUrl,
 	ISnapshot,
+	IContainerPackageInfo,
+	ICacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
-	isOnline,
 	NetworkErrorBasic,
 	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
+	isOnline,
 } from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
@@ -29,28 +29,28 @@ import {
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	authHeaderFromTokenResponse,
-	type InstrumentedStorageTokenFetcher,
-	type InstrumentedTokenFetcher,
 	type IOdspResolvedUrl,
 	type IOdspUrlParts,
 	type ISharingLinkKind,
-	isTokenFromCache,
+	type InstrumentedStorageTokenFetcher,
+	type InstrumentedTokenFetcher,
 	OdspErrorTypes,
+	authHeaderFromTokenResponse,
 	type OdspResourceTokenFetchOptions,
-	snapshotKey,
-	snapshotWithLoadingGroupIdKey,
-	type TokenFetcher,
 	type TokenFetchOptions,
+	type TokenFetcher,
+	isTokenFromCache,
+	snapshotKey,
 	tokenFromResponse,
+	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	createChildLogger,
 	type IConfigProvider,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
+	createChildLogger,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 

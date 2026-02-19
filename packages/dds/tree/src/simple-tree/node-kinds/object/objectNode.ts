@@ -3,84 +3,84 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, fail, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type FieldKey,
 	ObjectNodeStoredSchema,
+	type FieldKey,
 	type TreeFieldStoredSchema,
 } from "../../../core/index.js";
 import {
 	FieldKinds,
+	isTreeValue,
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
-	isTreeValue,
 } from "../../../feature-libraries/index.js";
 import type {
+	RestrictiveStringRecord,
 	FlattenKeys,
 	JsonCompatibleReadOnlyObject,
-	RestrictiveStringRecord,
 } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	CompatibilityLevel,
-	createField,
-	createTreeNodeSchemaPrivateData,
-	type FlexContent,
-	getInnerNode,
-	type ImplicitAllowedTypes,
-	type InternalTreeNode,
-	type MostDerivedData,
-	NodeKind,
-	type NodeSchemaMetadata,
-	privateDataSymbol,
-	type TreeNode,
 	type TreeNodeSchema,
-	type TreeNodeSchemaCorePrivate,
-	type TreeNodeSchemaInitializedData,
-	type TreeNodeSchemaPrivateData,
-	TreeNodeValid,
+	NodeKind,
+	type WithType,
 	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
-	type UnhydratedFlexTreeField,
+	type InternalTreeNode,
+	type TreeNode,
 	type UnhydratedFlexTreeNode,
-	type WithType,
+	getInnerNode,
+	type NodeSchemaMetadata,
+	type ImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	type UnhydratedFlexTreeField,
+	createField,
+	type TreeNodeSchemaCorePrivate,
+	type TreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 } from "../../createContext.js";
 import {
-	type ContextualFieldProvider,
-	extractFieldProvider,
-	FieldKind,
-	type FieldProps,
+	type ImplicitFieldSchema,
+	getStoredKey,
+	getExplicitStoredKey,
+	type TreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	FieldSchemaAlpha,
-	getExplicitStoredKey,
-	getStoredKey,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-	isConstant,
 	normalizeFieldSchema,
-	type TreeFieldFromImplicitField,
+	FieldKind,
+	type FieldProps,
+	type ContextualFieldProvider,
+	extractFieldProvider,
+	isConstant,
 } from "../../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
 import { convertFieldKind } from "../../toStoredSchema.js";
 import {
+	unhydratedFlexTreeFromInsertable,
+	unhydratedFlexTreeFromInsertableNode,
 	type FactoryContent,
 	type FactoryContentObject,
 	type InsertableContent,
-	unhydratedFlexTreeFromInsertable,
-	unhydratedFlexTreeFromInsertableNode,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 
 import type {

@@ -9,16 +9,16 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
-	type IContainerRuntimeOptions,
 	loadContainerRuntime,
+	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import-x/no-deprecated
-	buildRuntimeRequestHandler,
-	// eslint-disable-next-line import-x/no-deprecated
 	type RuntimeRequestHandler,
+	// eslint-disable-next-line import-x/no-deprecated
+	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import type {
 	IFluidDataStoreRegistry,

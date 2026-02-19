@@ -8,8 +8,8 @@ import "ses";
 
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import {
-	type AsynchronousEditor,
 	createContext,
+	type AsynchronousEditor,
 	type ViewOrTree,
 } from "@fluidframework/tree-agent/alpha";
 

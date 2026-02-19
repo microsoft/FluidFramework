@@ -20,32 +20,32 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from '../Identifiers.js';
+import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
 import {
-	hasOngoingSession,
 	IdCompressor,
+	hasOngoingSession,
 	isFinalId,
 	isLocalId,
 	legacySharedTreeInitialTreeId,
 } from '../id-compressor/IdCompressor.js';
 import { getIds } from '../id-compressor/IdRange.js';
-import type { IdCreationRange, UnackedLocalId } from '../id-compressor/index.js';
 import {
 	createSessionId,
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid.js';
-import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
+import type { IdCreationRange, UnackedLocalId } from '../id-compressor/index.js';
 
 import {
-	attributionIds,
 	Client,
-	createCompressor,
 	DestinationClient,
-	expectSerializes,
-	generateCompressedIds,
 	IdCompressorTestNetwork,
 	MetaClient,
+	attributionIds,
+	createCompressor,
+	expectSerializes,
+	generateCompressedIds,
 	makeOpGenerator,
 	performFuzzActions,
 	roundtrip,

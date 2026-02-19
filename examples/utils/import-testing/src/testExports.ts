@@ -40,17 +40,17 @@ however that is less representative of actual use, and thus fails to detect some
 /* eslint-disable jsdoc/require-jsdoc */
 
 import {
-	type NodeFromSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
+	type NodeFromSchema,
 	type ValidateRecursiveSchema,
 	// To diagnose `error TS2742: The inferred type of ...` errors,
 	// enable this import then look for use of it in the generated d.ts file fo find what needs to be moved out of InternalTypes
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
-import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
 import { eraseSchemaDetails, SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { requireAssignableTo, TreeNode, WithType } from "@fluidframework/tree/internal";
 

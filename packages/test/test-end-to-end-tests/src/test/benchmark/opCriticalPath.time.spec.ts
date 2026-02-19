@@ -5,18 +5,18 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { type BenchmarkTimingOptions, benchmark } from "@fluid-tools/benchmark";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { benchmark, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 import {
+	toIDeltaManagerFull,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	timeoutPromise,
-	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
 // NOTE: Changing this will rename the benchmark which will create a new chart on the dashboard

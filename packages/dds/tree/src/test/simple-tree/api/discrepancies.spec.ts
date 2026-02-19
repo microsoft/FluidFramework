@@ -11,12 +11,12 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	storedEmptyFieldSchema,
-	type TreeNodeSchemaIdentifier,
 	ValueSchema,
+	type TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import {
-	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	allowsRepoSuperset,
 	FieldKinds,
 } from "../../../feature-libraries/index.js";
 import {
@@ -25,12 +25,12 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/discrepancies.js";
 import {
-	type AnnotatedAllowedType,
-	NodeKind,
-	SchemaFactory,
 	SchemaFactoryAlpha,
+	type AnnotatedAllowedType,
 	type TreeNodeSchema,
+	SchemaFactory,
 	TreeViewConfigurationAlpha,
+	NodeKind,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

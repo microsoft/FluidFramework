@@ -24,10 +24,10 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 
 import { DiceRollerController } from "../src/controller.js";
 import {
-	type DiceRollerContainerSchema,
 	diceRollerContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
+	type DiceRollerContainerSchema,
 } from "../src/fluid.js";
 import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";

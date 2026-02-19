@@ -17,7 +17,7 @@ import {
 	IDocumentAttributes,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
@@ -28,14 +28,14 @@ import {
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
 	createDataStoreFactory,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObject,
+	createDocumentId,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 

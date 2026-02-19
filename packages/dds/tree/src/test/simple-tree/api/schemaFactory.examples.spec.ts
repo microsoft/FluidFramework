@@ -12,8 +12,8 @@ import {
 	type ITree,
 	SchemaFactory,
 	treeNodeApi as Tree,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "../../../simple-tree/index.js";
 import { DefaultTestSharedTreeKind, getView } from "../../utils.js";
 

@@ -11,18 +11,18 @@ import { assert, expect } from 'chai';
 import { v5 } from 'uuid';
 
 import { Change, StablePlace, StableRange } from '../ChangeTypes.js';
-import { fail, RecursiveMutable } from '../Common.js';
+import { RecursiveMutable, fail } from '../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities.js';
 import { convertEditIds } from '../IdConversion.js';
 import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers.js';
 import { initialTree } from '../InitialTree.js';
-import { IdCompressor } from '../id-compressor/index.js';
 import { sequencedIdNormalizer } from '../NodeIdUtilities.js';
-import { reservedIdCount, SharedTreeSummary, SharedTreeSummary_0_0_2, WriteFormat } from '../persisted-types/index.js';
 import { getChangeNodeFromView } from '../SerializationUtilities.js';
 import { SharedTree } from '../SharedTree.js';
 import { MutableStringInterner } from '../StringInterner.js';
-import { deserialize, getSummaryStatistics, SummaryStatistics } from '../SummaryBackCompatibility.js';
+import { SummaryStatistics, deserialize, getSummaryStatistics } from '../SummaryBackCompatibility.js';
+import { IdCompressor } from '../id-compressor/index.js';
+import { SharedTreeSummary, SharedTreeSummary_0_0_2, WriteFormat, reservedIdCount } from '../persisted-types/index.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
 import { TestFluidSerializer } from './utilities/TestSerializer.js';

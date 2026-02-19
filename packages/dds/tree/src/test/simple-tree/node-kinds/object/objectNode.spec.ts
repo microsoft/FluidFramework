@@ -6,10 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { isStableId } from "@fluidframework/id-compressor/internal";
-import {
-	validateAssertionError,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FieldKinds } from "../../../../feature-libraries/index.js";
 import { Tree } from "../../../../shared-tree/index.js";
@@ -24,25 +22,25 @@ import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKe
 import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 import {
 	type FieldKind,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+	typeNameSymbol,
+	typeSchemaSymbol,
+	type LeafSchema,
+	type NodeBuilderData,
+	type ObjectNodeSchema,
+	type SimpleObjectNodeSchema,
+	type TreeNodeSchema,
+	type ValidateRecursiveSchema,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTypedNode,
-	type LeafSchema,
-	type NodeBuilderData,
 	type NodeFromSchema,
-	type ObjectNodeSchema,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	type SimpleObjectNodeSchema,
-	type TreeNodeSchema,
-	TreeViewConfiguration,
-	typeNameSymbol,
-	typeSchemaSymbol,
 	unhydratedFlexTreeFromInsertable,
-	type ValidateRecursiveSchema,
 } from "../../../../simple-tree/index.js";
 import type {
 	FieldHasDefault,
@@ -50,15 +48,15 @@ import type {
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
+import { brand } from "../../../../util/index.js";
 import type {
 	areSafelyAssignable,
 	isAssignableTo,
-	RestrictiveStringRecord,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
+	RestrictiveStringRecord,
 } from "../../../../util/index.js";
-import { brand } from "../../../../util/index.js";
 import { getView } from "../../../utils.js";
 import { describeHydration, hydrate, pretty } from "../../utils.js";
 

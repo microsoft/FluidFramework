@@ -9,15 +9,15 @@ import { defineLazyCachedProperty, hasSome, type Mutable } from "../../util/inde
 
 import {
 	type ChangeRebaser,
-	makeAnonChange,
-	mapTaggedChange,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type TaggedChange,
+	makeAnonChange,
+	mapTaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "./changeRebaser.js";
-import { type GraphCommit, mintCommit, type RevisionTag } from "./types.js";
+import { type GraphCommit, type RevisionTag, mintCommit } from "./types.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.

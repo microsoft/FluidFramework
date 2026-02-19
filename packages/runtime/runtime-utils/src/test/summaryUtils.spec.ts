@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { IsoBuffer, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { IsoBuffer, Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	ISummaryBlob,
 	ISummaryHandle,
@@ -17,13 +17,13 @@ import type { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/in
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
 
 import {
+	SummaryTreeBuilder,
+	TelemetryContext,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
-	SummaryTreeBuilder,
-	type SummaryTreeBuilderParams,
-	TelemetryContext,
 	utf8ByteLength,
+	type SummaryTreeBuilderParams,
 } from "../summaryUtils.js";
 
 describe("Summary Utils", () => {

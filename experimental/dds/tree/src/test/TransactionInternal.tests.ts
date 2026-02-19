@@ -6,8 +6,10 @@
 import { assert, expect } from 'chai';
 
 import { StablePlace, StableRange } from '../ChangeTypes.js';
-import { deepCompareNodes, PlaceValidationResult, RangeValidationResultKind } from '../EditUtilities.js';
+import { PlaceValidationResult, RangeValidationResultKind, deepCompareNodes } from '../EditUtilities.js';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers.js';
+import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
+import { GenericTransaction, TransactionInternal } from '../TransactionInternal.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -19,8 +21,6 @@ import {
 	StablePlaceInternal,
 	StableRangeInternal,
 } from '../persisted-types/index.js';
-import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
-import { GenericTransaction, TransactionInternal } from '../TransactionInternal.js';
 
 import { SimpleTestTree } from './utilities/TestNode.js';
 import { refreshTestTree, testTrait, testTraitLabel } from './utilities/TestUtilities.js';

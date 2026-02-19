@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type ISegmentInternal,
 	LocalReferenceCollection,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {

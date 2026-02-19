@@ -13,7 +13,6 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
-	compareFieldUpPaths,
 	type DeltaDetachedNodeId,
 	type DeltaRoot,
 	type FieldUpPath,
@@ -22,22 +21,23 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	type TreeChunk,
-	topDownPath,
 	type UpPath,
+	compareFieldUpPaths,
+	topDownPath,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
 	type EditDescription,
 	type FieldChangeset,
 	type FieldEditDescription,
-	intoDelta as intoModularDelta,
 	ModularChangeFamily,
 	type ModularChangeset,
 	ModularEditBuilder,
+	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
-import { type OptionalChangeset, optional, required } from "../optional-field/index.js";
-import { type CellId, sequence } from "../sequence-field/index.js";
+import { optional, type OptionalChangeset, required } from "../optional-field/index.js";
+import { sequence, type CellId } from "../sequence-field/index.js";
 
 import { fieldKinds } from "./defaultFieldKinds.js";
 

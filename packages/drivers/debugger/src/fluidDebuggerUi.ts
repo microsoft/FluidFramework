@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	ISequencedDocumentMessage,
 	IVersion,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

@@ -17,8 +17,8 @@ import { lt } from "semver-ts";
 
 import { pkgVersion } from "../packageVersion.js";
 import {
-	type DocumentSchemaValueType,
 	DocumentsSchemaController,
+	type DocumentSchemaValueType,
 	type IDocumentSchema,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,

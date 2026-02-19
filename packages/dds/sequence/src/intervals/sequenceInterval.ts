@@ -9,26 +9,26 @@ import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	addProperties,
 	Client,
-	compareReferencePositions,
-	createDetachedLocalReferencePosition,
-	createMap,
-	endpointPosAndSide,
-	getSlideToSegoff,
 	ISegment,
-	type ISegmentInternal,
 	LocalReferencePosition,
-	maxReferencePosition,
-	minReferencePosition,
 	PropertiesManager,
 	PropertySet,
 	ReferenceType,
+	SlidingPreference,
+	compareReferencePositions,
+	createDetachedLocalReferencePosition,
+	createMap,
+	getSlideToSegoff,
+	maxReferencePosition,
+	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	SequencePlace,
 	Side,
-	SlidingPreference,
+	endpointPosAndSide,
+	addProperties,
+	type ISegmentInternal,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
@@ -36,15 +36,15 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/intern
 import { v4 as uuid } from "uuid";
 
 import {
-	computeStickinessFromSide,
-	endReferenceSlidingPreference,
-	type IInterval,
-	IntervalStickiness,
-	IntervalType,
 	ISerializableInterval,
 	ISerializedInterval,
-	type SerializedIntervalDelta,
+	IntervalStickiness,
+	IntervalType,
+	computeStickinessFromSide,
+	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
+	type IInterval,
+	type SerializedIntervalDelta,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {

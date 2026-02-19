@@ -15,10 +15,10 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
-	type IFluidDataStoreFactory,
-	type IFluidDataStoreRegistry,
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 
 // eslint-disable-next-line import-x/no-deprecated

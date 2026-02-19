@@ -12,11 +12,11 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	makeAnonChange,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
+	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -28,8 +28,8 @@ import {
 	type NodeChangeRebaser,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	rebaseRevisionMetadataFromInfo,
 	type ToDelta,
+	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -69,7 +69,7 @@ import {
 	isDeltaVisible,
 } from "../../utils.js";
 
-import { assertTaggedEqual, Change, verifyContextChain } from "./optionalFieldUtils.js";
+import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
 

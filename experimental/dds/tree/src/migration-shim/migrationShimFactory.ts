@@ -7,8 +7,8 @@ import { assert } from '@fluidframework/core-utils/internal';
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from '@fluidframework/datastore-definitions/internal';
 import type { ITree } from '@fluidframework/tree';
 

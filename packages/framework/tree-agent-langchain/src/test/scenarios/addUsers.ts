@@ -4,7 +4,7 @@
  */
 
 import { Users } from "../domains/index.js";
-import { type LLMIntegrationTest, type ScorableVerboseTree, scoreSymbol } from "../utils.js";
+import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
 // We start with two users (alpardes and mapardes) and add two more.
 // We only score on the presence of the four correct user IDs and their name fields; timestamps/emails are ignored.

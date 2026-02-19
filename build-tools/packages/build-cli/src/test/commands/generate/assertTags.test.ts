@@ -8,10 +8,8 @@ import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
 import { lilconfig } from "lilconfig";
 import { afterEach, describe, it } from "mocha";
-
 import {
 	generateShortCodeMap,
 	generateShortCodeMappingFileContents,

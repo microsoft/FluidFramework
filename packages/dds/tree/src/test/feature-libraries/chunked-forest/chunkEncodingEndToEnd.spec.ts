@@ -11,7 +11,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index.js";
+import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	type FieldKey,
@@ -24,16 +24,16 @@ import {
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
-	type ShapeInfo,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
+	type ShapeInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
@@ -49,27 +49,27 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import {
-	buildChunkedForest,
-	cursorForJsonableTreeNode,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
-	defaultIncrementalEncodingPolicy,
-	defaultSchemaPolicy,
 	ForestSummarizer,
-	fieldKindConfigurations,
-	jsonableTreeFromCursor,
-	MockNodeIdentifierManager,
 	type ModularChangeset,
+	TreeCompressionStrategy,
+	buildChunkedForest,
+	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	TreeCompressionStrategy,
+	MockNodeIdentifierManager,
+	jsonableTreeFromCursor,
+	cursorForJsonableTreeNode,
+	defaultIncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
-	ForestTypeOptimized,
 	type ISharedTreeEditor,
-	type ITreePrivate,
 	Tree,
+	ForestTypeOptimized,
+	type ITreePrivate,
 } from "../../../shared-tree/index.js";
 import {
 	numberSchema,
@@ -82,10 +82,10 @@ import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
+	MockTreeCheckout,
 	checkoutWithContent,
 	forestWithContent,
 	getView,
-	MockTreeCheckout,
 	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";

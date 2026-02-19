@@ -12,17 +12,17 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	getOrCreate,
-	type IsUnion,
 	isReadonlyArray,
+	type IsUnion,
 	type MakeNominal,
 } from "../../util/index.js";
 import type { SchemaType, SimpleAllowedTypeAttributes } from "../simpleSchema.js";
 
-import { type FlexListToUnion, isLazy, type LazyItem } from "./flexList.js";
+import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import {
+	NodeKind,
 	type InsertableTypedNode,
 	type NodeFromSchema,
-	NodeKind,
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";

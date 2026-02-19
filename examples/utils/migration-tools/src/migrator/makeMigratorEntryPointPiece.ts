@@ -7,7 +7,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IEntryPointPiece } from "../compositeRuntime/index.js";
-import { type IMigrationTool, MigrationToolFactory } from "../migrationTool/index.js";
+import { MigrationToolFactory, type IMigrationTool } from "../migrationTool/index.js";
 
 import type {
 	ExportDataCallback,

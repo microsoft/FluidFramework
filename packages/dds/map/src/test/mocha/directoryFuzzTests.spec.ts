@@ -8,9 +8,9 @@ import * as dirPath from "node:path";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
@@ -21,11 +21,11 @@ import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 import {
 	baseDirModel,
-	type DirOperation,
-	type DirOperationGenerationConfig,
 	dirDefaultOptions,
 	makeDirOperationGenerator,
 	makeDirReducer,
+	type DirOperation,
+	type DirOperationGenerationConfig,
 } from "./fuzzUtils.js";
 import { hasSharedDirectoryOracle, type ISharedDirectoryWithOracle } from "./oracleUtils.js";
 

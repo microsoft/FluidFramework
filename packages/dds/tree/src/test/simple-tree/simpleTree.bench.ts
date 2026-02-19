@@ -16,9 +16,9 @@ import {
 	generateWideSimpleTree,
 	readDeepSimpleTree,
 	readWideSimpleTree,
-	type WideTreeNode,
 	writeDeepTree,
 	writeWideSimpleTreeNewValue,
+	type WideTreeNode,
 } from "./benchmarkUtilities.js";
 import { hydrate, hydrateUnsafe } from "./utils.js";
 

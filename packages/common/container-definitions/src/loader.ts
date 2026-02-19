@@ -15,11 +15,11 @@ import type {
 	IQuorumClients,
 } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentMessage,
 	IResolvedUrl,
-	ISequencedDocumentMessage,
+	IDocumentMessage,
 	ISequencedProposal,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";

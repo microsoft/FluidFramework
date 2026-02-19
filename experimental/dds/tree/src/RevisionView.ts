@@ -4,12 +4,12 @@
  */
 
 import { HasVariadicTraits } from './ChangeTypes.js';
-import { copyPropertyIfDefined, fail, Mutable, MutableMap } from './Common.js';
+import { Mutable, MutableMap, copyPropertyIfDefined, fail } from './Common.js';
 import { Forest } from './Forest.js';
 import { NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
 import { NodeIdConverter } from './NodeIdUtilities.js';
-import { Payload, TreeNode, TreeNodeSequence } from './persisted-types/index.js';
 import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView.js';
+import { Payload, TreeNode, TreeNodeSequence } from './persisted-types/index.js';
 
 /**
  * An immutable view of a distributed tree.

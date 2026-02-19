@@ -9,15 +9,15 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { Tree } from "../../../shared-tree/index.js";
 import {
-	inPrototypeChain,
 	TreeNode,
+	inPrototypeChain,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNode.js";
 import {
-	SchemaFactory,
-	type TreeNodeSchema,
 	typeNameSymbol,
 	typeSchemaSymbol,
+	type TreeNodeSchema,
+	SchemaFactory,
 } from "../../../simple-tree/index.js";
 
 describe("simple-tree core types", () => {

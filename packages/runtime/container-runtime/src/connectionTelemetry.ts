@@ -6,21 +6,21 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import type { IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
+	type IEventSampler,
+	type ITelemetryLoggerExt,
+	type ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
 	formatTick,
-	type IEventSampler,
-	type ISampledTelemetryLogger,
-	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**

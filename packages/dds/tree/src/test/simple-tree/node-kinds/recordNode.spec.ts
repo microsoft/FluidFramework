@@ -9,11 +9,11 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { Tree } from "../../../shared-tree/index.js";
 import {
+	SchemaFactoryAlpha,
+	TreeBeta,
 	type ConciseTree,
 	type NodeFromSchema,
 	type NodeKind,
-	SchemaFactoryAlpha,
-	TreeBeta,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,

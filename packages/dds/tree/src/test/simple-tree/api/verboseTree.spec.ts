@@ -13,8 +13,8 @@ import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	replaceVerboseTreeHandles,
-	type VerboseTree,
 	verboseFromCursor,
+	type VerboseTree,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -25,7 +25,7 @@ import {
 	type TreeEncodingOptions,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
-import { type TestTree, testSpecializedCursor } from "../../cursorTestSuite.js";
+import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
 
 const schema = new SchemaFactory("Test");
 

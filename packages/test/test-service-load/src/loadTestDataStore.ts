@@ -34,7 +34,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
-import { type VirtualDataStore, VirtualDataStoreFactory } from "./virtualDataStore.js";
+import { VirtualDataStoreFactory, type VirtualDataStore } from "./virtualDataStore.js";
 
 export interface IRunConfig {
 	runId: number;

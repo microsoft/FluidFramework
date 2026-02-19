@@ -4,7 +4,6 @@
  */
 
 import { Octokit } from "@octokit/core";
-
 import type { CommandLogger } from "../logging.js";
 
 const PULL_REQUEST_EXISTS = "GET /repos/{owner}/{repo}/pulls";

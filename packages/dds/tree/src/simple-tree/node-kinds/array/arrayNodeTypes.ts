@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { NodeKind } from "../../core/index.js";
 import type {
-	ImplicitAllowedTypes,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
-import { NodeKind } from "../../core/index.js";
 import type { SchemaType, SimpleArrayNodeSchema } from "../../simpleSchema.js";
 
 import type { TreeArrayNode } from "./arrayNode.js";

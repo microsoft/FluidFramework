@@ -12,7 +12,7 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
-import { TreeViewConfiguration, TreeViewConfigurationAlpha } from "./configuration.js";
+import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {

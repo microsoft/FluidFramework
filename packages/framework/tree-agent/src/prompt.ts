@@ -4,8 +4,8 @@
  */
 
 import { oob } from "@fluidframework/core-utils/internal";
-import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema, ValueSchema } from "@fluidframework/tree/internal";
@@ -13,10 +13,10 @@ import { normalizeFieldSchema, ValueSchema } from "@fluidframework/tree/internal
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import {
+	IdentifierCollisionResolver,
+	getFriendlyName,
 	communize,
 	findSchemas,
-	getFriendlyName,
-	IdentifierCollisionResolver,
 } from "./utils.js";
 
 /**

@@ -4,8 +4,8 @@
  */
 
 import {
-	IContainer,
 	IDeltaQueue,
+	IContainer,
 	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -17,8 +17,8 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 

@@ -12,8 +12,8 @@ import type {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
-import type { MergeBlock } from "../mergeTreeNodes.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import type { MergeBlock } from "../mergeTreeNodes.js";
 import {
 	PartialSequenceLengths,
 	verifyExpectedPartialLengths,
@@ -21,8 +21,8 @@ import {
 } from "../partialLengths.js";
 import {
 	LocalReconnectingPerspective,
-	type Perspective,
 	PriorPerspective,
+	type Perspective,
 } from "../perspective.js";
 import type { OperationStamp } from "../stamps.js";
 

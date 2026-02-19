@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
+	ITestDataObject,
+	TestDataObjectType,
 	describeCompat,
 	getDataStoreFactory,
-	ITestDataObject,
 	itExpects,
-	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import {
 	ContainerErrorTypes,
@@ -33,12 +33,14 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
-	FiveDaysMs,
 	IAnyDriverError,
-	type IDocumentDeltaConnection,
-	IDocumentService,
-	IDocumentServiceFactory,
 	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	FiveDaysMs,
+	IDocumentServiceFactory,
+	IDocumentService,
+	type IDocumentDeltaConnection,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,

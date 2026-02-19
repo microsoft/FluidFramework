@@ -5,8 +5,8 @@
 
 import type {
 	IConfigProviderBase,
-	IDisposable,
 	IFluidHandle,
+	IDisposable,
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";

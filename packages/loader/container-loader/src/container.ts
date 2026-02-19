@@ -6,9 +6,9 @@
 /* eslint-disable unicorn/consistent-function-scoping, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import {
-	type ILayerCompatDetails,
-	performanceNow,
 	TypedEventEmitter,
+	performanceNow,
+	type ILayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -22,17 +22,17 @@ import type {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
-	IContainerStorageService,
 	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
-	ILoader,
-	ILoaderOptions,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
 	ReadOnlyInfo,
+	ILoader,
+	ILoaderOptions,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -53,77 +53,77 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	type ConnectionMode,
+	type IDocumentService,
+	type IDocumentServiceFactory,
+	type IResolvedUrl,
+	type ISnapshot,
+	type IThrottlingWarning,
+	type IUrlResolver,
 	type ICommittedProposal,
 	type IDocumentAttributes,
 	type IDocumentMessage,
-	type IDocumentService,
-	type IDocumentServiceFactory,
 	type IQuorumProposals,
-	type IResolvedUrl,
-	type ISequencedDocumentMessage,
 	type ISequencedProposal,
-	type ISignalMessage,
-	type ISnapshot,
 	type ISnapshotTree,
 	type ISummaryContent,
-	type IThrottlingWarning,
-	type IUrlResolver,
 	type IVersion,
 	MessageType,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
+	type ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type CombinedAppAndProtocolSummary,
 	getSnapshotTree,
+	OnlineStatus,
 	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
 	isOnline,
-	OnlineStatus,
 	readAndParse,
 	runWithRetry,
+	type CombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import {
+	type TelemetryEventCategory,
+	type ITelemetryLoggerExt,
+	EventEmitterWithErrorHandling,
+	GenericError,
+	type IFluidErrorBase,
+	type MonitoringContext,
+	PerformanceEvent,
+	UsageError,
 	connectedEventName,
 	createChildLogger,
 	createChildMonitoringContext,
-	EventEmitterWithErrorHandling,
 	formatTick,
-	GenericError,
-	type IFluidErrorBase,
-	type ITelemetryErrorEventExt,
-	type ITelemetryLoggerExt,
-	loggerToMonitoringContext,
-	type MonitoringContext,
 	normalizeError,
-	PerformanceEvent,
 	raiseConnectedEvent,
-	type TelemetryEventCategory,
-	UsageError,
 	wrapError,
+	loggerToMonitoringContext,
+	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
-	type AttachmentData,
 	type AttachProcessProps,
+	type AttachmentData,
 	runRetriableAttachProcess,
 } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import {
-	createConnectionStateHandler,
 	type IConnectionStateHandler,
+	createConnectionStateHandler,
 } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
-	getPackageName,
 	type IConnectionDetailsInternal,
 	type IConnectionManagerFactoryArgs,
 	type IConnectionStateChangeReason,
 	ReconnectMode,
+	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
 import type { ILoaderServices } from "./loader.js";
@@ -134,8 +134,8 @@ import {
 } from "./loaderLayerCompatState.js";
 import {
 	createMemoryDetachedBlobStorage,
-	type MemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
+	type MemoryDetachedBlobStorage,
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -156,13 +156,13 @@ import {
 import {
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
-	convertISnapshotToSnapshotWithBlobs,
-	convertSnapshotInfoToSnapshot,
 	getDetachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
-	getISnapshotFromSerializedContainer,
 	getProtocolSnapshotTree,
+	getISnapshotFromSerializedContainer,
 	runSingle,
+	convertISnapshotToSnapshotWithBlobs,
+	convertSnapshotInfoToSnapshot,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;

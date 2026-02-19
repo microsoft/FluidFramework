@@ -8,12 +8,12 @@ import type { UnsafeUnknownSchema } from "@fluidframework/tree/alpha";
 import {
 	addCommentTest,
 	addUsersTest,
-	methodUseTest,
 	smokeTest,
+	methodUseTest,
+	updateUserTest,
 	sortGroceriesTest,
 	sortLinkedGroceriesTest,
 	unlinkLinkedGroceriesTest,
-	updateUserTest,
 } from "./scenarios/index.js";
 import { describeIntegrationTests, type LLMIntegrationTest } from "./utils.js";
 

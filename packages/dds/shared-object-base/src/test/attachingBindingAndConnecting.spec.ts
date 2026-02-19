@@ -10,17 +10,17 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
-	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 

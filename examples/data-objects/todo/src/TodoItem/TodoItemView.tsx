@@ -14,7 +14,6 @@ import React, { useEffect, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
-
 import type { TodoItem } from "../Todo/index.js";
 
 interface TodoItemViewProps {

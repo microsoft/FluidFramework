@@ -5,19 +5,19 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
+	Serializable,
 	IChannelAttributes,
+	IFluidDataStoreRuntime,
 	IChannelFactory,
 	IChannelStorageService,
-	IFluidDataStoreRuntime,
-	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ITree } from "@fluidframework/driver-definitions/internal";
 import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import type {
+	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -25,19 +25,19 @@ import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import type {
-	ISharedArray,
 	ISharedArrayEvents,
+	ISharedArray,
 	ISharedArrayRevertible,
 	SerializableTypeForSharedArray,
 	SharedArrayEntry,
-	SharedArrayEntryCore,
 	SnapshotFormat,
+	SharedArrayEntryCore,
 } from "./interfaces.js";
 import { SharedArrayFactory } from "./sharedArrayFactory.js";
 import type {
+	ISharedArrayOperation,
 	IDeleteOperation,
 	IMoveOperation,
-	ISharedArrayOperation,
 	IToggleMoveOperation,
 	IToggleOperation,
 } from "./sharedArrayOperations.js";

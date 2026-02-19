@@ -7,7 +7,6 @@ import type { Machine } from "jssm";
 
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
-
 import { BaseStateHandler } from "./stateHandlers.js";
 
 /**

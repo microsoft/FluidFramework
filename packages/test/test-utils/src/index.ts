@@ -3,59 +3,40 @@
  * Licensed under the MIT License.
  */
 
-export {
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-	toIDeltaManagerFull,
-	waitForContainerConnection,
-} from "./containerUtils.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
-	createDataStoreFactory,
-	Factory,
 	fluidEntryPoint,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
+	Factory,
+	createDataStoreFactory,
 } from "./localCodeLoader.js";
 export {
 	createAndAttachContainer,
-	createAndAttachContainerUsingProps,
 	createLoader,
 	createLoaderProps,
+	createAndAttachContainerUsingProps,
 } from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
 export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
-export {
-	createSummarizer,
-	createSummarizerCore,
-	createSummarizerFromFactory,
-	SummaryInfo,
-	summarizeNow,
-} from "./TestSummaryUtils.js";
 export {
 	createTestContainerRuntimeFactory,
 	TestContainerRuntimeFactory,
 } from "./testContainerRuntimeFactory.js";
 export {
-	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
-export {
 	ChannelFactoryRegistry,
-	TestDataObjectKind,
 	TestFluidObject,
 	TestFluidObjectFactory,
+	TestDataObjectKind,
 } from "./testFluidObject.js";
-export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";
 export {
 	createDocumentId,
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
+	type IEventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
 	IDocumentIdStrategy,
-	type IEventAndErrorTrackingLogger,
 	IOpProcessingController,
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -63,9 +44,29 @@ export {
 	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider.js";
 export {
+	createSummarizer,
+	createSummarizerCore,
+	createSummarizerFromFactory,
+	summarizeNow,
+	SummaryInfo,
+} from "./TestSummaryUtils.js";
+export {
+	timeoutAwait,
+	timeoutPromise,
 	type TimeoutDurationOption,
 	type TimeoutWithError,
 	type TimeoutWithValue,
-	timeoutAwait,
-	timeoutPromise,
 } from "./timeoutUtils.js";
+export {
+	toIDeltaManagerFull,
+	waitForContainerConnection,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "./containerUtils.js";
+export {
+	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+
+export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";

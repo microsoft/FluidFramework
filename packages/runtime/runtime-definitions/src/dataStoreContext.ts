@@ -22,8 +22,8 @@ import type {
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 

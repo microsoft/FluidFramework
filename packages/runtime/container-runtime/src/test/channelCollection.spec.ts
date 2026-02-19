@@ -8,8 +8,8 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { ConfigTypes } from "@fluidframework/core-interfaces";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 	ITree,
 } from "@fluidframework/driver-definitions/internal";
 import type {

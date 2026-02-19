@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	stringToBuffer,
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
-	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -16,8 +16,8 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
-	type IBatchMessage,
 	type IContainerContext,
+	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -35,28 +35,28 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import {
+	type ISnapshot,
+	type ISummaryContext,
+	type ISnapshotTree,
+	MessageType,
+	type ISequencedDocumentMessage,
+	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
-	type ISequencedDocumentMessage,
-	type ISnapshot,
-	type ISnapshotTree,
-	type ISummaryContext,
-	type IVersion,
-	MessageType,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	FluidDataStoreMessage,
+	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
 	IRuntimeMessageCollection,
 	ISequencedMessageEnvelope,
-	ISummarizeInternalResult,
-	ISummaryTreeWithStats,
 	ITelemetryContext,
-	NamedFluidDataStoreRegistryEntries,
+	ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FlushMode,
@@ -64,11 +64,11 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildLogger,
 	type IFluidErrorBase,
+	MockLogger,
+	createChildLogger,
 	isFluidError,
 	isILoggingError,
-	MockLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -83,12 +83,12 @@ import { ChannelCollection } from "../channelCollection.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	type ContainerRuntimeOptionsInternal,
+	type IContainerRuntimeOptions,
+	type IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
-	type IContainerRuntimeOptions,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
-	type IPendingRuntimeState,
 	type UnknownIncomingTypedMessage,
 } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
@@ -110,10 +110,10 @@ import type {
 	PendingStateManager,
 } from "../pendingStateManager.js";
 import {
-	type IRefreshSummaryAckOptions,
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
 	recentBatchInfoBlobName,
+	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;

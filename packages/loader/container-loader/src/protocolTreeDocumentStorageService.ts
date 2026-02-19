@@ -7,8 +7,8 @@ import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
 	ISummaryContext,
+	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

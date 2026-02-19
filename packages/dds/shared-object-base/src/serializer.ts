@@ -12,14 +12,14 @@ import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal"
 import {
 	encodeHandleForSerialization,
 	generateHandleContextPath,
-	type ISerializedHandle,
-	isFluidHandle,
 	isSerializedHandle,
-	RemoteFluidObjectHandle,
+	isFluidHandle,
 	toFluidHandleInternal,
+	type ISerializedHandle,
+	RemoteFluidObjectHandle,
 } from "@fluidframework/runtime-utils/internal";
 
-import { type ISharedObjectHandle, isISharedObjectHandle } from "./handle.js";
+import { isISharedObjectHandle, type ISharedObjectHandle } from "./handle.js";
 
 /**
  * @legacy @beta

@@ -12,16 +12,16 @@ import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInter
 import { ContainerStateChangeKind } from "./Container.js";
 import type { ContainerStateMetadata } from "./ContainerMetadata.js";
 import type { DecomposedContainer } from "./DecomposedContainer.js";
-import {
-	DataVisualizerGraph,
-	defaultVisualizers,
-	type FluidObjectNode,
-	type RootHandleNode,
-	VisualNodeKind,
-} from "./data-visualization/index.js";
 import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
 import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
+import {
+	DataVisualizerGraph,
+	type FluidObjectNode,
+	type RootHandleNode,
+	VisualNodeKind,
+	defaultVisualizers,
+} from "./data-visualization/index.js";
 import {
 	AudienceSummary,
 	ContainerDevtoolsFeatures,
@@ -33,13 +33,13 @@ import {
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
-	handleIncomingWindowMessage,
 	type IDevtoolsMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	type MessageLoggingOptions,
-	postMessagesToWindow,
 	RootDataVisualizations,
+	handleIncomingWindowMessage,
+	postMessagesToWindow,
 } from "./messaging/index.js";
 
 /**

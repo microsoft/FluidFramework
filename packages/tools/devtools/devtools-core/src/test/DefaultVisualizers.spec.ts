@@ -7,7 +7,7 @@
 
 /* eslint-disable unicorn/no-null */
 
-import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -21,6 +21,7 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 import {
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
@@ -37,7 +38,6 @@ import {
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 } from "../data-visualization/index.js";
-import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests

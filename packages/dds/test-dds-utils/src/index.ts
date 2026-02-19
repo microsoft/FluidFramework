@@ -3,35 +3,35 @@
  * Licensed under the MIT License.
  */
 
-export type { Client, FuzzSerializedIdCompressor } from "./clientLoading.js";
+export type { IGCTestProvider } from "./gcTestRunner.js";
+export { runGCTests } from "./gcTestRunner.js";
 export type {
 	AddClient,
 	ChangeConnectionState,
 	ClientSpec,
-	DDSFuzzHarnessEvents,
-	DDSFuzzHarnessModel,
 	DDSFuzzModel,
+	DDSFuzzHarnessModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
+	DDSFuzzHarnessEvents,
 	DDSRandom,
 	Synchronize,
 } from "./ddsFuzzHarness.js";
 export {
 	createDDSFuzzSuite,
 	defaultDDSFuzzSuiteOptions,
-	registerOracle,
 	replayTest,
+	registerOracle,
 } from "./ddsFuzzHarness.js";
-export type { ISnapshotSuite } from "./ddsSnapshotHarness.js";
-export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
-export type { IGCTestProvider } from "./gcTestRunner.js";
-export { runGCTests } from "./gcTestRunner.js";
 export {
 	createSquashFuzzSuite,
 	type SquashClient,
+	type SquashRandom,
 	type SquashFuzzHarnessModel,
-	type SquashFuzzModel,
 	type SquashFuzzSuiteOptions,
 	type SquashFuzzTestState,
-	type SquashRandom,
+	type SquashFuzzModel,
 } from "./squashFuzzHarness.js";
+export type { ISnapshotSuite } from "./ddsSnapshotHarness.js";
+export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
+export type { Client, FuzzSerializedIdCompressor } from "./clientLoading.js";

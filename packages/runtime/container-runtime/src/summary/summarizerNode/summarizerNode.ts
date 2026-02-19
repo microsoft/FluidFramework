@@ -7,31 +7,31 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
 	channelsTreeName,
 	type IExperimentalIncrementalSummaryContext,
+	type ITelemetryContext,
+	type CreateChildSummarizerNodeParam,
+	CreateSummarizerNodeSource,
 	type ISummarizeResult,
 	type ISummarizerNode,
 	type ISummarizerNodeConfig,
-	type ITelemetryContext,
 	type SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
-import type {
-	ITelemetryErrorEventExt,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
 import {
-	createChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
+	createChildLogger,
 	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -39,8 +39,8 @@ import type {
 	IRefreshSummaryResult,
 	IStartSummaryResult,
 	ISummarizerNodeRootContract,
-	PendingSummaryInfo,
 	ValidateSummaryResult,
+	PendingSummaryInfo,
 } from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}

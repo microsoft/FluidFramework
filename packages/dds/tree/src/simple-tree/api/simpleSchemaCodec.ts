@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { transformMapValues, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase, transformMapValues } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	DiscriminatedUnionDispatcher,
 	extractJsonValidator,
-	type FormatValidator,
 	FormatValidatorNoOp,
+	type FormatValidator,
 } from "../../codec/index.js";
 import type { ValueSchema } from "../../core/index.js";
-import { type JsonCompatibleReadOnly, objectToMap } from "../../util/index.js";
+import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
 import type { FieldKind } from "../fieldSchema.js";
 import type {

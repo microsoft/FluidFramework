@@ -7,8 +7,8 @@ import type { FieldKey } from "../../../core/index.js";
 import type { RestrictiveStringRecord } from "../../../util/index.js";
 import {
 	NodeKind,
-	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
 	type TreeNodeSchemaCorePrivate,
 } from "../../core/index.js";
 import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
@@ -19,9 +19,9 @@ import type {
 } from "../../simpleSchema.js";
 
 import type {
-	InsertableObjectFromSchemaRecord,
-	SimpleKeyMap,
 	TreeObjectNode,
+	SimpleKeyMap,
+	InsertableObjectFromSchemaRecord,
 } from "./objectNode.js";
 
 /**

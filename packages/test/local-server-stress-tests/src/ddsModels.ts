@@ -4,18 +4,18 @@
  */
 
 /* eslint-disable import-x/no-internal-modules */
-import { type AsyncGenerator, done } from "@fluid-private/stochastic-test-utils";
+import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
-import { baseDirModel, baseMapModel } from "@fluidframework/map/internal/test";
+import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
 import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
 import { baseConsensusOrderedCollectionModel } from "@fluidframework/ordered-collection/internal/test";
 import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 import {
-	baseIntervalModel,
 	baseSharedStringModel,
+	baseIntervalModel,
 } from "@fluidframework/sequence/internal/test";
 import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";

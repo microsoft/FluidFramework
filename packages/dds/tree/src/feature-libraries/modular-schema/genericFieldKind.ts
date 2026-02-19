@@ -27,7 +27,7 @@ import type {
 } from "./fieldChangeHandler.js";
 import { FlexFieldKind } from "./fieldKind.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
-import { type GenericChangeset, newGenericChangeset } from "./genericFieldKindTypes.js";
+import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
 
 /**

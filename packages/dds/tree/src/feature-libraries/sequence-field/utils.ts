@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
-	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	makeChangeAtomId,
 	type RevisionMetadataSource,
 	type RevisionTag,
+	areEqualChangeAtomIdOpts,
+	areEqualChangeAtomIds,
+	makeChangeAtomId,
 } from "../../core/index.js";
-import { brand, type Mutable } from "../../util/index.js";
+import { type Mutable, brand } from "../../util/index.js";
 import {
-	type CrossFieldKeyRange,
 	CrossFieldTarget,
-	type NestedChangesIndices,
 	type NodeId,
+	type CrossFieldKeyRange,
+	type NestedChangesIndices,
 } from "../modular-schema/index.js";
 
 import type {
@@ -31,7 +31,6 @@ import type {
 import {
 	type Attach,
 	type AttachAndDetach,
-	type CellCount,
 	type CellId,
 	type CellMark,
 	type Changeset,
@@ -46,6 +45,7 @@ import {
 	type NoopMark,
 	NoopMarkType,
 	type Remove,
+	type CellCount,
 	type Rename,
 } from "./types.js";
 

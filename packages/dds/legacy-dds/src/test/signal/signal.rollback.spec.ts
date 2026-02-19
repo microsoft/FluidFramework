@@ -5,10 +5,10 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules

@@ -28,14 +28,14 @@ import {
 	type SimpleAllowedTypeAttributes,
 } from "../../simple-tree/index.js";
 import {
-	filterAllowedTypes,
 	getStoredSchema,
 	permissiveStoredSchemaGenerationOptions,
 	restrictiveStoredSchemaGenerationOptions,
-	simpleStoredSchemaToStoredSchema,
 	toInitialSchema,
+	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
 	transformSimpleNodeSchema,
+	filterAllowedTypes,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
 import { brand } from "../../util/index.js";

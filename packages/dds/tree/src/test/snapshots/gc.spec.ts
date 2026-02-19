@@ -16,8 +16,8 @@ import {
 
 import {
 	SchemaFactory,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "../../simple-tree/index.js";
 import type { ISharedTree } from "../../treeFactory.js";
 import { DefaultTestSharedTreeKind } from "../utils.js";

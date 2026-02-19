@@ -13,11 +13,11 @@ import {
 	type FieldAnchor,
 	type FieldKey,
 	type ITreeSubscriptionCursor,
-	rootFieldKey,
 	type TreeFieldStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type UpPath,
+	rootFieldKey,
 } from "../../../core/index.js";
 import {
 	LazyField,
@@ -27,21 +27,21 @@ import {
 	unboxedFlexNode,
 } from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
-	Context,
+	FieldKinds,
+	MockNodeIdentifierManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	FieldKinds,
+	Context,
 	isFlexTreeNode,
-	MockNodeIdentifierManager,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	numberSchema,
-	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	stringSchema,
 	toInitialSchema,
+	restrictiveStoredSchemaGenerationOptions,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";

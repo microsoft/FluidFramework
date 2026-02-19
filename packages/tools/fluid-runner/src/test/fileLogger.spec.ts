@@ -11,7 +11,6 @@ import path from "path";
 import { CSVFileLogger } from "../logger/csvFileLogger.js";
 import type { IFileLogger } from "../logger/fileLogger.js";
 import { JSONFileLogger } from "../logger/jsonFileLogger.js";
-
 /* eslint-enable import-x/no-internal-modules */
 
 import { _dirname } from "./dirname.cjs";

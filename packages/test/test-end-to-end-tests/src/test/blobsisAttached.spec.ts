@@ -18,18 +18,18 @@ import type { IPendingRuntimeState } from "@fluidframework/container-runtime/int
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
-	ISharedDirectory,
 	ISharedMap,
+	ISharedDirectory,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import { isFluidHandlePayloadPending } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	createAndAttachContainer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
 
 import { driverSupportsBlobs } from "./mockDetachedBlobStorage.js";

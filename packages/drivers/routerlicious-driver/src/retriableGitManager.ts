@@ -4,8 +4,8 @@
  */
 
 import type {
-	IGitBlob,
 	IGitCommitDetails,
+	IGitBlob,
 	IGitCreateBlobResponse,
 	IGitCreateTreeParams,
 	IGitTree,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { BroadcastControlSettings, BroadcastControls } from "./broadcastControlsTypes.js";
+import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControlsTypes.js";
 
 class ForcedRefreshControl
 	implements

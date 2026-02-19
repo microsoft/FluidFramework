@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	dataStoreCompatDetailsForRuntime,
-	dataStoreCoreCompatDetails,
-	runtimeSupportRequirementsForDataStore,
-} from "./dataStoreLayerCompatState.js";
+export { FluidObjectHandle } from "./fluidHandle.js";
 export {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
@@ -16,4 +12,8 @@ export {
 	mixinRequestHandler,
 	mixinSummaryHandler,
 } from "./dataStoreRuntime.js";
-export { FluidObjectHandle } from "./fluidHandle.js";
+export {
+	dataStoreCoreCompatDetails,
+	dataStoreCompatDetailsForRuntime,
+	runtimeSupportRequirementsForDataStore,
+} from "./dataStoreLayerCompatState.js";

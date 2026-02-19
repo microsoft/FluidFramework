@@ -5,13 +5,13 @@
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
+	NodeKind,
+	TreeNodeSchema,
+	WithType,
+	TreeNode,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	TreeNode,
-	TreeNodeSchema,
 	TreeNodeSchemaClass,
-	WithType,
 } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";

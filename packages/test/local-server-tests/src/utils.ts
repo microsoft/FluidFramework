@@ -5,10 +5,10 @@
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
-	ICodeDetailsLoader,
 	type IFluidCodeDetails,
 	type ILoaderOptions,
 	type IRuntimeFactory,
+	ICodeDetailsLoader,
 } from "@fluidframework/container-definitions/internal";
 import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type {

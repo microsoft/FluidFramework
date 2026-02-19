@@ -4,10 +4,10 @@
  */
 
 export { type IAttributor } from "./attributor.js";
+export { mixinAttributor, getRuntimeAttributor } from "./mixinAttributor.js";
 export {
 	attributorDataStoreAlias,
 	enableOnNewFileKey,
 	type IProvideRuntimeAttributor,
 	IRuntimeAttributor,
 } from "./attributorContracts.js";
-export { getRuntimeAttributor, mixinAttributor } from "./mixinAttributor.js";

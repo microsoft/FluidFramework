@@ -12,20 +12,20 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import {
-	IGarbageCollector,
 	IGCMetadata,
+	IGarbageCollector,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	createSummarizerFromFactory,
 	ITestFluidObject,
 	ITestObjectProvider,
-	summarizeNow,
 	TestFluidObjectFactory,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { createSandbox, SinonSandbox } from "sinon";

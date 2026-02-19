@@ -10,7 +10,7 @@
  * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
  */
 export {
-	IJSONRunSegment,
-	SharedSequence,
 	SubSequence,
+	SharedSequence,
+	IJSONRunSegment,
 } from "@fluidframework/sequence/internal";

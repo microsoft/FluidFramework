@@ -39,8 +39,8 @@ import {
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";

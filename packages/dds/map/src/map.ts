@@ -6,17 +6,17 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";

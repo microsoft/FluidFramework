@@ -6,15 +6,15 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
+	type ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
 	type IRuntimeStorageService,
-	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";

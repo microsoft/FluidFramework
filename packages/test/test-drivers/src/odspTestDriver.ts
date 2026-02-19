@@ -10,22 +10,22 @@ import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitio
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
-	type IPersistedCache,
 	IUrlResolver,
+	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	IPublicClientConfig,
 	getDriveId,
 	getDriveItemByRootFileName,
-	IPublicClientConfig,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	getMicrosoftConfiguration,
 	OdspTokenConfig,
 	OdspTokenManager,
+	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
 import { compare } from "semver";

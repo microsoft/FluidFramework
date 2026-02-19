@@ -4,7 +4,6 @@
  */
 
 import { getApiExtractorConfigFilePath, getInstalledPackageVersion } from "../taskUtils.js";
-
 import { TscDependentTask } from "./tscTask.js";
 
 export class ApiExtractorTask extends TscDependentTask {

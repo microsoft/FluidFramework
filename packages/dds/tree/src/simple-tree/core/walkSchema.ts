@@ -4,10 +4,10 @@
  */
 
 import {
-	type AllowedTypesFullEvaluated,
-	type AnnotatedAllowedType,
-	markSchemaMostDerived,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
+	type AnnotatedAllowedType,
+	type AllowedTypesFullEvaluated,
+	markSchemaMostDerived,
 } from "./allowedTypes.js";
 import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
 

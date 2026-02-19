@@ -11,9 +11,9 @@ import { ExtensibleUnionNode } from "../extensibleUnionNode.js";
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
+	snapshotSchemaCompatibility,
 	KeyEncodingOptions,
 	SchemaFactoryBeta,
-	snapshotSchemaCompatibility,
 	TreeBeta,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";

@@ -16,7 +16,6 @@ import {
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
 import { isReleaseGroup } from "../releaseGroups.js";
-
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import type { StateHandlerFunction } from "./stateHandlers.js";
 

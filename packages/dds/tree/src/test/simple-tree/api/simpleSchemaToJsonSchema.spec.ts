@@ -16,8 +16,6 @@ import {
 	FieldKind,
 	generateSchemaFromSimpleSchema,
 	getJsonSchema,
-	type JsonObjectNodeSchema,
-	type JsonTreeSchema,
 	KeyEncodingOptions,
 	NodeKind,
 	normalizeFieldSchema,
@@ -25,6 +23,8 @@ import {
 	SchemaFactoryAlpha,
 	stringSchema,
 	TreeBeta,
+	type JsonObjectNodeSchema,
+	type JsonTreeSchema,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 import type {

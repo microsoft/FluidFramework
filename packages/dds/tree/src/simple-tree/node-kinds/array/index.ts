@@ -4,13 +4,13 @@
  */
 
 export {
-	type ArrayPlaceAnchor,
 	arraySchema,
 	asIndex,
-	createArrayInsertionAnchor,
 	IterableTreeArrayContent,
-	type ReadonlyArrayNode,
 	TreeArrayNode,
+	type ReadonlyArrayNode,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
 } from "./arrayNode.js";
 export {
 	type ArrayNodeCustomizableSchema,

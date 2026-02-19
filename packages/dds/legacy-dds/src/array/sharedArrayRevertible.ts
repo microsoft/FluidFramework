@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IRevertible, ISharedArrayRevertible } from "./interfaces.js";
+import type { ISharedArrayRevertible, IRevertible } from "./interfaces.js";
 import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
 import { OperationType } from "./sharedArrayOperations.js";
 

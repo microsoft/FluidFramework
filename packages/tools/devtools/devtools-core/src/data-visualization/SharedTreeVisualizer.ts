@@ -15,15 +15,15 @@ import type {
 import { NodeKind, SchemaFactory, Tree } from "@fluidframework/tree/internal";
 
 import type { VisualizeChildData } from "./DataVisualization.js";
-import type { SharedTreeSchemaNode, VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
+import type { VisualSharedTreeNode, SharedTreeSchemaNode } from "./VisualSharedTreeTypes.js";
 import { VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import {
-	type FluidHandleNode,
-	type UnknownObjectNode,
 	type VisualChildNode,
 	VisualNodeKind,
-	type VisualTreeNode,
 	type VisualValueNode,
+	type VisualTreeNode,
+	type FluidHandleNode,
+	type UnknownObjectNode,
 } from "./VisualTree.js";
 
 /**

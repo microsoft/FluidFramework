@@ -5,7 +5,6 @@
 
 import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 import {

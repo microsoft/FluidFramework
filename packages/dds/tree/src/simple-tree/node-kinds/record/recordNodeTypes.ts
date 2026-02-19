@@ -4,17 +4,17 @@
  */
 
 import type { RestrictiveStringRecord } from "../../../util/index.js";
+import { NodeKind } from "../../core/index.js";
 import type {
-	ImplicitAllowedTypes,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNode,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
+	TreeNode,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
-import { NodeKind } from "../../core/index.js";
 import type { SchemaType, SimpleRecordNodeSchema } from "../../simpleSchema.js";
 
 /**

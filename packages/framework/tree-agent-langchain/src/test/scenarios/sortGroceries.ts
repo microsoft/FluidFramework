@@ -4,7 +4,7 @@
  */
 
 import { Grocery, GroceryList } from "../domains/index.js";
-import { type LLMIntegrationTest, type ScorableVerboseTree, scoreSymbol } from "../utils.js";
+import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
 const alphabeticalGroceries = [
 	{ name: "Apples", price: 1.49, purchased: false },

@@ -8,12 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../core/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
-import type {
-	InsertableTypedNode,
-	TreeNode,
-	TreeNodeFromImplicitAllowedTypes,
-	WithType,
-} from "../simple-tree/index.js";
 import {
 	enumFromStrings,
 	eraseSchemaDetails,
@@ -21,6 +15,12 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 	TreeBeta,
+} from "../simple-tree/index.js";
+import type {
+	InsertableTypedNode,
+	TreeNode,
+	TreeNodeFromImplicitAllowedTypes,
+	WithType,
 } from "../simple-tree/index.js";
 import { mapIterable } from "../util/index.js";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ExampleDriverService, isExampleDriverService } from "./interfaces.js";
+import { isExampleDriverService, type ExampleDriverService } from "./interfaces.js";
 
 declare const EXAMPLE_DRIVER_SERVICE: string | undefined;
 /**

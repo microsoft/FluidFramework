@@ -9,10 +9,10 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import {
 	Breakable,
-	breakingClass,
-	breakingMethod,
-	throwIfBroken,
 	type WithBreakable,
+	throwIfBroken,
+	breakingMethod,
+	breakingClass,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../util/breakable.js";
 

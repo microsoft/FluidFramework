@@ -5,10 +5,10 @@
 
 import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence/legacy";
 
-import { DocSegmentKind, type FlowDocument, getDocSegmentKind } from "../document/index.js";
-import { clamp, Dom, hasTagName, TagName } from "../util/index.js";
+import { DocSegmentKind, getDocSegmentKind, type FlowDocument } from "../document/index.js";
+import { Dom, TagName, clamp, hasTagName } from "../util/index.js";
 import { updateRef } from "../util/localref.js";
-import { eotSegment, Layout } from "../view/layout.js";
+import { Layout, eotSegment } from "../view/layout.js";
 
 import { debug } from "./debug.js";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ImplicitFieldSchema, Tree, TreeNode } from "@fluidframework/tree";
+import { Tree, TreeNode, type ImplicitFieldSchema } from "@fluidframework/tree";
 import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 
 /**

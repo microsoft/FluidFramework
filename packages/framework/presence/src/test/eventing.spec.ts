@@ -5,15 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import type { SinonFakeTimers, SinonSpy } from "sinon";
+import { useFakeTimers, spy } from "sinon";
+
 import type {
-	LatestMapRaw,
 	LatestRaw,
+	LatestMapRaw,
 	NotificationsManager,
 } from "@fluidframework/presence/alpha";
 import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers, SinonSpy } from "sinon";
-import { spy, useFakeTimers } from "sinon";
 
 import type { Attendee, PresenceWithNotifications, WorkspaceAddress } from "../index.js";
 import { toOpaqueJson } from "../internalUtils.js";
@@ -23,10 +24,10 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
-	attendeeId1,
-	initialLocalClientConnectionId,
-	localAttendeeId,
 	prepareConnectedPresence,
+	attendeeId1,
+	localAttendeeId,
+	initialLocalClientConnectionId,
 } from "./testUtils.js";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";

@@ -8,18 +8,18 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	toIDeltaManagerFull,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat(

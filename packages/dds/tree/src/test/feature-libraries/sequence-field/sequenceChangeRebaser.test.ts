@@ -11,11 +11,11 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangesetLocalId,
-	emptyDelta,
-	makeAnonChange,
 	type RevisionInfo,
 	type RevisionTag,
 	type TaggedChange,
+	emptyDelta,
+	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -29,8 +29,8 @@ import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modul
 // eslint-disable-next-line import-x/no-internal-modules
 import type * as SF from "../../../feature-libraries/sequence-field/types.js";
 import {
-	brand,
 	type IdAllocator,
+	brand,
 	idAllocatorFromMaxId,
 	makeArray,
 } from "../../../util/index.js";
@@ -48,23 +48,23 @@ import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areRebasable,
 	assertChangesetsEqual,
-	assertWrappedChangesetsEqual,
-	composeDeep,
-	composeShallow,
-	inlineRevision,
-	invertDeep,
-	prune,
-	pruneDeep,
-	rebaseDeepTagged,
-	rebaseOverChanges,
-	rebaseTagged,
-	tagChangeInline,
 	testCompose,
 	testInvert,
-	toDeltaWrapped,
+	prune,
+	rebaseOverChanges,
+	rebaseTagged,
+	composeShallow,
+	invertDeep,
+	rebaseDeepTagged,
+	withoutTombstonesDeep,
+	assertWrappedChangesetsEqual,
+	composeDeep,
+	pruneDeep,
 	type WrappedChange,
 	withoutTombstones,
-	withoutTombstonesDeep,
+	tagChangeInline,
+	inlineRevision,
+	toDeltaWrapped,
 } from "./utils.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.

@@ -12,17 +12,38 @@
  */
 
 export type { ClientConnectionId } from "./baseTypes.js";
+
 export type {
-	BroadcastControlSettings,
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceEntries,
+	StatesWorkspaceSchema,
+	StatesWorkspaceEntry,
+	WorkspaceAddress,
+} from "./types.js";
+
+export {
+	type Attendee,
+	type AttendeesEvents,
+	type AttendeeId,
+	AttendeeStatus,
+	type Presence,
+	type PresenceEvents,
+	type PresenceWithNotifications,
+} from "./presence.js";
+
+export type {
 	BroadcastControls,
+	BroadcastControlSettings,
 } from "./broadcastControlsTypes.js";
-export type { InternalTypes } from "./exposedInternalTypes.js";
-export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+
 export {
 	getPresence,
 	getPresenceAlpha,
 	getPresenceFromDataStoreContext,
 } from "./getPresence.js";
+
 export type {
 	KeySchemaValidator,
 	LatestMap,
@@ -56,6 +77,7 @@ export type {
 	StateSchemaValidator,
 	ValueAccessor,
 } from "./latestValueTypes.js";
+
 export { Notifications } from "./notificationsManager.js";
 export type {
 	NotificationEmitter,
@@ -64,22 +86,8 @@ export type {
 	NotificationsManager,
 	NotificationsManagerEvents,
 } from "./notificationsManagerTypes.js";
-export {
-	type Attendee,
-	type AttendeeId,
-	AttendeeStatus,
-	type AttendeesEvents,
-	type Presence,
-	type PresenceEvents,
-	type PresenceWithNotifications,
-} from "./presence.js";
+
 export { StateFactory } from "./stateFactory.js";
-export type {
-	NotificationsWorkspace,
-	NotificationsWorkspaceSchema,
-	StatesWorkspace,
-	StatesWorkspaceEntries,
-	StatesWorkspaceEntry,
-	StatesWorkspaceSchema,
-	WorkspaceAddress,
-} from "./types.js";
+
+export type { InternalTypes } from "./exposedInternalTypes.js";
+export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";

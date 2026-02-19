@@ -12,8 +12,8 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
-import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import {
@@ -26,7 +26,7 @@ import { Side } from "../sequencePlace.js";
 import type { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 describe("client.applyMsg", () => {
 	const localUserLongId = "localUser";

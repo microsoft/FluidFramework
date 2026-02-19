@@ -4,10 +4,10 @@
  */
 
 import type {
-	ICodeDetailsLoader,
 	IContainer,
-	IContainerPolicies,
+	ICodeDetailsLoader,
 	IFluidCodeDetails,
+	IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
@@ -23,13 +23,13 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import {
-	createChildMonitoringContext,
 	GenericError,
-	isFluidError,
-	mixinMonitoringContext,
 	normalizeError,
-	PerformanceEvent,
+	createChildMonitoringContext,
+	mixinMonitoringContext,
 	sessionStorageConfigProvider,
+	PerformanceEvent,
+	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

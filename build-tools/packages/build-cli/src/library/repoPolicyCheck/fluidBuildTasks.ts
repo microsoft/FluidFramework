@@ -5,7 +5,6 @@
 
 import fs from "node:fs";
 import path from "node:path";
-
 import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
@@ -21,9 +20,7 @@ import {
 } from "@fluidframework/build-tools";
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
-
 import { getFlubConfig } from "../../config.js";
-
 import { type Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 

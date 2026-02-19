@@ -9,11 +9,11 @@ import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 import { assertIdenticalTypes, createInstanceOf, parameterAcceptedAs } from "./testUtils.js";
 import type { ConstHeterogenousEnum, NumericEnum } from "./testValues.js";
 import {
-	jsonStringOfBigInt,
-	jsonStringOfObjectWithArrayOfNumbers,
 	jsonStringOfString,
-	jsonStringOfStringRecordOfNumberOrUndefined,
+	jsonStringOfObjectWithArrayOfNumbers,
 	jsonStringOfStringRecordOfNumbers,
+	jsonStringOfStringRecordOfNumberOrUndefined,
+	jsonStringOfBigInt,
 	jsonStringOfUnknown,
 } from "./testValues.js";
 

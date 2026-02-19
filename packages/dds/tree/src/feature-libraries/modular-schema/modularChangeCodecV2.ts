@@ -18,8 +18,8 @@ import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import {
-	decodeChange,
 	encodeChange,
+	decodeChange,
 	getFieldChangesetCodecs,
 } from "./modularChangeCodecV1.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";

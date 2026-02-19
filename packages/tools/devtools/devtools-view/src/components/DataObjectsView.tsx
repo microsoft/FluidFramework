@@ -7,18 +7,18 @@ import { Tree as FluentTree } from "@fluentui/react-components";
 import {
 	GetRootDataVisualizations,
 	type HasContainerKey,
-	handleIncomingMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	RootDataVisualizations,
 	type RootHandleNode,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 
-import { TreeDataView } from "./data-visualization/index.js";
 import { Waiting } from "./Waiting.js";
+import { TreeDataView } from "./data-visualization/index.js";
 
 const loggingContext = "INLINE(VIEW)";
 

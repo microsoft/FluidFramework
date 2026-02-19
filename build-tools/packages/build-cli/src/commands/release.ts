@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import {
 	bumpVersionScheme,
 	detectVersionScheme,

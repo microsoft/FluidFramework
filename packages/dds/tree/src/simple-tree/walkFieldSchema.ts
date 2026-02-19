@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type SchemaVisitor, type TreeNodeSchema, walkAllowedTypes } from "./core/index.js";
+import { type TreeNodeSchema, walkAllowedTypes, type SchemaVisitor } from "./core/index.js";
 import { type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js";
 
 /**

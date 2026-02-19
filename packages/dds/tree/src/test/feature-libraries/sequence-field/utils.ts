@@ -13,14 +13,14 @@ import {
 	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	makeAnonChange,
-	mapTaggedChange,
-	newChangeAtomIdRangeMap,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
-	revisionMetadataSourceFromInfo,
 	type TaggedChange,
+	makeAnonChange,
+	mapTaggedChange,
+	newChangeAtomIdRangeMap,
+	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -29,12 +29,15 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
-	DefaultRevisionReplacer,
 	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	rebaseRevisionMetadataFromInfo,
 	setInCrossFieldMap,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+import {
+	DefaultRevisionReplacer,
+	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -54,16 +57,16 @@ import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
 import {
+	type MarkEffect,
+	NoopMarkType,
 	CellId,
 	Changeset,
 	HasMarkFields,
-	type Mark,
-	type MarkEffect,
 	MoveId,
-	type MoveIn,
-	type MoveOut,
-	NoopMarkType,
 	type Remove,
+	type Mark,
+	type MoveOut,
+	type MoveIn,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 import {
@@ -81,12 +84,12 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
+	type IdAllocator,
+	type Mutable,
 	brand,
 	fakeIdAllocator,
 	getOrAddEmptyToMap,
-	type IdAllocator,
 	idAllocatorFromMaxId,
-	type Mutable,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";

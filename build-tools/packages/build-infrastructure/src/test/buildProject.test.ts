@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import * as chai from "chai";
 import { expect } from "chai";
 import assertArrays from "chai-arrays";

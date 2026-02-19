@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 
 import {
-	type ChunkedCursor,
 	CursorLocationType,
-	cursorChunk,
-	dummyRoot,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
-	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
 	type TreeType,
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
 import { ReferenceCountedBase } from "../../util/index.js";
-import { prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
+import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
 
 /**
  * General purpose one node chunk.

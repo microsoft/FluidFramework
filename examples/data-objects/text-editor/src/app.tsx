@@ -11,20 +11,19 @@ import { toPropTreeNode } from "@fluidframework/react/alpha";
  */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, type TreeView, TreeViewConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
-
 import * as React from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
 import { FormattedMainView } from "./formatted/index.js";
-import { QuillMainView as PlainQuillView, PlainTextMainView } from "./plain/index.js";
-import { type UndoRedo, UndoRedoStacks } from "./undoRedo.js";
+import { PlainTextMainView, QuillMainView as PlainQuillView } from "./plain/index.js";
+import { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
 
 /**
  * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,

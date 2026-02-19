@@ -5,8 +5,8 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
-	IOdspTokens,
 	IPublicClientConfig,
+	IOdspTokens,
 	TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {

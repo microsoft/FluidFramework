@@ -9,16 +9,6 @@
  * @packageDocumentation
  */
 
-// Re-export so developers can build loggers without pulling in core-interfaces
-export type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-export type { IUser } from "@fluidframework/driver-definitions";
-// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
-export type { CompatibilityMode } from "@fluidframework/fluid-static";
-export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-
 export { AzureClient } from "./AzureClient.js";
 export type {
 	AzureClientProps,
@@ -34,3 +24,15 @@ export type {
 	AzureUser,
 	IAzureAudience,
 } from "./interfaces.js";
+
+export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+export type { IUser } from "@fluidframework/driver-definitions";
+
+// Re-export so developers can build loggers without pulling in core-interfaces
+export type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+
+// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
+export type { CompatibilityMode } from "@fluidframework/fluid-static";

@@ -13,8 +13,8 @@ import type {
 import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	describeCompat,
-	type ExpectedEvents,
 	itExpects,
+	type ExpectedEvents,
 } from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {

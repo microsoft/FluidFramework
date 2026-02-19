@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
-	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { IntervalCollection } from "../intervalCollection.js";

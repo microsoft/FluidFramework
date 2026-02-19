@@ -3,43 +3,41 @@
  * Licensed under the MIT License.
  */
 
+import type { RestrictiveStringRecord } from "../../util/index.js";
 // eslint-disable-next-line unused-imports/no-unused-imports, import-x/no-duplicates -- This import prevents a large number of type references in the API reports from showing up as *_2.
-import type {
-	RestrictiveStringRecord as _RestrictiveStringRecord,
-	RestrictiveStringRecord,
-} from "../../util/index.js";
+import type { RestrictiveStringRecord as _RestrictiveStringRecord } from "../../util/index.js";
 import {
+	AnnotatedAllowedTypesInternal,
+	createSchemaUpgrade,
+	normalizeToAnnotatedAllowedType,
 	type AllowedTypesFullFromMixed,
 	type AllowedTypesMetadata,
 	type AnnotatedAllowedType,
-	AnnotatedAllowedTypesInternal,
-	createSchemaUpgrade,
 	type ImplicitAllowedTypes,
 	type LazyItem,
 	type NodeKind,
-	normalizeToAnnotatedAllowedType,
 	type TreeNodeSchema,
 	type TreeNodeSchemaBoth,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type WithType,
 } from "../core/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 /* eslint-disable unused-imports/no-unused-imports, import-x/no-duplicates -- These imports prevent a large number of type references in the API reports from showing up as *_2. */
 import type {
-	FieldKind as _FieldKind,
 	FieldProps as _FieldProps,
-	FieldPropsAlpha as _FieldPropsAlpha,
 	FieldSchemaAlpha as _FieldSchemaAlpha,
+	FieldPropsAlpha as _FieldPropsAlpha,
+	FieldKind as _FieldKind,
 	ImplicitFieldSchema as _ImplicitFieldSchema,
-	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import type { LeafSchema as _LeafSchema } from "../leafNodeSchema.js";
 /* eslint-enable unused-imports/no-unused-imports, import-x/no-duplicates */
 import {
-	type InsertableObjectFromSchemaRecord,
 	objectSchema,
-	type RecordNodeInsertableData,
 	recordSchema,
+	type InsertableObjectFromSchemaRecord,
+	type RecordNodeInsertableData,
 	type TreeObjectNode,
 	type TreeRecordNode,
 } from "../node-kinds/index.js";
@@ -48,12 +46,12 @@ import type { SimpleLeafNodeSchema as _SimpleLeafNodeSchema } from "../simpleSch
 
 import {
 	defaultSchemaFactoryObjectOptions,
-	type NodeSchemaOptions,
-	type ObjectSchemaOptions,
 	SchemaFactory,
-	type ScopedSchemaName,
 	scoped,
 	structuralName,
+	type NodeSchemaOptions,
+	type ObjectSchemaOptions,
+	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import type {
 	AllowedTypesFullFromMixedUnsafe,

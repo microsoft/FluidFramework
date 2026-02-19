@@ -14,18 +14,18 @@ import type {
 	ISummaryTree,
 } from "@fluidframework/driver-definitions";
 import type {
-	FetchSource,
-	ICreateBlobResponse,
-	IDocumentMessage,
-	IDocumentStorageServicePolicies,
-	ISequencedDocumentMessage,
 	ISnapshot,
-	ISnapshotFetchOptions,
+	IDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
-	ISummaryContext,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
+	ICreateBlobResponse,
+	ISummaryContext,
+	ISnapshotFetchOptions,
+	FetchSource,
+	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";

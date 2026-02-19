@@ -16,35 +16,35 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import type { IThrottlingWarning, JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonParse } from "@fluidframework/core-interfaces/internal";
+import type { IThrottlingWarning, JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
-	type IClientConfiguration,
-	type IClientDetails,
 	type IDocumentDeltaStorageService,
-	type IDocumentMessage,
 	type IDocumentService,
-	type ISequencedDocumentMessage,
-	type ISequencedDocumentSystemMessage,
-	type ISignalMessage,
+	DriverErrorTypes,
+	type IDocumentMessage,
 	MessageType,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
+	type IClientDetails,
+	type IClientConfiguration,
+	type ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { isRuntimeMessage, NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	DataCorruptionError,
-	DataProcessingError,
-	EventEmitterWithErrorHandling,
-	extractSafePropertiesFromMessage,
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	type ITelemetryLoggerExt,
+	DataCorruptionError,
+	DataProcessingError,
+	UsageError,
+	extractSafePropertiesFromMessage,
 	isFluidError,
 	normalizeError,
 	safeRaiseEvent,
-	UsageError,
+	EventEmitterWithErrorHandling,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

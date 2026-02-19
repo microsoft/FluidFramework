@@ -13,8 +13,8 @@ import {
 } from "@fluid-example/migration-tools/alpha";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";

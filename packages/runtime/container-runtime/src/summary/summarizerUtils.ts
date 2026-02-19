@@ -8,7 +8,7 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import type { IRetriableFailureError, ISummaryCancellationToken } from "./summarizerTypes.js";
+import type { ISummaryCancellationToken, IRetriableFailureError } from "./summarizerTypes.js";
 
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }

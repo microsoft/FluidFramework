@@ -4,7 +4,6 @@
  */
 
 import type { GitRepo } from "../common/gitRepo";
-
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 
 /**

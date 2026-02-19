@@ -26,12 +26,12 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	handleIncomingWindowMessage,
-	type InboundHandlers,
-	type ISourcedDevtoolsMessage,
-	type MessageLoggingOptions,
-	postMessagesToWindow,
 	SetUnsampledTelemetry,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	type MessageLoggingOptions,
+	handleIncomingWindowMessage,
+	postMessagesToWindow,
 } from "./messaging/index.js";
 import { pkgVersion as devtoolsVersion } from "./packageVersion.js";
 

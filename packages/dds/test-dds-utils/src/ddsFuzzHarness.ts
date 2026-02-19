@@ -19,14 +19,14 @@ import type {
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	ExitBehavior,
+	FuzzTestMinimizer,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
 	createWeightedAsyncGenerator,
 	defaultOptions,
 	done,
-	ExitBehavior,
-	FuzzTestMinimizer,
 	generateTestSeeds,
 	getSaveDirectory,
 	getSaveInfo,
@@ -48,23 +48,23 @@ import type {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
-	type IFluidSerializer,
 	isISharedObjectHandle,
+	type IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
-import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type Client,
 	type ClientLoadData,
 	type ClientWithStashData,
+	type FuzzSerializedIdCompressor,
 	createLoadData,
 	createLoadDataFromStashData,
-	type FuzzSerializedIdCompressor,
 	hasStashData,
 } from "./clientLoading.js";
 import { DDSFuzzHandle } from "./ddsFuzzHandle.js";

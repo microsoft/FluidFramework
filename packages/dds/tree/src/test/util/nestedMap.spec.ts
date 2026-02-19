@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type NestedMap,
+	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,
-	getOrCreateInNestedMap,
 	getOrDefaultInNestedMap,
-	mapNestedMap,
-	type NestedMap,
 	populateNestedMap,
-	SizedNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
+	getOrCreateInNestedMap,
 } from "../../util/index.js";
 
 describe("NestedMap unit tests", () => {

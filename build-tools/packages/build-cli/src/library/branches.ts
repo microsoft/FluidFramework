@@ -18,14 +18,12 @@ import {
 } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
-
 import {
 	isReleaseGroup,
 	type ReleaseGroup,
 	type ReleasePackage,
 	type ReleaseSource,
 } from "../releaseGroups.js";
-
 import type { DependencyUpdateType } from "./bump.js";
 import type { Context } from "./context.js";
 

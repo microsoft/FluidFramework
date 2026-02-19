@@ -15,11 +15,11 @@ import {
 	Marker,
 	PropertySet,
 	ReferenceType,
-	refHasTileLabel,
 	TextSegment,
+	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
-import { type ISharedSegmentSequence, SharedSegmentSequence } from "./sequence.js";
+import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**

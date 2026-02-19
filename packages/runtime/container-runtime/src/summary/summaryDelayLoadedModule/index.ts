@@ -3,25 +3,26 @@
  * Licensed under the MIT License.
  */
 
-export { RunningSummarizer } from "./runningSummarizer.js";
-export {
-	type ICancellableSummarizerController,
-	neverCancelledSummaryToken,
-	RunWhileConnectedCoordinator,
-} from "./runWhileConnectedCoordinator.js";
 export {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
 	Summarizer,
 } from "./summarizer.js";
 export {
-	SummarizeHeuristicData,
-	SummarizeHeuristicRunner,
-} from "./summarizerHeuristics.js";
+	type ICancellableSummarizerController,
+	neverCancelledSummaryToken,
+	RunWhileConnectedCoordinator,
+} from "./runWhileConnectedCoordinator.js";
+
 export type {
 	EnqueueSummarizeResult,
 	IAckSummaryResult,
-	IBroadcastSummaryResult,
 	INackSummaryResult,
+	IBroadcastSummaryResult,
 	ISummarizeResults,
 } from "./summaryResultTypes.js";
+export { RunningSummarizer } from "./runningSummarizer.js";
+export {
+	SummarizeHeuristicData,
+	SummarizeHeuristicRunner,
+} from "./summarizerHeuristics.js";

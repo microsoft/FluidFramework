@@ -7,21 +7,21 @@ import { EventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	createSingleBlobSummary,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { IAcceptedPact, IPactMap, IPactMapEvents } from "./interfaces.js";

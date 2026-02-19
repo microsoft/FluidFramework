@@ -9,14 +9,14 @@ import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import {
 	generateSchemaFromSimpleSchema,
 	getSimpleSchema,
-	type ImplicitFieldSchema,
-	isObjectNodeSchema,
 	SchemaFactory,
+	toInitialSchema,
+	type ImplicitFieldSchema,
+	type ValidateRecursiveSchema,
+	type SimpleObjectNodeSchema,
+	isObjectNodeSchema,
 	SchemaFactoryAlpha,
 	SchemaUpgrade,
-	type SimpleObjectNodeSchema,
-	toInitialSchema,
-	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
 import { HasUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";

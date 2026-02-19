@@ -10,22 +10,22 @@ import { ValueSchema } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
 import {
-	createTreeSchema,
 	decodeSchemaCompatibilitySnapshot,
-	encodeSchemaCompatibilitySnapshot,
 	FieldKind,
-	getSimpleSchema,
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	type SchemaType,
-	type SimpleFieldSchema,
+	encodeSchemaCompatibilitySnapshot,
+	stringSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
 	type SimpleObjectNodeSchema,
 	type SimpleTreeSchema,
-	stringSchema,
+	getSimpleSchema,
+	type SimpleFieldSchema,
+	createTreeSchema,
+	type SchemaType,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";

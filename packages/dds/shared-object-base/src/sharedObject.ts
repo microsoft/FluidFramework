@@ -6,20 +6,20 @@
 import type { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import type { ErasedType, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties, ErasedType } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
+	IChannelServices,
+	IChannelStorageService,
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
-	IChannelStorageService,
-	IDeltaHandler,
 	IFluidDataStoreRuntime,
+	IDeltaHandler,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
@@ -27,31 +27,31 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	blobCountPropertyName,
 	type IExperimentalIncrementalSummaryContext,
-	type IGarbageCollectionData,
-	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
+	type IGarbageCollectionData,
+	blobCountPropertyName,
 	totalBlobSizePropertyName,
+	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type TelemetryContext,
 	toDeltaManagerInternal,
+	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildLogger,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
-	type ICustomData,
-	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
-	LoggingError,
-	loggerToMonitoringContext,
 	type MonitoringContext,
 	SampledTelemetryHelper,
+	createChildLogger,
+	loggerToMonitoringContext,
 	tagCodeArtifacts,
+	type ICustomData,
+	type IFluidErrorBase,
+	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

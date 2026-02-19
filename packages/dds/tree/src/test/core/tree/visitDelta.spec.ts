@@ -17,8 +17,8 @@ import {
 	type DetachedFieldIndex,
 	type FieldKey,
 	type MapTree,
-	makeDetachedFieldIndex,
 	type RevisionTag,
+	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../../core/index.js";
 import { mapTreeFromCursor } from "../../../feature-libraries/index.js";
@@ -26,11 +26,11 @@ import { brand } from "../../../util/index.js";
 import {
 	chunkFromJsonTrees,
 	chunkToMapTreeField,
-	type DeltaParams,
 	mintRevisionTag,
 	rootFromDeltaFieldMap,
 	testIdCompressor,
 	testRevisionTagCodec,
+	type DeltaParams,
 } from "../../utils.js";
 
 function visit(

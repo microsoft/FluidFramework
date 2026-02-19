@@ -33,7 +33,7 @@ import type {
 	StateMap,
 } from "./latestMapTypes.js";
 import type { LatestData, StateSchemaValidator, ValueAccessor } from "./latestValueTypes.js";
-import type { Attendee, AttendeeId, Presence, SpecificAttendee } from "./presence.js";
+import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import type { PostUpdateAction, ValueManager } from "./statesManagerTypes.js";
 import type { ValidatableOptionalState } from "./validatableTypes.js";

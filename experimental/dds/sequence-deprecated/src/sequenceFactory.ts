@@ -6,14 +6,14 @@
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { IJSONSegment } from "@fluidframework/merge-tree/internal";
 import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence/internal";
 import {
-	createSharedObjectKind,
 	ISharedObject,
+	createSharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";

@@ -8,9 +8,9 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	objectSchema,
-	type SimpleKeyMap,
 	setField,
 	type TreeObjectNode,
+	type SimpleKeyMap,
 } from "./objectNode.js";
 export {
 	isObjectNodeSchema,

@@ -9,8 +9,8 @@ import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils"
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type {
-	IChannel,
 	IChannelServices,
+	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISegmentInternal } from "@fluidframework/merge-tree/internal";
 import {

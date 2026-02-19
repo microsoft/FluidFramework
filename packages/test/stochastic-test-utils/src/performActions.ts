@@ -7,19 +7,19 @@ import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 
 import {
-	type BaseOperation,
 	combineReducers,
 	combineReducersAsync,
+	type BaseOperation,
 } from "./combineReducers.js";
 import { makeRandom } from "./random.js";
 import {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Reducer,
 	SaveInfo,
+	done,
 } from "./types.js";
 
 type RealOperation<T extends BaseOperation> = T & {

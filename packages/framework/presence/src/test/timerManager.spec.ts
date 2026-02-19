@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { after, afterEach, before, beforeEach, describe, it } from "mocha";
-import { type SinonFakeTimers, spy, useFakeTimers } from "sinon";
+import { describe, it, after, afterEach, before, beforeEach } from "mocha";
+import { useFakeTimers, type SinonFakeTimers, spy } from "sinon";
 
 import { TimerManager } from "../timerManager.js";
 

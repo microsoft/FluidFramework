@@ -4,10 +4,10 @@
  */
 
 import type {
-	IChannelAttributes,
-	IChannelFactory,
 	IChannelServices,
+	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	createSharedObjectKind,

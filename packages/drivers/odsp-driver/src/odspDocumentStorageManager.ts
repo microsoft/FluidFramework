@@ -10,12 +10,12 @@ import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
-	type ICreateBlobResponse,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
-	type ISnapshotTree,
 	type ISummaryContext,
+	type ICreateBlobResponse,
 	type IVersion,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getKeyForCacheEntry,
@@ -23,19 +23,19 @@ import {
 	RateLimiter,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type InstrumentedStorageTokenFetcher,
 	type IOdspResolvedUrl,
 	type ISnapshotOptions,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	generateStack,
-	type IConfigProvider,
 	type ITelemetryLoggerExt,
+	PerformanceEvent,
+	generateStack,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-	PerformanceEvent,
+	type IConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -49,12 +49,12 @@ import type {
 import { useCreateNewModule } from "./createFile/index.js";
 import type { EpochTracker } from "./epochTracker.js";
 import {
-	downloadSnapshot,
-	fetchSnapshot,
-	fetchSnapshotWithRedeem,
-	getTreeStats,
 	type ISnapshotRequestAndResponseOptions,
 	type SnapshotFormatSupportType,
+	downloadSnapshot,
+	getTreeStats,
+	fetchSnapshot,
+	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import type { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
@@ -62,14 +62,14 @@ import type { FlushResult } from "./odspDocumentDeltaConnection.js";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
 import {
+	type IOdspResponse,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
-	type IOdspResponse,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	snapshotWithLoadingGroupIdSupported,
-	type TokenFetchOptionsEx,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 

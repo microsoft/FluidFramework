@@ -5,8 +5,8 @@
 
 import type {
 	IDocumentDeltaStorageService,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { streamFromMessages } from "@fluidframework/driver-utils/internal";
 

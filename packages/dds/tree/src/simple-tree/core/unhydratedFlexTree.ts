@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
-import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -24,18 +24,9 @@ import {
 	type Value,
 } from "../../core/index.js";
 import {
-	currentObserver,
-	cursorForMapTreeField,
-	cursorForMapTreeNode,
-	FieldKinds,
-	type FlexFieldKind,
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
 	type FlexTreeContext,
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeHydratedContext,
-	type FlexTreeHydratedContextMinimal,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
@@ -43,14 +34,23 @@ import {
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
 	flexTreeMarker,
-	type HydratedFlexTreeNode,
 	indexForAt,
+	type FlexTreeHydratedContext,
+	type FlexFieldKind,
+	FieldKinds,
+	type SequenceFieldEditBuilder,
+	cursorForMapTreeNode,
+	type OptionalFieldEditBuilder,
+	type ValueFieldEditBuilder,
+	type FlexibleNodeContent,
+	type FlexTreeHydratedContextMinimal,
+	type FlexibleFieldContent,
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
+	type HydratedFlexTreeNode,
+	cursorForMapTreeField,
 	type MinimalFieldMap,
-	type OptionalFieldEditBuilder,
-	type SequenceFieldEditBuilder,
-	type ValueFieldEditBuilder,
+	currentObserver,
 } from "../../feature-libraries/index.js";
 import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
 import type { ContextualFieldProvider } from "../fieldSchema.js";

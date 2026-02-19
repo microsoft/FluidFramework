@@ -11,7 +11,7 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
-import { type ISharedMap, type IValueChanged, MapFactory } from "@fluidframework/map/legacy";
+import { MapFactory, type ISharedMap, type IValueChanged } from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,

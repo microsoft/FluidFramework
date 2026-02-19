@@ -8,24 +8,24 @@ import { strict as assert } from "node:assert";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
-	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
-	MockHandle,
+	MockContainerRuntimeFactory,
 	MockStorage,
+	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type {
+	IToggleOperation,
+	IToggleMoveOperation,
 	IRevertible,
 	ISharedArray,
-	IToggleMoveOperation,
-	IToggleOperation,
 } from "../../index.js";
 import { SharedArrayBuilder, SharedArrayRevertible } from "../../index.js";
 import {
-	fillEntries,
-	getRandomInt,
-	verifyEntries,
 	verifyEventsEmitted,
+	verifyEntries,
+	getRandomInt,
+	fillEntries,
 	verifyIFluidHandleEntries,
 } from "../utilities.js";
 

@@ -8,8 +8,8 @@ import { getW3CData } from "@fluidframework/driver-base/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
 import {
-	ITelemetryLoggerExt,
 	PerformanceEvent,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { RouterliciousOrdererRestWrapper } from "./restWrapper.js";

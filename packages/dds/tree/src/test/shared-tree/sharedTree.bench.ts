@@ -13,22 +13,23 @@ import {
 } from "@fluid-tools/benchmark";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { EmptyKey, type NormalizedUpPath, rootFieldKey } from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
-	type Context,
-	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
+	jsonableTreeFromFieldCursor,
+	type Context,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 import {
-	deepPath,
 	type JSDeepTree,
 	type JSWideTree,
 	LinkedList,
+	WideRoot,
+	deepPath,
 	localFieldKey,
 	makeDeepContentSimple,
 	makeDeepStoredContent,
@@ -42,19 +43,18 @@ import {
 	readWideCursorTree,
 	readWideFlexTree,
 	readWideTreeAsJSObject,
-	WideRoot,
 } from "../scalableTestTrees.js";
 import { insert } from "../sequenceRootUtils.js";
 import {
-	checkoutWithContent,
-	chunkFromJsonTrees,
-	configureBenchmarkHooks,
-	fieldCursorFromInsertable,
-	flexTreeViewWithContent,
-	type SharedTreeWithContainerRuntime,
 	StringArray,
 	TestTreeProviderLite,
+	checkoutWithContent,
+	configureBenchmarkHooks,
+	chunkFromJsonTrees,
+	flexTreeViewWithContent,
 	toJsonableTree,
+	type SharedTreeWithContainerRuntime,
+	fieldCursorFromInsertable,
 } from "../utils.js";
 
 // number of nodes in test for wide trees

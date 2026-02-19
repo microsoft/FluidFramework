@@ -5,6 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
+
 import type {
 	Attendee,
 	ClientConnectionId,
@@ -13,9 +17,6 @@ import type {
 	PresenceWithNotifications,
 } from "@fluidframework/presence/alpha";
 import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../internalUtils.js";
 
@@ -24,11 +25,11 @@ import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	assertIdenticalTypes,
+	initialLocalClientConnectionId,
 	createInstanceOf,
 	createSpecificAttendeeId,
-	initialLocalClientConnectionId,
-	localAttendeeId,
 	prepareConnectedPresence,
+	localAttendeeId,
 } from "./testUtils.js";
 
 const attendeeId3 = createSpecificAttendeeId("attendeeId-3");

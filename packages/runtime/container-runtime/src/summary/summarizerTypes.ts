@@ -4,8 +4,8 @@
  */
 
 import type {
-	ContainerWarning,
 	IDeltaManager,
+	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
 import type {
 	ISummarizerEvents,
@@ -13,8 +13,8 @@ import type {
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IEventProvider,
-	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {

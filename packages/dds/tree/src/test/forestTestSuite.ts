@@ -7,14 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { FluidClientVersion } from "../codec/index.js";
 import {
-	clonePath,
-	createAnnouncedVisitor,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
 	type DetachedField,
 	DetachedFieldIndex,
-	detachedFieldAsKey,
 	EmptyKey,
 	type FieldKey,
 	type FieldUpPath,
@@ -22,13 +19,16 @@ import {
 	type IEditableForest,
 	type ITreeCursor,
 	type JsonableTree,
-	mapCursorField,
-	moveToDetachedField,
-	rootFieldKey,
 	TreeNavigationResult,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
+	clonePath,
+	createAnnouncedVisitor,
+	detachedFieldAsKey,
+	mapCursorField,
+	moveToDetachedField,
+	rootFieldKey,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -44,10 +44,10 @@ import {
 	toInitialSchema,
 } from "../simple-tree/index.js";
 import {
-	brand,
 	type IdAllocator,
-	idAllocatorFromMaxId,
 	type JsonCompatible,
+	brand,
+	idAllocatorFromMaxId,
 } from "../util/index.js";
 
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";

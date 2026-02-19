@@ -15,22 +15,22 @@ import type {
 import type {
 	IBatchMessage,
 	IContainerContext,
-	IContainerStorageService,
-	IDeltaManager,
 	ILoader,
 	ILoaderOptions,
+	IDeltaManager,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 

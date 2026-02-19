@@ -19,8 +19,8 @@ import type {
 } from "./presence.js";
 import type {
 	ClientUpdateEntry,
-	PresenceStatesInternal,
 	RuntimeLocalUpdateOptions,
+	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
 import {

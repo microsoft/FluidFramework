@@ -5,6 +5,7 @@
 
 import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
 
+import { assertIsStableId, generateStableId } from '../UuidUtilities.js';
 import { defaultClusterCapacity } from '../id-compressor/IdCompressor.js';
 import {
 	getPositiveDelta,
@@ -12,7 +13,6 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid.js';
-import { assertIsStableId, generateStableId } from '../UuidUtilities.js';
 
 describe('NumericUuid Perf', () => {
 	const stableId = assertIsStableId('4779fbf2-2012-4510-b4f0-28a99a9f8946');

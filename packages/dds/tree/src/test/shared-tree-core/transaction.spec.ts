@@ -12,9 +12,9 @@ import {
 
 import {
 	findAncestor,
+	rootFieldKey,
 	type GraphCommit,
 	type RevisionTag,
-	rootFieldKey,
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
@@ -23,8 +23,8 @@ import {
 } from "../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
-	SharedTreeBranch,
 	SquashingTransactionStack,
+	SharedTreeBranch,
 	TransactionResult,
 	TransactionStack,
 } from "../../shared-tree-core/index.js";

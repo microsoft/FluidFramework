@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { generateTable } from "./data.js";
 export { Table } from "./tree/index.js";
+export { generateTable } from "./data.js";

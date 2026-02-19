@@ -4,9 +4,9 @@
  */
 
 export {
-	CollaborativeInput,
 	type ICollaborativeInputProps,
 	type ICollaborativeInputState,
+	CollaborativeInput,
 } from "./CollaborativeInput.js";
 export {
 	CollaborativeTextArea,

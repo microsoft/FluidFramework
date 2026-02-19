@@ -22,10 +22,10 @@ import { createRoot } from "react-dom/client";
 
 import {
 	connectionConfig,
+	todoListContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
 	type TodoListContainerSchema,
-	todoListContainerSchema,
 } from "./fluid.js";
 import type { TodoList } from "./schema.js";
 import { TodoListAppView } from "./view.js";

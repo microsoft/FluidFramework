@@ -14,7 +14,7 @@ import {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
-import { type ISharedString, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import { reservedTileLabelsKey, type ISharedString } from "@fluidframework/sequence/internal";
 import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import

@@ -16,7 +16,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISharedSignal, SharedSignal } from "../../index.js";
+import { SharedSignal, type ISharedSignal } from "../../index.js";
 
 describe("SharedSignal", () => {
 	let factory: IChannelFactory;

@@ -6,12 +6,12 @@
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	offsetChangeAtomId,
 	type RevisionTag,
+	offsetChangeAtomId,
 } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { CellId, Changeset } from "../../../feature-libraries/sequence-field/types.js";
+import type { Changeset, CellId } from "../../../feature-libraries/sequence-field/types.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -19,8 +19,8 @@ import { mintRevisionTag } from "../../utils.js";
 
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
-	assertChangesetsEqual,
 	testInvert as invertChange,
+	assertChangesetsEqual,
 	tagChangeInline,
 } from "./utils.js";
 

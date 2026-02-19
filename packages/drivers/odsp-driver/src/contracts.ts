@@ -4,8 +4,8 @@
  */
 
 import type {
-	ISequencedDocumentMessage,
 	ISnapshot,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 

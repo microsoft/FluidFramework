@@ -4,7 +4,6 @@
  */
 
 import { Flags } from "@oclif/core";
-
 import { getCodeCoverageReport } from "../../codeCoverage/codeCoveragePr.js";
 import {
 	getPackagesWithCodeCoverageChanges,

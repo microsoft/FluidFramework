@@ -6,7 +6,7 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
+import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index.js";
 
 /**
  * Type alias to document which values are un-hydrated.

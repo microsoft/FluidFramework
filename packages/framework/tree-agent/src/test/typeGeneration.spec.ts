@@ -7,16 +7,16 @@ import { strict as assert } from "node:assert";
 
 import {
 	getSimpleSchema,
-	type ImplicitFieldSchema,
-	type InsertableField,
 	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableField,
 } from "@fluidframework/tree/internal";
 
-import { buildFunc, type ExposedMethods, exposeMethodsSymbol } from "../methodBinding.js";
+import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { fluidHandleTypeName } from "../prompt.js";
-import { type ExposedProperties, exposePropertiesSymbol } from "../propertyBinding.js";
+import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { typeFactory } from "../treeAgentTypes.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
 

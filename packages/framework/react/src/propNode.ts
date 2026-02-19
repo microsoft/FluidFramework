@@ -4,7 +4,7 @@
  */
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
-import type { TreeLeafValue, TreeNode } from "@fluidframework/tree";
+import type { TreeNode, TreeLeafValue } from "@fluidframework/tree";
 
 /**
  * A type erased TreeNode for use in react props.

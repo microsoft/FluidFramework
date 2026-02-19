@@ -8,16 +8,17 @@ import type {
 	InternalUtilityTypes,
 	JsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
+import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
+import { spy } from "sinon";
+import type { SinonFakeTimers } from "sinon";
+
 import type {
 	AttendeeId,
 	ClientConnectionId,
 	PresenceWithNotifications,
 	StateSchemaValidator,
 } from "@fluidframework/presence/alpha";
-import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers } from "sinon";
-import { spy } from "sinon";
 
 import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
 import { createPresenceManager } from "../presenceManager.js";

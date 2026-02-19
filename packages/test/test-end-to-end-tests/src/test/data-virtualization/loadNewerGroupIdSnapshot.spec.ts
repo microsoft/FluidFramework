@@ -26,10 +26,10 @@ import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definition
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	createSummarizerFromFactory,
 	type ITestObjectProvider,
-	summarizeNow,
 	toIDeltaManagerFull,
+	createSummarizerFromFactory,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";

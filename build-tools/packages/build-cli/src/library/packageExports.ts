@@ -7,7 +7,6 @@ import path from "node:path";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import * as resolve from "resolve.exports";
-
 import { ApiLevel } from "./apiLevel.js";
 
 /**

@@ -8,20 +8,20 @@ import { IDisposable } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
-	IConnected,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
-	IDocumentMessage,
 	IDocumentService,
-	ISequencedDocumentMessage,
+	IClientConfiguration,
+	IConnected,
+	IDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
-	type ISnapshotTree,
 	ITokenClaims,
 	IVersion,
 	ScopeType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
 import { ReplayController } from "./replayController.js";

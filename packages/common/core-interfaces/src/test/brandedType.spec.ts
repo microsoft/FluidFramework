@@ -9,9 +9,9 @@ import { createInstanceOf } from "./testUtils.js";
 import type { BrandedString } from "./testValues.js";
 import {
 	brandedNumber,
+	brandedString,
 	brandedObject,
 	brandedObjectWithString,
-	brandedString,
 } from "./testValues.js";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.

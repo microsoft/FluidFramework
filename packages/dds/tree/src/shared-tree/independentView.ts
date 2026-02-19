@@ -6,13 +6,13 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	createIdCompressor,
 	type IIdCompressor,
+	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
 import {
-	type CodecWriteOptions,
 	FluidClientVersion,
+	type CodecWriteOptions,
 	type ICodecOptions,
 } from "../codec/index.js";
 import {
@@ -22,32 +22,32 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
-	combineChunks,
 	createNodeIdentifierManager,
-	defaultIncrementalEncodingPolicy,
-	defaultSchemaPolicy,
-	type FieldBatchEncodingContext,
 	makeFieldBatchCodec,
 	makeSchemaCodec,
+	type FieldBatchEncodingContext,
+	defaultSchemaPolicy,
 	TreeCompressionStrategy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
+import { combineChunks } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
-	ImplicitFieldSchema,
-	ITreeAlpha,
-	ReadSchema,
-	SimpleTreeSchema,
-	TreeView,
-	TreeViewAlpha,
 	TreeViewConfiguration,
-	VerboseTree,
+	ImplicitFieldSchema,
+	TreeViewAlpha,
+	ITreeAlpha,
 	ViewableTree,
+	TreeView,
+	ReadSchema,
+	VerboseTree,
+	SimpleTreeSchema,
 } from "../simple-tree/index.js";
 import {
-	Breakable,
-	type JsonCompatible,
 	type JsonCompatibleReadOnly,
+	type JsonCompatible,
+	Breakable,
 	oneFromIterable,
 } from "../util/index.js";
 

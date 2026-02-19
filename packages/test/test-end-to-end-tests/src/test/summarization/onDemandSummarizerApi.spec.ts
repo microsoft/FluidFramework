@@ -8,9 +8,9 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
+	loadSummarizerContainerAndMakeSummary,
 	type ILoadSummarizerContainerProps,
 	type LoadSummarizerSummaryResult,
-	loadSummarizerContainerAndMakeSummary,
 } from "@fluidframework/container-loader/internal";
 import {
 	ISummarizeResults,
@@ -21,11 +21,11 @@ import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/inte
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	createLoaderProps,
-	createSummarizer,
-	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
+	DataObjectFactoryType,
 	ITestObjectProvider,
+	createSummarizer,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

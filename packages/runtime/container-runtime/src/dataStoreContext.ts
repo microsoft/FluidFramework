@@ -4,22 +4,22 @@
  */
 
 import {
+	TypedEventEmitter,
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
-	TypedEventEmitter,
 } from "@fluid-internal/client-utils";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import {
 	type IDeltaManager,
-	type IDeltaManagerFull,
 	isIDeltaManagerFull,
+	type IDeltaManagerFull,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
-	IEvent,
 	ITelemetryBaseProperties,
+	IEvent,
 } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
@@ -29,11 +29,11 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISnapshot,
+	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -42,34 +42,34 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	ContainerExtensionExpectations,
-	ContainerExtensionId,
+	FluidDataStoreMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreContextInternal,
-	FluidDataStoreMessage,
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContextDetached,
-	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	IInboundSignalMessage,
-	IPendingMessagesState,
 	IProvideFluidDataStoreFactory,
-	IRuntimeMessageCollection,
-	IRuntimeStorageService,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	MinimumVersionForCollab,
-	PackagePath,
 	SummarizeInternalFn,
+	IInboundSignalMessage,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IFluidDataStoreFactory,
+	PackagePath,
+	IRuntimeStorageService,
+	MinimumVersionForCollab,
+	ContainerExtensionId,
+	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -77,15 +77,15 @@ import {
 	isSnapshotFetchRequiredForLoadingGroupId,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildMonitoringContext,
 	DataProcessingError,
-	extractSafePropertiesFromMessage,
-	generateStack,
 	LoggingError,
 	type MonitoringContext,
 	ThresholdCounter,
-	tagCodeArtifacts,
 	UsageError,
+	createChildMonitoringContext,
+	extractSafePropertiesFromMessage,
+	generateStack,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidParentContextPrivate } from "./channelCollection.js";
@@ -95,13 +95,13 @@ import {
 	validateDatastoreCompatibility,
 } from "./runtimeLayerCompatState.js";
 import {
+	// eslint-disable-next-line import-x/no-deprecated
+	type ReadFluidDataStoreAttributes,
+	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	hasIsolatedChannels,
-	// eslint-disable-next-line import-x/no-deprecated
-	type ReadFluidDataStoreAttributes,
-	type WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 

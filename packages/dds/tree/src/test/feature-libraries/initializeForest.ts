@@ -4,16 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
+import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
-	combineVisitors,
 	type DeltaRoot,
-	deltaForRootInitialization,
 	type IEditableForest,
 	type ITreeCursorSynchronous,
-	makeDetachedFieldIndex,
 	type RevisionTagCodec,
+	combineVisitors,
+	deltaForRootInitialization,
+	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../core/index.js";
 import { combineChunks } from "../../feature-libraries/index.js";

@@ -4,11 +4,11 @@
  */
 
 import {
-	type IContainer,
 	isIDeltaManagerFull,
 	LoaderHeader,
+	type IContainer,
 } from "@fluidframework/container-definitions/internal";
-import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest, IErrorBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 

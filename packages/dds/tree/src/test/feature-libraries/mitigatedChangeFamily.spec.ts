@@ -7,12 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type { ICodecFamily } from "../../codec/index.js";
 import type {
-	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeFamilyEditor,
-	RevisionReplacer,
-	RevisionTag,
 	TaggedChange,
+	ChangeEncodingContext,
+	RevisionTag,
+	RevisionReplacer,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 import { mintRevisionTag } from "../utils.js";

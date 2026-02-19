@@ -10,6 +10,8 @@ import { convertNodeDataIds } from '../../IdConversion.js';
 import { Definition, NodeId, OpSpaceNodeId, SessionId, StableNodeId, TraitLabel } from '../../Identifiers.js';
 import { initialTree } from '../../InitialTree.js';
 import { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities.js';
+import { RevisionView } from '../../RevisionView.js';
+import { TraitLocation } from '../../TreeView.js';
 import {
 	BuildNodeInternal,
 	ChangeNode,
@@ -19,8 +21,6 @@ import {
 	TraitMap,
 	TreeNode,
 } from '../../persisted-types/index.js';
-import { RevisionView } from '../../RevisionView.js';
-import { TraitLocation } from '../../TreeView.js';
 
 /** A legacy format of a `TestNode` */
 export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;

@@ -5,10 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	validateAssertionError,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldKey,
@@ -21,7 +19,7 @@ import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
 import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
-import { Breakable, brand, type JsonCompatible } from "../../util/index.js";
+import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
 import { fieldJsonCursor } from "../json/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";

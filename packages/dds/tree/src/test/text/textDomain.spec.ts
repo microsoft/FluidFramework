@@ -7,13 +7,13 @@ import { strict as assert } from "node:assert";
 
 import {
 	allowUnused,
-	type NodeFromSchema,
 	TreeViewConfiguration,
+	type NodeFromSchema,
 } from "../../simple-tree/index.js";
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules
 import { TextAsTree } from "../../text/textDomain.js";
-import type { areSafelyAssignable, requireTrue } from "../../util/index.js";
+import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 
 describe("textDomain", () => {

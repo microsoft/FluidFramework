@@ -4,18 +4,15 @@
  */
 
 import * as assert from "assert";
-
 import type { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
-
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import type { Package } from "../common/npmPackage";
 import type { Timer } from "../common/timer";
-
 import type { BuildContext } from "./buildContext";
 import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";

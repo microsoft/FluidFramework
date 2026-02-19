@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-
 import type { Logger, Package } from "@fluidframework/build-tools";
 import registerDebug from "debug";
 import { readJsonSync } from "fs-extra/esm";

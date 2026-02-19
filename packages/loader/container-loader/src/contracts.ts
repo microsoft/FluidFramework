@@ -5,21 +5,21 @@
 
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	type IConnectionDetails,
 	type IDeltaQueue,
+	type ReadOnlyInfo,
 	type IFluidCodeDetails,
 	isFluidPackage,
-	type ReadOnlyInfo,
+	type IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import type { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import type {
-	IClientConfiguration,
 	IContainerPackageInfo,
+	IClientConfiguration,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
+	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 

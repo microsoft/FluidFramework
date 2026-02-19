@@ -9,17 +9,17 @@ import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	compareFieldUpPaths,
 	EmptyKey,
 	type FieldKey,
 	type FieldUpPath,
 	type ITreeCursor,
 	type JsonableTree,
 	type PathRootPrefix,
-	rootFieldKey,
-	setGenericTreeField,
 	type TreeNodeSchemaIdentifier,
 	type UpPath,
+	compareFieldUpPaths,
+	rootFieldKey,
+	setGenericTreeField,
 } from "../core/index.js";
 import {
 	cursorForJsonableTreeNode,

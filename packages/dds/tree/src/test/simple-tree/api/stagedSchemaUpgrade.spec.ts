@@ -22,9 +22,9 @@ import {
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
 	schemaStatics,
+	toUpgradeSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 

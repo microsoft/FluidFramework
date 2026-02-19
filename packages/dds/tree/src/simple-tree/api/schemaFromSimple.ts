@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import {
-	type AllowedTypesFull,
 	NodeKind,
-	SchemaUpgrade,
 	type TreeNodeSchema,
+	type AllowedTypesFull,
+	SchemaUpgrade,
 } from "../core/index.js";
 import {
-	FieldKind,
-	type FieldProps,
 	type FieldSchema,
 	type FieldSchemaAlpha,
+	FieldKind,
+	type FieldProps,
 } from "../fieldSchema.js";
 import type {
 	SchemaType,

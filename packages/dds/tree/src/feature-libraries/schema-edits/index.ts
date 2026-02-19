@@ -4,8 +4,8 @@
  */
 
 export {
-	getCodecTreeForSchemaChangeFormat,
 	makeSchemaChangeCodecs,
+	getCodecTreeForSchemaChangeFormat,
 } from "./schemaChangeCodecs.js";
-export { EncodedSchemaChange } from "./schemaChangeFormat.js";
 export type { SchemaChange } from "./schemaChangeTypes.js";
+export { EncodedSchemaChange } from "./schemaChangeFormat.js";

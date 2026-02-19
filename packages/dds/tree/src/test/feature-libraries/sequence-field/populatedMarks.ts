@@ -7,13 +7,13 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ChangeAtomId } from "../../../core/index.js";
 import type {
-	Attach,
 	CellMark,
+	Attach,
 	Detach,
 	MarkEffect,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
-import { brand, type Populated } from "../../../util/index.js";
+import { type Populated, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 

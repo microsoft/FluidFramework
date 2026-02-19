@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-
 import {
 	REPO_ROOT_TOKEN,
 	replaceRepoRootToken,

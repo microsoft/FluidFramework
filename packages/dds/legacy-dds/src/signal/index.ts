@@ -4,9 +4,9 @@
  */
 
 export type {
+	SerializableTypeForSharedSignal,
 	ISharedSignal,
 	ISharedSignalEvents,
 	ISignalOperation,
-	SerializableTypeForSharedSignal,
 } from "./interfaces.js";
-export { SharedSignal, SharedSignalFactory } from "./sharedSignalFactory.js";
+export { SharedSignalFactory, SharedSignal } from "./sharedSignalFactory.js";

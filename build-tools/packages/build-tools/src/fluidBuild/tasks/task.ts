@@ -4,16 +4,13 @@
  */
 
 import * as assert from "assert";
-
 import { type AsyncPriorityQueue, priorityQueue } from "async";
 import registerDebug from "debug";
-
 import type { Package } from "../../common/npmPackage";
 import type { BuildContext } from "../buildContext";
 import type { BuildPackage } from "../buildGraph";
 import { BuildResult } from "../buildResult";
 import { options } from "../options";
-
 import type { LeafTask } from "./leaf/leafTask";
 
 const traceTaskInit = registerDebug("fluid-build:task:init");

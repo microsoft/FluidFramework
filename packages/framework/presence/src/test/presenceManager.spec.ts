@@ -19,10 +19,10 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
+	localAttendeeId,
+	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
-	initialLocalClientConnectionId,
-	localAttendeeId,
 	prepareConnectedPresence,
 	prepareDisconnectedPresence,
 } from "./testUtils.js";

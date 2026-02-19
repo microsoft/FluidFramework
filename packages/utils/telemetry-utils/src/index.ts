@@ -5,24 +5,24 @@
 
 export {
 	createChildMonitoringContext,
-	createConfigBasedOptionsProxy,
+	type MonitoringContext,
+	sessionStorageConfigProvider,
+	mixinMonitoringContext,
 	type IConfigProvider,
 	loggerToMonitoringContext,
-	type MonitoringContext,
-	mixinMonitoringContext,
-	type OptionConfigReaders,
-	sessionStorageConfigProvider,
 	wrapConfigProviderWithDefaults,
+	createConfigBasedOptionsProxy,
+	type OptionConfigReaders,
 } from "./config.js";
 export {
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	GenericError,
-	LayerIncompatibilityError,
-	type MessageLike,
 	UsageError,
 	validatePrecondition,
+	LayerIncompatibilityError,
+	type MessageLike,
 } from "./error.js";
 export {
 	extractLogSafeErrorProperties,
@@ -53,11 +53,10 @@ export {
 	isFluidError,
 	isLayerIncompatibilityError,
 } from "./fluidErrorBase.js";
-export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
 export {
+	eventNamespaceSeparator,
 	createChildLogger,
 	createMultiSinkLogger,
-	eventNamespaceSeparator,
 	formatTick,
 	type IPerformanceEventMarkers,
 	type ITelemetryLoggerPropertyBag,
@@ -66,37 +65,38 @@ export {
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
+	tagData,
+	tagCodeArtifacts,
 	TelemetryDataTag,
 	type TelemetryEventPropertyTypes,
-	tagCodeArtifacts,
-	tagData,
 } from "./logger.js";
 export {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 	MockLogger,
 } from "./mockLogger.js";
+export { ThresholdCounter } from "./thresholdCounter.js";
 export {
+	SampledTelemetryHelper,
 	type CustomMetrics,
 	type ICustomData,
 	type MeasureReturnType,
-	SampledTelemetryHelper,
 } from "./sampledTelemetryHelper.js";
-export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
-export type {
-	ITelemetryErrorEventExt,
-	ITelemetryEventExt,
-	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
-	ITelemetryPerformanceEventExt,
-	ITelemetryPropertiesExt,
-	TelemetryEventCategory,
-	TelemetryEventPropertyTypeExt,
-} from "./telemetryTypes.js";
-export { ThresholdCounter } from "./thresholdCounter.js";
 export {
 	createSampledLogger,
 	type IEventSampler,
 	type ISampledTelemetryLogger,
 	measure,
 } from "./utils.js";
+export type {
+	TelemetryEventPropertyTypeExt,
+	ITelemetryEventExt,
+	ITelemetryGenericEventExt,
+	ITelemetryErrorEventExt,
+	ITelemetryPerformanceEventExt,
+	ITelemetryLoggerExt,
+	ITelemetryPropertiesExt,
+	TelemetryEventCategory,
+} from "./telemetryTypes.js";
+export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
+export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";

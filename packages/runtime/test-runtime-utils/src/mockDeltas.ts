@@ -15,9 +15,9 @@ import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
 	IDocumentMessage,
+	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

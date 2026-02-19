@@ -6,13 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type BenchmarkTimer,
-	type BenchmarkTimingOptions,
-	BenchmarkType,
 	benchmark,
 	benchmarkMemory,
-	type IMemoryTestObject,
+	BenchmarkType,
 	isInPerformanceTestingMode,
+	type BenchmarkTimer,
+	type BenchmarkTimingOptions,
+	type IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";

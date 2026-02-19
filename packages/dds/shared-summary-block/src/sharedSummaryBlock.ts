@@ -4,20 +4,20 @@
  */
 
 import type {
-	IChannelAttributes,
-	IChannelStorageService,
-	IFluidDataStoreRuntime,
 	Jsonable,
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
-	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedSummaryBlock } from "./interfaces.js";

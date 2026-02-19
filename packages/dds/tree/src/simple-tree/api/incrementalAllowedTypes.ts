@@ -9,7 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { FieldKey } from "../../core/index.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
-import { type AllowedTypesFull, getTreeNodeSchemaPrivateData } from "../core/index.js";
+import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeSchema } from "../treeSchema.js";
 

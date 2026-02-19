@@ -18,8 +18,8 @@ import {
 
 import { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 import {
-	type ConsensusQueue,
 	ConsensusQueueFactory,
+	type ConsensusQueue,
 } from "../consensusOrderedCollectionFactory.js";
 import { ConsensusQueueClass } from "../consensusQueue.js";
 import { ConsensusResult, type IConsensusOrderedCollection } from "../interfaces.js";

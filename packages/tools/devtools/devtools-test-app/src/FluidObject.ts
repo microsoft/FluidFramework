@@ -18,7 +18,7 @@ import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframewor
 import { SharedTree, type TreeView } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
-import { TodoItem, TodoList } from "./Schema.js";
+import { TodoList, TodoItem } from "./Schema.js";
 
 /**
  * Props used when creating a new todo item.

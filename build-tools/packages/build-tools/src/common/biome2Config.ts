@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert/strict";
 import { stat } from "node:fs/promises";
 import path from "node:path";
-
 import ignore from "ignore";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";

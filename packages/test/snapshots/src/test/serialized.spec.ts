@@ -7,18 +7,18 @@ import { strict as assert } from "assert";
 import fs from "fs";
 
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { ISharedCell, SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, ISharedCell } from "@fluidframework/cell/internal";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	rehydrateDetachedContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
-import { type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
 	ConsensusOrderedCollection,

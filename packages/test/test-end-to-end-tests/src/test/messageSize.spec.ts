@@ -22,12 +22,12 @@ import {
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
+	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

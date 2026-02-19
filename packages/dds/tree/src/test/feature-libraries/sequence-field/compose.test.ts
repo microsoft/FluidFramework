@@ -8,9 +8,9 @@ import { strict as assert, fail } from "node:assert";
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	makeAnonChange,
 	type RevisionInfo,
 	type RevisionTag,
+	makeAnonChange,
 } from "../../../core/index.js";
 import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -20,7 +20,7 @@ import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { mintRevisionTag } from "../../utils.js";
 
-import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
+import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areComposable,
 	assertChangesetsEqual,

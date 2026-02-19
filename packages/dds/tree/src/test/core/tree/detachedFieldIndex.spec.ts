@@ -9,7 +9,7 @@ import path from "node:path";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index.js";
+import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	DetachedFieldIndex,
 	type ForestRootId,
@@ -30,18 +30,18 @@ import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js"
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
-	brand,
 	type IdAllocator,
-	idAllocatorFromMaxId,
 	type JsonCompatibleReadOnly,
+	brand,
+	idAllocatorFromMaxId,
 } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import {
-	assertIsSessionId,
-	createSnapshotCompressor,
-	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
+	createSnapshotCompressor,
+	assertIsSessionId,
+	mintRevisionTag,
 } from "../../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();

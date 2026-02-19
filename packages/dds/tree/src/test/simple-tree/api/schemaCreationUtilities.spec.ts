@@ -15,20 +15,20 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
 import {
-	type InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
 	SchemaFactory,
-	SchemaFactoryBeta,
-	type TreeNodeFromImplicitAllowedTypes,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeNodeFromImplicitAllowedTypes,
+	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
 import {
+	unsafeArrayToTuple,
 	type areSafelyAssignable,
 	type isAssignableTo,
 	type requireFalse,
 	type requireTrue,
-	unsafeArrayToTuple,
 } from "../../../util/index.js";
 import { testSchemaCompatibilitySnapshots } from "../../snapshots/index.js";
 import { getView } from "../../utils.js";

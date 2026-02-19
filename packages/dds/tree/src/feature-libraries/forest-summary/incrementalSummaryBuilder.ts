@@ -16,10 +16,10 @@ import type { ITreeCursorSynchronous } from "../../core/index.js";
 import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
 import {
 	brand,
-	type JsonCompatible,
-	type NestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
+	type JsonCompatible,
+	type NestedMap,
 } from "../../util/index.js";
 import type {
 	ChunkReferenceId,

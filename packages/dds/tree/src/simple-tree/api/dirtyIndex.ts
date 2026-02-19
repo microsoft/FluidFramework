@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	type AnnouncedVisitor,
-	CursorLocationType,
 	createAnnouncedVisitor,
+	CursorLocationType,
+	type AnnouncedVisitor,
 	type FieldKey,
 	type IEditableForest,
 	type UpPath,

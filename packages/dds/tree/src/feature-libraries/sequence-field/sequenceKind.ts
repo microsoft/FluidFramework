@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { forbiddenFieldKindIdentifier, Multiplicity } from "../../core/index.js";
+import { Multiplicity, forbiddenFieldKindIdentifier } from "../../core/index.js";
 import {
-	identifierFieldIdentifier,
-	optionalIdentifier,
-	requiredIdentifier,
 	sequenceIdentifier,
+	identifierFieldIdentifier,
+	requiredIdentifier,
+	optionalIdentifier,
 } from "../fieldKindIdentifiers.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 

@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type {
-	BroadcastControlSettings,
 	BroadcastControls,
+	BroadcastControlSettings,
 	Presence,
 } from "@fluidframework/presence/beta";
 

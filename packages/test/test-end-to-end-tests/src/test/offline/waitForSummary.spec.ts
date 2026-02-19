@@ -11,9 +11,9 @@ import {
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import {
+	LoaderHeader,
 	type IContainer,
 	type IHostLoader,
-	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type {
@@ -24,21 +24,21 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
+	type ITestObjectProvider,
+	type ITestContainerConfig,
+	createSummarizer,
+	summarizeNow,
 	type ChannelFactoryRegistry,
 	createAndAttachContainer,
-	createSummarizer,
 	DataObjectFactoryType,
-	type ITestContainerConfig,
 	type ITestFluidObject,
-	type ITestObjectProvider,
-	summarizeNow,
-	timeoutAwait,
 	waitForContainerConnection,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
-import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
-import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
+import { loadContainerOffline, generatePendingState } from "./offlineTestsUtils.js";
 
 const loadSummarizerAndSummarize = async (
 	provider: ITestObjectProvider,

@@ -8,8 +8,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { UnionToTuple } from "../../util/index.js";
 import type {
-	InternalTreeNode,
 	NodeFromSchema,
+	InternalTreeNode,
 	NodeKind,
 	TreeNode,
 	TreeNodeSchema,

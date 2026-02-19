@@ -4,9 +4,9 @@
  */
 
 import {
-	DriverError,
 	DriverErrorTypes,
 	IDriverErrorBase,
+	DriverError,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

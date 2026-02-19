@@ -6,11 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import {
+	AnnotatedAllowedTypesInternal,
+	walkAllowedTypes,
 	type AllowedTypesFullEvaluated,
 	type AnnotatedAllowedType,
-	AnnotatedAllowedTypesInternal,
 	type SchemaVisitor,
-	walkAllowedTypes,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 import {

@@ -11,10 +11,8 @@ import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree } from "@fluidframework/tree/internal";
-
 // eslint-disable-next-line import-x/no-internal-modules
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
-
 import Quill from "quill";
 import Delta from "quill-delta";
 import * as React from "react";

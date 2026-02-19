@@ -6,8 +6,8 @@
 import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type {
-	ISharedObject,
 	ISharedObjectEvents,
+	ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedArrayOperation } from "./sharedArrayOperations.js";

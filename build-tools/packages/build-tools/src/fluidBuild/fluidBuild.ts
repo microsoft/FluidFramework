@@ -9,7 +9,6 @@ import { Spinner } from "picospinner";
 import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
-
 import type { BuildGraph } from "./buildGraph";
 import { BuildResult } from "./buildResult";
 import { commonOptions } from "./commonOptions";

@@ -38,8 +38,8 @@ export {
 	GetDevtoolsFeatures,
 	SetUnsampledTelemetry,
 } from "./devtools-messages/index.js";
+export type { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages.js";
 export type { IMessageRelay, IMessageRelayEvents } from "./MessageRelay.js";
-export type { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages.js";
 export {
 	GetTelemetryHistory,
 	TelemetryEvent,

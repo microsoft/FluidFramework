@@ -30,7 +30,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, type JsonCompatibleReadOnly, unbrand } from "../util/index.js";
+import { brand, unbrand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";

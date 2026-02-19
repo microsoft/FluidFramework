@@ -8,7 +8,6 @@
 // This file contains some helpers creating/executing benchmark suites using 'Benchmark.js'.
 
 import process = require("process");
-
 import { Suite } from "benchmark";
 
 let count = 0;

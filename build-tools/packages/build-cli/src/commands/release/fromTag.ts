@@ -17,7 +17,6 @@ import { findPackageOrReleaseGroup } from "../../args.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { MonoRepoKind, sortVersions } from "../../library/index.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
-
 import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
 
 const tagRefPrefix = "refs/tags/";

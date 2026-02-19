@@ -4,7 +4,6 @@
  */
 
 import path from "node:path";
-
 import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 

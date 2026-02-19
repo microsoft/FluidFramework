@@ -7,14 +7,13 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
 import type {
+	ISequencedDocumentMessage,
 	ICommittedProposal,
 	IQuorum,
 	IQuorumProposals,
-	ISequencedDocumentMessage,
 	ISequencedProposal,
 } from "@fluidframework/driver-definitions/internal";
 import events_pkg from "events_pkg";
-
 const { EventEmitter } = events_pkg;
 
 /**

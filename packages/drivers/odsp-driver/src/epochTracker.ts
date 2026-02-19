@@ -27,10 +27,10 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
+	PerformanceEvent,
 	isFluidError,
 	loggerToMonitoringContext,
 	normalizeError,
-	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -40,11 +40,11 @@ import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import type { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
+	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
 	getOdspResolvedUrl,
-	type IOdspResponse,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 

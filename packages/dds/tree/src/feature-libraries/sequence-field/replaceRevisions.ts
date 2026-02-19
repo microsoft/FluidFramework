@@ -6,8 +6,8 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	type ChangesetLocalId,
 	makeChangeAtomId,
+	type ChangesetLocalId,
 	type RevisionReplacer,
 	type RevisionTag,
 } from "../../core/index.js";

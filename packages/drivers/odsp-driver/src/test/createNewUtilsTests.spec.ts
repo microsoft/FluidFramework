@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import { bufferToString, fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import type {
+	ISnapshot,
 	IDocumentAttributes,
 	IFileEntry,
-	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,
@@ -32,13 +32,13 @@ import {
 import { getLocatorFromOdspUrl } from "../odspFluidFileLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
-	createCacheSnapshotKey,
-	getOdspResolvedUrl,
 	type IExistingFileInfo,
 	type INewFileInfo,
+	createCacheSnapshotKey,
+	getOdspResolvedUrl,
 } from "../odspUtils.js";
 
-import { mockFetchOKIf, mockFetchOk } from "./mockFetch.js";
+import { mockFetchOk, mockFetchOKIf } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

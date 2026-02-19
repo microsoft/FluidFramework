@@ -10,7 +10,7 @@ import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { TreeChunk } from "./chunk.js";
-import { type ITreeCursorSynchronous, mapCursorField } from "./cursor.js";
+import { mapCursorField, type ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
 import { areDetachedNodeIdsEqual, offsetDetachId } from "./deltaUtil.js";
 import type { DetachedFieldIndex } from "./detachedFieldIndex.js";

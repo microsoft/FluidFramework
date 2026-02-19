@@ -15,28 +15,33 @@ import {
 	AttributionId,
 	DetachedSequenceId,
 	FinalNodeId,
-	type NodeId,
 	OpSpaceNodeId,
 	TraitLabel,
+	type NodeId,
 } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
 import {
-	createSessionId,
-	hasOngoingSession,
-	IdCompressor,
-	IdCreationRange,
-	SerializedIdCompressorWithNoSession,
-} from './id-compressor/index.js';
-import {
 	ContextualizedNodeIdNormalizer,
-	getNodeIdContext,
 	NodeIdContext,
 	NodeIdConverter,
 	NodeIdGenerator,
 	NodeIdNormalizer,
+	getNodeIdContext,
 	scopeIdNormalizer,
 	sequencedIdNormalizer,
 } from './NodeIdUtilities.js';
+import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { MutableStringInterner, StringInterner } from './StringInterner.js';
+import { SummaryContents } from './Summary.js';
+import { InterningTreeCompressor } from './TreeCompressor.js';
+import {
+	IdCompressor,
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	createSessionId,
+	hasOngoingSession,
+} from './id-compressor/index.js';
 import {
 	ChangeInternal,
 	ChangeInternal_0_0_2,
@@ -50,7 +55,6 @@ import {
 	EditLogSummary,
 	EditWithoutId,
 	FluidEditHandle,
-	reservedIdCount,
 	SharedTreeEditOp,
 	SharedTreeEditOp_0_0_2,
 	SharedTreeOpType,
@@ -59,12 +63,8 @@ import {
 	Side,
 	StablePlaceInternal,
 	WriteFormat,
+	reservedIdCount,
 } from './persisted-types/index.js';
-import { RevisionView } from './RevisionView.js';
-import { getChangeNode_0_0_2FromView, getChangeNodeFromView } from './SerializationUtilities.js';
-import { MutableStringInterner, StringInterner } from './StringInterner.js';
-import { SummaryContents } from './Summary.js';
-import { InterningTreeCompressor } from './TreeCompressor.js';
 
 /**
  * Object capable of converting between the current internal representation for 0.1.1 edits and their wire format.

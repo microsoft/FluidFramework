@@ -16,7 +16,7 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
-import { type SinonFakeTimers, useFakeTimers } from "sinon";
+import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import type {
 	ISerializedStateManagerDocumentStorageService,

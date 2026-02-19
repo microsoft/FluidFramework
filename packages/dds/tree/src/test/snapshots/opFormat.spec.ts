@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion } from "../../codec/index.js";
-import { type ITree, SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration, type ITree } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 

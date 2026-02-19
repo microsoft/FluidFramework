@@ -8,31 +8,31 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type FieldKey,
-	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	type SchemaAndPolicy,
 	storedEmptyFieldSchema,
+	ValueSchema,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type SchemaAndPolicy,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
-	ValueSchema,
 } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
-	type FlexTreeHydratedContext,
 	MockNodeIdentifierManager,
+	type FlexTreeHydratedContext,
 } from "../../feature-libraries/index.js";
 import {
 	prepareForInsertionContextless,
 	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	stringSchema,
-	TreeArrayNode,
 	toStoredSchema,
+	TreeArrayNode,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import { checkoutWithContent, fieldSchema as createFieldSchema } from "../utils.js";

@@ -4,7 +4,6 @@
  */
 
 import path from "node:path";
-
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import fs from "fs-extra";
@@ -16,8 +15,8 @@ import { ApiLevel, isLegacy } from "../apiLevel.js";
 import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
-
 import { BaseCommand } from "./base.js";
+
 import { unscopedPackageNameString } from "./constants.js";
 
 interface Options {

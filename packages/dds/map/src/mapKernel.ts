@@ -20,8 +20,8 @@ import type {
 } from "./internalInterfaces.js";
 import {
 	type ILocalValue,
-	migrateIfSharedSerializable,
 	serializeValue,
+	migrateIfSharedSerializable,
 } from "./localValues.js";
 import { findLast, findLastIndex } from "./utils.js";
 

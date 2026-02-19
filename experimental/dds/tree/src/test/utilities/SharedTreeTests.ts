@@ -27,18 +27,6 @@ import { initialTree } from '../../InitialTree.js';
 import { CachingLogViewer } from '../../LogViewer.js';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth.js';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities.js';
-import {
-	ChangeInternal,
-	ChangeNode,
-	ChangeNode_0_0_2,
-	ChangeTypeInternal,
-	EditStatus,
-	SharedTreeEditOp,
-	SharedTreeSummary,
-	SharedTreeSummary_0_0_2,
-	SharedTreeSummaryBase,
-	WriteFormat,
-} from '../../persisted-types/index.js';
 import { getChangeNodeFromView } from '../../SerializationUtilities.js';
 import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder.js';
@@ -48,10 +36,24 @@ import { deserialize } from '../../SummaryBackCompatibility.js';
 import { InterningTreeCompressor } from '../../TreeCompressor.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { generateStableId, nilUuid } from '../../UuidUtilities.js';
+import {
+	ChangeInternal,
+	ChangeNode,
+	ChangeNode_0_0_2,
+	ChangeTypeInternal,
+	EditStatus,
+	SharedTreeEditOp,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummary_0_0_2,
+	WriteFormat,
+} from '../../persisted-types/index.js';
 
-import { buildLeaf, SimpleTestTree, TestTree } from './TestNode.js';
+import { SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';
 import {
+	SharedTreeTestingComponents,
+	SharedTreeTestingOptions,
 	areNodesEquivalent,
 	assertNoDelta,
 	getEditLogInternal,
@@ -59,8 +61,6 @@ import {
 	normalizeEdit,
 	normalizeId,
 	normalizeIds,
-	SharedTreeTestingComponents,
-	SharedTreeTestingOptions,
 	setUpTestTree,
 	spyOnSubmittedOps,
 	testTrait,

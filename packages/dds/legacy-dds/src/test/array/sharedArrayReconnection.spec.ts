@@ -6,16 +6,16 @@
 import { strict as assert } from "node:assert";
 
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 import {
-	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
+	MockContainerRuntimeFactoryForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
+import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ISharedArray } from "../../index.js";
 import { SharedArrayBuilder } from "../../index.js";
-import { fillEntries, getRandomInt, verifyEntries } from "../utilities.js";
+import { verifyEntries, fillEntries, getRandomInt } from "../utilities.js";
 
 describe("SharedArray", () => {
 	let sharedArray: ISharedArray<number>;

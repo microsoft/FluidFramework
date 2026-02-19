@@ -11,29 +11,29 @@ import {
 	type DeltaRoot,
 	type FieldKey,
 	type FieldKindIdentifier,
-	makeAnonChange,
 	type NormalizedUpPath,
 	type RevisionTag,
-	revisionMetadataSourceFromInfo,
 	type TaggedChange,
+	type UpPath,
+	makeAnonChange,
+	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
-	type UpPath,
 } from "../../core/index.js";
 import {
 	DefaultEditBuilder,
+	type FlexFieldKind,
+	type ModularChangeset,
+	type EditDescription,
+	genericFieldKind,
 	DefaultRevisionReplacer,
 	FieldKinds as defaultFieldKinds,
-	type EditDescription,
-	type FlexFieldKind,
-	genericFieldKind,
-	type ModularChangeset,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
-	intoDelta,
 	ModularChangeFamily,
+	intoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
@@ -44,10 +44,10 @@ import type {
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
-	brand,
 	type IdAllocator,
-	idAllocatorFromMaxId,
 	type Mutable,
+	brand,
+	idAllocatorFromMaxId,
 } from "../../util/index.js";
 import {
 	assertDeltaEqual,

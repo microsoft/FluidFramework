@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import type { IFluidCompatibilityMetadata } from "@fluidframework/build-tools";
 import { formatISO } from "date-fns";
 import { describe, it } from "mocha";

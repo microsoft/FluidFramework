@@ -6,17 +6,17 @@
 import type { TreeCheckout } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import {
+	isTreeNode,
+	isTreeNodeSchemaClass,
+	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
-	isTreeNode,
-	isTreeNodeSchemaClass,
 	type NodeKind,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
-	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";

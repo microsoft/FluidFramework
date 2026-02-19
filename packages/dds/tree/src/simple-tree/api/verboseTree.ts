@@ -11,18 +11,18 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	aboveRootPlaceholder,
 	EmptyKey,
+	keyAsDetachedField,
+	LeafNodeStoredSchema,
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
-	keyAsDetachedField,
-	LeafNodeStoredSchema,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import {
-	type CursorAdapter,
 	isTreeValue,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
+	type CursorAdapter,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
@@ -38,14 +38,14 @@ import {
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 
 import {
-	type CustomTreeNode,
 	customFromCursor,
-	type HandleConverter,
 	KeyEncodingOptions,
 	replaceHandles,
+	unknownTypeError,
+	type CustomTreeNode,
+	type HandleConverter,
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
-	unknownTypeError,
 } from "./customTree.js";
 
 /**

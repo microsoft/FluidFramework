@@ -5,8 +5,8 @@
 
 import type { VerboseTree } from "@fluidframework/tree/alpha";
 
-import { Page, Paragraph, Sentence, Span, Word } from "../domains/index.js";
-import { type LLMIntegrationTest, type ScorableVerboseTree, scoreSymbol } from "../utils.js";
+import { Page, Paragraph, Sentence, Word, Span } from "../domains/index.js";
+import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
 const expected: ScorableVerboseTree = {
 	"type": "com.microsoft.fluid.tree-agent.text.Page",

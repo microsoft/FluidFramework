@@ -7,9 +7,9 @@ import * as fs from "fs";
 
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	loadExistingContainer,
 	waitContainerToCatchUp,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {

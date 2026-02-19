@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { SchemaFactory, SchemaFactoryAlpha } from "./simple-tree/index.js";
 import type {
 	AllowedTypes,
+	FixRecursiveArraySchema,
+	TreeNodeFromImplicitAllowedTypes,
+	ValidateRecursiveSchema,
 	// #region Unused imports to make d.ts cleaner
 	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	ArrayNodeCustomizableSchemaUnsafe,
-	FixRecursiveArraySchema,
-	LeafSchema,
-	NodeKind,
 	System_Unsafe,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	TreeNodeSchemaClass,
 	TreeRecordNodeUnsafe,
-	ValidateRecursiveSchema,
+	NodeKind,
+	TreeNodeSchemaCore,
 	WithType,
+	LeafSchema,
 	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	// #endregion
 } from "./simple-tree/index.js";
-import { SchemaFactory, SchemaFactoryAlpha } from "./simple-tree/index.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.json");
 

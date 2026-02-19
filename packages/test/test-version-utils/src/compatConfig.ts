@@ -17,10 +17,10 @@ import {
 	compatKind,
 	compatVersions,
 	driver,
-	odspEndpointName,
 	r11sEndpointName,
-	reinstall,
 	tenantIndex,
+	reinstall,
+	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";

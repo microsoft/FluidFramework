@@ -11,13 +11,13 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "../../messageTypes.js";
 import type { IBatchMetadata } from "../../metadata.js";
-import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
 import {
 	BatchManager,
 	estimateSocketSize,
 	generateBatchId,
 	localBatchToOutboundBatch,
 } from "../../opLifecycle/index.js";
+import type { IBatchManagerOptions, LocalBatchMessage } from "../../opLifecycle/index.js";
 
 // Make a mock op with distinguishable contents
 function op(data: string = "Some Data"): LocalContainerRuntimeMessage {

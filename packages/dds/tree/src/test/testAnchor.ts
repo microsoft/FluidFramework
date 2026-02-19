@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type Anchor,
-	forEachNodeInSubtree,
-	getDetachedFieldContainingPath,
 	type IForestSubscription,
-	type ITreeSubscriptionCursor,
-	moveToDetachedField,
-	rootField,
-	TreeNavigationResult,
-	type TreeValue,
 	type UpPath,
+	moveToDetachedField,
+	type Anchor,
+	type ITreeSubscriptionCursor,
+	TreeNavigationResult,
 	type Value,
+	getDetachedFieldContainingPath,
+	rootField,
+	type TreeValue,
+	forEachNodeInSubtree,
 } from "../core/index.js";
 import { TreeStatus } from "../feature-libraries/index.js";
 

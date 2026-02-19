@@ -11,9 +11,9 @@ import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { fail } from '../../Common.js';
 import { revert } from '../../HistoryEditFactory.js';
 import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
 import { IdCompressor } from '../../id-compressor/index.js';
 import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types/index.js';
-import { SharedTree } from '../../SharedTree.js';
 
 import { TestTree } from './TestNode.js';
 import {

@@ -4,7 +4,6 @@
  */
 
 import type { Linter } from "eslint";
-
 import { recommended } from "../../common/build/eslint-config-fluid/flat.mts";
 import sharedConfig, { importInternalModulesAllowedForTest } from "../eslint.config.data.mts";
 

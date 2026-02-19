@@ -16,17 +16,17 @@ import { EditLog } from '../../EditLog.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
 import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers.js';
-import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
 import { SharedTree } from '../../SharedTree.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { nilUuid } from '../../UuidUtilities.js';
+import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
 import { applyTestEdits } from '../Summary.tests.js';
 
 import { buildLeaf } from './TestNode.js';
 import {
-	applyNoop,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
+	applyNoop,
 	setUpLocalServerTestSharedTree,
 	setUpTestTree,
 	spyOnSubmittedOps,

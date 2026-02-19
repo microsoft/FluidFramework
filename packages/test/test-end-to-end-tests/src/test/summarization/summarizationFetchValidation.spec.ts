@@ -10,18 +10,18 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizeResults, ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { ISnapshotTree, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import { ISummaryContext, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
+	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
-	type ITestContainerConfig,
-	type ITestFluidObject,
-	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
+	type ITestContainerConfig,
+	type ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
 import { createSandbox, SinonSandbox } from "sinon";
 

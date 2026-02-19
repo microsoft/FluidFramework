@@ -9,8 +9,8 @@ import {
 	IDeltaStorageService,
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	emptyMessageStream,

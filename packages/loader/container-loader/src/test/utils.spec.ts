@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type {
-	IDocumentAttributes,
 	IDocumentStorageService,
 	ISnapshot,
+	IDocumentAttributes,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 

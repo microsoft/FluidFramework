@@ -15,9 +15,9 @@ import type {
 	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
+	ITokenClaims,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

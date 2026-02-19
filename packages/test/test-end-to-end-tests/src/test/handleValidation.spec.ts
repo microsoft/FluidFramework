@@ -10,17 +10,17 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { ISharedCell } from "@fluidframework/cell/internal";
 import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import {
-	type FluidObject,
 	IFluidHandle,
 	IFluidLoadable,
+	type FluidObject,
 } from "@fluidframework/core-interfaces";
 import { isObject } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { type ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
-import { type ISharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrixFactory, type ISharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import {
 	ConsensusRegisterCollectionFactory,
@@ -35,9 +35,9 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
-	createAndAttachContainer,
-	DataObjectFactoryType,
 	ITestContainerConfig,
+	DataObjectFactoryType,
+	createAndAttachContainer,
 	ITestFluidObject,
 	type ITestObjectProvider,
 	timeoutAwait,
@@ -45,8 +45,8 @@ import {
 import {
 	ITree,
 	SchemaFactory,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 

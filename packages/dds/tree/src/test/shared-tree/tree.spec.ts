@@ -14,21 +14,21 @@ import { runTransaction, Tree } from "../../shared-tree/tree.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
 import {
-	type InsertableTypedNode,
-	type NodeFromSchema,
-	type rollback,
 	SchemaFactory,
-	type TransactionConstraint,
-	type TreeNodeSchema,
-	type TreeView,
-	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
+	type TreeView,
+	type InsertableTypedNode,
+	type TreeNodeSchema,
+	type NodeFromSchema,
+	type TreeViewAlpha,
+	type TransactionConstraint,
+	type rollback,
 } from "../../simple-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { createTestUndoRedoStacks, getView, TestTreeProviderLite } from "../utils.js";
+import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
 describe("treeApi", () => {
 	describe("runTransaction", () => {

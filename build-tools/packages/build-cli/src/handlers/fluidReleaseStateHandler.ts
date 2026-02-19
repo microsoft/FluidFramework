@@ -17,7 +17,6 @@ import type { Context } from "../library/index.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
 import type { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
-
 import { askForReleaseType } from "./askFunctions.js";
 import {
 	checkAssertTagging,

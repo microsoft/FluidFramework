@@ -12,10 +12,10 @@ import type { IFluidContainer } from "fluid-framework";
 import { DiceRollerController, type DieValue } from "./controller.js";
 import {
 	connectionConfig,
-	type DiceRollerContainerSchema,
 	diceRollerContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
+	type DiceRollerContainerSchema,
 } from "./fluid.js";
 import { buildDicePresence } from "./presence.js";
 import type { TwoDiceApp } from "./schema.js";

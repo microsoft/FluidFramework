@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { FluidClientVersion } from "../../codec/index.js";
 import {
+	independentInitializedView,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
-	independentInitializedView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
 import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";

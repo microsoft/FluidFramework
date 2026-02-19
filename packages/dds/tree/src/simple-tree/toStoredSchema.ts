@@ -4,20 +4,20 @@
  */
 
 import {
-	assert,
+	unreachableCase,
 	fail,
 	transformMapValues,
-	unreachableCase,
+	assert,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
-	type FieldKey,
-	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	type FieldKey,
+	type FieldKindIdentifier,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -29,19 +29,19 @@ import {
 	brand,
 	filterIterable,
 	getOrCreate,
-	type JsonCompatibleReadOnlyObject,
 	mapIterable,
+	type JsonCompatibleReadOnlyObject,
 } from "../util/index.js";
 
 import {
 	ExpectStored,
 	NodeKind,
+	Unchanged,
 	type SimpleSchemaTransformationOptions,
 	type StoredFromViewSchemaGenerationOptions,
 	type StoredSchemaGenerationOptions,
-	Unchanged,
 } from "./core/index.js";
-import { FieldKind, type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js";
+import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
 	SchemaType,
 	SimpleAllowedTypeAttributes,

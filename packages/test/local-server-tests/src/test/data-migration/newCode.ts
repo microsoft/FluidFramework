@@ -16,8 +16,8 @@ import { SchemaFactory } from "@fluidframework/tree";
 import {
 	ITree,
 	SharedTree,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "@fluidframework/tree/internal";
 
 import { runtimeOptions } from "./utils.js";

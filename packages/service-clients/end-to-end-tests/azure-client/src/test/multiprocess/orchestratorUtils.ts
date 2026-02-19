@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ChildProcess as AnyChildProcess } from "node:child_process";
 import { fork } from "node:child_process";
+import type { ChildProcess as AnyChildProcess } from "node:child_process";
 
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
@@ -12,13 +12,13 @@ import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/interna
 
 import type {
 	ConnectCommand,
-	EventEntry,
-	LatestMapValueGetResponseEvent,
+	MessageFromChild,
+	LatestValueUpdatedEvent,
 	LatestMapValueUpdatedEvent,
 	LatestValueGetResponseEvent,
-	LatestValueUpdatedEvent,
-	MessageFromChild,
+	LatestMapValueGetResponseEvent,
 	MessageToChild,
+	EventEntry,
 } from "./messageTypes.js";
 
 /**

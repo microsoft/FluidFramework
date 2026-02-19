@@ -8,9 +8,9 @@ import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-objec
 
 import { fail } from './Common.js';
 import type { EditHandle } from './EditLog.js';
+import type { MutableStringInterner } from './StringInterner.js';
 import type { IdCompressor } from './id-compressor/index.js';
 import type { ChangeInternal, ChangeNode, EditLogSummary, SharedTreeSummaryBase } from './persisted-types/index.js';
-import type { MutableStringInterner } from './StringInterner.js';
 
 /**
  * The contents of a SharedTree summary, converted to a common internal format that can be

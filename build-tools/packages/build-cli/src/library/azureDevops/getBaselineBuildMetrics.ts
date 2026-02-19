@@ -4,15 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import { getZipObjectFromArtifact } from "@fluidframework/bundle-size-tools";
 import type { WebApi } from "azure-devops-node-api";
 import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import { BuildResult } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type JSZip from "jszip";
-
 import type { CommandLogger } from "../../logging.js";
-
 import type { IAzureDevopsBuildCoverageConstants } from "./constants.js";
 import { getBuild, getBuilds } from "./utils.js";
 

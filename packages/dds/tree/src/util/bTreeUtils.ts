@@ -4,11 +4,11 @@
  */
 
 import { debugAssert } from "@fluidframework/core-utils/internal";
-import { BTree, type DefaultComparable, defaultComparator } from "@tylerbu/sorted-btree-es6";
+import { BTree, defaultComparator, type DefaultComparable } from "@tylerbu/sorted-btree-es6";
 // eslint-disable-next-line import-x/no-internal-modules
 import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
-import { type Brand, brand } from "./brand.js";
+import { brand, type Brand } from "./brand.js";
 
 /**
  * A BTree which uses tuples (arrays) as the key.

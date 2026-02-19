@@ -17,9 +17,9 @@ import {
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/brand.js";
 import type {
+	requireAssignableTo,
 	areSafelyAssignable,
 	isAssignableTo,
-	requireAssignableTo,
 	requireFalse,
 	requireTrue,
 	Values,

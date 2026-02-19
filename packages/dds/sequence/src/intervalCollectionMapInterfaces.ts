@@ -13,10 +13,10 @@ import type {
 	ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
 import {
-	IntervalDeltaOpType,
 	ISerializedInterval,
-	type SequenceIntervalClass,
+	IntervalDeltaOpType,
 	SerializedIntervalDelta,
+	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
 export interface IntervalAddLocalMetadata {

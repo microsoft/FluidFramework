@@ -11,15 +11,15 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	SchemaFactory,
+	TreeViewConfiguration,
 	type FixRecursiveArraySchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
-	SchemaFactory,
 	type TreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
-	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

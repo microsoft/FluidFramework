@@ -4,7 +4,6 @@
  */
 
 import path from "node:path";
-
 import type { Package } from "./npmPackage";
 
 /**

@@ -5,7 +5,6 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-
 import type { VersionBumpType } from "@fluid-tools/version-tools";
 import type { Package } from "@fluidframework/build-tools";
 import { Flags, ux } from "@oclif/core";

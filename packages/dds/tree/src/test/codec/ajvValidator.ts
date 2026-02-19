@@ -12,7 +12,7 @@ import type { Static, TSchema } from "@sinclair/typebox";
 import ajvModuleOrClass from "ajv";
 import formats from "ajv-formats";
 
-import { type JsonValidator, toFormatValidator } from "../../codec/index.js";
+import { toFormatValidator, type JsonValidator } from "../../codec/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 
 // The first case here covers the esm mode, and the second the cjs one.

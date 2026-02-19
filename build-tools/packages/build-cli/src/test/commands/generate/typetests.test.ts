@@ -7,10 +7,8 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-
 import { afterEach } from "mocha";
 import mockedEnv from "mocked-env";
-
 import GenerateTypetestsCommand, {
 	generateCompatibilityTestCase,
 	loadTypesSourceFile,

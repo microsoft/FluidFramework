@@ -6,8 +6,8 @@
 import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -16,13 +16,13 @@ import {
 	type IJSONSegment,
 	type IMergeTreeDeltaCallbackArgs,
 	type IMergeTreeDeltaOpArgs,
-	type IMergeTreeInsertMsg,
 	type IMergeTreeMaintenanceCallbackArgs,
-	type IMergeTreeRemoveMsg,
 	type ISegment,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	segmentIsRemoved,
+	type IMergeTreeInsertMsg,
+	type IMergeTreeRemoveMsg,
 } from "@fluidframework/merge-tree/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {

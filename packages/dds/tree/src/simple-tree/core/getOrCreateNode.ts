@@ -4,13 +4,13 @@
  */
 
 import type { TreeValue } from "../../core/index.js";
-import { type FlexTreeUnknownUnboxed, isFlexTreeNode } from "../../feature-libraries/index.js";
+import { isFlexTreeNode, type FlexTreeUnknownUnboxed } from "../../feature-libraries/index.js";
 
 import type { TreeNode } from "./treeNode.js";
 import {
-	createTreeNodeFromInner,
 	type InnerNode,
 	simpleTreeNodeSlot,
+	createTreeNodeFromInner,
 	splitInnerNodeType,
 } from "./treeNodeKernel.js";
 import type { TreeLeafValue } from "./treeNodeSchema.js";

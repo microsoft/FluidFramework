@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter, stringToBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
 	IAudienceEvents,
 	ISelf,
 } from "@fluidframework/container-definitions";
-import { IAudienceOwner, ILoader } from "@fluidframework/container-definitions/internal";
+import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
@@ -25,14 +25,14 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IChannel,
-	IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
 	IDeltaHandler,
-	type IDeltaManagerErased,
+	IChannel,
 	IFluidDataStoreRuntime,
+	IChannelFactory,
+	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -42,27 +42,27 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentMessage,
-	type ISnapshotTree,
 	ITreeEntry,
 	MessageType,
+	ISequencedDocumentMessage,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
-	type IdCreationRange,
 	type IIdCompressorCore,
+	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
 import {
+	ISummaryTreeWithStats,
+	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
-	IGarbageCollectionData,
+	VisibilityState,
+	type ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	ISummaryTreeWithStats,
-	type ITelemetryContext,
 	type MinimumVersionForCollab,
-	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,

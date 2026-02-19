@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMap } from "@fluidframework/map/internal";
@@ -11,15 +11,15 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { expect } from "chai";
 
 import { EditType } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 import {
-	createHandleNode,
 	DataVisualizerGraph,
-	defaultVisualizers,
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
 	VisualNodeKind,
+	createHandleNode,
+	defaultVisualizers,
 } from "../data-visualization/index.js";
-import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {

@@ -5,24 +5,24 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshot,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { measure } from "./odspUtils.js";
 import { ReadBuffer } from "./ReadBufferUtils.js";
+import { measure } from "./odspUtils.js";
 import {
+	type NodeCore,
+	type NodeTypes,
+	TreeBuilder,
 	assertBlobCoreInstance,
 	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
 	getNodeProps,
 	getStringInstance,
-	type NodeCore,
-	type NodeTypes,
-	TreeBuilder,
 } from "./zipItDataRepresentationUtils.js";
 
 export const snapshotMinReadVersion = "1.0";

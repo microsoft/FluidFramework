@@ -11,23 +11,23 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
+	ITelemetryContext,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
+	ISummarizeResult,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
-	ISummarizeResult,
-	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	DataProcessingError,
 	type ITelemetryLoggerExt,
+	DataProcessingError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ChannelServiceEndpoints,
-	createChannelServiceEndpoints,
 	type IChannelContext,
+	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,

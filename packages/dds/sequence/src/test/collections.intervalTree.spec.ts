@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 
 import type { PropertySet } from "@fluidframework/merge-tree/internal";
 
-import { ISerializableInterval } from "../intervals/index.js";
 import { IntervalTree } from "../intervalTree.js";
+import { ISerializableInterval } from "../intervals/index.js";
 
 class TestInterval implements ISerializableInterval {
 	constructor(

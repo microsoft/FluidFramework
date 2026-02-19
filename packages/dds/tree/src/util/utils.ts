@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type TUnsafe, Type } from "@sinclair/typebox";
+import { Type, type TUnsafe } from "@sinclair/typebox";
 
 /**
  * Subset of Map interface.

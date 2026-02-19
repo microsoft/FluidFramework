@@ -4,34 +4,34 @@
  */
 
 import { strict as assert } from "node:assert";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 
 import {
 	type AcceptanceCondition,
 	type BaseFuzzTestState,
+	type Generator,
+	type IRandom,
+	type Reducer,
 	chain,
 	createWeightedGenerator,
 	done,
-	type Generator,
 	generatorFromArray,
-	type IRandom,
 	interleave,
 	makeRandom,
 	performFuzzActions,
-	type Reducer,
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import type {
-	IChannelServices,
-	IFluidDataStoreRuntime,
 	Jsonable,
+	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	type IQuorumClients,
-	type ISequencedClient,
 	type ISummaryTree,
 	SummaryType,
+	type IQuorumClients,
+	type ISequencedClient,
 } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
@@ -41,16 +41,16 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
-	MockQuorumClients,
 	MockStorage,
+	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
+	type Encoder,
 	chain as chainEncoders,
 	deltaEncoder,
-	type Encoder,
 } from "../../encoders.js";
 import { makeLZ4Encoder } from "../../lz4Encoder.js";
 

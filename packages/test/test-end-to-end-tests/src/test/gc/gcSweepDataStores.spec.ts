@@ -6,19 +6,19 @@
 import { strict as assert } from "assert";
 
 import {
-	describeCompat,
 	ITestDataObject,
-	itExpects,
 	TestDataObjectType,
+	describeCompat,
+	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
 	ContainerRuntime,
-	DeletedResponseHeaderKey,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
+	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
 import {
 	computeTombstoneTimeout,
@@ -28,8 +28,8 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
-	defaultMaxAttemptsForSubmitFailures,
 	RetriableSummaryError,
+	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
@@ -40,17 +40,17 @@ import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
-	TelemetryDataTag,
 	tagCodeArtifacts,
+	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	toIDeltaManagerFull,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-	ITestContainerConfig,
-	ITestObjectProvider,
 	summarizeNow,
-	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";

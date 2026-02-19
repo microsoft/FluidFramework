@@ -9,9 +9,9 @@ import { type BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benc
 
 import {
 	type ChangeFamily,
-	type ChangeFamilyEditor,
 	type RevisionTag,
 	rootFieldKey,
+	type ChangeFamilyEditor,
 } from "../../../core/index.js";
 import {
 	DefaultChangeFamily,

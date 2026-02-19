@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IDisposable, IFluidLoadable, Listenable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 
 import type {
 	ChangeMetadata,

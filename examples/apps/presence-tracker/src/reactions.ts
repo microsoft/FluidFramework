@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Notifications } from "@fluidframework/presence/alpha";
 import type {
 	Attendee,
 	Presence,
 	PresenceWithNotifications,
 } from "@fluidframework/presence/alpha";
-import { Notifications } from "@fluidframework/presence/alpha";
 
 import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
 

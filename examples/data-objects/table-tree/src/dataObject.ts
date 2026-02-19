@@ -6,7 +6,7 @@
 // TODO: Update import once TreeDataObject is exported in our non-internal package.
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { SharedTree, type TreeView, TreeViewConfiguration } from "@fluidframework/tree/legacy";
+import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
 
 import { Column, Row, Table } from "./schema.js";
 

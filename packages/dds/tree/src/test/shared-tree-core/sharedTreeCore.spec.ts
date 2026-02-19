@@ -52,17 +52,17 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
 import {
+	EditManagerFormatVersion,
+	SharedTreeSummaryFormatVersion,
+	summarizablesMetadataKey,
 	type ChangeEnricher,
 	type EditManager,
-	EditManagerFormatVersion,
 	type ResubmitMachine,
 	type SharedTreeCore,
 	type SharedTreeSummarizableMetadata,
-	SharedTreeSummaryFormatVersion,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
-	summarizablesMetadataKey,
 } from "../../shared-tree-core/index.js";
 import {
 	summarizablesTreeKey,

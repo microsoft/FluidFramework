@@ -7,16 +7,16 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
-	IClientConfiguration,
-	IConnected,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
+	IClientConfiguration,
+	IConnected,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISignalClient,
-	ISignalMessage,
 	ITokenClaims,
 	ScopeType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import { FileDeltaStorageService } from "./fileDeltaStorageService.js";

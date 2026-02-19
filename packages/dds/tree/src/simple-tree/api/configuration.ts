@@ -6,20 +6,20 @@
 import { assert, fail, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { MakeNominal } from "../../util/index.js";
 import { getOrCreate } from "../../util/index.js";
+import type { MakeNominal } from "../../util/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchema,
 } from "../core/index.js";
-import { FieldKind, type FieldSchemaAlpha, type ImplicitFieldSchema } from "../fieldSchema.js";
+import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
 import {
-	type ArrayNodeSchema,
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
 	isRecordNodeSchema,
+	type ArrayNodeSchema,
 	type MapNodeSchema,
 	type ObjectNodeSchema,
 	type RecordNodeSchema,

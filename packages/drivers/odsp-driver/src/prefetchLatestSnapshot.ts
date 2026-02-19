@@ -12,24 +12,24 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import type {
-	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
 	IOdspUrlParts,
 	ISnapshotOptions,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
+	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	createChildMonitoringContext,
 	PerformanceEvent,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IVersionedValueWithEpoch } from "./contracts.js";
 import {
-	downloadSnapshot,
-	fetchSnapshotWithRedeem,
 	type ISnapshotRequestAndResponseOptions,
 	type SnapshotFormatSupportType,
+	downloadSnapshot,
+	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
 import type { IPrefetchSnapshotContents } from "./odspCache.js";
 import type { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
@@ -38,8 +38,8 @@ import {
 	createOdspLogger,
 	getOdspResolvedUrl,
 	snapshotWithLoadingGroupIdSupported,
-	type TokenFetchOptionsEx,
 	toInstrumentedOdspStorageTokenFetcher,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 
 /**

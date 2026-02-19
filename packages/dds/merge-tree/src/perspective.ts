@@ -4,10 +4,10 @@
  */
 
 import { NonCollabClient } from "./constants.js";
-import { type ISegment, seqLTE } from "./mergeTreeNodes.js";
+import { seqLTE, type ISegment } from "./mergeTreeNodes.js";
 import { isInserted, isRemoved } from "./segmentInfos.js";
-import type { OperationStamp, RemoveOperationStamp } from "./stamps.js";
 import * as opstampUtils from "./stamps.js";
+import type { OperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 /**
  * A perspective which includes some subset of operations known to the local client.

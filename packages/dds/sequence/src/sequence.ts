@@ -8,21 +8,15 @@ import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	ISequencedDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type AdjustParams,
 	Client,
-	createAnnotateRangeOp,
-	createGroupOp,
-	createInsertOp,
-	createObliterateRangeOp,
-	createRemoveRangeOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -32,26 +26,32 @@ import {
 	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
-	type InteriorSequencePlace,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	type MapLike,
 	MergeTreeDeltaType,
 	MergeTreeRevertibleDriver,
-	matchProperties,
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
 	SlidingPreference,
+	createAnnotateRangeOp,
+	createGroupOp,
+	createInsertOp,
+	createObliterateRangeOp,
+	createRemoveRangeOp,
+	matchProperties,
+	type AdjustParams,
+	type InteriorSequencePlace,
+	type MapLike,
 } from "@fluidframework/merge-tree/internal";
 import {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
@@ -59,14 +59,14 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
-	type ISharedObject,
 	ISharedObjectEvents,
 	SharedObject,
+	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import {
+	LoggingError,
 	createChildLogger,
 	createConfigBasedOptionsProxy,
-	LoggingError,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";

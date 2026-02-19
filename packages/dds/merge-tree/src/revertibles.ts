@@ -5,30 +5,30 @@
 
 import {
 	assert,
-	DoublyLinkedList,
 	unreachableCase,
+	DoublyLinkedList,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
-import { findRootMergeBlock, type MergeTree } from "./mergeTree.js";
+import { type MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import type { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
+import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import {
 	assertSegmentLeaf,
-	type ISegmentLeaf,
-	type ISegmentPrivate,
 	isSegmentLeaf,
 	toSegmentLeaf,
+	type ISegmentLeaf,
+	type ISegmentPrivate,
 } from "./mergeTreeNodes.js";
-import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import {
 	type ITrackingGroup,
 	type Trackable,
 	UnorderedTrackingGroup,
 } from "./mergeTreeTracking.js";
 import { type IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
-import { matchProperties, type PropertySet } from "./properties.js";
+import { type PropertySet, matchProperties } from "./properties.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
 import { toRemovalInfo } from "./segmentInfos.js";
 

@@ -9,8 +9,8 @@ import type {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	IOdspAuthRequestInfo,
 	IPublicClientConfig,
+	IOdspAuthRequestInfo,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import * as odsp from "@fluidframework/odsp-driver/internal";
 import type {
@@ -25,7 +25,7 @@ import * as r11s from "@fluidframework/routerlicious-driver/internal";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver/internal";
 
 import { localDataOnly, paramJWT } from "./fluidFetchArgs.js";
-import { fetchToolClientConfig, resolveWrapper } from "./fluidFetchSharePoint.js";
+import { resolveWrapper, fetchToolClientConfig } from "./fluidFetchSharePoint.js";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export type { ICounterProps } from "./counter.js";
 export { Counter } from "./counter.js";
-export { InventoryViewMonolithic, InventoryViewWithHook, MainView } from "./inventoryView.js";
+export type { ICounterProps } from "./counter.js";
+
+export { MainView, InventoryViewMonolithic, InventoryViewWithHook } from "./inventoryView.js";

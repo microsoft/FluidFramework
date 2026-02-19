@@ -18,6 +18,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import JsDiff from "diff";
 
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
 	type KeyComparer,
 	type Property,
@@ -30,15 +31,14 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "../constants.js";
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { MergeTree } from "../mergeTree.js";
 import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
+	type IJSONMarkerSegment,
 	compareNumbers,
 	compareStrings,
-	type IJSONMarkerSegment,
-	type ISegmentPrivate,
 	reservedMarkerIdKey,
+	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
@@ -49,7 +49,7 @@ import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { type IJSONTextSegment, TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
-import { getStats, specToSegment, TestClient } from "./testClient.js";
+import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 

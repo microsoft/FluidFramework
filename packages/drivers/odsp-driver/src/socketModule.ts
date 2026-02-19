@@ -5,6 +5,6 @@
 
 import { io } from "socket.io-client";
 
-import { type Mockable, mockify } from "./mockify.js";
+import { mockify, type Mockable } from "./mockify.js";
 
 export const SocketIOClientStatic: Mockable<typeof io> = mockify(io);

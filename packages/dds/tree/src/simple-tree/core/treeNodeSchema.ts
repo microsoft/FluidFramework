@@ -10,7 +10,7 @@ import type { FieldKey, NodeData } from "../../core/index.js";
 import type { UnionToIntersection } from "../../util/index.js";
 import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
-import type { AllowedTypesFull, AllowedTypesFullEvaluated } from "./allowedTypes.js";
+import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
 import type { Context } from "./context.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";

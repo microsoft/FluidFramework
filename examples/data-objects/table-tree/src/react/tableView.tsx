@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Button, Table, TableBody } from "@fluentui/react-components";
+import { Table, TableBody, Button } from "@fluentui/react-components";
 import { Add24Regular } from "@fluentui/react-icons";
 import { useTree } from "@fluidframework/react/alpha";
-import React, { type DragEvent, useState } from "react";
+import React, { useState, type DragEvent } from "react";
 
 import type { TableDataObject } from "../dataObject.js";
 import { Row } from "../schema.js";

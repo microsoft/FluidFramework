@@ -12,15 +12,15 @@ import {
 	describeFuzz,
 	makeRandom,
 	performFuzzActionsAsync as performFuzzActionsBase,
-	type SaveInfo,
 	takeAsync as take,
+	type SaveInfo,
 } from '@fluid-private/stochastic-test-utils';
 import { expect } from 'chai';
 
 import { fail } from '../../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
-import { WriteFormat } from '../../persisted-types/index.js';
 import { SharedTree } from '../../SharedTree.js';
+import { WriteFormat } from '../../persisted-types/index.js';
 import {
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,

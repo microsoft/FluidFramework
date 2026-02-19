@@ -11,11 +11,11 @@ import type {
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
-	createChildLogger,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
+	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -23,18 +23,18 @@ import type {
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
-	IRetriableFailureError,
 	ISummarizeHeuristicData,
 	ISummarizer,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
+	IRetriableFailureError,
 	ISummaryConfiguration,
 } from "../summarizerTypes.js";
 import type { SummaryCollection } from "../summaryCollection.js";
 
-import { RunningSummarizer } from "./runningSummarizer.js";
 import type { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
+import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
 import type { EnqueueSummarizeResult, ISummarizeResults } from "./summaryResultTypes.js";

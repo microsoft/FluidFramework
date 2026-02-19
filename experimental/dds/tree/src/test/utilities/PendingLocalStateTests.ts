@@ -11,16 +11,16 @@ import { Change, StablePlace } from '../../ChangeTypes.js';
 import { fail } from '../../Common.js';
 import type { EditLog } from '../../EditLog.js';
 import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
-import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types/index.js';
 import { SharedTree } from '../../SharedTree.js';
 import { TreeView } from '../../TreeView.js';
+import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types/index.js';
 
 import { SimpleTestTree } from './TestNode.js';
 import {
-	applyNoop,
-	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
+	applyNoop,
+	getEditLogInternal,
 	setUpTestTree,
 	stabilizeEdit,
 	withContainerOffline,

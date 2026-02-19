@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { MergeTree } from "../mergeTree.js";
-import { type ISegmentPrivate, Marker } from "../mergeTreeNodes.js";
+import { Marker, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { LocalDefaultPerspective } from "../perspective.js";
 import { assertMergeNode } from "../segmentInfos.js";

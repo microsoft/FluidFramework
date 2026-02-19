@@ -4,8 +4,8 @@
  */
 
 import type { TreeNodeSchema } from "@fluidframework/tree";
-import type { ImplicitFieldSchema, SimpleTreeSchema } from "@fluidframework/tree/internal";
 import { walkFieldSchema } from "@fluidframework/tree/internal";
+import type { ImplicitFieldSchema, SimpleTreeSchema } from "@fluidframework/tree/internal";
 
 import type { BindableSchema } from "./methodBinding.js";
 import { getExposedMethods, isBindableSchema } from "./methodBinding.js";

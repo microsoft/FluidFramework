@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-
 import { Flags } from "@oclif/core";
 import { format as prettier } from "prettier";
 

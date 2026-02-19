@@ -6,10 +6,10 @@
 import { validateMessages } from "@fluidframework/driver-base/internal";
 import type {
 	IDocumentDeltaStorageService,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { emptyMessageStream, Queue } from "@fluidframework/driver-utils/internal";
+import { Queue, emptyMessageStream } from "@fluidframework/driver-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**

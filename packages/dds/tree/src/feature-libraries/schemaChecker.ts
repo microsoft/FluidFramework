@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	Multiplicity,
-	ObjectNodeStoredSchema,
 	type SchemaAndPolicy,
-	type TreeFieldStoredSchema,
 } from "../core/index.js";
 import { iterableHasSome, mapIterable } from "../util/index.js";
 

@@ -5,14 +5,14 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { Tree, TreeAlpha } from "./shared-tree/index.js";
+import { TreeAlpha, Tree } from "./shared-tree/index.js";
 import type {
+	TreeNodeSchema,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeFieldFromImplicitField,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	SchemaFactoryBeta,
-	TreeFieldFromImplicitField,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
 } from "./simple-tree/index.js";
 import {
 	createCustomizedFluidFrameworkScopedFactory,

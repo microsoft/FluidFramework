@@ -17,8 +17,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
 import type {
-	ContainerExtensionExpectations,
 	ContainerExtensionId,
+	ContainerExtensionExpectations,
 	ExtensionCompatibilityDetails,
 	UnknownExtensionInstantiation,
 } from "@fluidframework/runtime-definitions/internal";

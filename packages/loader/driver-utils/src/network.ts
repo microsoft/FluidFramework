@@ -7,10 +7,10 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	DriverErrorTypes,
 	type IAuthorizationError,
-	type IDriverErrorBase,
 	type ILocationRedirectionError,
 	type IResolvedUrl,
 	type IThrottlingWarning,
+	type IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
 import { type IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 

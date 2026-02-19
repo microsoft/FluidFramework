@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { AppView, type IAppViewProps } from "./appView.js";
-export { DebugView, type IDebugViewProps } from "./debugView.js";
+export { type IAppViewProps, AppView } from "./appView.js";
+export { type IDebugViewProps, DebugView } from "./debugView.js";

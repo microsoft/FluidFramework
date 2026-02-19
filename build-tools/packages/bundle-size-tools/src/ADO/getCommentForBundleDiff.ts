@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import type { BundleComparison, BundleMetric } from "../BundleBuddyTypes";
-
 import { totalSizeMetricName } from "./Constants";
 
 const bundleDetailsTableHeader = `<table><tr><th>Metric Name</th><th>Baseline Size</th><th>Compare Size</th><th>Size Diff</th></tr>`;

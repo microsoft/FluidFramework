@@ -4,14 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-
 import type { WebApi } from "azure-devops-node-api";
 import type JSZip from "jszip";
 import type { StatsCompilation } from "webpack";
 
 import type { BundleBuddyConfig } from "../BundleBuddyTypes";
 import { decompressStatsFile, unzipStream } from "../utilities";
-
 import {
 	type BundleFileData,
 	getBundleFilePathsFromFolder,

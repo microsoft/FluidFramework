@@ -24,10 +24,10 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	createSummarizerFromFactory,
 	type ITestObjectProvider,
-	summarizeNow,
 	toIDeltaManagerFull,
+	createSummarizerFromFactory,
+	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
@@ -11,12 +11,12 @@ import {
 	type FieldKey,
 	type FieldKindData,
 	type FieldKindIdentifier,
-	forEachNode,
 	type ITreeCursorSynchronous,
 	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
+	forEachNode,
 } from "../../../core/index.js";
 import { getOrCreate } from "../../../util/index.js";
 

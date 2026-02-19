@@ -10,67 +10,69 @@
  */
 
 export {
-	createContext,
 	SharedTreeSemanticAgent,
+	createContext,
 } from "./agent.js";
 export type {
-	AsynchronousEditor,
-	Context,
 	EditResult,
-	Logger,
-	SemanticAgentOptions,
 	SharedTreeChatModel,
 	SharedTreeChatQuery,
+	Logger,
+	SemanticAgentOptions,
 	SynchronousEditor,
+	AsynchronousEditor,
 	TreeView,
 	ViewOrTree,
+	Context,
 } from "./api.js";
+export { llmDefault } from "./utils.js";
 export {
-	type Arg,
-	type ArgsTuple,
-	type BindableSchema,
 	buildFunc,
-	type Ctor,
-	type ExposedMethods,
 	exposeMethodsSymbol,
+	type ArgsTuple,
+	type ExposedMethods,
+	type Arg,
 	type FunctionDef,
-	type IExposedMethods,
 	type MethodKeys,
+	type BindableSchema,
+	type Ctor,
+	type IExposedMethods,
 } from "./methodBinding.js";
 export type {
-	ExposedProperties,
 	exposePropertiesSymbol,
-	IExposedProperties,
 	PropertyDef,
+	ExposedProperties,
+	IExposedProperties,
 } from "./propertyBinding.js";
+
+export {
+	typeFactory,
+	isTypeFactoryType,
+} from "./treeAgentTypes.js";
+
 export type {
-	TypeFactoryArray,
+	TypeFactoryType,
+	TypeFactoryTypeKind,
+	TypeFactoryString,
+	TypeFactoryNumber,
 	TypeFactoryBoolean,
 	TypeFactoryDate,
+	TypeFactoryVoid,
+	TypeFactoryUndefined,
+	TypeFactoryNull,
+	TypeFactoryUnknown,
+	TypeFactoryArray,
+	TypeFactoryPromise,
+	TypeFactoryObject,
+	TypeFactoryRecord,
+	TypeFactoryMap,
+	TypeFactoryTuple,
+	TypeFactoryUnion,
+	TypeFactoryIntersection,
+	TypeFactoryLiteral,
+	TypeFactoryOptional,
+	TypeFactoryReadonly,
 	TypeFactoryFunction,
 	TypeFactoryFunctionParameter,
 	TypeFactoryInstanceOf,
-	TypeFactoryIntersection,
-	TypeFactoryLiteral,
-	TypeFactoryMap,
-	TypeFactoryNull,
-	TypeFactoryNumber,
-	TypeFactoryObject,
-	TypeFactoryOptional,
-	TypeFactoryPromise,
-	TypeFactoryReadonly,
-	TypeFactoryRecord,
-	TypeFactoryString,
-	TypeFactoryTuple,
-	TypeFactoryType,
-	TypeFactoryTypeKind,
-	TypeFactoryUndefined,
-	TypeFactoryUnion,
-	TypeFactoryUnknown,
-	TypeFactoryVoid,
 } from "./treeAgentTypes.js";
-export {
-	isTypeFactoryType,
-	typeFactory,
-} from "./treeAgentTypes.js";
-export { llmDefault } from "./utils.js";

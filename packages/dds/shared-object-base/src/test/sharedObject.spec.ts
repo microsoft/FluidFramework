@@ -9,14 +9,14 @@ import { strict as assert } from "node:assert";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	IChannelStorageService,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IGarbageCollectionData,
-	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {

@@ -6,16 +6,16 @@
 import { strict as assert } from "node:assert";
 
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions/internal";
+import { SummaryType, type ISummaryBlob } from "@fluidframework/driver-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	VersionedSummarizer,
+	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
-	summarizablesMetadataKey,
-	VersionedSummarizer,
 } from "../../shared-tree-core/index.js";
 
 class TestUnversionedSummarizer {

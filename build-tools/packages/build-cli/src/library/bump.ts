@@ -12,8 +12,8 @@ import {
 	type VersionScheme,
 } from "@fluid-tools/version-tools";
 import type { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
-
 import type { Context } from "./context.js";
+
 import { setVersion } from "./package.js";
 
 /**

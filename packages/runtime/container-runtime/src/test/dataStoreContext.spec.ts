@@ -20,30 +20,30 @@ import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datasto
 import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import type { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
-	IContainerRuntimeBase,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	IRuntimeStorageService,
 	SummarizeInternalFn,
+	IContainerRuntimeBase,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	convertSummaryTreeToITree,
 	GCDataBuilder,
+	convertSummaryTreeToITree,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildLogger,
-	isFluidError,
 	MockLogger,
 	TelemetryDataTag,
+	createChildLogger,
+	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
@@ -64,12 +64,12 @@ import {
 } from "../dataStoreContext.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
-	createRootSummarizerNodeWithGC,
-	dataStoreAttributesBlobName,
 	type IRootSummarizerNodeWithGC,
 	type ReadFluidDataStoreAttributes,
-	summarizerClientType,
 	type WriteFluidDataStoreAttributes,
+	createRootSummarizerNodeWithGC,
+	dataStoreAttributesBlobName,
+	summarizerClientType,
 } from "../summary/index.js";
 
 import {

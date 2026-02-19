@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createWeightedAsyncGenerator,
-	done,
 	takeAsync,
+	done,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	createSquashFuzzSuite,
@@ -17,20 +17,20 @@ import {
 	type SquashFuzzTestState,
 } from "@fluid-private/test-dds-utils";
 import {
-	type LocalReferencePosition,
 	ReferenceType,
-	segmentIsRemoved,
+	type LocalReferencePosition,
 } from "@fluidframework/merge-tree/internal";
+import { segmentIsRemoved } from "@fluidframework/merge-tree/internal";
 
 import type { SharedStringFactory } from "../../sequenceFactory.js";
 import type { ISharedString } from "../../sharedString.js";
 
 import {
-	type AddPoisonedText,
 	baseSharedStringModel,
 	defaultFuzzOptions,
 	defaultIntervalOperationGenerationConfig,
 	makeSharedStringOperationGenerator,
+	type AddPoisonedText,
 	type Operation,
 	type SharedStringOperationGenerationConfig,
 } from "./fuzzUtils.js";

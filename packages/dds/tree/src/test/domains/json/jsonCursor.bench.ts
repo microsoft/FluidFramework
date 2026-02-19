@@ -13,8 +13,8 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type JsonableTree,
-	moveToDetachedField,
 	TreeStoredSchemaRepository,
+	moveToDetachedField,
 } from "../../../core/index.js";
 import {
 	basicChunkTree,

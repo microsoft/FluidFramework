@@ -8,7 +8,6 @@
  */
 
 import { readFile } from "node:fs/promises";
-
 import * as JSON5 from "json5";
 
 import type { GitRepo } from "./gitRepo";

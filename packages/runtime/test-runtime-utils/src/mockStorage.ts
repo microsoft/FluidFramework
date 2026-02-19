@@ -7,7 +7,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { IBlob, type ISnapshotTree, ITree } from "@fluidframework/driver-definitions/internal";
+import { IBlob, ITree, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	convertSummaryTreeToITree,

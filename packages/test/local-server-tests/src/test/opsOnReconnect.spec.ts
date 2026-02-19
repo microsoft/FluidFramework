@@ -9,8 +9,8 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import {
 	ContainerMessageType,
@@ -23,7 +23,7 @@ import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
-import { type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+import { SharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	type FluidDataStoreMessage,
 	FlushMode,
@@ -35,8 +35,8 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainerUsingProps,
 	createDataStoreFactory,
+	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,

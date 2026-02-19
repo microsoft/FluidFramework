@@ -9,31 +9,31 @@ import { getW3CData } from "@fluidframework/driver-base/internal";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	type DriverErrorTelemetryProps,
-	isRuntimeMessage,
 	NonRetryableError,
+	isRuntimeMessage,
 } from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	type InstrumentedStorageTokenFetcher,
 	type IOdspError,
 	type IOdspResolvedUrl,
 	type ISnapshotOptions,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
-	isFluidError,
 	PerformanceEvent,
+	isFluidError,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
-	currentReadVersion,
 	type ISnapshotContentsWithProps,
+	currentReadVersion,
 	parseCompactSnapshotResponse,
 } from "./compactSnapshotParser.js";
 import {
@@ -50,16 +50,16 @@ import { mockify } from "./mockify.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
+	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	getWithRetryForTokenRefreshRepeat,
-	type IOdspResponse,
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
-	type TokenFetchOptionsEx,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 

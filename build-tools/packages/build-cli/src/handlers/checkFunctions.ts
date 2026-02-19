@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
-
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
 import { confirm, rawlist } from "@inquirer/prompts";
@@ -34,7 +33,6 @@ import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
 import { isReleaseGroup, type ReleaseSource } from "../releaseGroups.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
-
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 

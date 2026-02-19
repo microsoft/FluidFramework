@@ -20,8 +20,8 @@ import {
 import {
 	SchemaFactory,
 	SharedTree,
-	type TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "@fluidframework/tree/internal";
 
 const schemaFactory = new SchemaFactory("test");

@@ -13,8 +13,8 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	asLegacyAlpha,
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";

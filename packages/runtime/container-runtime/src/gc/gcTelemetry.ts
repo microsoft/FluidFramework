@@ -6,11 +6,11 @@
 import type { Tagged } from "@fluidframework/core-interfaces";
 import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
-	generateStack,
 	type ITelemetryLoggerExt,
-	type ITelemetryPropertiesExt,
 	type MonitoringContext,
+	generateStack,
 	tagCodeArtifacts,
+	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { RuntimeHeaderData } from "../containerRuntime.js";

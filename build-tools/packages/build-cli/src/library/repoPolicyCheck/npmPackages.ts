@@ -9,7 +9,6 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
-
 import {
 	findGitRootSync,
 	updatePackageJsonFile,
@@ -20,7 +19,6 @@ import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
-
 import {
 	getFlubConfig,
 	type PackageNamePolicyConfig,
@@ -28,7 +26,6 @@ import {
 } from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-
 import { type Handler, readFile, writeFile } from "./common.js";
 
 const require = createRequire(import.meta.url);

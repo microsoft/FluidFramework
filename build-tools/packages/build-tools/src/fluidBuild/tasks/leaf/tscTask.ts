@@ -7,13 +7,11 @@ import * as assert from "node:assert";
 import { type BigIntStats, existsSync, lstatSync, type Stats } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-
 import isEqual from "lodash.isequal";
 import type * as tsTypes from "typescript";
 
 import { getTscUtils, type TscUtil } from "../../tscUtils";
 import { getInstalledPackageVersion } from "../taskUtils";
-
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {

@@ -19,15 +19,15 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
 import {
-	extractLogSafeErrorProperties,
-	generateStack,
 	type IFluidErrorAnnotations,
+	LoggingError,
+	extractLogSafeErrorProperties,
 	isExternalError,
 	isTaggedTelemetryPropertyValue,
-	LoggingError,
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
+	generateStack,
 } from "../errorLogging.js";
 import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";

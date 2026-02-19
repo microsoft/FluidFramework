@@ -9,8 +9,8 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { compress, decompress } from "lz4js";
 import { deflate, inflate } from "pako";

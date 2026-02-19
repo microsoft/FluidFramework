@@ -30,15 +30,15 @@ import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 import type {
 	JsonArrayNodeSchema,
 	JsonFieldSchema,
+	JsonSchemaRef,
+	JsonRefPath,
 	JsonLeafNodeSchema,
-	JsonLeafSchemaType,
 	JsonMapNodeSchema,
 	JsonNodeSchema,
 	JsonObjectNodeSchema,
-	JsonRecordNodeSchema,
-	JsonRefPath,
-	JsonSchemaRef,
 	JsonTreeSchema,
+	JsonLeafSchemaType,
+	JsonRecordNodeSchema,
 } from "./jsonSchema.js";
 
 /**

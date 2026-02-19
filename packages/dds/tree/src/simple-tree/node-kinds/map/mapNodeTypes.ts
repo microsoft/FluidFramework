@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { NodeKind } from "../../core/index.js";
 import type {
-	ImplicitAllowedTypes,
-	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
+	ImplicitAllowedTypes,
 } from "../../core/index.js";
-import { NodeKind } from "../../core/index.js";
 import type { SchemaType, SimpleMapNodeSchema } from "../../simpleSchema.js";
 
 import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";

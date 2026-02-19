@@ -6,7 +6,7 @@
 /**
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
-import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import cloneDeep from "lodash/cloneDeep.js";
 import isEqual from "lodash/isEqual.js";
 import isNumber from "lodash/isNumber.js";
@@ -18,15 +18,15 @@ import { TypeIdHelper } from "../helpers/typeidHelper.js";
 
 import {
 	ArrayChangeSetIterator,
-	arrayInsertList,
-	arrayModifyList,
-	arrayRemoveList,
 	GenericOperation,
 	InsertOperation,
 	ModifyOperation,
 	NOPOperation,
 	NoneNOPOperation,
 	RemoveOperation,
+	arrayInsertList,
+	arrayModifyList,
+	arrayRemoveList,
 } from "./arrayChangesetIterator.js";
 import { ConflictType } from "./changesetConflictTypes.js";
 

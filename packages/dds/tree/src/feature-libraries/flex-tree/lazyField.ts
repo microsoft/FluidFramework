@@ -15,19 +15,19 @@ import {
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
+	type NormalizedFieldUpPath,
+	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
 	mapCursorField,
-	type NormalizedFieldUpPath,
 	rootFieldKey,
-	type TreeNavigationResult,
 } from "../../core/index.js";
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { combineChunks } from "../chunked-forest/index.js";
 import {
 	FieldKinds,
-	type IDefaultEditBuilder,
 	MappedEditBuilder,
+	type IDefaultEditBuilder,
 	type OptionalFieldEditBuilder,
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
@@ -37,8 +37,6 @@ import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
 	FlexTreeEntityKind,
 	type FlexTreeField,
 	type FlexTreeOptionalField,
@@ -46,13 +44,15 @@ import {
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
-	flexTreeMarker,
-	flexTreeSlot,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
 	type HydratedFlexTreeNode,
 	TreeStatus,
+	flexTreeMarker,
+	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { getOrCreateHydratedFlexTreeNode, type LazyTreeNode } from "./lazyNode.js";
+import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**

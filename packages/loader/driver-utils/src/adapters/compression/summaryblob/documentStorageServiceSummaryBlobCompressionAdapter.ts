@@ -14,16 +14,16 @@ import {
 } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
-	ISnapshotTree,
 	ISummaryContext,
+	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { compress, decompress } from "lz4js";
 
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
 import {
-	type ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	type ICompressionStorageConfig,
 } from "../compressionTypes.js";
 
 /**

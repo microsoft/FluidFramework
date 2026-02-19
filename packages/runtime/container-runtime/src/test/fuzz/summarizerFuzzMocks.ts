@@ -8,16 +8,16 @@ import type { IFluidHandleContext } from "@fluidframework/core-interfaces/intern
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
-	createChildLogger,
 	type ITelemetryLoggerExt,
+	createChildLogger,
 	raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import {

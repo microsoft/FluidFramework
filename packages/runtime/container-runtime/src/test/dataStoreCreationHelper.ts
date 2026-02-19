@@ -7,8 +7,8 @@ import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClientDetails } from "@fluidframework/driver-definitions/internal";
 import {
-	type CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
+	type CreateChildSummarizerNodeFn,
 	type IFluidDataStoreContext,
 	type IFluidDataStoreFactory,
 	type IFluidDataStoreRegistry,
@@ -25,8 +25,8 @@ import {
 
 import type { IFluidParentContextPrivate } from "../channelCollection.js";
 import {
-	type ILocalFluidDataStoreContextProps,
 	LocalFluidDataStoreContext,
+	type ILocalFluidDataStoreContextProps,
 } from "../dataStoreContext.js";
 import {
 	createRootSummarizerNodeWithGC,

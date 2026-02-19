@@ -6,15 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import {
-	asChangeAtomId,
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	makeAnonChange,
 	type RevisionTag,
 	type TaggedChange,
+	asChangeAtomId,
+	makeAnonChange,
 	tagChange,
-	taggedAtomId,
 	tagRollbackInverse,
+	taggedAtomId,
 } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
 import {
@@ -28,13 +28,13 @@ import {
 } from "../../../feature-libraries/optional-field/optionalField.js";
 import type {
 	ChildChange,
+	Replace,
 	Move,
 	OptionalChangeset,
 	RegisterId,
-	Replace,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { brand, type Mutable } from "../../../util/index.js";
+import { type Mutable, brand } from "../../../util/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 

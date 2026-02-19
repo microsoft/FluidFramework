@@ -13,13 +13,13 @@ import { UnassignedSequenceNumber } from "../constants.js";
 import type { IMergeTreeOptions } from "../index.js";
 import {
 	type IMergeTreeDeltaOpArgs,
-	type IMergeTreeMaintenanceCallbackArgs,
 	MergeTreeMaintenanceType,
+	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
-import { type IMergeNode, type ISegmentPrivate, Marker, seqLTE } from "../mergeTreeNodes.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
+import { type IMergeNode, Marker, seqLTE, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { type IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
-import { matchProperties, type PropertySet } from "../properties.js";
+import { type PropertySet, matchProperties } from "../properties.js";
 import type { IHasInsertionInfo, IHasRemovalInfo } from "../segmentInfos.js";
 import type { RemoveOperationStamp } from "../stamps.js";
 import { TextSegment, TextSegmentGranularity } from "../textSegment.js";

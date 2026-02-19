@@ -9,8 +9,8 @@ import fs from "node:fs";
 import { type IClient, SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	DriverError,
-	ISequencedDocumentMessage,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IOdspResolvedUrl,

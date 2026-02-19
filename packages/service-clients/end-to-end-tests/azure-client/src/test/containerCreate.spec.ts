@@ -11,8 +11,8 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
-	type ISequencedDocumentMessage,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import { isTreeContainerSchema } from "@fluidframework/fluid-static/internal";

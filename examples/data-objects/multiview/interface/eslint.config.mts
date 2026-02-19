@@ -4,7 +4,6 @@
  */
 
 import type { Linter } from "eslint";
-
 import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
 import sharedConfig from "../../../eslint.config.data.mts";
 

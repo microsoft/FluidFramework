@@ -4,7 +4,6 @@
  */
 
 import { SparseArray2D } from "../imports";
-
 import { pointwise } from "./test";
 
 pointwise(undefined, new SparseArray2D());

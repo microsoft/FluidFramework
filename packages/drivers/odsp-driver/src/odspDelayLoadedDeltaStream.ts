@@ -8,10 +8,10 @@ import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
-	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
+	IAnyDriverError,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -22,11 +22,11 @@ import {
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	type HostStoragePolicy,
-	type InstrumentedStorageTokenFetcher,
 	type IOdspError,
 	type IOdspResolvedUrl,
-	type ISensitivityLabelsInfo,
 	type ISocketStorageDiscovery,
+	type ISensitivityLabelsInfo,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	type TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
@@ -42,9 +42,9 @@ import type { EpochTracker } from "./epochTracker.js";
 import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
+	type TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
-	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { fetchJoinSession } from "./vroom.js";

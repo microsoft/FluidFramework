@@ -25,9 +25,9 @@ import {
 	type TreeChunk,
 } from "../../../core/index.js";
 import {
-	type Brand,
 	brand,
 	brandedNumberType,
+	type Brand,
 	type JsonCompatibleReadOnly,
 	unbrand,
 } from "../../../util/index.js";
@@ -35,7 +35,7 @@ import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, FieldBatchFormatVersion, validVersions } from "./format.js";
+import { EncodedFieldBatch, validVersions, FieldBatchFormatVersion } from "./format.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
 import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";

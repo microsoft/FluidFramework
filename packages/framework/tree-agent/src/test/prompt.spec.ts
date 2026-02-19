@@ -8,17 +8,17 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import {
-	type ImplicitFieldSchema,
-	type InsertableField,
 	independentView,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableField,
 } from "@fluidframework/tree/internal";
 
 import type { TreeView } from "../api.js";
-import { buildFunc, type ExposedMethods, exposeMethodsSymbol } from "../methodBinding.js";
+import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { fluidHandleTypeName, getPrompt } from "../prompt.js";
-import { type ExposedProperties, exposePropertiesSymbol } from "../propertyBinding.js";
+import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
 import { typeFactory as tf } from "../treeAgentTypes.js";
 

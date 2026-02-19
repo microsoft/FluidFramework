@@ -4,7 +4,6 @@
  */
 
 export { run } from "@oclif/core";
-
 // Exported for use in config files.
 export type { AssertTaggingPackageConfig } from "./commands/generate/assertTags.js";
 export type {

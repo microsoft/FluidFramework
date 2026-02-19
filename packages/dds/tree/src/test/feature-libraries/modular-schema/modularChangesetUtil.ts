@@ -20,8 +20,8 @@ import {
 	type FieldChangeMap,
 	type ModularChangeFamily,
 	type ModularChangeset,
-	type NodeId,
 	newChangeAtomIdBTree,
+	type NodeId,
 } from "../../../feature-libraries/index.js";
 import {
 	getChangeHandler,
@@ -30,18 +30,18 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
+	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldId,
 	type NodeChangeset,
-	newCrossFieldKeyTable,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	brand,
 	type IdAllocator,
-	idAllocatorFromMaxId,
 	type Mutable,
+	brand,
+	idAllocatorFromMaxId,
 } from "../../../util/index.js";
 import { assertStructuralEquality } from "../../objMerge.js";
 

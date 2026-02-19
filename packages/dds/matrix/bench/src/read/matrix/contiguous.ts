@@ -4,7 +4,6 @@
  */
 
 import { getTestArgs } from "hotloop";
-
 import { createContiguousMatrix } from "../../util";
 import { pointwise } from "../test";
 

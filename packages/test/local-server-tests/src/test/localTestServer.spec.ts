@@ -11,8 +11,8 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	type ILoaderProps,
 	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { IUrlResolver, MessageType } from "@fluidframework/driver-definitions/internal";
 import {
@@ -25,11 +25,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainerUsingProps,
-	createLoaderProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestFluidObjectFactory,
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 
 /**

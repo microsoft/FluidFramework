@@ -7,19 +7,19 @@ import type {
 	TreeNodeSchemaIdentifier,
 	TreeStoredSchemaSubscription,
 } from "../../../core/index.js";
-// Allow importing from this specific file which is being tested:
-// eslint-disable-next-line import-x/no-internal-modules
-import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	Chunker,
-	defaultChunkPolicy,
 	type IChunker,
+	type ShapeInfo,
+	defaultChunkPolicy,
 	makeTreeChunker,
 	polymorphic,
-	type ShapeInfo,
 	tryShapeFromNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// Allow importing from this specific file which is being tested:
+// eslint-disable-next-line import-x/no-internal-modules
+import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,

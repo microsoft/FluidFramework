@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-
 import type { PackageJson } from "../common/npmPackage";
 import {
 	getTaskDefinitions,

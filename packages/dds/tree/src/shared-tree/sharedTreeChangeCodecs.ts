@@ -23,18 +23,18 @@ import {
 	type TreeStoredSchema,
 } from "../core/index.js";
 import {
+	ModularChangeFormatVersion,
+	type ModularChangeset,
+	type SchemaChange,
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
 	getCodecTreeForSchemaChangeFormat,
-	ModularChangeFormatVersion,
-	type ModularChangeset,
 	makeSchemaChangeCodecs,
-	type SchemaChange,
 } from "../feature-libraries/index.js";
 import {
+	strictEnum,
 	type JsonCompatibleReadOnly,
 	type Mutable,
-	strictEnum,
 	type Values,
 } from "../util/index.js";
 

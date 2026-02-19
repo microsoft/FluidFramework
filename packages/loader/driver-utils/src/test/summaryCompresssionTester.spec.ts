@@ -22,7 +22,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
-	ICreateBlobResponse,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -32,17 +31,18 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	ISnapshotTree,
 	ISummaryContext,
+	ICreateBlobResponse,
+	ISnapshotTree,
 	IVersion,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 
 import {
-	applyStorageCompression,
-	blobHeadersBlobName,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	applyStorageCompression,
+	blobHeadersBlobName,
 } from "../adapters/index.js";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";
 

@@ -4,7 +4,6 @@
  */
 
 import { getTestArgs } from "hotloop";
-
 import { createFragmentedMatrix } from "../../util";
 import { pointwise } from "../test";
 

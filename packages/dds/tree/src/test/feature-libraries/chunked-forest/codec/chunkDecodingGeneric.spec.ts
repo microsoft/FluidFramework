@@ -12,9 +12,9 @@ import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/in
 import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,
+	type StreamCursor,
 	getChecked,
 	readStreamNumber,
-	type StreamCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {

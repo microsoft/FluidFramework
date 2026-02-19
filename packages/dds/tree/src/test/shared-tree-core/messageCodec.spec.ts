@@ -11,9 +11,9 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 import type {
-	ChangeEncodingContext,
 	EncodedRevisionTag,
 	GraphCommit,
+	ChangeEncodingContext,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import { MessageFormatVersion } from "../../shared-tree-core/index.js";

@@ -7,6 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { isPromiseLike } from "@fluidframework/core-utils/internal";
 import {
+	ScopeType,
 	type ConnectionMode,
 	type IClient,
 	type IClientConfiguration,
@@ -24,7 +25,6 @@ import {
 	type ISignalClient,
 	type ISignalMessage,
 	type ITokenClaims,
-	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IConnectionStateChangeReason } from "./contracts.js";

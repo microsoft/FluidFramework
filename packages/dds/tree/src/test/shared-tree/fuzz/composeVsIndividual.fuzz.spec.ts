@@ -12,10 +12,10 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
@@ -29,9 +29,9 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
+	applyForkMergeOperation,
 	applyConstraint,
 	applyFieldEdit,
-	applyForkMergeOperation,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
 } from "./fuzzEditReducers.js";

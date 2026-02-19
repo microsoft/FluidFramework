@@ -10,6 +10,7 @@
 import { expect } from "chai";
 
 import type { PropertySchema } from "../../templateValidator.js";
+import { SchemaValidator } from "../schemaValidator.js";
 // Good or bad none of the templateSchema in these imports actually conform to
 // PropertySchema type. Perhaps the type is inaccurate. Common incompatibilities
 // are missing properties of `context` and `values`.
@@ -25,7 +26,6 @@ import {
 	goodReservedTypes,
 	goodUIBorder,
 } from "../schemas/index.js";
-import { SchemaValidator } from "../schemaValidator.js";
 
 (function () {
 	describe("Simple Template Validation", function () {

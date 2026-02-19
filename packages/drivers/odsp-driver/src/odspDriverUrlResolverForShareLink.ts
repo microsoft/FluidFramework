@@ -11,8 +11,8 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	IdentityType,
 	IOdspResolvedUrl,
+	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
@@ -30,8 +30,8 @@ import {
 import {
 	appendNavParam,
 	createOdspLogger,
-	getContainerPackageName,
 	getOdspResolvedUrl,
+	getContainerPackageName,
 } from "./odspUtils.js";
 
 /**

@@ -18,7 +18,7 @@ import {
 	LocalReconnectingPerspective,
 	PriorPerspective,
 } from "./perspective.js";
-import { assertInserted, toRemovalInfo, wasRemovedOnInsert } from "./segmentInfos.js";
+import { toRemovalInfo, assertInserted, wasRemovedOnInsert } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 import * as opstampUtils from "./stamps.js";
 

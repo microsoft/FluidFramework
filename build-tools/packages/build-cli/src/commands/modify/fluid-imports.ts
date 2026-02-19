@@ -7,11 +7,9 @@
 
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-
 import { Flags } from "@oclif/core";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, type SourceFile } from "ts-morph";
-
 import { ApiLevel, BaseCommand, getApiExports, isKnownApiLevel } from "../../library/index.js";
 import type { CommandLogger } from "../../logging.js";
 

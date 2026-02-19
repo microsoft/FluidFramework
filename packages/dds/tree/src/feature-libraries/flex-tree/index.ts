@@ -4,35 +4,43 @@
  */
 
 export {
-	Context,
-	ContextSlot,
-	type FlexTreeContext,
-	type FlexTreeHydratedContext,
-	type FlexTreeHydratedContextMinimal,
-} from "./context.js";
-export {
-	type FlexibleFieldContent,
-	type FlexibleNodeContent,
-	type FlexTreeEntity,
-	FlexTreeEntityKind,
 	type FlexTreeField,
 	type FlexTreeNode,
+	type FlexTreeEntity,
+	type FlexTreeTypedField,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
-	type FlexTreeTypedField,
+	TreeStatus,
 	type FlexTreeUnknownUnboxed,
 	flexTreeMarker,
-	flexTreeSlot,
-	type HydratedFlexTreeNode,
+	FlexTreeEntityKind,
 	isFlexTreeNode,
-	TreeStatus,
+	flexTreeSlot,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type HydratedFlexTreeNode,
 } from "./flexTreeTypes.js";
+
+export {
+	type FlexTreeContext,
+	type FlexTreeHydratedContext,
+	Context,
+	ContextSlot,
+	type FlexTreeHydratedContextMinimal,
+} from "./context.js";
+
+export { type FlexTreeNodeEvents } from "./treeEvents.js";
+
 export {
 	assertFlexTreeEntityNotFreed,
 	LazyEntity,
 } from "./lazyEntity.js";
+
 export { getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
-export { currentObserver, type Observer, withObservation } from "./observer.js";
-export { type FlexTreeNodeEvents } from "./treeEvents.js";
-export { getSchemaAndPolicy, indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
+
+export { getSchemaAndPolicy, indexForAt } from "./utilities.js";
+
+export { treeStatusFromAnchorCache } from "./utilities.js";
+
+export { currentObserver, withObservation, type Observer } from "./observer.js";

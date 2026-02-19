@@ -18,11 +18,11 @@ import type {
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	toIDeltaManagerFull,
+	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

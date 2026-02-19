@@ -4,7 +4,6 @@
  */
 
 import { Result } from '../../Common.js';
-import { ChangeInternal, EditStatus } from '../../persisted-types/index.js';
 import { RevisionView } from '../../RevisionView.js';
 import {
 	ChangeResult,
@@ -12,6 +11,7 @@ import {
 	GenericTransactionPolicy,
 	TransactionInternal,
 } from '../../TransactionInternal.js';
+import { ChangeInternal, EditStatus } from '../../persisted-types/index.js';
 
 /**
  * @internal

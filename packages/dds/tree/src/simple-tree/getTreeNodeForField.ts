@@ -9,12 +9,12 @@ import type { TreeValue } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexTreeField,
-	type FlexTreeOptionalField,
-	type FlexTreeRequiredField,
 	isFlexTreeNode,
+	type FlexTreeRequiredField,
+	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
 
-import { getOrCreateNodeFromInnerNode, type TreeNode } from "./core/index.js";
+import { type TreeNode, getOrCreateNodeFromInnerNode } from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.

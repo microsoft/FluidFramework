@@ -13,11 +13,11 @@ import type {
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
-	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,

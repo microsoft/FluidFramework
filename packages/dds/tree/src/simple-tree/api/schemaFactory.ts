@@ -14,53 +14,53 @@ import type { TreeValue } from "../../core/index.js";
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
+	type JsonCompatibleReadOnlyObject,
+	type RestrictiveStringRecord,
 	compareSets,
 	getOrCreate,
 	isReadonlyArray,
-	type JsonCompatibleReadOnlyObject,
-	type RestrictiveStringRecord,
 } from "../../util/index.js";
+import { normalizeAllowedTypes, markSchemaMostDerived, isLazy } from "../core/index.js";
 import type {
-	ImplicitAllowedTypes,
-	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
-	NodeSchemaMetadata,
+	WithType,
 	TreeNodeSchema,
-	TreeNodeSchemaBoth,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
+	TreeNodeSchemaBoth,
 	UnhydratedFlexTreeNode,
-	WithType,
+	NodeSchemaMetadata,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
-import { isLazy, markSchemaMostDerived, normalizeAllowedTypes } from "../core/index.js";
 import {
-	createFieldSchema,
-	type DefaultProvider,
 	FieldKind,
+	type FieldSchema,
+	type ImplicitFieldSchema,
 	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
 	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 	type FieldProps,
-	type FieldSchema,
+	createFieldSchema,
+	type DefaultProvider,
 	getDefaultProvider,
-	type ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
-	// This import prevents a large number of LeafSchema references in the API reports from showing up as LeafSchema_2.
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	type LeafSchema,
 	nullSchema,
 	numberSchema,
 	stringSchema,
+	// This import prevents a large number of LeafSchema references in the API reports from showing up as LeafSchema_2.
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	type LeafSchema,
 } from "../leafNodeSchema.js";
 import {
 	arraySchema,
-	type InsertableObjectFromSchemaRecord,
 	type MapNodeInsertableData,
 	mapSchema,
 	objectSchema,
 	type TreeArrayNode,
+	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
 } from "../node-kinds/index.js";

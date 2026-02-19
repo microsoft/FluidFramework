@@ -16,22 +16,22 @@ import {
 import { pkgVersion } from "../../../packageVersion.js";
 import {
 	checkCompatibility,
-	exportCompatibilitySchemaSnapshot,
-	getCompatibility,
 	importCompatibilitySchemaSnapshot,
+	exportCompatibilitySchemaSnapshot,
 	type SnapshotFileSystem,
 	snapshotSchemaCompatibility,
+	getCompatibility,
 	// Allow importing file which is being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
 import {
-	allowUnused,
 	normalizeFieldSchema,
-	numberSchema,
 	SchemaFactory,
+	TreeViewConfiguration,
 	SchemaFactoryBeta,
 	stringSchema,
-	TreeViewConfiguration,
+	numberSchema,
+	allowUnused,
 } from "../../../simple-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";

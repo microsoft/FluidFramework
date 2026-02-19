@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export { createRootSummarizerNode, type IRootSummarizerNode } from "./summarizerNode.js";
 export type {
 	IRefreshSummaryResult,
 	ISummarizerNodeRootContract,
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils.js";
+
+export { type IRootSummarizerNode, createRootSummarizerNode } from "./summarizerNode.js";
 export {
-	createRootSummarizerNodeWithGC,
 	type IRootSummarizerNodeWithGC,
+	createRootSummarizerNodeWithGC,
 } from "./summarizerNodeWithGc.js";

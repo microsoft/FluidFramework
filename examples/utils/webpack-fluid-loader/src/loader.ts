@@ -13,17 +13,17 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	type ILoaderProps,
-	loadExistingContainer,
 	rehydrateDetachedContainer,
+	loadExistingContainer,
+	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IUser } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceFactory,
-	type IPersistedCache,
 	IResolvedUrl,
+	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import {

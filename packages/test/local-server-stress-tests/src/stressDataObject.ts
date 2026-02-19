@@ -11,14 +11,14 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	type IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type {
-	FluidObject,
 	IFluidHandle,
+	FluidObject,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
@@ -29,9 +29,9 @@ import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-u
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
-	asLegacyAlpha,
 	RuntimeHeaders,
 	toFluidHandleInternal,
+	asLegacyAlpha,
 } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 

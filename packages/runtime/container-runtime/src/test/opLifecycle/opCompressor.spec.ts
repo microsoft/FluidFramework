@@ -10,9 +10,9 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { ContainerMessageType } from "../../index.js";
 import {
+	type OutboundBatchMessage,
 	OpCompressor,
 	type OutboundBatch,
-	type OutboundBatchMessage,
 	type OutboundSingletonBatch,
 } from "../../opLifecycle/index.js";
 

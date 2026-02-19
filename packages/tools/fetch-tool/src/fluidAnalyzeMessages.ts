@@ -11,12 +11,12 @@ import {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import {
-	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryNack,
 	type ISummaryProposal,
 	MessageType,
 	TreeEntry,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 

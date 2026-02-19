@@ -4,7 +4,7 @@
  */
 
 export {
+	singleJsonCursor,
 	cursorToJsonObject,
 	fieldJsonCursor,
-	singleJsonCursor,
 } from "./jsonCursor.js";
