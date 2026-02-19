@@ -30,7 +30,6 @@ import {
 	assertIsStableId,
 	createIdCompressor,
 	type IIdCompressorCore,
-	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
@@ -264,6 +263,8 @@ export enum SummarizeType {
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link TestTreeProvider.create} and satisfy the {@link ITestObjectProvider} interface.
+ * @remarks
+ * When possible, prefer {@link TestTreeProviderLite} which is simpler and has lower overhead.
  */
 export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
@@ -479,7 +480,7 @@ export class TestTreeProviderLite {
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId, SerializationVersion.V3),
+				idCompressor: createIdCompressor(sessionId),
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);
@@ -1130,9 +1131,9 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// This block makes sure we still validate the encoded data schema for codecs following the latter
 			// pattern.
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
 					describe(
@@ -1150,16 +1151,6 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 							}
 						},
 					);
-				}
-			});
-
-			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of successes) {
-					it(name, () => {
-						const encoded = codec.binary.encode(data, context);
-						const decoded = codec.binary.decode(encoded, context);
-						assertEquivalent(decoded, data);
-					});
 				}
 			});
 
@@ -1198,9 +1189,9 @@ export function makeDiscontinuedEncodingTestSuite(
 		describe(`${version} (discontinued)`, () => {
 			const codec = family.resolve(version);
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			it("throws when encoding", () => {
 				assert.throws(
 					() => jsonCodec.encode({}, {}),

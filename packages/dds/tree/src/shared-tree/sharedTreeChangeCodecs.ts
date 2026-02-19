@@ -61,8 +61,8 @@ export function makeSharedTreeChangeCodecFamily(
 		([format, { modularChange, schemaChange }]) => [
 			format,
 			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(modularChange).json,
-				schemaChangeCodecs.resolve(schemaChange).json,
+				modularChangeCodecFamily.resolve(modularChange),
+				schemaChangeCodecs.resolve(schemaChange),
 				options,
 			),
 		],

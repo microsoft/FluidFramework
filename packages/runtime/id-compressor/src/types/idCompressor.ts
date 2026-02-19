@@ -16,30 +16,6 @@ import type {
 } from "./persisted-types/index.js";
 
 /**
- * Serialization format versions for IdCompressor.
- * @legacy
- * @beta
- */
-export const SerializationVersion = {
-	/**
-	 * Base format without sharding support
-	 */
-	V2: 2,
-	/**
-	 * Adds optional sharding state
-	 */
-	V3: 3,
-} as const;
-
-/**
- * Type representing valid serialization version values.
- * @legacy
- * @beta
- */
-export type SerializationVersion =
-	(typeof SerializationVersion)[keyof typeof SerializationVersion];
-
-/**
  * A distributed UUID generator and compressor.
  *
  * Generates arbitrary non-colliding v4 UUIDs, called stable IDs, for multiple "sessions" (which can be distributed across the network),
@@ -99,7 +75,7 @@ export type SerializationVersion =
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
- * @internal
+ * @legacy @beta
  */
 export interface IIdCompressorCore {
 	/**
@@ -150,72 +126,16 @@ export interface IIdCompressorCore {
 	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
 
 	/**
-	 * Shards the ID space of this compressor such that multiple local compressors can safely share it without colliding.
-	 * This can allow multiple local instantiations of the same compressor to safely share an ID space in scenarios where
-	 * different threads do not have access to a central ID compressor.
-	 * @param newShardCount - The number of additional different shards to split this compressor into.
-	 * @returns An array of serialized compressors of size `newShardCount`.
-	 * These can be passed across a marshalling boundary and rehydrated on the other side, and will safely share the ID space of `this`.
-	 * Note that this method should only be needed when multiple JS runtimes are in play, as sharded compressors essentially
-	 * attempt to emulate a single static compressor and any code running in the same JS runtime can simply use statics.
-	 */
-	shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[];
-
-	/**
-	 * Deregisters the specific shard, allowing `this` to reclaim and use its subset of the ID space.
-	 * Once called, it is no longer safe to use the sharded compressor that the ID came from.
-	 * @param shardId - The ID for the shard, obtained by calling `shardId`.
-	 */
-	unshard(shardId: CompressorShardId): void;
-
-	/**
-	 * Returns undefined if this compressor is not part of a shard group, and otherwise disposes this shard and returns
-	 * the shard ID for this compressor. If this compressor was part of a shard group, the compressor will no longer be usable.
-	 *
-	 * @returns The shard ID if this compressor is part of a sharded group, otherwise undefined.
-	 * The returned ID is serializable and can be passed across marshaling boundaries. This ID can be used to unshard the compressor
-	 * by calling {@link IIdCompressorCore.unshard}.
-	 * @throws If this shard has active child shards.
-	 * This means that a shard tree must be disposed/unsharded from the leaves upwards.
-	 */
-	disposeShard(): CompressorShardId | undefined;
-
-	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
 	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */
 	serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 
 	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
 	 * This only includes finalized state and is therefore suitable for use in summaries.
 	 */
 	serialize(withSession: false): SerializedIdCompressorWithNoSession;
-}
-
-/**
- * An ID that uniquely identifies an ID compressor shard.
- * This is used to track which shard generated which IDs and to manage unsharding.
- * @internal
- */
-export interface CompressorShardId {
-	/**
-	 * The session ID of the shard. All shards from the same parent share the same session ID.
-	 */
-	sessionId: SessionId;
-
-	/**
-	 * The number of positions filled in this shard's stride pattern.
-	 * This tracks progress through the stride cycle, not the count of IDs actually generated.
-	 * For example, when a shard is created, it backfills entries for positions in its stride,
-	 * so this value may be non-zero even if the shard hasn't generated any IDs yet.
-	 */
-	localGenCount: number;
-
-	/**
-	 * Unique identifier for this shard within its parent.
-	 */
-	shardId: SessionId;
 }
 
 /**

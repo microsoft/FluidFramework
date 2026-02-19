@@ -11,10 +11,7 @@ import {
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
-import {
-	createIdCompressor,
-	SerializationVersion,
-} from "@fluidframework/id-compressor/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -83,9 +80,13 @@ import {
 	exportConcise,
 	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
+	type TreeContextAlpha,
 	type TreeNodeSchema,
 	getUnhydratedContext,
 	type TreeBranchAlpha,
+	type TransactionResult,
+	type TransactionResultExt,
+	type WithValue,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -229,7 +230,7 @@ export interface TreeIdentifierUtils {
  * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
  * If an option were added to these APIs, it could also be used to enable unknown optional fields.
  *
- * @system @sealed @alpha
+ * @sealed @alpha
  */
 export interface TreeAlpha {
 	/**
@@ -240,8 +241,16 @@ export interface TreeAlpha {
 	 *
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
+	 *
+	 * @deprecated To obtain a {@link TreeBranchAlpha | branch }, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
 	 */
 	branch(node: TreeNode): TreeBranchAlpha | undefined;
+
+	/**
+	 * Retrieve the {@link TreeContextAlpha | context} for the given node.
+	 * @param node - The node to query
+	 */
+	context(node: TreeNode): TreeContextAlpha;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -766,6 +775,10 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
+	context(node: TreeNode): TreeContextAlpha {
+		return this.branch(node) ?? UnhydratedTreeContext.instance;
+	},
+
 	branch(node: TreeNode): TreeBranchAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
@@ -862,7 +875,7 @@ export const TreeAlpha: TreeAlpha = {
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
-		const idCompressor = options.idCompressor ?? createIdCompressor(SerializationVersion.V3);
+		const idCompressor = options.idCompressor ?? createIdCompressor();
 
 		// Grabbing an existing stored schema from the node is important to ensure that unknown optional fields can be preserved.
 		// Note that if the node is unhydrated, this can result in all staged allowed types being included in the schema, which might be undesired.
@@ -893,7 +906,7 @@ export const TreeAlpha: TreeAlpha = {
 			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
 			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
-			idCompressor: options.idCompressor ?? createIdCompressor(SerializationVersion.V3),
+			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);
@@ -1081,4 +1094,42 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
+}
+
+class UnhydratedTreeContext implements TreeContextAlpha {
+	public static instance = new UnhydratedTreeContext();
+	private constructor() {}
+
+	public isBranch(): this is TreeBranchAlpha {
+		return false;
+	}
+
+	public runTransaction<TValue>(
+		t: () => WithValue<TValue>,
+	): TransactionResultExt<TValue, TValue>;
+	public runTransaction(t: () => void): TransactionResult;
+	public runTransaction(
+		t: () => WithValue<unknown> | void,
+	): TransactionResultExt<unknown, unknown> | TransactionResult {
+		return UnhydratedTreeContext.wrapTransactionResult(t());
+	}
+
+	public runTransactionAsync<TValue>(
+		t: () => Promise<WithValue<TValue>>,
+	): Promise<TransactionResultExt<TValue, TValue>>;
+	public runTransactionAsync(t: () => Promise<void>): Promise<TransactionResult>;
+	public async runTransactionAsync(
+		t: () => Promise<WithValue<unknown> | void>,
+	): Promise<TransactionResultExt<unknown, unknown> | TransactionResult> {
+		return UnhydratedTreeContext.wrapTransactionResult(await t());
+	}
+
+	private static wrapTransactionResult<TValue>(
+		value: WithValue<TValue> | void,
+	): TransactionResultExt<TValue, TValue> | TransactionResult {
+		if (value?.value !== undefined) {
+			return { success: true, value: value.value };
+		}
+		return { success: true };
+	}
 }

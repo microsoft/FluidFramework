@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-loader-utils",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"description": "Mocks and other test utilities for the Fluid Framework Loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -76,10 +76,6 @@
 				"tsc"
 			],
 			"check:exports:esm:index": [
-				"...",
-				"build:esnext"
-			],
-			"check:exports:bundle-release-tags": [
 				"...",
 				"build:esnext"
 			]

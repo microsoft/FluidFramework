@@ -15,7 +15,7 @@ describe("Snapshots", function () {
 		skipOrFailIfTestContentMissing(this, contentLocation);
 	});
 
-	it("Snapshot stress test", async () => {
+	it("Stress Test", async () => {
 		await processContent(Mode.Stress);
 	});
 
