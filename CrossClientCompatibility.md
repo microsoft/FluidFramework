@@ -6,7 +6,7 @@
 
 Cross-client compatibility is Fluid's ability to support collaboration between two clients running different versions of the Fluid runtime within an allowable window. This addresses two key scenarios:
 1. **Rolling upgrades**: During version upgrades, there is an unavoidable transition window when clients running different versions must coexist and collaborate. This compatibility ensures users can continue working together seamlessly, whether or not their application instance has been updated yet.
-1. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
+2. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
 
 This document explains:
 
@@ -51,16 +51,16 @@ For example, if you want to ensure collaboration between N/N-1 clients, the prop
 
 We recommend maintaining `minVersionForCollab` at the latest version of Fluid that your users are saturated on. This will ensure:
 1. Older and newer clients can collaborate with each other safely.
-1. Your application can leverage new Fluid features as soon as they become safe for cross-client collaboration.
+2. Your application can leverage new Fluid features as soon as they become safe for cross-client collaboration.
 
 ### Best Practices
 
 We recommend following the below pattern to ensure cross-client compatibility when upgrading major versions of Fluid.
 
 1. Observe the distribution of Fluid versions across your application's clients.
-1. Set `minVersionForCollab` to the lowest deployed version that the application's clients are saturated on.
-1. If `minVersionForCollab` is within the cross-client compatibility window of the Fluid version you want to upgrade then bump Fluid dependencies and no further action is required. If `minVersionForCollab` is not within the cross-client compatibility window, then wait for further saturation and return to step 1.
-1. Monitor telemetry for warnings/errors to ensure safe rollout (see below section). At this point any clients that are not saturated may be blocked from accessing the document.
+2. Set `minVersionForCollab` to the lowest deployed version that the application's clients are saturated on.
+3. If `minVersionForCollab` is within the cross-client compatibility window of the Fluid version you want to upgrade then bump Fluid dependencies and no further action is required. If `minVersionForCollab` is not within the cross-client compatibility window, then wait for further saturation and return to step 1.
+4. Monitor telemetry for warnings/errors to ensure safe rollout (see below section). At this point any clients that are not saturated may be blocked from accessing the document.
 
 ### Errors and Warnings to Monitor
 

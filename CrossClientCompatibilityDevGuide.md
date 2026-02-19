@@ -100,13 +100,13 @@ Add a mechanism to enable/disable your change:
 
 1. **Add a container runtime option** to `ContainerRuntimeOptionsInternal` in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts). The option should control whether your change is enabled or disabled. For example, there exists a runtime option for `createBlobPayloadPending` which determines whether to use the new or legacy behavior. New properties added to `ContainerRuntimeOptionsInternal` are automatically included in `RuntimeOptionsAffectingDocSchema` (defined in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts)) via an `Omit` pattern — this will cause a build failure until the configuration maps are updated in Step 3. If your option does **not** affect the document schema, explicitly add it to the `Omit` list in `RuntimeOptionsAffectingDocSchema`.
 
-1. **Add a property** corresponding to the container runtime option to `IDocumentSchemaFeatures` in [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts).
+2. **Add a property** corresponding to the container runtime option to `IDocumentSchemaFeatures` in [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts).
 
-1. **Update `documentSchemaSupportedConfigs`** to include the property added in the previous bullet. It should be instantiated as one of the `IProperty` classes (e.g., `TrueOrUndefined`). Although unlikely, you may need to define a new class.
+3. **Update `documentSchemaSupportedConfigs`** to include the property added in the previous bullet. It should be instantiated as one of the `IProperty` classes (e.g., `TrueOrUndefined`). Although unlikely, you may need to define a new class.
 
-1. **Update the `desiredSchema.runtime` definition** to include your new property. Follow existing patterns in [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts) for reference.
+4. **Update the `desiredSchema.runtime` definition** to include your new property. Follow existing patterns in [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts) for reference.
 
-1. **Ensure the container runtime option is passed** into the `DocumentsSchemaController` constructor when instantiating a new container runtime. Follow the existing patterns in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts) for reference.
+5. **Ensure the container runtime option is passed** into the `DocumentsSchemaController` constructor when instantiating a new container runtime. Follow the existing patterns in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts) for reference.
 
 ### 3. Edit the "Configuration Maps" for this change
 
