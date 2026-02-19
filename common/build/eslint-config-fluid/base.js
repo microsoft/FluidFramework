@@ -158,21 +158,8 @@ module.exports = {
 			},
 		],
 		"import-x/no-unused-modules": "error",
-		"import-x/order": [
-			"error",
-			{
-				"groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
-				"newlines-between": "always",
-				"alphabetize": {
-					order: "asc",
-					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
-					// another huge set of changes to order things case-insensitively, we'll just
-					// use the rule with this config for now. This decision should be considered
-					// pragmatic and not a statement of preference, and we should revisit this.
-					caseInsensitive: false,
-				},
-			},
-		],
+		// Import ordering is handled by Biome's organizeImports action.
+		"import-x/order": "off",
 
 		// #region
 

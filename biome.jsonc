@@ -129,7 +129,26 @@
 		],
 		"maxSize": 2097152
 	},
-	"assist": { "actions": { "source": { "organizeImports": "off" } } },
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [
+							":NODE:",
+							":BLANK_LINE:",
+							":PACKAGE:",
+							":BLANK_LINE:",
+							"../**",
+							":BLANK_LINE:",
+							"./**"
+						]
+					}
+				}
+			}
+		}
+	},
 	"linter": {
 		"enabled": false,
 		"rules": {
