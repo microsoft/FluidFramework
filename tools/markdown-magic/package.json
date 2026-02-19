@@ -25,7 +25,7 @@
 		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
-		"@rushstack/node-core-library": "^3.61.0",
+		"@rushstack/node-core-library": "^5.19.1",
 		"@tylerbu/markdown-magic": "2.4.0-tylerbu-1",
 		"chalk": "^4.1.2",
 		"markdown-magic-package-scripts": "^1.2.2",
