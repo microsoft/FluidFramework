@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../api.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
@@ -25,7 +26,6 @@ import {
 	type TransactionConstraint,
 	type rollback,
 } from "../../simple-tree/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";

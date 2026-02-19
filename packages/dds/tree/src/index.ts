@@ -77,7 +77,7 @@ export {
 	type TreeIdentifierUtils,
 	type ParentType,
 	type ParentObject,
-	type TreeParent,
+	type TreeNodeParent,
 	independentView,
 	type IndependentViewOptions,
 	createIndependentTreeBeta,

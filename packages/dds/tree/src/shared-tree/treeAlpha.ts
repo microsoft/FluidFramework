@@ -1380,7 +1380,7 @@ export const TreeAlpha: TreeAlpha = {
 				return [];
 			}
 			const root = view.root;
-			return root !== undefined ? [[undefined, root as TreeNode | TreeLeafValue]] : [];
+			return root === undefined ? [] : [[undefined, root as TreeNode | TreeLeafValue]];
 		}
 
 		if (parent instanceof DetachedParent) {
@@ -1389,7 +1389,7 @@ export const TreeAlpha: TreeAlpha = {
 
 		if (parent instanceof UnhydratedParent) {
 			const treeNode = parent.getUnhydratedRoot().treeNode;
-			return treeNode !== undefined ? [[undefined, treeNode]] : [];
+			return treeNode === undefined ? [] : [[undefined, treeNode]];
 		}
 
 		if (!isTreeNode(parent)) {
@@ -1527,9 +1527,9 @@ export const TreeAlpha: TreeAlpha = {
 				}
 
 				assert(
-						view.compatibility.canView,
-						0xa5f /* Cannot subscribe to node events on a TreeView with incompatible schema */,
-					);
+					view.compatibility.canView,
+					0xa5f /* Cannot subscribe to node events on a TreeView with incompatible schema */,
+				);
 				const rootNode = view.root;
 				// rootNode may be undefined if the root is optional.
 				currentNodeUnsubscribe = isTreeNode(rootNode)
