@@ -181,6 +181,24 @@
 	},
 	"overrides": [
 		{
+			// FILES WITH SHEBANGS
+			// Biome's organizeImports introduces a blank line between the shebang and the copyright
+			// header, which breaks policy. Disable organizeImports for files with shebangs.
+			"includes": [
+				"**/build-cli/bin/**",
+				"**/build-infrastructure/bin/**",
+				"**/fluid-runner/bin/**",
+				"**/fluid-runner/src/test/sampleCodeLoaders/**"
+			],
+			"assist": {
+				"actions": {
+					"source": {
+						"organizeImports": "off"
+					}
+				}
+			}
+		},
+		{
 			// @fluid-experimental/tree FORMATTING
 			// This configuration is used to format the @fluid-experimental/tree package, which uses different settings than
 			// most projects. This override is needed to ensure that the formatter is applied correctly when run from the root
