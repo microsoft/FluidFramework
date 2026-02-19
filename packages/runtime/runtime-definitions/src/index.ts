@@ -10,10 +10,11 @@ export type {
 	LocalAttributionKey,
 	OpAttributionKey,
 } from "./attribution.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 export type {
+	ContainerExtensionExpectations,
 	ContainerExtensionId,
 	ContainerExtensionProvider,
-	ContainerExtensionExpectations,
 	ExtensionCompatibilityDetails,
 	UnknownExtensionInstantiation,
 } from "./containerExtensionProvider.js";
@@ -25,10 +26,10 @@ export type {
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
-	IFluidDataStorePolicies,
 	IFluidDataStoreContext,
-	IFluidParentContext,
 	IFluidDataStoreContextDetached,
+	IFluidDataStorePolicies,
+	IFluidParentContext,
 	IPendingMessagesState,
 	PackagePath,
 } from "./dataStoreContext.js";
@@ -62,13 +63,21 @@ export type {
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
-	ISequencedMessageEnvelope,
 	IRuntimeStorageService,
+	ISequencedMessageEnvelope,
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
 } from "./runtimeLayerCompatFeatureNames.js";
+export {
+	asLegacyAlpha,
+	type CommitStagedChangesOptionsInternal,
+	type ContainerRuntimeBaseAlpha,
+	type IContainerRuntimeBaseInternal,
+	type StageControlsAlpha,
+	type StageControlsInternal,
+} from "./stagingMode.js";
 export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
@@ -86,19 +95,9 @@ export type {
 } from "./summary.js";
 export {
 	blobCountPropertyName,
-	channelsTreeName,
 	CreateSummarizerNodeSource,
+	channelsTreeName,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 	totalBlobSizePropertyName,
 } from "./summary.js";
-export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
-
-export {
-	type ContainerRuntimeBaseAlpha,
-	type StageControlsAlpha,
-	type CommitStagedChangesOptionsInternal,
-	type IContainerRuntimeBaseInternal,
-	type StageControlsInternal,
-	asLegacyAlpha,
-} from "./stagingMode.js";

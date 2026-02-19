@@ -11,16 +11,16 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { ReadBuffer } from "../ReadBufferUtils.js";
 import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
 import {
+	assertBlobCoreInstance,
+	assertBoolInstance,
+	assertNodeCoreInstance,
+	assertNumberInstance,
 	BlobCore,
 	BlobShallowCopy,
 	type IStringElement,
 	NodeCore,
 	type NodeTypes,
 	TreeBuilder,
-	assertBlobCoreInstance,
-	assertBoolInstance,
-	assertNodeCoreInstance,
-	assertNumberInstance,
 } from "../zipItDataRepresentationUtils.js";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes): void {

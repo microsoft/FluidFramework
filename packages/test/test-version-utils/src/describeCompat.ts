@@ -17,8 +17,8 @@ import {
 	CompatConfig,
 	configList,
 	isCompatVersionBelowMinVersion,
-	mochaGlobalSetup,
 	isOdspCompatCompliant,
+	mochaGlobalSetup,
 } from "./compatConfig.js";
 import {
 	CompatKind,
@@ -28,17 +28,17 @@ import {
 	tenantIndex,
 } from "./compatOptions.js";
 import {
-	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 	getDriverInformationWhenNoProviderIsAvailable,
+	getVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
 import {
+	CompatApis,
+	getCompatModeFromKind,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
-	getLoaderApi,
-	CompatApis,
 	getDriverApi,
-	getCompatModeFromKind,
+	getLoaderApi,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 

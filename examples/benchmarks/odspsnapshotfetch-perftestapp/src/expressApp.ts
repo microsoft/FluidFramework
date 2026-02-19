@@ -5,9 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	getServer,
 	type IOdspTokens,
 	type IPublicClientConfig,
-	getServer,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	type OdspTokenConfig,

@@ -4,16 +4,16 @@
  */
 
 import {
-	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
 	numberCases,
+	OptionsMatrix,
 } from "@fluid-private/test-pairwise-generator";
 import {
-	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
+	OdspDocumentServiceFactory,
+	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 import {
 	HostStoragePolicy,

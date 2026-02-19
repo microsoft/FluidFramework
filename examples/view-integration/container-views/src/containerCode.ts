@@ -4,10 +4,10 @@
  */
 
 import {
+	getDataStoreEntryPoint,
 	type IFluidMountableView,
 	ModelContainerRuntimeFactory,
 	MountableView,
-	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions/legacy";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";

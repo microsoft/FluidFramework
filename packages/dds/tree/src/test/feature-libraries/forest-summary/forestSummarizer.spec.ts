@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
-	SummaryType,
 	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
+	SummaryType,
 } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -17,7 +17,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
@@ -34,51 +34,51 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
 import {
+	defaultSchemaPolicy,
+	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
 	ForestFormatVersion,
 	ForestSummarizer,
-	TreeCompressionStrategy,
-	defaultSchemaPolicy,
-	makeFieldBatchCodec,
-	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
+	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import {
+	type ForestType,
 	ForestTypeOptimized,
 	ForestTypeReference,
-	type ForestType,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
 import {
-	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
+	summarizablesMetadataKey,
 } from "../../../shared-tree-core/index.js";
 import {
+	type ImplicitFieldSchema,
+	type InsertableField,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	toStoredSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	type ImplicitFieldSchema,
-	type InsertableField,
+	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	checkoutWithContent,
 	fieldCursorFromInsertable,
+	type TreeStoredContentStrict,
 	testIdCompressor,
 	testRevisionTagCodec,
-	type TreeStoredContentStrict,
 } from "../../utils.js";
 
 import {
+	createInitialBoard,
 	Root,
 	setupForestForIncrementalSummarization,
-	createInitialBoard,
 } from "./forestSummarizerTestUtils.js";
 
 function createForestSummarizer(args: {

@@ -9,9 +9,9 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeAtomId,
-	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
+	type TaggedChange,
 	tagChange,
 } from "../../../core/index.js";
 import type {
@@ -50,7 +50,7 @@ import {
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 import { testSnapshots } from "./optionalFieldSnapshots.test.js";
-import { Change, assertEqual, inlineRevision, tagChangeInline } from "./optionalFieldUtils.js";
+import { assertEqual, Change, inlineRevision, tagChangeInline } from "./optionalFieldUtils.js";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
 
 /**

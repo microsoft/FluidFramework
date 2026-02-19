@@ -16,11 +16,11 @@ import type {
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	type ISequencedDocumentMessage,
 	type ITree,
 	type ITreeEntry,
 	MessageType,
 	TreeEntry,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	FileDeltaStorageService,
@@ -29,8 +29,8 @@ import {
 	FileStorageDocumentName,
 	FluidFetchReaderFileSnapshotWriter,
 	type ISnapshotWriterStorage,
-	ReplayFileDeltaConnection,
 	type Replayer,
+	ReplayFileDeltaConnection,
 } from "@fluidframework/file-driver/internal";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
@@ -40,8 +40,8 @@ import {
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockEmptyDeltaConnection,

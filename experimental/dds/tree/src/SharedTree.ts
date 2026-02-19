@@ -10,33 +10,33 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions/internal';
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from '@fluidframework/runtime-definitions/internal';
 import {
+	createSingleBlobSummary,
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
-	createSingleBlobSummary,
 } from '@fluidframework/shared-object-base/internal';
 import {
-	IEventSampler,
-	ITelemetryLoggerPropertyBags,
-	ITelemetryLoggerExt,
-	PerformanceEvent,
 	createChildLogger,
 	createSampledLogger,
+	IEventSampler,
+	ITelemetryLoggerExt,
+	ITelemetryLoggerPropertyBags,
+	PerformanceEvent,
 } from '@fluidframework/telemetry-utils/internal';
 
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
-import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
+import { copyPropertyIfDefined, fail, RestOrArray, unwrapRestOrArray } from './Common.js';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';
 import {
 	areRevisionViewsSemanticallyEqual,
@@ -54,13 +54,14 @@ import {
 	AttributionId,
 	DetachedSequenceId,
 	EditId,
+	isDetachedSequenceId,
 	NodeId,
 	OpSpaceNodeId,
 	SessionId,
 	StableNodeId,
-	isDetachedSequenceId,
 } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
+import { createSessionId, IdCompressor } from './id-compressor/index.js';
 import {
 	CachingLogViewer,
 	EditCacheEntry,
@@ -69,16 +70,7 @@ import {
 	SequencedEditResult,
 	SequencedEditResultCallback,
 } from './LogViewer.js';
-import { NodeIdContext, NodeIdNormalizer, getNodeIdContext } from './NodeIdUtilities.js';
-import { ReconciliationPath } from './ReconciliationPath.js';
-import { RevisionView } from './RevisionView.js';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
-import { MutableStringInterner } from './StringInterner.js';
-import { SummaryContents, serialize } from './Summary.js';
-import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
-import { TransactionInternal } from './TransactionInternal.js';
-import { nilUuid } from './UuidUtilities.js';
-import { IdCompressor, createSessionId } from './id-compressor/index.js';
+import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -89,22 +81,30 @@ import {
 	Edit,
 	EditLogSummary,
 	EditStatus,
+	ghostSessionId,
 	InternalizedChange,
+	reservedIdCount,
 	SharedTreeEditOp,
 	SharedTreeEditOp_0_0_2,
 	SharedTreeOp,
-	SharedTreeOpType,
 	SharedTreeOp_0_0_2,
+	SharedTreeOpType,
 	SharedTreeSummary,
-	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
+	SharedTreeSummaryBase,
 	TreeNode,
 	TreeNodeSequence,
 	WriteFormat,
-	ghostSessionId,
-	reservedIdCount,
 } from './persisted-types/index.js';
 import { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
+import { ReconciliationPath } from './ReconciliationPath.js';
+import { RevisionView } from './RevisionView.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
+import { MutableStringInterner } from './StringInterner.js';
+import { SummaryContents, serialize } from './Summary.js';
+import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { nilUuid } from './UuidUtilities.js';
 
 /**
  * The write format and associated options used to construct a `SharedTree`

@@ -4,29 +4,29 @@
  */
 
 import type { Off } from "@fluidframework/core-interfaces";
-import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
+import { FieldKinds, isTreeValue, type TreeStatus } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
 import {
-	getKernel,
-	isTreeNode,
-	type TreeNodeSchema,
-	NodeKind,
-	type TreeNode,
-	tryGetTreeNodeSchema,
-	getOrCreateNodeFromInnerNode,
-	typeSchemaSymbol,
 	getInnerNode,
-	type TreeLeafValue,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
 	type ImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
+	isTreeNode,
+	NodeKind,
 	normalizeAllowedTypes,
+	type TreeLeafValue,
+	type TreeNode,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
+	tryGetTreeNodeSchema,
+	typeSchemaSymbol,
 } from "../core/index.js";
-import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
+import { FieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
 import {
 	booleanSchema,

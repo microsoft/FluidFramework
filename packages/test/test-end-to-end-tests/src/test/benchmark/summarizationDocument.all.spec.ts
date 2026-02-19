@@ -11,11 +11,11 @@ import { delay } from "@fluidframework/core-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import {
+	benchmarkAll,
+	createDocument,
 	IBenchmarkParameters,
 	IDocumentLoaderAndSummarizer,
 	ISummarizeResult,
-	benchmarkAll,
-	createDocument,
 } from "./DocumentCreator.js";
 
 const scenarioTitle = "Summarize Document";

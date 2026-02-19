@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
+import { fluidHandleSymbol, IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { assert } from '@fluidframework/core-utils/internal';
 import { FluidSerializer, isISharedObjectHandle } from '@fluidframework/shared-object-base/internal';
@@ -13,19 +13,19 @@ import { expect } from 'chai';
 import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
 import { noop } from '../Common.js';
 import {
-	PlaceValidationResult,
-	RangeValidationResultKind,
 	convertTreeNodes,
 	deepCompareNodes,
 	internalizeBuildNode,
+	PlaceValidationResult,
+	RangeValidationResultKind,
 	validateStablePlace,
 	validateStableRange,
 	walkTree,
 } from '../EditUtilities.js';
 import { Definition, NodeId } from '../Identifiers.js';
 import { comparePayloads } from '../PayloadUtilities.js';
-import { getChangeNodeFromView } from '../SerializationUtilities.js';
 import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types/index.js';
+import { getChangeNodeFromView } from '../SerializationUtilities.js';
 
 import { refreshTestTree } from './utilities/TestUtilities.js';
 

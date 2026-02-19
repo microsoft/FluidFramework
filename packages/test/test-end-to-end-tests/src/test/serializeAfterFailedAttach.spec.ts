@@ -17,12 +17,12 @@ import {
 	type IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createDocumentId,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LocalCodeLoader,
 	TestFluidObject,
 	TestFluidObjectFactory,
-	createDocumentId,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";

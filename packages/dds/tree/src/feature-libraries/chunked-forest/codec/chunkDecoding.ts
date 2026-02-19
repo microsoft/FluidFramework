@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IIdCompressor,
 	OpSpaceCompressedId,
@@ -13,9 +13,9 @@ import type {
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type {
 	FieldKey,
+	TreeChunk,
 	TreeNodeSchemaIdentifier,
 	Value,
-	TreeChunk,
 } from "../../../core/index.js";
 import { assertValidIndex, brand } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
@@ -24,13 +24,13 @@ import { SequenceChunk } from "../sequenceChunk.js";
 
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	getChecked,
 	readStream,
 	readStreamBoolean,
 	readStreamNumber,
 	readStreamStream,
 	readStreamValue,
+	type StreamCursor,
 } from "./chunkCodecUtilities.js";
 import {
 	DecoderContext,

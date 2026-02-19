@@ -26,12 +26,12 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
 	createLoader,
 	createLoaderProps,
 	getContainerEntryPointBackCompat,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 

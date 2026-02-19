@@ -5,15 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
 	type IMergeTreeDeltaCallbackArgs,
 	type ITrackingGroup,
 	type MergeTreeDeltaRevertible,
 	MergeTreeDeltaType,
 	type MergeTreeRevertibleDriver,
-	TrackingGroup,
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
+	TrackingGroup,
 } from "@fluidframework/merge-tree/internal";
 
 import { type Handle, isHandleValid } from "./handletable.js";

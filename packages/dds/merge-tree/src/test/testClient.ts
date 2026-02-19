@@ -11,32 +11,32 @@ import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	type ISequencedDocumentMessage,
 	type ITree,
 	MessageType,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { UnassignedSequenceNumber } from "../constants.js";
 import type { IMergeTreeOptions, ReferencePosition } from "../index.js";
-import { type MergeTree, getSlideToSegoff } from "../mergeTree.js";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
+import { getSlideToSegoff, type MergeTree } from "../mergeTree.js";
+import {
+	assertSegmentLeaf,
+	type ISegmentPrivate,
+	Marker,
+	MaxNodesInBlock,
+	type MergeBlock,
+	type SegmentGroup,
+} from "../mergeTreeNodes.js";
 import {
 	backwardExcursion,
 	forwardExcursion,
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
-import {
-	type MergeBlock,
-	type ISegmentPrivate,
-	Marker,
-	MaxNodesInBlock,
-	type SegmentGroup,
-	assertSegmentLeaf,
-} from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
@@ -46,10 +46,10 @@ import {
 import {
 	type IJSONSegment,
 	type IMarkerDef,
+	type IMergeTreeInsertMsg,
 	type IMergeTreeOp,
 	MergeTreeDeltaType,
 	ReferenceType,
-	type IMergeTreeInsertMsg,
 } from "../ops.js";
 import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
 import type { PropertySet } from "../properties.js";

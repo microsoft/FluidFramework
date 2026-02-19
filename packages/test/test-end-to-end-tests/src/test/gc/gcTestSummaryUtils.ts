@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	IGarbageCollectionState,
 	concatGarbageCollectionStates,
+	IGarbageCollectionState,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {

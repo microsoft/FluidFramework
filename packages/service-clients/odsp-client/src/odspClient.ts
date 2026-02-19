@@ -10,8 +10,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	loadExistingContainer,
 	type ILoaderProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type {
 	IConfigProviderBase,
@@ -27,23 +27,23 @@ import {
 	isInternalFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 import {
-	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
+	OdspDocumentServiceFactory,
+	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import type {
-	TokenResponse,
+	OdspContainerServices as IOdspContainerServices,
+	IOdspFluidContainer,
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-	OdspContainerServices as IOdspContainerServices,
-	IOdspFluidContainer,
+	TokenResponse,
 } from "./interfaces.js";
 import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";

@@ -7,8 +7,8 @@ import { expect } from "chai";
 
 import type { ContainerDevtoolsProps } from "../ContainerDevtools.js";
 import {
-	FluidDevtools,
 	accessBeforeInitializeErrorText,
+	FluidDevtools,
 	getContainerAlreadyRegisteredErrorText,
 	initializeDevtools,
 	useAfterDisposeErrorText,

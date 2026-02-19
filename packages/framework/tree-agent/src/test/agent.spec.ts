@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 /*
  * The unit tests in this file purposefully exercise dynamically generated / stringified code paths.
  * We disable the TypeScript ESLint unsafe access rules here to keep the test code concise while still

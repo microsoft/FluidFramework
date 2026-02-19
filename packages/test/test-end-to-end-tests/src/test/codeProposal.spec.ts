@@ -16,13 +16,13 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
+	createAndAttachContainer,
+	createDocumentId,
+	getContainerEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-	createAndAttachContainer,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {

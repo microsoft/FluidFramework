@@ -8,17 +8,17 @@ import {
 	Body1Strong,
 	Button,
 	Link,
-	Subtitle1,
 	makeStyles,
+	Subtitle1,
 } from "@fluentui/react-components";
 import {
 	DevtoolsFeatures,
 	GetDevtoolsFeatures,
-	type ISourcedDevtoolsMessage,
+	handleIncomingMessage,
 	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 	SetUnsampledTelemetry,
 	TelemetryEvent,
-	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 

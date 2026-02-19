@@ -6,8 +6,8 @@
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	buildFunc,
-	exposeMethodsSymbol,
 	type ExposedMethods,
+	exposeMethodsSymbol,
 	type IExposedMethods,
 	typeFactory as tf,
 } from "@fluidframework/tree-agent/alpha";

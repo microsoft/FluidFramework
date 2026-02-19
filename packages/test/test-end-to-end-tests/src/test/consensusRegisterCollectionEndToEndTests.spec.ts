@@ -17,10 +17,10 @@ import type { IConsensusRegisterCollection } from "@fluidframework/register-coll
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 const mapId = "mapKey";

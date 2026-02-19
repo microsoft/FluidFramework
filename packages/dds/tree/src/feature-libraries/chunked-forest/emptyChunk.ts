@@ -6,16 +6,16 @@
 import { fail } from "@fluidframework/core-utils/internal";
 
 import {
+	type ChunkedCursor,
 	CursorLocationType,
 	CursorMarker,
+	cursorChunk,
+	dummyRoot,
 	type FieldKey,
 	type FieldUpPath,
 	type PathRootPrefix,
-	type UpPath,
-	type ChunkedCursor,
 	type TreeChunk,
-	cursorChunk,
-	dummyRoot,
+	type UpPath,
 } from "../../core/index.js";
 import { prefixFieldPath } from "../treeCursorUtils.js";
 

@@ -6,18 +6,18 @@
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IDocumentDeltaConnection,
 	IAnyDriverError,
 	IConnect,
+	IDocumentDeltaConnection,
 } from "@fluidframework/driver-definitions/internal";
 import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
 import {
-	IR11sSocketError,
 	errorObjectFromSocketError,
 	getUrlForTelemetry,
+	IR11sSocketError,
 	socketIoPath,
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";

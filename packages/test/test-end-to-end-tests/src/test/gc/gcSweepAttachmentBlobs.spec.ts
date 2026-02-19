@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
@@ -22,9 +22,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
+	defaultMaxAttemptsForSubmitFailures,
 	ISummarizer,
 	RetriableSummaryError,
-	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
@@ -33,12 +33,12 @@ import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestObjectProvider,
-	toIDeltaManagerFull,
 	createSummarizer,
 	createTestConfigProvider,
+	ITestContainerConfig,
+	ITestObjectProvider,
 	summarizeNow,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

@@ -14,7 +14,7 @@ import {
 } from "@fluid-experimental/tree";
 import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
 
-import { NodeKind, fromJson } from "./treeutils.js";
+import { fromJson, NodeKind } from "./treeutils.js";
 
 function getChild(
 	tree: SharedTree,

@@ -4,10 +4,10 @@
  */
 
 import {
+	createDataObjectKind,
 	DataObject,
 	DataObjectFactory,
 	type IDataObjectProps,
-	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";

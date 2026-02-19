@@ -5,7 +5,7 @@
 
 export {
 	AnchorTreeIndex,
-	type KeyFinder,
 	hasElement,
+	type KeyFinder,
 } from "./anchorTreeIndex.js";
 export type { TreeIndex, TreeIndexNodes } from "./types.js";

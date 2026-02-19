@@ -9,9 +9,9 @@ import type { IJsonCodec } from "../../codec/index.js";
 import { hasSingle } from "../../util/index.js";
 
 import {
-	Format,
 	type DetachedFieldIndexFormatVersion,
 	type EncodedRootsForRevision,
+	Format,
 	type RootRanges,
 } from "./detachedFieldIndexFormatCommon.js";
 import type {

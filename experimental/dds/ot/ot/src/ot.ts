@@ -7,19 +7,19 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	ISummaryTreeWithStats,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 	type ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
-	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
 interface ISequencedOpInfo<TOp> {

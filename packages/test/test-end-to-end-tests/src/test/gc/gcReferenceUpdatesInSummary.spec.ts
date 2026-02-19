@@ -24,9 +24,9 @@ import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
+	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";

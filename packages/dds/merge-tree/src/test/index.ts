@@ -4,53 +4,13 @@
  */
 
 export {
-	createRevertDriver,
-	getStats,
-	type MergeTreeStats,
-	specToSegment,
-	TestClient,
-	type TestClientRevertibleDriver,
-} from "./testClient.js";
-export { checkTextMatchRelative, TestServer } from "./testServer.js";
-export {
-	countOperations,
-	loadTextFromFile,
-	loadTextFromFileWithMarkers,
-	nodeOrdinalsHaveIntegrity,
-	validatePartialLengths,
-	useStrictPartialLengthChecks,
-} from "./testUtils.js";
-export {
-	annotateRange,
-	applyMessages,
-	doOverRange,
-	generateClientNames,
-	generateOperationMessagesForClients,
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
-	insertAtRefPos,
-	removeRange,
-	type ReplayGroup,
-	replayResultsPath,
-	runMergeTreeOperationRunner,
-	type TestOperation,
-} from "./mergeTreeOperationRunner.js";
-export {
-	type LRUSegment,
-	MergeTree,
-	type IMergeTreeOptions,
-	type IMergeTreeOptionsInternal,
-} from "../mergeTree.js";
-export { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
-export { SnapshotLegacy } from "../snapshotlegacy.js";
-export {
 	addProperties,
 	appendToMergeTreeDeltaRevertibles,
 	BaseSegment,
 	Client,
 	CollaborationWindow,
-	compareReferencePositions,
 	type ConflictAction,
+	compareReferencePositions,
 	createAnnotateRangeOp,
 	createDetachedLocalReferencePosition,
 	createGroupOp,
@@ -85,14 +45,14 @@ export {
 	type LocalReferencePosition,
 	type MapLike,
 	Marker,
-	matchProperties,
-	maxReferencePosition,
 	type MergeTreeDeltaOperationType,
 	type MergeTreeDeltaOperationTypes,
 	type MergeTreeDeltaRevertible,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	type MergeTreeRevertibleDriver,
+	matchProperties,
+	maxReferencePosition,
 	minReferencePosition,
 	PropertiesManager,
 	type Property,
@@ -121,3 +81,44 @@ export {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "../index.js";
+export { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
+export {
+	type IMergeTreeOptions,
+	type IMergeTreeOptionsInternal,
+	type LRUSegment,
+	MergeTree,
+} from "../mergeTree.js";
+export { SnapshotLegacy } from "../snapshotlegacy.js";
+
+export {
+	annotateRange,
+	applyMessages,
+	doOverRange,
+	generateClientNames,
+	generateOperationMessagesForClients,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
+	insertAtRefPos,
+	type ReplayGroup,
+	removeRange,
+	replayResultsPath,
+	runMergeTreeOperationRunner,
+	type TestOperation,
+} from "./mergeTreeOperationRunner.js";
+export {
+	createRevertDriver,
+	getStats,
+	type MergeTreeStats,
+	specToSegment,
+	TestClient,
+	type TestClientRevertibleDriver,
+} from "./testClient.js";
+export { checkTextMatchRelative, TestServer } from "./testServer.js";
+export {
+	countOperations,
+	loadTextFromFile,
+	loadTextFromFileWithMarkers,
+	nodeOrdinalsHaveIntegrity,
+	useStrictPartialLengthChecks,
+	validatePartialLengths,
+} from "./testUtils.js";

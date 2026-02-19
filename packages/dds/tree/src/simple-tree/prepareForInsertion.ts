@@ -7,28 +7,28 @@ import { debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
-	SchemaAndPolicy,
-	IForestSubscription,
-	UpPath,
-	FieldKey,
 	DetachedField,
+	FieldKey,
+	IForestSubscription,
+	SchemaAndPolicy,
 	TreeFieldStoredSchema,
 	TreeTypeSet,
+	UpPath,
 } from "../core/index.js";
 import {
-	type FlexTreeContext,
-	getSchemaAndPolicy,
-	type FlexTreeHydratedContextMinimal,
+	assertFlexTreeEntityNotFreed,
+	ContextSlot,
 	FieldKinds,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
-	throwOutOfSchema,
+	type FlexTreeContext,
+	type FlexTreeHydratedContextMinimal,
 	flexTreeSlot,
-	ContextSlot,
 	getOrCreateHydratedFlexTreeNode,
-	assertFlexTreeEntityNotFreed,
+	getSchemaAndPolicy,
+	isFieldInSchema,
+	throwOutOfSchema,
 } from "../feature-libraries/index.js";
-import { isFieldInSchema } from "../feature-libraries/index.js";
 import { brand, type Mutable } from "../util/index.js";
 
 import {

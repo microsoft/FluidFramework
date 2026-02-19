@@ -15,35 +15,35 @@ import type {
 	SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type IGarbageCollectionDetailsBase,
-	type ISummarizeResult,
 	channelsTreeName,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
 	type IGarbageCollectionData,
+	type IGarbageCollectionDetailsBase,
+	type ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildLogger,
 	MockLogger,
 	type MonitoringContext,
-	createChildLogger,
 	mixinMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, spy, useFakeTimers } from "sinon";
 
 import {
+	concatGarbageCollectionStates,
+	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
+	type GarbageCollectionMessage,
+	GarbageCollectionMessageType,
+	GarbageCollector,
 	GCNodeType,
 	type GCSummaryStateTracker,
 	type GCTelemetryTracker,
 	type GCVersion,
-	type GarbageCollectionMessage,
-	GarbageCollectionMessageType,
-	GarbageCollector,
-	type IGCMetadata,
-	type IGCStats,
-	type IGCSummaryTrackingData,
 	type IGarbageCollectionNodeData,
 	type IGarbageCollectionRuntime,
 	type IGarbageCollectionSnapshotData,
@@ -52,19 +52,19 @@ import {
 	type IGarbageCollector,
 	type IGarbageCollectorConfigs,
 	type IGarbageCollectorCreateParams,
-	UnreferencedState,
-	type UnreferencedStateTracker,
-	concatGarbageCollectionStates,
-	defaultSessionExpiryDurationMs,
-	defaultSweepGracePeriodMs,
+	type IGCMetadata,
+	type IGCStats,
+	type IGCSummaryTrackingData,
 	oneDayMs,
 	stableGCVersion,
+	UnreferencedState,
+	type UnreferencedStateTracker,
 } from "../../gc/index.js";
 import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 import {
-	type IContainerRuntimeMetadata,
 	dataStoreAttributesBlobName,
+	type IContainerRuntimeMetadata,
 	metadataBlobName,
 } from "../../summary/index.js";
 

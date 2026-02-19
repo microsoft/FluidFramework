@@ -14,7 +14,7 @@ import {
 
 import type { SharedMatrix } from "../index.js";
 
-import { checkCorners, expectSize, setCorners, matrixFactory } from "./utils.js";
+import { checkCorners, expectSize, matrixFactory, setCorners } from "./utils.js";
 
 const enum Const {
 	// https://support.office.com/en-us/article/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3

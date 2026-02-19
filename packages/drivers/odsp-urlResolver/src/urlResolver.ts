@@ -12,11 +12,11 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	OdspDriverUrlResolver,
 	createOdspUrl,
 	getOdspUrlParts,
 	isOdcUrl,
 	isSpoUrl,
+	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 import type { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 

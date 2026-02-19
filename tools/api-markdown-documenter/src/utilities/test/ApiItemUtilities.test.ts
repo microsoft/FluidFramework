@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ReleaseTag, type ApiItem } from "@microsoft/api-extractor-model";
+import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
 import { getEffectiveReleaseLevel } from "../ApiItemUtilities.js";

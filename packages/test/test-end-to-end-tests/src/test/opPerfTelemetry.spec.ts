@@ -8,11 +8,11 @@ import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	createTestConfigProvider,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createTestConfigProvider,
 } from "@fluidframework/test-utils/internal";
 
 /**

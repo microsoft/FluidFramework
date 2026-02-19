@@ -17,9 +17,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
-	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	jsonableTreeFromFieldCursor,
+	TreeCompressionStrategy,
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";

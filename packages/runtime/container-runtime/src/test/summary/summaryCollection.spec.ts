@@ -8,8 +8,8 @@ import { strict as assert } from "node:assert";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	type IDocumentMessage,
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";

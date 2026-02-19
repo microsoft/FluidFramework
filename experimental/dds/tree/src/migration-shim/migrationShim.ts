@@ -8,13 +8,13 @@ import { AttachState } from '@fluidframework/container-definitions';
 import type { IEvent, IFluidHandle, IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
+	type IChannel,
 	type IChannelAttributes,
 	IChannelFactory,
-	type IFluidDataStoreRuntime,
-	type IChannel,
 	type IChannelServices,
+	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions/internal';
-import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/driver-definitions/internal';
 import type { SessionId } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import type {

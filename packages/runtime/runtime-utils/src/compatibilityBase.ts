@@ -6,7 +6,7 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { compare, gt, gte, lte, valid, parse } from "semver-ts";
+import { compare, gt, gte, lte, parse, valid } from "semver-ts";
 
 import { pkgVersion } from "./packageVersion.js";
 

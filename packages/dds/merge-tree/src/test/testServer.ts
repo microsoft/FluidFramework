@@ -6,8 +6,8 @@
 import { Heap, type IComparer } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { RedBlackTree } from "../collections/index.js";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { compareNumbers } from "../mergeTreeNodes.js";
 import { PriorPerspective } from "../perspective.js";
 import type { PropertySet } from "../properties.js";

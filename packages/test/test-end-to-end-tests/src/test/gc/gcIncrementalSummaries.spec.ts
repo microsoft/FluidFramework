@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
+	ITestDataObject,
 	itExpects,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime/internal";
@@ -17,8 +17,8 @@ import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createSummarizer,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

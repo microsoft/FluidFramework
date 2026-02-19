@@ -8,7 +8,7 @@ import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
-import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
+import type { EncodedRevisionTag, RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
 import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";

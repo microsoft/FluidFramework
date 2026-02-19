@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type {
+	ISequencedDocumentMessage,
 	ISnapshot,
 	ISnapshotTree,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 

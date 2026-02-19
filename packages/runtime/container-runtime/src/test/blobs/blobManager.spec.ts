@@ -26,9 +26,9 @@ import {
 	MockStorageAdapter,
 	simulateAttach,
 	textToBlob,
+	type UnprocessedMessage,
 	unpackHandle,
 	waitHandlePayloadShared,
-	type UnprocessedMessage,
 } from "./blobTestUtils.js";
 
 for (const createBlobPayloadPending of [false, true]) {

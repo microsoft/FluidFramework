@@ -8,8 +8,8 @@ import {
 	BenchmarkType,
 	benchmark,
 	benchmarkCustom,
-	isInPerformanceTestingMode,
 	type IMeasurementReporter,
+	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 

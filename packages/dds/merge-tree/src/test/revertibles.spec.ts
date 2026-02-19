@@ -17,13 +17,13 @@ import type {
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import {
-	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
+	type MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
 
 import { createRevertDriver } from "./testClient.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 /**
  * Run a custom "spy function" every time the given method is invoked.

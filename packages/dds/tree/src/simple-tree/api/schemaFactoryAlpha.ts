@@ -5,19 +5,19 @@
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
+	ImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchemaClass,
-	ImplicitAllowedTypes,
 	WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 import type {
-	FieldProps,
-	FieldSchemaAlpha,
-	FieldPropsAlpha,
 	FieldKind,
+	FieldProps,
+	FieldPropsAlpha,
+	FieldSchemaAlpha,
+	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -30,25 +30,28 @@ import {
 	type RecordNodeCustomizableSchema,
 	recordSchema,
 } from "../node-kinds/index.js";
-import type { SchemaType, SimpleObjectNodeSchema } from "../simpleSchema.js";
-import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleLeafNodeSchema,
+	SimpleObjectNodeSchema,
+} from "../simpleSchema.js";
 
 import {
 	defaultSchemaFactoryObjectOptions,
-	scoped,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ScopedSchemaName,
+	scoped,
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 import { schemaStatics } from "./schemaStatics.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
+	FieldSchemaAlphaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
-import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**

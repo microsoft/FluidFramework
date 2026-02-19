@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import type { IMatrixReader, IMatrixWriter, IMatrixProducer } from "@tiny-calc/nano";
+import type { IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 
 // Build a lookup table that maps a uint8 to the corresponding uint16 where 0s
 // are interleaved between the original bits. (e.g., 1111... -> 01010101...).

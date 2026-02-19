@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
+import { performanceNow, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IDeltaQueue,
 	IDeltaQueueEvents,

@@ -16,6 +16,12 @@
  */
 
 export type {
+	ICreateInfo,
+	IDirectoryDataObject,
+	IDirectoryNewStorageFormat,
+} from "./directory.js";
+export { DirectoryFactory, SharedDirectory } from "./directoryFactory.js";
+export type {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
@@ -25,15 +31,6 @@ export type {
 	ISharedMapEvents,
 	IValueChanged,
 } from "./interfaces.js";
-export { SharedMap } from "./mapFactory.js";
-export { SharedDirectory } from "./directoryFactory.js";
-
 // Legacy exports that should be deprecated and removed as part of AB#8004 or AB#35245
 export type { ISerializableValue } from "./internalInterfaces.js";
-export { MapFactory } from "./mapFactory.js";
-export { DirectoryFactory } from "./directoryFactory.js";
-export type {
-	ICreateInfo,
-	IDirectoryNewStorageFormat,
-	IDirectoryDataObject,
-} from "./directory.js";
+export { MapFactory, SharedMap } from "./mapFactory.js";

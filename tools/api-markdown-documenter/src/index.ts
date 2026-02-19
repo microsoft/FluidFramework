@@ -13,6 +13,7 @@
  * @packageDocumentation
  */
 
+export type { ApiDocument, RenderedDocument } from "./ApiDocument.js";
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationConfigurationBase,
@@ -28,8 +29,8 @@ export {
 	type FolderHierarchyConfiguration,
 	// TODO: remove this once utility APIs can be called with partial configs.
 	getApiItemTransformationConfigurationWithDefaults,
-	HierarchyKind,
 	type HierarchyConfiguration,
+	HierarchyKind,
 	type HierarchyOptions,
 	type SectionHierarchyConfiguration,
 	type TransformApiItemWithChildren,
@@ -37,7 +38,21 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-export type { ApiDocument, RenderedDocument } from "./ApiDocument.js";
+export { type SaveDocumentsOptions, saveDocuments } from "./FileSystem.js";
+export {
+	type LintApiModelConfiguration,
+	type LinterErrors,
+	type LinterReferenceError,
+	lintApiModel,
+} from "./LintApiModel.js";
+export { type LoadModelOptions, loadModel } from "./LoadModel.js";
+export {
+	defaultConsoleLogger,
+	type Logger,
+	type LoggingFunction,
+	verboseConsoleLogger,
+} from "./Logging.js";
+export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type {
 	NormalizedRootContent,
 	NormalizedTree,
@@ -49,21 +64,6 @@ export {
 	DocumentWriter,
 	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
-export type { LoggingConfiguration } from "./LoggingConfiguration.js";
-export { type SaveDocumentsOptions, saveDocuments } from "./FileSystem.js";
-export {
-	lintApiModel,
-	type LintApiModelConfiguration,
-	type LinterErrors,
-	type LinterReferenceError,
-} from "./LintApiModel.js";
-export { loadModel, type LoadModelOptions } from "./LoadModel.js";
-export {
-	defaultConsoleLogger,
-	type LoggingFunction,
-	type Logger,
-	verboseConsoleLogger,
-} from "./Logging.js";
 export type {
 	ApiConstructorLike,
 	ApiFunctionLike,
@@ -83,10 +83,8 @@ export type {
 
 // Export `ApiItem`-related utilities
 import * as ApiItemUtilities from "./ApiItemUtilitiesModule.js";
-
 // Export layout-related utilities (for use in writing custom transformations)
 import * as LayoutUtilities from "./LayoutUtilitiesModule.js";
-
 // Export renderers
 import * as MarkdownRenderer from "./MarkdownRendererModule.js";
 

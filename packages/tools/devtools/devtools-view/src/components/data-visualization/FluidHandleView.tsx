@@ -10,9 +10,9 @@ import {
 	GetDataVisualization,
 	type HasContainerKey,
 	type HasFluidObjectId,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
 	handleIncomingMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 

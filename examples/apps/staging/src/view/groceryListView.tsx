@@ -5,7 +5,7 @@
 
 import React, { type FC, useEffect, useRef, useState } from "react";
 
-import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
+import type { ISuggestionGroceryItem, ISuggestionGroceryList } from "../container/index.js";
 
 interface IGroceryItemViewProps {
 	groceryItem: ISuggestionGroceryItem;

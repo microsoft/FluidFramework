@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type GraphCommit,
-	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
+	type GraphCommit,
+	type RevisionTag,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
@@ -21,9 +21,9 @@ import {
 } from "../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
+	onForkTransitive,
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
-	onForkTransitive,
 } from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
 import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";

@@ -6,18 +6,18 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import {
-	UsageError,
 	type ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type CodecWriteOptions,
 	FluidClientVersion,
 	FormatValidatorNoOp,
-	type CodecWriteOptions,
 } from "../codec/index.js";
 import {
 	type Anchor,
@@ -25,73 +25,73 @@ import {
 	type AnchorNode,
 	AnchorSet,
 	type AnchorSetRootEvents,
+	type ChangeEncodingContext,
 	type ChangeFamily,
+	type ChangeMetadata,
 	CommitKind,
+	combineVisitors,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
+	diffHistories,
+	type GraphCommit,
 	type IEditableForest,
 	type IForestSubscription,
+	type ITreeCursor,
+	isAncestor,
 	type JsonableTree,
+	LeafNodeStoredSchema,
+	makeAnonChange,
+	makeDetachedFieldIndex,
+	moveToDetachedField,
+	type ReadOnlyDetachedFieldIndex,
+	type RevertibleAlpha,
+	type RevertibleAlphaFactory,
 	RevertibleStatus,
 	type RevisionTag,
 	type RevisionTagCodec,
+	rebaseChange,
+	rootFieldKey,
+	type TaggedChange,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
-	combineVisitors,
-	makeDetachedFieldIndex,
-	rebaseChange,
-	rootFieldKey,
 	tagChange,
 	visitDelta,
-	type RevertibleAlphaFactory,
-	type RevertibleAlpha,
-	type GraphCommit,
-	isAncestor,
-	moveToDetachedField,
-	type ITreeCursor,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-	LeafNodeStoredSchema,
-	diffHistories,
-	type ChangeMetadata,
-	type ChangeEncodingContext,
-	type ReadOnlyDetachedFieldIndex,
-	makeAnonChange,
-	type TaggedChange,
 } from "../core/index.js";
 import {
-	type FieldBatchCodec,
-	type TreeCompressionStrategy,
 	allowsRepoSuperset,
 	buildForest,
 	createNodeIdentifierManager,
 	defaultSchemaPolicy,
+	type FieldBatchCodec,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
+	type TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import {
-	SquashingTransactionStack,
-	SharedTreeBranch,
-	TransactionResult,
 	onForkTransitive,
+	SharedTreeBranch,
 	type SharedTreeBranchChange,
+	SquashingTransactionStack,
+	TransactionResult,
 	type Transactor,
 } from "../shared-tree-core/index.js";
 import {
+	type CustomTreeNode,
+	type CustomTreeValue,
+	customFromCursorStored,
 	type ImplicitFieldSchema,
 	type ReadSchema,
+	type TreeBranch,
+	type TreeChangeEvents,
 	type TreeView,
 	type TreeViewConfiguration,
 	type UnsafeUnknownSchema,
-	type ViewableTree,
-	type TreeBranch,
-	type TreeChangeEvents,
 	type VerboseTree,
-	customFromCursorStored,
-	type CustomTreeValue,
-	type CustomTreeNode,
+	type ViewableTree,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -104,7 +104,7 @@ import {
 
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
-import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
+import { hasSchemaChange, SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 

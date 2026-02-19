@@ -11,10 +11,10 @@ import { delay } from "@fluidframework/core-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import {
-	IBenchmarkParameters,
-	IDocumentLoader,
 	benchmarkAll,
 	createDocument,
+	IBenchmarkParameters,
+	IDocumentLoader,
 } from "./DocumentCreator.js";
 
 describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {

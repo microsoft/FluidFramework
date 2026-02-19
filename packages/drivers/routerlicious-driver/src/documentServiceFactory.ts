@@ -19,16 +19,16 @@ import {
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
+	RateLimiter,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ISession,
 	convertSummaryTreeToWholeSummaryTree,
+	ISession,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { ICache, InMemoryCache, NullCache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";

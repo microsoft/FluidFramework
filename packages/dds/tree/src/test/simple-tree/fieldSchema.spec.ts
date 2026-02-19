@@ -7,22 +7,22 @@ import { strict as assert } from "node:assert";
 
 import { TreeAlpha } from "../../shared-tree/index.js";
 import {
+	areImplicitFieldSchemaEqual,
 	type FieldKind,
 	type FieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
-	areImplicitFieldSchemaEqual,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
-	SchemaFactory,
-	SchemaFactoryAlpha,
 	type AllowedTypes,
 	type booleanSchema,
 	type ImplicitAllowedTypes,
 	type numberSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
 	type stringSchema,
 	type TreeLeafValue,
 	type TreeNode,

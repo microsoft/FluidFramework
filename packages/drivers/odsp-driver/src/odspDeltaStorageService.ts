@@ -9,8 +9,8 @@ import { validateMessages } from "@fluidframework/driver-base/internal";
 import type {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
-	IStream,
 	ISequencedDocumentMessage,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";

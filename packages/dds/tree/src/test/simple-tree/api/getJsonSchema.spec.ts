@@ -7,11 +7,11 @@ import { strict as assert } from "node:assert";
 
 import {
 	getJsonSchema,
+	type JsonTreeSchema,
 	KeyEncodingOptions,
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	type JsonTreeSchema,
 } from "../../../simple-tree/index.js";
 import { hydrate } from "../utils.js";
 

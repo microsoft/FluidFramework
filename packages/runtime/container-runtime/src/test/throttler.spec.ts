@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import sinon from "sinon";
 
 import {
-	Throttler,
 	formExponentialFn,
 	formExponentialFnWithAttemptOffset,
 	formLinearFn,
+	Throttler,
 } from "../throttler.js";
 
 describe("Throttler", () => {

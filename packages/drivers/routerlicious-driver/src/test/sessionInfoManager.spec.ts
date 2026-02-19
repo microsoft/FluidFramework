@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
 import {
-	MockLogger,
 	type ITelemetryLoggerExt,
+	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 

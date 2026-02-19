@@ -16,16 +16,16 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	LoaderContainerTracker,
 	createAndAttachContainer,
 	createDocumentId,
 	createLoader,
 	createLoaderProps,
 	createSummarizerFromFactory,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

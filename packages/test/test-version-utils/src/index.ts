@@ -13,61 +13,61 @@ export {
 	TestDataObjectType,
 } from "./compatUtils.js";
 export {
-	describeInstallVersions,
-	IRequestedFluidVersions,
-	DescribeWithVersions,
-	DescribeSuiteWithVersions,
-} from "./describeWithVersions.js";
-export {
+	type CompatType,
 	DescribeCompat,
 	DescribeCompatSuite,
 	describeCompat,
 	ITestObjectProviderOptions,
-	type CompatType,
 } from "./describeCompat.js";
 export {
-	DescribeE2EDocSuite,
-	describeE2EDocs,
-	DocumentType,
-	DocumentTypeInfo,
-	DescribeE2EDocInfo,
+	assertDocumentTypeInfo,
 	BenchmarkType,
-	describeE2EDocsMemory,
-	describeE2EDocsRuntime,
-	describeE2EDocRun,
-	getCurrentBenchmarkType,
-	isMemoryTest,
+	DescribeE2EDocInfo,
+	DescribeE2EDocSuite,
 	DocumentMapInfo,
-	DocumentMultipleDataStoresInfo,
 	DocumentMatrixInfo,
 	DocumentMatrixPlainInfo,
-	assertDocumentTypeInfo,
+	DocumentMultipleDataStoresInfo,
+	DocumentType,
+	DocumentTypeInfo,
+	describeE2EDocRun,
+	describeE2EDocs,
+	describeE2EDocsMemory,
+	describeE2EDocsRuntime,
+	getCurrentBenchmarkType,
 	isDocumentMapInfo,
-	isDocumentMultipleDataStoresInfo,
 	isDocumentMatrixInfo,
 	isDocumentMatrixPlainInfo,
+	isDocumentMultipleDataStoresInfo,
+	isMemoryTest,
 } from "./describeE2eDocs.js";
+export {
+	DescribeSuiteWithVersions,
+	DescribeWithVersions,
+	describeInstallVersions,
+	IRequestedFluidVersions,
+} from "./describeWithVersions.js";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
+	itExpectsSkipsFailureOnSpecificDrivers,
+	itSkipsFailureOnSpecificDrivers,
+	SkippedErrorExpectingTestWithDriverBaseType,
+	SkippedErrorExpectingTestWithDriverType,
+	SkippedTestWithDriverBaseType,
+	SkippedTestWithDriverType,
+} from "./itSkipsOnFailure.js";
+export {
 	CompatApis,
+	CompatMode,
+	ContainerRuntimeApi,
+	DataRuntimeApi,
 	ensurePackageInstalled,
+	getCompatModeFromKind,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,
 	getLoaderApi,
 	InstalledPackage,
-	DataRuntimeApi,
-	ContainerRuntimeApi,
 	LoaderApi,
-	CompatMode,
-	getCompatModeFromKind,
 } from "./testApi.js";
-export {
-	itExpectsSkipsFailureOnSpecificDrivers,
-	itSkipsFailureOnSpecificDrivers,
-	SkippedTestWithDriverType,
-	SkippedTestWithDriverBaseType,
-	SkippedErrorExpectingTestWithDriverType,
-	SkippedErrorExpectingTestWithDriverBaseType,
-} from "./itSkipsOnFailure.js";
 export { getRequestedVersion, versionToComparisonNumber } from "./versionUtils.js";

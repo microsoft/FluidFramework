@@ -9,7 +9,7 @@ import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/int
 // eslint-disable-next-line import-x/no-extraneous-dependencies
 import { Context } from "mocha";
 
-import { ExpectedEvents, createExpectsTest } from "./itExpects.js";
+import { createExpectsTest, ExpectedEvents } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(
 	skippedDrivers: TestDriverTypes[],

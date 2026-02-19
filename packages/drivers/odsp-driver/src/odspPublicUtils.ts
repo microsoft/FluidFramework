@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer, hashFile } from "@fluid-internal/client-utils";
+import { hashFile, IsoBuffer } from "@fluid-internal/client-utils";
 import type {
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

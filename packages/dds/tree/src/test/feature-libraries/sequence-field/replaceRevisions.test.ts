@@ -14,7 +14,7 @@ import {
 import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-field/sequenceFieldChangeRebaser.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
-import { type Mutable, brand } from "../../../util/index.js";
+import { brand, type Mutable } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import { MarkMaker as Mark } from "./testEdits.js";

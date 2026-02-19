@@ -10,8 +10,8 @@ import { fail } from './Common.js';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog.js';
 import {
 	SharedTreeSummary,
-	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
+	SharedTreeSummaryBase,
 	WriteFormat,
 } from './persisted-types/index.js';
 

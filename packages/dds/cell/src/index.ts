@@ -11,8 +11,8 @@
 
 export { CellFactory, SharedCell } from "./cellFactory.js";
 export type {
+	ICellAttributionOptions,
+	ICellOptions,
 	ISharedCell,
 	ISharedCellEvents,
-	ICellOptions,
-	ICellAttributionOptions,
 } from "./interfaces.js";

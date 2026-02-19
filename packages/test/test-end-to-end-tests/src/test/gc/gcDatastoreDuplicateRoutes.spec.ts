@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
@@ -17,8 +17,8 @@ import { IGarbageCollectionState } from "@fluidframework/container-runtime/inter
 import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { gcBlobPrefix, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestObjectProvider,
 	createSummarizer,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

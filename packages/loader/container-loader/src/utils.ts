@@ -13,9 +13,9 @@ import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitio
 import {
 	DriverErrorTypes,
 	type IDocumentAttributes,
-	type ISnapshotTree,
 	type IDocumentStorageService,
 	type ISnapshot,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type CombinedAppAndProtocolSummary,
@@ -24,9 +24,9 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import {
+	type IFluidErrorBase,
 	LoggingError,
 	UsageError,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

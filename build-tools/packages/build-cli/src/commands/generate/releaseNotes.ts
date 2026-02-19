@@ -5,6 +5,7 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+
 import { Flags } from "@oclif/core";
 import { StringBuilder } from "@rushstack/node-core-library";
 import { format as prettier } from "prettier";

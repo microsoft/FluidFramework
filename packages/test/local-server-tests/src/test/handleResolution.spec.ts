@@ -15,10 +15,10 @@ import { LocalResolver } from "@fluidframework/local-driver/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-	LoaderContainerTracker,
 	getContainerEntryPointBackCompat,
-	waitForContainerConnection,
 	type ITestFluidObject,
+	LoaderContainerTracker,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils";

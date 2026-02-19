@@ -13,9 +13,9 @@ import { revealOpaqueJson, toOpaqueJson } from "./internalUtils.js";
 import type {
 	NotificationEmitter,
 	NotificationListenable,
+	NotificationSubscriberSignatures,
 	NotificationsManager,
 	NotificationsManagerEvents,
-	NotificationSubscriberSignatures,
 } from "./notificationsManagerTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";

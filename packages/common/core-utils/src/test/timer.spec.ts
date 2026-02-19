@@ -6,11 +6,10 @@
 import { strict as assert } from "node:assert";
 import process from "node:process";
 
+import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
+import { PromiseTimer, Timer } from "@fluidframework/core-utils/internal";
 import type { SinonFakeTimers, SinonSandbox, SinonSpy } from "sinon";
 import { createSandbox, useFakeTimers } from "sinon";
-
-import { PromiseTimer, Timer } from "@fluidframework/core-utils/internal";
-import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
 
 const flushPromises = async (): Promise<void> =>
 	new Promise((resolve) => process.nextTick(resolve));

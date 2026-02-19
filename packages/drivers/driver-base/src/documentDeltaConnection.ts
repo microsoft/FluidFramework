@@ -12,34 +12,34 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
 	IAnyDriverError,
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
 	IClientConfiguration,
 	IConnect,
 	IConnected,
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
 	IDocumentMessage,
 	type ISentSignalMessage,
+	ISequencedDocumentMessage,
 	ISignalClient,
+	ISignalMessage,
 	ITokenClaims,
 	ScopeType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	UsageError,
 	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
+	UsageError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
-	EventEmitterWithErrorHandling,
-	MonitoringContext,
 	createChildMonitoringContext,
+	EventEmitterWithErrorHandling,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
-	isFluidError,
-	normalizeError,
 	type IFluidErrorBase,
+	ITelemetryLoggerExt,
+	isFluidError,
+	MonitoringContext,
+	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 

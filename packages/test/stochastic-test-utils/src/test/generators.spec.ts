@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 
 import {
-	ExitBehavior,
 	asyncGeneratorFromArray,
 	chain,
 	chainAsync,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
+	ExitBehavior,
 	generatorFromArray,
 	interleave,
 	interleaveAsync,
@@ -21,7 +21,7 @@ import {
 	takeAsync,
 } from "../generators.js";
 import { makeRandom } from "../random.js";
-import { AsyncGenerator, Generator, IRandom, done } from "../types.js";
+import { AsyncGenerator, done, Generator, IRandom } from "../types.js";
 
 import { Counter, chiSquaredCriticalValues, computeChiSquared } from "./utils.js";
 

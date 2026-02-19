@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTree, ISummaryHandle } from "@fluidframework/driver-definitions";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
+	ICreateBlobResponse,
 	IDocumentStorageService,
+	ISnapshotTree,
 	ISummaryContext,
 	IVersion,
-	ISnapshotTree,
-	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

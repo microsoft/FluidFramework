@@ -26,30 +26,30 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import type {
 	IGarbageCollectionData,
+	ISequencedMessageEnvelope,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	FluidHandleBase,
 	createResponseError,
+	FluidHandleBase,
 	generateHandleContextPath,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildMonitoringContext,
 	LoggingError,
 	type MonitoringContext,
 	PerformanceEvent,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { isBlobMetadata } from "../metadata.js";
 
 import {
+	type IBlobManagerLoadInfo,
 	summarizeBlobManagerState,
 	toRedirectTable,
-	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
 /**

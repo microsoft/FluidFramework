@@ -12,16 +12,16 @@ import {
 import {
 	BenchmarkArguments,
 	BenchmarkTimer,
-	IMemoryTestObject,
-	Phase,
 	benchmark,
 	benchmarkMemory,
+	IMemoryTestObject,
+	Phase,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
-	ITelemetryLoggerExt,
 	createChildLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 

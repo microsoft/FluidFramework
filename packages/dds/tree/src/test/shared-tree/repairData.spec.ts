@@ -11,7 +11,7 @@ import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TestAnchor } from "../testAnchor.js";
-import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
+import { createTestUndoRedoStacks, StringArray, TestTreeProviderLite } from "../utils.js";
 
 const enableSchemaValidation = true;
 

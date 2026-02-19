@@ -20,17 +20,17 @@ import {
 	type IIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 import type {
-	ISummaryTreeWithStats,
 	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext,
 	IRuntimeMessageCollection,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	SharedObject,
 	type IChannelView,
 	type IFluidSerializer,
 	type ISharedObject,
 	type ISharedObjectHandle,
+	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	MockFluidDataStoreRuntime,
@@ -38,27 +38,27 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	type CodecWriteOptions,
 	currentVersion,
 	DependentFormatVersion,
-	type CodecWriteOptions,
 } from "../../codec/index.js";
 import {
-	RevisionTagCodec,
-	TreeStoredSchemaRepository,
 	type GraphCommit,
+	RevisionTagCodec,
 	type TaggedChange,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
-	type ModularChangeFormatVersion,
-	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
+	type ModularChangeFormatVersion,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import {
 	changeFormatVersionForEditManager,
@@ -68,16 +68,16 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
 import {
-	SquashingTransactionStack,
+	type ChangeEnricher,
+	type EditManagerFormatVersion,
+	type EnrichmentConfig,
+	type MessageFormatVersion,
 	type SharedTreeBranch,
 	SharedTreeCore,
+	SquashingTransactionStack,
 	type Summarizable,
-	type EditManagerFormatVersion,
 	supportedEditManagerFormatVersions,
-	type MessageFormatVersion,
 	supportedMessageFormatVersions,
-	type EnrichmentConfig,
-	type ChangeEnricher,
 } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";

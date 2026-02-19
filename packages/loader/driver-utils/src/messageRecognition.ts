@@ -4,8 +4,8 @@
  */
 
 import {
-	type ISequencedDocumentMessage,
 	type IDocumentMessage,
+	type ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 

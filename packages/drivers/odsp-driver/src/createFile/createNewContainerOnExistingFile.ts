@@ -7,8 +7,8 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import type {
-	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
+	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -22,8 +22,8 @@ import type { EpochTracker } from "./../epochTracker.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
 import { getApiRoot } from "./../odspUrlHelper.js";
 import {
-	type IExistingFileInfo,
 	createCacheSnapshotKey,
+	type IExistingFileInfo,
 	snapshotWithLoadingGroupIdSupported,
 } from "./../odspUtils.js";
 import {

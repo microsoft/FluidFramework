@@ -13,10 +13,10 @@ import {
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 import {
-	ContainerTelemetryEventNames,
-	type ContainerTelemetryEventName,
-	type IContainerTelemetry,
 	type ContainerDisposedTelemetry,
+	type ContainerTelemetryEventName,
+	ContainerTelemetryEventNames,
+	type IContainerTelemetry,
 } from "./containerTelemetry.js";
 
 /**

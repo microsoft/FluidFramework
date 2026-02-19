@@ -13,14 +13,14 @@ import {
 	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type RevisionInfo,
-	type RevisionMetadataSource,
-	type RevisionTag,
-	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	newChangeAtomIdRangeMap,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	revisionMetadataSourceFromInfo,
+	type TaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -29,15 +29,12 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	DefaultRevisionReplacer,
 	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	setInCrossFieldMap,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import {
-	DefaultRevisionReplacer,
 	rebaseRevisionMetadataFromInfo,
+	setInCrossFieldMap,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -57,16 +54,16 @@ import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
 import {
-	type MarkEffect,
-	NoopMarkType,
 	CellId,
 	Changeset,
 	HasMarkFields,
-	MoveId,
-	type Remove,
 	type Mark,
-	type MoveOut,
+	type MarkEffect,
+	MoveId,
 	type MoveIn,
+	type MoveOut,
+	NoopMarkType,
+	type Remove,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 import {
@@ -84,12 +81,12 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	type IdAllocator,
-	type Mutable,
 	brand,
 	fakeIdAllocator,
 	getOrAddEmptyToMap,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type Mutable,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";

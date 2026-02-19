@@ -4,13 +4,12 @@
  */
 
 export {
+	allowsFieldSuperset,
+	allowsMultiplicitySuperset,
 	allowsRepoSuperset,
 	allowsTreeSchemaIdentifierSuperset,
-	allowsFieldSuperset,
 	allowsTreeSuperset,
-	allowsMultiplicitySuperset,
 } from "./comparison.js";
-export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	addCrossFieldQuery,
 	type CrossFieldManager,
@@ -19,32 +18,59 @@ export {
 	CrossFieldTarget,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
+export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
+export {
+	type FieldChangeDelta,
+	type FieldChangeEncodingContext,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type NestedChangesIndices,
+	NodeAttachState,
+	type NodeChangeComposer,
+	type NodeChangeInverter,
+	type NodeChangePruner,
+	type NodeChangeRebaser,
+	type RebaseRevisionMetadata,
+	type RelevantRemovedRootsFromChild,
+	referenceFreeFieldChangeRebaser,
+	type ToDelta,
+} from "./fieldChangeHandler.js";
+export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
+export type {
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
+} from "./fieldKindConfiguration.js";
+export {
+	convertGenericChange,
+	genericChangeHandler,
+	genericFieldKind,
+} from "./genericFieldKind.js";
+export type { GenericChangeset } from "./genericFieldKindTypes.js";
+export { isNeverField, isNeverTree } from "./isNeverTree.js";
+export {
+	ModularChangeFormatVersion,
+	makeModularChangeCodecFamily,
+} from "./modularChangeCodecs.js";
+export {
+	type EditDescription,
+	type FieldEditDescription,
+	type GlobalEditDescription,
+	intoDelta,
+	ModularChangeFamily,
+	ModularEditBuilder,
+	rebaseRevisionMetadataFromInfo,
+	relevantRemovedRoots,
+	updateRefreshers,
+} from "./modularChangeFamily.js";
 export {
 	ChangesetLocalIdSchema,
 	EncodedChangeAtomId,
-	EncodedRevisionInfo,
 	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
+	EncodedRevisionInfo,
 } from "./modularChangeFormatV1.js";
 export { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
-export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
-export {
-	type FieldChangeHandler,
-	type FieldChangeDelta,
-	type FieldChangeRebaser,
-	type FieldEditor,
-	type NodeChangeComposer,
-	type NodeChangeInverter,
-	type NodeChangeRebaser,
-	type NodeChangePruner,
-	referenceFreeFieldChangeRebaser,
-	type RebaseRevisionMetadata,
-	type RelevantRemovedRootsFromChild,
-	type ToDelta,
-	NodeAttachState,
-	type FieldChangeEncodingContext,
-	type NestedChangesIndices,
-} from "./fieldChangeHandler.js";
 export type {
 	CrossFieldKey,
 	CrossFieldKeyRange,
@@ -57,29 +83,3 @@ export type {
 	NodeExistsConstraint,
 	NodeId,
 } from "./modularChangeTypes.js";
-export {
-	convertGenericChange,
-	genericChangeHandler,
-	genericFieldKind,
-} from "./genericFieldKind.js";
-export type { GenericChangeset } from "./genericFieldKindTypes.js";
-export {
-	ModularChangeFamily,
-	ModularEditBuilder,
-	type EditDescription,
-	type GlobalEditDescription,
-	type FieldEditDescription,
-	rebaseRevisionMetadataFromInfo,
-	intoDelta,
-	relevantRemovedRoots,
-	updateRefreshers,
-} from "./modularChangeFamily.js";
-export {
-	ModularChangeFormatVersion,
-	makeModularChangeCodecFamily,
-} from "./modularChangeCodecs.js";
-export type {
-	FieldKindConfiguration,
-	FieldKindConfigurationEntry,
-} from "./fieldKindConfiguration.js";
-export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";

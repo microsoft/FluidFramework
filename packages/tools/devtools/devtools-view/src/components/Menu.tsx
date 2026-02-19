@@ -8,29 +8,29 @@ import {
 	makeStyles,
 	mergeClasses,
 	shorthands,
-	tokens,
 	Tooltip,
+	tokens,
 } from "@fluentui/react-components";
 import {
-	QuestionCircle16Regular,
 	ArrowSync16Regular,
+	Attach16Regular,
 	CatchUp16Regular,
-	Run16Regular,
+	Delete16Regular,
+	Dismiss24Regular,
+	DocumentDataLink16Regular,
+	DocumentDismiss16Regular,
 	LockClosed16Regular,
 	PlugConnected16Regular,
 	PlugDisconnected16Regular,
-	Delete16Regular,
-	Dismiss24Regular,
-	Attach16Regular,
-	DocumentDataLink16Regular,
-	DocumentDismiss16Regular,
+	QuestionCircle16Regular,
+	Run16Regular,
 } from "@fluentui/react-icons";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type {
-	HasContainerKey,
-	DevtoolsFeatureFlags,
 	ContainerKey,
 	ContainerStateMetadata,
+	DevtoolsFeatureFlags,
+	HasContainerKey,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
@@ -46,8 +46,8 @@ import React from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
-import { Waiting } from "./Waiting.js";
 import { ScreenReaderAnnouncement } from "./utility-components/index.js";
+import { Waiting } from "./Waiting.js";
 
 const useMenuStyles = makeStyles({
 	root: {

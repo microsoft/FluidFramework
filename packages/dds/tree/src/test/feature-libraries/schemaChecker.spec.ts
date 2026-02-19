@@ -7,20 +7,20 @@ import { strict as assert } from "node:assert";
 
 // Reaching into internal module just to test it
 import {
-	LeafNodeStoredSchema,
-	MapNodeStoredSchema,
-	Multiplicity,
-	ObjectNodeStoredSchema,
-	ValueSchema,
 	type FieldKey,
 	type FieldKindData,
 	type FieldKindIdentifier,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
 	type MapTree,
+	Multiplicity,
+	ObjectNodeStoredSchema,
 	type SchemaAndPolicy,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type Value,
+	ValueSchema,
 } from "../../core/index.js";
 import {
 	cursorForJsonableTreeNode,
@@ -29,10 +29,10 @@ import {
 	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import {
-	SchemaValidationError,
 	compliesWithMultiplicity,
 	isFieldInSchema,
 	isNodeInSchema,
+	SchemaValidationError,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/schemaChecker.js";
 import { brand } from "../../util/index.js";

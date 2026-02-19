@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
-import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { type TreeView, TreeViewConfiguration } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -15,15 +15,15 @@ import { render } from "@testing-library/react";
 import * as React from "react";
 
 import {
-	FormattedTextAsTree,
-	FormattedMainView,
 	type FormattedEditorHandle,
+	FormattedMainView,
+	FormattedTextAsTree,
 } from "../formatted/quillFormattedView.js";
 import {
+	type MainViewProps,
 	PlainTextMainView,
 	QuillMainView,
 	TextAsTree,
-	type MainViewProps,
 } from "../plain/index.js";
 import { UndoRedoStacks } from "../undoRedo.js";
 

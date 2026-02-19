@@ -10,41 +10,41 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
-	Reducer,
 	combineReducers,
 	createWeightedAsyncGenerator,
+	Reducer,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	type DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	registerOracle,
-	type DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
+	IChannelServices,
 	IFluidDataStoreRuntime,
 	type Serializable,
-	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	endpointPosAndSide,
-	PropertySet,
-	Side,
 	type AdjustParams,
+	endpointPosAndSide,
 	type InteriorSequencePlace,
 	type MapLike,
+	PropertySet,
 	type SequencePlace,
+	Side,
 } from "@fluidframework/merge-tree/internal";
 
 import {
-	toOptionalSequencePlace,
-	toSequencePlace,
 	type IntervalCollection,
 	type ISequenceIntervalCollection,
+	toOptionalSequencePlace,
+	toSequencePlace,
 } from "../../intervalCollection.js";
-import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";

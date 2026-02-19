@@ -9,10 +9,10 @@ import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryEventCategory,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, type ICatchUpMonitor } from "./catchUpMonitor.js";

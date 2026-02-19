@@ -15,20 +15,20 @@ import {
 } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
-	ISelf,
-	ICriticalContainerError,
 	IAudienceEvents,
+	ICriticalContainerError,
+	ISelf,
 } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
+	ConnectionStatus,
 	IContainerContext,
-	IGetPendingLocalStateProps,
-	IRuntime,
+	IContainerStorageService,
 	IDeltaManager,
 	IDeltaManagerFull,
+	IGetPendingLocalStateProps,
 	ILoader,
-	IContainerStorageService,
-	ConnectionStatus,
+	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
@@ -68,11 +68,11 @@ import type {
 import {
 	assert,
 	Deferred,
+	delay,
+	fail,
 	Lazy,
 	LazyPromise,
 	PromiseCache,
-	delay,
-	fail,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
@@ -95,8 +95,8 @@ import { FetchSource, MessageType } from "@fluidframework/driver-definitions/int
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	IIdCompressorCore,
 	IdCreationRange,
+	IIdCompressorCore,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
@@ -105,32 +105,32 @@ import {
 	createSessionId,
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
-import {
-	FlushMode,
-	FlushModeExperimental,
-	channelsTreeName,
-	gcTreeKey,
-} from "@fluidframework/runtime-definitions/internal";
 import type {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
+	ContainerExtensionExpectations,
 	CreateChildSummarizerNodeParam,
+	IContainerRuntimeBaseInternal,
 	IDataStore,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	ISummarizeInternalResult,
-	InboundAttachMessage,
-	NamedFluidDataStoreRegistryEntries,
-	SummarizeInternalFn,
+	IGarbageCollectionData,
 	IInboundSignalMessage,
+	InboundAttachMessage,
 	IRuntimeMessagesContent,
+	ISummarizeInternalResult,
 	ISummarizerNodeWithGC,
-	StageControlsInternal,
-	IContainerRuntimeBaseInternal,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 	MinimumVersionForCollab,
-	ContainerExtensionExpectations,
+	NamedFluidDataStoreRegistryEntries,
+	StageControlsInternal,
+	SummarizeInternalFn,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	channelsTreeName,
+	FlushMode,
+	FlushModeExperimental,
+	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -143,9 +143,9 @@ import {
 	isValidMinVersionForCollab,
 	RequestParser,
 	RuntimeHeaders,
-	validateMinimumVersionForCollab,
 	seqFromTree,
 	TelemetryContext,
+	validateMinimumVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
 import type {
 	IEventSampler,
@@ -155,23 +155,23 @@ import type {
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
+	createChildLogger,
+	createChildMonitoringContext,
+	createSampledLogger,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	GenericError,
 	LoggingError,
+	loggerToMonitoringContext,
+	normalizeError,
 	PerformanceEvent,
+	raiseConnectedEvent,
 	// eslint-disable-next-line import-x/no-deprecated
 	TaggedLoggerAdapter,
-	UsageError,
-	createChildLogger,
-	createChildMonitoringContext,
-	createSampledLogger,
-	loggerToMonitoringContext,
-	raiseConnectedEvent,
-	wrapError,
 	tagCodeArtifacts,
-	normalizeError,
+	UsageError,
+	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -179,12 +179,12 @@ import { v4 as uuid } from "uuid";
 import { BindBatchTracker } from "./batchTracker.js";
 import {
 	BlobManager,
-	type IPendingBlobs,
 	blobManagerBasePath,
 	blobsTreeName,
+	type IBlobManagerLoadInfo,
+	type IPendingBlobs,
 	isBlobPath,
 	loadBlobManagerLoadInfo,
-	type IBlobManagerLoadInfo,
 } from "./blobManager/index.js";
 import type {
 	AddressedUnsequencedSignalEnvelope,
@@ -200,10 +200,10 @@ import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionD
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import {
 	getMinVersionForCollabDefaults,
-	type RuntimeOptionsAffectingDocSchema,
-	validateRuntimeOptions,
-	runtimeOptionKeysThatRequireExplicitSchemaControl,
 	type RuntimeOptionKeysThatRequireExplicitSchemaControl,
+	type RuntimeOptionsAffectingDocSchema,
+	runtimeOptionKeysThatRequireExplicitSchemaControl,
+	validateRuntimeOptions,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -215,50 +215,50 @@ import {
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
-	GCNodeType,
+	type GarbageCollectionMessage,
 	GarbageCollector,
+	GCNodeType,
+	gcGenerationOptionName,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollector,
 	type IGCRuntimeOptions,
 	type IGCStats,
-	type IGarbageCollector,
-	gcGenerationOptionName,
-	type GarbageCollectionMessage,
-	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeAliasMessage,
 	type ContainerRuntimeDataStoreOpMessage,
-	type OutboundContainerRuntimeDocumentSchemaMessage,
 	type ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeAttachMessage,
+	type OutboundContainerRuntimeDocumentSchemaMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import type { ISavedOpMetadata } from "./metadata.js";
 import {
-	type LocalBatchMessage,
+	type BatchResubmitInfo,
 	type BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	type IBatchCheckpoint,
+	type LocalBatchMessage,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
+	type OutboundBatch,
 	Outbox,
 	RemoteMessageProcessor,
-	type OutboundBatch,
-	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	type PendingMessageResubmitData,
 	type IPendingLocalState,
-	PendingStateManager,
 	type PendingBatchResubmitMetadata,
+	type PendingMessageResubmitData,
+	PendingStateManager,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
@@ -274,19 +274,18 @@ import {
 	createRootSummarizerNodeWithGC,
 	DefaultSummaryConfiguration,
 	DocumentsSchemaController,
-	electedSummarizerBlobName,
 	type EnqueueSummarizeResult,
+	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
 	formCreateSummarizerFn,
 	type IBaseSummarizeResult,
 	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
 	type ICreateContainerMetadata,
-	idCompressorBlobName,
-	type IdCompressorMode,
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
+	type IdCompressorMode,
 	type IEnqueueSummarizeOptions,
 	type IGeneratedSummaryStats,
 	type IGenerateSummaryTreeResult,
@@ -294,31 +293,32 @@ import {
 	type IRefreshSummaryAckOptions,
 	type IRootSummarizerNodeWithGC,
 	type ISerializedElection,
-	isSummariesDisabled,
-	isSummaryOnRequest,
 	type ISubmitSummaryOptions,
 	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
+	idCompressorBlobName,
+	isSummariesDisabled,
+	isSummaryOnRequest,
 	metadataBlobName,
 	OrderedClientCollection,
 	OrderedClientElection,
-	recentBatchInfoBlobName,
 	RetriableSummaryError,
+	recentBatchInfoBlobName,
 	rootHasIsolatedChannels,
 	type SubmitSummaryResult,
 	type Summarizer,
 	SummarizerClientElection,
-	summarizerClientType,
-	summarizerRequestUrl,
 	SummaryCollection,
 	SummaryManager,
+	summarizerClientType,
+	summarizerRequestUrl,
 	validateSummaryHeuristicConfiguration,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
-import { Throttler, formExponentialFn } from "./throttler.js";
+import { formExponentialFn, Throttler } from "./throttler.js";
 
 /**
  * A {@link ContainerExtension}'s factory function as stored in extension map.

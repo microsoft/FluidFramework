@@ -13,13 +13,13 @@ import { Type } from "@sinclair/typebox";
 
 import {
 	type Brand,
-	type JsonCompatibleReadOnly,
-	type NestedMap,
-	RangeMap,
 	brand,
 	brandedNumberType,
 	brandedStringType,
 	comparePartialStrings,
+	type JsonCompatibleReadOnly,
+	type NestedMap,
+	RangeMap,
 } from "../../util/index.js";
 import type { RevertibleAlpha } from "../revertible.js";
 

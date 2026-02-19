@@ -8,17 +8,17 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import { SummaryType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { type ISnapshotTree, SummaryType } from "@fluidframework/driver-definitions/internal";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import {
-	type EncodedFieldBatch,
 	type ChunkReferenceId,
-	type TreeChunk,
 	defaultIncrementalEncodingPolicy,
+	type EncodedFieldBatch,
+	type TreeChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import {

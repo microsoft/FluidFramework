@@ -8,20 +8,20 @@ import type { ICriticalContainerError } from "@fluidframework/container-definiti
 import type { IFluidContainer, IFluidContainerEvents } from "@fluidframework/fluid-static";
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import { expect } from "chai";
-import { spy } from "sinon";
 import type Sinon from "sinon";
+import { spy } from "sinon";
 
 import {
-	IFluidContainerSystemEventNames,
 	type IContainerTelemetry,
+	IFluidContainerSystemEventNames,
 } from "../container/index.js";
 import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import {
 	AppInsightsTelemetryConsumer,
-	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
+	ContainerTelemetryEventNames,
 } from "../index.js";
 
 /**

@@ -8,8 +8,8 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	DataCorruptionError,
 	createChildLogger,
+	DataCorruptionError,
 	extractSafePropertiesFromMessage,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";

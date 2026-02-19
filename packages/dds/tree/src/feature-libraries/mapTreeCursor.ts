@@ -6,16 +6,16 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	aboveRootPlaceholder,
 	CursorLocationType,
 	type DetachedField,
+	detachedFieldAsKey,
 	type ExclusiveMapTree,
 	type FieldKey,
 	type ITreeCursor,
 	type MapTree,
-	type NodeData,
-	aboveRootPlaceholder,
-	detachedFieldAsKey,
 	mapCursorField,
+	type NodeData,
 	rootField,
 	rootFieldKey,
 } from "../core/index.js";

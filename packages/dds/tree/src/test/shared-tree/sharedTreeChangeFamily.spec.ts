@@ -7,26 +7,26 @@ import { strict as assert, fail } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
-import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
+import { type CodecWriteOptions, currentVersion } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
-	type TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
+	type TreeStoredSchema,
 	tagChange,
 } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
+	DefaultRevisionReplacer,
+	fieldKinds,
+	intoDelta,
 	ModularChangeFamily,
 	type ModularChangeset,
-	type TreeChunk,
-	fieldKinds,
 	type SchemaChange,
-	intoDelta,
-	DefaultRevisionReplacer,
+	type TreeChunk,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,

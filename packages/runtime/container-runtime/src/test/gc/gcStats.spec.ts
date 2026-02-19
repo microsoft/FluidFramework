@@ -8,23 +8,23 @@ import { strict as assert } from "node:assert";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildLogger,
 	MockLogger,
 	type MonitoringContext,
-	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
-	GCNodeType,
+	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
 	GarbageCollector,
-	type IGCMetadata,
-	type IGCStats,
+	GCNodeType,
 	type IGarbageCollectionRuntime,
 	type IGarbageCollector,
 	type IGarbageCollectorCreateParams,
-	defaultSessionExpiryDurationMs,
-	defaultSweepGracePeriodMs,
+	type IGCMetadata,
+	type IGCStats,
 	oneDayMs,
 	stableGCVersion,
 } from "../../gc/index.js";

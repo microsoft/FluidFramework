@@ -11,7 +11,7 @@ import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test
 
 import { IntervalStickiness } from "../intervals/index.js";
 
-import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";
+import { assertConsistent, assertSequenceIntervals, Client } from "./intervalTestUtils.js";
 import { constructClient, constructClients, loadClient } from "./multiClientTestUtils.js";
 
 describe("interval rebasing", () => {

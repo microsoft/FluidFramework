@@ -7,9 +7,9 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	ValueType,
 	parseHandles,
 	serializeHandles,
+	ValueType,
 } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import-x/no-deprecated

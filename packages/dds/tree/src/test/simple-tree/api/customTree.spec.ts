@@ -11,8 +11,8 @@ import {
 	EmptyKey,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	ValueSchema,
 	type TreeFieldStoredSchema,
+	ValueSchema,
 } from "../../../core/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";

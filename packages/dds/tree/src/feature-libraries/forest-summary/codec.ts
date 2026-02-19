@@ -22,7 +22,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
-import { ForestFormatVersion, validVersions, type Format } from "./formatCommon.js";
+import { ForestFormatVersion, type Format, validVersions } from "./formatCommon.js";
 import { FormatV1 } from "./formatV1.js";
 import { FormatV2 } from "./formatV2.js";
 

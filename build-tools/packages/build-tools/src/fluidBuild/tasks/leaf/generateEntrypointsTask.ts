@@ -4,6 +4,7 @@
  */
 
 import { getInstalledPackageVersion } from "../taskUtils";
+
 import { TscDependentTask } from "./tscTask";
 
 export class GenerateEntrypointsTask extends TscDependentTask {

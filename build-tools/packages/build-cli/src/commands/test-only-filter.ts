@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { Package } from "@fluidframework/build-tools";
+
 import { PackageCommand } from "../BasePackageCommand.js";
 import type { PackageWithKind } from "../filter.js";
 import type { PackageSelectionDefault } from "../flags.js";

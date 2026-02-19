@@ -7,13 +7,13 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
+	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
 	FluidInvalidSchemaError,
+	isOnline,
 	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
-	createGenericNetworkError,
-	isOnline,
 } from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspErrorAugmentations,
