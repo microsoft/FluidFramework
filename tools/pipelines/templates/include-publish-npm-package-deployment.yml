@@ -94,6 +94,7 @@ jobs:
                 set -eu -o pipefail
                 echo "Listing files in directory: $(pwd)"
                 ls -la
+                pnpm setup
                 echo "Attempting install of build tools from build tools pipeline artifact tarball"
                 pnpm add -g ./*.tgz
 
