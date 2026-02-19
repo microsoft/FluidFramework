@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -181,7 +181,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@tylerbu/sorted-btree-es6": "^2.1.1",
 		"double-ended-queue": "^2.1.0-0",
 		"lz4js": "^0.2.0",
 		"semver-ts": "^1.0.3",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"check:release-tags": "api-extractor run --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet src",

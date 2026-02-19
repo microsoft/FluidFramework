@@ -39,14 +39,14 @@ importers:
         specifier: ^9.39.0
         version: 9.39.2
       '@fluid-tools/build-cli':
-        specifier: ^0.61.0
-        version: 0.61.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.4.5)
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@18.19.39)(encoding@0.1.13)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.61.0
-        version: 0.61.0(@types/node@18.19.39)
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@18.19.39)
       '@fluidframework/common-utils-previous':
         specifier: npm:@fluidframework/common-utils@1.0.0
         version: '@fluidframework/common-utils@1.0.0'
@@ -553,31 +553,31 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fluid-tools/build-cli@0.61.0':
-    resolution: {integrity: sha512-NVP71bRXV5/v38SPwcQbYlvqE/HPikM7bd33MGgaMPtOgnzD6w/7HW119ZC5czvJP47MCUgKNVKXlXo731CMKQ==}
-    engines: {node: '>=20.15.1'}
+  '@fluid-tools/build-cli@0.63.0':
+    resolution: {integrity: sha512-uojCOPIEhjtGCLd69RdQAvfJ55scFgyXaltTwoD19z6Q3JTn4FRnLfl2t00sAXHB5rCLoff6fDeIJ7blRElOpg==}
+    engines: {node: '>=20.19.0'}
     hasBin: true
 
-  '@fluid-tools/build-infrastructure@0.61.0':
-    resolution: {integrity: sha512-+d9ndBsfe8gXu1nFKCoEM3j7+wxjtF8Slgu1SmzLu2wSC7ksVKdz6QtAG+mf+emsIUHPKGeBFGftdgWNxN775Q==}
+  '@fluid-tools/build-infrastructure@0.63.0':
+    resolution: {integrity: sha512-YuOvII++mJ18PVTW8A1phqvk/6/NgKJ6n940exaXBgKiXqcumLWDKW5Bmlr0w9FK8+iYuvmjVcDJCKMof6CUlg==}
     hasBin: true
 
-  '@fluid-tools/version-tools@0.61.0':
-    resolution: {integrity: sha512-tsxwuAfWNo8A6OgFqeL03hyuKnIGhCSaFl0QxBmgA+p3tl3HhqAXDXLOqyw5WB02nrleQUGbBjMaOMLD6ZTWcg==}
-    engines: {node: '>=20.15.1'}
+  '@fluid-tools/version-tools@0.63.0':
+    resolution: {integrity: sha512-XckRsHRPKunrcD4CtbqpHFbCrH/kIbRuyohSEckeTh2GVxaZW4eUj3NxyaKCn/hUq9qtGvhDhBbbfGlA/G2HiQ==}
+    engines: {node: '>=20.19.0'}
     hasBin: true
 
   '@fluidframework/build-common@2.0.3':
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.61.0':
-    resolution: {integrity: sha512-iqgDYuvChXmnMU8uxFhAl3WROVh0lu168uNiFx2WLA3jkYI0/Sq9WL6TPb/33CsS84aEaMI7msrpeCHFb7QgSw==}
-    engines: {node: '>=20.15.1'}
+  '@fluidframework/build-tools@0.63.0':
+    resolution: {integrity: sha512-Zpp1X6gETBXSIP9mkhBjKTpY1qkNINQIdEhYRoo6bvnZ50mvSncEOBgHlEhS3vQh3vYc2XwUT8sGuVMVJCKhoA==}
+    engines: {node: '>=20.19.0'}
     hasBin: true
 
-  '@fluidframework/bundle-size-tools@0.61.0':
-    resolution: {integrity: sha512-5H5eZnTmHS9mhGLPDDi6UbSiw8Uoq6nKvW52eEtUqEOhr57Yyj+Xq5HyH7GK9E+9RHLFMjWvrn+cIsFa1gACvw==}
+  '@fluidframework/bundle-size-tools@0.63.0':
+    resolution: {integrity: sha512-S6KbzJVfVOYAMWwrWOf05K/JWdpVt7b+hAdP2g8vC89hvwUcGjwtxxHEsZYcPJx/aQ+xtTPcjiqNCqnSxiEu3Q==}
 
   '@fluidframework/common-definitions@0.20.1':
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
@@ -3109,14 +3109,6 @@ packages:
   fd-slicer@1.1.0:
     resolution: {integrity: sha512-cE1qsB/VwyQozZ+q1dGxR8LBYNZeofhEdUNGSMbQD3Gw2lAzX9Zb3uIU6Ebc/Fmyjo9AWWfnn0AUCHqtevs/8g==}
 
-  fdir@6.4.6:
-    resolution: {integrity: sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w==}
-    peerDependencies:
-      picomatch: ^3 || ^4
-    peerDependenciesMeta:
-      picomatch:
-        optional: true
-
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
@@ -3346,6 +3338,7 @@ packages:
 
   glob@10.5.0:
     resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@13.0.0:
@@ -3354,16 +3347,17 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@9.3.5:
     resolution: {integrity: sha512-e1LleDykUz2Iu+MTYdkSsuWX8lvAjAcs0Xef0lNIu0S2wOAzuTxCJtcd9S3cijlwYF18EsU3rzb8jPVobxDh9Q==}
     engines: {node: '>=16 || 14 >=14.17'}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-dirs@3.0.1:
     resolution: {integrity: sha512-NBcGGFbBA9s1VzD41QXDG+3++t9Mn5t1FpLdhESY6oKY4gYTFpX4wO3sqGUa0Srjtbfj3szX0RnemmrVRUdULA==}
@@ -4175,9 +4169,6 @@ packages:
   jws@3.2.2:
     resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
 
-  keyv@4.5.2:
-    resolution: {integrity: sha512-5MHbFaKn8cNSmVW7BYnijeAVlE4cYA/SVkifVgrh7yotnfhKmjuXpDKjrABLnT0SfHWV21P8ow07OGfRrNDg8g==}
-
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -4900,9 +4891,6 @@ packages:
 
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
-
-  pako@2.1.0:
-    resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
 
   param-case@3.0.4:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
@@ -5747,6 +5735,7 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   terser-webpack-plugin@5.3.15:
     resolution: {integrity: sha512-PGkOdpRFK+rb1TzVz+msVhw4YMRT9txLF4kRqvJhGhCM324xuR3REBSHALN+l+sAhKUmz0aotnjp5D+P83mLhQ==}
@@ -5791,10 +5780,6 @@ packages:
 
   tiny-jsonc@1.0.2:
     resolution: {integrity: sha512-f5QDAfLq6zIVSyCZQZhhyl0QS6MvAyTxgz4X4x3+EoCktNWEYJ6PeoEA97fyb98njpBNNi88ybpD7m+BDFXaCw==}
-
-  tinyglobby@0.2.14:
-    resolution: {integrity: sha512-tX5e7OM1HnYr2+a2C/4V0htOcSQcoSTH9KgJnVvNm5zm/cyEWKJ7j7YutsH9CxMdtOkkLFy2AHrMci9IM8IPZQ==}
-    engines: {node: '>=12.0.0'}
 
   tinyglobby@0.2.15:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
@@ -7112,13 +7097,13 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@fluid-tools/build-cli@0.61.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.4.5)':
+  '@fluid-tools/build-cli@0.63.0(@types/node@18.19.39)(encoding@0.1.13)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.61.0(@types/node@18.19.39)
-      '@fluid-tools/version-tools': 0.61.0(@types/node@18.19.39)
-      '@fluidframework/build-tools': 0.61.0(@types/node@18.19.39)
-      '@fluidframework/bundle-size-tools': 0.61.0
+      '@fluid-tools/build-infrastructure': 0.63.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.63.0(@types/node@18.19.39)
+      '@fluidframework/build-tools': 0.63.0(@types/node@18.19.39)
+      '@fluidframework/bundle-size-tools': 0.63.0
       '@inquirer/prompts': 8.0.2(@types/node@18.19.39)
       '@microsoft/api-extractor': 7.55.2(@types/node@18.19.39)
       '@oclif/core': 4.8.0
@@ -7132,7 +7117,6 @@ snapshots:
       async: 3.2.6
       azure-devops-node-api: 11.2.0
       change-case: 5.4.4
-      cosmiconfig: 9.0.0(typescript@5.4.5)
       danger: 13.0.5(encoding@0.1.13)
       date-fns: 3.6.0
       debug: 4.4.3(supports-color@8.1.1)
@@ -7148,6 +7132,7 @@ snapshots:
       jssm: 5.104.2
       jszip: 3.10.1
       latest-version: 9.0.0
+      lilconfig: 3.1.3
       mdast: 3.0.0
       mdast-util-heading-range: 4.0.0
       mdast-util-to-string: 4.0.0
@@ -7184,21 +7169,20 @@ snapshots:
       - esbuild
       - react-devtools-core
       - supports-color
-      - typescript
       - uglify-js
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-infrastructure@0.61.0(@types/node@18.19.39)':
+  '@fluid-tools/build-infrastructure@0.63.0(@types/node@18.19.39)':
     dependencies:
-      '@fluid-tools/version-tools': 0.61.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.63.0(@types/node@18.19.39)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.8.0
-      cosmiconfig: 9.0.0(typescript@5.4.5)
       detect-indent: 6.1.0
       execa: 5.1.1
       fs-extra: 11.3.2
       globby: 11.1.0
+      lilconfig: 3.1.3
       micromatch: 4.0.8
       oclif: 4.22.54(@types/node@18.19.39)
       picocolors: 1.1.1
@@ -7206,6 +7190,7 @@ snapshots:
       semver: 7.7.3
       simple-git: 3.30.0
       sort-package-json: 1.57.0
+      type-fest: 2.19.0
       typescript: 5.4.5
     transitivePeerDependencies:
       - '@types/node'
@@ -7215,7 +7200,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.61.0(@types/node@18.19.39)':
+  '@fluid-tools/version-tools@0.63.0(@types/node@18.19.39)':
     dependencies:
       '@oclif/core': 4.8.0
       '@oclif/plugin-autocomplete': 3.2.39
@@ -7233,12 +7218,12 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.61.0(@types/node@18.19.39)':
+  '@fluidframework/build-tools@0.63.0(@types/node@18.19.39)':
     dependencies:
-      '@fluid-tools/version-tools': 0.61.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.63.0(@types/node@18.19.39)
       '@manypkg/get-packages': 2.2.2
+      '@types/glob': 7.2.0
       async: 3.2.6
-      cosmiconfig: 9.0.0(typescript@5.4.5)
       date-fns: 3.6.0
       debug: 4.4.3(supports-color@8.1.1)
       detect-indent: 6.1.0
@@ -7248,6 +7233,7 @@ snapshots:
       globby: 11.1.0
       ignore: 7.0.5
       json5: 2.2.3
+      lilconfig: 3.1.3
       lodash.isequal: 4.5.0
       multimatch: 5.0.0
       picocolors: 1.1.1
@@ -7257,6 +7243,7 @@ snapshots:
       semver: 7.7.3
       sort-package-json: 1.57.0
       ts-deepmerge: 7.0.3
+      type-fest: 2.19.0
       typescript: 5.4.5
       yaml: 2.8.2
     transitivePeerDependencies:
@@ -7266,12 +7253,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/bundle-size-tools@0.61.0':
+  '@fluidframework/bundle-size-tools@0.63.0':
     dependencies:
       azure-devops-node-api: 11.2.0
+      fflate: 0.8.2
       jszip: 3.10.1
       msgpack-lite: 0.1.26
-      pako: 2.1.0
       typescript: 5.4.5
       webpack: 5.103.0
     transitivePeerDependencies:
@@ -7850,7 +7837,7 @@ snapshots:
     dependencies:
       fast-glob: 3.3.2
       jju: 1.4.0
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
 
   '@microsoft/api-extractor-model@7.30.7(@types/node@18.19.39)':
     dependencies:
@@ -8000,7 +7987,7 @@ snapshots:
       semver: 7.7.3
       string-width: 4.2.3
       supports-color: 8.1.1
-      tinyglobby: 0.2.14
+      tinyglobby: 0.2.15
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
@@ -9569,7 +9556,7 @@ snapshots:
       '@types/http-cache-semantics': 4.0.1
       get-stream: 6.0.1
       http-cache-semantics: 4.1.1
-      keyv: 4.5.2
+      keyv: 4.5.4
       mimic-response: 4.0.0
       normalize-url: 8.0.0
       responselike: 3.0.0
@@ -10521,10 +10508,6 @@ snapshots:
   fd-slicer@1.1.0:
     dependencies:
       pend: 1.2.0
-
-  fdir@6.4.6(picomatch@4.0.3):
-    optionalDependencies:
-      picomatch: 4.0.3
 
   fdir@6.5.0(picomatch@4.0.3):
     optionalDependencies:
@@ -11850,10 +11833,6 @@ snapshots:
       jwa: 1.4.1
       safe-buffer: 5.2.1
 
-  keyv@4.5.2:
-    dependencies:
-      json-buffer: 3.0.1
-
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -12588,7 +12567,7 @@ snapshots:
   normalize-package-data@5.0.0:
     dependencies:
       hosted-git-info: 6.1.1
-      is-core-module: 2.15.1
+      is-core-module: 2.16.1
       semver: 7.7.3
       validate-npm-package-license: 3.0.4
 
@@ -12619,7 +12598,7 @@ snapshots:
       globby: 11.1.0
       hosted-git-info: 5.2.1
       ini: 4.1.1
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       json-parse-helpfulerror: 1.0.3
       jsonlines: 0.1.1
       lodash: 4.17.21
@@ -12891,8 +12870,6 @@ snapshots:
 
   pako@1.0.11: {}
 
-  pako@2.1.0: {}
-
   param-case@3.0.4:
     dependencies:
       dot-case: 3.0.4
@@ -13111,7 +13088,7 @@ snapshots:
   rc-config-loader@4.1.3:
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       json5: 2.2.3
       require-from-string: 2.0.2
     transitivePeerDependencies:
@@ -13634,7 +13611,7 @@ snapshots:
       is-plain-obj: 4.1.0
       semver: 7.7.3
       sort-object-keys: 1.1.3
-      tinyglobby: 0.2.14
+      tinyglobby: 0.2.15
 
   source-map-support@0.5.13:
     dependencies:
@@ -13898,11 +13875,6 @@ snapshots:
   through@2.3.8: {}
 
   tiny-jsonc@1.0.2: {}
-
-  tinyglobby@0.2.14:
-    dependencies:
-      fdir: 6.4.6(picomatch@4.0.3)
-      picomatch: 4.0.3
 
   tinyglobby@0.2.15:
     dependencies:
