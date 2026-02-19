@@ -5,19 +5,19 @@
 
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
-	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
 	numberCases,
+	OptionsMatrix,
 } from "@fluid-private/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
+	type ContainerRuntimeOptionsInternal,
 	disabledCompressionConfig,
+	type IContainerRuntimeOptionsInternal,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
-	type ContainerRuntimeOptionsInternal,
-	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";

@@ -14,8 +14,8 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
-	MockLogger,
 	isFluidError,
+	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import type { Socket } from "socket.io-client";

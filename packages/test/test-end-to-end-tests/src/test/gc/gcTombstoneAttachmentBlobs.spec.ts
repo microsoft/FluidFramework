@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -15,10 +15,10 @@ import {
 import { delay } from "@fluidframework/core-utils/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	ITestContainerConfig,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

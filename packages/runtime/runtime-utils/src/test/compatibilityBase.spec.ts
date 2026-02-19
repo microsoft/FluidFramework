@@ -10,18 +10,18 @@ import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { compare } from "semver-ts";
 
 import {
-	getConfigsForMinVersionForCollab,
-	validateConfigMapOverrides,
 	type ConfigMap,
-	type SemanticVersion,
 	type ConfigValidationMap,
-	configValueToMinVersionForCollab,
-	lowestMinVersionForCollab,
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
-	validateMinimumVersionForCollab,
+	configValueToMinVersionForCollab,
 	getConfigForMinVersionForCollab,
+	getConfigsForMinVersionForCollab,
+	lowestMinVersionForCollab,
+	type SemanticVersion,
 	selectVersionRoundedDown,
+	validateConfigMapOverrides,
+	validateMinimumVersionForCollab,
 } from "../compatibilityBase.js";
 import { pkgVersion } from "../packageVersion.js";
 

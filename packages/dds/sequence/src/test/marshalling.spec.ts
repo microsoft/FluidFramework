@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import {
+	addProperties,
 	Marker,
 	ReferenceType,
 	TextSegment,
-	addProperties,
 } from "@fluidframework/merge-tree/internal";
 
 import { SubSequence } from "../sharedSequence.js";

@@ -13,18 +13,18 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
 	IFluidDataStoreContext,
-	ISummarizeResult,
+	IGarbageCollectionData,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
+	ISummarizeResult,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataCorruptionError,
+	type ITelemetryLoggerExt,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 

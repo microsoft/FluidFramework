@@ -20,8 +20,8 @@ import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITestObjectProvider,
 	createSummarizerFromFactory,
+	type ITestObjectProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

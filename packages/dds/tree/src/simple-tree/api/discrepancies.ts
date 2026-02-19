@@ -24,16 +24,16 @@ import {
 import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
+	type AnnotatedAllowedType,
 	NodeKind,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
-	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 } from "../core/index.js";
 import {
 	createFieldSchema,
 	FieldKind,
-	FieldSchemaAlpha,
 	type FieldSchema,
+	FieldSchemaAlpha,
 } from "../fieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import {

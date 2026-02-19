@@ -7,6 +7,7 @@ import { setVersion } from "@fluid-tools/build-infrastructure";
 import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { parse } from "semver";
+
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { updateChangelogs } from "../../../library/changelogs.js";

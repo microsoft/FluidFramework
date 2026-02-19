@@ -4,6 +4,7 @@
  */
 
 import { assert } from "chai";
+
 import { getLegacyCompatRange } from "../../library/release.js";
 
 interface TestMatrix {

@@ -12,10 +12,10 @@ import { strict as assert } from "node:assert";
 import {
 	type ISegmentPrivate,
 	type Marker,
-	type SegmentGroup,
 	reservedMarkerIdKey,
+	type SegmentGroup,
 } from "../mergeTreeNodes.js";
-import { MergeTreeDeltaType, ReferenceType, type IMergeTreeOp } from "../ops.js";
+import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";

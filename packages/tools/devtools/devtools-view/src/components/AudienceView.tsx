@@ -8,9 +8,9 @@ import {
 	AudienceSummary,
 	GetAudienceSummary,
 	type HasContainerKey,
+	handleIncomingMessage,
 	type IDevtoolsMessage,
 	type InboundHandlers,
-	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import React from "react";

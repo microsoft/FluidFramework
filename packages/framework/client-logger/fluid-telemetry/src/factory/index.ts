@@ -7,8 +7,8 @@ import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 import type { ITelemetryConsumer } from "../common/index.js";
 import {
-	ContainerTelemetryManager,
 	ContainerEventTelemetryProducer,
+	ContainerTelemetryManager,
 } from "../container/index.js";
 
 /**

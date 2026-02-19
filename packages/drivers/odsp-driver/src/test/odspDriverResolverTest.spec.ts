@@ -11,7 +11,7 @@ import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/i
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
-import { OdspDriverUrlResolver, decodeOdspUrl } from "../odspDriverUrlResolver.js";
+import { decodeOdspUrl, OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 

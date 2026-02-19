@@ -8,11 +8,11 @@ import type { IReactTreeDataObject } from "@fluidframework/react/alpha";
 import * as React from "react";
 
 import {
-	type TextAsTree,
-	TextEditorFactory,
+	type MainViewProps,
 	PlainTextMainView,
 	QuillMainView,
-	type MainViewProps,
+	type TextAsTree,
+	TextEditorFactory,
 } from "./plain/index.js";
 
 /**

@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type IMemoryTestObject,
 	benchmarkMemory,
+	type IMemoryTestObject,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -20,11 +20,11 @@ import {
 	type SharedTreeOptions,
 } from "../../shared-tree/index.js";
 import {
-	SchemaFactory,
-	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
+	SchemaFactory,
 	type TreeView,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { testIdCompressor } from "../utils.js";

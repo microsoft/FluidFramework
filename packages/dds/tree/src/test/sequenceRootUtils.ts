@@ -4,15 +4,15 @@
  */
 
 import {
-	type TreeStoredSchema,
+	type JsonableTree,
 	rootFieldKey,
 	type TreeNodeSchemaIdentifier,
-	type JsonableTree,
+	type TreeStoredSchema,
 } from "../core/index.js";
 import { FieldKinds } from "../feature-libraries/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import type { ITreeCheckout, TreeCheckout } from "../shared-tree/index.js";
-import { stringSchema, normalizeAllowedTypes, toInitialSchema } from "../simple-tree/index.js";
+import { normalizeAllowedTypes, stringSchema, toInitialSchema } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
 
 import { fieldJsonCursor } from "./json/index.js";

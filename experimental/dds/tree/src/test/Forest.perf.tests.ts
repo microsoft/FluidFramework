@@ -10,9 +10,9 @@ import { v4 } from 'uuid';
 
 import { Forest, ForestNode } from '../Forest.js';
 import { Definition, NodeId, TraitLabel } from '../Identifiers.js';
+import { ChangeNode, Side } from '../persisted-types/index.js';
 import { RevisionView } from '../RevisionView.js';
 import { TreeViewNode } from '../TreeView.js';
-import { ChangeNode, Side } from '../persisted-types/index.js';
 
 import { TestTree } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';

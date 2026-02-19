@@ -4,9 +4,9 @@
  */
 
 import {
-	stringToBuffer,
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
+	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import type {
 	ICodeDetailsLoader,
@@ -14,11 +14,11 @@ import type {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
-	SummaryType,
-	type IDocumentServiceFactory,
 	type IDocumentService,
+	type IDocumentServiceFactory,
 	type IDocumentStorageService,
 	type IResolvedUrl,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 

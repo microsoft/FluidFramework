@@ -13,7 +13,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedObjectSequenceFactory, type SharedObjectSequence } from "../sequenceFactory.js";
+import { type SharedObjectSequence, SharedObjectSequenceFactory } from "../sequenceFactory.js";
 import { SharedObjectSequenceClass } from "../sharedObjectSequence.js";
 
 function createConnectedSequence(

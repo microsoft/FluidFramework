@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	isObjectNodeSchema,
 	ObjectNodeSchema,
 	SchemaFactory,
-	isObjectNodeSchema,
 } from "../../../../simple-tree/index.js";
 
 const schemaFactory = new SchemaFactory("Test");

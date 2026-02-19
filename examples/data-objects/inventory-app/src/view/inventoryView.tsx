@@ -5,10 +5,10 @@
 
 import {
 	objectIdNumber,
-	usePropTreeNode,
-	withTreeObservations,
-	withMemoizedTreeObservations,
 	type PropTreeNode,
+	usePropTreeNode,
+	withMemoizedTreeObservations,
+	withTreeObservations,
 } from "@fluidframework/react/alpha";
 import { Tree } from "fluid-framework";
 import * as React from "react";

@@ -5,6 +5,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+
 import { BaseCommand } from "../library/index.js";
 
 function renameFilesInDir(dir: string, extension: string, newExtension: string): void {

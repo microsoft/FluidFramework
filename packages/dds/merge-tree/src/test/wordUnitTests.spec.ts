@@ -13,7 +13,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
-import { type MapLike, createMap, extend } from "../properties.js";
+import { createMap, extend, type MapLike } from "../properties.js";
 import type { ReferencePosition } from "../referencePositions.js";
 
 import { _dirname } from "./dirname.cjs";

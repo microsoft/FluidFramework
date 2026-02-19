@@ -21,8 +21,8 @@ import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import {
-	OdspDocumentStorageService,
 	defaultSummarizerCacheExpiryTimeout,
+	OdspDocumentStorageService,
 } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";

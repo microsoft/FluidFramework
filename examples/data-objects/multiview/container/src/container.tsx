@@ -4,9 +4,9 @@
  */
 
 import {
+	getDataStoreEntryPoint,
 	type IFluidMountableViewEntryPoint,
 	MountableView,
-	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";

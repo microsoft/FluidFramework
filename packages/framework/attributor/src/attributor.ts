@@ -7,9 +7,9 @@ import type { IDeltaManager } from "@fluidframework/container-definitions/intern
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	MessageType,
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";

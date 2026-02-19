@@ -4,10 +4,10 @@
  */
 
 import {
-	IsoBuffer,
-	Uint8ArrayToString,
 	bufferToString,
 	fromBase64ToUtf8,
+	IsoBuffer,
+	Uint8ArrayToString,
 } from "@fluid-internal/client-utils";
 import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
@@ -25,11 +25,11 @@ import {
 	TreeTreeEntry,
 } from "@fluidframework/driver-utils/internal";
 import type {
+	IGarbageCollectionData,
+	ISummarizeResult,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IGarbageCollectionData,
-	ISummarizeResult,
 	ITelemetryContextExt,
 } from "@fluidframework/runtime-definitions/internal";
 import {

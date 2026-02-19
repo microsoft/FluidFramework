@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -26,21 +26,21 @@ import {
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
-	MessageType,
 	ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	IFluidDataStoreFactory,
 	type IContainerRuntimeBase,
 	type IFluidDataStoreContext,
+	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createSummarizer,
 	createSummarizerFromFactory,
 	createTestConfigProvider,
+	ITestObjectProvider,
 	summarizeNow,
 	timeoutAwait,
 	waitForContainerConnection,

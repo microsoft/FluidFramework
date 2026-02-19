@@ -12,7 +12,7 @@ import {
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { Type, type TSchema } from "@sinclair/typebox";
+import { type TSchema, Type } from "@sinclair/typebox";
 import { gt } from "semver-ts";
 
 import { pkgVersion } from "../../packageVersion.js";
@@ -21,14 +21,14 @@ import type {
 	JsonCompatibleReadOnlyObject,
 } from "../../util/index.js";
 import {
+	type CodecName,
+	type CodecTree,
+	type CodecWriteOptions,
+	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
-	type FormatVersion,
-	type CodecWriteOptions,
-	type CodecName,
-	type CodecTree,
 } from "../codec.js";
 
 import { Versioned } from "./format.js";

@@ -11,9 +11,9 @@ import { loadExistingContainer } from "@fluidframework/container-loader/internal
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils/internal";
 import {
+	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
-	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
@@ -21,13 +21,13 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	createAndAttachContainerUsingProps,
+	createLoader,
+	createLoaderProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingProps,
-	createLoader,
-	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 
 describe("No Delta Stream", () => {

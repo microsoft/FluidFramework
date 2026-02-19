@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 
-import { OptionsMatrix, generatePairwiseOptions } from "../index.js";
+import { generatePairwiseOptions, OptionsMatrix } from "../index.js";
 
 interface SimpleOptions {
 	oBoolean?: boolean;

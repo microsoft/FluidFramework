@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import {
 	type ChangeAtomIdMap,
-	type RevisionTag,
-	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
+	type RevisionTag,
+	type TaggedChange,
 	tagChange,
 	taggedOptAtomId,
 } from "../core/index.js";

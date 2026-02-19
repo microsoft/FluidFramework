@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
+import { makeStyles, Tooltip, tokens } from "@fluentui/react-components";
 import { Info20Regular } from "@fluentui/react-icons";
 import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
 import React from "react";

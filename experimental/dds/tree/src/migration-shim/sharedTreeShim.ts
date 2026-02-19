@@ -10,8 +10,8 @@ import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions/internal';
 import type {
 	IExperimentalIncrementalSummaryContext,

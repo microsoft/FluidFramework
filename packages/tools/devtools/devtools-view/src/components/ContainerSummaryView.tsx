@@ -6,7 +6,10 @@
 import {
 	Badge,
 	Button,
+	createTableColumn,
 	InfoLabel,
+	makeStyles,
+	shorthands,
 	Table,
 	TableBody,
 	TableCell,
@@ -14,9 +17,6 @@ import {
 	type TableColumnDefinition,
 	type TableColumnSizingOptions,
 	TableRow,
-	createTableColumn,
-	makeStyles,
-	shorthands,
 	useTableColumnSizing_unstable,
 	useTableFeatures,
 } from "@fluentui/react-components";
@@ -35,10 +35,10 @@ import {
 	DisconnectContainer,
 	GetContainerState,
 	type HasContainerKey,
-	type IMessageRelay,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
 	handleIncomingMessage,
+	type IMessageRelay,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 

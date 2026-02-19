@@ -5,11 +5,11 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	devtoolsMessageSource,
 	type IDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
 	type ISourcedDevtoolsMessage,
-	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 

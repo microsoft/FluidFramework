@@ -5,22 +5,22 @@
 
 import {
 	Divider,
+	makeStyles,
 	type SelectTabData,
 	type SelectTabEvent,
+	shorthands,
 	Tab,
 	TabList,
 	type TabValue,
-	makeStyles,
-	shorthands,
 } from "@fluentui/react-components";
 import {
 	type ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
 	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
 	handleIncomingMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 

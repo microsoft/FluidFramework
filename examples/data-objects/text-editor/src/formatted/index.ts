@@ -4,8 +4,8 @@
  */
 
 export {
-	FormattedTextAsTree,
-	FormattedTextEditorFactory,
 	FormattedMainView,
 	type FormattedMainViewProps,
+	FormattedTextAsTree,
+	FormattedTextEditorFactory,
 } from "./quillFormattedView.js";

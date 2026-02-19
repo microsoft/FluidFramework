@@ -8,6 +8,7 @@ import {
 	getEntryStatsProcessor,
 	getTotalSizeStatsProcessor,
 } from "../statsProcessors";
+
 import { totalSizeMetricName } from "./Constants";
 
 /**

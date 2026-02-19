@@ -14,7 +14,7 @@ import { SharedMatrix } from "@fluidframework/matrix/legacy";
 import { type ITree, NodeFromSchema, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
-import { Table, generateTable } from "../index.js";
+import { generateTable, Table } from "../index.js";
 
 import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 

@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
 import type {
-	IStream,
 	ISequencedDocumentMessage,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 

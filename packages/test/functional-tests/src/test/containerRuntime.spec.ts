@@ -30,9 +30,9 @@ import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
+	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 	MessageType,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,

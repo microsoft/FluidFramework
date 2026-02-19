@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert/strict";
+
 import { useWorker } from "../../../fluidBuild/tasks/leaf/apiExtractorTask.js";
 
 describe("API Extractor Task", () => {

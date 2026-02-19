@@ -10,24 +10,24 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	parseHandles,
 	SharedObject,
 	ValueType,
-	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	createChildMonitoringContext,
@@ -50,7 +50,7 @@ import type {
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import { serializeValue, migrateIfSharedSerializable } from "./localValues.js";
+import { migrateIfSharedSerializable, serializeValue } from "./localValues.js";
 import { findLast, findLastIndex } from "./utils.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.

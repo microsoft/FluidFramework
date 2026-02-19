@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
+	enableOnNewFileKey,
 	getRuntimeAttributor,
 	IRuntimeAttributor,
-	enableOnNewFileKey,
 } from "@fluid-experimental/attributor";
 import {
 	describeCompat,
@@ -22,10 +22,10 @@ import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 function assertAttributionMatches(

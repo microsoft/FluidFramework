@@ -11,11 +11,11 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	Doc,
+	insertOp,
 	JSONOp,
 	type as Json1OTType,
-	Path,
-	insertOp,
 	moveOp,
+	Path,
 	removeOp,
 	replaceOp,
 } from "ot-json1";

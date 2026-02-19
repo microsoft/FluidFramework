@@ -14,13 +14,13 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-	timeoutPromise as timeoutPromiseUnnamed,
 	TimeoutWithError,
 	TimeoutWithValue,
+	timeoutPromise as timeoutPromiseUnnamed,
 } from "@fluidframework/test-utils/internal";
 
 type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & {

@@ -34,9 +34,9 @@ import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/inde
 import { TestNodeId } from "../../testNodeId.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
-	Change,
 	assertEqual,
 	assertTaggedEqual,
+	Change,
 	tagChangeInline,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";

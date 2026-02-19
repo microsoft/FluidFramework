@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { type ITaskData, assertValidTaskData } from "../model-interface/index.js";
+import { assertValidTaskData, type ITaskData } from "../model-interface/index.js";
 
 import { ExternalDataSource } from "./externalDataSource.js";
 import { MockWebhook } from "./webhook.js";

@@ -10,6 +10,7 @@ import type { Machine } from "jssm";
 import { getDefaultBumpTypeForBranch } from "../library/index.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
+
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import type { StateHandlerFunction } from "./stateHandlers.js";
 

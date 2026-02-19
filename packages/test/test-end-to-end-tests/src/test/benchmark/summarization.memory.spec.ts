@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,

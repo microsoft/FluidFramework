@@ -8,10 +8,10 @@ import {
 	ICreateBlobResponse,
 	IDocumentService,
 	IDocumentStorageService,
+	ISequencedDocumentMessage,
 	ISnapshotTree,
 	ISummaryContext,
 	IVersion,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

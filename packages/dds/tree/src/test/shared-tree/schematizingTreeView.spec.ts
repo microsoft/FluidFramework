@@ -22,19 +22,19 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	TreeViewConfiguration,
+	getKernel,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTypedNode,
-	type UnsafeUnknownSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	type TransactionResult,
 	type TransactionResultExt,
-	getKernel,
+	TreeViewConfiguration,
 	toInitialSchema,
 	toUpgradeSchema,
-	SchemaFactoryBeta,
+	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
@@ -48,8 +48,8 @@ import {
 	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
-	validateViewConsistency,
 	type TreeStoredContentStrict,
+	validateViewConsistency,
 } from "../utils.js";
 
 const schema = new SchemaFactoryAlpha("com.example");

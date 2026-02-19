@@ -5,15 +5,20 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type Anchor,
 	AnchorSet,
 	type AnnouncedVisitor,
+	aboveRootPlaceholder,
+	type ChunkedCursor,
+	combineVisitors,
+	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
+	detachedFieldAsKey,
 	type FieldAnchor,
 	type FieldKey,
 	type ForestEvents,
@@ -21,19 +26,14 @@ import {
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
+	mapCursorField,
 	type PlaceIndex,
 	type Range,
+	rootFieldKey,
+	type TreeChunk,
 	TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
-	aboveRootPlaceholder,
-	combineVisitors,
-	detachedFieldAsKey,
-	mapCursorField,
-	rootFieldKey,
-	type ChunkedCursor,
-	type TreeChunk,
-	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
 	assertValidRange,
@@ -44,7 +44,7 @@ import {
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkField, chunkTree } from "./chunkTree.js";
+import { basicChunkTree, chunkField, chunkTree, type IChunker } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());

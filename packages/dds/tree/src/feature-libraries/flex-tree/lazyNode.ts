@@ -12,13 +12,13 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
+	inCursorField,
+	mapCursorFields,
+	rootFieldKey,
 	type TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type Value,
-	inCursorField,
-	mapCursorFields,
-	rootFieldKey,
 } from "../../core/index.js";
 import { disposeSymbol } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
@@ -27,9 +27,9 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type HydratedFlexTreeNode,
 	flexTreeMarker,
 	flexTreeSlot,
+	type HydratedFlexTreeNode,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";

@@ -17,7 +17,7 @@ import {
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedStringClass, ISharedString } from "../sharedString.js";
+import { ISharedString, SharedStringClass } from "../sharedString.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };

@@ -9,9 +9,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentService,
+	type ISequencedDocumentMessage,
 	MessageType,
 	ScopeType,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import { printMessageStats } from "./fluidAnalyzeMessages.js";

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";

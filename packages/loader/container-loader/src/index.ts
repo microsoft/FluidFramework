@@ -4,26 +4,21 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
-export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
+export { asLegacyAlpha, type ContainerAlpha, waitContainerToCatchUp } from "./container.js";
 export {
 	createDetachedContainer,
-	loadExistingContainer,
-	rehydrateDetachedContainer,
-	loadFrozenContainerFromPendingState,
-	loadSummarizerContainerAndMakeSummary,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
+	type ILoadFrozenContainerFromPendingStateProps,
 	type ILoadSummarizerContainerProps,
 	type IRehydrateDetachedContainerProps,
-	type ILoadFrozenContainerFromPendingStateProps,
+	loadExistingContainer,
+	loadFrozenContainerFromPendingState,
+	loadSummarizerContainerAndMakeSummary,
+	rehydrateDetachedContainer,
 } from "./createAndLoadContainerUtils.js";
-export type {
-	LoadSummarizerSummaryResult,
-	OnDemandSummaryResults,
-	SummaryStage,
-} from "./summarizerResultTypes.js";
+export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
 	type ICodeDetailsLoader,
 	type IFluidModuleWithDetails,
@@ -33,25 +28,30 @@ export {
 } from "./loader.js";
 export {
 	driverSupportRequirementsForLoader,
+	loaderCompatDetailsForRuntime,
 	loaderCoreCompatDetails,
 	runtimeSupportRequirementsForLoader,
-	loaderCompatDetailsForRuntime,
 } from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities/index.js";
-export type { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
-export {
-	tryParseCompatibleResolvedUrl,
-	type IParsedUrl,
-} from "./utils.js";
+export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
 export type {
 	IBaseProtocolHandler,
-	IScribeProtocolState,
 	IQuorumSnapshot,
+	IScribeProtocolState,
 	QuorumClientsSnapshot,
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
-export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
+export type { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
+export type {
+	LoadSummarizerSummaryResult,
+	OnDemandSummaryResults,
+	SummaryStage,
+} from "./summarizerResultTypes.js";
+export {
+	type IParsedUrl,
+	tryParseCompatibleResolvedUrl,
+} from "./utils.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-components";
+import { Button, Checkbox, Input, TableCell, TableRow } from "@fluentui/react-components";
 import { Delete24Regular } from "@fluentui/react-icons";
 import { useTree } from "@fluidframework/react/alpha";
 import React, { type DragEvent } from "react";

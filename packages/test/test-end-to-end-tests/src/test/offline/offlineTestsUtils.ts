@@ -17,11 +17,11 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITestFluidObject,
 	type ITestContainerConfig,
+	type ITestFluidObject,
 	type ITestObjectProvider,
-	waitForContainerConnection,
 	toIDeltaManagerFull,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";

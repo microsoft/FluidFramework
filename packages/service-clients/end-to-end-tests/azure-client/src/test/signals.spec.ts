@@ -17,8 +17,8 @@ import {
 	getContainerIdFromPayloadResponse,
 	ScopeType,
 } from "./AzureClientFactory.js";
-import { SignalerTestDataObject } from "./TestDataObject.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
+import { SignalerTestDataObject } from "./TestDataObject.js";
 import { configProvider, getTestMatrix } from "./utils.js";
 
 interface UserIdAndName {

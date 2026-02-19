@@ -7,13 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { describe, it, after, afterEach, before, beforeEach } from "mocha";
-import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
-
 import type { Attendee, Latest, LatestMap } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { after, afterEach, before, beforeEach, describe, it } from "mocha";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../../internalUtils.js";
 import type { Presence } from "../../presence.js";
@@ -23,10 +22,10 @@ import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	localAttendeeId,
 	connectionId1,
-	initialLocalClientConnectionId,
 	createSpiedValidator,
+	initialLocalClientConnectionId,
+	localAttendeeId,
 	prepareConnectedPresence,
 } from "../testUtils.js";
 

@@ -7,16 +7,16 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
 	IAnyDriverError,
 	IClientConfiguration,
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
 	IDocumentMessage,
 	INack,
-	ISignalClient,
-	ITokenClaims,
 	ISequencedDocumentMessage,
+	ISignalClient,
 	ISignalMessage,
+	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 
 // This is coppied from alfred.  Probably should clean this up.

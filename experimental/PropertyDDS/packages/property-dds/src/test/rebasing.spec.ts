@@ -23,8 +23,8 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	loadExistingContainer,
 	type ILoaderProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
@@ -36,11 +36,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	createAndAttachContainerUsingProps,
+	createLoaderProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestFluidObjectFactory,
-	createAndAttachContainerUsingProps,
-	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import lodash from "lodash";

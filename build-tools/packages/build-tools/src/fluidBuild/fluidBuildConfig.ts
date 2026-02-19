@@ -4,6 +4,7 @@
  */
 
 import type { InterdependencyRange } from "@fluid-tools/version-tools";
+
 import type {
 	GitIgnoreSetting,
 	TaskDefinitionsOnDisk,

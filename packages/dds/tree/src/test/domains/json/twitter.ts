@@ -5,8 +5,8 @@
 
 import {
 	type IRandom,
-	SpaceEfficientWordMarkovChain,
 	makeRandom,
+	SpaceEfficientWordMarkovChain,
 } from "@fluid-private/stochastic-test-utils";
 
 import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";

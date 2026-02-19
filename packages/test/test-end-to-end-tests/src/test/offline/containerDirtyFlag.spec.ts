@@ -11,11 +11,11 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

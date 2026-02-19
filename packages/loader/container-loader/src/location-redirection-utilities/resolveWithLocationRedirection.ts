@@ -5,9 +5,9 @@
 
 import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
+	DriverErrorTypes,
 	type ILocationRedirectionError,
 	type IUrlResolver,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 

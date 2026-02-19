@@ -10,6 +10,10 @@
 // index.ts and retagged export from internal.ts may be removed.
 
 export type { DeepReadonly } from "./deepReadonly.js";
+export type {
+	InternalUtilityTypes,
+	ReadonlySupportedGenerics,
+} from "./exposedInternalUtilityTypes.js";
 export type { JsonDeserialized, JsonDeserializedOptions } from "./jsonDeserialized.js";
 export type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
 export type {
@@ -23,8 +27,3 @@ export type {
 } from "./jsonType.js";
 export type { OpaqueJsonDeserialized, OpaqueJsonSerializable } from "./opaqueJson.js";
 export type { ShallowReadonly } from "./shallowReadonly.js";
-
-export type {
-	InternalUtilityTypes,
-	ReadonlySupportedGenerics,
-} from "./exposedInternalUtilityTypes.js";

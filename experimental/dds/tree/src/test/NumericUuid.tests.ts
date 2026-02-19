@@ -13,7 +13,6 @@ import { expect } from 'chai';
 
 import { compareStrings } from '../Common.js';
 import { StableId } from '../Identifiers.js';
-import { assertIsStableId, isStableId } from '../UuidUtilities.js';
 import {
 	createSessionId,
 	ensureSessionUuid,
@@ -23,6 +22,7 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid.js';
+import { assertIsStableId, isStableId } from '../UuidUtilities.js';
 
 import { integerToStableId } from './utilities/IdCompressorTestUtilities.js';
 

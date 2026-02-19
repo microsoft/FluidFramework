@@ -13,9 +13,11 @@ import { IFormatterState, RootFormatter } from "../view/formatter.js";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./debug.css";
+
 import { debug } from "./debug.js";
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./index.css";
+
 import { SearchMenuView } from "./searchmenu/index.js";
 
 const always = (): boolean => true;

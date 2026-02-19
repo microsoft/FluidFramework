@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
-import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
+import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
 describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;

@@ -13,12 +13,12 @@ import {
 	type Brand,
 	type BrandedKey,
 	type BrandedMapSubset,
-	type Opaque,
-	ReferenceCountedBase,
 	brand,
 	brandedSlot,
 	getOrAddEmptyToMap,
 	getOrCreate,
+	type Opaque,
+	ReferenceCountedBase,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -26,8 +26,8 @@ import type { ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
 import { offsetDetachId } from "./deltaUtil.js";
 import {
-	isDetachedUpPathRoot,
 	type INormalizedUpPath,
+	isDetachedUpPathRoot,
 	type NormalizedUpPath,
 	type PlaceIndex,
 	type Range,

@@ -12,12 +12,12 @@ import {
 	type AnchorSet,
 	type AnnouncedVisitor,
 	type DetachedField,
+	detachedFieldAsKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	rootField,
 	type TreeChunk,
 	type UpPath,
-	detachedFieldAsKey,
-	rootField,
 } from "../tree/index.js";
 
 import type { IEditableForest } from "./editableForest.js";

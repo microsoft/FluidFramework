@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { StringBuilder, type IStringBuilder } from "@rushstack/node-core-library";
+import { type IStringBuilder, StringBuilder } from "@rushstack/node-core-library";
 
 /**
  * A utility for writing indented text.

@@ -11,9 +11,9 @@ import type { TestObjectProvider } from '@fluidframework/test-utils/internal';
 import type { Build, Detach, Insert, SetValue } from '../../ChangeTypes.js';
 import type { NodeId } from '../../Identifiers.js';
 import type { NodeIdGenerator } from '../../NodeIdUtilities.js';
+import type { WriteFormat } from '../../persisted-types/index.js';
 import type { SharedTree } from '../../SharedTree.js';
 import type { TreeView } from '../../TreeView.js';
-import type { WriteFormat } from '../../persisted-types/index.js';
 
 export interface FuzzTestState extends BaseFuzzTestState {
 	testObjectProvider?: TestObjectProvider;

@@ -6,22 +6,22 @@
 import { strict as assert } from "assert";
 
 import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IContainerRuntimeBase,
 	channelsTreeName,
+	IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestObjectProvider,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

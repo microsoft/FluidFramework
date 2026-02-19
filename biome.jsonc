@@ -129,7 +129,26 @@
 		],
 		"maxSize": 2097152
 	},
-	"assist": { "actions": { "source": { "organizeImports": "off" } } },
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [
+							":NODE:",
+							":BLANK_LINE:",
+							":PACKAGE:",
+							":BLANK_LINE:",
+							"../**",
+							":BLANK_LINE:",
+							"./**"
+						]
+					}
+				}
+			}
+		}
+	},
 	"linter": {
 		"enabled": false,
 		"rules": {
@@ -161,6 +180,24 @@
 		}
 	},
 	"overrides": [
+		{
+			// FILES WITH SHEBANGS
+			// Biome's organizeImports introduces a blank line between the shebang and the copyright
+			// header, which breaks policy. Disable organizeImports for files with shebangs.
+			"includes": [
+				"**/build-cli/bin/**",
+				"**/build-infrastructure/bin/**",
+				"**/fluid-runner/bin/**",
+				"**/fluid-runner/src/test/sampleCodeLoaders/**"
+			],
+			"assist": {
+				"actions": {
+					"source": {
+						"organizeImports": "off"
+					}
+				}
+			}
+		},
 		{
 			// @fluid-experimental/tree FORMATTING
 			// This configuration is used to format the @fluid-experimental/tree package, which uses different settings than

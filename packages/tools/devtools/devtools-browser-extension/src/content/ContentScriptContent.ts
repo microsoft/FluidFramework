@@ -4,8 +4,8 @@
  */
 
 import {
-	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
+	type ISourcedDevtoolsMessage,
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 

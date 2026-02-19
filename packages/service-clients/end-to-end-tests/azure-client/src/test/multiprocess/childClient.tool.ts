@@ -19,12 +19,12 @@ import { LogLevel } from "@fluidframework/core-interfaces";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	getPresence,
 	type Attendee,
+	getPresence,
+	type LatestMapRaw,
+	type LatestRaw,
 	type Presence,
 	StateFactory,
-	type LatestRaw,
-	type LatestMapRaw,
 	type StatesWorkspace,
 } from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -34,10 +34,10 @@ import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
 
 import type {
-	MessageFromChild as MessageToParent,
-	MessageToChild as MessageFromParent,
-	UserIdAndName,
 	EventEntry,
+	MessageToChild as MessageFromParent,
+	MessageFromChild as MessageToParent,
+	UserIdAndName,
 } from "./messageTypes.js";
 
 const testLabel = process.argv[2];

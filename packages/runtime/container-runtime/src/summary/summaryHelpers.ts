@@ -10,11 +10,11 @@ import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	summarizerClientType,
 	type ISummarizer,
 	type ISummaryConfiguration,
 	type ISummaryConfigurationDisableSummarizer,
 	type ISummaryConfigurationHeuristics,
+	summarizerClientType,
 } from "./summarizerTypes.js";
 
 export const summarizerRequestUrl = "_summarizer";

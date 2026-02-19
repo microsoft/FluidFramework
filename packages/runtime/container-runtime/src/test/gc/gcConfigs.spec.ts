@@ -13,35 +13,35 @@ import type {
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildLogger,
 	MockLogger,
 	type MonitoringContext,
-	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
-	GCNodeType,
+	defaultInactiveTimeoutMs,
+	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
+	disableThrowOnTombstoneLoadKey,
 	GarbageCollector,
-	type IGCMetadata,
-	type IGCMetadata_Deprecated,
-	type IGCRuntimeOptions,
+	GCNodeType,
+	gcGenerationOptionName,
+	gcTestModeKey,
+	gcVersionUpgradeToV4Key,
 	type IGarbageCollectionRuntime,
 	type IGarbageCollectionState,
 	type IGarbageCollector,
 	type IGarbageCollectorConfigs,
 	type IGarbageCollectorCreateParams,
-	defaultInactiveTimeoutMs,
-	defaultSessionExpiryDurationMs,
-	defaultSweepGracePeriodMs,
-	gcGenerationOptionName,
-	gcTestModeKey,
-	gcVersionUpgradeToV4Key,
+	type IGCMetadata,
+	type IGCMetadata_Deprecated,
+	type IGCRuntimeOptions,
 	nextGCVersion,
 	oneDayMs,
 	runSessionExpiryKey,
 	stableGCVersion,
-	disableThrowOnTombstoneLoadKey,
 } from "../../gc/index.js";
 import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";

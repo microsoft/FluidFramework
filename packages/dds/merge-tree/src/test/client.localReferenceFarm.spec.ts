@@ -13,10 +13,10 @@ import { ReferenceType } from "../ops.js";
 import type { ReferencePosition } from "../referencePositions.js";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
 	doOverRanges,
 	generateClientNames,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";

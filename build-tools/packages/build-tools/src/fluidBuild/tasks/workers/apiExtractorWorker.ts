@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type * as ApiExtractorModule from "@microsoft/api-extractor";
 import * as path from "path";
+
+import type * as ApiExtractorModule from "@microsoft/api-extractor";
+
 import { getApiExtractorConfigFilePath } from "../taskUtils.js";
+
 import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
 /**

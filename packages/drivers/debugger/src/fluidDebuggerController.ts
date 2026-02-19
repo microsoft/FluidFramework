@@ -5,13 +5,13 @@
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
+	IDocumentAttributes,
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-	IDocumentAttributes,
+	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {

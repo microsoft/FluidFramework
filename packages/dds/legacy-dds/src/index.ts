@@ -4,29 +4,30 @@
  */
 
 export type {
-	SerializableTypeForSharedSignal,
-	ISharedSignal,
-	ISharedSignalEvents,
-	ISignalOperation,
-} from "./signal/index.js";
-export { SharedSignal } from "./signal/index.js";
-export { SharedSignalFactory } from "./signal/index.js";
-export { SharedArray, SharedArrayBuilder, OperationType } from "./array/index.js";
-export { SharedArrayFactory } from "./array/index.js";
-export { SharedArrayRevertible } from "./array/index.js";
-export type {
-	SerializableTypeForSharedArray,
-	ISharedArray,
-	ISharedArrayEvents,
-	ISharedArrayRevertible,
-} from "./array/index.js";
-export type {
-	ISharedArrayOperation,
 	IDeleteOperation,
 	IInsertOperation,
 	IMoveOperation,
+	IRevertible,
+	ISharedArray,
+	ISharedArrayEvents,
+	ISharedArrayOperation,
+	ISharedArrayRevertible,
 	ISharedArrayRevertibleOperation,
 	IToggleMoveOperation,
 	IToggleOperation,
+	SerializableTypeForSharedArray,
 } from "./array/index.js";
-export type { IRevertible } from "./array/index.js";
+export {
+	OperationType,
+	SharedArray,
+	SharedArrayBuilder,
+	SharedArrayFactory,
+	SharedArrayRevertible,
+} from "./array/index.js";
+export type {
+	ISharedSignal,
+	ISharedSignalEvents,
+	ISignalOperation,
+	SerializableTypeForSharedSignal,
+} from "./signal/index.js";
+export { SharedSignal, SharedSignalFactory } from "./signal/index.js";

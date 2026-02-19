@@ -10,7 +10,7 @@ import { markEager } from "./flexList.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
 // eslint-disable-next-line import-x/no-deprecated
-import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
+import { typeNameSymbol, type typeSchemaSymbol, type WithType } from "./withType.js";
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.

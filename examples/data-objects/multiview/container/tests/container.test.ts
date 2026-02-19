@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { globals } from "../jest.config.cjs";
 
 describe("CoordinateContainerRuntimeFactory", () => {

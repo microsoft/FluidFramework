@@ -12,8 +12,8 @@ import { v4 as uuid } from "uuid";
 
 import {
 	dataObjectRegistry,
-	registryEntries,
 	type ISingleHandleItem,
+	registryEntries,
 } from "./dataObjectRegistry.js";
 
 /**

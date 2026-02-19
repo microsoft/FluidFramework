@@ -16,14 +16,14 @@ import {
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
+	type ConciseTree,
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	TreeBeta,
-	TreeViewConfiguration,
-	type ConciseTree,
 	type TreeNode,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 // We have to use disable twice this rule here and below, otherwise this rule gets in conflict with itself and ends up flagging imports as wrong, then flagging
@@ -35,6 +35,7 @@ import type {
 	requireFalse,
 	requireTrue,
 } from "../util/index.js";
+
 // eslint-disable-next-line import-x/order
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";

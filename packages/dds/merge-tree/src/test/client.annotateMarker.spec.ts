@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type Marker, reservedMarkerIdKey, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import { type ISegmentPrivate, type Marker, reservedMarkerIdKey } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 

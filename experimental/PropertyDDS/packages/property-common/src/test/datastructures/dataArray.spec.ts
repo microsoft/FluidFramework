@@ -9,6 +9,7 @@
 import { expect } from "chai";
 
 import { BoolDataArray, Int8DataArray, Int32DataArray, UniversalDataArray } from "../../index";
+
 let error;
 
 describe("BaseDataArray", function () {

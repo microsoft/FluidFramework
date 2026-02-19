@@ -12,10 +12,10 @@ import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { type ImplicitFieldSchema, TreeViewConfiguration } from "@fluidframework/tree";
 import {
-	TreeAlpha,
-	independentView,
 	type InsertableField,
+	independentView,
 	type ReadableField,
+	TreeAlpha,
 	type TreeNode,
 	type UnsafeUnknownSchema,
 	type VerboseTree,

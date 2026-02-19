@@ -17,14 +17,14 @@ import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal"
 import type { IJsonCodec } from "../../codec/index.js";
 import {
 	type MutableTreeStoredSchema,
-	type TreeStoredSchema,
 	schemaDataIsEmpty,
+	type TreeStoredSchema,
 } from "../../core/index.js";
 import {
-	VersionedSummarizer,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
+	VersionedSummarizer,
 } from "../../shared-tree-core/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 

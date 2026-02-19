@@ -8,23 +8,23 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
-	ISummaryTreeWithStats,
 	AttributionKey,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IAttributionCollection } from "./attributionCollection.js";
 import { NonCollabClient } from "./constants.js";
 import type { MergeTree } from "./mergeTree.js";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import type { ISegmentPrivate } from "./mergeTreeNodes.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import type { IJSONSegment } from "./ops.js";
-import { type PropertySet, matchProperties } from "./properties.js";
+import { matchProperties, type PropertySet } from "./properties.js";
 import { assertInserted, isRemoved } from "./segmentInfos.js";
 import {
 	type IJSONSegmentWithMergeInfo,

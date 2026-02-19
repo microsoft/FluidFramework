@@ -20,6 +20,7 @@ import React, { useEffect, useRef } from "react";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/javascript/javascript.js";
 import "./style.css";
+
 /* eslint-enable import-x/no-unassigned-import, import-x/no-internal-modules */
 
 import { CodeMirrorPresenceManager, PresenceManager } from "./presence.js";

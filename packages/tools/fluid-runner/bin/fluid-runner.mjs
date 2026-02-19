@@ -5,4 +5,5 @@
  */
 
 import { fluidRunner } from "@fluidframework/fluid-runner/internal";
+
 await fluidRunner();

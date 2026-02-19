@@ -6,19 +6,19 @@
 import { strict as assert } from "assert";
 
 import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestObjectProvider,
-	TestFluidObject,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	ITestObjectProvider,
+	TestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {

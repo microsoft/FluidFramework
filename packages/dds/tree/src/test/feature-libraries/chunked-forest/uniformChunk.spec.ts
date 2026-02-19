@@ -16,11 +16,11 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	type TreeChunk,
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
+	type TreeChunk,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules

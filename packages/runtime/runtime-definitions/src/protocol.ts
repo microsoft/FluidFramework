@@ -5,9 +5,9 @@
 
 import type { TypedMessage } from "@fluidframework/core-interfaces/internal";
 import type {
-	ITree,
-	ISignalMessage,
 	ISequencedDocumentMessage,
+	ISignalMessage,
+	ITree,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

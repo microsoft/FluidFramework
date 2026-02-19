@@ -4,6 +4,7 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
  */
 import type { Linter } from "eslint";
+
 import { strict } from "../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [

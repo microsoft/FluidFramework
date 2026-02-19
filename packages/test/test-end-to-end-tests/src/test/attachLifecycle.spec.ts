@@ -14,9 +14,9 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 import {
-	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	ITestFluidObject,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 

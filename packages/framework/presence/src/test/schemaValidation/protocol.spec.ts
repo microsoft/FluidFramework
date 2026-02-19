@@ -5,11 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { describe, it, after, afterEach, before, beforeEach } from "mocha";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
-
 import { StateFactory } from "@fluidframework/presence/beta";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { after, afterEach, before, beforeEach, describe, it } from "mocha";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import type { PresenceWithNotifications } from "../../index.js";
 import { toOpaqueJson } from "../../internalUtils.js";
@@ -20,12 +19,12 @@ import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	localAttendeeId,
 	connectionId1,
-	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
 	createSpiedValidator,
 	generateBasicClientJoin,
+	initialLocalClientConnectionId,
+	localAttendeeId,
 	prepareConnectedPresence,
 } from "../testUtils.js";
 

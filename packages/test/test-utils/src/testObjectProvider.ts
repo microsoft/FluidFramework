@@ -32,9 +32,9 @@ import {
 import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
+	type ITelemetryGenericEventExt,
 	type ITelemetryLoggerPropertyBags,
 	TelemetryDataTag,
 	tagData,
@@ -42,7 +42,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
-import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
+import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
 import { isNonEmptyArray } from "./nonEmptyArrayType.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";

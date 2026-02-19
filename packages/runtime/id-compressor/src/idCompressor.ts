@@ -7,17 +7,17 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	createChildLogger,
 	type ITelemetryLoggerExt,
 	LoggingError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { FinalSpace } from "./finalSpace.js";
 import {
 	type FinalCompressedId,
+	isFinalId,
 	type LocalCompressedId,
 	type NumericUuid,
-	isFinalId,
 } from "./identifiers.js";
 import {
 	type Index,
@@ -30,18 +30,18 @@ import {
 } from "./persistanceUtilities.js";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
 import {
-	type IdCluster,
-	Session,
-	Sessions,
 	getAlignedFinal,
 	getAlignedLocal,
+	type IdCluster,
 	lastFinalizedFinal,
 	lastFinalizedLocal,
+	Session,
+	Sessions,
 } from "./sessions.js";
 import type {
+	IdCreationRange,
 	IIdCompressor,
 	IIdCompressorCore,
-	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,

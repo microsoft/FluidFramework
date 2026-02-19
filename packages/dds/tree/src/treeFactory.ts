@@ -6,30 +6,30 @@
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
+	type FactoryOut,
 	type ISharedObject,
 	type ISharedObjectKind,
-	makeSharedObjectKind,
 	type KernelArgs,
+	makeSharedObjectKind,
 	type SharedKernelFactory,
 	type SharedObjectOptions,
-	type FactoryOut,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion } from "./codec/index.js";
 import {
-	SharedTreeKernel,
 	type ITreePrivate,
+	SharedTreeKernel,
+	type SharedTreeKernelView,
 	type SharedTreeOptions,
 	type SharedTreeOptionsBeta,
 	type SharedTreeOptionsInternal,
-	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
 import {
 	editManagerFormatVersionSelectorForSharedBranches,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
-import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
 import { Breakable, copyProperty } from "./util/index.js";
 

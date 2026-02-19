@@ -17,23 +17,23 @@ import {
 	CompatibilityLevel,
 	contentSchemaSymbol,
 	privateDataSymbol,
-	UnhydratedFlexTreeNode,
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
+	UnhydratedFlexTreeNode,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import {
 	createFieldSchema,
+	type DefaultProvider,
 	FieldKind,
 	getDefaultProvider,
-	type DefaultProvider,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
 	booleanSchema,
-	tryGetTreeNodeForField,
+	getKernel,
 	handleSchema,
 	nullSchema,
 	numberSchema,
@@ -41,14 +41,14 @@ import {
 	SchemaFactoryAlpha,
 	stringSchema,
 	type TreeNodeSchema,
-	type ValidateRecursiveSchema,
-	getKernel,
 	TreeViewConfiguration,
+	tryGetTreeNodeForField,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import {
 	getPossibleTypes,
-	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/unhydratedFlexTreeFromInsertable.js";
 import { brand } from "../../util/index.js";

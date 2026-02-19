@@ -13,9 +13,9 @@ import {
 
 import {
 	GCSummaryStateTracker,
-	type IGCStats,
-	type IGarbageCollectionState,
 	gcStateBlobKey,
+	type IGarbageCollectionState,
+	type IGCStats,
 	nextGCVersion,
 } from "../../gc/index.js";
 

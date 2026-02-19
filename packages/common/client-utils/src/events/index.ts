@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { createEmitter, CustomEventEmitter } from "./emitter.js";
+export { CustomEventEmitter, createEmitter } from "./emitter.js";

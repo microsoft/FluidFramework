@@ -6,9 +6,9 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import {
+	type FixRecursiveArraySchema,
 	SchemaFactory,
 	SchemaFactoryBeta,
-	type FixRecursiveArraySchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "./simple-tree/index.js";

@@ -8,9 +8,9 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -39,13 +39,13 @@ import type {
 	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizer,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

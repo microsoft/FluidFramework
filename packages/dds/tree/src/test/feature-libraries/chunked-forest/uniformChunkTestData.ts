@@ -14,7 +14,7 @@ import {
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 import { brand, makeArray } from "../../../util/index.js";
-import { type TestField, EmptyObject } from "../../cursorTestSuite.js";
+import { EmptyObject, type TestField } from "../../cursorTestSuite.js";
 
 export const emptyShape = new TreeShape(brand(EmptyObject.identifier), false, []);
 

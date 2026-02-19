@@ -3,34 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
+	identifierFieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	Multiplicity,
 	ObjectNodeStoredSchema,
+	type SchemaPolicy,
 	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	ValueSchema,
-	Multiplicity,
-	identifierFieldKindIdentifier,
-	type SchemaPolicy,
 } from "../../../core/index.js";
 import { brand, oneFromIterable } from "../../../util/index.js";
 
 import type { IncrementalEncoder } from "./codecs.js";
 import {
-	EncoderContext,
-	type FieldEncoder,
-	type FieldEncodeBuilder,
-	type KeyedFieldEncoder,
-	type NodeEncodeBuilder,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
+	EncoderContext,
+	type FieldEncodeBuilder,
+	type FieldEncoder,
 	incrementalFieldEncoder,
+	type KeyedFieldEncoder,
+	type NodeEncodeBuilder,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {

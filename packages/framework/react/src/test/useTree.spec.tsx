@@ -10,7 +10,7 @@ import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 
-import { toPropTreeNode, type PropTreeNode } from "../propNode.js";
+import { type PropTreeNode, toPropTreeNode } from "../propNode.js";
 import { objectIdNumber } from "../simpleIdentifier.js";
 import {
 	usePropTreeNode,
