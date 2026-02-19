@@ -141,7 +141,7 @@ export {
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
-export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
 	type IdentifierIndex,

@@ -258,16 +258,16 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions & ((IndependentVie
 export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
 
 // @alpha
-export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): SimpleTreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: (schema: TreeNodeSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
 
 // @alpha
-export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: (schema: TSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: (schema: TSchema) => string | undefined, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
 // @alpha
-export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): SimpleTreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey): TreeIndex<TKey, TValue>;
 
 // @alpha
-export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
+export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
 // @alpha
 export function decodeSchemaCompatibilitySnapshot(encodedSchema: JsonCompatibleReadOnly, validator?: FormatValidator): SimpleTreeSchema;
@@ -533,7 +533,7 @@ export interface IConnection {
 export type ICriticalContainerError = IErrorBase;
 
 // @alpha
-export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
+export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @public @sealed
 export interface IDisposable {
@@ -1561,9 +1561,6 @@ export interface SimpleRecordNodeSchema<Type extends SchemaType = SchemaType, ou
     readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes<Type>>;
 }
 
-// @alpha
-export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey, TValue>;
-
 // @alpha @sealed
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
@@ -2027,13 +2024,13 @@ export interface TreeIdentifierUtils {
     shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
 }
 
-// @alpha
-export interface TreeIndex<TKey extends TreeIndexKey, TValue> extends ReadonlyMap<TKey, TValue> {
+// @alpha @sealed
+export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
     dispose(): void;
 }
 
 // @alpha
-export type TreeIndexKey = number | string | boolean | IFluidHandle | null;
+export type TreeIndexKey = TreeLeafValue;
 
 // @alpha
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
