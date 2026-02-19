@@ -42,7 +42,7 @@ describe("Local Server Stress", () => {
 		skipMinimization: true,
 		skip: [
 			// Pre-existing: ConsensusOrderedCollection consistency (reproduces on main with minimized ops)
-			...[45, 54],
+			...[45],
 			// Pre-existing: SharedMatrix consistency (reproduces on main with minimized ops)
 			...[139],
 		],
