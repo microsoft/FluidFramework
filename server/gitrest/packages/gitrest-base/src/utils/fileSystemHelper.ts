@@ -149,7 +149,7 @@ export function filepathToString(filepath: PathLike | FileHandle): string {
 export function getStats(type?: FsEntityType, lastModified?: Date, size?: number): fs.Stats {
 	const computedLastModified = new Date(0);
 	const computedLastModifiedInMs = computedLastModified.getTime();
-	const defaultStats = new fs.Stats();
+	const defaultStats = Object.create(fs.Stats.prototype) as fs.Stats;
 	switch (type) {
 		case "file":
 			defaultStats.mode = fs.constants.S_IFREG;

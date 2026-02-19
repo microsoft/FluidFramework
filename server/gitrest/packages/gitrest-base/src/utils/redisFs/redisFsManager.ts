@@ -250,8 +250,12 @@ export class RedisFs extends FsPromisesBase {
 	): Promise<Dirent[]>;
 	public async readdirCore(
 		folderpath: PathLike,
+		options: { encoding: "buffer"; withFileTypes: true; recursive?: boolean | undefined },
+	): Promise<Dirent<Buffer>[]>;
+	public async readdirCore(
+		folderpath: PathLike,
 		options?: any,
-	): Promise<string[] | Buffer[] | Dirent[]> {
+	): Promise<string[] | Buffer[] | Dirent[] | Dirent<Buffer>[]> {
 		const folderpathString = folderpath.toString();
 
 		const result = await executeRedisFsApiWithMetric(

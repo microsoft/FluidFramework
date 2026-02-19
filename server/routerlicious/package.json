@@ -141,16 +141,14 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
-			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
+			"@types/node is overridden to v24 to ensure all packages are building using the v24 types.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
 			"@typescript-eslint/*: Pin to 8.52.0 to avoid 8.53.0 which may not be available in ADO package feed.",
 			"@babel/*: Pin to 7.27.x to avoid 7.28.x versions which may not be available in ADO package feed."
 		],
 		"overrides": {
-			"@types/node@<18": "^18.19.39",
-			"@types/node@>=22": "^20.0.0",
+			"@types/node": "^24.0.0",
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
 			"@typescript-eslint/project-service": "8.52.0",
 			"@babel/core": "7.27.7",
