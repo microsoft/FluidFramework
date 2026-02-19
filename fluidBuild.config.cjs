@@ -452,11 +452,15 @@ module.exports = {
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
 
+				// Packages that use api-extractor in fashion that does not allow
+				// for linting of final entrypoint files. (api-extractor doesn't
+				// generate roll-up files that it can lint for itself.)
+				"^tools/api-markdown-documenter/",
+
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
 				"^common/build/",
 				"^experimental/PropertyDDS/",
-				"^tools/api-markdown-documenter/",
 			],
 			"npm-package-exports-field": [
 				// This policy is no longer correct or applicable to our packages, so all files are excluded.

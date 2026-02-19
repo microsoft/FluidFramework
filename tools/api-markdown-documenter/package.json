@@ -14,12 +14,16 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": "./lib/index.js",
-			"types": "./lib/api-markdown-documenter.d.ts"
+			"import": {
+				"types": "./lib/api-markdown-documenter-public.d.ts",
+				"default": "./lib/index.js"
+			}
 		},
 		"./beta": {
-			"import": "./lib/index.js",
-			"types": "./lib/api-markdown-documenter-public-beta.d.ts"
+			"import": {
+				"types": "./lib/api-markdown-documenter-public-beta.d.ts",
+				"default": "./lib/index.js"
+			}
 		}
 	},
 	"scripts": {
@@ -31,9 +35,10 @@
 		"build:examples": "tsc -p examples/tsconfig.json",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"build:tsc": "npm run tsc",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"ci:build": "fluid-build . --task ci:build",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
@@ -41,7 +46,7 @@
 		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format:biome": "biome check . --write",
-		"lint": "npm run eslint",
+		"lint": "fluid-build . --task lint --task check:are-the-types-wrong",
 		"lint:fix": "npm run eslint:fix",
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
@@ -89,6 +94,7 @@
 		"unist-util-visit": "^5.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "^2.3.11",
 		"@fluid-internal/mocha-test-setup": "~2.60.0",
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",

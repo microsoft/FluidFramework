@@ -98,7 +98,10 @@ export {
 	 *
 	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
 	 *
-	 * @public
+	 * @privateRemarks
+	 * This TSDoc comment doesn't go anywhere. TypeScript and api-extractor don't
+	 * recognize docs on imported namespaces. Members of this namespace are part
+	 * or the roll-up namespace or not based on their individual tags.
 	 */
 	ApiItemUtilities,
 	/**
@@ -108,13 +111,19 @@ export {
 	 *
 	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
 	 *
-	 * @public
+	 * @privateRemarks
+	 * This TSDoc comment doesn't go anywhere. TypeScript and api-extractor don't
+	 * recognize docs on imported namespaces. Members of this namespace are part
+	 * or the roll-up namespace or not based on their individual tags.
 	 */
 	LayoutUtilities,
 	/**
 	 * Functionality for rendering documentation as Markdown.
 	 *
-	 * @public
+	 * @privateRemarks
+	 * This TSDoc comment doesn't go anywhere. TypeScript and api-extractor don't
+	 * recognize docs on imported namespaces. Members of this namespace are part
+	 * or the roll-up namespace or not based on their individual tags.
 	 */
 	MarkdownRenderer,
 };

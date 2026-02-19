@@ -90,9 +90,8 @@ extends:
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
     tagName: api-markdown-documenter
-    taskBuild: build
     taskBuildDocs: true
-    taskLint: true
+    taskLint: false # Linting is captured by `ci:build` via fluid-build
     taskTest:
     - test
     checks:
