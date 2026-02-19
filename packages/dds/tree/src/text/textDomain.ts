@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { debugAssert } from "@fluidframework/core-utils/internal";
+import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -29,8 +29,8 @@ class TextNode
 			TreeArrayNode.spread(charactersFromString(additionalCharacters)),
 		);
 	}
-	public removeRange(index: number, length: number): void {
-		this.content.removeRange(index, length);
+	public removeRange(index: number | undefined, end: number | undefined): void {
+		this.content.removeRange(index, end);
 	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
@@ -38,6 +38,16 @@ class TextNode
 
 	public characterCount(): number {
 		return this.content.length;
+	}
+
+	public charactersCopy(): string[] {
+		const result = this.content.charactersCopy();
+		debugAssert(
+			() =>
+				compareArrays(result, this.charactersCopy_reference()) ||
+				"invalid charactersCopy optimizations",
+		);
+		return result;
 	}
 
 	public fullString(): string {
@@ -53,6 +63,13 @@ class TextNode
 	 */
 	public fullString_reference(): string {
 		return this.content.join("");
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of charactersCopy.
+	 */
+	public charactersCopy_reference(): string[] {
+		return [...this.content];
 	}
 
 	public static fromString(value: string): TextNode {
@@ -86,10 +103,14 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 		return result;
 	}
 
-	public fullString(): string {
+	public charactersCopy(): string[] {
 		return this.withBorrowedSequenceCursor((cursor) =>
-			mapCursorField(cursor, () => cursor.value as string).join(""),
+			mapCursorField(cursor, () => cursor.value as string),
 		);
+	}
+
+	public fullString(): string {
+		return this.charactersCopy().join("");
 	}
 }
 
@@ -194,6 +215,11 @@ export namespace TextAsTree {
 		characters(): Iterable<string>;
 
 		/**
+		 * Optimized way to get a copy of the {@link TextAsTree.Members.characters} in an array.
+		 */
+		charactersCopy(): string[];
+
+		/**
 		 * Gets the number of characters currently in the text.
 		 * @remarks
 		 * The length of {@link TextAsTree.Members.characters}.
@@ -226,7 +252,7 @@ export namespace TextAsTree {
 		 * Remove a range from a string based on character index.
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
-		removeRange(index: number, length: number): void;
+		removeRange(index: number | undefined, end: number | undefined): void;
 	}
 
 	/**

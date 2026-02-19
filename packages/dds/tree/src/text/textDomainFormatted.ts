@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
@@ -45,12 +45,22 @@ class TextNode
 		);
 	}
 
-	public removeRange(index: number, length: number): void {
-		this.content.removeRange(index, length);
+	public removeRange(index: number | undefined, end: number | undefined): void {
+		this.content.removeRange(index, end);
 	}
 
 	public characters(): Iterable<string> {
 		return mapIterable(this.content, (atom) => atom.content.content);
+	}
+
+	public charactersCopy(): string[] {
+		const result = this.content.charactersCopy();
+		debugAssert(
+			() =>
+				compareArrays(result, this.charactersCopy_reference()) ||
+				"invalid charactersCopy optimizations",
+		);
+		return result;
 	}
 
 	public characterCount(): number {
@@ -70,6 +80,13 @@ class TextNode
 	 */
 	public fullString_reference(): string {
 		return [...this.characters()].join("");
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of charactersCopy.
+	 */
+	public charactersCopy_reference(): string[] {
+		return [...this.characters()];
 	}
 
 	public static fromString(
@@ -177,7 +194,7 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 		return result;
 	}
 
-	public fullString(): string {
+	public charactersCopy(): string[] {
 		return this.withBorrowedSequenceCursor((cursor) =>
 			mapCursorField(cursor, () => {
 				debugAssert(
@@ -211,8 +228,12 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 				cursor.exitNode();
 				cursor.exitField();
 				return content;
-			}).join(""),
+			}),
 		);
+	}
+
+	public fullString(): string {
+		return this.charactersCopy().join("");
 	}
 }
 
