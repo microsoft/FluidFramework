@@ -76,9 +76,8 @@ interface ProcessTelemetryProperties {
  * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
  * Even more such behaviors are implemented in the {@link SharedObject} class.
  * @privateRemarks
- * Now that this class is `@internal`, external implementations of ISharedObject via custom subclasses
- * are no longer part of the supported public API surface. Existing external subclasses may continue
- * to work but are not guaranteed to be compatible across versions.
+ * This class is `@internal`, so external implementations of ISharedObject via custom subclasses
+ * are not part of the supported public API surface.
  *
  * @internal
  */

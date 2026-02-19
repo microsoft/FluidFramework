@@ -29,29 +29,6 @@ import type {
  */
 export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdContext {
 	/**
-	 * Register an event listener. Supports custom SharedTree events beyond those in ISharedTreeEvents.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	on(event: string, listener: (...args: any[]) => void): this;
-
-	/**
-	 * Remove an event listener.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	off(event: string, listener: (...args: any[]) => void): this;
-
-	/**
-	 * Emit an event.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	emit(event: string, ...args: any[]): boolean;
-
-	/**
-	 * Get the number of listeners for a given event.
-	 */
-	listenerCount(event: string): number;
-
-	/**
 	 * The UUID used for attribution of nodes created by this SharedTree.
 	 */
 	readonly attributionId: AttributionId;
