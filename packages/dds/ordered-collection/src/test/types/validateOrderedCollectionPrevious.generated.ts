@@ -195,6 +195,7 @@ declare type old_as_current_for_TypeAlias_ConsensusQueue = requireAssignableTo<T
  * typeValidation.broken:
  * "TypeAlias_ConsensusQueue": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_ConsensusQueue = requireAssignableTo<TypeOnly<current.ConsensusQueue>, TypeOnly<old.ConsensusQueue>>
 
 /*
