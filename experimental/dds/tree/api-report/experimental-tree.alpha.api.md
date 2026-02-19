@@ -457,7 +457,7 @@ export interface ISharedTreeEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: 'committedEdit', listener: EditCommittedHandler): any;
     // (undocumented)
-    (event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler): any;
+    (event: 'sequencedEditApplied', listener: SequencedEditAppliedHandler): any;
 }
 
 // @alpha
@@ -738,8 +738,8 @@ export interface SharedTreeSummaryBase {
 // @alpha
 export class SharedTreeUndoRedoHandler {
     constructor(stackManager: IUndoConsumer);
-    attachTree(tree: SharedTree): void;
-    detachTree(tree: SharedTree): void;
+    attachTree(tree: ISharedTree): void;
+    detachTree(tree: ISharedTree): void;
 }
 
 // @alpha
