@@ -6,7 +6,7 @@
 import * as util from "util";
 
 import nconf from "nconf";
-import rimrafCallback from "rimraf";
+import { rimraf as rimrafCallback } from "rimraf";
 
 import type { IStorageDirectoryConfig } from "../utils";
 
@@ -69,7 +69,7 @@ export function initializeBeforeAfterTestHooks(provider: nconf.Provider) {
 	afterEach(async () => {
 		const storageDirConfig: IStorageDirectoryConfig = provider.get("storageDir");
 		if (storageDirConfig.baseDir !== undefined) {
-			await rimraf(storageDirConfig.baseDir);
+			await rimraf(storageDirConfig.baseDir, undefined);
 		}
 	});
 }
