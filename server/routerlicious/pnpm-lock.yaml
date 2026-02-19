@@ -228,8 +228,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       opossum:
-        specifier: ^8.1.4
-        version: 8.1.4
+        specifier: ^9.0.0
+        version: 9.0.0
       semver:
         specifier: ^7.7.1
         version: 7.7.1
@@ -7471,9 +7471,13 @@ packages:
     resolution: {integrity: sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==}
     engines: {node: '>=6'}
 
-  opossum@8.1.4:
-    resolution: {integrity: sha512-ktDDCD2MKX7yx8ZLtt57JrUE0IyYJthmTyXtaF4dEdPYHvX0kkWRiKkQkhEjtZnTNN5y1ErMriKNqOLqgpYXtQ==}
-    engines: {node: ^22 || ^21 || ^20 || ^18 || ^16}
+  opossum@8.5.0:
+    resolution: {integrity: sha512-LZNvs+p9/ZbG4oN6unnjh4hTxkB0dyHKI2p7azVt8w+//GKDpfHss6WR7KebbpzGEssYwtSd8Mvwxqcmxg10NA==}
+    engines: {node: ^24 || ^22 || ^21 || ^20 || ^18 || ^16}
+
+  opossum@9.0.0:
+    resolution: {integrity: sha512-K76U0QkxOfUZamneQuzz+AP0fyfTJcCplZ2oZL93nxeupuJbN4s6uFNbmVCt4eWqqGqRnnowdFuBicJ1fLMVxw==}
+    engines: {node: ^24 || ^22 || ^20}
 
   optional@0.1.4:
     resolution: {integrity: sha512-gtvrrCfkE08wKcgXaVwQVgwEQ8vel2dc5DDBn9RLQZ3YtmtkBss6A2HY6BnJH4N/4Ku97Ri/SF8sNWE2225WJw==}
@@ -10610,7 +10614,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      opossum: 8.1.4
+      opossum: 8.5.0
       semver: 7.7.2
       serialize-error: 8.1.0
       sha.js: 2.4.12
@@ -10639,7 +10643,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      opossum: 8.1.4
+      opossum: 8.5.0
       semver: 7.7.2
       serialize-error: 8.1.0
       sha.js: 2.4.12
@@ -16830,7 +16834,9 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  opossum@8.1.4: {}
+  opossum@8.5.0: {}
+
+  opossum@9.0.0: {}
 
   optional@0.1.4: {}
 
