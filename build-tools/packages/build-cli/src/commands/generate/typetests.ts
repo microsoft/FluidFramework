@@ -63,7 +63,6 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		entrypoint: Flags.string({
 			description: `What entrypoint to generate tests for. Use "${rootEntrypointAlias}" or "" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package's package.json.`,
 		}),
-		// Temporary support for back-compat
 		outDir: Flags.directory({
 			description: "Where to emit the type tests file.",
 			default: "./src/test/types",

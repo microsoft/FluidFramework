@@ -168,6 +168,9 @@ function findTypesPathsMatching<TOutKey>(
  * packages do use that simpler specification but so far only in a case that doesn't
  * require this to resolve the path. (Doesn't yet need to generate Node10 compatible
  * entrypoints.)
+ * This does mean that if a "default" condition occurs before a "types" condition in the
+ * export conditions hierarchy, this will incorrectly choose the "types" condition when
+ * other resolutions would select "default". But that is considered an invalid config.
  */
 export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 	packageJson: Pick<PackageJson, "exports">,

@@ -31,7 +31,12 @@ export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 		const { mapNode10CompatExportPathToData } = queryTypesResolutionPathsFromPackageExports(
 			packageJson,
 			new Map([[/.+/, undefined]]),
-			{ node10TypeCompat: true, onlyFirstMatches: true },
+			{
+				// Request `mapNode10CompatExportPathToData` output to be populated.
+				node10TypeCompat: true,
+				// Only consider the first match per export path.
+				onlyFirstMatches: true,
+			},
 			this.logger,
 		);
 
