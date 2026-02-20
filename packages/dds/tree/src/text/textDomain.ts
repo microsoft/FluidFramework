@@ -252,7 +252,7 @@ export namespace TextAsTree {
 		 * Remove a range from a string based on character index.
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
-		removeRange(index: number | undefined, end: number | undefined): void;
+		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
 	}
 
 	/**

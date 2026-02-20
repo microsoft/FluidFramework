@@ -4,7 +4,7 @@
  */
 
 import type { TreeCheckout } from "../../shared-tree/index.js";
-import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView, Tree } from "../../shared-tree/index.js";
 import {
 	isTreeNode,
 	isTreeNodeSchemaClass,
@@ -99,6 +99,17 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
 	view.initialize(initialTree as InsertableField<TSchema>);
 	return view.root;
+}
+
+/**
+ * Given the initial tree node, hydrate it.
+ * @remarks
+ * For minimal/concise targeted unit testing of specific simple-tree content.
+ */
+export function hydrateNode(initialTree: TreeNode): void {
+	const schema = Tree.schema(initialTree);
+	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
+	view.initialize(initialTree as never);
 }
 
 /**

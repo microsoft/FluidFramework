@@ -401,7 +401,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { bold: true });
+							text.formatRange(6, 11, { bold: true });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector("strong");
@@ -462,7 +462,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { italic: true });
+							text.formatRange(6, 11, { italic: true });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector("em");
@@ -523,7 +523,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { underline: true });
+							text.formatRange(6, 11, { underline: true });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector("u");
@@ -593,7 +593,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { size: 24 });
+							text.formatRange(6, 11, { size: 24 });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector(".ql-size-huge");
@@ -663,7 +663,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { font: "monospace" });
+							text.formatRange(6, 11, { font: "monospace" });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector(".ql-font-monospace");
@@ -800,7 +800,7 @@ describe("textEditor", () => {
 
 						const emojiStart = 5; // "Test " is 5 chars
 						const emojiLength = [...joinedEmoji].length;
-						text.formatRange(emojiStart, emojiLength, { bold: true });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { bold: true });
 						rendered.rerender(content);
 
 						assert.ok(
@@ -812,7 +812,7 @@ describe("textEditor", () => {
 							"After bold: emoji should be preserved",
 						);
 
-						text.formatRange(emojiStart, emojiLength, { bold: false });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { bold: false });
 						rendered.rerender(content);
 
 						assert.ok(
@@ -832,7 +832,7 @@ describe("textEditor", () => {
 
 						const emojiStart = 5;
 						const emojiLength = [...joinedEmoji].length;
-						text.formatRange(emojiStart, emojiLength, { size: 24 });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { size: 24 });
 						rendered.rerender(content);
 
 						assert.ok(
@@ -844,7 +844,7 @@ describe("textEditor", () => {
 							"Emoji preserved",
 						);
 
-						text.formatRange(emojiStart, emojiLength, { size: 12 });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { size: 12 });
 						rendered.rerender(content);
 
 						assert.ok(

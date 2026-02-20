@@ -22,8 +22,25 @@ import type { FlexTreeNode } from "./flexTreeTypes.js";
  * See {@link withObservation} and {@link currentObserver}.
  */
 export interface Observer {
+	/**
+	 * Arbitrary content in `node` subtree might be observed.
+	 */
+	observeNodeDeep(node: FlexTreeNode): void;
+	/**
+	 * Which fields exist (as non-empty) on `node` is being observed.
+	 * @remarks
+	 * The set of fields should be considered order independent.
+	 */
 	observeNodeFields(node: FlexTreeNode): void;
+	/**
+	 * The the contents of the `key` field of `node` is being observed.
+	 * @remarks
+	 * Any (shallow) change to which children exist in this field, or in what order should invalidate this observation.
+	 */
 	observeNodeField(node: FlexTreeNode, key: FieldKey): void;
+	/**
+	 * The parent of `node` is being observed.
+	 */
 	observeParentOf(node: FlexTreeNode): void;
 }
 

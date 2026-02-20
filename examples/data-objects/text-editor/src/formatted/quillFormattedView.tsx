@@ -171,6 +171,7 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
 	let text = "";
 	let attrs: Record<string, unknown> = {};
 	// JSON key for current attributes, used for equality comparison
+	// TODO:Performance: implement faster equality check.
 	let key = "";
 
 	// Helper to push accumulated text as an insert operation
@@ -182,6 +183,8 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
 	};
 
 	// Iterate through each formatted character in the tree
+	// TODO:Performance: Optimize this loop by adding an API to get runs to FormattedTextAsTree.Tree, and implementing that using cursors.
+	// Something like `getUniformRun(startIndex, maxLength): number` and `substring(startIndex, length): string`.
 	for (const atom of root.charactersWithFormatting()) {
 		const a = formatToQuillAttrs(atom.format);
 		const k = JSON.stringify(a);
@@ -295,7 +298,7 @@ const FormattedTextEditorView = React.forwardRef<
 						const cpCount = codepointCount(retainedStr);
 
 						if (op.attributes) {
-							root.formatRange(cpPos, cpCount, quillAttrsToPartial(op.attributes));
+							root.formatRange(cpPos, cpPos + cpCount, quillAttrsToPartial(op.attributes));
 						}
 						utf16Pos += op.retain;
 						cpPos += cpCount;
@@ -351,6 +354,10 @@ const FormattedTextEditorView = React.forwardRef<
 			// Skip if we caused the tree change ourselves via the text-change handler
 			if (!quillRef.current || isUpdating.current) return;
 
+			// TODO:Performance: Once SharedTree has better ArrayNode change events,
+			// use those events to construct a delta, instead of rebuilding a new delta then diffing every edit.
+			// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
+			// Use it in tests and possibly occasionally in debug builds.
 			const treeDelta = buildDeltaFromTree(root);
 			const quillDelta = quillRef.current.getContents() as QuillDelta;
 

@@ -7,6 +7,7 @@ import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-u
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import { currentObserver } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
@@ -23,7 +24,7 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	WithType,
 } from "../simple-tree/index.js";
-import { mapIterable } from "../util/index.js";
+import { mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
 import { charactersFromString, type TextAsTree } from "./textDomain.js";
 
@@ -106,7 +107,7 @@ class TextNode
 		});
 	}
 
-	public charactersWithFormatting(): Iterable<FormattedTextAsTree.StringAtom> {
+	public charactersWithFormatting(): readonly FormattedTextAsTree.StringAtom[] {
 		return this.content;
 	}
 	public insertWithFormattingAt(
@@ -116,14 +117,25 @@ class TextNode
 		this.content.insertAt(index, TreeArrayNode.spread(additionalCharacters));
 	}
 	public formatRange(
-		startIndex: number,
-		length: number,
+		start: number | undefined,
+		end: number | undefined,
 		format: Partial<FormattedTextAsTree.CharacterFormat>,
 	): void {
+		const formatStart = start ?? 0;
+		validateIndex(formatStart, this.content, "FormattedTextAsTree.formatRange", true);
+
+		const formatEnd = Math.min(this.content.length, end ?? this.content.length);
+		validateIndexRange(
+			formatStart,
+			formatEnd,
+			this.content,
+			"FormattedTextAsTree.formatRange",
+		);
+
 		const branch = TreeAlpha.branch(this);
 
 		const applyFormatting = (): void => {
-			for (let i = startIndex; i < startIndex + length; i++) {
+			for (let i = formatStart; i < formatEnd; i++) {
 				const atom = this.content[i];
 				if (atom === undefined) {
 					throw new UsageError("Index out of bounds while formatting text range.");
@@ -187,7 +199,11 @@ function textAtomsFromString(
 
 class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.StringAtom]) {
 	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
-		const cursor = getInnerNode(this).borrowCursor();
+		const innerNode = getInnerNode(this);
+		// Since the cursor will be used to read content from the tree and won't track observations,
+		// treat it as if it observed the whole subtree.
+		currentObserver?.observeNodeDeep(innerNode);
+		const cursor = innerNode.borrowCursor();
 		cursor.enterField(EmptyKey);
 		const result = f(cursor);
 		cursor.exitField();
@@ -370,11 +386,15 @@ export namespace FormattedTextAsTree {
 		defaultFormat: CharacterFormat;
 
 		/**
-		 * Gets an iterable over the characters currently in the text.
+		 * Gets an array type view of the characters currently in the text.
 		 * @remarks
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
+		 * @privateRemarks
+		 * Currently this is implemented by a node and changes with the text over time.
+		 * We might not want to leak a node like this in the API.
+		 * Providing a way to index and iterate separately might be better.
 		 */
-		charactersWithFormatting(): Iterable<StringAtom>;
+		charactersWithFormatting(): readonly StringAtom[];
 
 		/**
 		 * Insert a range of characters into the string based on character index.
@@ -396,11 +416,17 @@ export namespace FormattedTextAsTree {
 
 		/**
 		 * Apply formatting to a range of characters based on character index.
-		 * @param startIndex - The starting index of the range to format.
-		 * @param length - The number of characters to format.
+		 * @param startIndex - The starting index (inclusive) of the range to format.
+		 * @param endIndex - The ending index (exclusive) of the range to format.
 		 * @param format - The formatting to apply to the specified range.
+		 * @remarks
+		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
 		 */
-		formatRange(startIndex: number, length: number, format: Partial<CharacterFormat>): void;
+		formatRange(
+			startIndex: number | undefined,
+			endIndex: number | undefined,
+			format: Partial<CharacterFormat>,
+		): void;
 	}
 
 	/**
