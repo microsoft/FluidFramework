@@ -32,7 +32,7 @@ import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
-const passwordTokenConfig = (username, password): OdspTokenConfig => ({
+const passwordTokenConfig = (username: string, password: string): OdspTokenConfig => ({
 	type: "password",
 	username,
 	password,
@@ -81,6 +81,11 @@ interface IOdspTestDriverConfig extends TokenConfig {
 	directory: string;
 	driveId: string;
 	options: HostStoragePolicy | undefined;
+	getNewToken?: (
+		bearerToken: string,
+		scopeEndpoint: string,
+		numAccounts?: number,
+	) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
 }
 
 // specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
@@ -104,6 +109,15 @@ interface LoginTenants {
 export interface UserPassCredentials {
 	UserPrincipalName: string;
 	Password: string;
+}
+
+/**
+ * Credentials containing a username and bearer token for FIC authentication scenarios.
+ */
+export interface TokenCredentials {
+	GUID: string;
+	UserPrincipalName: string;
+	Token: string;
 }
 
 /**
@@ -140,24 +154,26 @@ export function getOdspCredentials(
 	if (loginTenants !== undefined) {
 		/**
 		 * Parse login credentials using the new tenant format for e2e tests.
-		 * For the expected format of loginTenants, see {@link UserPassCredentials}
+		 * For the expected format of loginTenants, see {@link UserPassCredentials} or {@link TokenCredentials}
 		 */
 		if (loginTenants.includes("GUID")) {
-			const output: { GUID: string; UserPrincipalName: string; Token: string }[] =
-				JSON.parse(loginTenants);
+			// Token-based credentials (FIC flow)
+			const output: TokenCredentials[] = JSON.parse(loginTenants);
 			if (output?.[tenantIndex] === undefined) {
 				throw new Error("No resources found in the login tenants");
 			}
 
 			// Return the set of accounts to choose from a single tenant
+			// Token is passed in the password field for compatibility
 			for (const account of output) {
 				const username = account.UserPrincipalName;
-				const password = account.Token;
+				const password = account.Token; // Bearer token in password field
 				if (requestedUserName === undefined || requestedUserName === username) {
 					creds.push({ username, password });
 				}
 			}
 		} else if (loginTenants.includes("UserPrincipalName")) {
+			// Password-based credentials (OAuth flow)
 			const output: UserPassCredentials[] = JSON.parse(loginTenants);
 			if (output?.[tenantIndex] === undefined) {
 				throw new Error("No resources found in the login tenants");
@@ -319,6 +335,18 @@ export class OdspTestDriver implements ITestDriver {
 		const options = config?.options ?? {};
 		options.isolateSocketCache = true;
 
+		if (process.env.token__package__specifier === undefined) {
+			throw new Error(
+				"Missing package specifier for token retrieval. Please set the environment variable token__package__specifier to the package that exports a getFicToken function.",
+			);
+		}
+		const { getFicToken } = await import(process.env.token__package__specifier);
+		if (typeof getFicToken !== "function") {
+			throw new TypeError(
+				`Expected package '${process.env.token__package__specifier}' to export a getFicToken function, but got '${typeof getFicToken}'.`,
+			);
+		}
+
 		return this.create(
 			{
 				username,
@@ -332,6 +360,7 @@ export class OdspTestDriver implements ITestDriver {
 			tenantName,
 			userIndex,
 			endpointName,
+			getFicToken,
 		);
 	}
 
@@ -386,6 +415,7 @@ export class OdspTestDriver implements ITestDriver {
 			directory: directoryParts.join("/"),
 			driveId,
 			options,
+			getNewToken,
 		};
 
 		return new OdspTestDriver(driverConfig, api, tenantName, userIndex, endpointName);
@@ -423,8 +453,20 @@ export class OdspTestDriver implements ITestDriver {
 			);
 			return browserTokens.accessToken;
 		}
-		// This function can handle token request for any multiple sites.
-		// Where the test driver is for a specific site.
+
+		// Check if this is a bearer token (FIC flow)
+		// Bearer tokens are JWTs that start with "eyJ"
+		if (config.password.startsWith("eyJ") && config.getNewToken) {
+			const token = await this.odspTokenManager.getOdspTokens(
+				host,
+				config,
+				createBearerTokenConfig(config.username, config.password, config.getNewToken),
+				options.refresh,
+			);
+			return token.accessToken;
+		}
+
+		// Standard OAuth password flow
 		const tokens = await this.odspTokenManager.getOdspTokens(
 			host,
 			config,
@@ -515,8 +557,26 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
+		const host = new URL(options.siteUrl).host;
+
+		// Check if this is a bearer token (FIC flow)
+		if (this.config.password.startsWith("eyJ") && this.config.getNewToken) {
+			const token = await OdspTestDriver.odspTokenManager.getPushTokens(
+				host,
+				this.config,
+				createBearerTokenConfig(
+					this.config.username,
+					this.config.password,
+					this.config.getNewToken,
+				),
+				options.refresh,
+			);
+			return token.accessToken;
+		}
+
+		// Standard OAuth password flow
 		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
-			new URL(options.siteUrl).host,
+			host,
 			this.config,
 			passwordTokenConfig(this.config.username, this.config.password),
 			options.refresh,

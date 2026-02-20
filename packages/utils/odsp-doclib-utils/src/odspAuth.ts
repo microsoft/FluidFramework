@@ -15,7 +15,7 @@ import { unauthPostAsync } from "./odspRequest.js";
  */
 export interface IOdspTokens {
 	readonly accessToken: string;
-	readonly refreshToken?: string;
+	readonly refreshToken?: string; // Refresh token is not used in federated credential flow, so it's optional
 	readonly receivedAt?: number; // Unix timestamp in seconds
 	readonly expiresIn?: number; // Seconds from reception until the token expires
 }
@@ -173,7 +173,7 @@ export async function fetchTokens(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const refreshToken = parsedResponse.refresh_token;
 
-	if (accessToken === undefined || refreshToken === undefined) {
+	if (accessToken === undefined) {
 		try {
 			throwOdspNetworkError(
 				// pre-0.58 error message: unableToGetAccessToken
