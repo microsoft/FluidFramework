@@ -121,32 +121,17 @@ jobs:
                 ls -la
                 pnpm --version
 
-                # Set up pnpm global bin directory explicitly
-                export PNPM_HOME="$HOME/.local/share/pnpm"
-                mkdir -p "$PNPM_HOME"
-                export PATH="$PNPM_HOME:$PATH"
-                pnpm config set global-bin-dir "$PNPM_HOME"
-
                 echo "Installing build tools from tarballs (uses overrides from package.json)"
                 pnpm install ./*.tgz
 
-                echo "Linking build tools globally"
-                for tgz in *.tgz; do
-                  pkg_name=$(tar -xzf "$tgz" --to-stdout package/package.json | jq -r '.name')
-                  # Check if the package has a bin field (i.e., provides CLI commands)
-                  has_bin=$(tar -xzf "$tgz" --to-stdout package/package.json | jq -e '.bin' > /dev/null 2>&1 && echo "yes" || echo "no")
-                  if [ "$has_bin" = "yes" ]; then
-                    echo "Linking $pkg_name globally"
-                    pnpm link --global "node_modules/$pkg_name"
-                  fi
-                done
+                # Add the local node_modules/.bin to PATH for subsequent pipeline steps
+                BIN_DIR="$(pwd)/node_modules/.bin"
+                echo "Adding $BIN_DIR to PATH for subsequent steps"
+                echo "##vso[task.prependpath]$BIN_DIR"
 
                 # Verify the tools are available
-                echo "Global bin directory contents:"
-                ls -la "$PNPM_HOME"
-            env:
-              PNPM_HOME: $(HOME)/.local/share/pnpm
-              PATH: $(HOME)/.local/share/pnpm:$(PATH)
+                echo "Installed binaries:"
+                ls -la "$BIN_DIR"
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
