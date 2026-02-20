@@ -21,8 +21,6 @@ export function syncTextToTree(root: TextAsTree.Tree, newText: string): void {
 
 /**
  * Sync `newText` into the provided `root` tree.
- *
- * TODO: unit tests for this.
  */
 export function computeSync<T>(
 	existing: readonly T[],
