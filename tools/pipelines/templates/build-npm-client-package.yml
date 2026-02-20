@@ -848,7 +848,7 @@ extends:
                         while IFS= read -r LOG; do
                           # Extract the relative path by removing the source directory prefix
                           # Example: /build/source/packages/test/foo/tinylicious.log -> packages/test/foo/tinylicious.log
-                          RELATIVE_PATH="${LOG#$(Build.SourcesDirectory)/}"
+                          RELATIVE_PATH="${LOG#$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/}"
 
                           # Extract the directory path and filename separately
                           DIR_PATH=$(dirname "$RELATIVE_PATH")
@@ -861,13 +861,13 @@ extends:
                           SAFE_DIR="${DIR_PATH//\//_}"
                           SAFE_NAME="${SAFE_TEST_NAME}-${SAFE_DIR}-${FILENAME}"
 
-                          TEMP_LOG="$(Build.SourcesDirectory)/$SAFE_NAME"
+                          TEMP_LOG="$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/$SAFE_NAME"
                           cp "$LOG" "$TEMP_LOG"
 
                           echo "Found tinylicious log at '$LOG'. Uploading as '$SAFE_NAME'.";
                           echo "##vso[task.uploadfile]$TEMP_LOG";
                           FOUND=1
-                        done < <(find "$(Build.SourcesDirectory)" -maxdepth 5 -name "tinylicious.log" -type f 2>/dev/null)
+                        done < <(find "$(Pipeline.Workspace)/${{ parameters.buildDirectory }}" -maxdepth 5 -name "tinylicious.log" -type f 2>/dev/null)
 
                         if [ "$FOUND" -eq 0 ]; then
                           echo "##vso[task.logissue type=warning]No tinylicious log files found.";
