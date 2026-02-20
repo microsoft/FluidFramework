@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { generateNode10TypeEntrypoints } from "../../library/commands/generateEntrypoints.js";
 import { BaseCommand } from "../../library/commands/base.js";
+import { generateNode10TypeEntrypoints } from "../../library/commands/generateEntrypoints.js";
 import { readPackageJson } from "../../library/package.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../../library/packageExports.js";
 
