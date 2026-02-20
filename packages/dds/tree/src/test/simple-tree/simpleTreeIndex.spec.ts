@@ -6,18 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { rootFieldKey, type FieldKey, type UpPath } from "../../core/index.js";
-import {
-	flexTreeSlot,
-	type TreeIndexKey,
-	type TreeIndexNodes,
-} from "../../feature-libraries/index.js";
+import { flexTreeSlot, type TreeIndexNodes } from "../../feature-libraries/index.js";
 import {
 	type InsertableTypedNode,
 	SchemaFactory,
 	type TreeNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
-	createSimpleTreeIndex,
+	createTreeIndex,
+	TreeIndexKey,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import { getView } from "../utils.js";
@@ -65,7 +62,7 @@ describe("simple tree indexes", () => {
 
 	it("can index nodes", () => {
 		const { view } = createView(new IndexableChild({ childKey: childId }));
-		const index = createSimpleTreeIndex(
+		const index = createTreeIndex(
 			view,
 			(s) => indexer(s),
 			() => 3,
@@ -81,7 +78,7 @@ describe("simple tree indexes", () => {
 
 	it("does not reify tree of nodes being scanned", () => {
 		const { view, parent } = createView({ childKey: childId });
-		const index = createSimpleTreeIndex(
+		const index = createTreeIndex(
 			view,
 			(s) => indexer(s),
 			(nodes) => nodes,
@@ -112,11 +109,7 @@ describe("simple tree indexes", () => {
 
 	it("filters out removed nodes", () => {
 		const { view, parent } = createView(new IndexableChild({ childKey: childId }));
-		const index = createSimpleTreeIndex<
-			typeof IndexableParent,
-			string,
-			TreeIndexNodes<TreeNode>
-		>(
+		const index = createTreeIndex<typeof IndexableParent, string, TreeIndexNodes<TreeNode>>(
 			view,
 			(schema) => indexer(schema),
 			(nodes) => nodes,
@@ -146,7 +139,7 @@ describe("simple tree indexes", () => {
 		const view = getView(config);
 		view.initialize({ other: parentId, child: new OtherIndexableChild({ other: childId }) });
 		const parent = view.root;
-		const index = createSimpleTreeIndex(
+		const index = createTreeIndex(
 			view,
 			(schema) => "other",
 			(nodes) => nodes.length,
@@ -166,7 +159,7 @@ describe("simple tree indexes", () => {
 
 	it("can be defined using a map of schemas to field keys", () => {
 		const { view } = createView(new IndexableChild({ childKey: childId }));
-		const index = createSimpleTreeIndex(
+		const index = createTreeIndex(
 			view,
 			new Map<TreeNodeSchema, string>([
 				[IndexableParent, parentKey],

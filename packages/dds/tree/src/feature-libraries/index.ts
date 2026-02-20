@@ -204,12 +204,12 @@ export {
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
 
 export {
 	type ChangeAtomIdBTree,
+	newChangeAtomIdBTree,
 	getFromChangeAtomIdMap,
 	setInChangeAtomIdMap,
 } from "./changeAtomIdBTree.js";

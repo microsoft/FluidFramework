@@ -6,7 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
-import { Tree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+// eslint-disable-next-line import-x/no-internal-modules
+import { TreeAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
@@ -23,13 +25,13 @@ import {
 	TextAsTree,
 	type MainViewProps,
 } from "../plain/index.js";
+import { UndoRedoStacks } from "../undoRedo.js";
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
 
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
- * Returns the tree for direct manipulation and treeView for events.
  */
 function createFormattedTreeView(initialValue = ""): {
 	tree: FormattedTextAsTree.Tree;
@@ -38,6 +40,17 @@ function createFormattedTreeView(initialValue = ""): {
 	const treeView = independentView(formattedTreeConfig);
 	treeView.initialize(FormattedTextAsTree.Tree.fromString(initialValue));
 	return { tree: treeView.root, treeView };
+}
+
+/**
+ * Creates a TreeView for formatted text with events access (needed for undo/redo tests).
+ */
+function createFormattedTreeViewWithEvents(
+	initialValue = "",
+): TreeView<typeof FormattedTextAsTree.Tree> {
+	const treeView = independentView(formattedTreeConfig);
+	treeView.initialize(FormattedTextAsTree.Tree.fromString(initialValue));
+	return treeView;
 }
 
 const views: { name: string; component: React.FC<MainViewProps> }[] = [
@@ -105,7 +118,8 @@ describe("textEditor", () => {
 							// Rerender and verify the view updates
 							rendered.rerender(content);
 							assert.match(rendered.baseElement.textContent ?? "", /Hello/);
-							assert.doesNotMatch(rendered.baseElement.textContent ?? "", /World/);
+							assert(rendered.baseElement.textContent !== null);
+							assert.doesNotMatch(rendered.baseElement.textContent, /World/);
 						});
 
 						it("invalidates view when text is cleared and replaced", () => {
@@ -123,7 +137,8 @@ describe("textEditor", () => {
 							// Rerender and verify the view updates
 							rendered.rerender(content);
 							assert.match(rendered.baseElement.textContent ?? "", /Replaced/);
-							assert.doesNotMatch(rendered.baseElement.textContent ?? "", /Original/);
+							assert(rendered.baseElement.textContent !== null);
+							assert.doesNotMatch(rendered.baseElement.textContent, /Original/);
 						});
 
 						// Tests for surrogate pair characters (emojis use 2 UTF-16 code units)
@@ -160,7 +175,8 @@ describe("textEditor", () => {
 
 							rendered.rerender(content);
 							assert.match(rendered.baseElement.textContent ?? "", /AB/);
-							assert.doesNotMatch(rendered.baseElement.textContent ?? "", /😀/);
+							assert(rendered.baseElement.textContent !== null);
+							assert.doesNotMatch(rendered.baseElement.textContent, /😀/);
 						});
 
 						it("handles multiple surrogate pair characters", () => {
@@ -248,7 +264,8 @@ describe("textEditor", () => {
 						// Rerender and verify the view updates
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /Hello/);
-						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /World/);
+						assert(rendered.baseElement.textContent !== null);
+						assert.doesNotMatch(rendered.baseElement.textContent, /World/);
 					});
 
 					it("invalidates view when text is cleared and replaced", () => {
@@ -271,7 +288,8 @@ describe("textEditor", () => {
 						// Rerender and verify the view updates
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /Replaced/);
-						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /Original/);
+						assert(rendered.baseElement.textContent !== null);
+						assert.doesNotMatch(rendered.baseElement.textContent, /Original/);
 					});
 
 					// Tests for surrogate pair characters (emojis use 2 UTF-16 code units)
@@ -323,7 +341,8 @@ describe("textEditor", () => {
 
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /AB/);
-						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /😀/);
+						assert(rendered.baseElement.textContent !== null);
+						assert.doesNotMatch(rendered.baseElement.textContent, /😀/);
 					});
 
 					it("handles multiple surrogate pair characters", () => {
@@ -787,13 +806,15 @@ describe("textEditor", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					it("insert character, undo removes it, redo restores it", () => {
-						const { tree: text, treeView } = createFormattedTreeView();
+						const treeView = createFormattedTreeViewWithEvents();
+						const text = treeView.root;
+						const undoRedo = new UndoRedoStacks(treeView.events);
 						const editorRef = React.createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
 								root={toPropTreeNode(text)}
-								treeViewEvents={treeView.events}
+								undoRedo={undoRedo}
 							/>
 						);
 						const rendered = render(content, { reactStrictMode });
@@ -806,7 +827,8 @@ describe("textEditor", () => {
 						// Undo - character should be removed
 						editorRef.current?.undo();
 						rendered.rerender(content);
-						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /A/);
+						assert(rendered.baseElement.textContent !== null);
+						assert.doesNotMatch(rendered.baseElement.textContent, /A/);
 
 						// Redo - character should be restored
 						editorRef.current?.redo();
@@ -815,13 +837,15 @@ describe("textEditor", () => {
 					});
 
 					it("insert character, make bold, undo removes bold but keeps character", () => {
-						const { tree: text, treeView } = createFormattedTreeView();
+						const treeView = createFormattedTreeViewWithEvents();
+						const text = treeView.root;
+						const undoRedo = new UndoRedoStacks(treeView.events);
 						const editorRef = React.createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
 								root={toPropTreeNode(text)}
-								treeViewEvents={treeView.events}
+								undoRedo={undoRedo}
 							/>
 						);
 						const rendered = render(content, { reactStrictMode });
@@ -851,19 +875,21 @@ describe("textEditor", () => {
 					});
 
 					it("multiple operations in transaction undo together as one unit", () => {
-						const { tree: text, treeView } = createFormattedTreeView();
+						const treeView = createFormattedTreeViewWithEvents();
+						const text = treeView.root;
+						const undoRedo = new UndoRedoStacks(treeView.events);
 						const editorRef = React.createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
 								root={toPropTreeNode(text)}
-								treeViewEvents={treeView.events}
+								undoRedo={undoRedo}
 							/>
 						);
 						const rendered = render(content, { reactStrictMode });
 
 						// Two operations in one transaction
-						Tree.runTransaction(text, () => {
+						TreeAlpha.branch(text)?.runTransaction(() => {
 							text.insertAt(0, "A");
 							text.insertAt(1, "B");
 						});
@@ -873,8 +899,9 @@ describe("textEditor", () => {
 						// Single undo should remove both characters
 						editorRef.current?.undo();
 						rendered.rerender(content);
-						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /A/);
-						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /B/);
+						assert(rendered.baseElement.textContent !== null);
+						assert.doesNotMatch(rendered.baseElement.textContent, /A/);
+						assert.doesNotMatch(rendered.baseElement.textContent, /B/);
 
 						// Single redo should restore both characters
 						editorRef.current?.redo();

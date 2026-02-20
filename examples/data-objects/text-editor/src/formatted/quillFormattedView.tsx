@@ -8,6 +8,8 @@ import { type PropTreeNode, unwrapPropTreeNode } from "@fluidframework/react/alp
 import { treeDataObjectInternal } from "@fluidframework/react/internal";
 import { Tree, TreeViewConfiguration, type TreeViewEvents } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
+import { TreeAlpha } from "@fluidframework/tree/alpha";
+// eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
@@ -15,6 +17,9 @@ import type { Listenable } from "fluid-framework";
 import Quill from "quill";
 import Delta from "quill-delta";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
+
+import type { UndoRedo } from "../undoRedo.js";
 
 import { createUndoRedoStacks, type UndoRedo } from "./undoRedo.js";
 
@@ -47,20 +52,18 @@ interface QuillDelta {
 /** Props for the FormattedMainView component. */
 export interface FormattedMainViewProps {
 	root: PropTreeNode<FormattedTextAsTree.Tree>;
-	treeViewEvents: Listenable<TreeViewEvents>;
+	/** Optional undo/redo stack for the editor. */
+	undoRedo?: UndoRedo;
 }
 
 /** Ref handle exposing undo/redo methods for the formatted editor. */
-export interface FormattedEditorHandle {
-	undo: () => void;
-	redo: () => void;
-}
+export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 
 export const FormattedMainView = React.forwardRef<
 	FormattedEditorHandle,
 	FormattedMainViewProps
->(({ root, treeViewEvents }, ref) => {
-	return <FormattedTextEditorView root={root} treeViewEvents={treeViewEvents} ref={ref} />;
+>(({ root, undoRedo }, ref) => {
+	return <FormattedTextEditorView root={root} undoRedo={undoRedo} ref={ref} />;
 });
 FormattedMainView.displayName = "FormattedMainView";
 
@@ -223,9 +226,9 @@ const FormattedTextEditorView = React.forwardRef<
 	FormattedEditorHandle,
 	{
 		root: PropTreeNode<FormattedTextAsTree.Tree>;
-		treeViewEvents: Listenable<TreeViewEvents>;
+		undoRedo?: UndoRedo;
 	}
->(({ root: propRoot, treeViewEvents }, ref) => {
+>(({ root: propRoot, undoRedo }, ref) => {
 	// Unwrap the PropTreeNode to get the actual tree node
 	const root = unwrapPropTreeNode(propRoot);
 	// DOM element where Quill will mount its editor
@@ -234,24 +237,18 @@ const FormattedTextEditorView = React.forwardRef<
 	const quillRef = React.useRef<Quill | null>(null);
 	// Guards against update loops between Quill and the tree
 	const isUpdating = React.useRef(false);
-	// Undo/redo stack manager
-	const undoRedoRef = React.useRef<UndoRedo | undefined>(undefined);
+	// Container element for undo/redo button portal
+	const [undoRedoContainer, setUndoRedoContainer] = React.useState<HTMLElement | undefined>(
+		undefined,
+	);
+	// Force re-render when undo/redo state changes
+	const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
 
 	// Expose undo/redo methods via ref
 	React.useImperativeHandle(ref, () => ({
-		undo: () => undoRedoRef.current?.undo(),
-		redo: () => undoRedoRef.current?.redo(),
+		undo: () => undoRedo?.undo(),
+		redo: () => undoRedo?.redo(),
 	}));
-
-	// Initialize undo/redo stacks (guard against StrictMode double-mount)
-	React.useEffect(() => {
-		if (undoRedoRef.current) return;
-		undoRedoRef.current = createUndoRedoStacks(treeViewEvents);
-		return () => {
-			undoRedoRef.current?.dispose();
-			undoRedoRef.current = undefined;
-		};
-	}, [treeViewEvents]);
 
 	// Initialize Quill editor with formatting toolbar using Quill provided CSS
 	React.useEffect(() => {
@@ -261,23 +258,12 @@ const FormattedTextEditorView = React.forwardRef<
 			placeholder: "Start typing with formatting...",
 			modules: {
 				history: false, // Disable Quill's built-in undo/redo
-				toolbar: {
-					container: [
-						["undo", "redo"],
-						["bold", "italic", "underline"],
-						[{ size: ["small", false, "large", "huge"] }],
-						[{ font: [] }],
-						["clean"],
-					],
-					handlers: {
-						undo() {
-							undoRedoRef.current?.undo();
-						},
-						redo() {
-							undoRedoRef.current?.redo();
-						},
-					},
-				},
+				toolbar: [
+					["bold", "italic", "underline"],
+					[{ size: ["small", false, "large", "huge"] }],
+					[{ font: [] }],
+					["clean"],
+				],
 			},
 		});
 
@@ -292,8 +278,10 @@ const FormattedTextEditorView = React.forwardRef<
 			if (source !== "user" || isUpdating.current) return;
 			isUpdating.current = true;
 
-			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit
-			Tree.runTransaction(root, () => {
+			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
+			// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
+			const branch = TreeAlpha.branch(root);
+			const applyDelta = (): void => {
 				// Helper to count Unicode codepoints in a string
 				const codepointCount = (s: string): number => [...s].length;
 
@@ -336,12 +324,24 @@ const FormattedTextEditorView = React.forwardRef<
 						cpPos += codepointCount(op.insert);
 					}
 				}
-			});
+			};
+			if (branch === undefined) {
+				applyDelta();
+			} else {
+				branch.runTransaction(applyDelta);
+			}
 
 			isUpdating.current = false;
 		});
 
 		quillRef.current = quill;
+
+		// Create container for React-controlled undo/redo buttons and prepend to toolbar
+		const toolbar = editorRef.current.previousElementSibling as HTMLElement;
+		const container = document.createElement("span");
+		container.className = "ql-formats";
+		toolbar.prepend(container);
+		setUndoRedoContainer(container);
 		// In React strict mode, effects run twice. The `!quillRef.current` check above
 		// makes the second call a no-op, preventing double-initialization of Quill.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -372,6 +372,35 @@ const FormattedTextEditorView = React.forwardRef<
 		});
 	}, [root]);
 
+	// Subscribe to undo/redo state changes to update button disabled state
+	React.useEffect(() => {
+		if (!undoRedo) return;
+		return undoRedo.onStateChange(() => {
+			forceUpdate();
+		});
+	}, [undoRedo]);
+
+	// Render undo/redo buttons via portal into Quill toolbar
+	const undoRedoButtons = undoRedoContainer
+		? ReactDOM.createPortal(
+				<>
+					<button
+						type="button"
+						className="ql-undo"
+						disabled={undoRedo?.canUndo() !== true}
+						onClick={() => undoRedo?.undo()}
+					/>
+					<button
+						type="button"
+						className="ql-redo"
+						disabled={undoRedo?.canRedo() !== true}
+						onClick={() => undoRedo?.redo()}
+					/>
+				</>,
+				undoRedoContainer,
+			)
+		: undefined;
+
 	return (
 		<div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
 			<style>{`
@@ -383,6 +412,7 @@ const FormattedTextEditorView = React.forwardRef<
 				.ql-undo, .ql-redo { width: 28px !important; }
 				.ql-undo::after { content: "↶"; font-size: 18px; }
 				.ql-redo::after { content: "↷"; font-size: 18px; }
+				.ql-undo:disabled, .ql-redo:disabled { opacity: 0.3; cursor: not-allowed; }
 			`}</style>
 			<h2 style={{ margin: "10px 0" }}>Collaborative Formatted Text Editor</h2>
 			<div
@@ -394,6 +424,7 @@ const FormattedTextEditorView = React.forwardRef<
 					borderRadius: "4px",
 				}}
 			/>
+			{undoRedoButtons}
 		</div>
 	);
 });

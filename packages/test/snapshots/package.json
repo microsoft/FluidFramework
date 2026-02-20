@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-snapshots",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"private": true,
 	"description": "Comprehensive test of snapshot logic.",
 	"homepage": "https://fluidframework.com",
@@ -100,7 +100,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

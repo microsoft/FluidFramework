@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/ordered-collection",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "Consensus Collection",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -148,7 +148,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/ordered-collection-previous": "npm:@fluidframework/ordered-collection@2.81.0",
+		"@fluidframework/ordered-collection-previous": "npm:@fluidframework/ordered-collection@2.82.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
@@ -161,7 +161,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

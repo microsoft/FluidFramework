@@ -145,7 +145,6 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
  */
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 
-// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */

@@ -204,6 +204,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<MoveOut> = { ...effect };
 
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- TODO: ADO#58522 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
@@ -221,6 +222,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<Remove> = { ...effect };
 
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- TODO: ADO#58522 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
