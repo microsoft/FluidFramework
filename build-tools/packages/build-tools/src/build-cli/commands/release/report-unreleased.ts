@@ -11,7 +11,8 @@ import type { Logger } from "../../../core/index.js";
 import { isInternalTestVersion } from "../../../version-tools/index.js";
 
 import { semverFlag } from "../../flags.js";
-import { BaseCommand, type ReleaseReport, toReportKind } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { type ReleaseReport, toReportKind } from "../../library/release.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =

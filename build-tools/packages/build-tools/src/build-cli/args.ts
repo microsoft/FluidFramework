@@ -8,7 +8,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 import type { MonoRepo, Package } from "../core/index.js";
 // eslint-disable-next-line import-x/no-deprecated
-import { type Context, isMonoRepoKind } from "./library/index.js";
+import { type Context, isMonoRepoKind } from "./library/context.js";
 
 /**
  * Creates a CLI argument for package or release group names. It's a factory function so that commands can override the

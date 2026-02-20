@@ -8,13 +8,9 @@ import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 import type { Logger } from "../../../core/index.js";
 
-import {
-	BaseCommand,
-	createPullRequest,
-	getCommitInfo,
-	pullRequestExists,
-	type Repository,
-} from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import type { Repository } from "../../library/git.js";
+import { createPullRequest, getCommitInfo, pullRequestExists } from "../../library/github.js";
 
 interface CleanupBranch {
 	branch: string;

@@ -8,7 +8,7 @@ import { describe, it } from "mocha";
 import { getResolvedFluidRoot, type Package } from "../../../core/index.js";
 
 import type { PackageNamePolicyConfig } from "../../config.js";
-import { Context } from "../../library/index.js";
+import { Context } from "../../library/context.js";
 import {
 	type Feed,
 	feeds,

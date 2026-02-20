@@ -9,7 +9,7 @@ import { parseJSON } from "date-fns";
 import { describe, it } from "mocha";
 import type { PackageJson } from "../../../core/index.js";
 
-import type { VersionDetails } from "../../library/index.js";
+import type { VersionDetails } from "../../library/context.js";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,

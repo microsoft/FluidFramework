@@ -8,7 +8,8 @@ import * as semver from "semver";
 import { isInternalVersionScheme } from "../../../../version-tools/index.js";
 
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
-import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";
+import { BaseCommandWithBuildProject } from "../../../library/commands/base.js";
+import { getVersionsFromTags } from "../../../library/git.js";
 
 type MajorVersion = number;
 

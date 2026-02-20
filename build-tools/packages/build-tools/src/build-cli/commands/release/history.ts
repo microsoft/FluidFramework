@@ -9,13 +9,10 @@ import { table } from "table";
 import { detectBumpType } from "../../../version-tools/index.js";
 import { findPackageOrReleaseGroup } from "../../args.js";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
-import {
-	getDisplayDate,
-	getDisplayDateRelative,
-	type ReleaseReport,
-	sortVersions,
-	type VersionDetails,
-} from "../../library/index.js";
+import type { VersionDetails } from "../../library/context.js";
+import { getDisplayDate, getDisplayDateRelative } from "../../library/dates.js";
+import { sortVersions } from "../../library/package.js";
+import type { ReleaseReport } from "../../library/release.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
 import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
 

@@ -25,11 +25,11 @@ import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js"
 import { getDefaultInterdependencyRange } from "../config.js";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags.js";
 import {
-	BaseCommand,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
-	setVersion,
-} from "../library/index.js";
+} from "../library/branches.js";
+import { BaseCommand } from "../library/commands/base.js";
+import { setVersion } from "../library/package.js";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static readonly summary =

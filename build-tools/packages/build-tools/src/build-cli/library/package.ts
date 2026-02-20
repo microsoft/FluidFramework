@@ -10,13 +10,11 @@ import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
 import { readJsonSync } from "fs-extra/esm";
-import JSON5 from "json5";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
 import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
-import type { TsConfigJson } from "type-fest";
 import { updatePackageJsonFile } from "../../build-infrastructure/index.js";
 import { type Logger, MonoRepo, Package, type PackageJson } from "../../core/index.js";
 import {
@@ -939,10 +937,4 @@ export function getFullTarballName(pkg: PackageJson): string {
 export async function readPackageJson(): Promise<PackageJson> {
 	const packageJson = await readFile("./package.json", { encoding: "utf8" });
 	return JSON.parse(packageJson) as PackageJson;
-}
-
-// Reads and parses the `tsconfig.json` file in the current directory.
-export async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfigContent = await readFile("./tsconfig.json", { encoding: "utf8" });
-	return JSON5.parse(tsConfigContent);
 }

@@ -11,7 +11,7 @@ import path from "node:path";
 import type { TsConfigJson } from "type-fest";
 import { type Package, TscUtils } from "../../../core/index.js";
 
-import { getGenerateEntrypointsOutput } from "../commands/index.js";
+import { getGenerateEntrypointsOutput } from "../commands/generateEntrypoints.js";
 
 type PackageName = string;
 type Script = string;

@@ -8,29 +8,26 @@ import { existsSync } from "node:fs";
 import { confirm, rawlist } from "@inquirer/prompts";
 import execa from "execa";
 import type { Machine } from "jssm";
-import { FluidRepo } from "../../core/index.js";
-import { bumpVersionScheme } from "../../version-tools/index.js";
-
-import {
-	checkPackagesCompatLayerGeneration,
-	DEFAULT_GENERATION_DIR,
-	DEFAULT_GENERATION_FILE_NAME,
-	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	formatCompatLayerGenerationError,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../library/compatLayerGeneration.js";
+import { FluidRepo } from "../../core/fluidBuild/fluidRepo.js";
+import { bumpVersionScheme } from "../../version-tools/schemes.js";
 import {
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	generateReleaseBranchName,
-	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
-	isReleased,
-} from "../library/index.js";
+} from "../library/branches.js";
+import {
+	checkPackagesCompatLayerGeneration,
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	formatCompatLayerGenerationError,
+} from "../library/compatLayerGeneration.js";
+import { getPreReleaseDependencies, isReleased } from "../library/package.js";
 import type { CommandLogger } from "../logging.js";
-import type { MachineState } from "../machines/index.js";
+import type { MachineState } from "../machines/types.js";
 import { isReleaseGroup, type ReleaseSource } from "../releaseGroups.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";

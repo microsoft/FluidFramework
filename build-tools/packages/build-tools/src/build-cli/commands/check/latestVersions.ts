@@ -6,7 +6,8 @@
 import * as semver from "semver";
 import { isInternalVersionScheme } from "../../../version-tools/index.js";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
-import { BaseCommand, sortVersions } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { sortVersions } from "../../library/package.js";
 
 type MajorVersion = number;
 

@@ -20,17 +20,15 @@ import {
 	testModeFlag,
 } from "../../flags.js";
 import {
-	BaseCommand,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
-	indentString,
-	isDependencyUpdateType,
-	// eslint-disable-next-line import-x/no-deprecated
-	MonoRepoKind,
-	npmCheckUpdates,
-} from "../../library/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { npmCheckUpdatesHomegrown } from "../../library/package.js";
+} from "../../library/branches.js";
+import { isDependencyUpdateType } from "../../library/bump.js";
+import { BaseCommand } from "../../library/commands/base.js";
+// eslint-disable-next-line import-x/no-deprecated
+import { MonoRepoKind } from "../../library/context.js";
+import { npmCheckUpdates, npmCheckUpdatesHomegrown } from "../../library/package.js";
+import { indentString } from "../../library/text.js";
 import type { ReleaseGroup } from "../../releaseGroups.js";
 
 /**

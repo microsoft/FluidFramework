@@ -36,6 +36,6 @@
 		"@fluidframework/build-tools": "workspace:~"
 	},
 	"devDependencies": {
-		"rimraf": "^6.1.2"
+		"rimraf": "^6.1.3"
 	}
 }

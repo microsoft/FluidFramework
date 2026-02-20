@@ -11,7 +11,7 @@ import {
 	type InterdependencyRange,
 	type VersionBumpType,
 } from "../version-tools/index.js";
-import type { Context } from "./library/index.js";
+import type { Context } from "./library/context.js";
 import type { ReleaseGroup } from "./releaseGroups.js";
 
 /**

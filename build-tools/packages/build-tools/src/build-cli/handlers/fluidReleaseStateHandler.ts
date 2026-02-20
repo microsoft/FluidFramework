@@ -13,9 +13,9 @@ import type {
 } from "../../version-tools/index.js";
 
 import type { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
-import type { Context } from "../library/index.js";
+import type { Context } from "../library/context.js";
 import type { CommandLogger } from "../logging.js";
-import type { MachineState } from "../machines/index.js";
+import type { MachineState } from "../machines/types.js";
 import type { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
 import { askForReleaseType } from "./askFunctions.js";
 import {

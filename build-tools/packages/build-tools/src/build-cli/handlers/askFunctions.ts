@@ -7,9 +7,9 @@ import { rawlist } from "@inquirer/prompts";
 import type { Machine } from "jssm";
 import { bumpVersionScheme, type VersionBumpType } from "../../version-tools/index.js";
 
-import { getDefaultBumpTypeForBranch } from "../library/index.js";
+import { getDefaultBumpTypeForBranch } from "../library/branches.js";
 import type { CommandLogger } from "../logging.js";
-import type { MachineState } from "../machines/index.js";
+import type { MachineState } from "../machines/types.js";
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import type { StateHandlerFunction } from "./stateHandlers.js";
 

@@ -11,13 +11,13 @@ import { MonoRepo, Package } from "../../core/index.js";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
 import { filterPackages, parsePackageFilterFlags } from "../filter.js";
 import { filterFlags, releaseGroupFlag } from "../flags.js";
-import { BaseCommand, getTarballName } from "../library/index.js";
+import { BaseCommand } from "../library/commands/base.js";
+import { getTarballName } from "../library/package.js";
 import {
 	type Feed,
 	feeds,
 	isFeed,
 	packagePublishesToFeed,
-	// eslint-disable-next-line import-x/no-internal-modules -- the policy-related stuff will eventually be moved into this package
 } from "../library/repoPolicyCheck/npmPackages.js";
 import { type PnpmListEntry, pnpmList } from "../pnpm.js";
 
