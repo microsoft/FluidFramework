@@ -26,7 +26,7 @@
 		"@fluidframework/build-tools": "^0.63.0",
 		"jest-environment-puppeteer": "^10.1.3",
 		"jiti": "^2.6.1",
-		"rimraf": "^6.1.2"
+		"rimraf": "^6.1.3"
 	},
 	"typeValidation": {
 		"disabled": true
