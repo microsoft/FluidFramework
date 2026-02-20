@@ -4,6 +4,7 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"outDir": "../../../dist/build-infrastructure/test",
+		"module": "Node16",
 		"types": ["node", "mocha", "chai"],
 	},
 	"references": [

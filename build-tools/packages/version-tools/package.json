@@ -22,14 +22,14 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"fluv": "../build-tools/bin/fluv/run.js"
+		"fluv": "../build-tools/bin/fluv/run.cjs"
 	},
 	"files": [
 		"/lib"
 	],
 	"scripts": {
 		"build": "echo stub",
-		"clean": "rimraf lib dist",
+		"clean": "rimraf --glob lib dist",
 		"test": "echo stub"
 	},
 	"dependencies": {

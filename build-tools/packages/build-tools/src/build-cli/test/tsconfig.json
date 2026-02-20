@@ -5,6 +5,7 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"outDir": "../../../dist/build-cli/test",
+		"module": "Node16",
 		"types": ["node", "mocha", "chai"],
 		"exactOptionalPropertyTypes": false,
 	},

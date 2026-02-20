@@ -1,4 +1,10 @@
 {
+	"compilerOptions": {
+		// module is specified here so the tsc policy handler can resolve it when
+		// checking packages that depend on @fluidframework/build-tools. Individual
+		// sub-projects specify their own module settings via extends.
+		"module": "Node16",
+	},
 	"files": [],
 	"references": [
 		{ "path": "src/version-tools" },

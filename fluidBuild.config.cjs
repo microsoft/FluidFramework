@@ -327,6 +327,13 @@ module.exports = {
 			"common/build/build-common/src/esm/package.json",
 			"packages/common/core-interfaces/src/cjs/package.json",
 			"packages/framework/presence/src/cjs/package.json",
+
+			// ESM module type markers - not real packages
+			"build-tools/packages/build-tools/src/build-cli/package.json",
+			"build-tools/packages/build-tools/src/build-infrastructure/package.json",
+
+			// Test data - not real packages
+			"build-tools/packages/build-tools/src/build-infrastructure/test/data/",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
@@ -347,8 +354,17 @@ module.exports = {
 				"^server/routerlicious/packages/.*/package.json",
 			],
 			"fluid-build-tasks-tsc": [
+				// build-tools uses tsc --build (solution-style) which the policy handler
+				// doesn't understand (ts.parseCommandLine doesn't parse --build mode).
+				"^build-tools/packages/build-tools/package.json",
 				// Server packages need to be cleaned up; excluding as a workaround
 				"^server/routerlicious/packages/.*/package.json",
+			],
+			"tsc-project-single-use": [
+				// build-tools uses tsc --build (solution-style) with separate tsc and build:test
+				// scripts. The policy handler can't distinguish them because ts.parseCommandLine
+				// doesn't understand --build mode — both resolve to tsconfig.json.
+				"^build-tools/packages/build-tools/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
@@ -367,7 +383,7 @@ module.exports = {
 				".*/.eslint-print-configs/.*",
 
 				// test data
-				"^build-tools/packages/build-infrastructure/src/test/data/.*",
+				"^build-tools/packages/build-tools/src/build-infrastructure/test/data/.*",
 
 				// TODO: Once ESLint 9 flat configs are completely in use and the CJS configs are gone
 				// we can remove these exceptions.
@@ -378,11 +394,11 @@ module.exports = {
 				"experimental/PropertyDDS/.*",
 				"azure/packages/azure-local-service/index.js",
 
-				// These oclif packages are still CJS vs. build-infrastructure which is ESM so is not excluded here.
-				"build-tools/packages/build-cli/bin/dev.js",
-				"build-tools/packages/build-cli/bin/run.js",
-				"build-tools/packages/version-tools/bin/dev.js",
-				"build-tools/packages/version-tools/bin/run.js",
+				// These files no longer exist after consolidation into build-tools.
+				// build-tools/packages/build-cli/bin/dev.js
+				// build-tools/packages/build-cli/bin/run.js
+				// build-tools/packages/version-tools/bin/dev.js
+				// build-tools/packages/version-tools/bin/run.js
 
 				// Could be renamed, but there is tooling that uses this name and it's not worth it.
 				"common/build/build-common/gen_version.js",
@@ -488,18 +504,18 @@ module.exports = {
 			"npm-package-json-script-dep": [],
 			"npm-package-license": [
 				// test packages
-				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+				"^build-tools/packages/build-tools/src/build-infrastructure/test/data/testRepo/",
 			],
 			"npm-private-packages": [
 				// TODO: Temporarily disabled for this package while it's a part of the client release group.
 				"^common/build/eslint-config-fluid/",
 
 				// test packages
-				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+				"^build-tools/packages/build-tools/src/build-infrastructure/test/data/testRepo/",
 			],
 			"pnpm-npm-package-json-preinstall": [
 				// test packages
-				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+				"^build-tools/packages/build-tools/src/build-infrastructure/test/data/testRepo/",
 			],
 		},
 		packageNames: {

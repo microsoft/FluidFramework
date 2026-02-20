@@ -10,8 +10,6 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/core/index.js",
-	"types": "dist/core/index.d.ts",
 	"exports": {
 		".": {
 			"default": {
@@ -50,21 +48,23 @@
 			}
 		}
 	},
+	"main": "dist/core/index.js",
+	"types": "dist/core/index.d.ts",
 	"bin": {
+		"buildProject": "bin/buildProject/run.mjs",
+		"flub": "bin/flub/run.mjs",
 		"fluid-build": "bin/fluid-build",
 		"fluid-doc-stats": "bin/fluid-doc-stats",
 		"fluid-tsc": "bin/fluid-tsc",
-		"flub": "bin/flub/run.mjs",
-		"fluv": "bin/fluv/run.js",
-		"buildProject": "bin/buildProject/run.mjs"
+		"fluv": "bin/fluv/run.cjs"
 	},
 	"scripts": {
 		"build": "fluid-build --task build",
 		"build:compile": "fluid-build --task compile",
 		"build:copy": "copyfiles -u 2 \"src/build-cli/**/*.fsl\" \"src/build-cli/test/**/fixtures/**/*\" dist/build-cli && node -e \"const fs=require('fs');fs.mkdirSync('dist/build-infrastructure',{recursive:true});fs.mkdirSync('dist/build-cli',{recursive:true});fs.copyFileSync('src/build-infrastructure/package.json','dist/build-infrastructure/package.json');fs.copyFileSync('src/build-cli/package.json','dist/build-cli/package.json');\"",
 		"build:diagrams": "jssm-viz -i \"./src/build-cli/machines/*.fsl\"",
-		"build:manifest": "echo 'skipping oclif manifest generation'",
-		"build:test": "tsc --build src/core/test/tsconfig.json src/version-tools/test/tsconfig.json src/build-infrastructure/test/tsconfig.json src/build-cli/test/tsconfig.json",
+		"build:manifest": "echo \"skipping oclif manifest generation\"",
+		"build:test": "tsc --project src/core/test/tsconfig.json && tsc --project src/version-tools/test/tsconfig.json && tsc --project src/build-infrastructure/test/tsconfig.json && tsc --project src/build-cli/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -204,17 +204,39 @@
 	"engines": {
 		"node": ">=20.19.0"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"...",
+					"build:diagrams"
+				],
+				"script": false
+			},
+			"build:diagrams": [],
+			"build:manifest": [
+				"...",
+				"build:copy",
+				"build:diagrams"
+			],
+			"build:test": [
+				"tsc",
+				"build:copy"
+			],
+			"tsc": []
+		}
+	},
 	"oclif": {
-		"bin": "flub",
-		"dirname": "flub",
-		"flexibleTaxonomy": true,
-		"commands": "./dist/build-cli/commands",
 		"additionalHelpFlags": [
 			"-h"
 		],
 		"additionalVersionFlags": [
 			"-V"
 		],
+		"bin": "flub",
+		"commands": "./dist/build-cli/commands",
+		"dirname": "flub",
+		"flexibleTaxonomy": true,
 		"plugins": [
 			"@oclif/plugin-autocomplete",
 			"@oclif/plugin-commands",
@@ -236,46 +258,24 @@
 			"modify": {
 				"description": "Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc."
 			},
-			"release": {
-				"description": "Release commands are used to manage the Fluid release process."
+			"promote": {
+				"description": "Promote commands are used to promote packages published to an npm registry."
 			},
 			"publish": {
 				"description": "Publish commands are used to publish packages to an npm registry."
 			},
-			"promote": {
-				"description": "Promote commands are used to promote packages published to an npm registry."
-			},
-			"transform": {
-				"description": "Transform commands are used to transform code, docs, etc. into alternative forms."
+			"release": {
+				"description": "Release commands are used to manage the Fluid release process."
 			},
 			"report": {
 				"description": "Report analysis about the codebase, like code coverage and bundle size measurements."
 			},
+			"transform": {
+				"description": "Transform commands are used to transform code, docs, etc. into alternative forms."
+			},
 			"vnext": {
 				"description": "Vnext commands are new implementations of standard flub commands using new infrastructure."
 			}
-		}
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build": {
-				"dependsOn": [
-					"...",
-					"build:diagrams"
-				],
-				"script": false
-			},
-			"build:diagrams": [],
-			"build:manifest": [
-				"...",
-				"build:copy",
-				"build:diagrams"
-			],
-			"build:test": [
-				"tsc",
-				"build:copy"
-			],
-			"tsc": []
 		}
 	}
 }

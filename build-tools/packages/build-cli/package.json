@@ -35,7 +35,7 @@
 	],
 	"scripts": {
 		"build": "echo stub",
-		"clean": "rimraf lib dist",
+		"clean": "rimraf --glob lib dist",
 		"test": "echo stub"
 	},
 	"dependencies": {
