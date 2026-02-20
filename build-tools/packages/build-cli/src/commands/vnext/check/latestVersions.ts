@@ -8,7 +8,8 @@ import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
-import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";
+import { BaseCommandWithBuildProject } from "../../../library/commands/base.js";
+import { getVersionsFromTags } from "../../../library/git.js";
 
 type MajorVersion = number;
 
