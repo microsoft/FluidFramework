@@ -112,7 +112,6 @@ jobs:
                 .map(([pkgName]) => pkgName),
             );
             const reportsDir = "upload_release_reports";
-            const currentDate = new Date().toISOString().slice(0, 10);
 
             for (const file of fs.readdirSync(reportsDir)) {
               const reportPath = path.join(reportsDir, file);
@@ -122,29 +121,6 @@ jobs:
               const json = JSON.parse(fs.readFileSync(reportPath, "utf8"));
               const filtered = Object.fromEntries(Object.entries(json).filter(([pkgName]) => keep.has(pkgName)));
               fs.writeFileSync(reportPath, JSON.stringify(filtered, null, 2));
-            }
-
-            for (const baseFileName of ["simpleManifest", "manifest"]) {
-              const target = `${baseFileName}-${currentDate}.json`;
-              const matching = fs.readdirSync(reportsDir).filter(
-                (file) => file.startsWith(`${baseFileName}-`) && file.endsWith(".json"),
-              );
-
-              if (matching.length === 0) {
-                continue;
-              }
-
-              const source = matching.includes(target) ? target : matching[0];
-              if (source !== target) {
-                fs.renameSync(path.join(reportsDir, source), path.join(reportsDir, target));
-              }
-
-              for (const file of matching) {
-                if (file === source || file === target) {
-                  continue;
-                }
-                fs.rmSync(path.join(reportsDir, file), { force: true });
-              }
             }
             '
 
