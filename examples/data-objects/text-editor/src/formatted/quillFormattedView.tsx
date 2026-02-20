@@ -81,14 +81,17 @@ function parseCssFontSize(node: HTMLElement): string | undefined {
 	const style = node.style.fontSize;
 	if (!style) return undefined;
 
-	// Parse pixel value (e.g., "18px" -> 18)
-	const parsed = Number.parseFloat(style);
-	if (Number.isNaN(parsed)) return undefined;
+	// check if pixel value is in <size>px format
+	if (style.endsWith("px")) {
+		// Parse pixel value (e.g., "18px" -> 18)
+		const parsed = Number.parseFloat(style);
+		if (Number.isNaN(parsed)) return undefined;
 
-	// Round to nearest integer and look up Quill size name
-	const rounded = Math.round(parsed);
-	if (rounded in sizeReverse) {
-		return sizeReverse[rounded as keyof typeof sizeReverse];
+		// Round to nearest integer and look up Quill size name
+		const rounded = Math.round(parsed);
+		if (rounded in sizeReverse) {
+			return sizeReverse[rounded as keyof typeof sizeReverse];
+		}
 	}
 	return undefined;
 }
@@ -99,7 +102,7 @@ function parseCssFontSize(node: HTMLElement): string | undefined {
  */
 function parseCssFontFamily(node: HTMLElement): string | undefined {
 	const style = node.style.fontFamily;
-	if (style === "" || style === undefined) return undefined;
+	if (style === "") return undefined;
 
 	// Get the last font in the stack (generic family)
 	const fonts = style.split(",");
@@ -112,6 +115,7 @@ function parseCssFontFamily(node: HTMLElement): string | undefined {
 	// Map generic families to Quill values
 	if (last === "monospace") return "monospace";
 	if (last === "serif") return "serif";
+	if (last === "sans-serif") return "sans-serif";
 	// Arial is default, no attribute needed
 	return undefined;
 }
@@ -305,26 +309,24 @@ const FormattedTextEditorView = React.forwardRef<
 					["clean"],
 				],
 				clipboard: [
-					[
-						Node.ELEMENT_NODE,
-						(node: Node, delta: Delta): Delta => {
-							if (!(node instanceof HTMLElement)) return delta;
+					Node.ELEMENT_NODE,
+					(node: Node, delta: Delta): Delta => {
+						if (!(node instanceof HTMLElement)) return delta;
 
-							const size = parseCssFontSize(node);
-							const font = parseCssFontFamily(node);
+						const size = parseCssFontSize(node);
+						const font = parseCssFontFamily(node);
 
-							// If no formatting to apply, return unchanged
-							if (size === undefined && font === undefined) return delta;
+						// If no formatting to apply, return unchanged
+						if (size === undefined && font === undefined) return delta;
 
-							// Build attributes object
-							const attrs: Record<string, unknown> = {};
-							if (size !== undefined) attrs.size = size;
-							if (font !== undefined) attrs.font = font;
+						// Build attributes object
+						const attrs: Record<string, unknown> = {};
+						if (size !== undefined) attrs.size = size;
+						if (font !== undefined) attrs.font = font;
 
-							// Apply formatting using compose/retain pattern per Quill docs
-							return delta.compose(new Delta().retain(delta.length(), attrs));
-						},
-					],
+						// Apply formatting using compose/retain pattern per Quill docs
+						return delta.compose(new Delta().retain(delta.length(), attrs));
+					},
 				],
 			},
 		});
