@@ -74,6 +74,12 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+          # KLUDGE:
+          # - @rushstack/node-core-library 5.19.1: version 5.20.0 broke ESM module resolution in Node.
+          #   https://github.com/microsoft/rushstack/issues/5644
+          # This prevented build tools' publish command from working.
+          # Short-term, this should be replaced with a more robust pnpm overrides approach (but manually installing
+          # the lower version happens to prod npm into a valid install tree)
           - task: Bash@3
             name: InstallBuildToolsFromTarball
             displayName: Install Fluid Build Tools from artifact tarball
