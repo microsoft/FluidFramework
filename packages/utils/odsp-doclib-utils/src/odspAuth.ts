@@ -15,7 +15,7 @@ import { unauthPostAsync } from "./odspRequest.js";
  */
 export interface IOdspTokens {
 	readonly accessToken: string;
-	readonly refreshToken: string;
+	readonly refreshToken?: string; // Optional - not needed for bearer token flows
 	readonly receivedAt?: number; // Unix timestamp in seconds
 	readonly expiresIn?: number; // Seconds from reception until the token expires
 }
@@ -167,7 +167,7 @@ export async function fetchTokens(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const refreshToken = parsedResponse.refresh_token;
 
-	if (accessToken === undefined || refreshToken === undefined) {
+	if (accessToken === undefined) {
 		try {
 			throwOdspNetworkError(
 				// pre-0.58 error message: unableToGetAccessToken
@@ -239,7 +239,10 @@ export async function refreshTokens(
 ): Promise<IOdspTokens> {
 	// Clear out the old tokens while awaiting the new tokens
 	const refresh_token = tokens.refreshToken;
-	assert(refresh_token.length > 0, 0x1ec /* "No refresh token provided." */);
+	assert(
+		refresh_token !== undefined && refresh_token.length > 0,
+		0x1ec /* "No refresh token provided." */,
+	);
 
 	const credentials: TokenRequestCredentials = {
 		grant_type: "refresh_token",

@@ -132,6 +132,7 @@ declare type old_as_current_for_Interface_IResources = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IResources": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IResources = requireAssignableTo<TypeOnly<current.IResources>, TypeOnly<old.IResources>>
 
 /*
@@ -168,6 +169,7 @@ declare type old_as_current_for_TypeAlias_OdspTokenConfig = requireAssignableTo<
  * typeValidation.broken:
  * "TypeAlias_OdspTokenConfig": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_OdspTokenConfig = requireAssignableTo<TypeOnly<current.OdspTokenConfig>, TypeOnly<old.OdspTokenConfig>>
 
 /*

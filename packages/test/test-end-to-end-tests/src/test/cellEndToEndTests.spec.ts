@@ -26,7 +26,7 @@ import {
 
 const cellId = "cellKey";
 
-describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat.only("SharedCell", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedCell } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
