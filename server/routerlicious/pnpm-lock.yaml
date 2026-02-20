@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@types/node': ^24.0.0
+  zookeeper: ^7.2.0
   '@typescript-eslint/tsconfig-utils': 8.52.0
   '@typescript-eslint/project-service': 8.52.0
   '@babel/core': 7.27.7
@@ -1476,8 +1477,8 @@ importers:
         specifier: workspace:~
         version: link:../services-core
       zookeeper:
-        specifier: ^5.3.2
-        version: 5.6.0
+        specifier: ^7.2.0
+        version: 7.2.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
@@ -6164,10 +6165,6 @@ packages:
     resolution: {integrity: sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==}
     engines: {node: '>= 0.4'}
 
-  interpret@1.4.0:
-    resolution: {integrity: sha512-agE4QfB2Lkp9uICn7BAqoscw4SZP9kTE2hxiFI3jBPmXJfdqiahTbUuKGsMoN2GtqL9AxhYioAcVvgsb1HvRbA==}
-    engines: {node: '>= 0.10'}
-
   interpret@3.1.1:
     resolution: {integrity: sha512-6xwYfHbajpoF0xLW+iwLkhwgvLoZDfjYfoFNu8ftMoXINzwuymNLd9u/KmwtdT2GbR+/Cz66otEGEVVUHX9QLQ==}
     engines: {node: '>=10.13.0'}
@@ -7203,12 +7200,6 @@ packages:
     resolution: {integrity: sha512-dkEJPVvun4FryqBmZ5KhDo0K9iDXAwn08tMLDinNdRBNPcYEDiWYysLcc6k3mjTMlbP9KyylvRpd4wFtwrT9rw==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  nan@2.17.0:
-    resolution: {integrity: sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==}
-
-  nan@2.19.0:
-    resolution: {integrity: sha512-nO1xXxfh/RWNxfd/XPfbIfFk5vgLsAxUR9y5O0cHMJu/AW9U95JLXqthYHjEp+8gQ5p96K9jUp8nbVOxCdRbtw==}
-
   nan@2.22.2:
     resolution: {integrity: sha512-DANghxFkS1plDdRsX0X9pm0Z6SJNN6gBdtXfanwoZ8hooC5gosGFSBGRYHUVPz1asKA/kMRqDRdHrluZ61SpBQ==}
 
@@ -7975,10 +7966,6 @@ packages:
     resolution: {integrity: sha512-gNva8/6UAe8QYepIQH/jQ2qn91Qj0B9sYjMBBs3QOB8F2CXcKgLxQaJRP76sWVRQt+QU+8fAkCbCvjjMFu7Ycw==}
     engines: {node: '>= 0.8.0'}
 
-  rechoir@0.6.2:
-    resolution: {integrity: sha512-HFM8rkZ+i3zrV+4LQjwQ0W+ez98pApMGM3HUrN04j3CqzPOzl9nmP15Y8YXNm8QHGv/eacOVEjqhmWpkRV0NAw==}
-    engines: {node: '>= 0.10'}
-
   rechoir@0.8.0:
     resolution: {integrity: sha512-/vxpCXddiX8NGfGO/mTafwjq4aFa/71pvamip0++IQk3zG8cbCj0fifNPrjjF1XMXUne91jL9OoxmdykoEtifQ==}
     engines: {node: '>= 10.13.0'}
@@ -8318,10 +8305,9 @@ packages:
   shell-quote@1.8.1:
     resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
 
-  shelljs@0.8.5:
-    resolution: {integrity: sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==}
-    engines: {node: '>=4'}
-    hasBin: true
+  shelljs@0.10.0:
+    resolution: {integrity: sha512-Jex+xw5Mg2qMZL3qnzXIfaxEtBaC4n7xifqaqtrZDdlheR70OGkydrPJWT0V1cA1k3nanC86x9FwAmQl6w3Klw==}
+    engines: {node: '>=18'}
 
   shimmer@1.2.1:
     resolution: {integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==}
@@ -9384,8 +9370,8 @@ packages:
   yoga-wasm-web@0.3.3:
     resolution: {integrity: sha512-N+d4UJSJbt/R3wqY7Coqs5pcV0aUj2j9IaQ3rNj9bVCLld8tTGKRa2USARjnvZJWVx1NDmQev8EknoczaOQDOA==}
 
-  zookeeper@5.6.0:
-    resolution: {integrity: sha512-MNgvcBSdmMMeh77ubcE/lu42BvvFxYlFiJNftc/X9I+tCSJL+jofLize9hNBeJCkSA5NXSn+cz1JB0S/T526Jg==}
+  zookeeper@7.2.0:
+    resolution: {integrity: sha512-4x9yk2HH1lHxLVPIh/3Ll6rkMNHEJACN4TZDI2oI9pkJDvbVEpzvn23qQK/5ctbUvS39+rSrxuAQ9NYFtG0Aig==}
     engines: {node: '>=14.15.4'}
 
   zwitch@2.0.4:
@@ -10803,7 +10789,7 @@ snapshots:
   '@fluidframework/server-services-ordering-zookeeper@7.0.0':
     dependencies:
       '@fluidframework/server-services-core': 7.0.0
-      zookeeper: 5.6.0
+      zookeeper: 7.2.0
     transitivePeerDependencies:
       - supports-color
 
@@ -15242,8 +15228,6 @@ snapshots:
       hasown: 2.0.2
       side-channel: 1.1.0
 
-  interpret@1.4.0: {}
-
   interpret@3.1.1: {}
 
   ioredis-mock@8.9.0(@types/ioredis-mock@8.2.6(ioredis@5.6.1))(ioredis@5.6.1):
@@ -16466,11 +16450,6 @@ snapshots:
 
   mute-stream@3.0.0: {}
 
-  nan@2.17.0: {}
-
-  nan@2.19.0:
-    optional: true
-
   nan@2.22.2: {}
 
   napi-build-utils@1.0.2:
@@ -17423,10 +17402,6 @@ snapshots:
 
   readline-sync@1.4.10: {}
 
-  rechoir@0.6.2:
-    dependencies:
-      resolve: 1.22.10
-
   rechoir@0.8.0:
     dependencies:
       resolve: 1.22.10
@@ -17809,11 +17784,10 @@ snapshots:
 
   shell-quote@1.8.1: {}
 
-  shelljs@0.8.5:
+  shelljs@0.10.0:
     dependencies:
-      glob: 7.2.3
-      interpret: 1.4.0
-      rechoir: 0.6.2
+      execa: 5.1.1
+      fast-glob: 3.3.2
 
   shimmer@1.2.1: {}
 
@@ -17932,7 +17906,7 @@ snapshots:
   snappy@6.3.5:
     dependencies:
       bindings: 1.5.0
-      nan: 2.19.0
+      nan: 2.22.2
       prebuild-install: 5.3.0
     optional: true
 
@@ -19118,13 +19092,13 @@ snapshots:
 
   yoga-wasm-web@0.3.3: {}
 
-  zookeeper@5.6.0:
+  zookeeper@7.2.0:
     dependencies:
-      async: 3.2.4
+      async: 3.2.6
       decompress: 4.2.1
       decompress-targz: 4.1.1
-      nan: 2.17.0
+      nan: 2.22.2
       node-gyp-build: 4.6.0
-      shelljs: 0.8.5
+      shelljs: 0.10.0
 
   zwitch@2.0.4: {}

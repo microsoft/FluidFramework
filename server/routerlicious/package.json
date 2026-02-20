@@ -145,10 +145,12 @@
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
 			"@typescript-eslint/*: Pin to 8.52.0 to avoid 8.53.0 which may not be available in ADO package feed.",
-			"@babel/*: Pin to 7.27.x to avoid 7.28.x versions which may not be available in ADO package feed."
+			"@babel/*: Pin to 7.27.x to avoid 7.28.x versions which may not be available in ADO package feed.",
+			"zookeeper is overridden to v7 because v5 uses nan bindings that cannot be compiled against Node 24's V8."
 		],
 		"overrides": {
 			"@types/node": "^24.0.0",
+			"zookeeper": "^7.2.0",
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
 			"@typescript-eslint/project-service": "8.52.0",
 			"@babel/core": "7.27.7",
