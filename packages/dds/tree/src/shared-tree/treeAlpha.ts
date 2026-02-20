@@ -80,9 +80,13 @@ import {
 	exportConcise,
 	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
+	type TreeContextAlpha,
 	type TreeNodeSchema,
 	getUnhydratedContext,
 	type TreeBranchAlpha,
+	type TransactionResult,
+	type TransactionResultExt,
+	type WithValue,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -237,8 +241,16 @@ export interface TreeAlpha {
 	 *
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
+	 *
+	 * @deprecated To obtain a {@link TreeBranchAlpha | branch }, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
 	 */
 	branch(node: TreeNode): TreeBranchAlpha | undefined;
+
+	/**
+	 * Retrieve the {@link TreeContextAlpha | context} for the given node.
+	 * @param node - The node to query
+	 */
+	context(node: TreeNode): TreeContextAlpha;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -763,6 +775,10 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 
+	context(node: TreeNode): TreeContextAlpha {
+		return this.branch(node) ?? UnhydratedTreeContext.instance;
+	},
+
 	branch(node: TreeNode): TreeBranchAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
@@ -1078,4 +1094,42 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
+}
+
+class UnhydratedTreeContext implements TreeContextAlpha {
+	public static instance = new UnhydratedTreeContext();
+	private constructor() {}
+
+	public isBranch(): this is TreeBranchAlpha {
+		return false;
+	}
+
+	public runTransaction<TValue>(
+		t: () => WithValue<TValue>,
+	): TransactionResultExt<TValue, TValue>;
+	public runTransaction(t: () => void): TransactionResult;
+	public runTransaction(
+		t: () => WithValue<unknown> | void,
+	): TransactionResultExt<unknown, unknown> | TransactionResult {
+		return UnhydratedTreeContext.wrapTransactionResult(t());
+	}
+
+	public runTransactionAsync<TValue>(
+		t: () => Promise<WithValue<TValue>>,
+	): Promise<TransactionResultExt<TValue, TValue>>;
+	public runTransactionAsync(t: () => Promise<void>): Promise<TransactionResult>;
+	public async runTransactionAsync(
+		t: () => Promise<WithValue<unknown> | void>,
+	): Promise<TransactionResultExt<unknown, unknown> | TransactionResult> {
+		return UnhydratedTreeContext.wrapTransactionResult(await t());
+	}
+
+	private static wrapTransactionResult<TValue>(
+		value: WithValue<TValue> | void,
+	): TransactionResultExt<TValue, TValue> | TransactionResult {
+		if (value?.value !== undefined) {
+			return { success: true, value: value.value };
+		}
+		return { success: true };
+	}
 }
