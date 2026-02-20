@@ -56,6 +56,7 @@ import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	toStoredSchema,
+	type TransactionResult,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -3836,6 +3837,66 @@ describe("treeNodeApi", () => {
 				assert.ok(value.success);
 				assert.equal(obj.n, value.value);
 			}
+		});
+
+		it("can successfully run transactions with constraints", () => {
+			const node = hydrate(Obj, { n: 3 });
+			const context = TreeAlpha.context(node);
+			context.runTransaction(() => (node.n = 4), {
+				preconditions: [{ type: "nodeInDocument", node }],
+			});
+			assert.equal(node.n, 4);
+		});
+
+		it("throws if you start a transaction with violated constraints", () => {
+			const node = new Obj({ n: 3 });
+			const context = TreeAlpha.context(node);
+			assert.throws(
+				() =>
+					context.runTransaction(() => {}, {
+						// `obj` belongs to the context, but it is not "in the document"
+						preconditions: [{ type: "nodeInDocument", node }],
+					}),
+				validateAssertionError(/constraint failed/),
+			);
+		});
+
+		it("rejects async transactions within existing transactions", async () => {
+			const node = new Obj({ n: 3 });
+			const context = TreeAlpha.context(node);
+
+			let transactionPromise: Promise<TransactionResult> | undefined;
+			const expectedError = validateUsageError(
+				/An asynchronous transaction cannot be started while another transaction is already in progress/,
+			);
+
+			// Synchronous -> Asynchronous
+			assert.throws(
+				() =>
+					context.runTransaction(() => {
+						transactionPromise = context.runTransactionAsync(async () => {});
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
+
+			// Asynchronous -> Asynchronous
+			assert.throws(
+				async () =>
+					context.runTransactionAsync(async () => {
+						transactionPromise = context.runTransactionAsync(async () => {});
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
 		});
 	});
 });

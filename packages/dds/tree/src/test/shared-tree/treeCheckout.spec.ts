@@ -785,7 +785,7 @@ describe("sharedTreeView", () => {
 			assert.equal(view.checkout.transaction.isInProgress(), false);
 		});
 
-		it("rejects async transactions within synchronous transactions", async () => {
+		it("rejects async transactions within existing transactions", async () => {
 			const provider = new TestTreeProviderLite(1);
 			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
 			const view = provider.trees[0].kernel.viewWith(config);
@@ -793,11 +793,27 @@ describe("sharedTreeView", () => {
 
 			let transactionPromise: Promise<TransactionResult> | undefined;
 			const expectedError = validateUsageError(
-				/An asynchronous transaction cannot be started while a synchronous transaction is in progress./,
+				/An asynchronous transaction cannot be started while another transaction is already in progress/,
 			);
+
+			// Synchronous -> Asynchronous
 			assert.throws(
 				() =>
 					view.runTransaction(() => {
+						transactionPromise = view.runTransactionAsync(async () => {});
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
+
+			// Asynchronous -> Asynchronous
+			assert.throws(
+				async () =>
+					view.runTransactionAsync(async () => {
 						transactionPromise = view.runTransactionAsync(async () => {});
 					}),
 				expectedError,

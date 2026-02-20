@@ -49,16 +49,16 @@ export interface NoChangeConstraint {
 }
 
 /**
- * An interface representing a value associated with a transaction.
+ * Contains a value returned from a transaction.
  * @alpha
  */
 export interface WithValue<TValue> {
-	/** The user defined value. */
+	/** The user-supplied value. */
 	value: TValue;
 }
 
 /**
- * The status of the transaction callback in the {@link RunTransaction | RunTransaction} API.
+ * Contains a value and status returned from a user-supplied {@link TreeBranchAlpha.(runTransaction:1) | transaction callback}.
  * @alpha
  */
 export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
@@ -82,8 +82,7 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
 };
 
 /**
- * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API where the transaction doesn't
- * need to return a value. This is the same as {@link TransactionCallbackStatus} but with the `value` field omitted.
+ * The result of a {@link TreeBranchAlpha.(runTransaction:2) | transaction} that doesn't return a value.
  * @alpha
  */
 export type VoidTransactionCallbackStatus = Omit<
@@ -92,20 +91,20 @@ export type VoidTransactionCallbackStatus = Omit<
 >;
 
 /**
- * The result of the {@link RunTransaction | RunTransaction} API when it was successful.
+ * The result of a {@link TreeBranchAlpha.(runTransaction:1) | transaction} that completed successfully.
  * @alpha
  */
 export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
-	/** Indicates that the transaction was successful. */
+	/** The success flag for a transaction that completed without being {@link TransactionCallbackStatus | rolled back}. */
 	success: true;
 }
 
 /**
- * The result of the {@link RunTransaction | RunTransaction} API when it failed.
+ * The result of a {@link TreeBranchAlpha.(runTransaction:1) | transaction} that was rolled back.
  * @alpha
  */
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
-	/** Indicates that the transaction failed. */
+	/** The failure flag for a transaction that was {@link TransactionCallbackStatus | rolled back}. */
 	success: false;
 }
 
@@ -134,17 +133,18 @@ export type TransactionResult =
 export interface RunTransactionParams {
 	/**
 	 * An optional list of {@link TransactionConstraintAlpha | constraints} that are checked just before the transaction begins.
+	 * @remarks
 	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
-	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on
-	 * this client and ignored by all other clients.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 *
+	 * Constraints only apply to the "outermost" transaction.
+	 * If a transaction is started while another transaction is already in progress, then its constraints will be ignored.
 	 */
 	readonly preconditions?: readonly TransactionConstraintAlpha[];
 	/**
 	 * A label for this transaction that allows it to be correlated with later edits (e.g. for controlling undo/redo grouping).
-	 *
 	 * @remarks
-	 * This label is associated with the commit produced by this transaction, and is surfaced through the
-	 * `label` property of {@link ChangeMetadata} in the `commitApplied` or `changed` event.
+	 * If this transaction is applied to a {@link TreeBranchAlpha | branch}, the label will be available in the {@link LocalChangeMetadata.label | metadata} of the {@link TreeBranchEvents.changed | `changed`} event.
 	 *
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
