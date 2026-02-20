@@ -112,9 +112,21 @@ jobs:
                 set -eu -o pipefail
                 echo "Listing files in directory: $(pwd)"
                 ls -la
-                npm --version
-                echo "Attempting install of build tools from build tools pipeline artifact tarball"
-                npm i -g ./*.tgz
+                pnpm --version
+
+                echo "Installing build tools from tarballs (uses overrides from package.json)"
+                pnpm install ./*.tgz
+
+                echo "Linking build tools globally"
+                for tgz in *.tgz; do
+                  pkg_name=$(tar -xzf "$tgz" --to-stdout package/package.json | jq -r '.name')
+                  # Check if the package has a bin field (i.e., provides CLI commands)
+                  has_bin=$(tar -xzf "$tgz" --to-stdout package/package.json | jq -e '.bin' > /dev/null 2>&1 && echo "yes" || echo "no")
+                  if [ "$has_bin" = "yes" ]; then
+                    echo "Linking $pkg_name globally"
+                    pnpm link --global "node_modules/$pkg_name"
+                  fi
+                done
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
