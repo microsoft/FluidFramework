@@ -72,12 +72,10 @@ const sizeReverse = { 10: "small", 18: "large", 24: "huge" } as const;
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
-/** Supported font sizes for exact matching during paste. */
-const supportedSizes = new Set([10, 12, 18, 24]);
-
 /**
  * Parse CSS font-size from a pasted HTML element's inline style.
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
+ * 12px is the default size and returns undefined (no Quill attribute needed).
  */
 function parseCssFontSize(node: HTMLElement): string | undefined {
 	const style = node.style.fontSize;
@@ -87,15 +85,11 @@ function parseCssFontSize(node: HTMLElement): string | undefined {
 	const parsed = Number.parseFloat(style);
 	if (Number.isNaN(parsed)) return undefined;
 
-	// Round to nearest integer for comparison
+	// Round to nearest integer and look up Quill size name
 	const rounded = Math.round(parsed);
-	if (!supportedSizes.has(rounded)) return undefined;
-
-	// Convert to Quill size name
 	if (rounded in sizeReverse) {
 		return sizeReverse[rounded as keyof typeof sizeReverse];
 	}
-	// 12 is default, no attribute needed
 	return undefined;
 }
 
@@ -118,7 +112,7 @@ function parseCssFontFamily(node: HTMLElement): string | undefined {
 	// Map generic families to Quill values
 	if (last === "monospace") return "monospace";
 	if (last === "serif") return "serif";
-	// sans-serif is default, no attribute needed
+	// Arial is default, no attribute needed
 	return undefined;
 }
 
