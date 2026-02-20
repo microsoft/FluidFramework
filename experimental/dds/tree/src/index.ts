@@ -144,6 +144,7 @@ export {
 	ISharedTreeEvents,
 	StashedLocalOpMetadata,
 } from './SharedTree.js';
+export type { ISharedTree } from './ISharedTree.js';
 export { StringInterner } from './StringInterner.js';
 export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 
