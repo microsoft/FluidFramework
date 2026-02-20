@@ -162,7 +162,8 @@ export interface ISummaryTree {
 	 *
 	 * @param path - The key to store the SummaryObject at in the current summary tree being generated. Should not contain any "/" characters and should not change when encodeURIComponent is called on it.
 	 */
-	tree: Record<string, SummaryObject>;
+	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- use `[path: string]` to clarify that it should be a path (also make `@param` comment meaningful).
+	tree: { [path: string]: SummaryObject };
 
 	/**
 	 * Indicates that this tree entry is unreferenced.

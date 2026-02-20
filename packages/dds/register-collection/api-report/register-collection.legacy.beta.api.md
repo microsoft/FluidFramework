@@ -10,7 +10,7 @@ export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCo
 // @beta @legacy
 export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)

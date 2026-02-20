@@ -120,7 +120,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"playwright": "^1.55.1",
 		"prop-types": "^15.8.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.4.5"
