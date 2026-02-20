@@ -20,7 +20,7 @@
 		"incremental": true,
 		"sourceMap": true,
 		"types": ["node", "mocha"],
-		"skipLibCheck": true,
+
 		"exactOptionalPropertyTypes": false,
 		"noUncheckedIndexedAccess": false,
 		"noUnusedLocals": false,

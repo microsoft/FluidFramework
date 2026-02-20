@@ -9,7 +9,7 @@
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"types": ["node", "mocha", "chai"],
-		"skipLibCheck": true,
+
 		"exactOptionalPropertyTypes": false,
 		"noUncheckedIndexedAccess": false,
 		"noUnusedLocals": false,
