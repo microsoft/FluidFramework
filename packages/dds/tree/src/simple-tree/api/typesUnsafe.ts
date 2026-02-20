@@ -27,7 +27,6 @@ import type {
 import type {
 	ApplyKind,
 	ApplyKindInput,
-	DefaultProvider,
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
@@ -475,49 +474,6 @@ export interface FieldSchemaAlphaUnsafe<
 	 */
 	readonly allowedTypes: Types;
 }
-
-/**
- * {@link Unenforced} version of `FieldHasDefaultAlpha`.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @system @sealed @alpha
- */
-export type FieldHasDefaultAlphaUnsafe<T extends System_Unsafe.ImplicitFieldSchemaUnsafe> =
-	// Extract Kind and TProps from FieldSchemaAlphaUnsafe and compute whether it has a default
-	T extends FieldSchemaAlphaUnsafe<infer Kind, infer _Types, infer _Meta, infer TProps>
-		? // Inline ComputeHasDefault logic: Optional and Identifier kinds always have defaults
-			Kind extends FieldKind.Optional | FieldKind.Identifier
-			? true
-			: // Check if props has defaultProvider
-				TProps extends { defaultProvider: DefaultProvider }
-				? true
-				: false
-		: false;
-
-/**
- * Alpha version of {@link System_Unsafe.InsertableObjectFromSchemaRecordUnsafe} that supports field defaults.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @system @alpha
- */
-export type InsertableObjectFromSchemaRecordAlphaUnsafe<
-	T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
-> = {
-	// Field might not have a default, so make it required:
-	readonly [Property in keyof T as FieldHasDefaultAlphaUnsafe<
-		T[Property & string]
-	> extends false
-		? Property
-		: never]: System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
-} & {
-	// Field might have a default, so allow optional.
-	// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
-	readonly [Property in keyof T as FieldHasDefaultAlphaUnsafe<
-		T[Property & string]
-	> extends true
-		? Property
-		: never]?: System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<T[Property & string]>;
-};
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
