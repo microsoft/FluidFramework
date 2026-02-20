@@ -121,6 +121,7 @@ jobs:
                 ls -la
                 pnpm --version
 
+                pnpm setup
                 echo "Installing build tools from tarballs (uses overrides from package.json)"
                 pnpm install ./*.tgz
 
