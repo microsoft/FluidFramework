@@ -7,7 +7,7 @@ import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Updates the version of a dependency in the lockfile.

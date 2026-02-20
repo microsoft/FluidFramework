@@ -85,7 +85,18 @@ For client that is:
 			"@fluidframework/bundle-size-tools": "file:./build-tools/packages/bundle-size-tools"
 ```
 
-This approach can be used with `flub generate typetests` to ensure that the `--level` configuration from the scripts is included, and can be done from a JavaScript Debug console to debug, though breakpoints will need to be set in the `.js` files in `node_modules` (for example in `node_modules/.pnpm/file+build-tools+packages+build-cli_@types+node@18.19.1/node_modules/@fluid-tools/build-cli/lib/commands/generate/typetests.js`).
+This approach can be used with `flub generate typetests` to ensure that the `--entrypoint` configuration, if any, from the scripts is included, and can be done from a JavaScript Debug console to debug, though breakpoints will need to be set in the `.js` files in `node_modules` (for example in `node_modules/.pnpm/file+build-tools+packages+build-cli_@types+node@18.19.1/node_modules/@fluid-tools/build-cli/lib/commands/generate/typetests.js`).
+
+Alternatively, `link:` overrides give similar results and are known to support setting breakpoints directly in `.ts` files. When using `link:` be sure dependencies in `build-tools` are installed. See [pnpm.ic documentation](https://pnpm.io/cli/link#whats-the-difference-between-pnpm-link-and-using-the-file-protocol) for more information.
+
+```
+			"@fluid-tools/build-cli": "link:./build-tools/packages/build-cli",
+			"@fluidframework/build-tools": "link:./build-tools/packages/build-tools",
+			"@fluid-tools/version-tools": "link:./build-tools/packages/version-tools",
+			"@fluidframework/bundle-size-tools": "link:./build-tools/packages/bundle-size-tools"
+```
+
+Either pattern requires `pnpm i --no-frozen-lockfile` after setting `overrides`. If any build-tools package `dependencies` are updated when using `file:`, be sure to rerun for both workspaces.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

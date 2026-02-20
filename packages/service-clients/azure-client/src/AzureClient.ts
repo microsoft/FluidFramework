@@ -141,7 +141,6 @@ export class AzureClient {
 	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns New detached container instance along with associated services.
 	 */
-	// eslint-disable-next-line @typescript-eslint/await-thenable -- known limitation
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 		compatibilityMode: CompatibilityMode,
@@ -176,7 +175,6 @@ export class AzureClient {
 	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Existing container instance along with associated services.
 	 */
-	// eslint-disable-next-line @typescript-eslint/await-thenable -- known limitation
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
@@ -201,7 +199,6 @@ export class AzureClient {
 		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
 		});
-		// eslint-disable-next-line @typescript-eslint/await-thenable -- known limitation
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
