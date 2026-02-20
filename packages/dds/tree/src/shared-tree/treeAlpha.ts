@@ -627,35 +627,6 @@ export interface TreeAlpha {
 	key2(node: TreeNode): string | number | undefined;
 
 	/**
-	 * Gets the child of the given TreeNode with the given property key if a child exists under that key.
-	 *
-	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
-	 *
-	 * @param node - The parent TreeNode whose child is being requested.
-	 * @param key - The property key under the node under which the child is being requested.
-	 * For Object nodes, this is the developer-facing "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
-	 *
-	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
-	 *
-	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (TreeNodeApi:interface).parent}
-	 */
-	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
-
-	/**
-	 * Gets the child of the given ParentObject.
-	 *
-	 * @param parent - The ParentObject (root, detached, or unhydrated) whose child is being requested.
-	 * @param key - Must be `undefined` for ParentObject parents.
-	 *
-	 * @returns The child node at the root of the ParentObject, or `undefined` if no child exists.
-	 *
-	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (TreeAlpha:interface).parent2}
-	 */
-	child(parent: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
-
-	/**
 	 * Gets the child of the given parent with the given property key if a child exists under that key.
 	 *
 	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
@@ -668,7 +639,7 @@ export interface TreeAlpha {
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (TreeNodeApi:interface).parent}
+	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
 	child(
 		parent: TreeNodeParent,
@@ -676,7 +647,7 @@ export interface TreeAlpha {
 	): TreeNode | TreeLeafValue | undefined;
 
 	/**
-	 * Gets the children of the provided TreeNode, paired with their property keys under the node.
+	 * Gets the children of the provided parent, paired with their property keys under the parent.
 	 *
 	 * @remarks
 	 * No guarantees are made regarding the order of the children in the returned array.
@@ -687,7 +658,10 @@ export interface TreeAlpha {
 	 *
 	 * For TreeNode parents, the key will always be `string | number` (never `undefined`).
 	 *
-	 * @param node - The TreeNode whose children are being requested.
+	 * For ParentObject parents (root, detached, unhydrated), returns a single child with key `undefined`.
+	 * Returns an empty array if no child exists (e.g., optional root with no value).
+	 *
+	 * @param parent - The parent (TreeNode or ParentObject) whose children are being requested.
 	 *
 	 * @returns
 	 * An array of pairs of the form `[propertyKey, child]`.
@@ -695,42 +669,6 @@ export interface TreeAlpha {
 	 * For Array nodes, the `propertyKey` is the index of the child in the array.
 	 *
 	 * For Object nodes, the returned `propertyKey`s are the developer-facing "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
-	 *
-	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (TreeNodeApi:interface).parent}
-	 */
-	children(
-		node: TreeNode,
-	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
-
-	/**
-	 * Gets the child of the provided ParentObject.
-	 *
-	 * @remarks
-	 * For ParentObject parents (root, detached, unhydrated), returns a single child with key `undefined`.
-	 *
-	 * @param parent - The ParentObject whose child is being requested.
-	 *
-	 * @returns
-	 * An array with a single pair `[undefined, child]` where `child` is the root/detached/unhydrated node.
-	 * Returns an empty array if no child exists (e.g., optional root with no value).
-	 *
-	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (TreeAlpha:interface).parent2}
-	 */
-	children(
-		parent: ParentObject,
-	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
-
-	/**
-	 * Gets the children of the provided parent, paired with their property keys under the parent.
-	 *
-	 * @remarks
-	 * This overload accepts the union type `TreeParent` (result of `parent2()`).
-	 * For ParentObject parents, the key will be `undefined`.
-	 * For TreeNode parents, the key will be `string | number`.
-	 *
-	 * @param parent - The parent (TreeNode or ParentObject) whose children are being requested.
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeAlpha:interface).parent2}
@@ -1570,6 +1508,12 @@ export const TreeAlpha: TreeAlpha = {
 			const detachedNode = parent.getDetachedNode();
 			const kernel = getKernel(detachedNode);
 			const context = parent.getContext();
+
+			// Sync the kernel's last known status to the current state before subscribing.
+			// Without this, the kernel may still think the node is InDocument (from when it was
+			// originally inserted), so a Removed → InDocument transition (e.g., via undo) would
+			// go undetected.
+			kernel.checkAndEmitStatusChange();
 
 			// Subscribe to status changes (re-attached, deleted, etc.)
 			const unsubscribeStatus = kernel.statusEvents.on("statusChanged", () => {

@@ -1511,11 +1511,7 @@ export const Tree: Tree;
 // @alpha @sealed
 export interface TreeAlpha {
     branch(node: TreeNode): TreeBranchAlpha | undefined;
-    child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
-    child(parent: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
     child(parent: TreeNodeParent, key: string | number | undefined): TreeNode | TreeLeafValue | undefined;
-    children(node: TreeNode): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
-    children(parent: ParentObject): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
     children(parent: TreeNodeParent): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {

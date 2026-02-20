@@ -491,6 +491,16 @@ describe("treeApi", () => {
 			);
 			assert.equal(rootTreeChangedCount, 1, "rootTreeChanged should fire for deep changes");
 
+			// Unsubscribe and verify no more events are received
+			unsubscribeChildNodeChanged();
+			// Modify the child (still in document) to verify unsubscribe worked
+			child.value = 44;
+			assert.equal(
+				childNodeChangedCount,
+				1,
+				"childNodeChanged should not fire after unsubscribe",
+			);
+
 			// Modify the root node's child property (shallow change)
 			root.child = new ChildNode({ value: 3 });
 			assert.equal(
@@ -500,18 +510,8 @@ describe("treeApi", () => {
 			);
 			assert.equal(
 				rootTreeChangedCount,
-				2,
+				3,
 				"rootTreeChanged should fire after root property change",
-			);
-
-			// Unsubscribe and verify no more events are received
-			unsubscribeChildNodeChanged();
-			// Modify the original child (now detached) to verify unsubscribe worked
-			child.value = 44;
-			assert.equal(
-				childNodeChangedCount,
-				1,
-				"childNodeChanged should not fire after unsubscribe",
 			);
 
 			unsubscribeRootNodeChanged();
