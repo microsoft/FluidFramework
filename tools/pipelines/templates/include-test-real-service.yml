@@ -82,6 +82,10 @@ parameters:
   type: string
   default: true
 
+- name: tenantSetupPackage
+  type: string
+  default: '@ff-internal/trips-setup'
+
 # If true, skip publishing report files for test results.
 # Useful because our stress tests pipeline doesn't generate any test result files.
 - name: skipTestResultPublishing
@@ -412,6 +416,19 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
               path: $(compatVersionInstallsPath)
 
+        # Install @ff-internal/trips-setup to provide the getFicToken function for ODSP tests.
+        # The ado-feeds-ff-download-only variable (from the ado-feeds group, set up in
+        # include-setup-npmrc-for-download.yml) provides authenticated access to the ADO feed.
+        - ${{ if ne(parameters.odspTenantType, 'none') }}:
+          - task: Bash@3
+            displayName: Install @ff-internal/trips-setup
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.pipelineHostPath }}
+              script: |
+                set -eu -o pipefail
+                pnpm add @ff-internal/trips-setup
+
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if ne(parameters.odspTenantType, 'none') }}:
           # Retrieve a tenant from the tenant pool
@@ -456,6 +473,10 @@ stages:
             ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
               login__microsoft__clientId: $(appClientId)
               login__odsp__test__tenants: $(tenantCreds)
+            # Provide the package that exports getFicToken, used by the ODSP test driver
+            # to refresh FIC bearer tokens without an OAuth refresh token.
+            ${{ if ne(parameters.odspTenantType, 'none') }}:
+              token__package__specifier: '@ff-internal/trips-setup'
           inputs:
             command: 'custom'
             workingDir: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}

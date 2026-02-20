@@ -55,6 +55,16 @@ export type OdspTokenConfig =
 			type: "browserLogin";
 			navigator: (url: string) => void;
 			redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
+	  }
+	| {
+			type: "token";
+			username: string;
+			token: string;
+			/**
+			 * Callback to fetch a new bearer token when the current one expires.
+			 * This is used for authentication flows that don't support OAuth refresh tokens (e.g., FIC tokens).
+			 */
+			getNewToken: () => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
 	  };
 
 /**
@@ -225,9 +235,16 @@ export class OdspTokenManager {
 			if (tokensFromCache) {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
-						// This updates the tokens in tokensFromCache
-						tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
-						await this.updateTokensCacheWithoutLock(cacheKey, tokens);
+						// For bearer tokens, use getNewToken callback instead of OAuth refresh
+						if (tokenConfig.type === "token") {
+							const newTokenData = await tokenConfig.getNewToken();
+							tokens = await this.acquireTokensWithBearerToken(newTokenData.Token);
+							await this.updateTokensCacheWithoutLock(cacheKey, tokens);
+						} else if (tokensFromCache.refreshToken !== undefined) {
+							// For OAuth flows, use refresh token
+							tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
+							await this.updateTokensCacheWithoutLock(cacheKey, tokens);
+						}
 					} catch (error) {
 						debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
 					}
@@ -263,6 +280,10 @@ export class OdspTokenManager {
 					tokenConfig.navigator,
 					tokenConfig.redirectUriCallback,
 				);
+				break;
+			}
+			case "token": {
+				tokens = await this.acquireTokensWithBearerToken(tokenConfig.token);
 				break;
 			}
 			default: {
@@ -333,6 +354,22 @@ export class OdspTokenManager {
 		const odspTokens = await tokenGetter();
 
 		return odspTokens;
+	}
+
+	private async acquireTokensWithBearerToken(token: string): Promise<IOdspTokens> {
+		// Bearer tokens are already access tokens (no OAuth exchange needed)
+		// They don't have refresh tokens - use getNewToken callback when expired
+		const receivedAt = Math.floor(Date.now() / 1000);
+		// Default to 1 hour expiry - actual expiry will be in the JWT claims
+		// but we'll rely on the token validation to determine if it's expired
+		const expiresIn = 3600;
+
+		return {
+			accessToken: token,
+			// No refreshToken - will use getNewToken callback instead
+			receivedAt,
+			expiresIn,
+		};
 	}
 
 	private async onTokenRetrievalFromCache(
