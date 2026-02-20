@@ -304,38 +304,34 @@ const FormattedTextEditorView = React.forwardRef<
 			placeholder: "Start typing with formatting...",
 			modules: {
 				history: false, // Disable Quill's built-in undo/redo
-				toolbar: {
-					container: [
-						["bold", "italic", "underline"],
-						[{ size: ["small", false, "large", "huge"] }],
-						[{ font: [] }],
-						["clean"],
+				toolbar: [
+					["bold", "italic", "underline"],
+					[{ size: ["small", false, "large", "huge"] }],
+					[{ font: [] }],
+					["clean"],
+				],
+				clipboard: [
+					[
+						Node.ELEMENT_NODE,
+						(node: Node, delta: Delta): Delta => {
+							if (!(node instanceof HTMLElement)) return delta;
+
+							const size = parseCssFontSize(node);
+							const font = parseCssFontFamily(node);
+
+							// If no formatting to apply, return unchanged
+							if (size === undefined && font === undefined) return delta;
+
+							// Build attributes object
+							const attrs: Record<string, unknown> = {};
+							if (size !== undefined) attrs.size = size;
+							if (font !== undefined) attrs.font = font;
+
+							// Apply formatting using compose/retain pattern per Quill docs
+							return delta.compose(new Delta().retain(delta.length(), attrs));
+						},
 					],
-				},
-				clipboard: {
-					matchers: [
-						[
-							Node.ELEMENT_NODE,
-							(node: Node, delta: Delta): Delta => {
-								if (!(node instanceof HTMLElement)) return delta;
-
-								const size = parseCssFontSize(node);
-								const font = parseCssFontFamily(node);
-
-								// If no formatting to apply, return unchanged
-								if (size === undefined && font === undefined) return delta;
-
-								// Build attributes object
-								const attrs: Record<string, unknown> = {};
-								if (size !== undefined) attrs.size = size;
-								if (font !== undefined) attrs.font = font;
-
-								// Apply formatting using compose/retain pattern per Quill docs
-								return delta.compose(new Delta().retain(delta.length(), attrs));
-							},
-						],
-					],
-				},
+				],
 			},
 		});
 
