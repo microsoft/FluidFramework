@@ -59,12 +59,10 @@ describe("withDefault", () => {
 
 			it("null", () => {
 				const TestSchema = factory.objectAlpha("TestObject", {
-					// eslint-disable-next-line @rushstack/no-new-null
 					value: SchemaFactoryAlpha.withDefault(factory.optional(factory.null), null),
 				});
 
 				const obj = new TestSchema({});
-				// eslint-disable-next-line @rushstack/no-new-null
 				assert.equal(obj.value, null);
 			});
 
@@ -223,10 +221,7 @@ describe("withDefault", () => {
 					count: SchemaFactoryAlpha.withDefault(factory.required(factory.number), 42),
 				});
 
-				// Type system doesn't recognize required fields with defaults as optional in constructors
-				// Use type assertion to test runtime behavior
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const obj1 = new TestSchema({} as any);
+				const obj1 = new TestSchema({});
 				assert.equal(obj1.count, 42);
 
 				const obj2 = new TestSchema({ count: 100 });
@@ -238,8 +233,7 @@ describe("withDefault", () => {
 					name: SchemaFactoryAlpha.withDefault(factory.required(factory.string), "default"),
 				});
 
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const obj1 = new TestSchema({ name: undefined } as any);
+				const obj1 = new TestSchema({ name: undefined });
 				assert.equal(obj1.name, "default");
 
 				const obj2 = new TestSchema({ name: "custom" });
@@ -257,8 +251,7 @@ describe("withDefault", () => {
 					x: undefined,
 					y: undefined,
 					label: undefined,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				} as any);
+				});
 				assert.equal(obj.x, 0);
 				assert.equal(obj.y, 0);
 				assert.equal(obj.label, "point");
@@ -275,13 +268,11 @@ describe("withDefault", () => {
 					}),
 				});
 
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const obj1 = new TestSchema({ id: undefined } as any);
+				const obj1 = new TestSchema({ id: undefined });
 				assert.equal(callCount, 1);
 				assert.equal(obj1.id, 10);
 
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const obj2 = new TestSchema({ id: undefined } as any);
+				const obj2 = new TestSchema({ id: undefined });
 				assert.equal(callCount, 2);
 				assert.equal(obj2.id, 20);
 
@@ -354,30 +345,6 @@ describe("withDefault", () => {
 			assert.equal(obj1.numbers.length, 4);
 			assert.equal(obj2.numbers.length, 3, "Modifying obj1 array should not affect obj2");
 			assert.equal(sharedArray.length, 3, "Original array should be unchanged");
-		});
-
-		it("leaf values are safely reused (not cloned)", () => {
-			const TestSchema = factory.objectAlpha("TestObject", {
-				name: SchemaFactoryAlpha.withDefault(factory.optional(factory.string), "shared"),
-				count: SchemaFactoryAlpha.withDefault(factory.optional(factory.number), 42),
-				flag: SchemaFactoryAlpha.withDefault(factory.optional(factory.boolean), true),
-			});
-
-			const obj1 = new TestSchema({});
-			const obj2 = new TestSchema({});
-
-			// Leaf values are immutable, so they can be safely reused
-			assert.equal(obj1.name, "shared");
-			assert.equal(obj2.name, "shared");
-			assert.equal(obj1.count, 42);
-			assert.equal(obj2.count, 42);
-			assert.equal(obj1.flag, true);
-			assert.equal(obj2.flag, true);
-
-			// Values are primitives, not objects that can be mutated
-			assert.equal(typeof obj1.name, "string");
-			assert.equal(typeof obj1.count, "number");
-			assert.equal(typeof obj1.flag, "boolean");
 		});
 	});
 

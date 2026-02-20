@@ -24,6 +24,7 @@ import {
 	type FieldSchema,
 	getDefaultProvider,
 	createFieldSchema,
+	type DefaultProvider,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -135,7 +136,12 @@ export interface SchemaStaticsAlpha {
 	>(
 		fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
 		defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>,
-	) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
+	) => FieldSchemaAlpha<
+		Kind,
+		Types,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
+	>;
 }
 
 const withDefault = <
@@ -145,7 +151,12 @@ const withDefault = <
 >(
 	fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
 	defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>,
-): FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>> => {
+): FieldSchemaAlpha<
+	Kind,
+	Types,
+	TCustomMetadata,
+	FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
+> => {
 	const typedFieldSchema = fieldSchema as FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
 
 	// create the default provider function, it is called eagerly during node construction

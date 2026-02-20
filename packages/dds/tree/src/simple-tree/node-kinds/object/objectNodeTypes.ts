@@ -21,7 +21,7 @@ import type {
 import type {
 	TreeObjectNode,
 	SimpleKeyMap,
-	InsertableObjectFromSchemaRecord,
+	InsertableObjectFromSchemaRecordAlpha,
 } from "./objectNode.js";
 
 /**
@@ -39,7 +39,7 @@ export interface ObjectNodeSchema<
 			TName,
 			NodeKind.Object,
 			TreeObjectNode<T, TName>,
-			InsertableObjectFromSchemaRecord<T>,
+			object & InsertableObjectFromSchemaRecordAlpha<T>,
 			ImplicitlyConstructable,
 			T,
 			never,

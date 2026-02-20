@@ -257,6 +257,7 @@ export {
 	type FieldHasDefault,
 	type FieldHasDefaultAlpha,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromSchemaRecordAlpha,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,

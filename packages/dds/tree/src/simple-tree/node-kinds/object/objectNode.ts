@@ -239,7 +239,7 @@ export type InsertableObjectFromSchemaRecord<
 			>;
 
 /**
- * Alpha version of {@link InsertableObjectFromSchemaRecord} that supports field defaults.
+ * Alpha version of InsertableObjectFromSchemaRecord that supports field defaults.
  *
  * @system @alpha
  */
@@ -649,7 +649,7 @@ export function objectSchema<
 	}
 	type Output = typeof CustomObjectNode &
 		(new (
-			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
+			input: InsertableObjectFromSchemaRecordAlpha<T> | InternalTreeNode,
 		) => TreeObjectNode<T, TName>);
 	return CustomObjectNode as Output;
 }

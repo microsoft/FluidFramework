@@ -402,7 +402,14 @@ export class SchemaFactory<
 	> {
 		return objectSchema(scoped(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-		});
+		}) as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			true,
+			T
+		>;
 	}
 
 	/**
