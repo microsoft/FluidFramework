@@ -8,6 +8,7 @@ overrides:
   '@types/node': ^24.0.0
   zookeeper: ^7.2.0
   nan: 2.22.2
+  node-rdkafka: ^3.4.0
   nanoid: ^3.3.9
   oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
@@ -4574,8 +4575,8 @@ packages:
     engines: {node: ^12.13 || ^14.13 || >=16}
     hasBin: true
 
-  node-rdkafka@3.0.1:
-    resolution: {integrity: sha512-USTFu7ylRj+fEiGz0hA92GWSqmX/hu/xSTqtgmInPPmh5zKhjauTciRjDEG3yK5m6yChwyHKQTIgmr56DfhiaQ==}
+  node-rdkafka@3.6.1:
+    resolution: {integrity: sha512-sfpTbrT35429cs0RE8Yb9avGX9BiRRvpV7aweQsghKTjtrVZP3jBrKOPItWXAqHb8doyh3SkuGuUVBLgig1SRg==}
     engines: {node: '>=16'}
 
   node-releases@2.0.27:
@@ -7092,7 +7093,7 @@ snapshots:
       '@fluidframework/server-services-utils': 6.0.0-340759
       events_pkg: events@3.3.0
       nconf: 0.12.0
-      node-rdkafka: 3.0.1
+      node-rdkafka: 3.6.1
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -11995,7 +11996,7 @@ snapshots:
       - bluebird
       - supports-color
 
-  node-rdkafka@3.0.1:
+  node-rdkafka@3.6.1:
     dependencies:
       bindings: 1.5.0
       nan: 2.22.2
