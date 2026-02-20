@@ -73,7 +73,7 @@
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/assert": "^1.5.1",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^18.19.39",
+		"@types/node": "^22",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
