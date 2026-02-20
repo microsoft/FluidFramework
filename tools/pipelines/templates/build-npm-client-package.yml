@@ -813,20 +813,56 @@ extends:
                     customCommand: 'run test:copyresults'
 
                 - ${{ if contains(test.name, 'tinylicious') }}:
+                  # We upload the log file for the tinylicious server as a preventive troubleshooting mechanism.
+                  # It's not really too relevant unless tests fail, but when they do it's helpful to have it available
+                  # so we can investigate if there were issues on the server side.
+                  # It's also slightly tricky to only upload it conditionally based on things like whether the tests
+                  # failed, because in some scenarios (stress tests in particular) the pipeline steps might not actually fail.
+                  # Since the log files are not extremely huge (they average ~150Mb), we can afford to upload them unconditionally.
                   - task: Bash@3
-                    displayName: Upload tinylicious log
+                    displayName: Upload tinylicious log(s)
                     condition: always()
                     continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                     inputs:
                       targetType: inline
                       script: |
                         set -eu -o pipefail
-                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
-                        if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
-                          echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
-                          echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
-                        else
-                          echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
+                        FOUND=0
+
+                        # Sanitize the test name by removing colons and replacing other problematic characters
+                        TEST_NAME="${{ test.name }}"
+                        SAFE_TEST_NAME="${TEST_NAME//:/}"
+                        SAFE_TEST_NAME="${SAFE_TEST_NAME// /_}"
+
+                        # Process each tinylicious.log file found in the repo
+                        # Uses process substitution (< <(...)) to avoid creating a subshell, which would prevent
+                        # the FOUND variable from being updated properly
+                        while IFS= read -r LOG; do
+                          # Extract the relative path by removing the source directory prefix
+                          # Example: /build/source/packages/test/foo/tinylicious.log -> packages/test/foo/tinylicious.log
+                          RELATIVE_PATH="${LOG#$(Build.SourcesDirectory)/}"
+
+                          # Extract the directory path and filename separately
+                          DIR_PATH=$(dirname "$RELATIVE_PATH")
+                          FILENAME=$(basename "$RELATIVE_PATH")
+
+                          # Note: Azure DevOps only preserves the filename when uploading, not the directory structure,
+                          # so multiple files named "tinylicious.log" would overwrite each other.
+                          # Thus we create a unique name for each log file by using the test name and a safe version of its directory path.
+                          # Example: packages/test/foo/tinylicious.log -> test_tinylicious-packages_test_foo-tinylicious.log
+                          SAFE_DIR="${DIR_PATH//\//_}"
+                          SAFE_NAME="${SAFE_TEST_NAME}-${SAFE_DIR}-${FILENAME}"
+
+                          TEMP_LOG="$(Build.SourcesDirectory)/$SAFE_NAME"
+                          cp "$LOG" "$TEMP_LOG"
+
+                          echo "Found tinylicious log at '$LOG'. Uploading as '$SAFE_NAME'.";
+                          echo "##vso[task.uploadfile]$TEMP_LOG";
+                          FOUND=1
+                        done < <(find "$(Build.SourcesDirectory)" -maxdepth 5 -name "tinylicious.log" -type f 2>/dev/null)
+
+                        if [ "$FOUND" -eq 0 ]; then
+                          echo "##vso[task.logissue type=warning]No tinylicious log files found.";
                         fi
 
                 # Process test result, include publishing and logging
