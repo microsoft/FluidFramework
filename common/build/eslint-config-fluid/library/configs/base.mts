@@ -59,12 +59,11 @@ export const baseConfig: FlatConfigArray = [
 	// eslint:recommended
 	eslintJs.configs.recommended,
 	// @typescript-eslint/recommended-type-checked and stylistic-type-checked
-	// Type assertions needed: typescript-eslint's PluginFlatConfig.languageOptions lacks the
-	// string index signature that ESLint core's LanguageOptions requires.
-	...(tseslint.configs.recommendedTypeChecked as Linter.Config[]),
-	...(tseslint.configs.stylisticTypeChecked as Linter.Config[]),
+	...(tseslint.configs.recommendedTypeChecked satisfies Linter.Config[]),
+	...(tseslint.configs.stylisticTypeChecked satisfies Linter.Config[]),
 	// import-x/recommended and import-x/typescript
-	// Type assertions needed: same PluginFlatConfig incompatibility as typescript-eslint above.
+	// Type assertions needed: import-x's FlatConfig type is not compatible with ESLint core's
+	// Linter.Config (missing string index signature on languageOptions).
 	importXPlugin.flatConfigs.recommended as Linter.Config,
 	importXPlugin.flatConfigs.typescript as Linter.Config,
 	// Base config with all plugins and custom rules
@@ -115,5 +114,5 @@ export const baseConfig: FlatConfigArray = [
 		},
 	},
 	// Prettier disables conflicting rules - must come after custom rules
-	prettierConfig as Linter.Config,
+	prettierConfig satisfies Linter.Config,
 ];

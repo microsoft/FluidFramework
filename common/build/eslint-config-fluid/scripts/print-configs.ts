@@ -17,22 +17,22 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ESLint } from "eslint";
-import type { Linter } from "eslint";
 import sortJson from "sort-json";
 
 // Import flat configs directly from flat.mjs
 import { recommended, strict, minimalDeprecated } from "../flat.mjs";
+import type { FlatConfigArray } from "../library/configs/base.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface ConfigToPrint {
 	name: string;
-	config: readonly Linter.Config[];
+	config: FlatConfigArray;
 	sourceFilePath: string;
 }
 
-const configsToPrint: ConfigToPrint[] = [
+const configsToPrint = [
 	{
 		name: "default",
 		config: recommended,
@@ -69,12 +69,12 @@ const configsToPrint: ConfigToPrint[] = [
 		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "test", "file.ts"),
 	},
-];
+] as const satisfies readonly ConfigToPrint[];
 
 /**
  * Generates the applied ESLint config for a specific file and config.
  */
-async function generateConfig(filePath: string, config: readonly Linter.Config[]): Promise<string> {
+async function generateConfig(filePath: string, config: FlatConfigArray): Promise<string> {
 	console.log(`Generating config for ${filePath}`);
 
 	// ESLint 9's default ESLint class uses flat config format.
