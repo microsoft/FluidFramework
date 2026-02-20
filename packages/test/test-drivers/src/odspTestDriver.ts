@@ -396,7 +396,9 @@ export class OdspTestDriver implements ITestDriver {
 
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
-		config: TokenConfig & { getNewToken?: () => Promise<{ GUID: string; UserPrincipalName: string; Token: string }> },
+		config: TokenConfig & {
+			getNewToken?: () => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
+		},
 	): Promise<string> {
 		const host = new URL(options.siteUrl).host;
 
