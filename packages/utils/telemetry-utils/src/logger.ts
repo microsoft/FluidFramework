@@ -750,8 +750,10 @@ export class PerformanceEvent {
 
 		if (
 			typeof window === "object" &&
-			window?.performance?.mark !== undefined &&
-			window?.performance?.mark !== null
+			typeof window?.performance?.mark === "function" &&
+			typeof window?.performance?.measure === "function" &&
+			typeof window?.performance?.clearMarks === "function" &&
+			typeof window?.performance?.clearMeasures === "function"
 		) {
 			this.startMark = `${event.eventName}-start`;
 			window.performance.mark(this.startMark);
