@@ -344,11 +344,11 @@ export class ModularChangeFamily
 			}
 		}
 
-		composeRootRenames(
+		adjustComposedRenames(
 			change1,
 			change2,
 			crossFieldTable.composedRootNodes,
-			crossFieldTable.composedRenames,
+			crossFieldTable.attachDetachRenames,
 			crossFieldTable.deletedRenames,
 		);
 
@@ -2675,7 +2675,7 @@ function newComposeTable(
 		composedNodes: new Set(),
 		movedNodeToParent: newChangeAtomIdBTree(),
 		composedRootNodes,
-		composedRenames: newChangeAtomIdTransform(),
+		attachDetachRenames: newChangeAtomIdTransform(),
 		deletedRenames: newChangeAtomIdRangeMap(),
 		addedCrossFieldKeys: newCrossFieldRangeTable(),
 		removedCrossFieldKeys,
@@ -2700,7 +2700,16 @@ interface ComposeTable {
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly movedNodeToParent: ChangeAtomIdBTree<NodeLocation>;
 	readonly composedRootNodes: RootNodeTable;
-	readonly composedRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	/**
+	 * Maps from attach ID in change1 to a corresponding detach ID in change2.
+	 */
+	readonly attachDetachRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	/**
+	 * The set of root IDs (in the input context of the composed change)
+	 * which should have any associated rename removed from the composed change.
+	 */
 	readonly deletedRenames: ChangeAtomIdRangeMap<true>;
 	readonly removedCrossFieldKeys: CrossFieldRangeTable<boolean>;
 	readonly addedCrossFieldKeys: CrossFieldRangeTable<FieldId>;
@@ -3260,7 +3269,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			if (!treatNewAsRedundantPin) {
 				// These nodes were detached in the base change's input context,
 				// so the net effect of the two changes is a rename.
-				this.table.composedRenames.set(baseAttachId, baseDetachEntry.length, newDetachId);
+				this.table.attachDetachRenames.set(baseAttachId, baseDetachEntry.length, newDetachId);
 			}
 
 			this.table.removedCrossFieldKeys.set(
@@ -3272,7 +3281,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// The base change moves these nodes.
 			// XXX: Can this be combined with duplicated line in prior branch.
 			if (!treatNewAsRedundantPin) {
-				this.table.composedRenames.set(baseAttachId, countToProcess, newDetachId);
+				this.table.attachDetachRenames.set(baseAttachId, countToProcess, newDetachId);
 			}
 
 			if (!areEqualChangeAtomIds(baseAttachId, newDetachId)) {
@@ -4435,9 +4444,10 @@ function composeRootTables(
 	composedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
-	// Composition of renames is handled later, in `composeRootRenames`.
 	// TODO: Refactor to avoid leaving composed rename tables in an unfinished state.
 	const composedTable = cloneRootTable(change1.rootNodes);
+
+	composeRootRenames(change1, change2, composedTable);
 
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
 		const detachId2 = { revision: revision2, localId: id2 };
@@ -4535,61 +4545,52 @@ function composeOutputDetachLocation(
 	}
 }
 
-/**
- * This assumes that `composedRoots` starts with the renames from `change1`.
- */
 function composeRootRenames(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
 	composedRoots: RootNodeTable,
-	composedRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
+): void {
+	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
+		// `change1` may also have a rename to `renameEntry.value`, in which case it must refer to a different node.
+		// We delete any such rename for now to avoid colliding with the rename currently being processed.
+		// In the case that we delete a rename, `change2` must have a rename from `renameEntry.value`,
+		// which will compose with the rename we delete.
+		deleteNodeRenameTo(composedRoots, renameEntry.value, renameEntry.length);
+		composeRename(
+			composedRoots,
+			renameEntry.start,
+			renameEntry.value,
+			renameEntry.length,
+			change1.rootNodes,
+			change2.rootNodes,
+			RenameSource.Change2,
+		);
+	}
+}
+
+function adjustComposedRenames(
+	change1: ModularChangeset,
+	change2: ModularChangeset,
+	composedRoots: RootNodeTable,
+	attachDetachRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
 	deletedRenames: ChangeAtomIdRangeMap<true>,
 ): void {
-	for (const entry of composedRenames.entries()) {
+	for (const entry of attachDetachRenames.entries()) {
 		// XXX: Detach location
-		appendNodeRename(
+		composeRename(
 			composedRoots,
 			entry.start,
 			entry.value,
 			entry.length,
 			change1.rootNodes,
-			undefined,
-		);
-	}
-
-	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
-		composeRename(
-			change2,
-			composedRoots,
-			renameEntry.start,
-			renameEntry.value,
-			renameEntry.length,
+			change2.rootNodes,
+			RenameSource.AttachDetach,
 		);
 	}
 
 	for (const entry of deletedRenames.entries()) {
 		deleteNodeRenameFrom(composedRoots, entry.start, entry.length);
 	}
-}
-
-function composeRename(
-	change2: ModularChangeset,
-	mergedTable: RootNodeTable,
-	oldId: ChangeAtomId,
-	newId: ChangeAtomId,
-	count: number,
-): void {
-	// XXX: Cleanup detachLocation if nodes are now attached in input context.
-	// XXX: Use change1's detachLocation if it has one.
-	// The nodes were detached before `change`, so we append this rename.
-	appendNodeRename(
-		mergedTable,
-		oldId,
-		newId,
-		count,
-		mergedTable,
-		change2.rootNodes.detachLocations.getFirst(oldId, count).value,
-	);
 }
 
 export function cloneRootTable(table: RootNodeTable): RootNodeTable {
@@ -4801,41 +4802,79 @@ function deleteNodeRenameTo(roots: RootNodeTable, id: ChangeAtomId, count: numbe
 	}
 }
 
-function appendNodeRename(
+enum RenameSource {
+	Change2,
+	AttachDetach,
+}
+
+function composeRename(
 	composedTable: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	count: number,
-	change1Table: RootNodeTable,
-	detachLocation: FieldId | undefined,
+	change1Roots: RootNodeTable,
+	change2Roots: RootNodeTable,
+	renameSource: RenameSource,
 ): void {
 	let countToProcess = count;
-	const rename1Entry = change1Table.newToOldId.getFirst(oldId, countToProcess);
+
+	let composedOldId = oldId;
+	const rename1Entry = change1Roots.newToOldId.getFirst(oldId, countToProcess);
 	countToProcess = rename1Entry.length;
 
 	if (rename1Entry.value !== undefined) {
-		deleteNodeRenameFrom(composedTable, rename1Entry.value, countToProcess);
+		composedOldId = rename1Entry.value;
+		deleteNodeRenameFrom(composedTable, composedOldId, countToProcess);
 	}
+
+	let composedNewId = newId;
+
+	// If the rename is from change2, we don't want to compose it with other renames from change2.
+	// Note that a single changeset can have renames which would appear to compose with each other.
+	// If a changeset has renames [A -> B] and [B -> C], they represent renames of two different nodes,
+	// with the [B -> C] rename taking place first.
+	// They do not represent the rename [A -> C].
+	if (renameSource !== RenameSource.Change2) {
+		const rename2Entry = change2Roots.oldToNewId.getFirst(newId, countToProcess);
+		countToProcess = rename2Entry.length;
+
+		if (rename2Entry.value !== undefined) {
+			composedNewId = rename2Entry.value;
+			deleteNodeRenameTo(composedTable, composedNewId, countToProcess);
+		}
+	}
+
+	// XXX: Cleanup detachLocation if nodes are now attached in input context.
+	const detachLocationEntry1 = change1Roots.detachLocations.getFirst(
+		composedOldId,
+		countToProcess,
+	);
+	countToProcess = detachLocationEntry1.length;
+
+	const detachLocationEntry2 = change2Roots.detachLocations.getFirst(oldId, countToProcess);
+	countToProcess = detachLocationEntry2.length;
 
 	addNodeRename(
 		composedTable,
-		rename1Entry.value ?? oldId,
-		newId,
+		composedOldId,
+		composedNewId,
 		countToProcess,
-		detachLocation,
+		detachLocationEntry1.value ?? detachLocationEntry2.value,
 	);
 
 	tryRemoveDetachLocation(composedTable, newId, countToProcess);
+	tryRemoveDetachLocation(composedTable, composedNewId, countToProcess);
 
 	if (countToProcess < count) {
 		const countRemaining = count - countToProcess;
-		appendNodeRename(
+		composeRename(
 			composedTable,
 			offsetChangeAtomId(oldId, countToProcess),
 			offsetChangeAtomId(newId, countToProcess),
 			countRemaining,
-			change1Table,
-			detachLocation,
+			change1Roots,
+			change2Roots,
+			renameSource,
 		);
 	}
 }
