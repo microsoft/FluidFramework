@@ -5,53 +5,88 @@
 
 /**
  * Generates HTML dashboard files for build performance observability.
+ * Uses EJS templating to generate the final HTML from separate CSS, JS, and template files.
  */
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import ejs from "ejs";
+
 import type { BuildPerfMode } from "./types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Directory containing the bundled template files (dashboard-template.html).
+ * Directory containing the bundled template files (dashboard.ejs, dashboard.css, dashboard.js).
  */
 export const TEMPLATES_DIR = path.resolve(__dirname, "templates");
 
 /**
- * Generate a standalone HTML dashboard by injecting data into the template.
+ * Generate a standalone HTML dashboard by rendering the EJS template
+ * with CSS, JS, and data inlined.
  *
- * @param templatePath - Path to the dashboard-template.html file.
+ * @param templatePath - Path to the dashboard.ejs file.
  * @param dataJson - Stringified JSON data to inject.
  * @param mode - The build perf mode ("public" or "internal").
- * @returns The generated HTML string with data inlined.
+ * @returns The generated HTML string with all assets inlined.
  */
 export function generateStandaloneHtml(
 	templatePath: string,
 	dataJson: string,
 	mode: BuildPerfMode,
 ): string {
-	let html = readFileSync(templatePath, "utf8");
-
 	// Validate JSON before inlining
 	JSON.parse(dataJson);
 
 	// Sanitize for safe embedding in <script> tag: escape </script> sequences
-	const sanitizedData = dataJson.replace(/<\//g, "<\\/");
+	const sanitizedDataJson = dataJson.replace(/<\//g, "<\\/");
 
-	// Replace the placeholder token with actual variables
-	const placeholder = "/* __INJECT_STANDALONE_DATA__ */";
-	const injection = `const STANDALONE_MODE = '${mode}';\n        const INLINED_DATA = ${sanitizedData};`;
+	return renderTemplate(templatePath, {
+		standalone: true,
+		mode,
+		sanitizedDataJson,
+	});
+}
 
-	if (!html.includes(placeholder)) {
-		throw new Error(
-			`Template placeholder "${placeholder}" not found in ${templatePath}. Was the template reformatted?`,
-		);
-	}
+/**
+ * Generate a multi-mode HTML dashboard for Azure Static Web Apps deployment.
+ * The generated HTML fetches data from `/data/*.json` at runtime instead of
+ * inlining it, and shows tabs for both public and internal modes.
+ *
+ * @param templatePath - Path to the dashboard.ejs file.
+ * @returns The generated HTML string (no data inlined).
+ */
+export function generateAswaHtml(templatePath: string): string {
+	return renderTemplate(templatePath, {
+		standalone: false,
+	});
+}
 
-	html = html.replace(placeholder, injection);
+/**
+ * Render the EJS dashboard template with the given variables.
+ */
+function renderTemplate(templatePath: string, vars: Record<string, unknown>): string {
+	const templateDir = path.dirname(templatePath);
+	const cssContent = readFileSync(path.join(templateDir, "dashboard.css"), "utf8");
+	// Read the tsc-compiled JS and strip module artifacts — this is inlined
+	// in a <script> tag, not loaded as an ES module.
+	const jsContent = readFileSync(path.join(templateDir, "dashboard.js"), "utf8")
+		.split("\n")
+		.filter(
+			(line) =>
+				line.trim() !== '"use strict";' &&
+				line.trim() !== "export {};" &&
+				!line.startsWith("//# sourceMappingURL="),
+		)
+		.join("\n")
+		.trimEnd();
+	const ejsTemplate = readFileSync(templatePath, "utf8");
 
-	return html;
+	return ejs.render(ejsTemplate, {
+		...vars,
+		cssContent,
+		jsContent,
+	});
 }

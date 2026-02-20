@@ -10,7 +10,7 @@ export type {
 } from "./adoClient.js";
 export { fetchBuilds, fetchTimelines } from "./adoClient.js";
 export { BUILD_PERF_CONFIG } from "./config.js";
-export { generateStandaloneHtml, TEMPLATES_DIR } from "./htmlGenerator.js";
+export { generateAswaHtml, generateStandaloneHtml, TEMPLATES_DIR } from "./htmlGenerator.js";
 export {
 	calcDurationMins,
 	calcDurationTrend,

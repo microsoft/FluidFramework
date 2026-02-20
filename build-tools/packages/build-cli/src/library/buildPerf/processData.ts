@@ -26,7 +26,9 @@ import type {
  */
 export function parseAdoTime(timestamp: string | undefined | null): Date | null {
 	if (!timestamp) return null;
-	return new Date(timestamp);
+	const date = new Date(timestamp);
+	if (isNaN(date.getTime())) return null;
+	return date;
 }
 
 /**
@@ -195,8 +197,8 @@ export function calcDurationTrend(builds: ProcessedBuild[]): DurationTrendPoint[
 	return Object.entries(byDate)
 		.map(([date, buildInfos]) => {
 			const durations = buildInfos.map((b) => b.duration);
-			const minDuration = Math.min(...durations);
-			const maxDuration = Math.max(...durations);
+			const minDuration = durations.reduce((a, b) => Math.min(a, b), Infinity);
+			const maxDuration = durations.reduce((a, b) => Math.max(a, b), -Infinity);
 			const minBuild = buildInfos.find((b) => b.duration === minDuration);
 			const maxBuild = buildInfos.find((b) => b.duration === maxDuration);
 			return {
@@ -266,6 +268,12 @@ export function processTimelines(timelines: Record<string, AdoTimeline>): {
 }
 
 /**
+ * Keys reserved for metadata in trend data entries.
+ * Any stage/task names matching these are excluded to prevent data corruption.
+ */
+const RESERVED_TREND_KEYS = new Set(["date", "buildCount", "buildIds"]);
+
+/**
  * Calculate stage duration trend over time (for stacked bar chart).
  */
 export function calcStageDurationTrend(
@@ -309,7 +317,7 @@ export function calcStageDurationTrend(
 		}
 	}
 
-	const stageNames = [...allStages].sort();
+	const stageNames = [...allStages].filter((name) => !RESERVED_TREND_KEYS.has(name)).sort();
 	const trendData = dates.map((date) => {
 		const entry: Record<string, unknown> = {
 			date,
@@ -398,7 +406,10 @@ export function calcTaskDurationTrend(
 		}
 		taskAvgs[task] = count > 0 ? total / count : 0;
 	}
-	const taskNames = [...allTasks].sort((a, b) => taskAvgs[b] - taskAvgs[a]).slice(0, 10);
+	const taskNames = [...allTasks]
+		.filter((name) => !RESERVED_TREND_KEYS.has(name))
+		.sort((a, b) => taskAvgs[b] - taskAvgs[a])
+		.slice(0, 10);
 
 	const trendData = dates.map((date) => {
 		const entry: Record<string, unknown> = {

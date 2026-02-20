@@ -5,6 +5,7 @@ Build performance observability commands for collecting, processing, and analyzi
 
 * [`flub build-perf-tools check-thresholds`](#flub-build-perf-tools-check-thresholds)
 * [`flub build-perf-tools collect-data`](#flub-build-perf-tools-collect-data)
+* [`flub build-perf-tools deploy-aswa`](#flub-build-perf-tools-deploy-aswa)
 * [`flub build-perf-tools generate-html`](#flub-build-perf-tools-generate-html)
 
 ## `flub build-perf-tools check-thresholds`
@@ -81,6 +82,39 @@ EXAMPLES
 ```
 
 _See code: [src/commands/build-perf-tools/collect-data.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/build-perf-tools/collect-data.ts)_
+
+## `flub build-perf-tools deploy-aswa`
+
+Manually deploy the build performance dashboard to Azure Static Web Apps.
+
+```
+USAGE
+  $ flub build-perf-tools deploy-aswa --mode public|internal --aswaHostname <value> --deploymentToken <value> --dataDir <value>
+    [-v | --quiet]
+
+FLAGS
+  --aswaHostname=<value>     (required) [env: ASWA_HOSTNAME] Hostname of the Azure Static Web App.
+  --dataDir=<value>          (required) [env: DATA_DIR] Directory containing generated data files (public-data.json /
+                             internal-data.json).
+  --deploymentToken=<value>  (required) [env: SWA_DEPLOYMENT_TOKEN] Azure Static Web Apps deployment token.
+  --mode=<option>            (required) [env: MODE] Pipeline mode: "public" or "internal".
+                             <options: public|internal>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Manually deploy the build performance dashboard to Azure Static Web Apps.
+
+EXAMPLES
+  Deploy dashboard for public mode.
+
+    $ flub build-perf-tools deploy-aswa --mode public --aswaHostname myapp.azurestaticapps.net --dataDir ./data \
+      --deploymentToken $SWA_TOKEN
+```
+
+_See code: [src/commands/build-perf-tools/deploy-aswa.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/build-perf-tools/deploy-aswa.ts)_
 
 ## `flub build-perf-tools generate-html`
 

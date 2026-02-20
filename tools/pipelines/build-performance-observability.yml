@@ -49,9 +49,6 @@ variables:
   # Project to query (same as where pipeline runs)
   - name: targetProject
     value: $(System.TeamProject)
-  # GitHub repository for source links
-  - name: githubRepo
-    value: microsoft/FluidFramework
   # Max concurrent API requests when fetching timeline data
   - name: parallelJobs
     value: 20

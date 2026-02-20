@@ -10,7 +10,9 @@ import {
 	calcDurationMins,
 	calcDurationTrend,
 	calcPeriodChange,
+	calcStageDurationTrend,
 	calcSummary,
+	calcTaskDurationTrend,
 	filterBuilds,
 	getBuildUrl,
 	getSourceText,
@@ -67,6 +69,10 @@ describe("buildPerf processData", () => {
 
 		it("returns null for empty string", () => {
 			expect(parseAdoTime("")).to.equal(null);
+		});
+
+		it("returns null for invalid date string", () => {
+			expect(parseAdoTime("not-a-date")).to.equal(null);
 		});
 
 		it("parses a valid ISO timestamp", () => {
@@ -416,6 +422,360 @@ describe("buildPerf processData", () => {
 			expect(stagePerformance).to.have.length(1);
 			// Average of 30 and 60 = 45
 			expect(stagePerformance[0]!.avgDuration).to.equal(45);
+		});
+	});
+
+	describe("calcPeriodChange (additional edge cases)", () => {
+		it("calculates negative change correctly", () => {
+			const trend: DurationTrendPoint[] = [
+				{
+					date: "2024-06-01",
+					minDuration: 100,
+					avgDuration: 120,
+					maxDuration: 140,
+					minBuildId: 1,
+					maxBuildId: 2,
+				},
+				{
+					date: "2024-06-10",
+					minDuration: 80,
+					avgDuration: 96,
+					maxDuration: 110,
+					minBuildId: 3,
+					maxBuildId: 4,
+				},
+			];
+			const change = calcPeriodChange(trend, 3);
+			// 96 vs 120 = -20% decrease
+			expect(change).to.equal(-20);
+		});
+
+		it("returns 0 when previous average is zero", () => {
+			const trend: DurationTrendPoint[] = [
+				{
+					date: "2024-06-01",
+					minDuration: 0,
+					avgDuration: 0,
+					maxDuration: 0,
+					minBuildId: 1,
+					maxBuildId: 2,
+				},
+				{
+					date: "2024-06-10",
+					minDuration: 50,
+					avgDuration: 60,
+					maxDuration: 70,
+					minBuildId: 3,
+					maxBuildId: 4,
+				},
+			];
+			const change = calcPeriodChange(trend, 3);
+			expect(change).to.equal(0);
+		});
+
+		it("handles fractional percentage changes", () => {
+			const trend: DurationTrendPoint[] = [
+				{
+					date: "2024-06-01",
+					minDuration: 80,
+					avgDuration: 100,
+					maxDuration: 120,
+					minBuildId: 1,
+					maxBuildId: 2,
+				},
+				{
+					date: "2024-06-10",
+					minDuration: 90,
+					avgDuration: 110,
+					maxDuration: 130,
+					minBuildId: 3,
+					maxBuildId: 4,
+				},
+			];
+			const change = calcPeriodChange(trend, 3);
+			// 110 vs 100 = 10%
+			expect(change).to.be.closeTo(10, 0.01);
+		});
+	});
+
+	describe("calcStageDurationTrend", () => {
+		function makeTimelineWithStages(
+			stages: { name: string; startTime: string; finishTime: string }[],
+		): AdoTimeline {
+			return {
+				records: stages.map((s, i) => ({
+					id: `stage-${i}`,
+					type: "Stage",
+					name: s.name,
+					startTime: s.startTime,
+					finishTime: s.finishTime,
+				})),
+			};
+		}
+
+		it("groups stage durations by date", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T10:00:00Z" }),
+				makeBuild({ id: 2, startTime: "2024-06-02T10:00:00Z" }),
+			];
+			const timelines: Record<string, AdoTimeline> = {
+				"1": makeTimelineWithStages([
+					{
+						name: "Build",
+						startTime: "2024-06-01T10:00:00Z",
+						finishTime: "2024-06-01T10:30:00Z",
+					},
+				]),
+				"2": makeTimelineWithStages([
+					{
+						name: "Build",
+						startTime: "2024-06-02T10:00:00Z",
+						finishTime: "2024-06-02T11:00:00Z",
+					},
+				]),
+			};
+			const result = calcStageDurationTrend(builds, timelines);
+			expect(result.stageNames).to.include("Build");
+			expect(result.trendData).to.have.length(2);
+			expect(result.trendData[0]!.date).to.equal("2024-06-01");
+			expect(result.trendData[1]!.date).to.equal("2024-06-02");
+			// Day 1: 30 min, Day 2: 60 min
+			expect(result.trendData[0]!.Build).to.equal(30);
+			expect(result.trendData[1]!.Build).to.equal(60);
+		});
+
+		it("averages multiple builds on the same day", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T08:00:00Z" }),
+				makeBuild({ id: 2, startTime: "2024-06-01T14:00:00Z" }),
+			];
+			const timelines: Record<string, AdoTimeline> = {
+				"1": makeTimelineWithStages([
+					{
+						name: "Build",
+						startTime: "2024-06-01T08:00:00Z",
+						finishTime: "2024-06-01T08:30:00Z",
+					},
+				]),
+				"2": makeTimelineWithStages([
+					{
+						name: "Build",
+						startTime: "2024-06-01T14:00:00Z",
+						finishTime: "2024-06-01T15:00:00Z",
+					},
+				]),
+			};
+			const result = calcStageDurationTrend(builds, timelines);
+			expect(result.trendData).to.have.length(1);
+			// Average of 30 and 60 = 45
+			expect(result.trendData[0]!.Build).to.equal(45);
+			expect(result.trendData[0]!.buildCount).to.equal(2);
+		});
+
+		it("handles multiple stages", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T10:00:00Z" }),
+			];
+			const timelines: Record<string, AdoTimeline> = {
+				"1": makeTimelineWithStages([
+					{
+						name: "Build",
+						startTime: "2024-06-01T10:00:00Z",
+						finishTime: "2024-06-01T10:30:00Z",
+					},
+					{
+						name: "Test",
+						startTime: "2024-06-01T10:30:00Z",
+						finishTime: "2024-06-01T11:00:00Z",
+					},
+				]),
+			};
+			const result = calcStageDurationTrend(builds, timelines);
+			expect(result.stageNames).to.have.length(2);
+			expect(result.stageNames).to.include("Build");
+			expect(result.stageNames).to.include("Test");
+			expect(result.trendData[0]!.Build).to.equal(30);
+			expect(result.trendData[0]!.Test).to.equal(30);
+		});
+
+		it("returns empty when no timelines match", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T10:00:00Z" }),
+			];
+			const result = calcStageDurationTrend(builds, {});
+			expect(result.stageNames).to.have.length(0);
+			expect(result.trendData).to.have.length(0);
+		});
+
+		it("sorts trend data by date", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 2, startTime: "2024-06-03T10:00:00Z" }),
+				makeBuild({ id: 1, startTime: "2024-06-01T10:00:00Z" }),
+			];
+			const timelines: Record<string, AdoTimeline> = {
+				"1": makeTimelineWithStages([
+					{
+						name: "Build",
+						startTime: "2024-06-01T10:00:00Z",
+						finishTime: "2024-06-01T10:30:00Z",
+					},
+				]),
+				"2": makeTimelineWithStages([
+					{
+						name: "Build",
+						startTime: "2024-06-03T10:00:00Z",
+						finishTime: "2024-06-03T11:00:00Z",
+					},
+				]),
+			};
+			const result = calcStageDurationTrend(builds, timelines);
+			expect(result.trendData[0]!.date).to.equal("2024-06-01");
+			expect(result.trendData[1]!.date).to.equal("2024-06-03");
+		});
+	});
+
+	describe("calcTaskDurationTrend", () => {
+		function makeTimelineWithTasks(
+			stages: {
+				name: string;
+				startTime: string;
+				finishTime: string;
+				tasks: { name: string; startTime: string; finishTime: string }[];
+			}[],
+		): AdoTimeline {
+			const records: AdoTimeline["records"] = [];
+			for (const [i, stage] of stages.entries()) {
+				const stageId = `stage-${i}`;
+				records.push({
+					id: stageId,
+					type: "Stage",
+					name: stage.name,
+					startTime: stage.startTime,
+					finishTime: stage.finishTime,
+				});
+				for (const [j, task] of stage.tasks.entries()) {
+					records.push({
+						id: `task-${i}-${j}`,
+						parentId: stageId,
+						type: "Phase",
+						name: task.name,
+						startTime: task.startTime,
+						finishTime: task.finishTime,
+					});
+				}
+			}
+			return { records };
+		}
+
+		it("groups task durations by date with stage prefix", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T10:00:00Z" }),
+			];
+			const timelines: Record<string, AdoTimeline> = {
+				"1": makeTimelineWithTasks([
+					{
+						name: "Build",
+						startTime: "2024-06-01T10:00:00Z",
+						finishTime: "2024-06-01T11:00:00Z",
+						tasks: [
+							{
+								name: "Compile",
+								startTime: "2024-06-01T10:00:00Z",
+								finishTime: "2024-06-01T10:20:00Z",
+							},
+							{
+								name: "Lint",
+								startTime: "2024-06-01T10:20:00Z",
+								finishTime: "2024-06-01T10:30:00Z",
+							},
+						],
+					},
+				]),
+			};
+			const result = calcTaskDurationTrend(builds, timelines);
+			expect(result.taskNames).to.include("Build \u203A Compile");
+			expect(result.taskNames).to.include("Build \u203A Lint");
+			expect(result.trendData).to.have.length(1);
+			expect(result.trendData[0]!["Build \u203A Compile"]).to.equal(20);
+			expect(result.trendData[0]!["Build \u203A Lint"]).to.equal(10);
+		});
+
+		it("limits to top 10 tasks by average duration", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T10:00:00Z" }),
+			];
+			// Create 12 tasks with different durations
+			const tasks = Array.from({ length: 12 }, (_, i) => ({
+				name: `Task${i}`,
+				startTime: "2024-06-01T10:00:00Z",
+				finishTime: new Date(
+					new Date("2024-06-01T10:00:00Z").getTime() + (i + 1) * 60000,
+				).toISOString(),
+			}));
+			const timelines: Record<string, AdoTimeline> = {
+				"1": makeTimelineWithTasks([
+					{
+						name: "Build",
+						startTime: "2024-06-01T10:00:00Z",
+						finishTime: "2024-06-01T12:00:00Z",
+						tasks,
+					},
+				]),
+			};
+			const result = calcTaskDurationTrend(builds, timelines);
+			expect(result.taskNames).to.have.length(10);
+			// The top 10 should be sorted by duration descending — Task11 (12min) should be first
+			expect(result.taskNames[0]).to.equal("Build \u203A Task11");
+		});
+
+		it("returns empty when no timelines match", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T10:00:00Z" }),
+			];
+			const result = calcTaskDurationTrend(builds, {});
+			expect(result.taskNames).to.have.length(0);
+			expect(result.trendData).to.have.length(0);
+		});
+
+		it("averages task durations across builds on the same day", () => {
+			const builds: AdoBuildRecord[] = [
+				makeBuild({ id: 1, startTime: "2024-06-01T08:00:00Z" }),
+				makeBuild({ id: 2, startTime: "2024-06-01T14:00:00Z" }),
+			];
+			const timelines: Record<string, AdoTimeline> = {
+				"1": makeTimelineWithTasks([
+					{
+						name: "Build",
+						startTime: "2024-06-01T08:00:00Z",
+						finishTime: "2024-06-01T09:00:00Z",
+						tasks: [
+							{
+								name: "Compile",
+								startTime: "2024-06-01T08:00:00Z",
+								finishTime: "2024-06-01T08:20:00Z",
+							},
+						],
+					},
+				]),
+				"2": makeTimelineWithTasks([
+					{
+						name: "Build",
+						startTime: "2024-06-01T14:00:00Z",
+						finishTime: "2024-06-01T15:00:00Z",
+						tasks: [
+							{
+								name: "Compile",
+								startTime: "2024-06-01T14:00:00Z",
+								finishTime: "2024-06-01T14:40:00Z",
+							},
+						],
+					},
+				]),
+			};
+			const result = calcTaskDurationTrend(builds, timelines);
+			// Average of 20min and 40min = 30min
+			expect(result.trendData[0]!["Build \u203A Compile"]).to.equal(30);
+			expect(result.trendData[0]!.buildCount).to.equal(2);
 		});
 	});
 

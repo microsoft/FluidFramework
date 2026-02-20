@@ -59,6 +59,8 @@ async function runWithConcurrency<T>(
 	limit: number,
 	fn: (item: T) => Promise<void>,
 ): Promise<void> {
+	if (items.length === 0) return;
+	const effectiveLimit = Math.max(1, limit);
 	let index = 0;
 	async function worker(): Promise<void> {
 		while (index < items.length) {
@@ -66,7 +68,9 @@ async function runWithConcurrency<T>(
 			await fn(items[currentIndex]);
 		}
 	}
-	const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+	const workers = Array.from({ length: Math.min(effectiveLimit, items.length) }, () =>
+		worker(),
+	);
 	await Promise.all(workers);
 }
 

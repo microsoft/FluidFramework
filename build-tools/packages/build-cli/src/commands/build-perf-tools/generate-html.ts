@@ -78,7 +78,7 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 		this.log(`Found data file: ${dataFile} (${fileSize} bytes)`);
 
 		// Read data and generate standalone HTML
-		const templatePath = path.join(TEMPLATES_DIR, "dashboard-template.html");
+		const templatePath = path.join(TEMPLATES_DIR, "dashboard.ejs");
 		const dataJson = readFileSync(dataFile, "utf8").trim();
 
 		const html = generateStandaloneHtml(templatePath, dataJson, mode);
