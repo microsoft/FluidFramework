@@ -2687,7 +2687,11 @@ describe("Encoding", () => {
 		],
 	};
 
-	makeEncodingTestSuite(family.codecs, encodingTestData, assertModularChangesetsEqual, [3, 4]);
+	makeEncodingTestSuite(family.codecs, encodingTestData, assertModularChangesetsEqual, [
+		ModularChangeFormatVersion.v3,
+		ModularChangeFormatVersion.v4,
+		ModularChangeFormatVersion.v5,
+	]);
 
 	// In the detached root format, we no longer encode information about root locations.
 	makeEncodingTestSuite(
