@@ -85,7 +85,7 @@ jobs:
                 echo "Listing files in directory: $(pwd)"
                 ls -la
                 echo "Attempting install of build tools from build tools pipeline artifact tarball"
-                npm i -g ./*.tgz
+                npm i -g ./*.tgz @rushstack/node-core-library@5.19.1
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
