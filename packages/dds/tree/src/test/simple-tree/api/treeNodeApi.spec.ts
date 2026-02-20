@@ -15,6 +15,7 @@ import {
 import { FluidClientVersion } from "../../../codec/index.js";
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
+	currentObserver,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
@@ -286,6 +287,11 @@ describe("treeNodeApi", () => {
 					() => Tree.parent(y),
 				);
 
+				TreeAlpha.trackObservations(
+					() => log.push("deep"),
+					() => currentObserver?.observeNodeDeep(getInnerNode(node)),
+				);
+
 				log.push("change: x.value");
 				node.x.value = 3;
 
@@ -296,10 +302,12 @@ describe("treeNodeApi", () => {
 					"change: x.value",
 					"node.x.value",
 					"x.value",
+					"deep",
 					"change: y",
 					"node.y",
 					"node.y.value",
 					"y.parent",
+					"deep",
 				]);
 			});
 
