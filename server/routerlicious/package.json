@@ -151,8 +151,6 @@
 		],
 		"overrides": {
 			"@types/node": "^24.0.0",
-			"zookeeper": "^7.2.0",
-			"nan": "2.22.2",
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
 			"@typescript-eslint/project-service": "8.52.0",
 			"@babel/core": "7.27.7",
@@ -170,10 +168,12 @@
 			"@babel/types": "7.27.7",
 			"@babel/runtime": "7.27.6",
 			"eslint": "^9.39.2",
+			"nan": "2.22.2",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.4"
+			"socket.io-parser": "^4.2.4",
+			"zookeeper": "^7.2.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime.",
