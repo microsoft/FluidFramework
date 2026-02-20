@@ -62,6 +62,8 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 
 					// Get plain text from Quill and preserve trailing newline
 					const newText = quill.getText();
+					// TODO: Consider using delta from Quill to compute a more minimal update,
+					// and maybe add a debugAssert that the delta actually gets the strings synchronized.
 					syncTextToTree(root, newText);
 
 					isUpdatingRef.current = false;
