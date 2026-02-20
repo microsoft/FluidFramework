@@ -5,7 +5,6 @@
 		"strictNullChecks": true,
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
 }

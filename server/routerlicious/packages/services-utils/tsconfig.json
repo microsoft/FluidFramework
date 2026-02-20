@@ -6,7 +6,6 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"types": ["mocha"],
-		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
 }

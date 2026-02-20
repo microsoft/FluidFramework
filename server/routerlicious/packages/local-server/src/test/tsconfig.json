@@ -6,7 +6,6 @@
 		"types": ["node", "mocha"],
 		"declaration": false,
 		"declarationMap": false,
-		"skipLibCheck": true,
 	},
 	"include": ["./**/*"],
 	"references": [

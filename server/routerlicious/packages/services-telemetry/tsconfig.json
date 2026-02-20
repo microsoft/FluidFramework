@@ -7,7 +7,6 @@
 		"outDir": "./dist",
 		"types": ["node"],
 		"composite": true,
-		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
 }
