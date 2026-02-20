@@ -28,10 +28,11 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"flub": "../build-tools/bin/flub/run.mjs"
+		"flub": "bin/run.mjs"
 	},
 	"files": [
-		"/lib"
+		"/lib",
+		"/bin"
 	],
 	"scripts": {
 		"build": "echo stub",

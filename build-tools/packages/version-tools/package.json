@@ -22,10 +22,11 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"fluv": "../build-tools/bin/fluv/run.cjs"
+		"fluv": "bin/run.cjs"
 	},
 	"files": [
-		"/lib"
+		"/lib",
+		"/bin"
 	],
 	"scripts": {
 		"build": "echo stub",

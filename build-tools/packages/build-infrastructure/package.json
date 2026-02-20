@@ -22,10 +22,11 @@
 	"main": "lib/index.js",
 	"types": "./lib/index.d.ts",
 	"bin": {
-		"buildProject": "../build-tools/bin/buildProject/run.mjs"
+		"buildProject": "bin/run.mjs"
 	},
 	"files": [
-		"/lib"
+		"/lib",
+		"/bin"
 	],
 	"scripts": {
 		"build": "echo stub",
