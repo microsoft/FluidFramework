@@ -121,7 +121,12 @@ jobs:
                 ls -la
                 pnpm --version
 
-                SHELL=$SHELL pnpm setup
+                # Set up pnpm global bin directory explicitly
+                export PNPM_HOME="$HOME/.local/share/pnpm"
+                mkdir -p "$PNPM_HOME"
+                export PATH="$PNPM_HOME:$PATH"
+                pnpm config set global-bin-dir "$PNPM_HOME"
+
                 echo "Installing build tools from tarballs (uses overrides from package.json)"
                 pnpm install ./*.tgz
 
@@ -135,6 +140,13 @@ jobs:
                     pnpm link --global "node_modules/$pkg_name"
                   fi
                 done
+
+                # Verify the tools are available
+                echo "Global bin directory contents:"
+                ls -la "$PNPM_HOME"
+            env:
+              PNPM_HOME: $(HOME)/.local/share/pnpm
+              PATH: $(HOME)/.local/share/pnpm:$(PATH)
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
