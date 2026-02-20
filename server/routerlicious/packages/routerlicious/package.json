@@ -66,7 +66,7 @@
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^18.19.39",
+		"@types/node": "^22",
 		"concurrently": "^9.2.1",
 		"eslint": "~8.57.0",
 		"prettier": "~3.0.3",
