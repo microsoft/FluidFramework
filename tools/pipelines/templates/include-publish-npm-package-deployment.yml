@@ -66,10 +66,8 @@ jobs:
           # We can use this step to add overrides that might be necessary to allow for a correct
           # installation of build-tools from the tarball artifacts produced by the build stage.
           # Since this is a lockfile-less install (ideally we should figure out how to change that),
-          # npm overrides is our recourse when a dependency releases a new version that causes build-tools installation to break.
+          # overrides is one recourse when a dependency releases a new version that causes build-tools installation to break.
           # Current overrides:
-          # - @rushstack/node-core-library 5.19.1: version 5.20.0 broke ESM module resolution in Node.
-          #   https://github.com/microsoft/rushstack/issues/5644
           # - Build-tools packages: map all versions to local tarballs so interdependencies resolve correctly.
           - task: Bash@3
             name: CreatePackageJsonForOverrides
@@ -81,9 +79,9 @@ jobs:
                 set -eu -o pipefail
                 echo "Creating package.json with npm overrides"
 
-                # Manual overrides - add new entries here as needed
+                # Manual overrides - add new entries here as needed, using same syntax supported by the pnpm overrides field
                 manual_overrides='{
-                  "@rushstack/node-core-library": "5.19.1"
+
                 }'
 
                 # Build overrides for local tarballs so interdependencies resolve correctly
