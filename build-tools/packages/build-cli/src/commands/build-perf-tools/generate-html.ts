@@ -13,7 +13,7 @@ import {
 	TEMPLATES_DIR,
 } from "../../library/buildPerf/htmlGenerator.js";
 import type { BuildPerfMode } from "../../library/buildPerf/types.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Generate a standalone HTML dashboard artifact from processed metrics.

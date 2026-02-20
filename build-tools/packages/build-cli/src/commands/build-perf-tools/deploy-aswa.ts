@@ -17,7 +17,7 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 
 import { generateAswaHtml, TEMPLATES_DIR } from "../../library/buildPerf/htmlGenerator.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Manually deploy the build performance dashboard to Azure Static Web Apps.

@@ -13,7 +13,7 @@ import type {
 	ProcessedDataOutput,
 	ThresholdResult,
 } from "../../library/buildPerf/types.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Check build performance thresholds and fail if exceeded.

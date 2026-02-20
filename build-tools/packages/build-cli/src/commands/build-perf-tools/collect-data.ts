@@ -11,7 +11,7 @@ import { Flags } from "@oclif/core";
 import { fetchBuilds, fetchTimelines } from "../../library/buildPerf/adoClient.js";
 import { processRawData } from "../../library/buildPerf/processData.js";
 import type { BuildPerfMode } from "../../library/buildPerf/types.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Collect build performance data from Azure DevOps and generate processed metrics.
