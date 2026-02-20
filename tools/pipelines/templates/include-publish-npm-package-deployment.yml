@@ -65,6 +65,7 @@ jobs:
           # Current overrides:
           # - @rushstack/node-core-library 5.19.1: version 5.20.0 broke ESM module resolution in Node.
           #   https://github.com/microsoft/rushstack/issues/5644
+          # - Build-tools packages: map all versions to local tarballs so interdependencies resolve correctly.
           - task: Bash@3
             name: CreatePackageJsonForOverrides
             displayName: Create package.json with npm overrides
@@ -74,15 +75,31 @@ jobs:
               script: |
                 set -eu -o pipefail
                 echo "Creating package.json with npm overrides"
-                cat > package.json << 'EOF'
-                {
-                  "name": "build-tools-install",
-                  "packageManager": "npm@8.3",
-                  "overrides": {
-                    "@rushstack/node-core-library": "5.19.1"
-                  }
-                }
-                EOF
+
+                # Manual overrides - add new entries here as needed
+                manual_overrides='{
+                  "@rushstack/node-core-library": "5.19.1"
+                }'
+
+                # Build overrides for local tarballs so interdependencies resolve correctly
+                tarball_overrides='{}'
+                for tgz in *.tgz; do
+                  # Extract package.json from tarball and get the package name
+                  pkg_name=$(tar -xzf "$tgz" --to-stdout package/package.json | jq -r '.name')
+                  echo "Adding override for $pkg_name -> file:$tgz"
+                  tarball_overrides=$(echo "$tarball_overrides" | jq --arg name "$pkg_name" --arg file "file:$tgz" '. + {($name): $file}')
+                done
+
+                # Merge manual overrides with tarball overrides and create package.json
+                jq -n \
+                  --argjson manual "$manual_overrides" \
+                  --argjson tarballs "$tarball_overrides" \
+                  '{
+                    "name": "build-tools-install",
+                    "packageManager": "npm@8.3",
+                    "overrides": ($manual + $tarballs)
+                  }' > package.json
+
                 cat package.json
 
           - task: Bash@3
