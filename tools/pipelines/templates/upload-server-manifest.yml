@@ -1,0 +1,168 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: releaseGroup
+  type: string
+
+- name: releaseReportCategory
+  type: string
+  default: ''
+
+- name: blobPathPrefix
+  type: string
+  default: ''
+
+- name: serverManifestPathSegment
+  type: string
+  default: prerelease
+
+jobs:
+  - job:
+    displayName: Upload Release Reports
+    variables:
+    - group: storage-vars
+    - name: version
+      value: $[stageDependencies.build.build.outputs['SetVersion.version']]
+    steps:
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
+    - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+
+    - ${{ if eq(parameters.serverManifestPathSegment, 'prerelease') }}:
+      - task: Bash@3
+        displayName: Generate latest prerelease reports
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            set -eu -o pipefail
+            mkdir generate_release_reports
+            mkdir upload_release_reports
+            flub release report -g ${{ parameters.releaseGroup }} --useCurrentVersion -o generate_release_reports --baseFileName manifest
+            REPORT_VERSION="$(version)" RELEASE_GROUP="${{ parameters.releaseGroup }}" BUILD_SOURCEBRANCH='$(Build.SourceBranch)' node -e '
+            const fs = require("node:fs");
+            const full = JSON.parse(fs.readFileSync("generate_release_reports/manifest.full.json", "utf8"));
+            const releaseGroup = process.env.RELEASE_GROUP;
+            const version = process.env.REPORT_VERSION;
+            const buildSourceBranch = process.env.BUILD_SOURCEBRANCH ?? "";
+            const date = new Date().toISOString().slice(0, 10);
+            const manifest = {};
+            for (const [pkgName, details] of Object.entries(full)) {
+              if (details?.releaseGroup !== releaseGroup) {
+                continue;
+              }
+              manifest[pkgName] = version;
+            }
+
+            const testMatch = version.match(/^0\.0\.0-(\d+)-test(?:-.+)?$/);
+            const buildMatch = version.match(/(\d+)$/);
+            const buildNumber = testMatch?.[1] ?? buildMatch?.[1];
+            if (buildNumber === undefined) {
+              throw new Error(`Unable to determine build number from version: ${version}`);
+            }
+
+            fs.writeFileSync(`upload_release_reports/manifest-${buildNumber}.json`, JSON.stringify(manifest, null, 2));
+
+            if (buildSourceBranch === "refs/heads/main") {
+              fs.writeFileSync(`upload_release_reports/manifest-${date}.json`, JSON.stringify(manifest, null, 2));
+            }
+            '
+
+    - ${{ if eq(parameters.serverManifestPathSegment, 'release') }}:
+      - task: Bash@3
+        displayName: Generate release reports
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            set -eu -o pipefail
+            mkdir generate_release_reports
+            flub release report -g ${{ parameters.releaseGroup }} -o generate_release_reports --baseFileName manifest
+
+      - task: Bash@3
+        displayName: Update release report version
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            set -eu -o pipefail
+            mkdir upload_release_reports
+            flub release report-unreleased --version $(version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
+
+      - task: Bash@3
+        displayName: Filter release report output packages
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            set -eu -o pipefail
+            RELEASE_GROUP="${{ parameters.releaseGroup }}" node -e '
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const full = JSON.parse(fs.readFileSync("generate_release_reports/manifest.full.json", "utf8"));
+            const releaseGroup = process.env.RELEASE_GROUP;
+            const keep = new Set(
+              Object.entries(full)
+                .filter(([, details]) => details?.releaseGroup === releaseGroup)
+                .map(([pkgName]) => pkgName),
+            );
+            const reportsDir = "upload_release_reports";
+            const currentDate = new Date().toISOString().slice(0, 10);
+
+            for (const file of fs.readdirSync(reportsDir)) {
+              const reportPath = path.join(reportsDir, file);
+              if (!fs.statSync(reportPath).isFile()) {
+                continue;
+              }
+              const json = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+              const filtered = Object.fromEntries(Object.entries(json).filter(([pkgName]) => keep.has(pkgName)));
+              fs.writeFileSync(reportPath, JSON.stringify(filtered, null, 2));
+            }
+
+            for (const baseFileName of ["simpleManifest", "manifest"]) {
+              const target = `${baseFileName}-${currentDate}.json`;
+              const matching = fs.readdirSync(reportsDir).filter(
+                (file) => file.startsWith(`${baseFileName}-`) && file.endsWith(".json"),
+              );
+
+              if (matching.length === 0) {
+                continue;
+              }
+
+              const source = matching.includes(target) ? target : matching[0];
+              if (source !== target) {
+                fs.renameSync(path.join(reportsDir, source), path.join(reportsDir, target));
+              }
+
+              for (const file of matching) {
+                if (file === source || file === target) {
+                  continue;
+                }
+                fs.rmSync(path.join(reportsDir, file), { force: true });
+              }
+            }
+            '
+
+    - ${{ if ne(parameters.releaseReportCategory, '') }}:
+      - task: Bash@3
+        displayName: Prefix release report filenames
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            set -eu -o pipefail
+            for file in upload_release_reports/*; do
+                if [ -f "$file" ]; then
+                    mv "$file" "upload_release_reports/${{ parameters.releaseReportCategory }}$(basename "$file")"
+                fi
+            done
+
+    - template: /tools/pipelines/templates/include-upload-release-reports.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        blobPathPrefix: ${{ parameters.blobPathPrefix }}
