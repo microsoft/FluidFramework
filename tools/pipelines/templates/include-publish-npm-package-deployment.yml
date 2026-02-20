@@ -58,6 +58,11 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+            parameters:
+              buildDirectory: $(Pipeline.Workspace)
+              enableCache: false
+
           # We can use this step to add overrides that might be necessary to allow for a correct
           # installation of build-tools from the tarball artifacts produced by the build stage.
           # Since this is a lockfile-less install (ideally we should figure out how to change that),
