@@ -1,0 +1,52 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: blobPathPrefix
+  type: string
+  default: ''
+
+steps:
+- task: CopyFiles@2
+  displayName: Copy release reports
+  inputs:
+    SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+    TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
+
+- task: AzureCLI@2
+  displayName: Upload release reports
+  continueOnError: true
+  inputs:
+    azureSubscription: 'fluid-docs'
+    scriptType: bash
+    workingDirectory: ${{ parameters.buildDirectory }}
+    scriptLocation: inlineScript
+    inlineScript: |
+      blobPrefix='${{ parameters.blobPathPrefix }}'
+      blobPrefix="${blobPrefix#/}"
+      blobPrefix="${blobPrefix%/}"
+      for file in upload_release_reports/*; do
+        fileName="$(basename "$file")"
+        if [ -n "$blobPrefix" ]; then
+          blobName="$blobPrefix/$fileName"
+        else
+          blobName="$fileName"
+        fi
+        # Use 5 minute TTL for manifest files. This could be lengthened significantly
+        # for manifest files for a particular build (immutable) or for those for a particular
+        # release (updates with our release cycle), but using a shorter TTL for all risks only small
+        # perf losses while remaining simple.
+        az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
+      done
+      # Delete generate_release_reports and upload_release_reports folder
+      rm -rf generate_release_reports upload_release_reports
+
+- task: 1ES.PublishPipelineArtifact@1
+  displayName: Publish Artifact - release_reports
+  inputs:
+    targetPath: $(Build.ArtifactStagingDirectory)/release_reports
+    artifactName: release_reports
+    publishLocation: pipeline

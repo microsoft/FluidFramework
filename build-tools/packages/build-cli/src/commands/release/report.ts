@@ -128,6 +128,7 @@ export abstract class ReleaseReportBaseCommand<
 		mode: ReleaseSelectionMode = this.defaultMode,
 		releaseGroupOrPackage?: ReleaseGroup | ReleasePackage,
 		includeDependencies = true,
+		useCurrentVersion = false,
 	): Promise<PackageReleaseData> {
 		const versionData: PackageReleaseData = {};
 
@@ -180,6 +181,7 @@ export abstract class ReleaseReportBaseCommand<
 				rg,
 				rgVerMap?.[rg] ?? context.getVersion(rg),
 				mode,
+				useCurrentVersion,
 			);
 			if (data !== undefined) {
 				versionData[rg] = data;
@@ -192,7 +194,13 @@ export abstract class ReleaseReportBaseCommand<
 
 			ux.action.status = `${pkg} (package)`;
 			// eslint-disable-next-line no-await-in-loop
-			const data = await this.collectRawReleaseData(gitRepo, pkg, repoVersion, mode);
+			const data = await this.collectRawReleaseData(
+				gitRepo,
+				pkg,
+				repoVersion,
+				mode,
+				useCurrentVersion,
+			);
 			if (data !== undefined) {
 				versionData[pkg] = data;
 			}
@@ -216,6 +224,7 @@ export abstract class ReleaseReportBaseCommand<
 		releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 		repoVersion: string,
 		latestReleaseChooseMode?: ReleaseSelectionMode,
+		useCurrentVersion = false,
 	): Promise<RawReleaseData | undefined> {
 		const versions = await repo.getAllVersions(releaseGroupOrPackage);
 
@@ -273,15 +282,26 @@ export abstract class ReleaseReportBaseCommand<
 			case "inRepo": {
 				latestReleasedVersion = sortedByVersion.find((v) => v.version === repoVersion);
 				if (latestReleasedVersion === undefined) {
-					const [, previousMinor] = getPreviousVersions(repoVersion);
-					this.info(
-						`The in-repo version of ${chalk.blue(releaseGroupOrPackage)} is ${chalk.yellow(
-							repoVersion,
-						)}, but there's no release for that version. Picked previous minor version instead: ${chalk.green(
-							previousMinor ?? "undefined",
-						)}. If you want to create a report for a specific version, check out the tag for the release and re-run this command.`,
-					);
-					latestReleasedVersion = sortedByVersion[0];
+					if (useCurrentVersion) {
+						this.info(
+							`The in-repo version of ${chalk.blue(releaseGroupOrPackage)} is ${chalk.yellow(
+								repoVersion,
+							)}, and there's no release for that version. Using the in-repo unreleased version because ${chalk.bold("--useCurrentVersion")} was provided.`,
+						);
+						latestReleasedVersion = {
+							version: repoVersion,
+						};
+					} else {
+						const [, previousMinor] = getPreviousVersions(repoVersion);
+						this.info(
+							`The in-repo version of ${chalk.blue(releaseGroupOrPackage)} is ${chalk.yellow(
+								repoVersion,
+							)}, but there's no release for that version. Picked previous minor version instead: ${chalk.green(
+								previousMinor ?? "undefined",
+							)}. If you want to create a report for a specific version, check out the tag for the release and re-run this command.`,
+						);
+						latestReleasedVersion = sortedByVersion[0];
+					}
 				}
 				break;
 			}
@@ -387,6 +407,12 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
 		}),
+		useCurrentVersion: Flags.boolean({
+			description:
+				"When selecting versions in in-repo mode, use current build versions (including unreleased in-repo versions) instead of falling back to the latest released version.",
+			required: false,
+			default: false,
+		}),
 		...ReleaseReportBaseCommand.flags,
 	};
 
@@ -409,6 +435,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 						: this.defaultMode;
 		assert(mode !== undefined, `mode is undefined`);
 
+		if (flags.useCurrentVersion && mode !== "inRepo") {
+			this.error(`--useCurrentVersion can only be used in in-repo mode.`);
+		}
+
 		this.releaseGroupName = flags.releaseGroup;
 		const context = await this.getContext();
 
@@ -418,6 +448,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			mode,
 			this.releaseGroupName,
 			/* includeDeps */ mode === "inRepo",
+			flags.useCurrentVersion,
 		);
 
 		if (this.releaseData === undefined) {
