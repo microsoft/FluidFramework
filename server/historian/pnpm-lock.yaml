@@ -7,7 +7,7 @@ settings:
 overrides:
   '@types/node': ^24.0.0
   zookeeper: ^7.2.0
-  nan: ^2.22.0
+  nan: 2.22.2
   nanoid: ^3.3.9
   oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
@@ -4508,8 +4508,8 @@ packages:
     resolution: {integrity: sha512-dkEJPVvun4FryqBmZ5KhDo0K9iDXAwn08tMLDinNdRBNPcYEDiWYysLcc6k3mjTMlbP9KyylvRpd4wFtwrT9rw==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  nan@2.25.0:
-    resolution: {integrity: sha512-0M90Ag7Xn5KMLLZ7zliPWP3rT90P6PN+IzVFS0VqmnPktBk3700xUVv8Ikm9EUaUE5SDWdp/BIxdENzVznpm1g==}
+  nan@2.22.2:
+    resolution: {integrity: sha512-DANghxFkS1plDdRsX0X9pm0Z6SJNN6gBdtXfanwoZ8hooC5gosGFSBGRYHUVPz1asKA/kMRqDRdHrluZ61SpBQ==}
 
   napi-build-utils@1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}
@@ -11920,7 +11920,7 @@ snapshots:
 
   mute-stream@3.0.0: {}
 
-  nan@2.25.0: {}
+  nan@2.22.2: {}
 
   napi-build-utils@1.0.2:
     optional: true
@@ -11998,7 +11998,7 @@ snapshots:
   node-rdkafka@3.0.1:
     dependencies:
       bindings: 1.5.0
-      nan: 2.25.0
+      nan: 2.22.2
 
   node-releases@2.0.27: {}
 
@@ -13065,7 +13065,7 @@ snapshots:
   snappy@6.3.5:
     dependencies:
       bindings: 1.5.0
-      nan: 2.25.0
+      nan: 2.22.2
       prebuild-install: 5.3.0
     optional: true
 
@@ -14024,7 +14024,7 @@ snapshots:
       async: 3.2.6
       decompress: 4.2.1
       decompress-targz: 4.1.1
-      nan: 2.25.0
+      nan: 2.22.2
       node-gyp-build: 4.6.0
       shelljs: 0.10.0
 
