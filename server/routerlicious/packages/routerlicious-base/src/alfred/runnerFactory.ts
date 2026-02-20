@@ -5,9 +5,10 @@
 
 import * as services from "@fluidframework/server-services";
 import {
+	createFetchWithAbortSignal,
 	getGlobalAbortControllerContext,
 	type IAlfredTenant,
-	setupAxiosInterceptorsForAbortSignals,
+	setGlobalFetchFn,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import type { IReadinessCheck } from "@fluidframework/server-services-core";
@@ -466,11 +467,16 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
 
 		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
-		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
-		if (axiosAbortSignalEnabled) {
-			setupAxiosInterceptorsForAbortSignals(() =>
-				getGlobalAbortControllerContext().getAbortController(),
+		const abortSignalEnabled =
+			config.get("fetchAbortSignalEnabled") ??
+			config.get("axiosAbortSignalEnabled") ??
+			false;
+		if (abortSignalEnabled) {
+			const wrappedFetch = createFetchWithAbortSignal(
+				globalThis.fetch.bind(globalThis),
+				() => getGlobalAbortControllerContext().getAbortController(),
 			);
+			setGlobalFetchFn(wrappedFetch);
 		}
 
 		return new AlfredResources(

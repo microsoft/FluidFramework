@@ -222,9 +222,6 @@ importers:
       async-mutex:
         specifier: ^0.3.2
         version: 0.3.2
-      axios:
-        specifier: ^1.8.4
-        version: 1.12.2(debug@4.4.3)
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3

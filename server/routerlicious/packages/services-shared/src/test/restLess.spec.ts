@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AxiosRequestConfig } from "axios";
+import type { RequestConfig } from "@fluidframework/server-services-client";
 import { json, urlencoded } from "body-parser";
 import express from "express";
 import request from "supertest";
@@ -101,7 +101,7 @@ describe("RestLess", () => {
 		});
 		supertest = request(app);
 	};
-	const superRequest = (requestConfig: AxiosRequestConfig, translate = false) => {
+	const superRequest = (requestConfig: RequestConfig, translate = false) => {
 		const reqConf = translate ? new RestLessClient().translate(requestConfig) : requestConfig;
 		const req: request.Test = supertest[reqConf.method?.toLowerCase() ?? "get"](
 			reqConf.url ?? "",
@@ -126,7 +126,7 @@ describe("RestLess", () => {
 			});
 			describe("un-translated (backwards compatible)", () => {
 				it("404, GET /resource/:id", async () => {
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "get",
 						url: `/resource/${resource1.id}`,
 						headers: {
@@ -138,7 +138,7 @@ describe("RestLess", () => {
 				});
 				it("200, GET /resource", async () => {
 					database.set(resource1.id, resource1.content);
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "get",
 						url: `/resource/${resource1.id}`,
 						headers: {
@@ -156,7 +156,7 @@ describe("RestLess", () => {
 					});
 				});
 				it("201, POST /resource", async () => {
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "post",
 						url: `/resource`,
 						headers: {
@@ -178,7 +178,7 @@ describe("RestLess", () => {
 				it("200, PUT /resource", async () => {
 					database.set(resource1.id, resource1.content);
 					const newContent = "Goodbye";
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "put",
 						url: `/resource`,
 						headers: {
@@ -203,7 +203,7 @@ describe("RestLess", () => {
 			});
 			describe("translated", () => {
 				it("404 /resource/:id", async () => {
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "get",
 						url: `/resource/${resource1.id}`,
 						headers: {
@@ -215,7 +215,7 @@ describe("RestLess", () => {
 				});
 				it("200, GET /resource/:id", async () => {
 					database.set(resource1.id, resource1.content);
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "get",
 						url: `/resource/${resource1.id}`,
 						headers: {
@@ -233,7 +233,7 @@ describe("RestLess", () => {
 					});
 				});
 				it("201, POST /resource", async () => {
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "post",
 						url: `/resource`,
 						headers: {
@@ -257,7 +257,7 @@ describe("RestLess", () => {
 						id: "large-request",
 						content: "x".repeat(1024 /* 1kb */ * 1024 /* 1mb */ * 10 /* 10mb */), // 10mb of "x"s
 					};
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "post",
 						url: `/resource`,
 						headers: {
@@ -279,7 +279,7 @@ describe("RestLess", () => {
 				it("200, PUT /resource", async () => {
 					database.set(resource1.id, resource1.content);
 					const newContent = "Goodbye";
-					const requestConfig: AxiosRequestConfig = {
+					const requestConfig: RequestConfig = {
 						method: "put",
 						url: `/resource`,
 						headers: {
