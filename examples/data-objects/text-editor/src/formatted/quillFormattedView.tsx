@@ -6,22 +6,19 @@
 import { type PropTreeNode, unwrapPropTreeNode } from "@fluidframework/react/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { treeDataObjectInternal } from "@fluidframework/react/internal";
-import { Tree, TreeViewConfiguration, type TreeViewEvents } from "@fluidframework/tree";
+import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
-import type { Listenable } from "fluid-framework";
 import Quill from "quill";
 import Delta from "quill-delta";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import type { UndoRedo } from "../undoRedo.js";
-
-import { createUndoRedoStacks, type UndoRedo } from "./undoRedo.js";
 
 export const FormattedTextEditorFactory = treeDataObjectInternal(
 	new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree }),
@@ -75,6 +72,55 @@ const sizeReverse = { 10: "small", 18: "large", 24: "huge" } as const;
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
+/** Supported font sizes for exact matching during paste. */
+const supportedSizes = new Set([10, 12, 18, 24]);
+
+/**
+ * Parse CSS font-size from a pasted HTML element's inline style.
+ * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
+ */
+function parseCssFontSize(node: HTMLElement): string | undefined {
+	const style = node.style.fontSize;
+	if (!style) return undefined;
+
+	// Parse pixel value (e.g., "18px" -> 18)
+	const parsed = Number.parseFloat(style);
+	if (Number.isNaN(parsed)) return undefined;
+
+	// Round to nearest integer for comparison
+	const rounded = Math.round(parsed);
+	if (!supportedSizes.has(rounded)) return undefined;
+
+	// Convert to Quill size name
+	if (rounded in sizeReverse) {
+		return sizeReverse[rounded as keyof typeof sizeReverse];
+	}
+	// 12 is default, no attribute needed
+	return undefined;
+}
+
+/**
+ * Parse CSS font-family from a pasted HTML element's inline style.
+ * Looks at the generic family (last in stack) to determine Quill font value.
+ */
+function parseCssFontFamily(node: HTMLElement): string | undefined {
+	const style = node.style.fontFamily;
+	if (style === "" || style === undefined) return undefined;
+
+	// Get the last font in the stack (generic family)
+	const fonts = style.split(",");
+	const last = fonts[fonts.length - 1]
+		?.trim()
+		.replace(/^["']/, "")
+		.replace(/["']$/, "")
+		.toLowerCase();
+
+	// Map generic families to Quill values
+	if (last === "monospace") return "monospace";
+	if (last === "serif") return "serif";
+	// sans-serif is default, no attribute needed
+	return undefined;
+}
 
 /**
  * Parse a size value from Quill into a numeric pixel value.
@@ -258,12 +304,38 @@ const FormattedTextEditorView = React.forwardRef<
 			placeholder: "Start typing with formatting...",
 			modules: {
 				history: false, // Disable Quill's built-in undo/redo
-				toolbar: [
-					["bold", "italic", "underline"],
-					[{ size: ["small", false, "large", "huge"] }],
-					[{ font: [] }],
-					["clean"],
-				],
+				toolbar: {
+					container: [
+						["bold", "italic", "underline"],
+						[{ size: ["small", false, "large", "huge"] }],
+						[{ font: [] }],
+						["clean"],
+					],
+				},
+				clipboard: {
+					matchers: [
+						[
+							Node.ELEMENT_NODE,
+							(node: Node, delta: Delta): Delta => {
+								if (!(node instanceof HTMLElement)) return delta;
+
+								const size = parseCssFontSize(node);
+								const font = parseCssFontFamily(node);
+
+								// If no formatting to apply, return unchanged
+								if (size === undefined && font === undefined) return delta;
+
+								// Build attributes object
+								const attrs: Record<string, unknown> = {};
+								if (size !== undefined) attrs.size = size;
+								if (font !== undefined) attrs.font = font;
+
+								// Apply formatting using compose/retain pattern per Quill docs
+								return delta.compose(new Delta().retain(delta.length(), attrs));
+							},
+						],
+					],
+				},
 			},
 		});
 
