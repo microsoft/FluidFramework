@@ -205,6 +205,8 @@ export abstract class SharedObjectCore<
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
+				// See REFERENCE TO DOC for more details on sampling in Fluid Framework.
+				sampleable: "sessionBased",
 			},
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
@@ -218,6 +220,8 @@ export abstract class SharedObjectCore<
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
+				// See REFERENCE TO DOC for more details on sampling in Fluid Framework.
+				sampleable: "sessionBased",
 			},
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,

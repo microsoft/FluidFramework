@@ -504,6 +504,7 @@ export class OrderedClientElection
 				sequenceNumber,
 				true /* forceSend */,
 				reason,
+				"sessionBased",
 			);
 			// Changing the elected client. Record the sequence number and note that we have to fire an event.
 			this._electionSequenceNumber = sequenceNumber;
@@ -517,6 +518,7 @@ export class OrderedClientElection
 				sequenceNumber,
 				true /* forceSend */,
 				reason,
+				"sessionBased",
 			);
 			// Changing the elected parent as well.
 			this._electedParent = client;
@@ -688,6 +690,7 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		forceSend: boolean = false,
 		reason?: string,
+		sampleable?: string,
 	): void {
 		if (this.recordPerformanceEvents || forceSend) {
 			this.logger.sendPerformanceEvent({
@@ -699,6 +702,8 @@ export class OrderedClientElection
 				isEligible: client === undefined ? false : this.isEligibleFn(client),
 				isSummarizerClient: client?.client.details.type === summarizerClientType,
 				reason,
+				// See REFERENCE TO DOC for more details on sampling in Fluid Framework.
+				sampleable,
 			});
 		}
 	}
