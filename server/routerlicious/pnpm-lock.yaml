@@ -7,6 +7,7 @@ settings:
 overrides:
   '@types/node': ^24.0.0
   zookeeper: ^7.2.0
+  nan: ^2.22.0
   '@typescript-eslint/tsconfig-utils': 8.52.0
   '@typescript-eslint/project-service': 8.52.0
   '@babel/core': 7.27.7

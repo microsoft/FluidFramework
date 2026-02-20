@@ -68,11 +68,13 @@
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
-			"zookeeper is overridden to v7 because v5 uses nan bindings that cannot be compiled against Node 24's V8."
+			"zookeeper is overridden to v7 because v5 uses nan bindings that cannot be compiled against Node 24's V8.",
+			"nan is overridden to v2.22+ which includes the Node 24 V8 compatibility fixes required to compile zookeeper."
 		],
 		"overrides": {
 			"@types/node": "^24.0.0",
 			"zookeeper": "^7.2.0",
+			"nan": "^2.22.0",
 			"nanoid": "^3.3.9",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
