@@ -1630,6 +1630,7 @@ describe("ModularChangeFamily integration", () => {
 					family,
 					maxId: 3,
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
+					renames: [{ oldId: id1, newId: id2, count: 1, detachLocation: undefined }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [MarkMaker.detach(1, id1)]),
 				Change.field(fieldB, sequenceIdentifier, [
@@ -1728,6 +1729,9 @@ describe("ModularChangeFamily integration", () => {
 							count: 1,
 							newLocation: fieldAId,
 						},
+					],
+					renames: [
+						{ oldId: detachCellId, newId: detachId, count: 1, detachLocation: undefined },
 					],
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
@@ -1835,27 +1839,24 @@ describe("ModularChangeFamily integration", () => {
 
 			const fieldAId = { nodeId: undefined, field: fieldA };
 			const detachId: ChangeAtomId = { revision: tag2, localId: brand(3) };
+			const firstDetachId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+
 			const expected = Change.build(
 				{
 					family,
 					maxId: 3,
 					detachedMoves: [{ detachId, count: 1, newLocation: fieldAId }],
+					renames: [
+						{ oldId: firstDetachId, newId: detachId, count: 1, detachLocation: undefined },
+					],
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.detach(
-						1,
-						{ revision: tag2, localId: brand(3) },
-						{
-							cellRename: { revision: tag2, localId: brand(1) }, // XXX: Is this correct?
-						},
-					),
+					MarkMaker.detach(1, firstDetachId, {
+						cellRename: { revision: tag2, localId: brand(1) },
+					}),
 					MarkMaker.skip(1),
-					MarkMaker.rename(
-						1,
-						{ revision: tag2, localId: brand(2) },
-						{ revision: tag2, localId: brand(3) },
-					),
+					MarkMaker.rename(1, { revision: tag2, localId: brand(2) }, detachId),
 				]),
 			);
 
