@@ -444,8 +444,6 @@ stages:
                 set -eu -o pipefail
 
                 az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
-
-                az login --tenant 72f988bf-86f1-41af-91ab-2d7cd011db47
                 tokenResponse=$(az account get-access-token --scope api://d25164f2-e94b-44ea-9ddb-f858dfedb399/.default)
                 echo "##vso[task.setvariable variable=ficBearerToken;issecret=true]$tokenResponse"
 
