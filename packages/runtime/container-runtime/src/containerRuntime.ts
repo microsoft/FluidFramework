@@ -1326,6 +1326,13 @@ export class ContainerRuntime
 	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
 	private pendingIdCompressorOps: IdCreationRange[] = [];
 
+	/**
+	 * Tracks the next expected firstGenCount for each session's IdAllocation ranges.
+	 * Used to detect duplicate (overlapping) IdAllocation ranges from forked containers
+	 * that share the same session ID but submit from different clients.
+	 */
+	private readonly finalizedIdAllocationRanges = new Map<string, number>();
+
 	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
 	// (such ops will be marked by Loader layer as savedOp === true)
 	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
@@ -3431,6 +3438,36 @@ export class ContainerRuntime
 						this.pendingIdCompressorOps.length === 0,
 						0x979 /* there should be no pending ops! */,
 					);
+
+					// Detect duplicate (overlapping) IdAllocation ranges from forked containers.
+					// Forked containers share the same session ID but submit from different clients,
+					// producing IdAllocation ranges with the same sessionId and overlapping genCounts.
+					// IdAllocation batches use ignoreBatchId, so the DuplicateBatchDetector cannot
+					// catch these duplicates — we must detect them here before finalizeCreationRange.
+					if (range.ids !== undefined) {
+						const nextExpectedGenCount = this.finalizedIdAllocationRanges.get(
+							range.sessionId,
+						);
+						if (
+							nextExpectedGenCount !== undefined &&
+							range.ids.firstGenCount < nextExpectedGenCount
+						) {
+							throw new DataCorruptionError(
+								"Duplicate IdAllocation range detected - overlapping ID ranges for the same session (likely a container fork)",
+								{
+									sessionId: range.sessionId,
+									firstGenCount: range.ids.firstGenCount,
+									count: range.ids.count,
+									nextExpectedGenCount,
+								},
+							);
+						}
+						this.finalizedIdAllocationRanges.set(
+							range.sessionId,
+							range.ids.firstGenCount + range.ids.count,
+						);
+					}
+
 					this._idCompressor.finalizeCreationRange(range);
 				}
 			}
