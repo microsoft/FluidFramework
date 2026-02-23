@@ -170,7 +170,6 @@ export class EpochTracker implements IPersistedFileCache {
 					return undefined;
 				}
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value.value;
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);

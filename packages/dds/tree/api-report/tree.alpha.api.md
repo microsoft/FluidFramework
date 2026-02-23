@@ -1616,10 +1616,10 @@ export enum TreeCompressionStrategy {
 // @alpha
 export interface TreeContextAlpha {
     isBranch(): this is TreeBranchAlpha;
-    runTransaction<TValue>(transaction: () => WithValue<TValue>): TransactionResultExt<TValue, TValue>;
-    runTransaction(transaction: () => void): TransactionResult;
-    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>): Promise<TransactionResultExt<TValue, TValue>>;
-    runTransactionAsync(transaction: () => Promise<void>): Promise<TransactionResult>;
+    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParams): TransactionResultExt<TValue, TValue>;
+    runTransaction(transaction: () => void, params?: RunTransactionParams): TransactionResult;
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TValue, TValue>>;
+    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParams): Promise<TransactionResult>;
 }
 
 // @beta @input
