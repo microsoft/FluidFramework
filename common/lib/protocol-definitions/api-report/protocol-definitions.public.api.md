@@ -126,7 +126,9 @@ export interface ISummaryHandle {
 // @public
 export interface ISummaryTree {
     groupId?: string;
-    tree: Record<string, SummaryObject>;
+    tree: {
+        [path: string]: SummaryObject;
+    };
     // (undocumented)
     type: SummaryType.Tree;
     unreferenced?: true;

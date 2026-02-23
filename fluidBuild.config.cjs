@@ -49,7 +49,9 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "^api", "build:test", "build:copy"],
+			// Note that "api" is included as "compile" intends to build a complete package
+			// and "api" generates package entrypoint files.
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -133,6 +135,7 @@ module.exports = {
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
+		"eslint:fix": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
