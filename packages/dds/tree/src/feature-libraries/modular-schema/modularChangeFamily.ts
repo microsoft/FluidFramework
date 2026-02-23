@@ -3016,12 +3016,14 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 
 			if (newDetachId !== undefined) {
-				addNodeRename(
+				insertRootRename(
 					this.table.rebasedRootNodes,
 					baseAttachId,
 					newDetachId,
 					countToProcess,
-					this.fieldId,
+					undefined,
+					this.table.newChange.rootNodes,
+					(id, length) => ({ value: this.fieldId, length }),
 				);
 			}
 		}
@@ -4556,13 +4558,13 @@ function composeRootRenames(
 		// In the case that we delete a rename, `change2` must have a rename from `renameEntry.value`,
 		// which will compose with the rename we delete.
 		deleteNodeRenameTo(composedRoots, renameEntry.value, renameEntry.length);
-		composeRename(
+		composeRootRename(
 			composedRoots,
 			renameEntry.start,
 			renameEntry.value,
 			renameEntry.length,
-			change1.rootNodes,
-			change2.rootNodes,
+			change1,
+			change2,
 			RenameSource.Change2,
 		);
 	}
@@ -4576,14 +4578,13 @@ function adjustComposedRenames(
 	deletedRenames: ChangeAtomIdRangeMap<true>,
 ): void {
 	for (const entry of attachDetachRenames.entries()) {
-		// XXX: Detach location
-		composeRename(
+		composeRootRename(
 			composedRoots,
 			entry.start,
 			entry.value,
 			entry.length,
-			change1.rootNodes,
-			change2.rootNodes,
+			change1,
+			change2,
 			RenameSource.AttachDetach,
 		);
 	}
@@ -4807,76 +4808,143 @@ enum RenameSource {
 	AttachDetach,
 }
 
-function composeRename(
-	composedTable: RootNodeTable,
+/**
+ * Adds to a rename table, composing with renames which should be applied before or after the inserted rename.
+ * @param tableToUpdate - The table to insert the rename into.
+ * @param oldId - The root ID to rename from.
+ * @param newId - The root ID to rename to.
+ * @param count - The length of the range of roots being renames.
+ * @param renamesBefore - If renamesBefore has a rename from X to `oldId`, the inserted rename will compose to a rename from X to `newId`.
+ * @param renamesAfter - If renamesAfter has a rename from `newId` to X, the inserted rename will compose to a rename from `oldId` to X.
+ * @param getDetachLocation - A function which provides the detach location for the rename, given the composed ID to rename from.
+ */
+function insertRootRename(
+	tableToUpdate: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	count: number,
-	change1Roots: RootNodeTable,
-	change2Roots: RootNodeTable,
-	renameSource: RenameSource,
+	renamesBefore: RootNodeTable | undefined,
+	renamesAfter: RootNodeTable | undefined,
+	getDetachLocation: (
+		oldId: ChangeAtomId,
+		count: number,
+	) => RangeQueryResult<FieldId | undefined>,
 ): void {
 	let countToProcess = count;
 
 	let composedOldId = oldId;
-	const rename1Entry = change1Roots.newToOldId.getFirst(oldId, countToProcess);
-	countToProcess = rename1Entry.length;
+	if (renamesBefore !== undefined) {
+		const rename1Entry = renamesBefore.newToOldId.getFirst(oldId, countToProcess);
+		countToProcess = rename1Entry.length;
 
-	if (rename1Entry.value !== undefined) {
-		composedOldId = rename1Entry.value;
-		deleteNodeRenameFrom(composedTable, composedOldId, countToProcess);
+		if (rename1Entry.value !== undefined) {
+			composedOldId = rename1Entry.value;
+			deleteNodeRenameFrom(tableToUpdate, composedOldId, countToProcess);
+		}
 	}
 
 	let composedNewId = newId;
 
+	if (renamesAfter !== undefined) {
+		const rename2Entry = renamesAfter.oldToNewId.getFirst(newId, countToProcess);
+		countToProcess = rename2Entry.length;
+
+		if (rename2Entry.value !== undefined) {
+			composedNewId = rename2Entry.value;
+			deleteNodeRenameTo(tableToUpdate, composedNewId, countToProcess);
+		}
+	}
+
+	// XXX: Cleanup detachLocation if nodes are now attached in input context.
+	const detachLocationEntry = getDetachLocation(composedOldId, countToProcess);
+	countToProcess = detachLocationEntry.length;
+
+	addNodeRename(
+		tableToUpdate,
+		composedOldId,
+		composedNewId,
+		countToProcess,
+		detachLocationEntry.value,
+	);
+
+	tryRemoveDetachLocation(tableToUpdate, newId, countToProcess);
+	tryRemoveDetachLocation(tableToUpdate, composedNewId, countToProcess);
+
+	if (countToProcess < count) {
+		const countRemaining = count - countToProcess;
+		insertRootRename(
+			tableToUpdate,
+			offsetChangeAtomId(oldId, countToProcess),
+			offsetChangeAtomId(newId, countToProcess),
+			countRemaining,
+			renamesBefore,
+			renamesAfter,
+			getDetachLocation,
+		);
+	}
+}
+
+function composeRootRename(
+	composedTable: RootNodeTable,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	count: number,
+	change1: ModularChangeset,
+	change2: ModularChangeset,
+	renameSource: RenameSource,
+): void {
 	// If the rename is from change2, we don't want to compose it with other renames from change2.
 	// Note that a single changeset can have renames which would appear to compose with each other.
 	// If a changeset has renames [A -> B] and [B -> C], they represent renames of two different nodes,
 	// with the [B -> C] rename taking place first.
 	// They do not represent the rename [A -> C].
-	if (renameSource !== RenameSource.Change2) {
-		const rename2Entry = change2Roots.oldToNewId.getFirst(newId, countToProcess);
-		countToProcess = rename2Entry.length;
+	const renamesAfter = renameSource === RenameSource.Change2 ? undefined : change2.rootNodes;
 
-		if (rename2Entry.value !== undefined) {
-			composedNewId = rename2Entry.value;
-			deleteNodeRenameTo(composedTable, composedNewId, countToProcess);
-		}
-	}
-
-	// XXX: Cleanup detachLocation if nodes are now attached in input context.
-	const detachLocationEntry1 = change1Roots.detachLocations.getFirst(
-		composedOldId,
-		countToProcess,
-	);
-	countToProcess = detachLocationEntry1.length;
-
-	const detachLocationEntry2 = change2Roots.detachLocations.getFirst(oldId, countToProcess);
-	countToProcess = detachLocationEntry2.length;
-
-	addNodeRename(
-		composedTable,
-		composedOldId,
-		composedNewId,
-		countToProcess,
-		detachLocationEntry1.value ?? detachLocationEntry2.value,
-	);
-
-	tryRemoveDetachLocation(composedTable, newId, countToProcess);
-	tryRemoveDetachLocation(composedTable, composedNewId, countToProcess);
-
-	if (countToProcess < count) {
-		const countRemaining = count - countToProcess;
-		composeRename(
-			composedTable,
-			offsetChangeAtomId(oldId, countToProcess),
-			offsetChangeAtomId(newId, countToProcess),
-			countRemaining,
-			change1Roots,
-			change2Roots,
-			renameSource,
+	const getDetachLocation = (
+		composedOldId: ChangeAtomId,
+		countQueried: number,
+	): RangeQueryResult<FieldId | undefined> => {
+		let countProcessed = countQueried;
+		const detachEntry = getFirstDetachField(
+			change1.crossFieldKeys,
+			composedOldId,
+			countProcessed,
 		);
-	}
+		countProcessed = detachEntry.length;
+
+		if (detachEntry.value !== undefined) {
+			// The renamed nodes are attached in the input context of the composed change.
+			return { value: undefined, length: detachEntry.length };
+		}
+
+		// XXX: Cleanup detachLocation if nodes are now attached in input context.
+		const detachLocationEntry1 = change1.rootNodes.detachLocations.getFirst(
+			composedOldId,
+			countProcessed,
+		);
+		countProcessed = detachLocationEntry1.length;
+
+		const detachLocationEntry2 = change2.rootNodes.detachLocations.getFirst(
+			oldId,
+			countProcessed,
+		);
+		countProcessed = detachLocationEntry2.length;
+
+		return {
+			value: detachLocationEntry1.value ?? detachLocationEntry2.value,
+			length: countProcessed,
+		};
+	};
+
+	insertRootRename(
+		composedTable,
+		oldId,
+		newId,
+		count,
+		change1.rootNodes,
+		renamesAfter,
+		getDetachLocation,
+	);
 }
 
 function tryRemoveDetachLocation(
