@@ -114,9 +114,7 @@ describe("SimpleTree benchmarks", () => {
 							}
 						},
 						benchmarkFn: () => {
-							readNumber = treeReadingFunction(
-								tree ?? fail("Expected tree to be set"),
-							);
+							readNumber = treeReadingFunction(tree ?? fail("Expected tree to be set"));
 						},
 						after: () => {
 							assert.equal(readNumber, expectedValue);
