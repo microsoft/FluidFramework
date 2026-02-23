@@ -84,14 +84,12 @@ import {
 	type TreeNodeSchema,
 	getUnhydratedContext,
 	type TreeBranchAlpha,
-	type TransactionResult,
-	type TransactionResultExt,
-	type WithValue,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	return getIdentifierFromNode(node, "uncompressed");
@@ -1094,42 +1092,4 @@ function borrowFieldCursorFromTreeNodeOrValue(
 	// TODO: avoid copy: borrow cursor from field instead.
 	const mapTree = mapTreeFromCursor(cursor);
 	return cursorForMapTreeField([mapTree]);
-}
-
-class UnhydratedTreeContext implements TreeContextAlpha {
-	public static instance = new UnhydratedTreeContext();
-	private constructor() {}
-
-	public isBranch(): this is TreeBranchAlpha {
-		return false;
-	}
-
-	public runTransaction<TValue>(
-		t: () => WithValue<TValue>,
-	): TransactionResultExt<TValue, TValue>;
-	public runTransaction(t: () => void): TransactionResult;
-	public runTransaction(
-		t: () => WithValue<unknown> | void,
-	): TransactionResultExt<unknown, unknown> | TransactionResult {
-		return UnhydratedTreeContext.wrapTransactionResult(t());
-	}
-
-	public runTransactionAsync<TValue>(
-		t: () => Promise<WithValue<TValue>>,
-	): Promise<TransactionResultExt<TValue, TValue>>;
-	public runTransactionAsync(t: () => Promise<void>): Promise<TransactionResult>;
-	public async runTransactionAsync(
-		t: () => Promise<WithValue<unknown> | void>,
-	): Promise<TransactionResultExt<unknown, unknown> | TransactionResult> {
-		return UnhydratedTreeContext.wrapTransactionResult(await t());
-	}
-
-	private static wrapTransactionResult<TValue>(
-		value: WithValue<TValue> | void,
-	): TransactionResultExt<TValue, TValue> | TransactionResult {
-		if (value?.value !== undefined) {
-			return { success: true, value: value.value };
-		}
-		return { success: true };
-	}
 }

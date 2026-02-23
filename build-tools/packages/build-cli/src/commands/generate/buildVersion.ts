@@ -8,7 +8,7 @@ import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 
 import { semverFlag } from "../../flags.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * This command class is used to compute the version number of Fluid packages. The release version number is based on
