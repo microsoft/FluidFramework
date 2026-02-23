@@ -21,4 +21,12 @@ export default [
 			"max-params": ["warn", 5],
 		},
 	},
+	{
+		// Rules only for files that are built on the build-infrastructure APIs.
+		files: ["src/**/vnext/**"],
+		rules: {
+			// Set to error since code using build-infrastructure APIs should not need to use any deprecated APIs.
+			"import-x/no-deprecated": "error",
+		},
+	},
 ];
