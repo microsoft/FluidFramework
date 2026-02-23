@@ -10,6 +10,7 @@ import {
 	SharedTreeFactory as LegacySharedTreeFactory,
 	SharedTreeShim,
 	SharedTreeShimFactory,
+	WriteFormat,
 } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -62,7 +63,7 @@ function migrate(legacyTree: ISharedTree, newTree: ITree): void {
 	NewTreeInventoryListController.initializeTree(newTree, initialTree);
 }
 
-const legacyTreeFactory = new LegacySharedTreeFactory();
+const legacyTreeFactory = new LegacySharedTreeFactory(WriteFormat.v0_1_1);
 const migrationShimFactory = new MigrationShimFactory(
 	legacyTreeFactory,
 	newTreeFactory,
