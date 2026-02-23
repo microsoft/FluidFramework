@@ -5045,6 +5045,80 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack@5.103.0)
 
+  examples/utils/cross-package-schema/schema-consumer:
+    dependencies:
+      '@fluid-example/cross-package-schema-provider':
+        specifier: workspace:~
+        version: link:../schema-provider
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/tree
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~2.3.11
+        version: 2.3.11
+      '@fluid-tools/build-cli':
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@20.19.30)
+      '@fluidframework/eslint-config-fluid':
+        specifier: workspace:~
+        version: link:../../../../common/build/eslint-config-fluid
+      eslint:
+        specifier: ~9.39.1
+        version: 9.39.1(jiti@2.6.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      rimraf:
+        specifier: ^6.1.3
+        version: 6.1.3
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  examples/utils/cross-package-schema/schema-provider:
+    dependencies:
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/tree
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~2.3.11
+        version: 2.3.11
+      '@fluid-tools/build-cli':
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@20.19.30)
+      '@fluidframework/eslint-config-fluid':
+        specifier: workspace:~
+        version: link:../../../../common/build/eslint-config-fluid
+      eslint:
+        specifier: ~9.39.1
+        version: 9.39.1(jiti@2.6.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      rimraf:
+        specifier: ^6.1.3
+        version: 6.1.3
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+      typescript-5.9:
+        specifier: npm:typescript@~5.9.2
+        version: typescript@5.9.3
+
   examples/utils/example-driver:
     dependencies:
       '@fluidframework/core-interfaces':
@@ -30401,7 +30475,7 @@ snapshots:
       mdast: 3.0.0
       mdast-util-heading-range: 4.0.0
       mdast-util-to-string: 4.0.0
-      minimatch: 10.1.1
+      minimatch: 10.2.1
       npm-check-updates: 16.14.20
       oclif: 4.22.52(@types/node@20.19.30)
       picocolors: 1.1.1

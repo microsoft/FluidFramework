@@ -1,0 +1,55 @@
+{
+	"name": "@fluid-example/cross-package-schema-provider",
+	"version": "2.90.0",
+	"private": true,
+	"description": "Example schema provider demonstrating cross-package SharedTree schema consumption with source export condition.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "examples/utils/cross-package-schema/schema-provider"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"source": "./src/index.ts",
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:bundler": "node ./node_modules/typescript-5.9/bin/tsc --project ./tsconfig.bundler.json",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format"
+	},
+	"dependencies": {
+		"@fluidframework/tree": "workspace:~"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"eslint": "~9.39.1",
+		"jiti": "^2.6.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5",
+		"typescript-5.9": "npm:typescript@~5.9.2"
+	}
+}
