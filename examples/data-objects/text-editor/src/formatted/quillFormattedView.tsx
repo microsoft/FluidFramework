@@ -113,7 +113,7 @@ export function parseCssFontFamily(node: HTMLElement): string | undefined {
 
 	const fonts = style.split(",");
 	for (const raw of fonts) {
-		const font = raw.trim().replace(/^["']/, "").replace(/["']$/, "").toLowerCase();
+		const font = raw.trim().replace(/^["']/, "").replace(/["']$/, "");
 		// check if font is in our supported font set
 		if (fontSet.has(font)) {
 			return font;

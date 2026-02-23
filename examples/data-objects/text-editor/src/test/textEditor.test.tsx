@@ -828,8 +828,16 @@ describe("textEditor", () => {
 						parseCssFontFamily(styledElement({ fontFamily: '"Courier New", monospace' })),
 						"monospace",
 					);
+					assert.equal(
+						parseCssFontFamily(
+							styledElement({ fontFamily: '"Times New Roman", "Arial", serif' }),
+						),
+						"Arial",
+					);
 				});
-
+				it("strips single quotes around recognized font names", () => {
+					assert.equal(parseCssFontFamily(styledElement({ fontFamily: "'Arial'" })), "Arial");
+				});
 				it("returns undefined for unrecognized fonts", () => {
 					assert.equal(
 						parseCssFontFamily(styledElement({ fontFamily: '"Courier New", fantasy' })),
