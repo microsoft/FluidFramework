@@ -2810,9 +2810,13 @@ class InvertNodeManagerI implements InvertNodeManager {
 					);
 				}
 			} else {
-				this.table.invertedRoots.detachLocations.set(attachIdEntry.value, count, this.fieldId);
 				if (!areEqualChangeAtomIds(attachIdEntry.value, newAttachId)) {
 					this.table.attachToDetachId.set(newAttachId, count, attachIdEntry.value);
+					this.table.invertedRoots.detachLocations.set(
+						attachIdEntry.value,
+						count,
+						this.fieldId,
+					);
 				}
 			}
 		}
@@ -4675,13 +4679,10 @@ function invertRename(
 		invertedRoots.outputDetachLocations.set(oldId, countProcessed, inputDetachEntry.value);
 	}
 
-	addNodeRename(
-		invertedRoots,
-		newId,
-		oldId,
-		countProcessed,
-		outputDetachEntry.value ?? inputDetachEntry.value,
-	);
+	// If the node is attached by `change`, then it is attached in the input context of the inverse,
+	// so it should not have a detach location.
+	const detachLocation = attachEntry.value === undefined ? outputDetachEntry.value : undefined;
+	addNodeRename(invertedRoots, newId, oldId, countProcessed, detachLocation);
 
 	if (countProcessed < length) {
 		invertRename(
