@@ -370,6 +370,151 @@ describe("Runtime", () => {
 					"All Ids should have been finalized after calling createSummary()",
 				);
 			});
+
+			describe("Duplicate IdAllocation range detection", () => {
+				let containerRuntime: ContainerRuntime;
+				const remoteClientId = "remoteClient1";
+				const forkClientId = "remoteClient2";
+				// Use the runtime's own session ID (obtained after creation) for realism,
+				// but also test with an arbitrary remote session ID.
+				let localSessionId: string;
+
+				beforeEach(async () => {
+					containerRuntime = await ContainerRuntime.loadRuntime2({
+						context: getMockContext() as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const compressor = containerRuntime.idCompressor;
+					assert(compressor !== undefined, "IdCompressor should be available");
+					localSessionId = compressor.localSessionId;
+					nextClientSequenceNumber = 1;
+				});
+
+				let nextClientSequenceNumber = 1;
+
+				function makeIdAllocationOp(
+					sessionId: string,
+					firstGenCount: number,
+					count: number,
+					clientId: string,
+					sequenceNumber: number,
+				): ISequencedDocumentMessage {
+					const op: Partial<ISequencedDocumentMessage> = {
+						contents: JSON.stringify({
+							type: ContainerMessageType.IdAllocation,
+							contents: {
+								sessionId,
+								ids: {
+									firstGenCount,
+									count,
+									requestedClusterSize: 128,
+									localIdRanges: [[firstGenCount, count]],
+								},
+							},
+						}),
+						type: MessageType.Operation,
+						sequenceNumber,
+						clientSequenceNumber: nextClientSequenceNumber++,
+						clientId,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						timestamp: Date.now(),
+					};
+					return op as ISequencedDocumentMessage;
+				}
+
+				it("Throws DataCorruptionError when overlapping IdAllocation ranges arrive for the same session from different clients", () => {
+					// First IdAllocation from remoteClient1 — should succeed
+					containerRuntime.process(
+						makeIdAllocationOp(localSessionId, 1, 5, remoteClientId, 1),
+						false /* local */,
+					);
+
+					// Second IdAllocation from forkClient with the SAME session and overlapping range — should throw
+					assert.throws(
+						() =>
+							containerRuntime.process(
+								makeIdAllocationOp(localSessionId, 1, 5, forkClientId, 2),
+								false /* local */,
+							),
+						(error: IErrorBase) => {
+							assert(isFluidError(error));
+							assert.strictEqual(
+								error.errorType,
+								ContainerErrorTypes.dataCorruptionError,
+							);
+							assert(
+								error.message.includes("Duplicate IdAllocation range detected"),
+								`Unexpected error message: ${error.message}`,
+							);
+							return true;
+						},
+						"Processing overlapping IdAllocation ranges for the same session should throw DataCorruptionError",
+					);
+				});
+
+				it("Allows sequential (non-overlapping) IdAllocation ranges for the same session", () => {
+					// First range: genCounts 1-5
+					containerRuntime.process(
+						makeIdAllocationOp(localSessionId, 1, 5, remoteClientId, 1),
+						false /* local */,
+					);
+
+					// Second range: genCounts 6-10 (sequential, no overlap)
+					containerRuntime.process(
+						makeIdAllocationOp(localSessionId, 6, 5, remoteClientId, 2),
+						false /* local */,
+					);
+					// No error — sequential ranges for the same session are fine (normal reconnection)
+				});
+
+				it("Allows IdAllocation ranges from different sessions", () => {
+					const otherSessionId = "aaaaaaaa-bbbb-4ccc-dddd-eeeeeeeeeeee";
+
+					containerRuntime.process(
+						makeIdAllocationOp(localSessionId, 1, 5, remoteClientId, 1),
+						false /* local */,
+					);
+
+					// Different session — no conflict
+					containerRuntime.process(
+						makeIdAllocationOp(otherSessionId, 1, 5, forkClientId, 2),
+						false /* local */,
+					);
+					// No error — different sessions can independently allocate the same genCount ranges
+				});
+
+				it("Detects partial overlap where new range starts before the end of the previous one", () => {
+					// First range: genCounts 1-5
+					containerRuntime.process(
+						makeIdAllocationOp(localSessionId, 1, 5, remoteClientId, 1),
+						false /* local */,
+					);
+
+					// Overlapping range starting at genCount 3 (before nextExpected=6)
+					assert.throws(
+						() =>
+							containerRuntime.process(
+								makeIdAllocationOp(localSessionId, 3, 5, forkClientId, 2),
+								false /* local */,
+							),
+						(error: IErrorBase) => {
+							assert(isFluidError(error));
+							assert.strictEqual(
+								error.errorType,
+								ContainerErrorTypes.dataCorruptionError,
+							);
+							return true;
+						},
+						"Partially overlapping ranges should be detected as duplicates",
+					);
+				});
+			});
 		});
 
 		describe("Batching", () => {
