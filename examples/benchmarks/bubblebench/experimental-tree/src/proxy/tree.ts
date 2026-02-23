@@ -7,7 +7,7 @@ import {
 	Change,
 	type ChangeNode,
 	type NodeId,
-	type SharedTree,
+	type ISharedTree,
 	StablePlace,
 	StableRange,
 	type TraitLabel,
@@ -17,7 +17,7 @@ import type { Serializable } from "@fluidframework/datastore-definitions/legacy"
 import { NodeKind, fromJson } from "./treeutils.js";
 
 function getChild(
-	tree: SharedTree,
+	tree: ISharedTree,
 	nodeId: NodeId,
 	update: (...change: Change[]) => void,
 ): unknown {
@@ -38,7 +38,7 @@ function getChild(
 
 // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
 export const TreeObjectProxy = <T extends Object>(
-	tree: SharedTree,
+	tree: ISharedTree,
 	nodeId: NodeId,
 	update: (...change: Change[]) => void,
 ): T =>
@@ -83,7 +83,7 @@ export const TreeObjectProxy = <T extends Object>(
 
 export class TreeArrayProxy<T> {
 	constructor(
-		private readonly tree: SharedTree,
+		private readonly tree: ISharedTree,
 		private readonly nodeId: NodeId,
 		private readonly update: (...change: Change[]) => void,
 	) {
