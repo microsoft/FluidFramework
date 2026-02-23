@@ -11,12 +11,12 @@ import {
 } from "@fluid-tools/build-infrastructure";
 import {
 	FluidRepo,
-	type Package,
-	type PackageJson,
-	TscUtils,
 	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
+	type Package,
+	type PackageJson,
+	TscUtils,
 } from "@fluidframework/build-tools";
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
@@ -57,9 +57,9 @@ interface ESLintInstance {
  * Requires ESLint 8.57.0+ which introduced the loadESLint API.
  */
 interface ESLintModuleType {
-	loadESLint: (opts?: { cwd?: string }) => Promise<
-		new (instanceOpts?: { cwd?: string }) => ESLintInstance
-	>;
+	loadESLint: (opts?: {
+		cwd?: string;
+	}) => Promise<new (instanceOpts?: { cwd?: string }) => ESLintInstance>;
 }
 
 /**

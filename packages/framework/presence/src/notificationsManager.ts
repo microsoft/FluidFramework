@@ -11,11 +11,11 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import { revealOpaqueJson, toOpaqueJson } from "./internalUtils.js";
 import type {
+	NotificationEmitter,
+	NotificationListenable,
 	NotificationsManager,
 	NotificationsManagerEvents,
-	NotificationEmitter,
-	NotificationSubscriptions,
-	NotificationListenable,
+	NotificationSubscriberSignatures,
 } from "./notificationsManagerTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -76,7 +76,8 @@ class NotificationsManagerImpl<
 	};
 
 	// Workaround for types
-	private readonly notificationsInternal = createEmitter<NotificationSubscriptions<T>>();
+	private readonly notificationsInternal =
+		createEmitter<NotificationSubscriberSignatures<T>>();
 
 	public readonly notifications: NotificationListenable<T> = this.notificationsInternal;
 
@@ -86,13 +87,13 @@ class NotificationsManagerImpl<
 			Key,
 			InternalTypes.ValueRequiredState<InternalTypes.NotificationType>
 		>,
-		initialSubscriptions: Partial<NotificationSubscriptions<T>>,
+		initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>,
 	) {
 		// Add event listeners provided at instantiation
 		for (const subscriptionName of recordKeys(initialSubscriptions)) {
 			// Lingering Event typing issues with Notifications specialization requires
 			// this cast. The only thing that really matters is that name is a string.
-			const name = subscriptionName as keyof Listeners<NotificationSubscriptions<T>>;
+			const name = subscriptionName as keyof Listeners<NotificationSubscriberSignatures<T>>;
 			const value = initialSubscriptions[subscriptionName];
 			// This check should not be needed while using exactOptionalPropertyTypes, but
 			// typescript appears to ignore that with Partial<>. Good to be defensive
@@ -114,12 +115,12 @@ class NotificationsManagerImpl<
 	): PostUpdateAction[] {
 		const postUpdateActions: PostUpdateAction[] = [];
 		const value = revealOpaqueJson(updateValue.value);
-		const eventName = value.name as keyof Listeners<NotificationSubscriptions<T>>;
+		const eventName = value.name as keyof Listeners<NotificationSubscriberSignatures<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
 			// For now we assume the user is sending the correct types and there is no corruption along the way.
 			const args = [attendee, ...value.args] as Parameters<
-				NotificationSubscriptions<T>[typeof eventName]
+				NotificationSubscriberSignatures<T>[typeof eventName]
 			>;
 			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
 		} else {
@@ -134,17 +135,57 @@ class NotificationsManagerImpl<
 /**
  * Factory for creating a {@link NotificationsManager}.
  *
- * @remarks
- * Typescript inference for `Notifications` is not working correctly yet.
- * Explicitly specify generics to make result types usable.
+ * @alpha
+ *
+ * @privateRemarks
+ * This overload requires explicit specification of the notification listener
+ * types. It is useful when a schema is separately defined.
+ */
+export function Notifications<
+	T extends InternalUtilityTypes.NotificationListeners<T>,
+	Key extends string = string,
+>(
+	initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>,
+): InternalTypes.ManagerFactory<
+	Key,
+	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	NotificationsManager<T>
+>;
+/**
+ * Factory for creating a {@link NotificationsManager}.
+ *
+ * @alpha
+ *
+ * @privateRemarks
+ * This overload infers the notification listener types from the provided
+ * subscriptions, simplifying usage when a schema is not separately defined.
+ */
+export function Notifications<
+	TSubscriptions extends
+		InternalUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>,
+	Key extends string = string,
+>(
+	initialSubscriptions: Partial<TSubscriptions>,
+): InternalTypes.ManagerFactory<
+	Key,
+	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	NotificationsManager<
+		InternalUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>
+	>
+>;
+
+/**
+ * Factory for creating a {@link NotificationsManager}.
  *
  * @alpha
  */
 export function Notifications<
 	T extends InternalUtilityTypes.NotificationListeners<T>,
 	Key extends string = string,
+	TSubscriptions extends
+		NotificationSubscriberSignatures<T> = NotificationSubscriberSignatures<T>,
 >(
-	initialSubscriptions: Partial<NotificationSubscriptions<T>>,
+	initialSubscriptions: Partial<TSubscriptions>,
 ): InternalTypes.ManagerFactory<
 	Key,
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,

@@ -8,35 +8,33 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import {
-	type InterdependencyRange,
-	type ReleaseVersion,
 	detectVersionScheme,
 	getVersionRange,
+	type InterdependencyRange,
 	isInterdependencyRange,
 	isInternalVersionRange,
 	isPrereleaseVersion,
 	isRangeOperator,
 	isWorkspaceRange,
+	type ReleaseVersion,
 } from "@fluid-tools/version-tools";
 import { type Logger, MonoRepo, Package, type PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
 import { readJsonSync } from "fs-extra/esm";
-import JSON5 from "json5";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
 import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
-import type { TsConfigJson } from "type-fest";
 import {
 	AllPackagesSelectionCriteria,
 	type PackageSelectionCriteria,
 	type PackageWithKind,
 	selectAndFilterPackages,
 } from "../filter.js";
-import { type ReleaseGroup, type ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";
@@ -532,7 +530,9 @@ export async function setVersion(
 				],
 				options,
 			],
-			["pnpm", ["-r", "run", "build:genver"], options],
+			// If no packages use `packageVersion.ts` then none will have the build:genver script,
+			// so use --if-present to avoid errors in that case in versions of pnpm where this is an error (versions >= 10.28.1).
+			["pnpm", ["-r", "--if-present", "run", "build:genver"], options],
 		);
 	} else {
 		options = {
@@ -934,10 +934,4 @@ export function getFullTarballName(pkg: PackageJson): string {
 export async function readPackageJson(): Promise<PackageJson> {
 	const packageJson = await readFile("./package.json", { encoding: "utf8" });
 	return JSON.parse(packageJson) as PackageJson;
-}
-
-// Reads and parses the `tsconfig.json` file in the current directory.
-export async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfigContent = await readFile("./tsconfig.json", { encoding: "utf8" });
-	return JSON5.parse(tsConfigContent);
 }

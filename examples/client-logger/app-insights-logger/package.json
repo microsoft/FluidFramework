@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-insights-logger",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"private": true,
 	"description": "Provides a simple Fluid application with a UI view written in React to test the Fluid App Insights telemetry logger that will route typical Fluid telemetry to configured Azure App Insights",
 	"homepage": "https://fluidframework.com",
@@ -76,7 +76,7 @@
 		"jest-environment-jsdom": "^29.6.2",
 		"jest-junit": "^16.0.0",
 		"jiti": "^2.6.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^7.0.0",
 		"ts-jest": "^29.1.1",

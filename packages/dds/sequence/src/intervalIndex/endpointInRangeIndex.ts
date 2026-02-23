@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
+import { PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { SequenceInterval, createTransientInterval } from "../intervals/index.js";
+import { SequenceInterval, createTransientIntervalFromSequence } from "../intervals/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
@@ -31,7 +32,7 @@ export interface IEndpointInRangeIndex extends SequenceIntervalIndex {
 export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 	private readonly intervalTree;
 
-	constructor(private readonly client: Client) {
+	constructor(private readonly sequence: ISharedSegmentSequence<any>) {
 		this.intervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(
 			(a: SequenceInterval, b: SequenceInterval) => {
 				const compareEndsResult = a.compareEnd(b);
@@ -75,9 +76,13 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 			return true;
 		};
 
-		const transientStartInterval = createTransientInterval(start, start, this.client);
+		const transientStartInterval = createTransientIntervalFromSequence(
+			start,
+			start,
+			this.sequence,
+		);
 
-		const transientEndInterval = createTransientInterval(end, end, this.client);
+		const transientEndInterval = createTransientIntervalFromSequence(end, end, this.sequence);
 
 		// Add comparison overrides to the transient intervals
 		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
@@ -89,11 +94,12 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 }
 
 /**
+ * Creates an endpoint-in-range index for the provided SharedString.
+ *
  * @internal
  */
 export function createEndpointInRangeIndex(
 	sharedString: ISharedString,
 ): IEndpointInRangeIndex {
-	const client = (sharedString as unknown as { client: Client }).client;
-	return new EndpointInRangeIndex(client);
+	return new EndpointInRangeIndex(sharedString);
 }

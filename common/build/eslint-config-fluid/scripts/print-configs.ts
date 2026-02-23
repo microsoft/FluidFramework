@@ -16,108 +16,92 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { loadESLint } from "eslint";
+import { ESLint } from "eslint";
 import sortJson from "sort-json";
+
+// Import flat configs directly from flat.mjs
+import { recommended, strict, minimalDeprecated } from "../flat.mjs";
+import type { FlatConfigArray } from "../library/configs/base.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Determine which config files to use based on ESLINT_USE_FLAT_CONFIG
-// NOTE: loadESLint() returns the appropriate ESLint class based on ESLINT_USE_FLAT_CONFIG,
-// but we still need to manually determine which config file format to use.
-// Legacy ESLint cannot read flat config files (.mjs), and FlatESLint cannot read legacy config files (.js/.cjs).
-const useFlatConfig = process.env.ESLINT_USE_FLAT_CONFIG === "true";
-
-// During the hybrid ESLint 8/9 migration, we need to maintain both legacy (.js/.cjs) and flat (.mjs) configs.
-// The .eslint-print-configs directory contains standalone flat configs that can be loaded by ESLint 9
-// without requiring the legacy config infrastructure.
-const configDir = useFlatConfig ? "../.eslint-print-configs" : "..";
-
-// File extensions differ between legacy (.js) and flat (.mjs) config formats.
-// Using .mjs for flat configs ensures they're treated as ES modules.
-const configExt = useFlatConfig ? ".mjs" : ".js";
-
 interface ConfigToPrint {
 	name: string;
-	configPath: string;
+	config: FlatConfigArray;
 	sourceFilePath: string;
 }
 
-// Legacy configs use "index.js" for default and "minimal-deprecated.js" for minimal.
-// Flat configs use "recommended.mjs" for default and "minimal.mjs" for minimal.
-const defaultConfigFile = useFlatConfig ? "recommended.mjs" : "index.js";
-const minimalConfigFile = `minimal${useFlatConfig ? "" : "-deprecated"}${configExt}`;
-const strictBiomeConfigFile = `strict${useFlatConfig ? "" : "-biome"}${configExt}`;
-
-const configsToPrint: ConfigToPrint[] = [
+const configsToPrint = [
 	{
 		name: "default",
-		configPath: path.join(__dirname, configDir, defaultConfigFile),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "minimal",
-		configPath: path.join(__dirname, configDir, minimalConfigFile),
+		config: minimalDeprecated,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "react",
-		configPath: path.join(__dirname, configDir, defaultConfigFile),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.tsx"),
 	},
 	{
 		name: "recommended",
-		configPath: path.join(__dirname, configDir, `recommended${configExt}`),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict",
-		configPath: path.join(__dirname, configDir, `strict${configExt}`),
+		config: strict,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict-biome",
-		configPath: path.join(__dirname, configDir, strictBiomeConfigFile),
+		// strict-biome uses the same flat config as strict; biome integration is handled separately
+		config: strict,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "test",
-		configPath: path.join(__dirname, configDir, `recommended${configExt}`),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "test", "file.ts"),
 	},
-];
+] as const satisfies readonly ConfigToPrint[];
 
 /**
- * Generates the applied ESLint config for a specific file and config path.
+ * Generates the applied ESLint config for a specific file and config.
  */
-async function generateConfig(filePath: string, configPath: string): Promise<string> {
-	console.log(`Generating config for ${filePath} using ${configPath}`);
+async function generateConfig(filePath: string, config: FlatConfigArray): Promise<string> {
+	console.log(`Generating config for ${filePath}`);
 
-	// loadESLint() respects ESLINT_USE_FLAT_CONFIG and returns the appropriate ESLint class.
-	// However, it's the caller's responsibility to provide config files in the correct format.
-	const ESLint = await loadESLint();
+	// ESLint 9's default ESLint class uses flat config format.
+	// Use overrideConfigFile: true to prevent loading eslint.config.js,
+	// and pass the config directly via overrideConfig.
 	const eslint = new ESLint({
-		overrideConfigFile: configPath,
+		overrideConfigFile: true,
+		overrideConfig: [...config],
 	});
 
-	const config = (await eslint.calculateConfigForFile(filePath)) as unknown;
-	if (!config) {
+	const resolvedConfig = (await eslint.calculateConfigForFile(filePath)) as unknown;
+	if (!resolvedConfig) {
 		console.warn("Warning: ESLint returned undefined config for " + filePath);
 		return "{}\n";
 	}
 
 	// Serialize and parse to create a clean copy without any circular references or non-serializable values
-	const cleanConfig = JSON.parse(JSON.stringify(config));
+	const cleanConfig = JSON.parse(JSON.stringify(resolvedConfig));
 
-	// Remove properties that contain environment-specific paths
-	if (useFlatConfig) {
-		// For flat configs, remove languageOptions which has environment-specific paths and large globals
-		if (cleanConfig.languageOptions) {
-			delete cleanConfig.languageOptions;
-		}
-	} else {
-		// For legacy configs, remove the parser property
-		delete cleanConfig.parser;
+	// Remove globals from languageOptions (very large) but keep the rest (parserOptions, etc.)
+	if (cleanConfig.languageOptions?.globals) {
+		delete cleanConfig.languageOptions.globals;
+	}
+
+	// Remove tsconfigRootDir since it varies by environment (it's set to process.cwd())
+	if (typeof cleanConfig.languageOptions?.parserOptions === "object") {
+		delete cleanConfig.languageOptions.parserOptions.tsconfigRootDir;
 	}
 
 	// Convert numeric severities to string equivalents in rules
@@ -143,8 +127,8 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 	// some eslint settings depend on object key order ("import-x/resolver" being a known one, see
 	// https://github.com/un-ts/eslint-plugin-import-x/blob/master/src/utils/resolve.ts).
 	// Using depth 2 is a nice compromise.
-	const sortedConfig = sortJson(cleanConfig, { indentSize: 4, depth: 2 });
-	const finalConfig = JSON.stringify(sortedConfig, null, 4);
+	const sortedConfig = sortJson(cleanConfig, { depth: 2 });
+	const finalConfig = JSON.stringify(sortedConfig, null, "\t");
 
 	// Add a trailing newline to match preferred output formatting
 	return finalConfig + "\n";
@@ -158,11 +142,12 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		process.exit(1);
 	}
 
-	const outputPath = args[0];
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated by the args.length check above
+	const outputPath = args[0]!;
 	await fs.mkdir(outputPath, { recursive: true });
 	const expectedFiles = new Set<string>();
 
-	for (const { name, configPath, sourceFilePath } of configsToPrint) {
+	for (const { name, config, sourceFilePath } of configsToPrint) {
 		const outputFilePath = path.join(outputPath, `${name}.json`);
 		expectedFiles.add(`${name}.json`);
 
@@ -173,7 +158,7 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 			// File doesn't exist yet, which is OK - we'll create it
 		}
 
-		const newContent = await generateConfig(sourceFilePath, configPath);
+		const newContent = await generateConfig(sourceFilePath, config);
 
 		// Only write the file if the content has changed
 		if (newContent !== originalContent) {

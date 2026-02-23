@@ -117,7 +117,7 @@ class ChunkedOpProcessor {
 	}
 
 	/**
-	 * @returns The concatenated contents of all the messages parsed as json
+	 * Gets the concatenated contents of all the messages parsed as JSON.
 	 */
 	getConcatenatedContents(): any {
 		const contentsString = this.parsedMessageContents.reduce(
@@ -376,7 +376,6 @@ export class Sanitizer {
 		if (typeof input === "string") {
 			return this.replaceText(input);
 		} else if (Array.isArray(input)) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return this.replaceArray(input);
 		} else if (typeof input === "object") {
 			return this.replaceObject(input, excludedKeys);
@@ -662,6 +661,8 @@ export class Sanitizer {
 	}
 
 	/**
+	 * Fixes a chunked operation by reassembling and sanitizing the message chunks.
+	 *
 	 * @param message - The top-level chunkedOp message or a top-level op message
 	 * with a chunkedOp inside its contents
 	 */

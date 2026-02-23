@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
+import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { createTransientInterval, SequenceInterval } from "../intervals/index.js";
+import { createTransientIntervalFromSequence, SequenceInterval } from "../intervals/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
@@ -30,14 +31,14 @@ export interface IEndpointIndex extends SequenceIntervalIndex {
 export class EndpointIndex implements IEndpointIndex {
 	private readonly endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
 
-	constructor(private readonly client: Client) {
+	constructor(private readonly sequence: ISharedSegmentSequence<any>) {
 		this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>((a, b) =>
 			a.compareEnd(b),
 		);
 	}
 
 	public previousInterval(pos: number): SequenceInterval | undefined {
-		const transientInterval = createTransientInterval(pos, pos, this.client);
+		const transientInterval = createTransientIntervalFromSequence(pos, pos, this.sequence);
 		const rbNode = this.endIntervalTree.floor(transientInterval);
 		if (rbNode) {
 			return rbNode.data;
@@ -45,7 +46,7 @@ export class EndpointIndex implements IEndpointIndex {
 	}
 
 	public nextInterval(pos: number): SequenceInterval | undefined {
-		const transientInterval = createTransientInterval(pos, pos, this.client);
+		const transientInterval = createTransientIntervalFromSequence(pos, pos, this.sequence);
 		const rbNode = this.endIntervalTree.ceil(transientInterval);
 		if (rbNode) {
 			return rbNode.data;
@@ -62,9 +63,10 @@ export class EndpointIndex implements IEndpointIndex {
 }
 
 /**
+ * Creates an endpoint index for the provided SharedString.
+ *
  * @internal
  */
 export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex {
-	const client = (sharedString as unknown as { client: Client }).client;
-	return new EndpointIndex(client);
+	return new EndpointIndex(sharedString);
 }

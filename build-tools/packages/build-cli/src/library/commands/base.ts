@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, type Interfaces } from "@oclif/core";
-
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
-
-import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import type { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";
@@ -21,6 +19,8 @@ export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
 	(typeof BaseCommand)["baseFlags"] & T["flags"]
 >;
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
+
+const verbosityCommandLineArguments = new Set(["-v", "--verbose", "--quiet"]);
 
 /**
  * A base command that sets up common flags that all commands should have. Most commands should have this class in their
@@ -74,6 +74,19 @@ export abstract class BaseCommand<T extends typeof Command>
 
 	protected flags!: Flags<T>;
 	protected args!: Args<T>;
+
+	/**
+	 * Lightly formats the command line arguments for the command
+	 * skipping verbosity flags.
+	 *
+	 * @remarks Prefixed with a space if there are any arguments.
+	 */
+	protected commandLineArgs(): string {
+		const argsLessVerbosity = this.argv.filter(
+			(arg) => !verbosityCommandLineArguments.has(arg),
+		);
+		return `${argsLessVerbosity.length > 0 ? " " : ""}${argsLessVerbosity.join(" ")}`;
+	}
 
 	/**
 	 * If true, all logs except those sent using the .log function will be suppressed.

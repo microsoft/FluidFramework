@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/id-compressor",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "ID compressor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -132,7 +132,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@tylerbu/sorted-btree-es6": "^2.1.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
@@ -145,10 +145,10 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.80.0",
+		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.83.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
@@ -157,7 +157,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

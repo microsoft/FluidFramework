@@ -2002,6 +2002,73 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("tolerates open async transactions in the face of inbound commits", () => {
+		it("committed transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const view1 = asAlpha(tree1.viewWith(config));
+			const view2 = tree2.viewWith(config);
+			view1.initialize(["A", "C", "E"]);
+			await provider.ensureSynchronized();
+
+			await view1.runTransactionAsync(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
+
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+			});
+			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+
+			await provider.ensureSynchronized();
+			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "D", "E"]);
+		});
+
+		it("aborted transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const view1 = asAlpha(tree1.viewWith(config));
+			const view2 = tree2.viewWith(config);
+			view1.initialize(["A", "C", "E"]);
+			await provider.ensureSynchronized();
+
+			await view1.runTransactionAsync(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
+
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				return { rollback: true };
+			});
+			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+
+			await provider.ensureSynchronized();
+			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+		});
+	});
+
 	describe("Anchors", () => {
 		it("Anchors can be created and dereferenced", () => {
 			const provider = new TestTreeProviderLite();
@@ -2424,6 +2491,11 @@ describe("SharedTree", () => {
 		});
 
 		it("properly encodes ops using specified compression strategy", async () => {
+			/** Shape of serialized edit manager summary for this test */
+			interface ChangesSummaryFormat {
+				trunk: { change: [unknown, { data: { builds: { trees: { data: unknown[][] } } } }] }[];
+			}
+
 			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
 			const factory = configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
@@ -2443,7 +2515,9 @@ describe("SharedTree", () => {
 			assert(editManagerSummary.type === SummaryType.Tree);
 			const editManagerSummaryBlob = editManagerSummary.tree.String;
 			assert(editManagerSummaryBlob.type === SummaryType.Blob);
-			const changesSummary = JSON.parse(editManagerSummaryBlob.content as string);
+			const changesSummary = JSON.parse(
+				editManagerSummaryBlob.content as string,
+			) as ChangesSummaryFormat;
 			const encodedTreeData = changesSummary.trunk[0].change[1].data.builds.trees;
 			const expectedUncompressedTreeData = [
 				"com.fluidframework.json.array",
@@ -2493,7 +2567,9 @@ describe("SharedTree", () => {
 			assert(editManagerSummary2.type === SummaryType.Tree);
 			const editManagerSummaryBlob2 = editManagerSummary2.tree.String;
 			assert(editManagerSummaryBlob2.type === SummaryType.Blob);
-			const changesSummary2 = JSON.parse(editManagerSummaryBlob2.content as string);
+			const changesSummary2 = JSON.parse(
+				editManagerSummaryBlob2.content as string,
+			) as ChangesSummaryFormat;
 			const encodedTreeData2 = changesSummary2.trunk[0].change[1].data.builds.trees;
 			const expectedCompressedTreeData = ["A", "B", "C"];
 			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);
@@ -2805,5 +2881,38 @@ describe("SharedTree", () => {
 				assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
 			});
 		}
+	});
+
+	it("Can process nested transactions from two different trees", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class TestObject extends schemaFactory.object("TestObject", {
+			content: schemaFactory.number,
+		}) {}
+
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+			}).getFactory(),
+		);
+		const [tree1, tree2] = provider.trees;
+
+		const config = new TreeViewConfiguration({ schema: TestObject, enableSchemaValidation });
+		const view1 = tree1.viewWith(config);
+		view1.initialize({ content: 0 });
+		const view2 = tree2.viewWith(config);
+		view2.initialize({ content: 0 });
+
+		provider.synchronizeMessages();
+
+		Tree.runTransaction(view1, () => {
+			view1.root.content = 1;
+			Tree.runTransaction(view2, () => {
+				view2.root.content = 2;
+			});
+		});
+
+		assert.equal(view1.root.content, 1);
+		assert.equal(view2.root.content, 2);
 	});
 });

@@ -166,6 +166,10 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
+	public isBranch(): this is TreeBranchAlpha {
+		return true;
+	}
+
 	public applyChange(change: JsonCompatibleReadOnly): void {
 		this.checkout.applySerializedChange(change);
 	}
@@ -227,21 +231,20 @@ export class SchematizingSimpleTreeView<
 				},
 			);
 
-			this.checkout.transaction.start();
-
-			initialize(
-				this.checkout,
-				schema,
-				initializerFromChunk(this.checkout, () => {
-					// This must be done after initial schema is set!
-					return combineChunks(
-						this.checkout.forest.chunkField(
-							cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
-						),
-					);
-				}),
-			);
-			this.checkout.transaction.commit();
+			this.runTransaction(() => {
+				initialize(
+					this.checkout,
+					schema,
+					initializerFromChunk(this.checkout, () => {
+						// This must be done after initial schema is set!
+						return combineChunks(
+							this.checkout.forest.chunkField(
+								cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+							),
+						);
+					}),
+				);
+			});
 		});
 	}
 
@@ -294,8 +297,46 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const { checkout } = this;
+		this.mountTransaction(params, false);
+		const transactionCallbackStatus = transaction();
+		return this.unmountTransaction(transactionCallbackStatus, params);
+	}
 
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
+	 */
+	public runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
+	 */
+	public runTransactionAsync(
+		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResult>;
+	public async runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void
+		>,
+		params: RunTransactionParams | undefined,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		this.mountTransaction(params, true);
+		const transactionCallbackStatus = await transaction();
+		return this.unmountTransaction(transactionCallbackStatus, params);
+	}
+
+	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+		this.ensureUndisposed();
+		const { checkout } = this;
+		if (isAsync && checkout.transaction.isInProgress()) {
+			throw new UsageError(
+				"An asynchronous transaction cannot be started while another transaction is already in progress.",
+			);
+		}
 		checkout.transaction.start();
 
 		// Validate preconditions before running the transaction callback.
@@ -304,7 +345,17 @@ export class SchematizingSimpleTreeView<
 			false /* constraintsOnRevert */,
 			params?.preconditions,
 		);
-		const transactionCallbackStatus = transaction();
+	}
+
+	private unmountTransaction<TSuccessValue, TFailureValue>(
+		transactionCallbackStatus:
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+		params: RunTransactionParams | undefined,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		this.ensureUndisposed();
+		const { checkout } = this;
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
 			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
@@ -324,7 +375,9 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
-		checkout.transaction.commit();
+		checkout.runWithTransactionLabel(() => {
+			checkout.transaction.commit();
+		}, params?.label);
 		return value === undefined
 			? { success: true }
 			: { success: true, value: value as TSuccessValue };
@@ -566,17 +619,11 @@ export function addConstraintsToTransaction(
 	constraints: readonly TransactionConstraintAlpha[] = [],
 ): void {
 	for (const constraint of constraints) {
+		assertValidConstraint(constraint, constraintsOnRevert);
 		const constraintType = constraint.type;
 		switch (constraintType) {
 			case "nodeInDocument": {
 				const node = getInnerNode(constraint.node);
-				const nodeStatus = getKernel(constraint.node).getStatus();
-				if (nodeStatus !== TreeStatus.InDocument) {
-					const revertText = constraintsOnRevert ? " on revert" : "";
-					throw new UsageError(
-						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-					);
-				}
 				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
 				if (constraintsOnRevert) {
 					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
@@ -596,6 +643,34 @@ export function addConstraintsToTransaction(
 			default: {
 				unreachableCase(constraintType);
 			}
+		}
+	}
+}
+
+/**
+ * Throws if the given {@link TransactionConstraintAlpha | transaction constraint} is not currently satisfied.
+ */
+export function assertValidConstraint(
+	constraint: TransactionConstraintAlpha,
+	onRevert: boolean,
+): void {
+	switch (constraint.type) {
+		case "nodeInDocument": {
+			const nodeStatus = getKernel(constraint.node).getStatus();
+			if (nodeStatus !== TreeStatus.InDocument) {
+				const revertText = onRevert ? " on revert" : "";
+				throw new UsageError(
+					`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+				);
+			}
+			break;
+		}
+		case "noChange": {
+			// This constraint is always satisfied at the time of checking, since it just requires that no changes have been made since the transaction callback returned.
+			break;
+		}
+		default: {
+			unreachableCase(constraint);
 		}
 	}
 }

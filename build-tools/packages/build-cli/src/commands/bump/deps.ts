@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 // eslint-disable-next-line import-x/no-named-as-default -- prompts default export is the intended API
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
-
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import {
@@ -21,17 +20,15 @@ import {
 	testModeFlag,
 } from "../../flags.js";
 import {
-	BaseCommand,
-	// eslint-disable-next-line import-x/no-deprecated
-	MonoRepoKind,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
-	indentString,
-	isDependencyUpdateType,
-	npmCheckUpdates,
-} from "../../library/index.js";
-
-import { npmCheckUpdatesHomegrown } from "../../library/package.js";
+} from "../../library/branches.js";
+import { isDependencyUpdateType } from "../../library/bump.js";
+import { BaseCommand } from "../../library/commands/base.js";
+// eslint-disable-next-line import-x/no-deprecated
+import { MonoRepoKind } from "../../library/context.js";
+import { npmCheckUpdates, npmCheckUpdatesHomegrown } from "../../library/package.js";
+import { indentString } from "../../library/text.js";
 import type { ReleaseGroup } from "../../releaseGroups.js";
 
 /**

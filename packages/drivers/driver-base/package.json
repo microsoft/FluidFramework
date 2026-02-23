@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-base",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "Shared driver code for Fluid driver implementations",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -111,11 +111,11 @@
 		"@fluid-tools/build-cli": "^0.63.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/driver-base-previous": "npm:@fluidframework/driver-base@2.80.0",
+		"@fluidframework/driver-base-previous": "npm:@fluidframework/driver-base@2.83.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
@@ -124,7 +124,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"socket.io-client": "~4.7.5",
 		"typescript": "~5.4.5"
 	},

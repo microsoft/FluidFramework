@@ -53,7 +53,6 @@ export {
 	TreeStatus,
 	TreeCompressionStrategy,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
@@ -76,8 +75,10 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
+	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
@@ -158,13 +159,13 @@ export {
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
 	// Index APIs
-	type SimpleTreeIndex,
 	type IdentifierIndex,
-	createSimpleTreeIndex,
+	createTreeIndex,
 	createIdentifierIndex,
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 	type DirtyTreeMap,
+	type TreeIndexKey,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -294,13 +295,17 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
-	type SchemaCompatibilitySnapshotsOptions,
+	type SnapshotSchemaCompatibilityOptions,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
+	type WithValue,
+	type TreeContextAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -315,6 +320,7 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
@@ -348,13 +354,12 @@ export type {
 export { cloneWithReplacements } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
-export {
-	/**
-	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
-	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
-	 */
-	InternalTypes,
-};
+/**
+ * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+ * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ */
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
+export { InternalTypes };
 
 // Internal/System types:
 // These would be put in `internalTypes` except doing so tents to cause errors like:
@@ -367,3 +372,4 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export { ExtensibleUnionNode } from "./extensibleUnionNode.js";

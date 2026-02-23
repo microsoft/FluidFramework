@@ -6,7 +6,7 @@
 
 // @beta @legacy (undocumented)
 export namespace FluidDebugger {
-    // @legacy (undocumented)
+    // @legacy
     export function createFromServiceFactory(documentServiceFactory: IDocumentServiceFactory): Promise<IDocumentServiceFactory>;
 }
 

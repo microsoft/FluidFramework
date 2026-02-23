@@ -12,7 +12,7 @@ import remarkGithub, { defaultBuildUrl } from "remark-github";
 import admonitions from "remark-github-beta-blockquote-admonitions";
 import remarkToc from "remark-toc";
 
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import {
 	addHeadingLinks,
 	removeHeadingsAtLevel,
@@ -20,7 +20,6 @@ import {
 	stripSoftBreaks,
 	updateTocLinks,
 } from "../../library/markdown.js";
-
 import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 
 /**

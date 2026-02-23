@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -37,7 +37,7 @@
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"check:release-tags": "api-extractor run --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet src",
@@ -91,7 +91,7 @@
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"chai": "^4.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
@@ -101,7 +101,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

@@ -80,6 +80,7 @@ import {
 	exportConcise,
 	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
+	type TreeContextAlpha,
 	type TreeNodeSchema,
 	getUnhydratedContext,
 	type TreeBranchAlpha,
@@ -88,6 +89,7 @@ import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js"
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	return getIdentifierFromNode(node, "uncompressed");
@@ -226,7 +228,7 @@ export interface TreeIdentifierUtils {
  * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
  * If an option were added to these APIs, it could also be used to enable unknown optional fields.
  *
- * @system @sealed @alpha
+ * @sealed @alpha
  */
 export interface TreeAlpha {
 	/**
@@ -237,8 +239,16 @@ export interface TreeAlpha {
 	 *
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
+	 *
+	 * @deprecated To obtain a {@link TreeBranchAlpha | branch }, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
 	 */
 	branch(node: TreeNode): TreeBranchAlpha | undefined;
+
+	/**
+	 * Retrieve the {@link TreeContextAlpha | context} for the given node.
+	 * @param node - The node to query
+	 */
+	context(node: TreeNode): TreeContextAlpha;
 
 	/**
 	 * Construct tree content that is compatible with the field defined by the provided `schema`.
@@ -761,6 +771,10 @@ export const TreeAlpha: TreeAlpha = {
 			true,
 		);
 		return result;
+	},
+
+	context(node: TreeNode): TreeContextAlpha {
+		return this.branch(node) ?? UnhydratedTreeContext.instance;
 	},
 
 	branch(node: TreeNode): TreeBranchAlpha | undefined {

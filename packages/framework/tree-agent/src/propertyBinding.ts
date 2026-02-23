@@ -4,11 +4,9 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
-import type { ZodType, ZodTypeAny, ZodTypeDef, infer as ZodInfer } from "zod";
+import type { TreeNodeSchema } from "@fluidframework/tree";
 
 import type { BindableSchema, Ctor } from "./methodBinding.js";
-import { instanceOf } from "./renderZodTypeScript.js";
 import type { TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
 
@@ -19,55 +17,6 @@ import { isTypeFactoryType } from "./treeAgentTypes.js";
 export const exposePropertiesSymbol: unique symbol = Symbol.for(
 	"@fluidframework/tree-agent/exposeProperties",
 );
-
-/**
- * Set of property keys from `T` that are not methods.
- * @alpha
- */
-export type ExposableKeys<T> = {
-	[K in keyof T]?: T[K] extends (...args: any[]) => any ? never : K;
-}[keyof T];
-
-/**
- * Type-level equality test used as a helper to evaluate readonly keys.
- * - If X and Y are the same type, it evaluates to A.
- * - If X and Y are different, it evaluates to B.
- * @alpha
- */
-export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extends <
-	T,
->() => T extends Y ? 1 : 2
-	? A
-	: B;
-
-/**
- * Produces a union of keys of `T` which are readonly.
- * @alpha
- */
-export type ReadonlyKeys<T> = {
-	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
-	[P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>;
-}[keyof T];
-
-/**
- * Type to enforce `readOnly: true` for readonly properties.
- * @alpha
- */
-export type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
-	[P in K]-?: P extends ReadonlyKeys<TObj> ? { readOnly: true } : { readOnly?: false };
-}[K];
-
-/**
- * Emits compile-time error when there is a type mismatch.
- * @alpha
- */
-export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected]
-	? unknown
-	: {
-			__error__: "Zod schema value type does not match the property's declared type";
-			expected: Expected;
-			received: Received;
-		};
 
 /**
  * A property definition class that describes the structure of the property
@@ -84,9 +33,9 @@ export class PropertyDef {
 		 */
 		public readonly description: string | undefined,
 		/**
-		 * The schema defining the property's type (either Zod or TypeFactory).
+		 * The schema defining the property's type.
 		 */
-		public readonly schema: ZodTypeAny | TypeFactoryType,
+		public readonly schema: TypeFactoryType,
 		/**
 		 * Whether the property is readonly.
 		 */
@@ -100,26 +49,9 @@ export class PropertyDef {
  */
 export interface ExposedProperties {
 	/**
-	 * Expose a property with Zod type checking.
-	 */
-	exposeProperty<
-		S extends BindableSchema & Ctor,
-		K extends string & ExposableKeys<InstanceType<S>>,
-		TZ extends ZodTypeAny,
-	>(
-		schema: S,
-		name: K,
-		def: { schema: TZ; description?: string } & ReadOnlyRequirement<InstanceType<S>, K> &
-			TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>,
-	): void;
-
-	/**
 	 * Expose a property with type factory type and metadata.
 	 */
-	exposeProperty<
-		S extends BindableSchema & Ctor,
-		K extends string & ExposableKeys<InstanceType<S>>,
-	>(
+	exposeProperty<S extends BindableSchema & Ctor, K extends string>(
 		schema: S,
 		name: K,
 		def: { schema: TypeFactoryType; description?: string; readOnly?: boolean },
@@ -128,17 +60,11 @@ export interface ExposedProperties {
 	/**
 	 * Expose a property with type factory type (simple form).
 	 */
-	exposeProperty<
-		S extends BindableSchema & Ctor,
-		K extends string & ExposableKeys<InstanceType<S>>,
-	>(schema: S, name: K, tfType: TypeFactoryType): void;
-
-	/**
-	 * Create a Zod type that references a SharedTree schema class.
-	 */
-	instanceOf<T extends TreeNodeSchemaClass>(
-		schema: T,
-	): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>>;
+	exposeProperty<S extends BindableSchema & Ctor, K extends string>(
+		schema: S,
+		name: K,
+		tfType: TypeFactoryType,
+	): void;
 }
 
 /**
@@ -168,16 +94,11 @@ class ExposedPropertiesI implements ExposedProperties {
 
 	public constructor(private readonly schemaClass: BindableSchema) {}
 
-	public exposeProperty<
-		S extends BindableSchema & Ctor,
-		K extends string & ExposableKeys<InstanceType<S>>,
-		TZ extends ZodTypeAny,
-	>(
+	public exposeProperty<S extends BindableSchema & Ctor, K extends string>(
 		schema: S,
 		name: K,
 		defOrType:
-			| ({ schema: TZ; description?: string } & ReadOnlyRequirement<InstanceType<S>, K> &
-					TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>)
+			| { schema: TypeFactoryType; description?: string; readOnly?: boolean }
 			| TypeFactoryType,
 	): void {
 		if (schema !== this.schemaClass) {
@@ -188,9 +109,9 @@ class ExposedPropertiesI implements ExposedProperties {
 		if (isTypeFactoryType(defOrType)) {
 			this.properties[name] = new PropertyDef(name, undefined, defOrType, false);
 		} else {
-			// Handle object with schema property (works for both Zod and TypeFactory)
+			// Handle object with schema property
 			const def = defOrType as {
-				schema: TZ | TypeFactoryType;
+				schema: TypeFactoryType;
 				description?: string;
 				readOnly?: boolean;
 			};
@@ -201,13 +122,6 @@ class ExposedPropertiesI implements ExposedProperties {
 				def.readOnly === true,
 			);
 		}
-	}
-
-	public instanceOf<T extends TreeNodeSchemaClass>(
-		schema: T,
-	): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>> {
-		this.referencedTypes.add(schema);
-		return instanceOf(schema);
 	}
 
 	public static getExposedProperties(schemaClass: BindableSchema): {
@@ -229,7 +143,7 @@ class ExposedPropertiesI implements ExposedProperties {
 /**
  * Get the exposed properties of a schema class.
  * @param schemaClass - The schema class to extract properties from.
- * @returns A record of property names and their corresponding Zod types.
+ * @returns A record of property names and their corresponding TypeFactory types.
  */
 export function getExposedProperties(schemaClass: BindableSchema): {
 	properties: Record<string, PropertyDef>;

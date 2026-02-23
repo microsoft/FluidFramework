@@ -211,11 +211,14 @@ stages:
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
     parameters:
-      stageId: perf_unit_tests_runtime
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      testWorkspace: ${{ variables.testWorkspace }}
+      stageIdFilter: perf_unit_tests_runtime
+      telemetry_upload_steps:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+          parameters:
+            stageIdFilter: perf_unit_tests_runtime
+            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
@@ -321,11 +324,14 @@ stages:
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
     parameters:
-      stageId: perf_unit_tests_memory
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      testWorkspace: ${{ variables.testWorkspace }}
+      stageIdFilter: perf_unit_tests_memory
+      telemetry_upload_steps:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+          parameters:
+            stageIdFilter: perf_unit_tests_memory
+            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
   # Performance unit tests - customBenchmark
   - stage: perf_unit_tests_customBenchmark
@@ -429,11 +435,14 @@ stages:
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
     parameters:
-      stageId: perf_unit_tests_customBenchmark
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      testWorkspace: ${{ variables.testWorkspace }}
+      stageIdFilter: perf_unit_tests_customBenchmark
+      telemetry_upload_steps:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+          parameters:
+            stageIdFilter: perf_unit_tests_customBenchmark
+            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
   - ${{ each endpointObject in parameters.endpoints }}:
 
@@ -626,8 +635,11 @@ stages:
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-    - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
       parameters:
-        stageId: perf_e2e_tests_${{ endpointObject.endpointName }}
-        pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-        testWorkspace: ${{ variables.testWorkspace }}
+        stageIdFilter: perf_e2e_tests_${{ endpointObject.endpointName }}
+        telemetry_upload_steps:
+          - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+            parameters:
+              stageIdFilter: perf_e2e_tests_${{ endpointObject.endpointName }}
+              pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}

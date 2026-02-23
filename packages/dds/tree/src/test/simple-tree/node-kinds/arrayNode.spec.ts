@@ -23,7 +23,7 @@ import {
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { asIndex } from "../../../simple-tree/node-kinds/index.js";
+import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import type {
 	areSafelyAssignable,
 	Mutable,
@@ -232,6 +232,16 @@ describe("ArrayNode", () => {
 						),
 					);
 				});
+			});
+
+			it("insertAtStart, insertAtEnd, and push insert at expected positions", () => {
+				const array = init(schemaType, [2]);
+				array.insertAtStart(1);
+				assert.deepEqual([...array], [1, 2]);
+				array.insertAtEnd(3);
+				assert.deepEqual([...array], [1, 2, 3]);
+				array.push(4);
+				assert.deepEqual([...array], [1, 2, 3, 4]);
 			});
 
 			describe("removeRange", () => {
@@ -1037,6 +1047,51 @@ describe("ArrayNode", () => {
 			assert.equal(JSON.stringify(fromMap), json);
 			const fromIterable = new Schema(new Map(data).entries());
 			assert.equal(JSON.stringify(fromIterable), json);
+		});
+	});
+
+	describeHydration("createArrayInsertionAnchor", (init) => {
+		it("creates valid anchors", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+		});
+
+		it("updates anchors correctly", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			array.removeAt(0);
+			assert.equal(anchor.index, 0);
+			array.insertAtStart(4);
+			assert.equal(anchor.index, 1);
+		});
+
+		it("past end", () => {
+			const array = init(CustomizableNumberArray, [1]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			array.insertAt(anchor.index, 4);
+			assert.equal(anchor.index, 2);
+		});
+
+		it("empty array", () => {
+			const array = init(CustomizableNumberArray, []);
+			const anchor = createArrayInsertionAnchor(array, 0);
+			assert.equal(anchor.index, 0);
+			array.insertAt(anchor.index, 4);
+			assert.equal(anchor.index, 1);
+			array.insertAt(anchor.index, 5);
+			assert.equal(anchor.index, 2);
+		});
+
+		// This case sticks to the end of the array, which is not ideal, and will need to be fixed with a more sophisticated anchor implementation.
+		it("removed item", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			array.removeAt(1);
+			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
+			assert.equal(anchor.index, 2);
 		});
 	});
 });
