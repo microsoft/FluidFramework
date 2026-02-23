@@ -1935,6 +1935,7 @@ describe("ModularChangeFamily integration", () => {
 					family,
 					maxId: 2,
 					revisions: [{ revision: tag1 }],
+					renames: [{ oldId: cellId1, newId: detachId, count: 1, detachLocation: undefined }],
 					detachedMoves: [{ detachId, count: 1, newLocation: fieldAId }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
@@ -1966,6 +1967,7 @@ describe("ModularChangeFamily integration", () => {
 				{
 					family,
 					maxId: 2,
+					renames: [{ oldId: cellId1, newId: attachId, count: 1, detachLocation: undefined }],
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
