@@ -29,23 +29,16 @@ import {
 	SyntaxKind,
 } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import { ensureDevDependencyExists, unscopedPackageNameString } from "../../library/index.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import-x/no-internal-modules
+import { unscopedPackageNameString } from "../../library/commands/constants.js";
+import { ensureDevDependencyExists } from "../../library/package.js";
 import { getTypesPathFromPackage } from "../../library/packageExports.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import-x/no-internal-modules
 import { buildTestCase, type TestCaseTypeData } from "../../typeValidator/testGeneration.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import-x/no-internal-modules
 import type { TypeData } from "../../typeValidator/typeData.js";
 import {
 	type BrokenCompatSettings,
 	type BrokenCompatTypes,
 	defaultTypeValidationConfig,
 	type PackageWithTypeTestSettings,
-	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";
 
 /**
