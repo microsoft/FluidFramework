@@ -672,12 +672,12 @@ class NodeSubscription {
 					subscriptions.set(flexNode, newSubscription);
 				} else {
 					// Already subscribed to this node.
-					subscription.keys = "deep"; // Now subscribed to all keys.
+					subscription.keys = "deep"; // Now subscribed to subtree changes (deep observation).
 				}
 			},
 			observeNodeFields(flexNode: FlexTreeNode): void {
 				if (flexNode.value !== undefined) {
-					// Leaf value: the set of fields is always empty, can cannot change, so no need to subscribe.
+					// Leaf value: the set of fields is always empty, and cannot change, so no need to subscribe.
 					return;
 				}
 

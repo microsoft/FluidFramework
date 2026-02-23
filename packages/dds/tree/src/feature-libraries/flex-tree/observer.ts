@@ -33,7 +33,7 @@ export interface Observer {
 	 */
 	observeNodeFields(node: FlexTreeNode): void;
 	/**
-	 * The the contents of the `key` field of `node` is being observed.
+	 * The contents of the `key` field of `node` are being observed.
 	 * @remarks
 	 * Any (shallow) change to which children exist in this field, or in what order should invalidate this observation.
 	 */
