@@ -77,8 +77,11 @@ interface ChunkSummaryProperties {
 	/**
 	 * The reference ID of the chunk which uniquely identifies it under its parent's summary tree.
 	 * The summary for this chunk will be stored against this reference ID as key in the summary tree.
+	 * @privateRemarks
+	 * TODO: there seems to be no reason to store this as it appears to only be used to store new references to this chunk under this id,
+	 * and there is no reason a new reference to a chunk should use the same ChunkReferenceId as a previous one.
 	 */
-	readonly referenceId: ChunkReferenceId;
+	// readonly referenceId: ChunkReferenceId;
 	/**
 	 * The path for this chunk's summary in the summary tree relative to the forest's summary tree.
 	 * This path is used to generate a summary handle for the chunk if it doesn't change between summaries.
@@ -310,6 +313,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				});
 
 				const chunkReferenceIdNumber = Number(chunkReferenceId);
+				// TODO: this should be unneeded
 				this.nextReferenceId = brand(
 					Math.max(this.nextReferenceId, chunkReferenceIdNumber + 1),
 				);
@@ -383,17 +387,20 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				this.latestSummarySequenceNumber,
 				chunk,
 			);
+
+			// Generate a new reference ID for the chunk.
+			// TODO: this should be able to just use the index in the `chunks` array.
+			// If done we can remove this.nextReferenceId.
+			const newReferenceId: ChunkReferenceId = brand(this.nextReferenceId++);
+
 			if (previousChunkProperties !== undefined && !this.trackedSummaryProperties.fullTree) {
 				chunkProperties = previousChunkProperties;
 				this.trackedSummaryProperties.parentSummaryBuilder.addHandle(
-					`${chunkProperties.referenceId}`,
+					`${newReferenceId}`,
 					SummaryType.Tree,
 					`${this.trackedSummaryProperties.latestSummaryBasePath}/${chunkProperties.summaryPath}`,
 				);
 			} else {
-				// Generate a new reference ID for the chunk.
-				const newReferenceId: ChunkReferenceId = brand(this.nextReferenceId++);
-
 				// Add the reference ID of this chunk to the chunk summary path and use the path as the summary path
 				// for the chunk in its summary properties.
 				// This is done before encoding the chunk so that the summary path is updated correctly when encoding
@@ -401,7 +408,6 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				this.trackedSummaryProperties.chunkSummaryPath.push(newReferenceId);
 
 				chunkProperties = {
-					referenceId: newReferenceId,
 					summaryPath: this.trackedSummaryProperties.chunkSummaryPath.join("/"),
 				};
 
@@ -435,7 +441,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				chunk,
 				chunkProperties,
 			);
-			chunkReferenceIds.push(chunkProperties.referenceId);
+			chunkReferenceIds.push(newReferenceId);
 		}
 		return chunkReferenceIds;
 	}

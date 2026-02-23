@@ -495,12 +495,10 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				builder: summaryTreeBuilder2,
 			});
 			const referenceIds2 = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
-			// Should reuse the same reference ID
-			assert.deepEqual(referenceIds1, referenceIds2, "Reference IDs should match");
 
 			// Verify that a handle was added to the summary builder
-			assert.equal(referenceIds1.length, 1);
-			const referenceId1 = referenceIds1[0];
+			assert.equal(referenceIds2.length, 1);
+			const referenceId1 = referenceIds2[0];
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext2,
 				forestSummaryRootContent: mockForestSummaryRootContent,
@@ -559,13 +557,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				builder: summaryTreeBuilder3,
 			});
 
-			// Should reuse the same reference ID since the chunk hasn't changed since the last successful summary.
+			// Get the reference ID for the chunk which hasn't changed since the last successful summary.
 			const referenceIds2 = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
-			assert.deepEqual(referenceIds1, referenceIds2, "Reference IDs should match");
 
 			// Verify that a handle was added to the summary builder
-			assert.equal(referenceIds1.length, 1);
-			const referenceId1 = referenceIds1[0];
+			assert.equal(referenceIds2.length, 1);
+			const referenceId1 = referenceIds2[0];
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext3,
 				forestSummaryRootContent: mockForestSummaryRootContent,
