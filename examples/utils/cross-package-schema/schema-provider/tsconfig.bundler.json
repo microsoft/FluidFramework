@@ -5,10 +5,7 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
-		// Override to "bundler" to simulate how TypeScript 5.9+ with bundler resolution
-		// normalizes import paths in .d.ts emission. This causes ObjectNodeSchema references
-		// to be written as import("@fluidframework/tree") instead of
-		// import("@fluidframework/tree/alpha"), triggering the type erasure issue.
+		// Override to "bundler"
 		"moduleResolution": "bundler",
 		"module": "esnext",
 	},
