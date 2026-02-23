@@ -3445,9 +3445,7 @@ export class ContainerRuntime
 					// IdAllocation batches use ignoreBatchId, so the DuplicateBatchDetector cannot
 					// catch these duplicates — we must detect them here before finalizeCreationRange.
 					if (range.ids !== undefined) {
-						const nextExpectedGenCount = this.finalizedIdAllocationRanges.get(
-							range.sessionId,
-						);
+						const nextExpectedGenCount = this.finalizedIdAllocationRanges.get(range.sessionId);
 						if (
 							nextExpectedGenCount !== undefined &&
 							range.ids.firstGenCount < nextExpectedGenCount

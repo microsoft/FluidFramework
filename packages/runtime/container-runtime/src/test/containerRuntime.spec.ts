@@ -444,10 +444,7 @@ describe("Runtime", () => {
 							),
 						(error: IErrorBase) => {
 							assert(isFluidError(error));
-							assert.strictEqual(
-								error.errorType,
-								ContainerErrorTypes.dataCorruptionError,
-							);
+							assert.strictEqual(error.errorType, ContainerErrorTypes.dataCorruptionError);
 							assert(
 								error.message.includes("Duplicate IdAllocation range detected"),
 								`Unexpected error message: ${error.message}`,
@@ -505,10 +502,7 @@ describe("Runtime", () => {
 							),
 						(error: IErrorBase) => {
 							assert(isFluidError(error));
-							assert.strictEqual(
-								error.errorType,
-								ContainerErrorTypes.dataCorruptionError,
-							);
+							assert.strictEqual(error.errorType, ContainerErrorTypes.dataCorruptionError);
 							return true;
 						},
 						"Partially overlapping ranges should be detected as duplicates",
