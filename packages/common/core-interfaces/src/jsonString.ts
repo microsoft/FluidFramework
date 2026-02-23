@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.
 import type { BrandedType } from "./brandedType.js";
 import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 import type { JsonDeserialized } from "./jsonDeserialized.js";

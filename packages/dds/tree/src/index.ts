@@ -53,7 +53,6 @@ export {
 	TreeStatus,
 	TreeCompressionStrategy,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
@@ -160,13 +159,13 @@ export {
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
 	// Index APIs
-	type SimpleTreeIndex,
 	type IdentifierIndex,
-	createSimpleTreeIndex,
+	createTreeIndex,
 	createIdentifierIndex,
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 	type DirtyTreeMap,
+	type TreeIndexKey,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -296,15 +295,17 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
-	type SchemaCompatibilitySnapshotsOptions,
+	type SnapshotSchemaCompatibilityOptions,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
+	type WithValue,
+	type TreeContextAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

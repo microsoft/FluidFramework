@@ -255,7 +255,6 @@ describe("Presence", () => {
 				const latest = statesWorkspace.states.latest;
 				const attendee1 = presence.attendees.getAttendee(attendeeId1);
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 				latest.getRemote(attendee1)?.value();
 
 				const originalJoinResponseData = expectedSetupJoinResponse.content.data;
