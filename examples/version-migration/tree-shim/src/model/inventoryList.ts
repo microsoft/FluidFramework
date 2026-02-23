@@ -5,10 +5,9 @@
 
 import type { ISharedTree } from "@fluid-experimental/tree";
 import {
-	// eslint-disable-next-line import-x/no-deprecated
-	SharedTree as LegacySharedTree,
 	MigrationShim,
 	MigrationShimFactory,
+	SharedTreeFactory as LegacySharedTreeFactory,
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from "@fluid-experimental/tree";
@@ -63,7 +62,7 @@ function migrate(legacyTree: ISharedTree, newTree: ITree): void {
 	NewTreeInventoryListController.initializeTree(newTree, initialTree);
 }
 
-const legacyTreeFactory = LegacySharedTree.getFactory();
+const legacyTreeFactory = new LegacySharedTreeFactory();
 const migrationShimFactory = new MigrationShimFactory(
 	legacyTreeFactory,
 	newTreeFactory,
