@@ -435,7 +435,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Log in to retrieve tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'Fluid Framework Odsp Tests TestTRS'
               # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
               addSpnToEnvironment: true
               scriptType: 'bash'
