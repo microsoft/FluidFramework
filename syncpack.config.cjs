@@ -214,6 +214,15 @@ module.exports = {
 			isIgnored: true,
 		},
 
+		// eslint-config-fluid is an independent workspace linked via the link: protocol,
+		// which syncpack cannot resolve. Ignore it from version matching.
+		{
+			label: "Ignore eslint-config-fluid (independent workspace with link: protocol)",
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
@@ -223,7 +232,6 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
 			],
