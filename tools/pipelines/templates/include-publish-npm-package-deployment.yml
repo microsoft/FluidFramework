@@ -71,7 +71,7 @@ jobs:
           # - Build-tools packages: map all versions to local tarballs so interdependencies resolve correctly.
           - task: Bash@3
             name: CreatePackageJsonForOverrides
-            displayName: Create package.json with npm overrides
+            displayName: Create package.json with pnpm overrides
             inputs:
               targetType: 'inline'
               workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
