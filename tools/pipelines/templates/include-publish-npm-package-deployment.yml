@@ -117,7 +117,12 @@ jobs:
                 pnpm --version
 
                 echo "Installing build tools from tarballs (uses overrides from package.json)"
-                pnpm install ./*.tgz
+                if ls ./*.tgz > /dev/null 2>&1; then
+                  pnpm install ./*.tgz
+                else
+                  echo "Error: No .tgz files found in $(pwd)"
+                  exit 1
+                fi
 
                 # Add the local node_modules/.bin to PATH for subsequent pipeline steps
                 BIN_DIR="$(pwd)/node_modules/.bin"
