@@ -105,7 +105,6 @@ export interface ClickerState {
 	value: number;
 }
 
-/* eslint-disable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
 export class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
 	constructor(props: ClickerProps) {
 		super(props);
@@ -138,7 +137,6 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 		);
 	}
 }
-/* eslint-enable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
 
 // ----- FACTORY SETUP -----
 

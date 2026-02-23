@@ -135,6 +135,7 @@ module.exports = {
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
+		"eslint:fix": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],

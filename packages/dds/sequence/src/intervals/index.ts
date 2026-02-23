@@ -19,8 +19,10 @@ export {
 export {
 	SequenceInterval,
 	SequenceIntervalClass,
+	BaseSequenceInterval,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
-	createTransientInterval,
+	createTransientIntervalFromSequence,
+	resolvePositionRef,
 	getSerializedProperties,
 } from "./sequenceInterval.js";
