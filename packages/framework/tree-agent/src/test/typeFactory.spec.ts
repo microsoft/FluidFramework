@@ -7,11 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree/internal";
 
-import {
-	typeFactory as tf,
-	isTypeFactoryType,
-	instanceOfsTypeFactory,
-} from "../treeAgentTypes.js";
+import { typeFactory as tf, isTypeFactoryType } from "../treeAgentTypes.js";
 
 const sf = new SchemaFactory("test");
 
@@ -157,8 +153,6 @@ describe("type factories", () => {
 			assert(isTypeFactoryType(instanceOfType));
 			assert.equal(instanceOfType._kind, "instanceof");
 			assert.equal(instanceOfType.schema, MyClass);
-			// Verify it's registered in the lookup
-			assert.equal(instanceOfsTypeFactory.get(instanceOfType), MyClass);
 		});
 
 		it("throws error for instanceOf with non-ObjectNodeSchema", () => {

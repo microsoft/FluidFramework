@@ -47,9 +47,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.61.0",
+		"@fluid-tools/build-cli": "^0.63.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.61.0",
+		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
@@ -58,7 +58,6 @@
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "^0.10.0",
 		"@types/node": "^18.17.1",
-		"@types/rimraf": "^3.0.2",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
@@ -69,7 +68,7 @@
 		"lorem-ipsum": "^1.0.6",
 		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
-		"rimraf": "^3.0.2",
+		"rimraf": "^6.1.3",
 		"run-script-os": "^1.1.5",
 		"sillyname": "^0.1.0",
 		"supertest": "^3.4.2",

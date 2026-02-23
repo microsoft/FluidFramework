@@ -6,17 +6,23 @@
 import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 
 import type {
-	CommitMetadata,
 	ChangeMetadata,
+	CommitMetadata,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
+// This is referenced by doc comments.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
 	// This is referenced by doc comments.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
 } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+// This is referenced by doc comments.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Unhydrated } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -35,6 +41,7 @@ import type {
 	TransactionResult,
 	TransactionResultExt,
 	VoidTransactionCallbackStatus,
+	WithValue,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
 
@@ -176,6 +183,92 @@ export interface TreeBranch extends IDisposable {
 }
 
 /**
+ * Provides additional APIs that may be used to interact with a tree node or a tree node's SharedTree.
+ * @alpha
+ */
+export interface TreeContextAlpha {
+	/**
+	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * It may return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
+	 * @returns A {@link TransactionResultExt | result object}.
+	 * It includes the following:
+	 *
+	 * - A "success" flag indicating whether the transaction was successful or not.
+	 * - The success or failure value as returned by `transaction`.
+	 *
+	 * @remarks
+	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransaction` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
+	 */
+	runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+	): TransactionResultExt<TValue, TValue>;
+
+	/**
+	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * @remarks
+	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:2) | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransaction` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
+	 */
+	runTransaction(transaction: () => void): TransactionResult;
+
+	/**
+	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * It may return a {@link WithValue | value }, which will be returned by the `runTransactionAsync` call.
+	 * @returns A promise that resolves to a {@link TransactionResultExt | result object}.
+	 * It includes the following:
+	 *
+	 * - A "success" flag indicating whether the transaction was successful or not.
+	 * - The success or failure value as returned by `transaction`.
+	 *
+	 * @remarks
+	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:1) | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransactionAsync` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
+	 */
+	runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+	): Promise<TransactionResultExt<TValue, TValue>>;
+
+	/**
+	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * @remarks
+	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:2) | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransactionAsync` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
+	 */
+	runTransactionAsync(transaction: () => Promise<void>): Promise<TransactionResult>;
+
+	/**
+	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
+	 * @remarks If this returns true, the context can be safely inferred or cast to {@link TreeBranchAlpha} to access additional branch-specific APIs.
+	 * @example
+	 * ```typescript
+	 * const context = tree.context(someNode);
+	 * if (context.isBranch()) {
+	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
+	 * }
+	 * ```
+	 */
+	isBranch(): this is TreeBranchAlpha;
+}
+
+/**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
  * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
@@ -183,7 +276,7 @@ export interface TreeBranch extends IDisposable {
  * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
-export interface TreeBranchAlpha extends TreeBranch {
+export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Events for the branch
 	 */
@@ -211,14 +304,14 @@ export interface TreeBranchAlpha extends TreeBranch {
 	fork(): TreeBranchAlpha;
 
 	/**
-	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
+	 * It should return a {@link TransactionCallbackStatus | status object }.
 	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
 	 * abort the transaction and discard any changes it made so far.
 	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 * @returns A {@link TransactionResultExt | result object}. It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
 	 * - The success or failure value as returned by the transaction function.
@@ -236,28 +329,30 @@ export interface TreeBranchAlpha extends TreeBranch {
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 *
 	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another runTransaction call. That will have slightly different behavior:
+	 * This API can be called from within the transaction callback of another `runTransaction` or `runTransactionAsync` call. That will have slightly different behavior:
 	 *
 	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
 	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
 	 * for the outermost transaction which includes all inner transactions.
 	 * - Undo will undo the outermost transaction and all inner transactions.
+	 * - If a label is provided in the params, only the label for the outermost transaction will be used. All other labels will be ignored.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	/**
-	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction. It may return the following:
 	 *
 	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
+	 * - A {@link VoidTransactionCallbackStatus | status object }.
+	 * It includes a "rollback" property which
 	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
 	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 *
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
+	 * @returns A {@link TransactionResult | result object}. It includes a "success" flag indicating whether the
 	 * transaction was successful or not.
 	 *
 	 * @remarks
@@ -273,7 +368,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 *
 	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another runTransaction call. That will have slightly different behavior:
+	 * This API can be called from within the transaction callback of another `runTransaction` or `runTransactionAsync` call. That will have slightly different behavior:
 	 *
 	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
 	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
@@ -284,6 +379,87 @@ export interface TreeBranchAlpha extends TreeBranch {
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
+
+	/**
+	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * It should return a promise that resolves to a {@link TransactionCallbackStatus | status object }.
+	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
+	 * abort the transaction and discard any changes it made so far.
+	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
+	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
+	 * @returns A promise that resolves to a {@link TransactionResultExt | result object}. It includes the following:
+	 *
+	 * - A "success" flag indicating whether the transaction was successful or not.
+	 * - The success or failure value as returned by the transaction function.
+	 *
+	 * The promise will reject if the constraints are not met or something unexpected happens.
+	 *
+	 * @remarks
+	 * As with synchronous transactions, using an asynchronous transaction has the following consequences:
+	 * - All of the changes in the transaction are treated as a unit, therefore no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Unlike with synchronous transactions, using an asynchronous transaction has the following consequences:
+	 * - It is possible that other changes (either from this client by merging a branch or from a remote client) may be applied to the branch while this transaction is in progress.
+	 * These other changes will be not be reflected on the branch until after this transaction completes,
+	 * at which point the transaction changes will be applied after these other changes.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 *
+	 * Nested transactions:
+	 * This API can be called from within the transaction callback of another `runTransactionAsync` call. That will have slightly different behavior:
+	 *
+	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
+	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
+	 * for the outermost transaction which includes all inner transactions.
+	 * - Undo will undo the outermost transaction and all inner transactions.
+	 */
+	runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	/**
+	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction. It must return a promise that can resolve to any of the following:
+	 *
+	 * - Nothing to indicate that the body of the transaction has successfully run.
+	 * - A {@link VoidTransactionCallbackStatus | status object }. It includes a "rollback" property which
+	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
+	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
+	 *
+	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
+	 * @returns A promise that resolves to a {@link TransactionResult | result object}. It includes a "success" flag indicating whether the
+	 * transaction was successful or not. The promise will reject if the constraints are not met or something unexpected happens.
+	 *
+	 * @remarks
+	 * As with synchronous transactions, using an asynchronous transaction has the following consequences:
+	 * - All of the changes in the transaction are treated as a unit, therefore no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Unlike with synchronous transactions, using an asynchronous transaction has the following consequences:
+	 * - It is possible that other changes (either from this client by merging a branch or from a remote client) may be applied to the branch while this transaction is in progress.
+	 * These other changes will be not be reflected on the branch until after this transaction completes,
+	 * at which point the transaction changes will be applied after these other changes.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 *
+	 * Nested transactions:
+	 * This API can be called from within the transaction callback of another `runTransactionAsync` call. That will have slightly different behavior:
+	 *
+	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
+	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
+	 * for the outermost transaction which includes all inner transactions.
+	 * - Undo will undo the outermost transaction and all inner transactions.
+	 */
+	runTransactionAsync(
+		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResult>;
 
 	/**
 	 * Apply a serialized change to this branch.
@@ -343,7 +519,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * @remarks
 	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
-	 * Use {@link checkSchemaCompatibilitySnapshots} to write tests to validate that this compatibility behaves as desired across schema changes.
+	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
 	readonly compatibility: SchemaCompatibilityStatus;
 
@@ -544,7 +720,7 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**

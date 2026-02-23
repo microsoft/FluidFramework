@@ -26,10 +26,7 @@ import { AzureClient } from "../AzureClient.js";
 import type { AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(
-	props: {
-		scopes?: ScopeType[];
-		configProvider?: IConfigProviderBase;
-	} = {},
+	props: { scopes?: ScopeType[]; configProvider?: IConfigProviderBase } = {},
 ): AzureClient {
 	const connectionProperties: AzureLocalConnectionConfig = {
 		tokenProvider: new InsecureTokenProvider(

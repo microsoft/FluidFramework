@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/attributor",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "Operation attributor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -120,7 +120,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

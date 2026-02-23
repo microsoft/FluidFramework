@@ -32,7 +32,10 @@ import {
 	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	ISharedObjectKind,
@@ -62,6 +65,7 @@ import {
 import {
 	currentVersion,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -186,6 +190,7 @@ import {
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	toStoredSchema,
+	type SnapshotFileSystem,
 } from "../simple-tree/index.js";
 import {
 	configuredSharedTree,
@@ -219,6 +224,8 @@ import {
  */
 export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
+	// Default to v2_80 to support noChange constraints in table operations
+	minVersionForCollab: FluidClientVersion.v2_80,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -256,6 +263,8 @@ export enum SummarizeType {
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link TestTreeProvider.create} and satisfy the {@link ITestObjectProvider} interface.
+ * @remarks
+ * When possible, prefer {@link TestTreeProviderLite} which is simpler and has lower overhead.
  */
 export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
@@ -1122,35 +1131,26 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// This block makes sure we still validate the encoded data schema for codecs following the latter
 			// pattern.
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
-					describe(includeStringification
-						? "with stringification"
-						: "without stringification", () => {
-						for (const [name, data, context] of successes) {
-							it(name, () => {
-								let encoded = jsonCodec.encode(data, context);
-								if (includeStringification) {
-									encoded = JSON.parse(JSON.stringify(encoded));
-								}
-								const decoded = jsonCodec.decode(encoded, context);
-								assertEquivalent(decoded, data);
-							});
-						}
-					});
-				}
-			});
-
-			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of successes) {
-					it(name, () => {
-						const encoded = codec.binary.encode(data, context);
-						const decoded = codec.binary.decode(encoded, context);
-						assertEquivalent(decoded, data);
-					});
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data, context] of successes) {
+								it(name, () => {
+									let encoded = jsonCodec.encode(data, context);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = jsonCodec.decode(encoded, context);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
 				}
 			});
 
@@ -1189,9 +1189,9 @@ export function makeDiscontinuedEncodingTestSuite(
 		describe(`${version} (discontinued)`, () => {
 			const codec = family.resolve(version);
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			it("throws when encoding", () => {
 				assert.throws(
 					() => jsonCodec.encode({}, {}),
@@ -1387,11 +1387,15 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & {
 		idCompressor?: IIdCompressor | undefined;
+		minVersionForCollab?: MinimumVersionForCollab;
 	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
+	// Default to v2_80 to support noChange constraints in table operations
+	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
 	const view = independentView(config, {
-		idCompressor: createSnapshotCompressor(),
 		...options,
+		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
+		minVersionForCollab,
 	});
 	assert(view instanceof SchematizingSimpleTreeView);
 	return view;
@@ -1670,4 +1674,31 @@ export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeCh
 		policy: defaultChunkPolicy,
 		idCompressor: testIdCompressor,
 	});
+}
+
+/**
+ * Create a trivial in-memory {@link SnapshotFileSystem} for testing.
+ * Ignores the directory and stores files by filename in a map.
+ * @remarks
+ * This is useful for testing how schema compatibility changes over time (using {@link testSchemaCompatibilitySnapshots} when making specific schema changes.
+ */
+export function inMemorySnapshotFileSystem(): [SnapshotFileSystem, Map<string, string>] {
+	const snapshots = new Map<string, string>();
+
+	const fileSystem: SnapshotFileSystem = {
+		writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void {
+			snapshots.set(file, data);
+		},
+		readFileSync(file: string, encoding: "utf8"): string {
+			return snapshots.get(file) ?? assert.fail(`File not found: ${file}`);
+		},
+		mkdirSync(dir: string, options: { recursive: true }): void {},
+		readdirSync(dir: string): readonly string[] {
+			return [...snapshots.keys()];
+		},
+		join(parentPath: string, childPath: string): string {
+			return childPath;
+		},
+	};
+	return [fileSystem, snapshots];
 }

@@ -89,6 +89,7 @@ export {
 	type FieldKindConfigurationEntry,
 	isNeverTree,
 	DefaultRevisionReplacer,
+	ModularChangeFormatVersion,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -139,7 +140,6 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 	getCodecTreeForModularChangeFormat,
-	type ModularChangeFormatVersion,
 } from "./default-schema/index.js";
 
 export {
@@ -204,12 +204,12 @@ export {
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
 
 export {
 	type ChangeAtomIdBTree,
+	newChangeAtomIdBTree,
 	getFromChangeAtomIdMap,
 	setInChangeAtomIdMap,
 } from "./changeAtomIdBTree.js";

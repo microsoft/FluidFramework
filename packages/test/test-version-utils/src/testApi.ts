@@ -125,6 +125,8 @@ export interface InstalledPackage {
 }
 
 /**
+ * Ensures a specific package version is installed and returns its installation information.
+ *
  * @internal
  */
 export const ensurePackageInstalled = async (

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { getResolvedFluidRoot, type Package } from "@fluidframework/build-tools";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
 import type { PackageNamePolicyConfig } from "../../config.js";
-import { Context } from "../../library/index.js";
+import { Context } from "../../library/context.js";
 import {
 	type Feed,
 	feeds,

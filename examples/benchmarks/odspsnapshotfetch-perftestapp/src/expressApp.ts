@@ -10,12 +10,12 @@ import {
 	getServer,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	OdspTokenConfig,
+	type OdspTokenConfig,
 	OdspTokenManager,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
 import express, { type Response } from "express";
-import webpack from "webpack";
+import webpack, { type Configuration } from "webpack";
 import webpackDevMiddleware from "webpack-dev-middleware";
 import webpackHotMiddleware from "webpack-hot-middleware";
 
@@ -28,12 +28,12 @@ let odspAuthStage = 0;
 let odspAccessToken: string | undefined;
 
 const app = express();
-const compiler = webpack(config);
+const compiler = webpack(config as Configuration);
 
 app.use(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	webpackDevMiddleware(compiler, {
-		publicPath: config.output.publicPath,
+		publicPath: (config as Configuration).output?.publicPath,
 	}),
 );
 

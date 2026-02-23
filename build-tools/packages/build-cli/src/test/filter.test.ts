@@ -5,19 +5,19 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { expect } from "chai";
+import { getResolvedFluidRoot, type Package } from "@fluidframework/build-tools";
 import * as chai from "chai";
+import { expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,
+	filterPackages,
 	type PackageFilterOptions,
 	type PackageSelectionCriteria,
-	filterPackages,
 	selectAndFilterPackages,
 	selectPackagesFromContext,
 } from "../filter.js";
-import { Context } from "../library/index.js";
+import { Context } from "../library/context.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -155,7 +155,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
@@ -168,9 +168,6 @@
 				"^api",
 				"^build:esnext",
 				"build:genver"
-			],
-			"check:exports:bundle-release-tags": [
-				"build:esnext"
 			],
 			"eslint": [
 				"api-extractor:esnext",
