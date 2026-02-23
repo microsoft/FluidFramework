@@ -742,8 +742,8 @@ export class PerformanceEvent {
 	 * Entries are collected and cleared in a single batch to allow
 	 * Performance Timeline observers time to capture them.
 	 */
-	private static readonly pendingMarkCleanup: Set<string> = new Set();
-	private static readonly pendingMeasureCleanup: Set<string> = new Set();
+	private static readonly pendingMarkCleanup = new Set<string>();
+	private static readonly pendingMeasureCleanup = new Set<string>();
 	private static cleanupScheduled = false;
 
 	/**
