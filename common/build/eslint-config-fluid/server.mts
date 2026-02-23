@@ -215,7 +215,7 @@ const serverOverrides = {
 
 		// Strict equality - some legacy code uses ==.
 		// TODO: Fix to use ===.
-		eqeqeq: "off",
+		"eqeqeq": "off",
 
 		// Return-await style - server code uses various patterns.
 		// TODO: Standardize on in-try-catch style.
