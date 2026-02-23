@@ -40,7 +40,7 @@ import { brand, type JsonCompatible } from "../../../util/index.js";
 /**
  * Creates a mock incremental summary context for testing.
  */
-export function createMockIncrementalSummaryContext(
+function createMockIncrementalSummaryContext(
 	summarySequenceNumber: number,
 	latestSummarySequenceNumber: number,
 	summaryPath: string = "/test/path",
@@ -55,7 +55,7 @@ export function createMockIncrementalSummaryContext(
 /**
  * Creates a mock channel storage service for testing.
  */
-export function createMockStorageService(
+function createMockStorageService(
 	snapshotTree?: ISnapshotTree,
 	blobs: Map<string, string> = new Map(),
 ): IChannelStorageService {
@@ -74,7 +74,7 @@ export function createMockStorageService(
 	return mockService as IChannelStorageService;
 }
 
-export function getReadAndParseChunk<T extends JsonCompatible<IFluidHandle>>(
+function getReadAndParseChunk<T extends JsonCompatible<IFluidHandle>>(
 	chunkMap: Map<string, string>,
 ): (chunkPath: string) => Promise<T> {
 	return async (chunkPath: string): Promise<T> => {
@@ -90,28 +90,16 @@ export function getReadAndParseChunk<T extends JsonCompatible<IFluidHandle>>(
  * Returns a mock TreeChunk for testing. It is a minimal implementation that only implements the `referenceAdded`
  * method since that is the only method of the `TreeChunk` used by the `ForestIncrementalSummaryBuilder`.
  */
-export function getMockChunk(): TreeChunk {
+function getMockChunk(): TreeChunk {
 	return { referenceAdded: () => {} } as unknown as TreeChunk;
 }
 
-/**
- * Shared test constants for incremental summary builder tests.
- */
-export const incrementalSummaryTestConstants = {
-	testCursor: { getFieldLength: () => 1 } as unknown as ITreeCursorSynchronous,
-	stringify: JSON.stringify,
-	mockForestSummaryRootContent: "test-summary-content",
-	mockEncodedChunk: {} as unknown as EncodedFieldBatch,
-	initialSequenceNumber: 0,
-};
+const testCursor = { getFieldLength: () => 1 } as unknown as ITreeCursorSynchronous;
 
-const {
-	testCursor,
-	stringify,
-	mockForestSummaryRootContent,
-	mockEncodedChunk,
-	initialSequenceNumber,
-} = incrementalSummaryTestConstants;
+const stringify = JSON.stringify;
+const mockForestSummaryRootContent = "test-summary-content";
+const mockEncodedChunk = {} as unknown as EncodedFieldBatch;
+const initialSequenceNumber = 0;
 
 describe("ForestIncrementalSummaryBuilder", () => {
 	function createIncrementalSummaryBuilder() {
