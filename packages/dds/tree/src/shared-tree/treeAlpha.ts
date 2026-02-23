@@ -661,7 +661,7 @@ class NodeSubscription {
 		const observer: Observer = {
 			observeNodeDeep(flexNode: FlexTreeNode): void {
 				if (flexNode.value !== undefined) {
-					// Leaf value: the set of fields is always empty, can cannot change, so no need to subscribe.
+					// Leaf value: the set of fields (and thus their content) is always empty, and cannot change, so no need to subscribe.
 					return;
 				}
 
