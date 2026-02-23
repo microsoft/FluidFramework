@@ -125,8 +125,13 @@ jobs:
                 echo "##vso[task.prependpath]$BIN_DIR"
 
                 # Verify the tools are available
-                echo "Installed binaries:"
-                ls -la "$BIN_DIR"
+                if [ -d "$BIN_DIR" ]; then
+                  echo "Installed binaries:"
+                  ls -la "$BIN_DIR"
+                else
+                  echo "Error: $BIN_DIR does not exist; expected installed binaries to be present."
+                  exit 1
+                fi
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
