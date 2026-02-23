@@ -80,10 +80,7 @@ jobs:
                 echo "Creating package.json with npm overrides"
 
                 # Manual overrides - add new entries here as needed, using same syntax supported by the pnpm overrides field
-                manual_overrides='{
-
-                }'
-
+                manual_overrides='{}'
                 # Build overrides for local tarballs so interdependencies resolve correctly
                 tarball_overrides='{}'
                 for tgz in *.tgz; do
