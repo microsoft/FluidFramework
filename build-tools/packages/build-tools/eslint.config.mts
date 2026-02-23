@@ -13,6 +13,9 @@ export default [
 	},
 	{
 		rules: {
+			// build-tools uses some template-like tokens for use in configs
+			"no-template-curly-in-string": "off",
+
 			// TODO: AB#58049 Enable these type-safety rules ASAP and fix violations
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",

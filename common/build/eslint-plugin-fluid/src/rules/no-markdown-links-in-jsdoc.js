@@ -19,6 +19,7 @@
 
 const { fail } = require("node:assert");
 const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
+const { getBlockComments } = require("./tsdoc-utils");
 
 const parser = new TSDocParser();
 
@@ -115,22 +116,7 @@ const rule = {
 					const parserContext = parser.parseString(`/**${comment.value}*/`);
 					const parsedComment = parserContext.docComment;
 
-					const blocksToCheck = [
-						...parsedComment.customBlocks,
-						...parsedComment.seeBlocks,
-					];
-					if (parsedComment.remarksBlock) {
-						blocksToCheck.push(parsedComment.remarksBlock);
-					}
-					if (parsedComment.privateRemarks) {
-						blocksToCheck.push(parsedComment.privateRemarks);
-					}
-					if (parsedComment.deprecatedBlock) {
-						blocksToCheck.push(parsedComment.deprecatedBlock);
-					}
-					if (parsedComment.returnsBlock) {
-						blocksToCheck.push(parsedComment.returnsBlock);
-					}
+					const blocksToCheck = getBlockComments(parsedComment);
 
 					/**
 					 * Checks the provided comment block for Markdown-syntax links and report eslint errors for them.
@@ -151,9 +137,10 @@ const rule = {
 								messageId: "markdownLink",
 								fix(fixer) {
 									const trimmedText = link.linkText.trim();
-									const tsdocLink = trimmedText.length > 0
-										? `{@link ${link.linkTarget} | ${trimmedText}}`
-										: `{@link ${link.linkTarget}}`;
+									const tsdocLink =
+										trimmedText.length > 0
+											? `{@link ${link.linkTarget} | ${trimmedText}}`
+											: `{@link ${link.linkTarget}}`;
 									return fixer.replaceTextRange(
 										[startIndex, endIndex],
 										tsdocLink,

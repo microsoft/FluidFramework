@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-local-service",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,7 +39,7 @@
 		"eslint-config-prettier": "~10.1.8",
 		"jiti": "^2.6.1",
 		"pm2": "^5.4.2",
-		"rimraf": "^6.1.2"
+		"rimraf": "^6.1.3"
 	},
 	"typeValidation": {
 		"disabled": true
