@@ -115,7 +115,7 @@ describe("SimpleTree benchmarks", () => {
 						},
 						benchmarkFn: () => {
 							readNumber = treeReadingFunction(
-								tree ?? fail("Expected unhydratedTree to be set"),
+								tree ?? fail("Expected tree to be set"),
 							);
 						},
 						after: () => {
