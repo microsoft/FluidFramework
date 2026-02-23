@@ -55,7 +55,7 @@
 		"@types/lorem-ipsum": "^1.0.2",
 		"@types/mocha": "^10.0.0",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^18.17.1",
+		"@types/node": "^24.0.0",
 		"@types/supertest": "^2.0.7",
 		"@types/uuid": "^3.4.4",
 		"@types/winston": "^2.4.4",
@@ -69,7 +69,7 @@
 		"run-script-os": "^1.1.5",
 		"sillyname": "^0.1.0",
 		"supertest": "^3.4.2",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"pnpm": {
@@ -77,7 +77,7 @@
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
 		"overrides": {
-			"@types/node": "^18.17.1",
+			"@types/node": "^24.0.0",
 			"nanoid": "^3.3.9",
 			"qs": "^6.11.0",
 			"sharp": "^0.33.2"

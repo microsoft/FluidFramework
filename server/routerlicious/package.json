@@ -111,7 +111,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^6.1.3",
 		"run-script-os": "^1.1.5",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"engines": {
@@ -141,15 +141,16 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
-			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
+			"@types/node is overridden to v24 to ensure all packages are building using the v24 types.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
 			"@typescript-eslint/*: Pin to 8.52.0 to avoid 8.53.0 which may not be available in ADO package feed.",
 			"@babel/*: Pin to 7.27.x to avoid 7.28.x versions which may not be available in ADO package feed.",
-			"zookeeper: pinned to 7.x since earlier versions fail to compile and may be brought in transitively."
+			"zookeeper is overridden to v7 because v5 uses nan bindings that cannot be compiled against Node 24's V8.",
+			"nan is pinned to 2.22.2, the last version known to compile zookeeper and node-rdkafka against Node 24's V8."
 		],
 		"overrides": {
+			"@types/node": "^24.0.0",
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
 			"@typescript-eslint/project-service": "8.52.0",
 			"@babel/core": "7.27.7",
@@ -167,6 +168,7 @@
 			"@babel/types": "7.27.7",
 			"@babel/runtime": "7.27.6",
 			"eslint": "^9.39.2",
+			"nan": "2.22.2",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
