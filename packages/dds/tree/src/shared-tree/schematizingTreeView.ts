@@ -166,6 +166,10 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
+	public isBranch(): this is TreeBranchAlpha {
+		return true;
+	}
+
 	public applyChange(change: JsonCompatibleReadOnly): void {
 		this.checkout.applySerializedChange(change);
 	}

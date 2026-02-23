@@ -136,6 +136,18 @@ export function enumFromStrings<TScope extends string, const Members extends rea
         }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
 };
 
+// @beta
+export namespace ExtensibleUnionNode {
+    export function createSchema<const T extends readonly TreeNodeSchema[], const TScope extends string, const TName extends string>(types: T, inputSchemaFactory: SchemaFactoryBeta<TScope>, name: TName): Statics<T> & TreeNodeSchemaCore_2<ScopedSchemaName_2<`com.fluidframework.extensibleUnionNode<${TScope}>`, TName>, NodeKind_2, false, unknown, never, unknown> & (new (data: InternalTreeNode_2) => Members<TreeNodeFromImplicitAllowedTypes<T>> & TreeNode_2 & WithType_2<ScopedSchemaName_2<`com.fluidframework.extensibleUnionNode<${TScope}>`, TName>, NodeKind_2, unknown>);
+    export interface Members<T> {
+        isValid(): boolean;
+        readonly union: T | undefined;
+    }
+    export interface Statics<T extends readonly TreeNodeSchema[]> {
+        create<TThis extends TreeNodeSchema>(this: TThis, child: TreeNodeFromImplicitAllowedTypes<T>): TreeFieldFromImplicitField<TThis>;
+    }
+}
+
 // @public @system
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
@@ -821,7 +833,7 @@ export namespace TableSchema {
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
-// @public @sealed @system
+// @public @sealed
 export interface Tree extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     readonly runTransaction: RunTransaction;
@@ -858,7 +870,7 @@ export const TreeArrayNode: {
     readonly spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
 
-// @beta @sealed @system
+// @beta @sealed
 export interface TreeBeta {
     clone<const TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
     create<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;

@@ -52,7 +52,6 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
-	withBufferedTreeEvents,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
@@ -1121,24 +1120,19 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				);
 			}
 
-			// We implement move here via subsequent `remove` and `insert`.
-			// This is strictly an implementation detail and should not be observable by the user.
-			// TODO:AB#47457: Implement proper move support for unhydrated trees.
-			// As a temporary mitigation, we will pause tree events until both edits have been completed.
-			// That way, users will only see a single change event for the array instead of 2.
-			withBufferedTreeEvents(() => {
-				if (sourceField !== destinationField || destinationGap < sourceStart) {
-					destinationField.editor.insert(
-						destinationGap,
-						sourceField.editor.remove(sourceStart, movedCount),
-					);
-				} else if (destinationGap > sourceStart + movedCount) {
-					destinationField.editor.insert(
-						destinationGap - movedCount,
-						sourceField.editor.remove(sourceStart, movedCount),
-					);
-				}
-			});
+			assert(
+				destinationField instanceof UnhydratedSequenceField,
+				0xcd5 /* destinationField should be unhydrated since we're in the else branch of isHydrated() check */,
+			);
+
+			// Use native move which handles the operation atomically for within-field moves
+			// to ensure only a single event is emitted per affected field.
+			destinationField.editor.move(
+				sourceStart,
+				movedCount,
+				destinationGap,
+				sourceField === destinationField ? undefined : sourceField,
+			);
 		}
 	}
 

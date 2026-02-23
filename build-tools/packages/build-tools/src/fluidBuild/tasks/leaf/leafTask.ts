@@ -23,10 +23,11 @@ import type { BuildPackage } from "../../buildGraph";
 import { type Seconds, TaskCacheOutcome } from "../../buildMetrics";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
-	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
+	replaceRepoRootToken,
 } from "../../fluidBuildConfig";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
 import { options } from "../../options";
 import { Task, type TaskExec } from "../task";
 import { globWithGitignore } from "../taskUtils";
@@ -569,6 +570,23 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 */
 
 	/**
+	 * Get additional config files to track for this task from the task definition.
+	 * @returns absolute paths to additional config files
+	 */
+	protected get additionalConfigFiles(): string[] {
+		if (this.taskName === undefined) {
+			return [];
+		}
+
+		const repoRoot = this.node.context.repoRoot;
+		return this.node
+			.getAdditionalConfigFiles(this.taskName)
+			.map((configPath) =>
+				this.getPackageFileFullPath(replaceRepoRootToken(configPath, repoRoot)),
+			);
+	}
+
+	/**
 	 * The content to be written in the "done file".
 	 * @remarks
 	 * This file must have different content if the work needed to be done by this task changes.
@@ -640,6 +658,18 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		return false;
 	}
 
+	/**
+	 * Get all input files for done file tracking, including additional config files.
+	 */
+	private async getAllInputFiles(): Promise<string[]> {
+		const srcFiles = await this.getInputFiles();
+		const additionalConfigFiles = this.additionalConfigFiles;
+		if (additionalConfigFiles.length === 0) {
+			return srcFiles;
+		}
+		return [...srcFiles, ...additionalConfigFiles];
+	}
+
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		if (this.useHashes) {
 			return this.getHashDoneFileContent();
@@ -649,10 +679,10 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		// Note: timestamps may signal change without meaningful content modification (e.g., git
 		// operations, file copies). Override useHashes to return true to use content hashes instead.
 		try {
-			const srcFiles = await this.getInputFiles();
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
 			const srcTimesP = Promise.all(
-				srcFiles
+				allSrcFiles
 					.map((match) => this.getPackageFileFullPath(match))
 					.map((match) => stat(match)),
 			);
@@ -669,7 +699,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstInfo = dstTimes.map((dstTime) => {
 				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
 			});
-			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
+			return JSON.stringify({ srcFiles: allSrcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
@@ -686,9 +716,9 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		};
 
 		try {
-			const srcFiles = await this.getInputFiles();
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
-			const srcHashesP = Promise.all(srcFiles.map(mapHash));
+			const srcHashesP = Promise.all(allSrcFiles.map(mapHash));
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
@@ -697,11 +727,10 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			srcHashes.sort(sortByName);
 			dstHashes.sort(sortByName);
 
-			const output = JSON.stringify({
+			return JSON.stringify({
 				srcHashes,
 				dstHashes,
 			});
-			return output;
 		} catch (e: any) {
 			this.traceError(`error calculating file hashes: ${e.message}`);
 			this.traceTrigger("failed to get file hash");

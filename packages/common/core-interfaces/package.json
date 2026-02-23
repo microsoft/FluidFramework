@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -87,7 +87,6 @@
 		"check:exports:esm:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build": "npm run build:compile",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
@@ -137,7 +136,7 @@
 		"@fluid-tools/build-cli": "^0.63.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.81.0",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.83.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
@@ -150,7 +149,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

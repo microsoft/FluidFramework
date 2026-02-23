@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -115,8 +115,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"uuid": "^11.1.0",
-		"zod": "^3.25.32"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
@@ -130,7 +129,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@langchain/anthropic": "^0.3.24",
-		"@langchain/core": "^0.3.78",
+		"@langchain/core": "^0.3.80",
 		"@langchain/google-genai": "^0.2.16",
 		"@langchain/openai": "^0.6.12",
 		"@microsoft/api-extractor": "7.52.11",
@@ -147,7 +146,7 @@
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"ses": "^1.14.0",
 		"typescript": "~5.4.5"
 	},
