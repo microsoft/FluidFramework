@@ -188,27 +188,28 @@ export interface TreeBranch extends IDisposable {
  */
 export interface TreeContextAlpha {
 	/**
-	 * Run a synchronous transaction which applies any number of edits to the tree as a single atomic unit.
+	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
 	 * @param transaction - A callback run during the transaction to perform user-supplied operations.
 	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
 	 * @param params - Optional {@link RunTransactionParams | parameters} for the transaction.
 	 * @returns A {@link TransactionResultExt | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
 	 * @remarks
-	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
-	 *
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 *
-	 * {@link (TreeBeta:interface).on | Change events } will be emitted for each mutation as the transaction is being applied.
-	 * Mutations to the tree are not permitted within these event callbacks, therefore no local changes will be interleaved with the changes in this transaction.
+	 * {@link (TreeBeta:interface).on | Change events } will be emitted for changed nodes on this client _as each edit happens_, just as they would be if the changes were made outside of a transaction.
+	 * Any other/future clients or contexts will process the transaction "squashed", i.e. they will apply its changes all at once, emitting only a single event per node (even if that node was edited multiple times in the transaction).
+	 * Edits to the tree are not permitted within these event callbacks, therefore no other local changes from this client will be interleaved with the changes in this transaction.
 	 *
-	 * However, using a transaction has the following additional consequences:
+	 * Using a transaction has the following additional consequences:
 	 *
 	 * - If {@link Revertible | reverted } (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
 	 * Only the "outermost" transaction commits a change to the synchronized tree state and therefore only the outermost transaction can be reverted.
 	 * If a transaction is started and completed while another transaction is already in progress, then the inner transaction will be reverted together with the outer transaction.
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
