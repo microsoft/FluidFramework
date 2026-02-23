@@ -159,7 +159,7 @@
 			"eslint": "~9.39.2",
 			"@types/glob>@types/minimatch": "~5.1.2",
 			"@types/node": "^22.19.1",
-			"eslint": "^9.39.2",
+			"eslint": "~9.39.2",
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"mdast-util-gfm-footnote": "^2.1.0",

@@ -103,4 +103,5 @@ export async function dangerfile(): Promise<void> {
 	}
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- .cts files cannot use top-level await
 dangerfile().catch((error: string) => console.error(error));
