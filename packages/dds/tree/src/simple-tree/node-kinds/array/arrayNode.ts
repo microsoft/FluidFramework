@@ -1122,7 +1122,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 			assert(
 				destinationField instanceof UnhydratedSequenceField,
-				"destinationField should be unhydrated since we're in the else branch of isHydrated() check",
+				0xcd5 /* destinationField should be unhydrated since we're in the else branch of isHydrated() check */,
 			);
 
 			// Use native move which handles the operation atomically for within-field moves

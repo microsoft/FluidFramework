@@ -1918,8 +1918,6 @@ export const shortCodeMap = {
 	"0xcc3": "New commits must have a parent.",
 	"0xcc4": "Missing enriched commit.",
 	"0xcc5": "Unsupported modular change codec version",
-	"0xcc6": "updatableError should only be called in test mode",
-	"0xcc7": "expected compatibility errors for missing min collab version snapshot",
 	"0xcc8": "Object.entries returned a non-string key.",
 	"0xcc9": "Count must be at least 1",
 	"0xcca": "TODO: Handle non-contiguous ranges",
@@ -1928,5 +1926,11 @@ export const shortCodeMap = {
 	"0xccd": "Transaction did not complete",
 	"0xcce": "branches must be related",
 	"0xccf": "Expected transaction revision in the presence of transaction steps",
-	"0xcd0": "The transaction commit should be rebased to the tip"
+	"0xcd0": "The transaction commit should be rebased to the tip",
+	"0xcd1": "missing compatibilityMap entry",
+	"0xcd2": "there should have been an error for the snapshot being out of date",
+	"0xcd3": "equality should be symmetric",
+	"0xcd4": "identicalCompatibility should have equivalent stored schema",
+	"0xcd5": "destinationField should be unhydrated since we're in the else branch of isHydrated() check",
+	"0xcd6": "Expect coordinatorResult to be defined"
 };

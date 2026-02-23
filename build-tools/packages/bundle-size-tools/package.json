@@ -30,8 +30,8 @@
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp \"*.build.log\"",
 		"compile": "fluid-build . --task compile",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
@@ -56,6 +56,6 @@
 		"@types/node": "^22.19.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~9.39.2",
-		"rimraf": "^6.1.2"
+		"rimraf": "^6.1.3"
 	}
 }

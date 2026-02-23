@@ -155,7 +155,6 @@ export async function getSharepointFiles(
 		files.push(fileInfo);
 	}
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const folderInfo = pendingFolder.shift();
 		if (!folderInfo) {

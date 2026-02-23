@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -119,7 +119,7 @@
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^7.0.0",
