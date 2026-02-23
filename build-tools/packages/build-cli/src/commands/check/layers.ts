@@ -8,8 +8,8 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 
-import { BaseCommand, LayerGraph } from "../../library/index.js";
-
+import { BaseCommand } from "../../library/commands/base.js";
+import { LayerGraph } from "../../library/layerGraph.js";
 import { writeFileWithLineFeeds } from "../../library/text.js";
 
 const packagesMdFileName = "PACKAGES.md";

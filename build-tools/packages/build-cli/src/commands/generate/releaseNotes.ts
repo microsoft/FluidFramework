@@ -17,18 +17,16 @@ import remarkToc from "remark-toc";
 import type { ReleaseNotesSection } from "../../config.js";
 import { releaseGroupFlag } from "../../flags.js";
 import {
-	BaseCommand,
 	DEFAULT_CHANGESET_PATH,
-	difference,
 	fluidCustomChangeSetMetadataDefaults,
 	groupBySection,
 	loadChangesets,
 	UNKNOWN_SECTION,
-} from "../../library/index.js";
-
+} from "../../library/changesets.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
-
 import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
+import { difference } from "../../library/sets.js";
 
 /**
  * Generates release notes from individual changeset files.

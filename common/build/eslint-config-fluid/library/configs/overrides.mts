@@ -58,6 +58,13 @@ export const useProjectService = {
 			// Newer typescript-eslint versions error if both project and projectService are enabled.
 			project: null,
 			projectService: true,
+			// Set tsconfigRootDir to the current working directory so the parser can locate tsconfig
+			// files unambiguously. Without this, typescript-eslint tries to auto-detect the root by
+			// inspecting the call stack for the nearest eslint.config file. In this monorepo the
+			// shared config lives in a different directory than the consuming packages, and VS Code's
+			// TypeScript project service can accumulate multiple candidate roots as files from
+			// different packages are visited, leading to "multiple candidate TSConfigRootDirs" errors.
+			tsconfigRootDir: process.cwd(),
 		},
 	},
 } as const satisfies Linter.Config;

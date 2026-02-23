@@ -8,11 +8,9 @@ import { ux } from "@oclif/core";
 import { command as execCommand } from "execa";
 import { parse } from "semver";
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
-
 import { updateChangelogs } from "../../../library/changelogs.js";
-
 import { canonicalizeChangesets } from "../../../library/changesets.js";
-import { BaseCommandWithBuildProject } from "../../../library/index.js";
+import { BaseCommandWithBuildProject } from "../../../library/commands/base.js";
 
 /**
  * Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!

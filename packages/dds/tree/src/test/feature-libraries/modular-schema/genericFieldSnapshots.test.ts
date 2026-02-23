@@ -43,7 +43,7 @@ export function testSnapshots(): void {
 				const codec = family.resolve(version);
 				for (const { name, change } of testChangesets) {
 					it(name, () => {
-						const encoded = codec.json.encode(change, {
+						const encoded = codec.encode(change, {
 							baseContext,
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),

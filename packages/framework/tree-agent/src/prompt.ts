@@ -12,7 +12,12 @@ import { normalizeFieldSchema, ValueSchema } from "@fluidframework/tree/internal
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import { getFriendlyName, communize, findSchemas } from "./utils.js";
+import {
+	IdentifierCollisionResolver,
+	getFriendlyName,
+	communize,
+	findSchemas,
+} from "./utils.js";
 
 /**
  * The type name used for handles in generated TypeScript.
@@ -33,18 +38,23 @@ export function getPrompt(args: {
 	const mapInterfaceName = "TreeMap";
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
-	const rootTypeUnion = `${rootTypes.map((t) => getFriendlyName(t)).join(" | ")}`;
+	const allSchemas = findSchemas(schema);
+	const resolver = new IdentifierCollisionResolver();
+	for (const schemaNode of allSchemas) {
+		resolver.resolve(schemaNode);
+	}
+
+	const rootTypeUnion = `${rootTypes.map((t) => resolver.resolve(t) ?? getFriendlyName(t)).join(" | ")}`;
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
 	let hasFluidHandles = false;
 	let exampleObjectName: string | undefined;
-	for (const s of findSchemas(schema)) {
+	for (const s of allSchemas) {
 		if (s.kind !== NodeKind.Leaf) {
+			const friendlyName = resolver.resolve(s);
 			nodeTypeUnion =
-				nodeTypeUnion === undefined
-					? getFriendlyName(s)
-					: `${nodeTypeUnion} | ${getFriendlyName(s)}`;
+				nodeTypeUnion === undefined ? friendlyName : `${nodeTypeUnion} | ${friendlyName}`;
 		}
 
 		switch (s.kind) {
@@ -57,7 +67,7 @@ export function getPrompt(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??= getFriendlyName(s);
+				exampleObjectName ??= resolver.resolve(s);
 				break;
 			}
 			case NodeKind.Leaf: {
@@ -68,7 +78,6 @@ export function getPrompt(args: {
 		}
 	}
 
-	const stringified = stringifyTree(field);
 	const { schemaText: typescriptSchemaTypes, hasHelperMethods } = generateEditTypesForPrompt(
 		schema,
 		getSimpleSchema(schema),
@@ -306,10 +315,10 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : resolver.resolve(Tree.schema(field))}\`) is:
 
 \`\`\`JSON
-${stringified}
+${stringifyTree(field, resolver)}
 \`\`\``;
 	return prompt;
 }
@@ -318,7 +327,11 @@ ${stringified}
  * Serializes tree data e.g. to include in a prompt or message.
  * @remarks This includes some extra metadata to make it easier to understand the structure of the tree.
  */
-export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string {
+export function stringifyTree(
+	tree: ReadableField<ImplicitFieldSchema>,
+	collisionResolver?: IdentifierCollisionResolver,
+): string {
+	const resolver = collisionResolver ?? new IdentifierCollisionResolver();
 	const typeReplacementKey = "_e944da5a5fd04ea2b8b2eb6109e089ed";
 	const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 	const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";
@@ -331,8 +344,9 @@ export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string 
 				const schema = Tree.schema(node);
 				switch (schema.kind) {
 					case NodeKind.Object: {
+						const friendlyName = resolver.resolve(schema);
 						return {
-							[typeReplacementKey]: getFriendlyName(schema),
+							[typeReplacementKey]: friendlyName,
 							[indexReplacementKey]: index,
 							...node,
 						};

@@ -6,7 +6,7 @@
 import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import {
 	CheckCompatLayerGeneration,
 	CheckDependenciesInstalled,
@@ -16,7 +16,6 @@ import {
 	CheckNoLocalChanges,
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,
-	// library is overloaded with too much stuff now, and we should consider allowing interior imports.
 } from "../../library/releasePrepChecks.js";
 
 /**
@@ -69,6 +68,7 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 
 		this.logHr();
 		for (const [name, check] of allChecks) {
+			// eslint-disable-next-line no-await-in-loop -- the checks are supposed to run serially
 			const checkResult = await check(context, pkgOrReleaseGroup);
 			const checkPassed = checkResult === undefined;
 			const icon = checkPassed

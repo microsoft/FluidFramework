@@ -6,7 +6,6 @@
 import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, type Interfaces } from "@oclif/core";
-
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 import type { CommandLogger } from "../../logging.js";
@@ -20,6 +19,8 @@ export type Flags<T extends typeof Command> = Interfaces.InferredFlags<
 	(typeof BaseCommand)["baseFlags"] & T["flags"]
 >;
 export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
+
+const verbosityCommandLineArguments = new Set(["-v", "--verbose", "--quiet"]);
 
 /**
  * A base command that sets up common flags that all commands should have. Most commands should have this class in their
@@ -73,6 +74,19 @@ export abstract class BaseCommand<T extends typeof Command>
 
 	protected flags!: Flags<T>;
 	protected args!: Args<T>;
+
+	/**
+	 * Lightly formats the command line arguments for the command
+	 * skipping verbosity flags.
+	 *
+	 * @remarks Prefixed with a space if there are any arguments.
+	 */
+	protected commandLineArgs(): string {
+		const argsLessVerbosity = this.argv.filter(
+			(arg) => !verbosityCommandLineArguments.has(arg),
+		);
+		return `${argsLessVerbosity.length > 0 ? " " : ""}${argsLessVerbosity.join(" ")}`;
+	}
 
 	/**
 	 * If true, all logs except those sent using the .log function will be suppressed.
@@ -195,6 +209,7 @@ export abstract class BaseCommand<T extends typeof Command>
 		return this.suppressLogging ? "" : this.warning(message);
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
 	 */
@@ -252,13 +267,13 @@ export abstract class BaseCommand<T extends typeof Command>
 			if (typeof input === "string") {
 				// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
 				// not worth replicating in this call.
-
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 				super.error(chalk.red(input), options as any);
 			}
 
 			// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
 			// not worth replicating in this call.
-
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 			return super.error(input as Error, options as any);
 		}
 	}

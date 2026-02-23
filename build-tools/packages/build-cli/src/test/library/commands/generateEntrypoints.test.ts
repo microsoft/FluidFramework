@@ -39,6 +39,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "./lib/legacy.d.ts";\n');
 			});
@@ -49,6 +50,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "rollups",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "../lib/legacy.d.ts";\n');
 			});
@@ -59,6 +61,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
 			});
@@ -69,6 +72,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: ".foo.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "./.foo.d.ts";\n');
 			});
@@ -81,6 +85,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "./lib/legacy.js";\n');
 			});
@@ -91,6 +96,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "rollups",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "../lib/legacy.js";\n');
 			});
@@ -101,6 +107,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "./lib/legacy/alpha.js";\n');
 			});
@@ -111,6 +118,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: ".foo.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "./.foo.js";\n');
 			});

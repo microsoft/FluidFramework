@@ -102,6 +102,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
+ * @deprecated Use {@link IConsensusOrderedCollection} for typing and the appropriate factory to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 

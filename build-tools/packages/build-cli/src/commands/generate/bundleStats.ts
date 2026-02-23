@@ -8,7 +8,7 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import { copySync, readJson } from "fs-extra/esm";
 
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import { type PnpmListEntry, pnpmList } from "../../pnpm.js";
 
 export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats> {
