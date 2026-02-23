@@ -3857,7 +3857,7 @@ describe("treeNodeApi", () => {
 						// `obj` belongs to the context, but it is not "in the document"
 						preconditions: [{ type: "nodeInDocument", node }],
 					}),
-				validateAssertionError(/constraint failed/),
+				validateAssertionError(/Attempted to add a.*constraint/),
 			);
 		});
 
@@ -3871,13 +3871,9 @@ describe("treeNodeApi", () => {
 			);
 
 			// Synchronous -> Asynchronous
-			assert.throws(
-				() =>
-					context.runTransaction(() => {
-						transactionPromise = context.runTransactionAsync(async () => {});
-					}),
-				expectedError,
-			);
+			context.runTransaction(() => {
+				transactionPromise = context.runTransactionAsync(async () => {});
+			});
 
 			await assert.rejects(
 				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
@@ -3885,10 +3881,11 @@ describe("treeNodeApi", () => {
 			);
 
 			// Asynchronous -> Asynchronous
-			assert.throws(
+			await assert.rejects(
 				async () =>
 					context.runTransactionAsync(async () => {
 						transactionPromise = context.runTransactionAsync(async () => {});
+						await transactionPromise;
 					}),
 				expectedError,
 			);

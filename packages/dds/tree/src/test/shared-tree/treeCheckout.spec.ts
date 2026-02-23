@@ -811,7 +811,7 @@ describe("sharedTreeView", () => {
 			);
 
 			// Asynchronous -> Asynchronous
-			assert.throws(
+			await assert.rejects(
 				async () =>
 					view.runTransactionAsync(async () => {
 						transactionPromise = view.runTransactionAsync(async () => {});
@@ -823,22 +823,6 @@ describe("sharedTreeView", () => {
 				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
 				expectedError,
 			);
-		});
-
-		it("handles async transactions within async transactions", async () => {
-			const provider = new TestTreeProviderLite(1);
-			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
-			const view = provider.trees[0].kernel.viewWith(config);
-			view.initialize([]);
-
-			await view.runTransactionAsync(async () => {
-				view.root.insertAtEnd("A");
-				await view.runTransactionAsync(async () => {
-					view.root.insertAtEnd("B");
-				});
-			});
-
-			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
 		it("handles synchronous transactions within async transactions", async () => {

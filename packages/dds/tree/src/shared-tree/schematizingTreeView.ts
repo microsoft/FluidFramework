@@ -299,7 +299,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.mountTransaction(params, false);
 		const transactionCallbackStatus = transaction();
-		return this.unmountTransaction(transactionCallbackStatus, params, false);
+		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
 	/**
@@ -326,7 +326,7 @@ export class SchematizingSimpleTreeView<
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.mountTransaction(params, true);
 		const transactionCallbackStatus = await transaction();
-		return this.unmountTransaction(transactionCallbackStatus, params, true);
+		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
@@ -353,7 +353,6 @@ export class SchematizingSimpleTreeView<
 			| VoidTransactionCallbackStatus
 			| void,
 		params: RunTransactionParams | undefined,
-		isAsync: boolean,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.ensureUndisposed();
 		const { checkout } = this;
@@ -661,7 +660,7 @@ export function assertValidConstraint(
 			if (nodeStatus !== TreeStatus.InDocument) {
 				const revertText = onRevert ? " on revert" : "";
 				throw new UsageError(
-					`Transaction constraint failed: "nodeInDocument"${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+					`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
 				);
 			}
 			break;

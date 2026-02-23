@@ -41,9 +41,11 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 			assertValidConstraint(constraint, false);
 		}
 		this.transactionCount += 1;
-		const result = t();
-		this.transactionCount -= 1;
-		return UnhydratedTreeContext.wrapTransactionResult(result);
+		try {
+			return UnhydratedTreeContext.wrapTransactionResult(t());
+		} finally {
+			this.transactionCount -= 1;
+		}
 	}
 
 	public runTransactionAsync<TValue>(
@@ -67,9 +69,11 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 			assertValidConstraint(constraint, false);
 		}
 		this.transactionCount += 1;
-		const result = await t();
-		this.transactionCount -= 1;
-		return UnhydratedTreeContext.wrapTransactionResult(result);
+		try {
+			return UnhydratedTreeContext.wrapTransactionResult(await t());
+		} finally {
+			this.transactionCount -= 1;
+		}
 	}
 
 	private static wrapTransactionResult<TValue>(

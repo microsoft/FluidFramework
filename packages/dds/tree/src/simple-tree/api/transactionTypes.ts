@@ -136,9 +136,6 @@ export interface RunTransactionParams {
 	 * @remarks
 	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
-	 *
-	 * Constraints only apply to the "outermost" transaction.
-	 * If a transaction is started while another transaction is already in progress, then its constraints will be ignored.
 	 */
 	readonly preconditions?: readonly TransactionConstraintAlpha[];
 	/**

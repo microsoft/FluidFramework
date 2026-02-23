@@ -197,16 +197,18 @@ export interface TreeContextAlpha {
 	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
 	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 *
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 *
+	 * {@link (TreeBeta:interface).on | Change events } will be emitted for each mutation as the transaction is being applied.
+	 * Mutations to the tree are not permitted within these event callbacks, therefore no local changes will be interleaved with the changes in this transaction.
+	 *
 	 * However, using a transaction has the following additional consequences:
 	 *
 	 * - If {@link Revertible | reverted } (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
 	 * Only the "outermost" transaction commits a change to the synchronized tree state and therefore only the outermost transaction can be reverted.
 	 * If a transaction is started and completed while another transaction is already in progress, then the inner transaction will be reverted together with the outer transaction.
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * {@link (TreeBeta:interface).on | Change events } will be emitted for each mutation as the transaction is being applied.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
@@ -222,7 +224,7 @@ export interface TreeContextAlpha {
 	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
 	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
 	 *
-	 * Unlike with synchronous transactions, it is possible that other changes (either from this client by merging a branch or from a remote client) may be applied to the branch while this transaction is in progress.
+	 * Unlike with synchronous transactions, it is possible that other changes (e.g. from a remote client) may be applied to the branch while this transaction is in progress.
 	 * Those other changes will be not be reflected on the branch until after this transaction completes, at which point the transaction changes will be applied after those other changes.
 	 *
 	 * An asynchronous transaction may not be started while any other transaction is in progress in this context.
