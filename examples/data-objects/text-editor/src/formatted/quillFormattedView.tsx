@@ -68,6 +68,8 @@ FormattedMainView.displayName = "FormattedMainView";
 const sizeMap = { small: 10, large: 18, huge: 24 } as const;
 /** Reverse mapping: pixel values back to Quill size names for display. */
 const sizeReverse = { 10: "small", 18: "large", 24: "huge" } as const;
+/** Set of recognized font families for Quill. */
+const fontSet: Set<string> = new Set(["monospace", "serif", "sans-serif", "Arial"]);
 /** Default formatting values when no explicit format is specified. */
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
@@ -77,7 +79,7 @@ const defaultFont = "Arial";
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
  * 12px is the default size and returns undefined (no Quill attribute needed).
  */
-function parseCssFontSize(node: HTMLElement): string | undefined {
+export function parseCssFontSize(node: HTMLElement): string | undefined {
 	const style = node.style.fontSize;
 	if (!style) return undefined;
 
@@ -98,26 +100,50 @@ function parseCssFontSize(node: HTMLElement): string | undefined {
 
 /**
  * Parse CSS font-family from a pasted HTML element's inline style.
- * Looks at the generic family (last in stack) to determine Quill font value.
+ * Tries fonts in priority order (first to last per CSS spec) and returns
+ * the first recognized Quill font value.
+ *
+ * Note: splitting on "," does not handle commas inside quoted font names,
+ * and escape sequences within font names are not supported. This is fine
+ * since none of the font names we match against contain commas or escapes.
  */
-function parseCssFontFamily(node: HTMLElement): string | undefined {
+export function parseCssFontFamily(node: HTMLElement): string | undefined {
 	const style = node.style.fontFamily;
 	if (style === "") return undefined;
 
-	// Get the last font in the stack (generic family)
 	const fonts = style.split(",");
-	const last = fonts[fonts.length - 1]
-		?.trim()
-		.replace(/^["']/, "")
-		.replace(/["']$/, "")
-		.toLowerCase();
-
-	// Map generic families to Quill values
-	if (last === "monospace") return "monospace";
-	if (last === "serif") return "serif";
-	if (last === "sans-serif") return "sans-serif";
-	// Arial is default, no attribute needed
+	for (const raw of fonts) {
+		const font = raw.trim().replace(/^["']/, "").replace(/["']$/, "").toLowerCase();
+		// check if font is in our supported font set
+		if (fontSet.has(font)) {
+			return font;
+		}
+	}
+	// No recognized font family found; fall back to default (Arial)
 	return undefined;
+}
+
+/**
+ * Clipboard matcher that preserves recognized font-size and font-family
+ * from pasted HTML elements. Applies each format independently via
+ * compose/retain so new attributes can be added without risk of an
+ * early return skipping them.
+ * @see https://quilljs.com/docs/modules/clipboard#addmatcher
+ */
+export function clipboardFormatMatcher(node: Node, delta: Delta): Delta {
+	if (!(node instanceof HTMLElement)) return delta;
+
+	const size = parseCssFontSize(node);
+	const font = parseCssFontFamily(node);
+
+	let result = delta;
+	if (size !== undefined) {
+		result = result.compose(new Delta().retain(result.length(), { size }));
+	}
+	if (font !== undefined) {
+		result = result.compose(new Delta().retain(result.length(), { font }));
+	}
+	return result;
 }
 
 /**
@@ -308,26 +334,7 @@ const FormattedTextEditorView = React.forwardRef<
 					[{ font: [] }],
 					["clean"],
 				],
-				clipboard: [
-					Node.ELEMENT_NODE,
-					(node: Node, delta: Delta): Delta => {
-						if (!(node instanceof HTMLElement)) return delta;
-
-						const size = parseCssFontSize(node);
-						const font = parseCssFontFamily(node);
-
-						// If no formatting to apply, return unchanged
-						if (size === undefined && font === undefined) return delta;
-
-						// Build attributes object
-						const attrs: Record<string, unknown> = {};
-						if (size !== undefined) attrs.size = size;
-						if (font !== undefined) attrs.font = font;
-
-						// Apply formatting using compose/retain pattern per Quill docs
-						return delta.compose(new Delta().retain(delta.length(), attrs));
-					},
-				],
+				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
 			},
 		});
 

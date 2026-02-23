@@ -12,12 +12,16 @@ import { TreeAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
+import Delta from "quill-delta";
 import * as React from "react";
 
 import {
+	clipboardFormatMatcher,
 	FormattedTextAsTree,
 	FormattedMainView,
 	type FormattedEditorHandle,
+	parseCssFontFamily,
+	parseCssFontSize,
 } from "../formatted/quillFormattedView.js";
 import {
 	PlainTextMainView,
@@ -784,6 +788,79 @@ describe("textEditor", () => {
 					});
 				});
 			}
+		});
+		describe("copy-paste helpers", () => {
+			/** Helper to create an HTMLElement with inline styles. */
+			function styledElement(styles: Partial<CSSStyleDeclaration>): HTMLElement {
+				const el = document.createElement("span");
+				Object.assign(el.style, styles);
+				return el;
+			}
+
+			describe("parseCssFontSize", () => {
+				it("returns undefined when no fontSize is set", () => {
+					assert.equal(parseCssFontSize(styledElement({})), undefined);
+				});
+
+				it("returns Quill size name for supported pixel values", () => {
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "10px" })), "small");
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "18px" })), "large");
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "24px" })), "huge");
+				});
+
+				it("returns undefined for default or unrecognized sizes", () => {
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "12px" })), undefined);
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "42px" })), undefined);
+				});
+			});
+
+			describe("parseCssFontFamily", () => {
+				it("returns undefined when no fontFamily is set", () => {
+					assert.equal(parseCssFontFamily(styledElement({})), undefined);
+				});
+
+				it("returns first recognized font in a comma-separated stack", () => {
+					assert.equal(
+						parseCssFontFamily(styledElement({ fontFamily: "monospace" })),
+						"monospace",
+					);
+					assert.equal(
+						parseCssFontFamily(styledElement({ fontFamily: '"Courier New", monospace' })),
+						"monospace",
+					);
+				});
+
+				it("returns undefined for unrecognized fonts", () => {
+					assert.equal(
+						parseCssFontFamily(styledElement({ fontFamily: '"Courier New", fantasy' })),
+						undefined,
+					);
+				});
+			});
+
+			describe("clipboardFormatMatcher", () => {
+				it("returns delta unchanged for non-HTMLElement nodes", () => {
+					const delta = new Delta().insert("hello");
+					const text = document.createTextNode("hello");
+					const result = clipboardFormatMatcher(text, delta);
+					assert.deepEqual(result.ops, delta.ops);
+				});
+
+				it("applies size and font attributes from inline styles", () => {
+					const delta = new Delta().insert("hello");
+					const el = styledElement({ fontSize: "18px", fontFamily: "serif" });
+					const result = clipboardFormatMatcher(el, delta);
+					assert.equal(result.ops[0]?.attributes?.size, "large");
+					assert.equal(result.ops[0]?.attributes?.font, "serif");
+				});
+
+				it("returns delta unchanged when no recognized styles", () => {
+					const delta = new Delta().insert("hello");
+					const el = styledElement({});
+					const result = clipboardFormatMatcher(el, delta);
+					assert.deepEqual(result.ops, delta.ops);
+				});
+			});
 		});
 
 		// Unicode 16+ (joined emojis) section - test attribute cycling
