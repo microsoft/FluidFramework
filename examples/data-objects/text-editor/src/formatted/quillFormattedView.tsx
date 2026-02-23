@@ -102,15 +102,14 @@ export function parseCssFontSize(node: HTMLElement): string | undefined {
  * Parse CSS font-family from a pasted HTML element's inline style.
  * Tries fonts in priority order (first to last per CSS spec) and returns
  * the first recognized Quill font value.
- *
- * Note: splitting on "," does not handle commas inside quoted font names,
- * and escape sequences within font names are not supported. This is fine
- * since none of the font names we match against contain commas or escapes.
  */
 export function parseCssFontFamily(node: HTMLElement): string | undefined {
 	const style = node.style.fontFamily;
 	if (style === "") return undefined;
 
+	// Splitting on "," does not handle commas inside quoted font names, and escape
+	// sequences within font names are not supported. This is fine since none of the
+	// font names we match against contain commas or escapes.
 	const fonts = style.split(",");
 	for (const raw of fonts) {
 		// Trim whitespace and leading and trailing quotes
