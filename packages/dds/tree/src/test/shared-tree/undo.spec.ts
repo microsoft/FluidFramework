@@ -103,7 +103,7 @@ const testCases: {
 				parentIndex: 0,
 			};
 
-			actedOn.transaction.start(false);
+			actedOn.transaction.start();
 			const listField = actedOn.editor.sequenceField({
 				parent: listNode,
 				field: brand(""),
@@ -124,7 +124,7 @@ const testCases: {
 				parentIndex: 0,
 			};
 
-			actedOn.transaction.start(false);
+			actedOn.transaction.start();
 			actedOn.editor.move({ parent: listNode, field: brand("") }, 0, 1, rootField, 1);
 			remove(actedOn, 0, 1);
 			actedOn.transaction.commit();
@@ -431,7 +431,7 @@ describe("Undo and redo", () => {
 			const tree = createCheckout(["A", "B"], attached);
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-			tree.transaction.start(false);
+			tree.transaction.start();
 			tree.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.editor.sequenceField(rootField).remove(0, 1);
 			tree.transaction.commit();
