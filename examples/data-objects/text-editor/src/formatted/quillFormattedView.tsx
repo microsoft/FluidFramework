@@ -113,6 +113,7 @@ export function parseCssFontFamily(node: HTMLElement): string | undefined {
 
 	const fonts = style.split(",");
 	for (const raw of fonts) {
+		// Trim whitespace and leading and trailing quotes
 		const font = raw.trim().replace(/^["']/, "").replace(/["']$/, "");
 		// check if font is in our supported font set
 		if (fontSet.has(font)) {
