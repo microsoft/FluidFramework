@@ -18,7 +18,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			// package hasn't converted to barrel files (which may not be a bad thing)
 			"import-x/no-internal-modules": [
 				"error",
 				{

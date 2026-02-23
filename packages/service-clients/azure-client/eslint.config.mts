@@ -30,14 +30,6 @@ const config: Linter.Config[] = [
 					],
 				},
 			],
-
-			// Exact variable name checks.
-			// See: https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/prevent-abbreviations.md#allowlist
-			// Industry-standard index variable name.
-			// RegEx-based exclusions
-			// See: https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/prevent-abbreviations.md#ignore
-			// "props" has become something of an industry standard abbreviation for "properties".
-			// Allow names to include "props" / "Props".
 		},
 	},
 

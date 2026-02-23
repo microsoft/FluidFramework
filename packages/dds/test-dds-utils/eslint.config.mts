@@ -25,8 +25,6 @@ const config: Linter.Config[] = [
 					],
 				},
 			],
-
-			// TODO: This package should use tinyexec or child_process directly instead of execa
 		},
 	},
 ];

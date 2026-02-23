@@ -137,9 +137,6 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
-		// General guidance to avoid importing compat-provided APIs does not apply to the benchmark tests,
-		// since they don't currently aim to test performance of mixed-versioned packages or cross-client
-		// collaboration between clients.
 		files: ["src/test/benchmark/**"],
 		rules: {
 			// General guidance to avoid importing compat-provided APIs does not apply to the benchmark tests,
