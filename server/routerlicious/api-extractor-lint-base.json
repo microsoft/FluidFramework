@@ -44,7 +44,7 @@
 			"ae-missing-release-tag": {
 				"logLevel": "none"
 			},
-			// Links with implicit (unanotated) package name specifiers don't currently resolve correctly
+			// Links with implicit (unannotated) package name specifiers don't currently resolve correctly
 			// when their members are bundled.
 			// See https://github.com/microsoft/rushstack/issues/3521
 			// Omit this check from the cross-package lint step.

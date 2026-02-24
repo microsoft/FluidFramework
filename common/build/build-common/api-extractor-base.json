@@ -10,12 +10,14 @@
 	 * Can be overridden as necessary for packages with different build structures.
 	 *
 	 * See: <https://api-extractor.com/pages/configs/api-extractor_json/#mainentrypointfilepath>
+	 *
+	 * Usually should be `<projectFolder>/lib/index.d.ts` or `<projectFolder>/dist/index.d.ts`.
 	 */
-	"mainEntryPointFilePath": "INVALID - specify in derived config - likely: <projectFolder>/lib/index.d.ts or <projectFolder>/dist/index.d.ts",
+	"mainEntryPointFilePath": "INVALID - specify in derived config",
 
 	// All of the outputs are disabled (`"enabled": false`) by default in the base config.
 	// Derived configs should enable the outputs that they need.  This ensures that we
-	// don't accidentally generate outputs with more explicit intent.
+	// don't accidentally generate outputs without more explicit intent.
 
 	/**
 	 * Configures how the API report file (*.api.md) will be generated.
