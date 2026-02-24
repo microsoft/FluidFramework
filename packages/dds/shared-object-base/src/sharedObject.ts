@@ -412,8 +412,8 @@ export abstract class SharedObjectCore<
 	 * - They are not interleaved with messages from other DDS in the container.
 	 * @param messageCollection - The 'bunch' of sequenced ops to apply to this shared object.
 	 * @privateRemarks
-	 * TODO: We should have cental linkable documentation (and ideally types) for the special cases of `IRuntimeMessageCollection`
-	 * that are known to be a valid "grouped batch" or a "bunch".
+	 * TODO: We should have central linkable documentation (and ideally more specific types) for the
+	 * "grouped batch" and "bunch" cases of `IRuntimeMessageCollection`.
 	 * TODO:Performance: AB#59783: Allowing this to process more messages at once (more than the current definition of 'bunch') could improve performance of clients which fall behind,
 	 * which is one of the most important performance sensitive scenarios.
 	 */
