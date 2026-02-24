@@ -5116,7 +5116,7 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       typescript-5.9:
-        specifier: npm:typescript@~5.9.2
+        specifier: npm:typescript@^5.9.2
         version: typescript@5.9.3
 
   examples/utils/example-driver:
