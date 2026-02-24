@@ -5,9 +5,6 @@
 ```ts
 
 import * as api from '@fluidframework/protocol-definitions';
-import { AxiosError } from 'axios';
-import { AxiosInstance } from 'axios';
-import { AxiosRequestConfig } from 'axios';
 import type { ICreateTreeEntry } from '@fluidframework/gitresources';
 import type { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -19,17 +16,19 @@ import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 import type { ITree } from '@fluidframework/gitresources';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
-import { RawAxiosRequestHeaders } from 'axios';
 import type * as resources from '@fluidframework/gitresources';
 import type { ScopeType } from '@fluidframework/protocol-definitions';
 import type { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined, getCallingServiceName?: (() => string | undefined) | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawRequestHeaders, fetchFn?: FetchFn, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawRequestHeaders) => Promise<RawRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IRestWrapperMetricProps) => void) | undefined, getCallingServiceName?: (() => string | undefined) | undefined);
     // (undocumented)
-    protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
+    protected request<T>(requestConfig: RequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
+
+// @internal
+export function buildFetchUrl(baseURL: string | undefined, url: string | undefined): string;
 
 // @internal
 export const buildTreePath: (...nodeNames: string[]) => string;
@@ -55,11 +54,11 @@ export const canWrite: (scopes: string[]) => boolean;
 // @internal (undocumented)
 export const choose: () => string;
 
-// @internal (undocumented)
-export function convertAxiosErrorToNetorkError(error: AxiosError): NetworkError;
-
 // @internal
 export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree, unreferenced?: true | undefined): ISummaryTree;
+
+// @internal (undocumented)
+export function convertRequestErrorToNetworkError(error: Error): NetworkError;
 
 // @internal
 export function convertSortedNumberArrayToRanges(numberArray: number[]): number[][];
@@ -72,6 +71,9 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWhol
 
 // @internal
 export const CorrelationIdHeaderName = "x-correlation-id";
+
+// @internal
+export function createFetchWithAbortSignal(fetchFn: FetchFn, getAbortController: () => AbortController | undefined): FetchFn;
 
 // @internal
 export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
@@ -91,6 +93,9 @@ export const DriverVersionHeaderName = "x-driver-version";
 // @internal (undocumented)
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
 
+// @internal
+export type FetchFn = (url: string | URL | Request, init?: RequestInit) => Promise<Response>;
+
 // @internal (undocumented)
 export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];
 
@@ -107,6 +112,9 @@ export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) =
 export const getGlobalAbortControllerContext: () => IAbortControllerContext;
 
 // @internal
+export function getGlobalFetchFn(): FetchFn;
+
+// @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
 
 // @internal
@@ -116,7 +124,7 @@ export function getNetworkInformationFromIP(clientIp?: string): NetworkInformati
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @internal (undocumented)
-export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: RawAxiosRequestHeaders): Promise<void>;
+export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: RawRequestHeaders): Promise<void>;
 
 // @internal (undocumented)
 export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
@@ -247,26 +255,6 @@ export interface IAlfredTenant {
     id: string;
     // (undocumented)
     key: string;
-}
-
-// @internal (undocumented)
-export interface IBasicRestWrapperMetricProps {
-    // (undocumented)
-    axiosError: AxiosError<any>;
-    // (undocumented)
-    baseUrl: string;
-    // (undocumented)
-    correlationId: string;
-    // (undocumented)
-    durationInMs: number;
-    // (undocumented)
-    method: string;
-    // (undocumented)
-    status: number | string;
-    // (undocumented)
-    timeoutInMs: number | string;
-    // (undocumented)
-    url: string;
 }
 
 // @internal
@@ -443,6 +431,26 @@ export enum InternalErrorCode {
 export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
     // (undocumented)
     config?: IExternalWriterConfig;
+}
+
+// @internal
+export interface IRestWrapperMetricProps {
+    // (undocumented)
+    baseUrl: string;
+    // (undocumented)
+    correlationId: string;
+    // (undocumented)
+    durationInMs: number;
+    // (undocumented)
+    method: string;
+    // (undocumented)
+    requestError: Error | undefined;
+    // (undocumented)
+    status: number | string;
+    // (undocumented)
+    timeoutInMs: number | string;
+    // (undocumented)
+    url: string;
 }
 
 // @alpha
@@ -655,8 +663,31 @@ export function parseToken(tenantId: string, authorization: string | undefined):
 export function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any>;
 
 // @internal
+export type RawRequestHeaders = Record<string, string | number | boolean>;
+
+// @internal
+export interface RequestConfig {
+    // (undocumented)
+    baseURL?: string;
+    // (undocumented)
+    data?: any;
+    // (undocumented)
+    headers?: RawRequestHeaders;
+    // (undocumented)
+    method?: string;
+    // (undocumented)
+    signal?: AbortSignal;
+    // (undocumented)
+    timeout?: number;
+    // (undocumented)
+    timeoutErrorMessage?: string;
+    // (undocumented)
+    url?: string;
+}
+
+// @internal
 export class RestLessClient {
-    translate(request: AxiosRequestConfig): AxiosRequestConfig;
+    translate(request: RequestConfig): RequestConfig;
 }
 
 // @internal (undocumented)
@@ -677,31 +708,31 @@ export abstract class RestWrapper {
     // (undocumented)
     protected defaultQueryString: Record<string, string | number | boolean>;
     // (undocumented)
-    delete<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    delete<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawRequestHeaders, additionalOptions?: Partial<Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected generateQueryString(queryStringValues: Record<string, string | number | boolean> | undefined): string;
     // (undocumented)
-    get<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    get<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawRequestHeaders, additionalOptions?: Partial<Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected readonly maxBodyLength: number;
     // (undocumented)
     protected readonly maxContentLength: number;
     // (undocumented)
-    patch<T>(url: string, requestBody: any, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    patch<T>(url: string, requestBody: any, queryString?: Record<string, string | number | boolean>, headers?: RawRequestHeaders, additionalOptions?: Partial<Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">>): Promise<T>;
     // (undocumented)
-    post<T>(url: string, requestBody: any, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
+    post<T>(url: string, requestBody: any, queryString?: Record<string, string | number | boolean>, headers?: RawRequestHeaders, additionalOptions?: Partial<Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">>): Promise<T>;
     // (undocumented)
-    protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
+    protected abstract request<T>(options: RequestConfig, statusCode: number): Promise<T>;
 }
 
 // @internal
 export const setGlobalAbortControllerContext: (abortControllerContext: IAbortControllerContext) => void;
 
 // @internal
-export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
+export function setGlobalFetchFn(fn: FetchFn): void;
 
-// @internal (undocumented)
-export function setupAxiosInterceptorsForAbortSignals(getAbortController: () => AbortController | undefined): void;
+// @internal
+export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
 // @internal
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
