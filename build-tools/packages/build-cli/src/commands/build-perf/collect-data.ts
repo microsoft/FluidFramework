@@ -47,7 +47,8 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 			options: ["public", "internal"],
 		}),
 		buildCount: Flags.integer({
-			description: "Number of builds to fetch.",
+			description:
+				"Number of builds to fetch. Note: This will be limited by the number of builds held by the ADO project's retention policy.",
 			env: "BUILD_COUNT",
 			default: 500,
 		}),

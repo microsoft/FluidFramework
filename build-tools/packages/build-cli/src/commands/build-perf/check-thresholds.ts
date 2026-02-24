@@ -30,7 +30,8 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 			options: ["public", "internal"],
 		}),
 		inputDir: Flags.directory({
-			description: "Directory containing the data JSON files.",
+			description:
+				"Directory containing the data JSON files (generated from the collect-data command).",
 			env: "DATA_DIR",
 			required: true,
 		}),
