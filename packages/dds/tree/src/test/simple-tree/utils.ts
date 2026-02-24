@@ -104,17 +104,8 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
  * Given the initial tree node, hydrate it.
  * @remarks
  * For minimal/concise targeted unit testing of specific simple-tree content.
- */
-export function hydrateNode(initialTree: TreeNode): void {
-	const schema = Tree.schema(initialTree);
-	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
-	view.initialize(initialTree as never);
-}
-
-/**
- * {@link hydrate} but unsafe initialTree.
- * This may be required when the schema is not entirely statically typed, for example when looping over multiple test cases and thus using a imprecise schema type.
- * In such cases the "safe" version of hydrate may require `never` for the initial tree.
+ *
+ * This is a simpler version of {@link hydrate} for when the input is already a node, and thus does not need the schema, type parameters or return value.
  */
 export function hydrateNode(initialTree: TreeNode): void {
 	const schema = Tree.schema(initialTree);
