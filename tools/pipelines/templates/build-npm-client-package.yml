@@ -692,13 +692,13 @@ extends:
                 displayName: Publish Code Coverage
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
-                  summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                  summaryFileLocation: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                   failIfCoverageEmpty: true
               - task: CopyFiles@2
                 displayName: Copy code coverage report to artifact staging directory
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
-                  sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                  sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report
                   targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
               - task: Bash@3
                 displayName: Report Code Coverage Comparison
