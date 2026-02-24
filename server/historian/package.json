@@ -73,6 +73,7 @@
 			"eslint is overridden to v9 for flat config support across all packages"
 		],
 		"overrides": {
+			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
 			"@types/node": "^18.17.1",
 			"eslint": "~9.39.2",
 			"nanoid": "^3.3.9",

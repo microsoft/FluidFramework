@@ -18,7 +18,7 @@
  * ```
  */
 
-import { minimalDeprecated } from "./flat.mts";
+import { minimalDeprecated, recommended } from "./flat.mts";
 
 /**
  * Server-specific rule overrides.
@@ -230,3 +230,10 @@ const serverOverrides = {
  * Uses minimalDeprecated config with server-specific rule overrides.
  */
 export const server = [...minimalDeprecated, serverOverrides];
+
+/**
+ * ESLint flat config for server packages using the recommended config level.
+ * For packages that were previously using the full recommended config
+ * (e.g. routerlicious/gitresources, routerlicious/lambdas).
+ */
+export const serverRecommended = [...recommended, serverOverrides];

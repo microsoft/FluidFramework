@@ -4,10 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { baseConfig } from "../../eslint.config.base.mts";
+import { recommendedConfig } from "../../eslint.config.base.mts";
 
 const config: Linter.Config[] = [
-	...baseConfig,
+	...recommendedConfig,
 	{
 		ignores: ["*.spec.ts"],
 	},
