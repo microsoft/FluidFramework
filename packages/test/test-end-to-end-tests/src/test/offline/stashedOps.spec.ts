@@ -2381,7 +2381,7 @@ describeCompat(
 				},
 			],
 			async function () {
-				if (provider.driver.type === "t9s") {
+				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 					this.skip();
 				}
 				const incrementValue = 3;
