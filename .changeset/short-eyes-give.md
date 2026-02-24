@@ -1,13 +1,20 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+---
+"fluid-framework": minor
+"@fluidframework/tree": minor
+"__section": tree
+---
+Promote checkSchemaCompatibilitySnapshots to beta
 
+[`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
+It is recommended that all SharedTree applications use this API to write schema compatibility tests.
+
+Usage should look something like:
+
+```typescript
 import fs from "node:fs";
 import path from "node:path";
 
-import { snapshotSchemaCompatibility } from "../../index.js";
-// import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
+import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
 
 // The TreeViewConfiguration the application uses, which contains the application's schema.
 import { treeViewConfiguration } from "./schema.js";
@@ -36,3 +43,5 @@ describe("schema", () => {
 		});
 	});
 });
+
+```
