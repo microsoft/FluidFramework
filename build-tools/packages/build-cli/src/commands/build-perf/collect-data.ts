@@ -15,8 +15,8 @@ import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Collect build performance data from Azure DevOps and generate processed metrics.
- * Combines the functionality of fetch-build-data.sh, fetch-timeline-data.sh,
- * generate-data-json.sh, and process-data.cjs into a single command.
+ * Fetches build records and timeline data via the ADO SDK, then processes
+ * everything into aggregated metrics written as a single JSON file.
  */
 export default class BuildPerfCollectCommand extends BaseCommand<
 	typeof BuildPerfCollectCommand
@@ -82,11 +82,12 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 
 	public async run(): Promise<void> {
 		const { flags } = this;
+		// oclif validates --mode against the options array, so the cast is safe.
 		const mode = flags.mode as BuildPerfMode;
 
-		this.log("==========================================");
+		this.logHr();
 		this.log(`Collecting build performance data (${mode} mode)`);
-		this.log("==========================================");
+		this.logHr();
 		this.log(`Organization: ${flags.org}`);
 		this.log(`Project: ${flags.project}`);
 		this.log(`Build count: ${flags.buildCount}`);
@@ -100,7 +101,7 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 		const builds = await fetchBuilds(
 			{
 				adoToken: flags.adoApiToken,
-				org: flags.org!,
+				org: flags.org,
 				project: flags.project,
 				mode,
 				buildCount: flags.buildCount,
@@ -123,7 +124,7 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 				? await fetchTimelines(
 						{
 							adoToken: flags.adoApiToken,
-							org: flags.org!,
+							org: flags.org,
 							project: flags.project,
 							buildIds,
 							parallelJobs: flags.parallelJobs,

@@ -224,7 +224,7 @@
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
 		"topicSeparator": " ",
 		"topics": {
-			"build-perf-tools": {
+			"build-perf": {
 				"description": "Build performance observability commands for collecting, processing, and analyzing build metrics."
 			},
 			"bump": {

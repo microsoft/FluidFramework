@@ -618,6 +618,7 @@ function createBarTrendChart(
 								month: "short",
 								day: "numeric",
 								year: "numeric",
+								timeZone: "UTC",
 							});
 							return (
 								formatted + " (" + buildCount + " build" + (buildCount !== 1 ? "s" : "") + ")"

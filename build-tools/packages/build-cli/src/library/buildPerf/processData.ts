@@ -447,9 +447,16 @@ export function processRawData(
 		.map((b) => processBuild(b, project, org, githubRepo))
 		.filter((b): b is ProcessedBuild & { duration: number } => b.duration !== null);
 
-	const { stagePerformance, stageTaskBreakdown } = processTimelines(timelines);
-	const stageDurationTrend = calcStageDurationTrend(filteredBuilds, timelines);
-	const taskDurationTrend = calcTaskDurationTrend(filteredBuilds, timelines);
+	// Filter timelines to match filteredBuilds so stage metrics exclude builds
+	// that were removed by filterBuilds (e.g. non-main-targeting PRs in public mode).
+	const filteredBuildIds = new Set(filteredBuilds.map((b) => String(b.id)));
+	const filteredTimelines = Object.fromEntries(
+		Object.entries(timelines).filter(([id]) => filteredBuildIds.has(id)),
+	);
+
+	const { stagePerformance, stageTaskBreakdown } = processTimelines(filteredTimelines);
+	const stageDurationTrend = calcStageDurationTrend(filteredBuilds, filteredTimelines);
+	const taskDurationTrend = calcTaskDurationTrend(filteredBuilds, filteredTimelines);
 
 	const sortedByDate = [...processedBuilds].sort(
 		(a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),

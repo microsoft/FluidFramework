@@ -9,6 +9,7 @@ import {
 	existsSync,
 	mkdirSync,
 	readdirSync,
+	rmSync,
 	statSync,
 	writeFileSync,
 } from "node:fs";
@@ -17,12 +18,15 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 
 import { generateAswaHtml, TEMPLATES_DIR } from "../../library/buildPerf/htmlGenerator.js";
+import type { BuildPerfMode } from "../../library/buildPerf/types.js";
 import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Manually deploy the build performance dashboard to Azure Static Web Apps.
- * Prepares a deployment package (data files, HTML, config) and deploys using the SWA CLI.
- * The deployed HTML fetches data at runtime from `/data/*.json`, showing tabs for both modes.
+ * Expects data files produced by the `collect-data` command. Prepares a deployment
+ * package (data files, HTML, config) and deploys using the SWA CLI. The SWA CLI is
+ * used instead of standard GitHub-based deployment because this pipeline runs in ADO.
+ * The deployed HTML fetches data at runtime from `data/*.json`, showing tabs for both modes.
  */
 export default class BuildPerfDeployCommand extends BaseCommand<
 	typeof BuildPerfDeployCommand
@@ -66,14 +70,17 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 
 	public async run(): Promise<void> {
 		const { flags } = this;
-		const mode = flags.mode as "public" | "internal";
+		// oclif validates --mode against the options array, so the cast is safe.
+		const mode = flags.mode as BuildPerfMode;
 
 		const deployDir = path.join(flags.dataDir, ".deploy");
+		// Clean any stale data from a previous run before creating the deploy directory
+		rmSync(deployDir, { recursive: true, force: true });
 		mkdirSync(path.join(deployDir, "data"), { recursive: true });
 
-		this.log("==========================================");
+		this.logHr();
 		this.log(`Deploying dashboard to ASWA (${mode} mode)`);
-		this.log("==========================================");
+		this.logHr();
 
 		// Copy our generated data file
 		const currentFile = mode === "public" ? "public-data.json" : "internal-data.json";
@@ -170,7 +177,7 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 			if (stat.isDirectory()) {
 				this.logDeployContents(fullPath, `${prefix}${entry}/`);
 			} else {
-				this.log(`  ${prefix}${entry} (${stat.size} bytes)`);
+				this.logIndent(`${prefix}${entry} (${stat.size} bytes)`);
 			}
 		}
 	}

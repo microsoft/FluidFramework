@@ -19,7 +19,8 @@ import type { BuildPerfMode } from "./types.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Directory containing the bundled template files (dashboard.ejs, dashboard.css, dashboard.js).
+ * Directory containing the template source files (dashboard.ejs, dashboard.css, dashboard.ts).
+ * At runtime the compiled dashboard.js is read from this directory.
  */
 export const TEMPLATES_DIR = path.resolve(__dirname, "templates");
 
@@ -52,7 +53,7 @@ export function generateStandaloneHtml(
 
 /**
  * Generate a multi-mode HTML dashboard for Azure Static Web Apps deployment.
- * The generated HTML fetches data from `/data/*.json` at runtime instead of
+ * The generated HTML fetches data from `data/*.json` at runtime instead of
  * inlining it, and shows tabs for both public and internal modes.
  *
  * @param templatePath - Path to the dashboard.ejs file.

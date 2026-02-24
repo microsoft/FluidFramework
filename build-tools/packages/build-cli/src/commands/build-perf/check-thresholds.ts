@@ -41,7 +41,7 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 		}),
 		changePeriodThreshold: Flags.integer({
 			description:
-				"Maximum acceptable percentage change over the relevant period (3 days for public, 7 days for internal).",
+				"Maximum acceptable percentage change (0-100) over the relevant period (3 days for public, 7 days for internal). E.g. 15 means ±15%.",
 			env: "CHANGE_PERIOD_THRESHOLD",
 			required: true,
 		}),
@@ -63,6 +63,7 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 
 	public async run(): Promise<ThresholdResult> {
 		const { flags } = this;
+		// oclif validates --mode against the options array, so the cast is safe.
 		const mode = flags.mode as BuildPerfMode;
 
 		const dataFile =
@@ -72,17 +73,17 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 		const changePeriodDays = mode === "public" ? 3 : 7;
 		const changeField = mode === "public" ? "change3Day" : "change7Day";
 
-		this.log("==========================================");
+		this.logHr();
 		this.log(`Checking build performance thresholds (${mode} mode)`);
-		this.log("==========================================");
+		this.logHr();
 		this.log(`Data file: ${dataFile}`);
 		this.log("Thresholds:");
-		this.log(`  Average duration: ${flags.avgDurationThreshold} minutes`);
-		this.log(`  ${changePeriodDays}-day change: \u00B1${flags.changePeriodThreshold}%`);
+		this.logIndent(`Average duration: ${flags.avgDurationThreshold} minutes`);
+		this.logIndent(`${changePeriodDays}-day change: \u00B1${flags.changePeriodThreshold}%`);
 
 		if (flags.forceFailure) {
 			this.log("");
-			this.log("** FORCE_FAILURE is enabled - will fail regardless of thresholds **");
+			this.warning("FORCE_FAILURE is enabled - will fail regardless of thresholds");
 		}
 
 		// Read the data file
@@ -90,11 +91,11 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 		try {
 			data = JSON.parse(readFileSync(dataFile, "utf8")) as ProcessedDataOutput;
 		} catch (err) {
-			this.error(`Failed to read data file '${dataFile}': ${err}`);
+			this.error(`Failed to read data file '${dataFile}': ${err}`, { exit: 1 });
 		}
 
 		const avgDuration = data.summary.avgDuration;
-		const changePeriod = data[changeField] as number;
+		const changePeriod = data[changeField] as number | null;
 
 		if (avgDuration === undefined || avgDuration === null) {
 			this.warning("Could not extract avgDuration from data file");
@@ -113,8 +114,8 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 
 		this.log("");
 		this.log("Key metrics:");
-		this.log(`  Average duration: ${avgDuration} minutes`);
-		this.log(`  ${changePeriodDays}-day change: ${changePeriod}%`);
+		this.logIndent(`Average duration: ${avgDuration} minutes`);
+		this.logIndent(`${changePeriodDays}-day change: ${changePeriod}%`);
 
 		// Check thresholds
 		const alertReasons: string[] = [];
@@ -125,8 +126,7 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 			);
 		}
 
-		const changePeriodAbs = Math.abs(changePeriod);
-		if (changePeriodAbs > flags.changePeriodThreshold) {
+		if (Math.abs(changePeriod) > flags.changePeriodThreshold) {
 			alertReasons.push(
 				`${changePeriodDays}-day build duration change (${changePeriod}%) exceeds threshold (\u00B1${flags.changePeriodThreshold}%)`,
 			);
@@ -137,7 +137,7 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 		}
 
 		this.log("");
-		this.log("==========================================");
+		this.logHr();
 
 		const result: ThresholdResult = {
 			passed: alertReasons.length === 0,
@@ -149,18 +149,20 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 		if (!result.passed) {
 			this.log("ALERT: Thresholds exceeded:");
 			for (const reason of alertReasons) {
-				this.log(`  - ${reason}`);
+				this.logIndent(`- ${reason}`);
 			}
 			this.log("");
 			this.log("Key metrics:");
-			this.log(`  - Average Duration: ${avgDuration} minutes`);
-			this.log(`  - ${changePeriodDays}-day Change: ${changePeriod}%`);
-			this.log("==========================================");
+			this.logIndent(`- Average Duration: ${avgDuration} minutes`);
+			this.logIndent(`- ${changePeriodDays}-day Change: ${changePeriod}%`);
+			this.logHr();
 			this.log("");
-			this.error("Thresholds exceeded - failing pipeline to trigger notifications.");
+			this.error("Thresholds exceeded - failing pipeline to trigger notifications.", {
+				exit: 1,
+			});
 		} else {
 			this.log("All thresholds within acceptable limits");
-			this.log("==========================================");
+			this.logHr();
 		}
 
 		return result;

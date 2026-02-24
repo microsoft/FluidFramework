@@ -31,6 +31,11 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 			required: true,
 			options: ["public", "internal"],
 		}),
+		format: Flags.string({
+			description: "Output format for the generated report.",
+			options: ["html"],
+			default: "html",
+		}),
 		inputDir: Flags.directory({
 			description:
 				"Directory containing the data JSON files (public-data.json / internal-data.json).",
@@ -55,14 +60,15 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 
 	public async run(): Promise<void> {
 		const { flags } = this;
+		// oclif validates --mode against the options array, so the cast is safe.
 		const mode = flags.mode as BuildPerfMode;
 
 		mkdirSync(flags.outputDir, { recursive: true });
 		const standaloneFile = path.join(flags.outputDir, "dashboard.html");
 
-		this.log("==========================================");
+		this.logHr();
 		this.log(`Generating standalone HTML dashboard (${mode} mode)`);
-		this.log("==========================================");
+		this.logHr();
 
 		// Determine the data file for this mode
 		const dataFile =

@@ -139,7 +139,6 @@ export async function fetchBuilds(
 	const buildApi = await getBuildApi(adoToken, org);
 
 	// Use the ADO SDK getBuilds with appropriate filters
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 	const reasonFilter = mode === "public" ? BuildReason.PullRequest : undefined;
 	const branchName = mode === "internal" ? "refs/heads/main" : undefined;
 

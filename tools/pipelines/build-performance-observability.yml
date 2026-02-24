@@ -112,7 +112,7 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
-              flub build-perf-tools collect-data
+              flub build-perf collect-data
 
         - task: Bash@3
           displayName: Generate HTML dashboard artifact
@@ -123,7 +123,7 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
-              flub build-perf-tools generate-html
+              flub build-perf generate-html
 
         templateContext:
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -171,4 +171,4 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
-              flub build-perf-tools check-thresholds
+              flub build-perf check-thresholds

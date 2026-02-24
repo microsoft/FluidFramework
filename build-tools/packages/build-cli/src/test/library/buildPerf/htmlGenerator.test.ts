@@ -87,7 +87,8 @@ describe("generateStandaloneHtml", () => {
 		const dataJson = makeSampleDataJson();
 		const html = generateStandaloneHtml(templatePath, dataJson, "public");
 
-		// tsc adds these for "type": "module" packages; htmlGenerator must strip them
+		// tsc may emit these artifacts in compiled output; htmlGenerator must strip
+		// them because the JS is inlined in a <script> tag, not loaded as a module.
 		expect(html).to.not.include("export {};");
 		expect(html).to.not.include('"use strict";');
 		expect(html).to.not.include("sourceMappingURL");
