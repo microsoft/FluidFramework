@@ -104,7 +104,7 @@ extends:
     shouldPublishNpmPackages: ${{ variables.publish }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: server/historian
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/historian
     containerName: fluidframework/routerlicious/historian
     dockerBuildBumpsVersion: true
     # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
