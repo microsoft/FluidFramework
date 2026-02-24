@@ -1572,7 +1572,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
-// @alpha @input
+// @beta @input
 export interface SnapshotFileSystem {
     join(parentPath: string, childPath: string): string;
     mkdirSync(dir: string, options: {
@@ -1585,10 +1585,10 @@ export interface SnapshotFileSystem {
     }): void;
 }
 
-// @alpha
+// @beta
 export function snapshotSchemaCompatibility(options: SnapshotSchemaCompatibilityOptions): void;
 
-// @alpha @input
+// @beta @input
 export interface SnapshotSchemaCompatibilityOptions {
     readonly fileSystem: SnapshotFileSystem;
     readonly minVersionForCollaboration: string;

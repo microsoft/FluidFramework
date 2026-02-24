@@ -9,7 +9,7 @@ import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
-	InternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes as InternalUtilityTypes,
 	JsonDeserialized,
 	JsonTypeWith,
 	NonNullJsonObjectWith,

@@ -12,12 +12,16 @@ import { TreeAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
+import Delta from "quill-delta";
 import * as React from "react";
 
 import {
+	clipboardFormatMatcher,
 	FormattedTextAsTree,
 	FormattedMainView,
 	type FormattedEditorHandle,
+	parseCssFontFamily,
+	parseCssFontSize,
 } from "../formatted/quillFormattedView.js";
 import {
 	PlainTextMainView,
@@ -401,7 +405,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { bold: true });
+							text.formatRange(6, 11, { bold: true });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector("strong");
@@ -462,7 +466,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { italic: true });
+							text.formatRange(6, 11, { italic: true });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector("em");
@@ -523,7 +527,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { underline: true });
+							text.formatRange(6, 11, { underline: true });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector("u");
@@ -593,7 +597,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { size: 24 });
+							text.formatRange(6, 11, { size: 24 });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector(".ql-size-huge");
@@ -663,7 +667,7 @@ describe("textEditor", () => {
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
 
-							text.formatRange(6, 5, { font: "monospace" });
+							text.formatRange(6, 11, { font: "monospace" });
 							rendered.rerender(content);
 
 							const el = rendered.container.querySelector(".ql-font-monospace");
@@ -785,6 +789,87 @@ describe("textEditor", () => {
 				});
 			}
 		});
+		describe("copy-paste helpers", () => {
+			/** Helper to create an HTMLElement with inline styles. */
+			function styledElement(styles: Partial<CSSStyleDeclaration>): HTMLElement {
+				const el = document.createElement("span");
+				Object.assign(el.style, styles);
+				return el;
+			}
+
+			describe("parseCssFontSize", () => {
+				it("returns undefined when no fontSize is set", () => {
+					assert.equal(parseCssFontSize(styledElement({})), undefined);
+				});
+
+				it("returns Quill size name for supported pixel values", () => {
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "10px" })), "small");
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "18px" })), "large");
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "24px" })), "huge");
+				});
+
+				it("returns undefined for default or unrecognized sizes", () => {
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "12px" })), undefined);
+					assert.equal(parseCssFontSize(styledElement({ fontSize: "42px" })), undefined);
+				});
+			});
+
+			describe("parseCssFontFamily", () => {
+				it("returns undefined when no fontFamily is set", () => {
+					assert.equal(parseCssFontFamily(styledElement({})), undefined);
+				});
+
+				it("returns first recognized font in a comma-separated stack", () => {
+					assert.equal(
+						parseCssFontFamily(styledElement({ fontFamily: "monospace" })),
+						"monospace",
+					);
+					assert.equal(
+						parseCssFontFamily(styledElement({ fontFamily: '"Courier New", monospace' })),
+						"monospace",
+					);
+					assert.equal(
+						parseCssFontFamily(
+							styledElement({ fontFamily: '"Times New Roman", "Arial", serif' }),
+						),
+						"Arial",
+					);
+				});
+				it("strips single quotes around recognized font names", () => {
+					assert.equal(parseCssFontFamily(styledElement({ fontFamily: "'Arial'" })), "Arial");
+				});
+				it("returns undefined for unrecognized fonts", () => {
+					assert.equal(
+						parseCssFontFamily(styledElement({ fontFamily: '"Courier New", fantasy' })),
+						undefined,
+					);
+				});
+			});
+
+			describe("clipboardFormatMatcher", () => {
+				it("returns delta unchanged for non-HTMLElement nodes", () => {
+					const delta = new Delta().insert("hello");
+					const text = document.createTextNode("hello");
+					const result = clipboardFormatMatcher(text, delta);
+					assert.deepEqual(result.ops, delta.ops);
+				});
+
+				it("applies size and font attributes from inline styles", () => {
+					const delta = new Delta().insert("hello");
+					const el = styledElement({ fontSize: "18px", fontFamily: "serif" });
+					const result = clipboardFormatMatcher(el, delta);
+					assert.equal(result.ops[0]?.attributes?.size, "large");
+					assert.equal(result.ops[0]?.attributes?.font, "serif");
+				});
+
+				it("returns delta unchanged when no recognized styles", () => {
+					const delta = new Delta().insert("hello");
+					const el = styledElement({});
+					const result = clipboardFormatMatcher(el, delta);
+					assert.deepEqual(result.ops, delta.ops);
+				});
+			});
+		});
 
 		// Unicode 16+ (joined emojis) section - test attribute cycling
 		describe("Unicode 16+ joined emoji attribute cycling", () => {
@@ -800,7 +885,7 @@ describe("textEditor", () => {
 
 						const emojiStart = 5; // "Test " is 5 chars
 						const emojiLength = [...joinedEmoji].length;
-						text.formatRange(emojiStart, emojiLength, { bold: true });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { bold: true });
 						rendered.rerender(content);
 
 						assert.ok(
@@ -812,7 +897,7 @@ describe("textEditor", () => {
 							"After bold: emoji should be preserved",
 						);
 
-						text.formatRange(emojiStart, emojiLength, { bold: false });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { bold: false });
 						rendered.rerender(content);
 
 						assert.ok(
@@ -832,7 +917,7 @@ describe("textEditor", () => {
 
 						const emojiStart = 5;
 						const emojiLength = [...joinedEmoji].length;
-						text.formatRange(emojiStart, emojiLength, { size: 24 });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { size: 24 });
 						rendered.rerender(content);
 
 						assert.ok(
@@ -844,7 +929,7 @@ describe("textEditor", () => {
 							"Emoji preserved",
 						);
 
-						text.formatRange(emojiStart, emojiLength, { size: 12 });
+						text.formatRange(emojiStart, emojiStart + emojiLength, { size: 12 });
 						rendered.rerender(content);
 
 						assert.ok(
