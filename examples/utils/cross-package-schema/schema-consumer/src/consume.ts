@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import-x/no-internal-modules
 import { AppState } from "@fluid-example/cross-package-schema-provider/schema";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 
@@ -13,5 +14,4 @@ import { TreeViewConfiguration } from "@fluidframework/tree";
  *
  * Run `npm run check:schema-import` to verify this passes.
  */
-
 export const appConfig = new TreeViewConfiguration({ schema: AppState });
