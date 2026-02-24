@@ -9,6 +9,16 @@
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
+// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+// have packages at today. Once we can upgrade to a later version of
+// globby things might be faster.
+const releaseGroupPackageJsonGlobs = [
+	"{azure,examples,experimental,packages}/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+	"tools/markdown-magic/package.json",
+];
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -49,7 +59,9 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "^api", "build:test", "build:copy"],
+			// Note that "api" is included as "compile" intends to build a complete package
+			// and "api" generates package entrypoint files.
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -115,6 +127,7 @@ module.exports = {
 		},
 		"depcruise": [],
 		"check:exports": ["api"],
+		"check:exports:bundle-release-tags": ["build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
@@ -132,6 +145,7 @@ module.exports = {
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
+		"eslint:fix": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
@@ -177,13 +191,7 @@ module.exports = {
 			inputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: ["package.json"],
 			gitignore: ["input", "output"],
@@ -224,24 +232,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},
@@ -250,24 +246,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},

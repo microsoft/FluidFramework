@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"private": true,
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -54,7 +54,7 @@
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"sort-json": "^2.0.1",
 		"tsx": "^4.21.0",
 		"typescript": "~5.4.5"

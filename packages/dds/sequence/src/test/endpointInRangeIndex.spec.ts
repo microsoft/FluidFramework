@@ -7,10 +7,12 @@ import { strict as assert } from "assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Lazy } from "@fluidframework/core-utils/internal";
-import { TestClient } from "@fluidframework/merge-tree/internal/test";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { EndpointInRangeIndex, IEndpointInRangeIndex } from "../intervalIndex/index.js";
 import type { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { ISharedString, SharedStringClass } from "../sharedString.js";
 
 import {
 	assertOrderedSequenceIntervals,
@@ -25,14 +27,16 @@ class TestEndpointInRangeIndex implements IEndpointInRangeIndex {
 		interval: SequenceInterval;
 	}[];
 
-	constructor(private readonly client: TestClient) {
+	constructor(private readonly sharedString: ISharedString) {
 		this.intervals = [];
 	}
 
 	add(interval: SequenceInterval) {
 		this.intervals.push({
-			start: new Lazy(() => this.client.localReferencePositionToPosition(interval.start)),
-			end: new Lazy(() => this.client.localReferencePositionToPosition(interval.end)),
+			start: new Lazy(() =>
+				this.sharedString.localReferencePositionToPosition(interval.start),
+			),
+			end: new Lazy(() => this.sharedString.localReferencePositionToPosition(interval.end)),
 			interval,
 		});
 	}
@@ -54,10 +58,10 @@ class TestEndpointInRangeIndex implements IEndpointInRangeIndex {
 describe("findIntervalsWithEndpointInRange", () => {
 	// sort the query result by the interval endpoint value
 	const compareFn = (a: SequenceInterval, b: SequenceInterval) => {
-		const aEnd = client.localReferencePositionToPosition(a.end);
-		const bEnd = client.localReferencePositionToPosition(b.end);
-		const aStart = client.localReferencePositionToPosition(a.start);
-		const bStart = client.localReferencePositionToPosition(b.start);
+		const aEnd = sharedString.localReferencePositionToPosition(a.end);
+		const bEnd = sharedString.localReferencePositionToPosition(b.end);
+		const aStart = sharedString.localReferencePositionToPosition(a.start);
+		const bStart = sharedString.localReferencePositionToPosition(b.start);
 		if (aEnd === bEnd) {
 			if (aStart === aStart) {
 				return a.getIntervalId().localeCompare(b.getIntervalId());
@@ -68,13 +72,18 @@ describe("findIntervalsWithEndpointInRange", () => {
 	};
 	let endpointInRangeIndex: EndpointInRangeIndex;
 	let createTestInterval: (p1, p2) => SequenceInterval;
-	let client: TestClient;
+	let sharedString: ISharedString;
 
 	beforeEach(() => {
-		client = new TestClient();
-		Array.from({ length: 100 }).forEach(() => client.insertTextLocal(0, "0123456789"));
-		endpointInRangeIndex = new EndpointInRangeIndex(client);
-		createTestInterval = (p1, p2) => createTestSequenceInterval(client, p1, p2);
+		const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
+		sharedString = new SharedStringClass(
+			dataStoreRuntime,
+			"test-string",
+			SharedStringFactory.Attributes,
+		);
+		Array.from({ length: 100 }).forEach(() => sharedString.insertText(0, "0123456789"));
+		endpointInRangeIndex = new EndpointInRangeIndex(sharedString);
+		createTestInterval = (p1, p2) => createTestSequenceInterval(sharedString, p1, p2);
 	});
 
 	describe("finds no intervals", () => {
@@ -126,10 +135,10 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 		it("when quering the intervals which the startpoints exactly fall on the range boundary", () => {
 			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 1);
-			assertOrderedSequenceIntervals(client, results, [{ start: 1, end: 1 }]);
+			assertOrderedSequenceIntervals(sharedString, results, [{ start: 1, end: 1 }]);
 
 			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
-			assertOrderedSequenceIntervals(client, results2, [
+			assertOrderedSequenceIntervals(sharedString, results2, [
 				{ start: 1, end: 1 },
 				{ start: 1, end: 3 },
 			]);
@@ -143,7 +152,7 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(3, 6);
 			results.sort(compareFn);
-			assertOrderedSequenceIntervals(client, results, [
+			assertOrderedSequenceIntervals(sharedString, results, [
 				{ start: 1, end: 3 },
 				{ start: 2, end: 4 },
 				{ start: 3, end: 4 },
@@ -171,14 +180,14 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
 			results.sort(compareFn);
-			assertOrderedSequenceIntervals(client, results, [
+			assertOrderedSequenceIntervals(sharedString, results, [
 				{ start: 1, end: 1 },
 				{ start: 1, end: 3 },
 			]);
 
 			endpointInRangeIndex.remove(interval3);
 			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
-			assertOrderedSequenceIntervals(client, results2, [{ start: 1, end: 3 }]);
+			assertOrderedSequenceIntervals(sharedString, results2, [{ start: 1, end: 3 }]);
 		});
 
 		it("when removing the interval does not exist in the index", () => {
@@ -187,7 +196,7 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
 			results.sort(compareFn);
-			assertOrderedSequenceIntervals(client, results, [
+			assertOrderedSequenceIntervals(sharedString, results, [
 				{ start: 1, end: 1 },
 				{ start: 1, end: 3 },
 			]);
@@ -197,7 +206,7 @@ describe("findIntervalsWithEndpointInRange", () => {
 			endpointInRangeIndex.remove(interval2);
 
 			const results = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 3);
-			assertOrderedSequenceIntervals(client, results, [{ start: 1, end: 1 }]);
+			assertOrderedSequenceIntervals(sharedString, results, [{ start: 1, end: 1 }]);
 
 			const interval3 = createTestInterval(2, 4);
 			endpointInRangeIndex.add(interval3);
@@ -209,7 +218,7 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 			const results2 = endpointInRangeIndex.findIntervalsWithEndpointInRange(1, 5);
 			results.sort(compareFn);
-			assertOrderedSequenceIntervals(client, results2, [
+			assertOrderedSequenceIntervals(sharedString, results2, [
 				{ start: 1, end: 1 },
 				{ start: 3, end: 4 },
 			]);
@@ -218,14 +227,14 @@ describe("findIntervalsWithEndpointInRange", () => {
 
 	describe("find exactly the same intervals as those obtained by `brute-force` method", () => {
 		it("when given massive random inputs", () => {
-			const testIndex = new TestEndpointInRangeIndex(client);
+			const testIndex = new TestEndpointInRangeIndex(sharedString);
 			const random = makeRandom(0);
 			const count = 800;
 			const min = 1;
-			const max = client.getLength() - 1;
+			const max = sharedString.getLength() - 1;
 
 			// Generate intervals randomly and add them to both index
-			const intervals = generateRandomIntervals(client, { random, count, min, max });
+			const intervals = generateRandomIntervals(sharedString, { random, count, min, max });
 			for (const interval of intervals) {
 				testIndex.add(interval);
 				endpointInRangeIndex.add(interval);
@@ -241,7 +250,7 @@ describe("findIntervalsWithEndpointInRange", () => {
 				results.sort(compareFn);
 				expected.sort(compareFn);
 
-				assertOrderedSequenceIntervals(client, results, expected);
+				assertOrderedSequenceIntervals(sharedString, results, expected);
 			}
 		});
 	});
