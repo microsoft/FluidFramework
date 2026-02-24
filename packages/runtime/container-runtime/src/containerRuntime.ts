@@ -3442,7 +3442,7 @@ export class ContainerRuntime
 					// Detect duplicate (overlapping) IdAllocation ranges from forked containers.
 					// Forked containers share the same session ID but submit from different clients,
 					// producing IdAllocation ranges with the same sessionId and overlapping genCounts.
-					// IdAllocation batches use ignoreBatchId, so the DuplicateBatchDetector cannot
+					// IdAllocation batches don't have a stable batch identity over resubmit so the DuplicateBatchDetector cannot
 					// catch these duplicates — we must detect them here before finalizeCreationRange.
 					if (range.ids !== undefined) {
 						const nextExpectedGenCount = this.finalizedIdAllocationRanges.get(range.sessionId);
