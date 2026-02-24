@@ -94,7 +94,7 @@ export interface IRuntimeMessagesContent {
 	 * The contents of the message, i.e., the payload
 	 * @privateRemarks
 	 * TODO: this should better document the expected type/format.
-	 * Likely this immutable fluid serializable data, but that should be captured in the type system and/or documentation.
+	 * Likely this is immutable Fluid serializable data, but that should be captured in the type system and/or documentation.
 	 */
 	readonly contents: unknown;
 	/**
