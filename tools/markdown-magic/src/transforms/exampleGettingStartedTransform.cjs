@@ -40,16 +40,16 @@ const generateExampleGettingStartedSection = (
 
 	if (includeTinyliciousStep) {
 		sectionBody.push(
-			`1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious).`,
+			`1. In a separate terminal, start a Tinylicious server by running pnpm Tinylicious in this directory.`,
+		);
+
+		sectionBody.push(
+			`1. If using codespaces in a browser, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. Check your IDE's terminal or ports panel to find available ports.`,
 		);
 	}
 
 	sectionBody.push(
 		`1. Run \`pnpm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
-	);
-
-	sectionBody.push(
-		`1. If using codespaces, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. Check your IDE's terminal or ports panel to find available ports.`,
 	);
 
 	sectionBody.push(
