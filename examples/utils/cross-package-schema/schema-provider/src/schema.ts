@@ -1,8 +1,9 @@
-/* eslint-disable jsdoc/require-jsdoc */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable jsdoc/require-jsdoc */
 
 import { SchemaFactory } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";

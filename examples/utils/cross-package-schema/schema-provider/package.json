@@ -24,9 +24,9 @@
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:bundler": "node ./node_modules/typescript-5.9/bin/tsc --project ./tsconfig.bundler.json",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:bundler": "node ./node_modules/typescript-5.9/bin/tsc --project ./tsconfig.bundler.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",

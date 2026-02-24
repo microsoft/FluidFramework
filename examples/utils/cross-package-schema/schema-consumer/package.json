@@ -25,10 +25,10 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:source-condition": "tsc --project ./tsconfig.json --noEmit",
-		"check:no-source-condition": "tsc --project ./tsconfig.no-source.json --noEmit || echo 'Expected failure: .d.ts references import(\"@fluidframework/tree\").ObjectNodeSchema which is not in public.d.ts'",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:no-source-condition": "tsc --project ./tsconfig.no-source.json --noEmit || echo \"Expected failure: .d.ts references import(\\\"@fluidframework/tree\\\").ObjectNodeSchema which is not in public.d.ts\"",
+		"check:source-condition": "tsc --project ./tsconfig.source.json --noEmit",
 		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -51,5 +51,18 @@
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:source-condition": [
+				"@fluid-example/cross-package-schema-provider#build:esnext",
+				"@fluidframework/tree#build:esnext"
+			],
+			"check:no-source-condition": [
+				"@fluid-example/cross-package-schema-provider#build:esnext",
+				"@fluidframework/tree#build:esnext"
+			]
+		},
+		"version": 1
 	}
 }
