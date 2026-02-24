@@ -92,7 +92,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
@@ -114,7 +114,7 @@
 		"execa": "^5.1.1",
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

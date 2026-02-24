@@ -376,7 +376,6 @@ export class Sanitizer {
 		if (typeof input === "string") {
 			return this.replaceText(input);
 		} else if (Array.isArray(input)) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return this.replaceArray(input);
 		} else if (typeof input === "object") {
 			return this.replaceObject(input, excludedKeys);

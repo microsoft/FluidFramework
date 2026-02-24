@@ -200,7 +200,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		await mockGetFileLink(Promise.resolve(sharelink), async () => {
 			return urlResolverWithShareLinkFetcher.resolve({ url });
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -212,7 +211,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		await mockGetFileLink(Promise.resolve(sharelink), async () => {
 			return urlResolverWithoutShareLinkFetcher.resolve({ url });
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithoutShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -258,7 +256,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl !== undefined, "Absolute url should be defined!!");
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -283,7 +280,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -300,7 +296,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
