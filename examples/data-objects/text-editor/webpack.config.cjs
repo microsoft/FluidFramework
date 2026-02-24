@@ -57,8 +57,6 @@ module.exports = (env = {}) => {
 			static: {
 				directory: path.join(__dirname, "dist"),
 			},
-			port: 8081,
-			hot: true,
 			open: true,
 		},
 		watchOptions: {
