@@ -366,8 +366,8 @@
 			"Security overrides: tar is overridden to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w, GHSA-34x7-hfp2-rc4v). The existing axios@<0.30.0 override resolves to 0.30.2 which is also affected by GHSA-43fc-jf86-j433 (DoS via __proto__), but updating that pre-1.0 override is out of scope here."
 		],
 		"overrides": {
-			"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
 			"@biomejs/biome": "~2.3.11",
+			"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
 			"@types/node": "~20.19.30",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",

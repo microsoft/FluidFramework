@@ -280,6 +280,7 @@ module.exports = {
 
 		// Independent packages
 		"build-common": "common/build/build-common",
+		"eslint-config-fluid": "common/build/eslint-config-fluid",
 		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
@@ -415,6 +416,9 @@ module.exports = {
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
+			],
+			"npm-package-types-field": [
+				"common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
