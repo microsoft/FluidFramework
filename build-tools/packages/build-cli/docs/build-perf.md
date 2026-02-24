@@ -24,7 +24,8 @@ FLAGS
                                    (0-100) over the relevant period (3 days for public, 7 days for internal). E.g. 15
                                    means ±15%.
   --forceFailure                   [env: FORCE_FAILURE] Force a failure (for testing notifications).
-  --inputDir=<value>               (required) [env: DATA_DIR] Directory containing the data JSON files.
+  --inputDir=<value>               (required) [env: DATA_DIR] Directory containing the data JSON files (generated from
+                                   the collect-data command).
   --mode=<option>                  (required) [env: MODE] Pipeline mode: "public" (PR builds) or "internal".
                                    <options: public|internal>
 
@@ -56,7 +57,8 @@ USAGE
 
 FLAGS
   --adoApiToken=<value>         (required) [env: ADO_API_TOKEN] Azure DevOps API token for authentication.
-  --buildCount=<value>          [default: 500, env: BUILD_COUNT] Number of builds to fetch.
+  --buildCount=<value>          [default: 500, env: BUILD_COUNT] Number of builds to fetch. Note: This will be limited
+                                by the number of builds held by the ADO project's retention policy.
   --internalBuildDefId=<value>  [env: INTERNAL_BUILD_DEF_ID] Build definition ID for internal builds (required for
                                 internal mode).
   --mode=<option>               (required) [env: MODE] Pipeline mode: "public" (PR builds) or "internal".
