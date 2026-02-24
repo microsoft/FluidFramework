@@ -1,16 +1,18 @@
 # Fluid Framework Cross-Client Compatibility
 
-**Suggested pre-read:** The [Fluid Framework Compatibility Considerations](./FluidCompatibilityConsiderations.md) document provides an overview of Fluid's four compatibility dimensions: API compatibility, Layer compatibility, Cross-client compatibility, and Data-at-rest compatibility. This document focuses specifically on Cross-client compatibility — how clients running different versions of the Fluid runtime can collaborate on the same document.
+**Suggested pre-read:** The [Fluid Framework Compatibility Considerations](./FluidCompatibilityConsiderations.md) document provides an overview of Fluid's four compatibility dimensions: API compatibility, Layer compatibility, Cross-client compatibility, and Data-at-rest compatibility. This document focuses specifically on Cross-client compatibility — how clients running different versions of Fluid can collaborate on the same document.
 
 ## Overview
 
-Cross-client compatibility is Fluid's ability to support collaboration between two clients running different versions of the Fluid runtime within an allowable window. This addresses two key scenarios:
+Cross-client compatibility is Fluid's ability to support collaboration between two clients running different versions of Fluid within an allowable window. This addresses two key scenarios:
 1. **Rolling upgrades**: During version upgrades, there is an unavoidable transition window when clients running different versions must coexist and collaborate. This compatibility ensures users can continue working together seamlessly, whether or not their application instance has been updated yet.
 2. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
 
+> **Note on scope:** The cross-client compatibility guarantee applies to all Fluid layers (Driver, Loader, Runtime, and Datastore). However, the enforcement mechanisms described in this document — `minVersionForCollab`, feature gating, and client version checks — are currently implemented only at the **Runtime and Datastore layers**. The Driver layer does not currently have cross-client compatibility concerns because it does not exchange data formats between clients. Enforcement at the Loader layer may be added in the future. See the [Interaction with Layer Compatibility](./FluidCompatibilityConsiderations.md#interaction-with-layer-compatibility) section for more details.
+
 This document explains:
 
-- Which versions of the Fluid runtime can collaborate together
+- Which versions of Fluid can collaborate together
 - How to configure cross-client compatibility
 - Best practices for upgrading safely
 - What to monitor in telemetry
@@ -24,7 +26,7 @@ This document explains:
 | **N-2** | The third most recent public major release |
 | **Saturation** | When an adequate percentage of an application's clients are running a certain version. The threshold that is considered adequate is defined by the application's requirements.  |
 
-> **Note:** When referring to previous major releases (e.g., N-1), we assume the latest minor release within that major version series. All minor releases within a given major version are compatible with each other.
+> **Note:** When referring to previous major releases (e.g., N-1), we assume the latest minor release within that major version series. All minor releases within a given major version are compatible with each other. However, please note this is currently TBD and is likely subject to change.
 
 ## Cross-Client Compatibility Policy
 
@@ -35,9 +37,20 @@ The Fluid Framework guarantees cross-client compatibility between adjacent major
 | **N / N-1** (adjacent major versions) | ✅ Fully compatible. No special action required. |
 | **N / N-2 or older** | ❌ Not supported. These clients cannot collaborate. |
 
-**Enforcement:** Incompatible clients will be blocked from collaborating on a document and shown a clear error message.
+**Enforcement:** Incompatible clients will be blocked from collaborating on a document and shown a clear error message (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
 
-**Example:** If the most recent public major release (N) is 4.0, a client running 4.x is cross-client compatible with 3.x clients by default, but not with 2.x or older clients.
+**Example:** If the most recent public major release (N) is 4.0, a client running 4.x is cross-client compatible with 3.x clients, but not with 2.x or older clients.
+
+## Understanding `minVersionForCollab`
+
+`minVersionForCollab` is the primary mechanism for configuring cross-client compatibility. It is a container runtime load parameter (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)) that specifies the minimum Fluid version that is allowed to collaborate on a document. It serves two purposes:
+
+1. **Feature gating**: It automatically enables or disables features based on the specified version to ensure all collaborating clients can understand the resulting data format. For example, if `minVersionForCollab` is set to `"2.0.0"`, features like grouped batching are safely enabled because all clients at version 2.0.0 or later can interpret that format.
+2. **Client enforcement**: Clients running a Fluid version older than what the document requires will be blocked from joining the collaboration session, preventing data corruption or runtime errors. See [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) for the specific error signals.
+
+If `minVersionForCollab` is not explicitly set, a default value is used. The default enables a conservative set of features that are safe for a broad range of clients. For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
+
+> **Note:** While `minVersionForCollab` currently operates at the container runtime layer, cross-client compatibility applies across all Fluid layers (Driver, Loader, Runtime, and Datastore). See the [Interaction with Layer Compatibility](./FluidCompatibilityConsiderations.md#interaction-with-layer-compatibility) section in the Fluid Compatibility Considerations document for more on how cross-client and layer compatibility interact.
 
 ## What This Means for An Application
 
@@ -45,32 +58,32 @@ As an application developer, you need to manage your Fluid version upgrades care
 
 ### Configuring Cross-Client Compatibility
 
-For the best results, we encourage you to set the `minVersionForCollab` property (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)). `minVersionForCollab` represents the minimum Fluid runtime version allowed to collaborate in a document. It will automatically disable any features that prevent safe cross-client collaboration for clients that are at least the version specified.
+We encourage you to set the `minVersionForCollab` property for best results. It represents the minimum Fluid version allowed to collaborate in a document. It will automatically disable any features that prevent safe cross-client collaboration for clients that are at least the version specified.
 
 For example, if you want to ensure collaboration between N/N-1 clients, the proper configuration for `minVersionForCollab` would be the latest minor release corresponding to the N-1 major version series.
 
-We recommend maintaining `minVersionForCollab` at the latest version of Fluid that your users are saturated on. This will ensure:
+We recommend maintaining `minVersionForCollab` at the latest version of Fluid that your users are [saturated](#terminology) on. This will ensure:
 1. Older and newer clients can collaborate with each other safely.
 2. Your application can leverage new Fluid features as soon as they become safe for cross-client collaboration.
 
 ### Best Practices
 
-We recommend following the below pattern to ensure cross-client compatibility when upgrading major versions of Fluid.
+We recommend following the below pattern to ensure cross-client compatibility. While these steps are especially important when upgrading major versions of Fluid, keeping `minVersionForCollab` up-to-date on an ongoing basis ensures you are always within a safe compatibility window.
 
 1. Observe the distribution of Fluid versions across your application's clients.
-2. Set `minVersionForCollab` to the lowest deployed version that the application's clients are saturated on.
+2. Set `minVersionForCollab` to the lowest deployed version that the application's clients are [saturated](#terminology) on.
 3. If `minVersionForCollab` is within the cross-client compatibility window of the Fluid version you want to upgrade then bump Fluid dependencies and no further action is required. If `minVersionForCollab` is not within the cross-client compatibility window, then wait for further saturation and return to step 1.
-4. Monitor telemetry for warnings/errors to ensure safe rollout (see below section). At this point any clients that are not saturated may be blocked from accessing the document.
+4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients that are not saturated may be blocked from accessing the document.
 
 ### Errors and Warnings to Monitor
 
 The following are errors and telemetry warnings you may see during and following an upgrade. Monitoring these signals will help ensure a safe rollout.
 
-| Signal | What it Means | What to Do |
-|--------|---------------|------------|
-| Telemetry Event: `MinVersionForCollabWarning` | Clients are joining with a version below your configured minimum, but are still able to understand the document's data format and therefore continue to collaborate. | If you see this warning message, it's likely a sign you updated `minVersionForCollab` too quickly. In future releases, ensure proper saturation before updating. If these warning messages are ignored, you may risk seeing the below error in the future. |
-| `DataProcessingError`: Document can't be opened with current version of the code | An out-of-window client tried to join and was blocked due to being unable to collaborate with the newer client's document. | If this was unexpected, lower `minVersionForCollab` to allow older clients to join. |
-| `UsageError`: Incompatible Runtime Option | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minVersionForCollab` (if there is proper saturation). |
+| Type | Signal | What it Means | What to Do |
+|------|--------|---------------|------------|
+| Telemetry Event | `MinVersionForCollabWarning` | Clients are joining with a version below your configured minimum, but are still able to understand the document's data format and therefore continue to collaborate. | If you see this warning message, it's likely a sign you updated `minVersionForCollab` too quickly. In future releases, ensure proper [saturation](#terminology) before updating. If these warning messages are ignored, you may risk seeing the below error in the future. |
+| `DataProcessingError` | `Document can't be opened with current version of the code` | An out-of-window client tried to join and was blocked due to being unable to collaborate with the newer client's document. | If this was unexpected, lower `minVersionForCollab` to allow older clients to join. |
+| `UsageError` | `Incompatible Runtime Option` | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minVersionForCollab` (if there is proper [saturation](#terminology)). |
 
 ## Developer Guide
 
