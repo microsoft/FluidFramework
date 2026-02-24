@@ -209,10 +209,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		this.inkData = new InkData(content);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
