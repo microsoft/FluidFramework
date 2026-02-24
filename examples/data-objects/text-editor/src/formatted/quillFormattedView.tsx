@@ -68,10 +68,83 @@ FormattedMainView.displayName = "FormattedMainView";
 const sizeMap = { small: 10, large: 18, huge: 24 } as const;
 /** Reverse mapping: pixel values back to Quill size names for display. */
 const sizeReverse = { 10: "small", 18: "large", 24: "huge" } as const;
+/** Set of recognized font families for Quill. */
+const fontSet: Set<string> = new Set(["monospace", "serif", "sans-serif", "Arial"]);
 /** Default formatting values when no explicit format is specified. */
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
+/**
+ * Parse CSS font-size from a pasted HTML element's inline style.
+ * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
+ * 12px is the default size and returns undefined (no Quill attribute needed).
+ */
+export function parseCssFontSize(node: HTMLElement): string | undefined {
+	const style = node.style.fontSize;
+	if (!style) return undefined;
+
+	// check if pixel value is in <size>px format
+	if (style.endsWith("px")) {
+		// Parse pixel value (e.g., "18px" -> 18)
+		const parsed = Number.parseFloat(style);
+		if (Number.isNaN(parsed)) return undefined;
+
+		// Round to nearest integer and look up Quill size name
+		const rounded = Math.round(parsed);
+		if (rounded in sizeReverse) {
+			return sizeReverse[rounded as keyof typeof sizeReverse];
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Parse CSS font-family from a pasted HTML element's inline style.
+ * Tries fonts in priority order (first to last per CSS spec) and returns
+ * the first recognized Quill font value.
+ */
+export function parseCssFontFamily(node: HTMLElement): string | undefined {
+	const style = node.style.fontFamily;
+	if (style === "") return undefined;
+
+	// Splitting on "," does not handle commas inside quoted font names, and escape
+	// sequences within font names are not supported. This is fine since none of the
+	// font names we match against contain commas or escapes.
+	const fonts = style.split(",");
+	for (const raw of fonts) {
+		// Trim whitespace and leading and trailing quotes
+		const font = raw.trim().replace(/^["']/, "").replace(/["']$/, "");
+		// check if font is in our supported font set
+		if (fontSet.has(font)) {
+			return font;
+		}
+	}
+	// No recognized font family found; fall back to default (Arial)
+	return undefined;
+}
+
+/**
+ * Clipboard matcher that preserves recognized font-size and font-family
+ * from pasted HTML elements. Applies each format independently via
+ * compose/retain so new attributes can be added without risk of an
+ * early return skipping them.
+ * @see https://quilljs.com/docs/modules/clipboard#addmatcher
+ */
+export function clipboardFormatMatcher(node: Node, delta: Delta): Delta {
+	if (!(node instanceof HTMLElement)) return delta;
+
+	const size = parseCssFontSize(node);
+	const font = parseCssFontFamily(node);
+
+	let result = delta;
+	if (size !== undefined) {
+		result = result.compose(new Delta().retain(result.length(), { size }));
+	}
+	if (font !== undefined) {
+		result = result.compose(new Delta().retain(result.length(), { font }));
+	}
+	return result;
+}
 
 /**
  * Parse a size value from Quill into a numeric pixel value.
@@ -261,6 +334,7 @@ const FormattedTextEditorView = React.forwardRef<
 					[{ font: [] }],
 					["clean"],
 				],
+				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
 			},
 		});
 
