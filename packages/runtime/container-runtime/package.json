@@ -183,6 +183,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"double-ended-queue": "^2.1.0-0",
+		"effection": "^4.0.2",
 		"lz4js": "^0.2.0",
 		"semver-ts": "^1.0.3",
 		"uuid": "^11.1.0"
