@@ -27,7 +27,7 @@
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:no-source-condition": "tsc --project ./tsconfig.no-source.json --noEmit || echo \"Expected failure: .d.ts references import(\\\"@fluidframework/tree\\\").ObjectNodeSchema which is not in public.d.ts\"",
+		"check:no-source-condition": "tsc --project ./tsconfig.no-source.json --noEmit",
 		"check:source-condition": "tsc --project ./tsconfig.source.json --noEmit",
 		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet --format stylish src",
