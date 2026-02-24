@@ -49,6 +49,10 @@ const generateExampleGettingStartedSection = (
 	);
 
 	sectionBody.push(
+		`1. If using codespaces, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. Check your IDE's terminal or ports panel to find available ports.`,
+	);
+
+	sectionBody.push(
 		`1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run \`pnpm start:spo\` or \`pnpm start:spo-df\` and open <http://localhost:8080> like above.`,
 	);
 
