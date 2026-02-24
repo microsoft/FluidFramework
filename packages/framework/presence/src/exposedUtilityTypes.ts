@@ -4,7 +4,7 @@
  */
 
 import type {
-	InternalUtilityTypes as CoreInternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
@@ -28,7 +28,12 @@ export namespace InternalUtilityTypes {
 	 */
 	export type IfNotificationParametersSignature<Event, IfParametersValid, Else> =
 		Event extends (...args: infer P) => void
-			? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfParametersValid, Else>
+			? InternalCoreInterfacesUtilityTypes.IfSameType<
+					P,
+					JsonSerializable<P>,
+					IfParametersValid,
+					Else
+				>
 			: Else;
 
 	/**
@@ -41,7 +46,7 @@ export namespace InternalUtilityTypes {
 		sender: Attendee,
 		...args: infer P
 	) => void
-		? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfSubscriber, Else>
+		? InternalCoreInterfacesUtilityTypes.IfSameType<P, JsonSerializable<P>, IfSubscriber, Else>
 		: Else;
 
 	/**
