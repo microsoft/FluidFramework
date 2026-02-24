@@ -77,7 +77,7 @@ extends:
           displayName: Variables
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            workingDirectory: $(Pipeline.Workspace)
             script: |
               set -eu -o pipefail
               echo "
