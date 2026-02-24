@@ -4,7 +4,7 @@
  */
 
 import type { TreeCheckout } from "../../shared-tree/index.js";
-import { SchematizingSimpleTreeView, Tree, Tree } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView, Tree } from "../../shared-tree/index.js";
 import {
 	isTreeNode,
 	isTreeNodeSchemaClass,
