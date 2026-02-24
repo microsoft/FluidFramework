@@ -23,7 +23,7 @@ import { BaseCommand } from "../../library/commands/base.js";
 
 /**
  * Manually deploy the build performance dashboard to Azure Static Web Apps.
- * Expects data files produced by the `collect-data` command. Prepares a deployment
+ * Expects data files produced by the `collect` command. Prepares a deployment
  * package (data files, HTML, config) and deploys using the SWA CLI. The SWA CLI is
  * used instead of standard GitHub-based deployment because this pipeline runs in ADO.
  * The deployed HTML fetches data at runtime from `data/*.json`, showing tabs for both modes.

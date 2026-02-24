@@ -35,7 +35,7 @@ function makeDataFile(overrides: Partial<ProcessedDataOutput> = {}): ProcessedDa
 	};
 }
 
-describe("flub build-perf check-thresholds", () => {
+describe("flub build-perf check", () => {
 	let tempDir: string;
 
 	beforeEach(() => {
@@ -55,7 +55,7 @@ describe("flub build-perf check-thresholds", () => {
 
 		await runCommand(
 			[
-				"build-perf:check-thresholds",
+				"build-perf:check",
 				"--mode",
 				"public",
 				"--inputDir",
@@ -81,7 +81,7 @@ describe("flub build-perf check-thresholds", () => {
 
 		const { error } = await runCommand(
 			[
-				"build-perf:check-thresholds",
+				"build-perf:check",
 				"--mode",
 				"public",
 				"--inputDir",
@@ -104,7 +104,7 @@ describe("flub build-perf check-thresholds", () => {
 
 		const { error } = await runCommand(
 			[
-				"build-perf:check-thresholds",
+				"build-perf:check",
 				"--mode",
 				"public",
 				"--inputDir",
@@ -127,7 +127,7 @@ describe("flub build-perf check-thresholds", () => {
 
 		const { error } = await runCommand(
 			[
-				"build-perf:check-thresholds",
+				"build-perf:check",
 				"--mode",
 				"public",
 				"--inputDir",
@@ -151,7 +151,7 @@ describe("flub build-perf check-thresholds", () => {
 
 		const { error } = await runCommand(
 			[
-				"build-perf:check-thresholds",
+				"build-perf:check",
 				"--mode",
 				"internal",
 				"--inputDir",
