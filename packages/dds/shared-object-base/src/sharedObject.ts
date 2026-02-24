@@ -400,7 +400,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * Apply a 'bunch' of sequenced ops to this shared object.
 	 * @remarks
-	 * These ops have been sequenced by the service and are now finalized with respect to their ordering.
+	 * These ops have been sequenced by the service and now have a finalized ordering.
 	 * They may be local or remote ops, but they cannot be ops that are still pending acknowledgement from the service.
 	 *
 	 * A 'bunch' is a group of messages that have the following properties:
