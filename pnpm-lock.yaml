@@ -12825,6 +12825,9 @@ importers:
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
+      effection:
+        specifier: ^4.0.2
+        version: 4.0.2
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
