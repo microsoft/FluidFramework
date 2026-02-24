@@ -6,7 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { snapshotSchemaCompatibility } from "@fluidframework/tree/alpha";
+import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
 
 import { config } from "../schema.js";
 
