@@ -24,7 +24,7 @@ jobs:
       displayName: Generate release reports
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           mkdir generate_release_reports
@@ -34,7 +34,7 @@ jobs:
       displayName: Update release report version
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           mkdir upload_release_reports
@@ -43,7 +43,7 @@ jobs:
     - task: CopyFiles@2
       displayName: Copy release reports
       inputs:
-        SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+        SourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/upload_release_reports
         TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
     - task: AzureCLI@2
@@ -52,7 +52,7 @@ jobs:
       inputs:
         azureSubscription: 'fluid-docs'
         scriptType: bash
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         scriptLocation: inlineScript
         inlineScript: |
           for file in upload_release_reports/*; do
