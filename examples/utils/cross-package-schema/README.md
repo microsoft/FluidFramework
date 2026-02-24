@@ -11,40 +11,39 @@ paths in a way that breaks cross-package consumption.
 
 ## The Solution
 
-Use TypeScript 5.0+ `customConditions` with a `"source"` export condition in the provider's
-`package.json`, so TypeScript resolves `.ts` source files directly instead of `.d.ts`.
+Add a `/schema` subpath export in the provider's `package.json` whose `"types"` field
+points directly to the `.ts` source.
 
 ### Provider side (`schema-provider`)
 
-Add a `"source"` condition to `package.json` exports:
+Add a `"./schema"` subpath to `package.json` exports:
 
 ```json
 "exports": {
   ".": {
-    "source": "./src/index.ts",
     "import": {
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
     }
+  },
+  "./schema": {
+    "types": "./src/index.ts", // <--- .ts source
+    "default": "./lib/index.js"
   }
 }
 ```
 
 ### Consumer side (`schema-consumer`)
 
-Add `customConditions` to `tsconfig.json`:
+Import from the `/schema` subpath
 
-```json
-{
-  "compilerOptions": {
-    "customConditions": ["source"]
-  }
-}
+```typescript
+import { AppState } from "@my-provider/schema";
 ```
 
 ## Verification
 
-### Step 1: Build the provider with bundler resolution (simulates Loop's setup)
+### Step 1: Build the provider with bundler resolution
 
 ```bash
 cd schema-provider
@@ -54,21 +53,21 @@ npm run build:bundler    # Uses TypeScript 5.9 + moduleResolution: "bundler"
 This generates `.d.ts` files where `ObjectNodeSchema` references are normalized to
 `import("@fluidframework/tree")` instead of `import("@fluidframework/tree/alpha")`.
 
-### Step 2: Check the consumer with `customConditions: ["source"]` (success path)
+### Step 2: Check the `/schema` subpath import (success path)
 
 ```bash
 cd schema-consumer
-npm run check:source-condition    # tsc with customConditions: ["source"]
+npm run check:schema-import
 ```
 
-Passes because `customConditions: ["source"]` causes TypeScript to resolve the provider's
-`.ts` source directly, bypassing the broken `.d.ts`.
+Passes because the consumer imports from the `/schema` subpath, which resolves
+types directly from the provider's `.ts` source, bypassing the broken `.d.ts`.
 
-### Step 3: Check the consumer without `customConditions` (failure path)
+### Step 3: Check the direct `.` import (failure path)
 
 ```bash
 cd schema-consumer
-npm run check:no-source-condition    # tsc without customConditions
+npm run check:direct-import
 ```
 
 Fails with:
@@ -77,9 +76,10 @@ TS2694: Namespace has no exported member 'ObjectNodeSchema'.
 TS2322: Type 'typeof AppState' is not assignable to type 'ImplicitFieldSchema'.
 ```
 
-This proves the `.d.ts` path normalization issue is real.
+This compiles `consume-direct.ts`, which imports from the `.` export (resolving
+through `.d.ts`) instead of the `/schema` subpath, demonstrating the breakage.
 
 ## Packages
 
-- **`schema-provider`** — Defines schemas via `objectAlpha()`, exports with `"source"` condition
-- **`schema-consumer`** — Imports schemas, uses `customConditions: ["source"]` in tsconfig
+- **`schema-provider`** — Defines schemas via `objectAlpha()`, exposes a `/schema` subpath with types from `.ts` source
+- **`schema-consumer`** — Imports schemas from `/schema` subpath, no special tsconfig needed

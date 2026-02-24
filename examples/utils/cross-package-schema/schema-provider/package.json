@@ -2,7 +2,7 @@
 	"name": "@fluid-example/cross-package-schema-provider",
 	"version": "2.90.0",
 	"private": true,
-	"description": "Example schema provider demonstrating cross-package SharedTree schema consumption with source export condition.",
+	"description": "Example schema provider demonstrating cross-package SharedTree schema consumption with a /schema subpath export.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -15,11 +15,14 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"source": "./src/index.ts",
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}
+		},
+		"./schema": {
+			"types": "./src/index.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {
@@ -51,5 +54,8 @@
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5",
 		"typescript-5.9": "npm:typescript@^5.9.2"
+	},
+	"typeValidation": {
+		"disabled": true
 	}
 }

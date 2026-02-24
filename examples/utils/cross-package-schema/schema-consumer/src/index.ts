@@ -3,10 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export {
-	appConfig,
-	type _checkPosition,
-	type _checkDimensions,
-	type _checkContainer,
-	type _checkAppState,
-} from "./consume.js";
+export { appConfig } from "./consume.js";

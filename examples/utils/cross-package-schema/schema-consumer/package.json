@@ -2,7 +2,7 @@
 	"name": "@fluid-example/cross-package-schema-consumer",
 	"version": "2.90.0",
 	"private": true,
-	"description": "Example schema consumer demonstrating cross-package SharedTree schema consumption with customConditions.",
+	"description": "Example schema consumer demonstrating cross-package SharedTree schema consumption via /schema subpath export.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -26,9 +26,9 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
+		"check:direct-import": "tsc --project ./tsconfig.direct-import.json --noEmit",
 		"check:format": "npm run check:biome",
-		"check:no-source-condition": "tsc --project ./tsconfig.no-source.json --noEmit",
-		"check:source-condition": "tsc --project ./tsconfig.source.json --noEmit",
+		"check:schema-import": "tsc --project ./tsconfig.schema-import.json --noEmit",
 		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -54,15 +54,18 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"check:source-condition": [
+			"check:direct-import": [
 				"@fluid-example/cross-package-schema-provider#build:esnext",
 				"@fluidframework/tree#build:esnext"
 			],
-			"check:no-source-condition": [
+			"check:schema-import": [
 				"@fluid-example/cross-package-schema-provider#build:esnext",
 				"@fluidframework/tree#build:esnext"
 			]
 		},
 		"version": 1
+	},
+	"typeValidation": {
+		"disabled": true
 	}
 }
