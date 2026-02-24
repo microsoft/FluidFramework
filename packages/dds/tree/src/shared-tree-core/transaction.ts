@@ -63,6 +63,12 @@ export interface Transactor {
 	 */
 	isInProgress(): boolean;
 	/**
+	 * The number of transactions currently in progress, including any nested transactions.
+	 * @remarks This is 0 when no transaction is in progress, 1 when a single transaction is in progress, 2 when a transaction is nested inside another, etc.
+	 * TODO: This method may make {@link Transactor.isInProgress} redundant since it can be implemented as `size() > 0`. Consider whether both are necessary.
+	 */
+	size(): number;
+	/**
 	 * Provides events for changes in transaction progress.
 	 */
 	events: Listenable<TransactionEvents>;
@@ -156,6 +162,11 @@ export class TransactionStack implements Transactor, IDisposable {
 	public isInProgress(): boolean {
 		this.ensureNotDisposed();
 		return this.#stack.length > 0;
+	}
+
+	public size(): number {
+		this.ensureNotDisposed();
+		return this.#stack.length;
 	}
 
 	public start(): void {

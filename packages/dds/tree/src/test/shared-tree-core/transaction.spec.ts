@@ -77,6 +77,23 @@ describe("TransactionStacks", () => {
 		assert.equal(transaction.isInProgress(), false);
 	});
 
+	it("report the number of transactions in progress", () => {
+		const transaction = new TransactionStack();
+		assert.equal(transaction.size(), 0);
+		transaction.start();
+		assert.equal(transaction.size(), 1);
+		transaction.start();
+		assert.equal(transaction.size(), 2);
+		transaction.start();
+		assert.equal(transaction.size(), 3);
+		transaction.commit();
+		assert.equal(transaction.size(), 2);
+		transaction.abort();
+		assert.equal(transaction.size(), 1);
+		transaction.commit();
+		assert.equal(transaction.size(), 0);
+	});
+
 	it("run a function when a transaction begins", () => {
 		let invoked = 0;
 		const transaction = new TransactionStack((): void => {
@@ -243,6 +260,7 @@ describe("TransactionStacks", () => {
 			() => transaction.isInProgress(),
 			validateAssertionError("Transactor is disposed"),
 		);
+		assert.throws(() => transaction.size(), validateAssertionError("Transactor is disposed"));
 		assert.throws(() => transaction.start(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.commit(),
