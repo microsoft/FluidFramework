@@ -148,7 +148,7 @@ export interface ITreeViewConfiguration<
 	/**
 	 * The schema which the application wants to view the tree with.
 	 * @remarks
-	 * Use {@link SchemaFactory} to construct this the schema.
+	 * Use {@link SchemaFactory} to construct the schema.
 	 * Changes to this schema between different versions have important compatibility implications.
 	 * See the {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution | documentation on schema evolution} for more details.
 	 */
