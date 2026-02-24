@@ -5,12 +5,7 @@
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import {
-	type ICodecOptions,
-	type IJsonCodec,
-	type IMultiFormatCodec,
-	withSchemaValidation,
-} from "../codec/index.js";
+import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
@@ -29,7 +24,7 @@ export interface EditManagerEncodingContext {
 }
 
 export function makeV1CodecWithVersion<TChangeset>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -49,9 +44,7 @@ export function makeV1CodecWithVersion<TChangeset>(
 	JsonCompatibleReadOnly,
 	EditManagerEncodingContext
 > {
-	const format = EncodedEditManager(
-		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
-	);
+	const format = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 
 	const codec: IJsonCodec<
 		SummaryData<TChangeset>,
