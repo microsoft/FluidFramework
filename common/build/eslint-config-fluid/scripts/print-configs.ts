@@ -17,16 +17,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ESLint } from "eslint";
-import type { Linter } from "eslint";
 import sortJson from "sort-json";
 
 // Import flat configs directly from flat.mjs
 import { recommended, strict, minimalDeprecated } from "../flat.mjs";
+import type { FlatConfigArray } from "../library/configs/base.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-type FlatConfigArray = Linter.Config[];
 
 interface ConfigToPrint {
 	name: string;
@@ -34,7 +32,7 @@ interface ConfigToPrint {
 	sourceFilePath: string;
 }
 
-const configsToPrint: ConfigToPrint[] = [
+const configsToPrint = [
 	{
 		name: "default",
 		config: recommended,
@@ -71,7 +69,7 @@ const configsToPrint: ConfigToPrint[] = [
 		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "test", "file.ts"),
 	},
-];
+] as const satisfies readonly ConfigToPrint[];
 
 /**
  * Generates the applied ESLint config for a specific file and config.
@@ -84,7 +82,7 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 	// and pass the config directly via overrideConfig.
 	const eslint = new ESLint({
 		overrideConfigFile: true,
-		overrideConfig: config,
+		overrideConfig: [...config],
 	});
 
 	const resolvedConfig = (await eslint.calculateConfigForFile(filePath)) as unknown;
@@ -129,8 +127,8 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 	// some eslint settings depend on object key order ("import-x/resolver" being a known one, see
 	// https://github.com/un-ts/eslint-plugin-import-x/blob/master/src/utils/resolve.ts).
 	// Using depth 2 is a nice compromise.
-	const sortedConfig = sortJson(cleanConfig, { indentSize: 4, depth: 2 });
-	const finalConfig = JSON.stringify(sortedConfig, null, 4);
+	const sortedConfig = sortJson(cleanConfig, { depth: 2 });
+	const finalConfig = JSON.stringify(sortedConfig, null, "\t");
 
 	// Add a trailing newline to match preferred output formatting
 	return finalConfig + "\n";
@@ -144,7 +142,8 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 		process.exit(1);
 	}
 
-	const outputPath = args[0];
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated by the args.length check above
+	const outputPath = args[0]!;
 	await fs.mkdir(outputPath, { recursive: true });
 	const expectedFiles = new Set<string>();
 

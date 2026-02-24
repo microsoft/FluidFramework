@@ -567,7 +567,8 @@ export function snapshotSchemaCompatibility(
 			wouldUpdate = `No snapshots found.`;
 		} else {
 			const latestCompatibility =
-				compatibilityMap.get(latestSnapshot[0]) ?? fail("missing compatibilityMap entry");
+				compatibilityMap.get(latestSnapshot[0]) ??
+				fail(0xcd1 /* missing compatibilityMap entry */);
 
 			const schemaChange = !latestCompatibility.identicalCompatibility;
 			const versionChange = versionComparer(latestSnapshot[0], currentVersion) !== 0;
@@ -702,7 +703,7 @@ export function snapshotSchemaCompatibility(
 			if (compatibility.identicalCompatibility === false) {
 				assert(
 					wouldUpdate !== false,
-					"there should have been an error for the snapshot being out of date",
+					0xcd2 /* there should have been an error for the snapshot being out of date */,
 				);
 			}
 		} else if (versionComparisonToCurrent < 0) {
@@ -824,7 +825,7 @@ export function getCompatibility(
 
 	assert(
 		backwardsCompatibilityStatus.isEquivalent === forwardsCompatibilityStatus.isEquivalent,
-		"equality should be symmetric",
+		0xcd3 /* equality should be symmetric */,
 	);
 
 	// This relies on exportCompatibilitySchemaSnapshot being well normalized, and not differing for non-significant changes.
@@ -835,7 +836,7 @@ export function getCompatibility(
 	if (identicalCompatibility) {
 		assert(
 			backwardsCompatibilityStatus.isEquivalent,
-			"identicalCompatibility should have equivalent stored schema",
+			0xcd4 /* identicalCompatibility should have equivalent stored schema */,
 		);
 	}
 

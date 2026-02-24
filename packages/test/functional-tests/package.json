@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/functional-tests",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"private": true,
 	"description": "Functional tests",
 	"homepage": "https://fluidframework.com",
@@ -95,7 +95,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",

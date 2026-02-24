@@ -24,7 +24,6 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(private readonly path: string) {
 		this.messages = [];
 		let counter = 0;
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			const filename = `${this.path}//messages${counter === 0 ? "" : counter}.json`;
 			if (!fs.existsSync(filename)) {
