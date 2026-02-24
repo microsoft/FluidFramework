@@ -7,6 +7,15 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "@fluidframework/build-common/api-extractor-base.json",
+
+	/**
+	 * Specifies the .d.ts file to be used as the starting point for analysis. API Extractor analyzes the symbols exported by this module.
+	 * Can be overridden as necessary for packages with different build structures.
+	 *
+	 * See: <https://api-extractor.com/pages/configs/api-extractor_json/#mainentrypointfilepath>
+	 */
+	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+
 	"apiReport": {
 		// Don't generate API report in lint pass
 		"enabled": false
@@ -35,7 +44,7 @@
 			"ae-missing-release-tag": {
 				"logLevel": "none"
 			},
-			// Links with implicit (unanotated) package name specifiers don't currently resolve correctly
+			// Links with implicit (unannotated) package name specifiers don't currently resolve correctly
 			// when their members are bundled.
 			// See https://github.com/microsoft/rushstack/issues/3521
 			// Omit this check from the cross-package lint step.

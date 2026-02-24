@@ -382,13 +382,13 @@ export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSch
 		encode: (obj: TInMemoryFormat, context: TContext): Static<EncodedSchema> => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac0 /* Encoded schema should validate */);
+				fail(0xac0 /* Encoded data should validate */);
 			}
 			return encoded;
 		},
 		decode: (encoded: JsonCompatibleReadOnly, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac1 /* Encoded schema should validate */);
+				fail(0xac1 /* Data being decoded should validate */);
 			}
 			return codec.decode(encoded, context);
 		},

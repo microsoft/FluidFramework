@@ -15,6 +15,7 @@ import type { TSchema } from "@sinclair/typebox";
 
 import {
 	ClientVersionDispatchingCodecBuilder,
+	eraseEncodedType,
 	type ICodecOptions,
 	type IJsonCodec,
 } from "../../../../codec/index.js";

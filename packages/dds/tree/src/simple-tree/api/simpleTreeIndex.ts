@@ -17,7 +17,6 @@ import {
 	type TreeIndexNodes,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexKey,
 	type KeyFinder,
 } from "../../feature-libraries/index.js";
 import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
@@ -27,6 +26,7 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
+	type TreeLeafValue,
 } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
@@ -35,14 +35,16 @@ import type { TreeView } from "./tree.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 
 /**
- * A {@link TreeIndex} that returns tree nodes given their associated keys.
- *
+ * Value that may be used as keys in a {@link TreeIndex}.
+ * @remarks
+ * This supports values which have value semantics and are compared by value, just like {@link TreeLeafValue}.
+ * This allows using any tree value as a key (for example in an index tracking where those values occur in the tree).
  * @alpha
  */
-export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey, TValue>;
+export type TreeIndexKey = TreeLeafValue;
 
 /**
- * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ * Creates a {@link TreeIndex} with a specified indexer.
  *
  * @param view - the view for the tree being indexed
  * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema
@@ -52,7 +54,7 @@ export type SimpleTreeIndex<TKey extends TreeIndexKey, TValue> = TreeIndex<TKey,
  *
  * @alpha
  */
-export function createSimpleTreeIndex<
+export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
 	TKey extends TreeIndexKey,
 	TValue,
@@ -61,9 +63,10 @@ export function createSimpleTreeIndex<
 	indexer: (schema: TreeNodeSchema) => string | undefined,
 	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
-): SimpleTreeIndex<TKey, TValue>;
+): TreeIndex<TKey, TValue>;
+
 /**
- * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ * Creates a {@link TreeIndex} with a specified indexer.
  *
  * @param view - the view for the tree being indexed
  * @param indexer - a function that takes in a {@link TreeNodeSchema} and returns the field name that all nodes of the given schema
@@ -74,7 +77,7 @@ export function createSimpleTreeIndex<
  *
  * @alpha
  */
-export function createSimpleTreeIndex<
+export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
 	TKey extends TreeIndexKey,
 	TValue,
@@ -85,9 +88,10 @@ export function createSimpleTreeIndex<
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema: readonly TSchema[],
-): SimpleTreeIndex<TKey, TValue>;
+): TreeIndex<TKey, TValue>;
+
 /**
- * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ * Creates a {@link TreeIndex} with a specified indexer.
  *
  * @param view - the view for the tree being indexed
  * @param indexer - a map from {@link TreeNodeSchema} to the field name that all nodes of the given schema
@@ -97,7 +101,7 @@ export function createSimpleTreeIndex<
  *
  * @alpha
  */
-export function createSimpleTreeIndex<
+export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
 	TKey extends TreeIndexKey,
 	TValue,
@@ -106,9 +110,10 @@ export function createSimpleTreeIndex<
 	indexer: Map<TreeNodeSchema, string>,
 	getValue: (nodes: TreeIndexNodes<TreeNode>) => TValue,
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
-): SimpleTreeIndex<TKey, TValue>;
+): TreeIndex<TKey, TValue>;
+
 /**
- * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ * Creates a {@link TreeIndex} with a specified indexer.
  *
  * @param view - the view for the tree being indexed
  * @param indexer - a map from {@link TreeNodeSchema} to the field name that all nodes of the given schema
@@ -119,7 +124,7 @@ export function createSimpleTreeIndex<
  *
  * @alpha
  */
-export function createSimpleTreeIndex<
+export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
 	TKey extends TreeIndexKey,
 	TValue,
@@ -130,13 +135,14 @@ export function createSimpleTreeIndex<
 	getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue,
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema: readonly TSchema[],
-): SimpleTreeIndex<TKey, TValue>;
+): TreeIndex<TKey, TValue>;
+
 /**
- * Creates a {@link SimpleTreeIndex} with a specified indexer.
+ * Creates a {@link TreeIndex} with a specified indexer.
  *
  * @alpha
  */
-export function createSimpleTreeIndex<
+export function createTreeIndex<
 	TFieldSchema extends ImplicitFieldSchema,
 	TKey extends TreeIndexKey,
 	TValue,
@@ -148,7 +154,7 @@ export function createSimpleTreeIndex<
 		| ((nodes: TreeIndexNodes<NodeFromSchema<TreeNodeSchema>>) => TValue),
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema?: readonly TreeNodeSchema[],
-): SimpleTreeIndex<TKey, TValue> {
+): TreeIndex<TKey, TValue> {
 	const indexableSchemaMap = new Map<string, TreeNodeSchema>();
 	if (indexableSchema === undefined) {
 		walkFieldSchema(view.schema, {
@@ -214,7 +220,7 @@ export function createSimpleTreeIndex<
 
 	// all the type checking guarantees that we put nodes of the correct type in the index
 	// but it's not captured in the type system
-	return index as SimpleTreeIndex<TKey, TValue>;
+	return index as TreeIndex<TKey, TValue>;
 }
 
 function makeGenericKeyFinder<TKey extends TreeIndexKey>(

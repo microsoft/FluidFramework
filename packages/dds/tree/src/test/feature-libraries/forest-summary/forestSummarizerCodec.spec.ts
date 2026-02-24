@@ -266,7 +266,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as FormatV1,
 						context,
 					),
-				validateAssertionError("Encoded schema should validate"),
+				validateAssertionError("Data being decoded should validate"),
 			);
 		});
 
@@ -282,7 +282,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as FormatV1,
 						context,
 					),
-				validateAssertionError("Encoded schema should validate"),
+				validateAssertionError("Data being decoded should validate"),
 			);
 		});
 	});

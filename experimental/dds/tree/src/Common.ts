@@ -5,6 +5,8 @@
 
 import { ITelemetryBaseEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+// eslint-disable-next-line import-x/no-internal-modules
+import { diffAgainst } from '@tylerbu/sorted-btree-es6/extended/diffAgainst';
 
 const defaultFailMessage = 'Assertion failed';
 
@@ -382,7 +384,7 @@ export function compareBtrees<K, V>(
 	treeB: BTree<K, V>,
 	compare: (valA: V, valB: V) => boolean
 ): boolean {
-	const diff = treeA.diffAgainst(treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
+	const diff = diffAgainst(treeA, treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
 		if (!compare(valA, valB)) {
 			return { break: true };
 		}
