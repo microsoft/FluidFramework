@@ -201,9 +201,6 @@ importers:
       '@types/ioredis-mock':
         specifier: ^8.2.6
         version: 8.2.6(ioredis@5.6.1)
-      axios:
-        specifier: ^1.8.4
-        version: 1.12.2(debug@4.4.3)
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
