@@ -30,10 +30,6 @@ You can run this example using the following steps:
     npm run test:mocha
 ```
 
-## Running in Codespaces
-
-If using codespaces, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. In VSC ports can usually be seen as a tab in the bottom panel with the terminal. After running tinylicious the app hosted on port 8081 will be able to connect to tinylicious.
-
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
