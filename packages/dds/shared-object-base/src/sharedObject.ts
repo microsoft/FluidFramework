@@ -398,8 +398,11 @@ export abstract class SharedObjectCore<
 
 	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Derived classes must override this to do custom processing on a 'bunch' of remote messages.
+	 * Apply a 'bunch' of sequenced ops to this shared object.
 	 * @remarks
+	 * These ops have been sequenced by the service and are now finalized with respect to their ordering.
+	 * They may be local or remote ops, but they cannot be ops that are still pending acknowledgement from the service.
+	 *
 	 * A 'bunch' is a group of messages that have the following properties:
 	 * - They are all part of the same grouped batch, which entails:
 	 *   - They are contiguous in sequencing order.
@@ -407,9 +410,12 @@ export abstract class SharedObjectCore<
 	 *   - They are all based on the same reference sequence number.
 	 *   - They are not interleaved with messages from other clients.
 	 * - They are not interleaved with messages from other DDS in the container.
-	 * Derived classes should override this if they need to do custom processing on a 'bunch' of remote messages.
-	 * @param messageCollection - The collection of messages to process.
-	 *
+	 * @param messageCollection - The 'bunch' of sequenced ops to apply to this shared object.
+	 * @privateRemarks
+	 * TODO: We should have cental linkable documentation (and ideally types) for the special cases of `IRuntimeMessageCollection`
+	 * that are known to be a valid "grouped batch" or a "bunch".
+	 * TODO:Performance: AB#59783: Allowing this to process more messages at once (more than the current definition of 'bunch') could improve performance of clients which fall behind,
+	 * which is one of the most important performance sensitive scenarios.
 	 */
 	/* eslint-enable jsdoc/check-indentation */
 	protected abstract processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
@@ -417,7 +423,6 @@ export abstract class SharedObjectCore<
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
-
 	protected abstract onDisconnect(): void;
 
 	/**
