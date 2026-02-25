@@ -91,7 +91,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     testCoverage: ${{ variables.testCoverage }}
     packageManager: pnpm
-    buildDirectory: tools/benchmark
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/tools/benchmark
     tagName: benchmark
     taskBuild: build
     taskBuildDocs: true

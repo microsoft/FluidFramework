@@ -88,7 +88,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: common/build/build-common
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/common/build/build-common
     tagName: build-common
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
