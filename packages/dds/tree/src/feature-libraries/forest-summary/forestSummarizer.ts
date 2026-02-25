@@ -47,11 +47,7 @@ import {
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import {
-	clientVersionToForestFormatVersion,
-	forestCodecBuilder,
-	type ForestCodec,
-} from "./codec.js";
+import { forestCodecBuilder, type ForestCodec } from "./codec.js";
 import { ForestFormatVersion } from "./formatCommon.js";
 import {
 	ForestIncrementalSummaryBehavior,
@@ -101,9 +97,7 @@ export class ForestSummarizer
 
 		this.codec = forestCodecBuilder.build({ ...options, fieldBatchCodec });
 
-		const forestFormatWriteVersion = clientVersionToForestFormatVersion(
-			options.minVersionForCollab,
-		);
+		const forestFormatWriteVersion = this.codec.writeVersion;
 		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
 			options.minVersionForCollab,
 		);

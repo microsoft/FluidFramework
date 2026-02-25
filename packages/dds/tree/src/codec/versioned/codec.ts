@@ -391,9 +391,14 @@ export class ClientVersionDispatchingCodecBuilder<
 	/**
 	 * Produce a single codec which can read any supported format, and writes a version selected based on the provided options.
 	 */
-	public build(
-		options: TBuildOptions,
-	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+	public build(options: TBuildOptions): IJsonCodec<
+		TDecoded,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		TContext
+	> & {
+		readonly writeVersion: TFormatVersion;
+	} {
 		const applied = this.applyOptions(options);
 		const writeVersion = getWriteVersion(this.name, options, applied);
 		const fromFormatVersion = new Map<
@@ -415,6 +420,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 				}
 				return codec.codec.decode(data, context);
 			},
+			writeVersion: writeVersion.formatVersion,
 		};
 	}
 
