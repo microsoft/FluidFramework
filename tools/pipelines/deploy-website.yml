@@ -132,7 +132,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/docs
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}/docs
 
         - task: Bash@3
           displayName: Install dependencies
@@ -270,7 +270,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/docs
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}/docs
 
         - task: Bash@3
           displayName: Install dependencies
