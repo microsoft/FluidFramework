@@ -42,6 +42,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber?: number,
 		initial?: boolean,
+		summaryTimeStr?: string,
 	): Promise<string> {
 		const previousFullSnapshot = await this.getPreviousFullSnapshot(parentHandle);
 		return this.writeSummaryTreeCore(summaryTree, previousFullSnapshot ?? undefined);
