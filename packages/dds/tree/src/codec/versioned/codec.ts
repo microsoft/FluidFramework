@@ -38,6 +38,12 @@ import { Versioned } from "./format.js";
  */
 type VersionedJson = JsonCompatibleReadOnlyObject & Versioned;
 
+/**
+ * Validate that the version is one of the supported values.
+ * @remarks
+ * If supportedVersions contains undefined, data with no version field is also accepted despite the return type indicating otherwise.
+ * This is for legacy compatibility where older data may not have a version field.
+ */
 function makeVersionedCodec<
 	TDecoded,
 	TEncoded extends Versioned = VersionedJson,
@@ -70,12 +76,21 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		},
 	};
 
-	return supportedVersions.has(undefined)
-		? codec
-		: withSchemaValidation(Versioned, codec, validator);
+	// If undefined is a supported version, skip using withSchemaValidation to enforce there is a version field.
+	// Codec will still assert the content of the field is in supportedVersions, so it is still somewhat validated, just in a different way.
+	if (supportedVersions.has(undefined)) {
+		return codec;
+	}
+
+	return withSchemaValidation(Versioned, codec, validator);
 }
 
 /**
+ * Wrap a codec with version checking and schema validation.
+ * @remarks
+ * The passed in codec should not perform its own schema validation.
+ * The schema validation gets added here.
+ *
  * TODO: users of this should migrate to {@link ClientVersionDispatchingCodecBuilder}.
  */
 export function makeVersionedValidatedCodec<

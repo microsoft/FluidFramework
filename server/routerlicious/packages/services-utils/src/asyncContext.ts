@@ -27,7 +27,7 @@ export class AsyncLocalStorageContextProvider<T> {
 	 * If properties are a key-value record, new entries will be appended to the existing record.
 	 * Otherwise, the old context will be overwritten with the new context.
 	 */
-	public bindContext(props: T, callback: () => void): void {
+	public bindContext<TBindType>(props: T, callback: () => TBindType): TBindType {
 		// Extend existing properties if props are a key-value record.
 		// Otherwise, overwrite existing props with new props.
 		const existingProps = this.getContext();
@@ -36,7 +36,7 @@ export class AsyncLocalStorageContextProvider<T> {
 				? { ...existingProps, ...props }
 				: props;
 		// Anything within callback context will have access to properties.
-		this.asyncLocalStorage.run(newProperties, () => callback());
+		return this.asyncLocalStorage.run(newProperties, () => callback());
 	}
 
 	/**
