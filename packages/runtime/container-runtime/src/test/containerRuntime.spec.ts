@@ -104,11 +104,7 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
-import type {
-	IPendingLocalState,
-	IPendingMessage,
-	PendingStateManager,
-} from "../pendingStateManager.js";
+import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
@@ -2254,7 +2250,9 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return () => undefined;
+									return () => ({
+										pending: { pendingStates: [] },
+									});
 								}
 								case "pendingMessagesCount": {
 									return 0;
@@ -2300,8 +2298,8 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return (): IPendingLocalState => ({
-										pendingStates,
+									return () => ({
+										pending: { pendingStates },
 									});
 								}
 								case "pendingMessagesCount": {
@@ -2371,8 +2369,8 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return (): IPendingLocalState => ({
-										pendingStates,
+									return () => ({
+										pending: { pendingStates },
 									});
 								}
 								case "pendingMessagesCount": {
