@@ -60,7 +60,7 @@ jobs:
 
           - template: /tools/pipelines/templates/include-install-pnpm.yml@self
             parameters:
-              buildDirectory: $(Pipeline.Workspace)
+              buildDirectory: buildTools-zip
               enableCache: false
 
           # We can use this step to add overrides that might be necessary to allow for a correct
