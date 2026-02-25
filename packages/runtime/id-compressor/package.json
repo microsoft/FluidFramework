@@ -145,7 +145,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.82.0",
+		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.83.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
@@ -155,9 +155,9 @@
 		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

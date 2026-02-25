@@ -53,7 +53,7 @@ export type ClientConnectionId = string;
 export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
 // @beta @system
-export namespace InternalTypes {
+export namespace InternalPresenceTypes {
     // @system
     export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<unknown>, TManager> = {
         instanceBase: new (...args: any[]) => unknown;
@@ -167,8 +167,8 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T> =
 
 // @beta @sealed
 export interface LatestFactory {
-    <T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
-    <T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+    <T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, Latest<T>>;
+    <T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, LatestRaw<T>>;
 }
 
 // @beta @sealed
@@ -223,8 +223,8 @@ export interface LatestMapEvents<T, K extends string, TRemoteValueAccessor exten
 
 // @beta @sealed
 export interface LatestMapFactory {
-    <T, Keys extends string = string, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
-    <T, Keys extends string = string, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+    <T, Keys extends string = string, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+    <T, Keys extends string = string, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 }
 
 // @beta @sealed
@@ -316,7 +316,7 @@ unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
-    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, manager: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
     readonly states: StatesWorkspaceEntries<TSchema>;
@@ -327,15 +327,15 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
     /**
     * Registered State objects.
     */
-    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
+    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalPresenceTypes.StateValue<infer TManager> ? TManager : never;
 };
 
 // @beta
-export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
+export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>;
 
 // @beta
 export interface StatesWorkspaceSchema {
-    [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<unknown>>;
+    [key: string]: StatesWorkspaceEntry<typeof key, InternalPresenceTypes.ValueDirectoryOrState<unknown>>;
 }
 
 // @beta @system

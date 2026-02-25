@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { FluidReleaseMachine } from "./fluidReleaseMachine.js";
-export type { MachineState } from "./types.js";
+export { describeHydration, hydrateNode } from "./utils.js";
