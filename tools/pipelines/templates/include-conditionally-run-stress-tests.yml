@@ -38,6 +38,10 @@ stages:
     - job: Job
       displayName: Check for DDS package changes
       steps:
+      # Use fetchDepth: 2 because the job uses 'git diff HEAD~1' to check for changes
+      - checkout: self
+        clean: true
+        fetchDepth: 2
       - ${{ each package in parameters.packages }}:
         - task: PowerShell@2
           inputs:

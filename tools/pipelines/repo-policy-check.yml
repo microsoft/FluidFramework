@@ -62,6 +62,11 @@ extends:
       jobs:
       - job: run_policy_check
         steps:
+        # Use shallow clone since policy checks only need current file state,
+        # not git history or version detection.
+        - checkout: self
+          clean: true
+          fetchDepth: 1
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:

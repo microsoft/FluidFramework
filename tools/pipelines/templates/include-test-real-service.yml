@@ -176,9 +176,11 @@ stages:
         - name: artifactPipeline
           value: Build - client packages
         steps:
-        # Setup
+        # Setup. Use shallow clone since we only need current files to run tests;
+        # no git history is needed.
         - checkout: ff_pipeline_host
           clean: true
+          fetchDepth: 1
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
@@ -242,9 +244,11 @@ stages:
 
         # Set up Docker environment if running against docker
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
-          # Checks out FluidFramework repo
+          # Checks out FluidFramework repo. Use shallow clone since we only need
+          # the docker-compose files; no git history or version detection is needed.
           - checkout: self
             clean: true
+            fetchDepth: 1
           - task: Docker@2
             displayName: 'Login to container registry'
             inputs:
