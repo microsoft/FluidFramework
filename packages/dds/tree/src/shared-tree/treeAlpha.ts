@@ -926,6 +926,7 @@ export const TreeAlpha: TreeAlpha = {
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
+		// TODO: codecs should better track which ones can contain handles, and which cannot. When done properly, casts like this can be removed.
 		return result as JsonCompatible<IFluidHandle>;
 	},
 
