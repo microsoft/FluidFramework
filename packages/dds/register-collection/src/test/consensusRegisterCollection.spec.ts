@@ -19,9 +19,18 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ConsensusRegisterCollection } from "../consensusRegisterCollection.js";
+import { ConsensusRegisterCollection } from "../consensusRegisterCollection.js";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
 import { IConsensusRegisterCollection } from "../interfaces.js";
+
+/**
+ * Test class that exposes protected applyStashedOp method for testing
+ */
+class TestConsensusRegisterCollection<T> extends ConsensusRegisterCollection<T> {
+	public testApplyStashedOp(content: unknown): void {
+		this.applyStashedOp(content);
+	}
+}
 
 function createConnectedCollection(
 	id: string,
@@ -69,6 +78,26 @@ function createCollectionForReconnection(
 	const collection = crcFactory.create(dataStoreRuntime, id);
 	collection.connect(services);
 	return { collection, containerRuntime };
+}
+
+function createTestCollectionForStashedOps(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): TestConsensusRegisterCollection<unknown> {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	};
+
+	const collection = new TestConsensusRegisterCollection(
+		id,
+		dataStoreRuntime,
+		ConsensusRegisterCollectionFactory.Attributes,
+	);
+	collection.connect(services);
+	return collection;
 }
 
 describe("ConsensusRegisterCollection", () => {
@@ -324,6 +353,138 @@ describe("ConsensusRegisterCollection", () => {
 				receivedValue = "";
 				receivedLocalStatus = true;
 			});
+		});
+	});
+
+	describe("applyStashedOp", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+		let testCollection1: TestConsensusRegisterCollection<unknown>;
+		let testCollection2: IConsensusRegisterCollection<unknown>;
+
+		beforeEach(() => {
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
+			testCollection1 = createTestCollectionForStashedOps(
+				"collection1",
+				containerRuntimeFactory,
+			);
+			testCollection2 = createConnectedCollection("collection2", containerRuntimeFactory);
+		});
+
+		it("can apply stashed write op and have it reach remote client", async () => {
+			const testKey = "testKey";
+			const testValue = "testValue";
+
+			// Create a stashed op in the format expected by applyStashedOp
+			// This simulates an op that was saved in pending state and is being replayed
+			const stashedOp = {
+				key: testKey,
+				type: "write" as const,
+				value: {
+					type: "Plain" as const,
+					value: testValue,
+				},
+				serializedValue: JSON.stringify(testValue),
+				refSeq: 0, // refSeq from when the op was originally created
+			};
+
+			// Apply the stashed op - this should submit it for processing
+			testCollection1.testApplyStashedOp(stashedOp);
+
+			// Process all messages
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the value was written to collection1
+			assert.equal(
+				testCollection1.read(testKey),
+				testValue,
+				"Local collection should have the value",
+			);
+
+			// Verify the value reached the remote collection
+			assert.equal(
+				testCollection2.read(testKey),
+				testValue,
+				"Remote collection should have the value",
+			);
+		});
+
+		it("can apply stashed write op with handle value", async () => {
+			const testKey = "handleKey";
+			const handle = testCollection1.handle;
+
+			if (handle === undefined) {
+				assert.fail("Need an actual handle to test this case");
+			}
+
+			// Create a stashed op with a handle value
+			const stashedOp = {
+				key: testKey,
+				type: "write" as const,
+				value: {
+					type: "Plain" as const,
+					value: handle,
+				},
+				serializedValue: JSON.stringify({
+					type: "__fluid_handle__",
+					url: handle.absolutePath,
+				}),
+				refSeq: 0,
+			};
+
+			// Apply the stashed op
+			testCollection1.testApplyStashedOp(stashedOp);
+
+			// Process all messages
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the value was written
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const readValue = testCollection1.read(testKey) as any;
+			assert.equal(
+				readValue.absolutePath,
+				handle.absolutePath,
+				"Handle should be stored correctly",
+			);
+		});
+
+		it("preserves refSeq from stashed op for correct FWW semantics", async () => {
+			const testKey = "fwwKey";
+
+			// First, write a value normally
+			const writeP = testCollection1.write(testKey, "firstValue");
+			containerRuntimeFactory.processAllMessages();
+			await writeP;
+
+			// Verify first value is written
+			assert.equal(
+				testCollection1.read(testKey),
+				"firstValue",
+				"First value should be written",
+			);
+
+			// Now apply a stashed op with refSeq=0 (as if it was created before any ops)
+			// This should lose to the existing write due to FWW semantics
+			const stashedOp = {
+				key: testKey,
+				type: "write" as const,
+				value: {
+					type: "Plain" as const,
+					value: "stashedValue",
+				},
+				serializedValue: JSON.stringify("stashedValue"),
+				refSeq: 0, // Low refSeq means this was created before seeing the first write
+			};
+
+			testCollection1.testApplyStashedOp(stashedOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// The atomic value should still be "firstValue" because the stashed op
+			// had a lower refSeq (it didn't know about the first write)
+			assert.equal(
+				testCollection1.read(testKey),
+				"firstValue",
+				"Atomic value should remain first value due to FWW",
+			);
 		});
 	});
 

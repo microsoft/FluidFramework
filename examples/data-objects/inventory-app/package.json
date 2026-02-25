@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/inventory-app",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"private": true,
 	"description": "Minimal sample of SharedTree/React integration.",
 	"homepage": "https://fluidframework.com",
@@ -62,8 +62,8 @@
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"global-jsdom": "^26.0.0",
 		"jiti": "^2.6.1",
-		"mocha": "^10.8.2",
-		"rimraf": "^6.1.2",
+		"mocha": "^11.7.5",
+		"rimraf": "^6.1.3",
 		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",

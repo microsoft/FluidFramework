@@ -6,19 +6,17 @@
 export {
 	type FormatVersion,
 	DependentFormatVersion,
-	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	type JsonValidator,
 	makeCodecFamily,
 	type SchemaValidationFunction,
 	unitCodec,
-	withDefaultBinaryEncoding,
 	withSchemaValidation,
 	FluidClientVersion,
 	currentVersion,
@@ -29,6 +27,7 @@ export {
 	jsonableCodecTree,
 	extractJsonValidator,
 	type CodecName,
+	eraseEncodedType,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,

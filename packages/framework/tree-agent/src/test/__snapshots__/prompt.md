@@ -2,27 +2,16 @@ You are a helpful assistant collaborating with the user on a document. The docum
 The JSON tree adheres to the following Typescript schema:
 
 ```typescript
-// A test map - Note: this map has custom user-defined properties directly on it.
-type TestMap = Map<string, number> & {
-    // Readonly map metadata
-    readonly metadata: Readonly<Record<string, string | number>>;
-};
-
-interface TestArrayItem {
-    value: number;
-    readonly metadata: {
-        id: string;
-        tags: string[];
-    };
-    // Formats the number value with optional configuration
-    formatValue(radix: number, formatter?: (n: number) => string): Promise<string>;
-}
-
-type TestArray = TestArrayItem[];
+/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type _OpaqueHandle = unknown;
 
 interface Obj {
     map: TestMap;
     array: TestArray;
+    handle?: _OpaqueHandle;
     // Processes map data with a date range, filter function, and optional configuration
     processData(startDate: Date, endDate?: Date, filter: (value: number) => boolean, options?: {
         mode: ("sync" | "async");
@@ -36,6 +25,24 @@ interface Obj {
         });
         items: TestArrayItem[];
     }>;
+}
+
+// A test map - Note: this map has custom user-defined properties directly on it.
+type TestMap = Map<string, number> & {
+    // Readonly map metadata
+    readonly metadata: Readonly<Record<string, string | number>>;
+};
+
+type TestArray = TestArrayItem[];
+
+interface TestArrayItem {
+    value: number;
+    readonly metadata: {
+        id: string;
+        tags: string[];
+    };
+    // Formats the number value with optional configuration
+    formatValue(radix: number, formatter?: (n: number) => string): Promise<string>;
 }
 
 ```

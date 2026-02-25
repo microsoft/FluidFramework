@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/odsp-end-to-end-tests",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "Odsp client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -69,7 +69,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/sinon": "^17.0.3",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"sinon": "^18.0.1",
 		"uuid": "^11.1.0"
@@ -87,7 +87,7 @@
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"nock": "^13.3.3",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

@@ -7,13 +7,13 @@
 // @beta @legacy
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     protected constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, data: IOrderedCollection<T>);
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
     add(value: T): Promise<void>;
     // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: unknown): void;
     // (undocumented)
     protected complete(acquireId: string): Promise<void>;
     // (undocumented)
@@ -38,10 +38,10 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
 // @beta @legacy
 export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>> & SharedObjectKind<IConsensusOrderedCollection<any>>;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
 }

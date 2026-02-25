@@ -17,10 +17,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: publishFlags
-  type: string
-  default:
-
 - name: customEndPoint
   type: string
   default:
@@ -28,18 +24,6 @@ parameters:
 - name: tagName
   type: string
   default:
-
-- name: buildDirectory
-  type: string
-
-- name: buildToolsVersionToInstall
-  type: string
-  default: repo
-
-# The path to the pnpm store.
-- name: pnpmStorePath
-  type: string
-  default: $(Pipeline.Workspace)/.pnpm-store
 
 jobs:
 # Note: must be kept in sync with the name of the dependsOn job below
@@ -74,6 +58,52 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+            parameters:
+              buildDirectory: $(Pipeline.Workspace)
+              enableCache: false
+
+          # We can use this step to add overrides that might be necessary to allow for a correct
+          # installation of build-tools from the tarball artifacts produced by the build stage.
+          # Since this is a lockfile-less install (ideally we should figure out how to change that),
+          # overrides is one recourse when a dependency releases a new version that causes build-tools installation to break.
+          # Current overrides:
+          # - Build-tools packages: map all versions to local tarballs so interdependencies resolve correctly.
+          - task: Bash@3
+            name: CreatePackageJsonForOverrides
+            displayName: Create package.json with pnpm overrides
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
+              script: |
+                set -eu -o pipefail
+                echo "Creating package.json with npm overrides"
+
+                # Manual overrides - add new entries here as needed, using same syntax supported by the pnpm overrides field
+                manual_overrides='{}'
+                # Build overrides for local tarballs so interdependencies resolve correctly
+                tarball_overrides='{}'
+                for tgz in *.tgz; do
+                  # Extract package.json from tarball and get the package name
+                  pkg_name=$(tar -xzf "$tgz" --to-stdout package/package.json | jq -r '.name')
+                  echo "Adding override for $pkg_name -> file:$tgz"
+                  tarball_overrides=$(echo "$tarball_overrides" | jq --arg name "$pkg_name" --arg file "file:$tgz" '. + {($name): $file}')
+                done
+
+                # Merge manual overrides with tarball overrides and create package.json
+                jq -n \
+                  --argjson manual "$manual_overrides" \
+                  --argjson tarballs "$tarball_overrides" \
+                  '{
+                    "name": "build-tools-install",
+                    "packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
+                    "pnpm": {
+                      "overrides": ($manual + $tarballs)
+                    }
+                  }' > package.json
+
+                cat package.json
+
           - task: Bash@3
             name: InstallBuildToolsFromTarball
             displayName: Install Fluid Build Tools from artifact tarball
@@ -84,8 +114,29 @@ jobs:
                 set -eu -o pipefail
                 echo "Listing files in directory: $(pwd)"
                 ls -la
-                echo "Attempting install of build tools from build tools pipeline artifact tarball"
-                npm i -g ./*.tgz
+                pnpm --version
+
+                echo "Installing build tools from tarballs (uses overrides from package.json)"
+                if ls ./*.tgz > /dev/null 2>&1; then
+                  pnpm install ./*.tgz
+                else
+                  echo "Error: No .tgz files found in $(pwd)"
+                  exit 1
+                fi
+
+                # Add the local node_modules/.bin to PATH for subsequent pipeline steps
+                BIN_DIR="$(pwd)/node_modules/.bin"
+                echo "Adding $BIN_DIR to PATH for subsequent steps"
+                echo "##vso[task.prependpath]$BIN_DIR"
+
+                # Verify the tools are available
+                if [ -d "$BIN_DIR" ]; then
+                  echo "Installed binaries:"
+                  ls -la "$BIN_DIR"
+                else
+                  echo "Error: $BIN_DIR does not exist; expected installed binaries to be present."
+                  exit 1
+                fi
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
@@ -93,7 +144,6 @@ jobs:
               feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
-              publishFlags: ${{ parameters.publishFlags }}
 
 - job: TagRelease
   displayName: Tag Release

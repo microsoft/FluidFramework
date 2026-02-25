@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/mocha-test-setup",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "Utilities for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -57,7 +57,7 @@
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"source-map-support": "^0.5.21"
 	},
 	"devDependencies": {
@@ -74,7 +74,7 @@
 		"copyfiles": "^2.4.1",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

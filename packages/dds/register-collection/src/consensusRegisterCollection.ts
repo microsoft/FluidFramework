@@ -122,6 +122,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @deprecated Use {@link IConsensusRegisterCollection} for typing and {@link ConsensusRegisterCollectionFactory} to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 export class ConsensusRegisterCollection<T>
@@ -432,7 +433,12 @@ export class ConsensusRegisterCollection<T>
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IIncomingRegisterOperation<T>;
+		assert(op.type === "write", 0xccc /* Only write ops should be stashed */);
+		// Submit the original op (preserving its refSeq) so we can match the ACK
+		// when it arrives during remote op processing.
+		const pendingMessageId = this.nextPendingMessageId++;
+		this.submitLocalMessage(op, pendingMessageId);
 	}
 }

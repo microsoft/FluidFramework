@@ -46,3 +46,15 @@ variables:
 - ${{ else }}:
   - name: containerTag
     value: $(buildContainerName):$(containerTagSuffix)
+# ADO changes the value of Build.SourcesDirectory depending on whether 1 vs. many repositories are checked out.
+# Using 's' is consistent with the behavior when multiple repositories are checked out and allows for more
+# consistent build scripts. See this documentation for more details:
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/multi-repo-checkout?view=azure-devops#checkout-path
+# A relative path is required in some places (like "checkout" steps). To get the absolute path, concatenate it
+# with the predefined variable "Pipeline.Workspace", e.g.: '$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}'
+- name: consistentSourcesDirectory
+  value: 's'
+- name: FluidFrameworkDirectory
+  value: '${{ variables.consistentSourcesDirectory }}/FluidFramework'
+- name: FFPipelineHostDirectory
+  value: '${{ variables.consistentSourcesDirectory }}/ff_pipeline_host'

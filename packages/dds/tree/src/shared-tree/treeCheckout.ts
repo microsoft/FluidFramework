@@ -388,6 +388,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private editLock: EditLock;
 
+	/**
+	 * User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	 *
+	 * @remarks
+	 * This label is used to implement {@link TreeCheckout.runWithTransactionLabel}.
+	 */
+	private transactionLabel?: unknown;
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -439,6 +447,34 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.registerForBranchEvents();
 	}
 
+	/**
+	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes.
+	 *
+	 * @remarks
+	 * The label is stored during the execution of the function and will be included in the {@link ChangeMetadata} of the transaction.
+	 *
+	 * Labels supplied to nested transactions are ignored - only the outermost transaction label is ever used.
+	 *
+	 * @param fn - The function to execute. It receives the user provided transaction label as an optional parameter.
+	 * @param label - The label to associate with the outermost transaction.
+	 * @returns The result of executing `fn`.
+	 */
+	public runWithTransactionLabel<TLabel, TResult>(
+		fn: (label?: TLabel) => TResult,
+		label: TLabel | undefined,
+	): TResult {
+		// If a transaction label is already set, nesting is occurring, so we should not override it.
+		if (this.transactionLabel !== undefined) {
+			return fn(this.transactionLabel as TLabel);
+		}
+		this.transactionLabel = label;
+		try {
+			return fn(this.transactionLabel as TLabel);
+		} finally {
+			this.transactionLabel = undefined;
+		}
+	}
+
 	public get removedRoots(): ReadOnlyDetachedFieldIndex {
 		return this._removedRoots;
 	}
@@ -464,16 +500,23 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
-			return (result) => {
+			return (result, viewUpdate: SharedTreeChange | undefined) => {
+				const newHead = this.#transaction.branch.getHead();
 				switch (result) {
 					case TransactionResult.Abort: {
 						restoreRemovedRoots();
+						if (viewUpdate !== undefined) {
+							this.applyChange(viewUpdate, newHead.revision);
+						}
 						break;
 					}
 					case TransactionResult.Commit: {
-						if (!this.transaction.isInProgress()) {
+						if (viewUpdate !== undefined) {
+							this.applyChange(viewUpdate, newHead.revision);
+						}
+						if (this.transaction.size === 0) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
-							this.validateCommit(this.#transaction.branch.getHead());
+							this.validateCommit(newHead);
 						}
 						break;
 					}
@@ -554,9 +597,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							originatorId: this.idCompressor.localSessionId,
 							revision,
 						};
-						const encodedChange = this.changeFamily.codecs
-							.resolve(4)
-							.json.encode(change, context);
+						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
 						assert(
 							commit.parent !== undefined,
@@ -570,6 +611,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						} satisfies SerializedChange;
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
+					label: this.transactionLabel,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -577,7 +619,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+			this.#events.emit("changed", {
+				isLocal: false,
+				kind: CommitKind.Default,
+			});
 		}
 	};
 
@@ -619,7 +664,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			originatorId: this.idCompressor.localSessionId,
 			revision,
 		};
-		const decodedChange = this.changeFamily.codecs.resolve(4).json.decode(change, context);
+		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 		this.applyChange(decodedChange, revision);
 	}
 
@@ -825,7 +870,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
 		// Branching after an unfinished transaction would expose the application to a state where its invariants may be violated.
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
@@ -857,7 +902,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	): void {
 		// TODO: Dispose old branch, if necessary
 		assert(
-			!this.#transaction.isInProgress(),
+			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
 		const diff = diffHistories(
@@ -887,12 +932,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		);
 		this.editLock.checkUnlocked("Rebasing");
 
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError(
 				"Views cannot be rebased onto a view that has a pending transaction.",
 			);
 		}
-		if (checkout.transaction.isInProgress()) {
+		if (checkout.transaction.size > 0) {
 			throw new UsageError("A view cannot be rebased while it has a pending transaction.");
 		}
 
@@ -921,12 +966,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
 		this.editLock.checkUnlocked("Merging");
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError(
 				"Views cannot be merged into a view while it has a pending transaction.",
 			);
 		}
-		if (checkout.transaction.isInProgress()) {
+		if (checkout.transaction.size > 0) {
 			throw new UsageError(
 				"Views with an open transaction cannot be merged into another view.",
 			);
@@ -1012,7 +1057,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
 

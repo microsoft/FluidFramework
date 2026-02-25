@@ -21,6 +21,7 @@ import {
 import {
 	type CodecTree,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	DependentFormatVersion,
 	FluidClientVersion,
 	FormatValidatorNoOp,
@@ -99,7 +100,6 @@ import {
 	type SchemaType,
 } from "../simple-tree/index.js";
 import {
-	brand,
 	type Breakable,
 	breakingClass,
 	type JsonCompatible,
@@ -109,7 +109,7 @@ import {
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	getCodecTreeForChangeFormat,
-	type SharedTreeChangeFormatVersion,
+	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -420,7 +420,7 @@ export class SharedTreeKernel
 
 	public override didAttach(): void {
 		for (const checkout of this.checkouts.values()) {
-			if (checkout.transaction.isInProgress()) {
+			if (checkout.transaction.size > 0) {
 				// Attaching during a transaction is not currently supported.
 				// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
 				throw new UsageError(
@@ -438,7 +438,7 @@ export class SharedTreeKernel
 	): void {
 		for (const checkout of this.checkouts.values()) {
 			assert(
-				!checkout.transaction.isInProgress(),
+				checkout.transaction.size === 0,
 				0x674 /* Unexpected transaction is open while applying stashed ops */,
 			);
 		}
@@ -453,7 +453,7 @@ export class SharedTreeKernel
 	): void {
 		const checkout = this.getCheckout(branchId);
 		assert(
-			!checkout.transaction.isInProgress(),
+			checkout.transaction.size === 0,
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
@@ -550,23 +550,14 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
-export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v3),
-		brand<SharedTreeChangeFormatVersion>(3),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v4),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vSharedBranches),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v6),
-		brand<SharedTreeChangeFormatVersion>(5),
-	],
+export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs<
+	EditManagerFormatVersion,
+	SharedTreeChangeFormatVersion
+>([
+	[EditManagerFormatVersion.v3, SharedTreeChangeFormatVersion.v3],
+	[EditManagerFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
+	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
+	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -575,23 +566,14 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v3),
-		brand<SharedTreeChangeFormatVersion>(3),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v4),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.vSharedBranches),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v6),
-		brand<SharedTreeChangeFormatVersion>(5),
-	],
+export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
+	MessageFormatVersion,
+	SharedTreeChangeFormatVersion
+>([
+	[MessageFormatVersion.v3, SharedTreeChangeFormatVersion.v3],
+	[MessageFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
+	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
+	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
@@ -631,7 +613,7 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export type SharedTreeOptionsBeta = ForestOptions;
+export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
 
 /**
  * Configuration options for SharedTree with alpha features.

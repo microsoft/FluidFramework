@@ -11,7 +11,6 @@ import {
 	JsonCompatibleReadOnlySchema,
 	brandedNumberType,
 } from "../../util/index.js";
-import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -115,10 +114,9 @@ export const EncodedBuilds = Type.Object(
 	{
 		builds: EncodedBuildsArray,
 		/**
-		 * Fields indexed by the EncodedTreeIndexes above.
-		 * TODO: Strongly typing this here may result in redundant schema validation of this data.
+		 * FieldBatch codec encoded data indexed by the EncodedTreeIndexes above.
 		 */
-		trees: EncodedFieldBatch,
+		trees: JsonCompatibleReadOnlySchema,
 	},
 	noAdditionalProps,
 );
