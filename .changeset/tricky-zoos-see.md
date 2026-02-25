@@ -3,7 +3,7 @@
 "@fluidframework/shared-object-base": minor
 "__section": feature
 ---
-Added logLevel property to events
+Add logLevel property to events
 
 Events now include an optional `logLevel` property that indicates their importance for diagnostics and enables consumers to make sampling or filtering decisions.
 
