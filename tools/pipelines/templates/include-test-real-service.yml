@@ -444,7 +444,10 @@ stages:
                 set -eu -o pipefail
 
                 tokenResponse=$(az account get-access-token --scope api://d25164f2-e94b-44ea-9ddb-f858dfedb399/.default | jq -r '.accessToken')
-                echo "##vso[task.setvariable variable=ficBearerToken;issecret=true]$tokenResponse"
+                # DEBUG ONLY - REMOVE IN FINAL VERSION
+                echo tokenResponse=$tokenResponse
+                echo "##vso[task.setvariable variable=ficBearerToken]$tokenResponse"
+                echo ficBearerToken=$ficBearerToken
 
           - task: Bash@3
             displayName: 'Run tenant setup script'
@@ -456,7 +459,7 @@ stages:
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --bearerToken=$(ficBearerToken)
+                pnpm run trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --bearerToken=$(ficBearerToken)
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
