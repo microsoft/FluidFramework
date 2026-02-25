@@ -558,7 +558,7 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
-	private attachmentData: AttachmentData = { state: AttachState.Detached };
+	private attachmentData: AttachmentData | undefined;
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
 
@@ -756,6 +756,12 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
+
+		// When loading an existing container, the attachment state is unknown until the load
+		// completes. Only initialize to Detached when creating a new container.
+		if (loadProps === undefined) {
+			this.attachmentData = { state: AttachState.Detached };
+		}
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -1155,7 +1161,7 @@ export class Container
 			);
 		}
 		assert(
-			this.attachmentData.state === AttachState.Attached,
+			this.attachmentData?.state === AttachState.Attached,
 			0x0d1 /* "Container should be attached before close" */,
 		);
 		assert(
@@ -1170,8 +1176,8 @@ export class Container
 		return pendingState;
 	}
 
-	public get attachState(): AttachState {
-		return this.attachmentData.state;
+	public get attachState(): AttachState | undefined {
+		return this.attachmentData?.state;
 	}
 
 	/**
@@ -1181,7 +1187,11 @@ export class Container
 	 * @returns stringified {@link IPendingDetachedContainerState} for the container
 	 */
 	public serialize(): string {
-		if (this.attachmentData.state === AttachState.Attached || this.closed) {
+		if (
+			this.attachmentData === undefined ||
+			this.attachmentData.state === AttachState.Attached ||
+			this.closed
+		) {
 			throw new UsageError("Container must not be attached or closed.");
 		}
 
@@ -1222,6 +1232,7 @@ export class Container
 				async () => {
 					if (
 						this._lifecycleState !== "loaded" ||
+						this.attachmentData === undefined ||
 						this.attachmentData.state === AttachState.Attached
 					) {
 						// pre-0.58 error message: containerNotValidForAttach
@@ -1243,7 +1254,7 @@ export class Container
 					const setAttachmentData: AttachProcessProps["setAttachmentData"] = (
 						attachmentData,
 					) => {
-						const previousState = this.attachmentData.state;
+						const previousState = this.attachmentData?.state;
 						this.attachmentData = attachmentData;
 						const state = this.attachmentData.state;
 						if (state !== previousState && state !== AttachState.Detached) {
@@ -2422,7 +2433,7 @@ export class Container
 				getAbsoluteUrl: this.getAbsoluteUrl,
 				getContainerDiagnosticId: () => this.resolvedUrl?.id,
 				getClientId: () => this.clientId,
-				getAttachState: () => this.attachState,
+				getAttachState: () => this.attachState as AttachState,
 				getConnected: () => this.connected,
 				getConnectionState: () => this.connectionState,
 				clientDetails: this._deltaManager.clientDetails,
