@@ -5,7 +5,6 @@
 
 export { Versioned } from "./format.js";
 export {
-	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
 	makeDiscontinuedCodecVersion,
 	ClientVersionDispatchingCodecBuilder,

@@ -369,30 +369,24 @@ export const unitCodec: IJsonCodec<
  * @remarks
  * Eventually all codecs should use the same pattern implemented by ClientVersionDispatchingCodecBuilder, resulting in that having the only use of this API.
  */
-export function withSchemaValidation<
-	TInMemoryFormat,
-	EncodedSchema extends TSchema,
-	TEncodedFormat,
-	TValidate,
-	TContext,
->(
+export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema, TContext>(
 	schema: EncodedSchema,
-	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,
+	codec: IJsonCodec<TInMemoryFormat, Static<EncodedSchema>, Static<EncodedSchema>, TContext>,
 	validator?: JsonValidator | FormatValidator,
-): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext> {
+): IJsonCodec<TInMemoryFormat, Static<EncodedSchema>, JsonCompatibleReadOnly, TContext> {
 	if (!validator) {
 		return codec;
 	}
 	const compiledFormat = extractJsonValidator(validator).compile(schema);
 	return {
-		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
+		encode: (obj: TInMemoryFormat, context: TContext): Static<EncodedSchema> => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
 				fail(0xac0 /* Encoded data should validate */);
 			}
 			return encoded;
 		},
-		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
+		decode: (encoded: JsonCompatibleReadOnly, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
 				fail(0xac1 /* Data being decoded should validate */);
 			}

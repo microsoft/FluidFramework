@@ -5,8 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { TUnsafe } from "@sinclair/typebox";
 
-import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	eraseEncodedType,
+	type ICodecOptions,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
@@ -51,17 +57,22 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	JsonCompatibleReadOnly,
 	EditManagerEncodingContext
 > {
-	const format = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
+	const format = EncodedEditManager(
+		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
+	) as TUnsafe<EncodedEditManager<TChangeset>>;
 
 	const codec: IJsonCodec<
 		SummaryData<TChangeset>,
 		EncodedEditManager<TChangeset>,
-		EncodedEditManager<TChangeset>,
+		JsonCompatibleReadOnly,
 		EditManagerEncodingContext
 	> = withSchemaValidation(
 		format,
 		{
-			encode: (data: SummaryData<TChangeset>, context: EditManagerEncodingContext) => {
+			encode: (
+				data: SummaryData<TChangeset>,
+				context: EditManagerEncodingContext,
+			): EncodedEditManager<TChangeset> => {
 				const mainBranch = encodeSharedBranch(
 					changeCodec,
 					revisionTagCodec,
@@ -137,13 +148,5 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		},
 		options.jsonValidator,
 	);
-	// TODO: makeVersionedValidatedCodec and withSchemaValidation should allow the codec to decode JsonCompatibleReadOnly, or Versioned or something like that,
-	// and not leak the internal encoded format in the API surface.
-	// Fixing that would remove the need for this cast.
-	return codec as unknown as IJsonCodec<
-		SummaryData<TChangeset>,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		EditManagerEncodingContext
-	>;
+	return eraseEncodedType(codec);
 }
