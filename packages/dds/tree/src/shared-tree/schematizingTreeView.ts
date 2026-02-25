@@ -363,7 +363,7 @@ export class SchematizingSimpleTreeView<
 		)?.value;
 
 		if (rollback === true) {
-			checkout.popLabelFrame(false);
+			checkout.popLabelFrame();
 			checkout.transaction.abort();
 			return value === undefined
 				? { success: false }
@@ -377,7 +377,6 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
-		checkout.popLabelFrame(true);
 		checkout.runWithTransactionLabel(() => {
 			checkout.transaction.commit();
 		}, params?.label);

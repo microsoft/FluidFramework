@@ -48,30 +48,23 @@ export interface ValueTree<T = unknown> {
 }
 
 /**
- * Mutable implementation of {@link ValueTree} with parent pointers for tree navigation.
+ * Mutable implementation of {@link ValueTree}.
  *
  * @remarks
  * Used internally to incrementally build a value tree as nested scopes open and close.
- * The mutable `children` array and `parent` pointer allow in-place tree construction,
+ * The mutable `children` array allows in-place tree construction,
  * while the class still satisfies the readonly {@link ValueTree} interface for consumers.
  */
 export class ValueTreeNode<T = unknown> implements ValueTree<T> {
 	public readonly value: T;
 	public readonly children: ValueTreeNode<T>[] = [];
-	public parent: ValueTreeNode<T> | undefined;
 
-	public constructor(
-		value: T,
-		parentOrChildren?: ValueTreeNode<T> | readonly ValueTreeNode<T>[],
-	) {
+	public constructor(value: T, children?: readonly ValueTreeNode<T>[]) {
 		this.value = value;
-		if (Array.isArray(parentOrChildren)) {
-			for (const child of parentOrChildren as ValueTreeNode<T>[]) {
-				child.parent = this;
+		if (children !== undefined) {
+			for (const child of children) {
 				this.children.push(child);
 			}
-		} else {
-			this.parent = parentOrChildren as ValueTreeNode<T> | undefined;
 		}
 	}
 
