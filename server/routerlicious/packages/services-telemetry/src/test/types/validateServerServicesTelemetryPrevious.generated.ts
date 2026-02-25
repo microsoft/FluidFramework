@@ -105,6 +105,7 @@ declare type old_as_current_for_Class_Lumber = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Lumber": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Lumber = requireAssignableTo<TypeOnly<current.Lumber>, TypeOnly<old.Lumber>>
 
 /*
@@ -430,6 +431,7 @@ declare type old_as_current_for_Enum_LumberEventName = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Enum_LumberEventName": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_LumberEventName = requireAssignableTo<TypeOnly<current.LumberEventName>, TypeOnly<old.LumberEventName>>
 
 /*
