@@ -1759,7 +1759,7 @@ export class ContainerRuntime
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
-			logLevel: "info"
+			logLevel: "info",
 		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
