@@ -193,7 +193,6 @@ function makeFieldBatchCodecForVersion(
 
 /**
  * Codec builder for field batch codecs.
- * Uses ClientVersionDispatchingCodecBuilder to dispatch to the appropriate version based on minVersionForCollab.
  */
 export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
 	"FieldBatch",
