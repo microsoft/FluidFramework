@@ -45,7 +45,7 @@ jobs:
         TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
     - task: AzureCLI@2
-      displayName: Upload release reports
+      displayName: Upload release reports to old storage
       continueOnError: true
       inputs:
         azureSubscription: 'fluid-docs'
@@ -55,6 +55,19 @@ jobs:
         inlineScript: |
           for file in upload_release_reports/*; do
               az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite true --verbose
+          done
+
+    - task: AzureCLI@2
+      displayName: Upload release reports to new storage
+      continueOnError: true
+      inputs:
+        azureSubscription: 'fluid-docs'
+        scriptType: bash
+        workingDirectory: ${{ parameters.buildDirectory }}
+        scriptLocation: inlineScript
+        inlineScript: |
+          for file in upload_release_reports/*; do
+              az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT_NEW) --auth-mode login --overwrite true --verbose
           done
           # Delete generate_release_reports and upload_release_reports folder
           rm -r generate_release_reports upload_release_reports

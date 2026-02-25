@@ -198,7 +198,7 @@ stages:
                   #quiet: # Optional
 
               - task: AzureCLI@2
-                displayName: 'Upload JSON'
+                displayName: 'Upload JSON to old storage'
                 continueOnError: true
                 inputs:
                   azureSubscription: 'fluid-docs'
@@ -208,7 +208,17 @@ stages:
                     az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --verbose
 
               - task: AzureCLI@2
-                displayName: 'Upload JSON as latest.tar.gz'
+                displayName: 'Upload JSON to new storage'
+                continueOnError: true
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name $(STORAGE_ACCOUNT_NEW) --auth-mode login --verbose
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON as latest.tar.gz to old storage'
                 continueOnError: true
                 condition: eq(variables['Build.SourceBranchName'], 'main')
                 inputs:
@@ -219,7 +229,18 @@ stages:
                     az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
 
               - task: AzureCLI@2
-                displayName: 'Upload JSON as latest-v*.tar.gz'
+                displayName: 'Upload JSON as latest.tar.gz to new storage'
+                continueOnError: true
+                condition: eq(variables['Build.SourceBranchName'], 'main')
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name $(STORAGE_ACCOUNT_NEW) --auth-mode login --overwrite --verbose
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON as latest-v*.tar.gz to old storage'
                 continueOnError: true
                 condition: eq(variables.isLatestMinorOfMajorTrain, true)
                 inputs:
@@ -228,6 +249,17 @@ stages:
                   scriptLocation: inlineScript
                   inlineScript: |
                     az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON as latest-v*.tar.gz to new storage'
+                continueOnError: true
+                condition: eq(variables.isLatestMinorOfMajorTrain, true)
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT_NEW) --auth-mode login --overwrite --verbose
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
