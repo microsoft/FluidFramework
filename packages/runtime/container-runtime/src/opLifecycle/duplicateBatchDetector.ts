@@ -10,7 +10,12 @@ import { getEffectiveBatchId } from "./batchManager.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 /**
- * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
+ * Detects duplicate batches that can arise from the "parallel fork" scenario:
+ * Container 1 is serialized, and Containers 2 and 3 are rehydrated from that state.
+ * They both catch up and (re)connect in parallel (at the same time), submitting the same local state,
+ * sharing the same batchId and sequence number.
+ *
+ * For "serial fork" detection scenarios see PendingStateManager.
  */
 export class DuplicateBatchDetector {
 	/**
