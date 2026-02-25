@@ -109,6 +109,7 @@ stages:
       pool: Large-eastus2
       steps:
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
 
@@ -116,15 +117,14 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            # TODO: Update to be a path relative to $(Pipeline.Workspace)
-            buildDirectory: $(Build.SourcesDirectory)/docs
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
           retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             script: |
               set -eu -o pipefail
               # Ensure it's easy to tell which workspace this is running in by inspecting the logs
@@ -135,7 +135,7 @@ stages:
           displayName: npm run build
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run build'
           env:
             INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
@@ -146,28 +146,28 @@ stages:
           displayName: 'Check inline script hashes correctness'
           inputs:
             targetType: 'filePath'
-            workingDirectory: $(Build.SourcesDirectory)/docs
-            filePath: '$(Build.SourcesDirectory)/docs/validateHashes.sh'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            filePath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/validateHashes.sh'
 
         # Run the tests
         - task: Npm@1
           displayName: Run tests
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run test'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: $(Build.SourcesDirectory)/docs/build
+            BuildDropPath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish site build artifact'
           inputs:
-            targetPath: '$(Build.SourcesDirectory)/docs/build'
+            targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
 
@@ -220,7 +220,7 @@ stages:
           inputs:
             GdnBreakPolicyMinSev: Warning
             GdnBreakAllTools: true
-            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
+            GdnBreakBaselineFiles: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/.gdnbaselines'
             GdnBreakGdnToolESLint: true
             GdnBreakGdnToolESLintSeverity: Warning
             GdnBreakPolicy: M365
@@ -247,6 +247,7 @@ stages:
       continueOnError: true
       steps:
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
 
@@ -254,15 +255,14 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            # TODO: Update to be a path relative to $(Pipeline.Workspace)
-            buildDirectory: $(Build.SourcesDirectory)/docs
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
           retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)/docs
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             script: |
               set -eu -o pipefail
               # Ensure it's easy to tell which workspace this is running in by inspecting the logs
@@ -273,14 +273,14 @@ stages:
           displayName: Build
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run build'
 
         - task: Npm@1
           displayName: Validate links
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
             customCommand: 'run ci:check-links'
 
 - stage: deploy
@@ -308,7 +308,7 @@ stages:
           inputs:
             source: current
             artifact: fluidframework-docs
-            path: '$(Build.SourcesDirectory)/docs/build'
+            path: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build'
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'

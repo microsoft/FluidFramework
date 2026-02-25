@@ -42,13 +42,13 @@ stages:
 
     steps:
     - checkout: ff_pipeline_host
+      path: $(FFPipelineHostDirectory)
 
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
-        # TODO: Update to be a path relative to $(Pipeline.Workspace)
-        buildDirectory: $(Build.SourcesDirectory)
+        buildDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
         primaryRegistry: $(ado-feeds-ff-download-only)
 
     - task: Bash@3
