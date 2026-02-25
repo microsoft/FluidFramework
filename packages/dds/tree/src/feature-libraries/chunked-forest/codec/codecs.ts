@@ -211,8 +211,9 @@ function makeFieldBatchCodecForVersion(
  */
 export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
 	"FieldBatch",
-	{
-		[lowestMinVersionForCollab]: {
+	[
+		{
+			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: FieldBatchFormatVersion.v1,
 			codec: makeFieldBatchCodecForVersion(
 				FieldBatchFormatVersion.v1,
@@ -221,7 +222,8 @@ export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build
 				EncodedFieldBatchV1,
 			),
 		},
-		[FluidClientVersion.v2_73]: {
+		{
+			minVersionForCollab: FluidClientVersion.v2_73,
 			formatVersion: FieldBatchFormatVersion.v2,
 			codec: makeFieldBatchCodecForVersion(
 				FieldBatchFormatVersion.v2,
@@ -230,5 +232,5 @@ export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build
 				EncodedFieldBatchV2,
 			),
 		},
-	},
+	],
 );

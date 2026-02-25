@@ -61,8 +61,9 @@ export function clientVersionToForestFormatVersion(
  * Codec builder for forest summarizer codecs.
  * Uses ClientVersionDispatchingCodecBuilder to dispatch to the appropriate version based on minVersionForCollab.
  */
-export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Forest", {
-	[lowestMinVersionForCollab]: {
+export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Forest", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
 		formatVersion: ForestFormatVersion.v1,
 		codec: (options: ForestCodecOptions) => {
 			const writeVersion = ForestFormatVersion.v1;
@@ -94,7 +95,8 @@ export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Fo
 			};
 		},
 	},
-	[FluidClientVersion.v2_74]: {
+	{
+		minVersionForCollab: FluidClientVersion.v2_74,
 		formatVersion: ForestFormatVersion.v2,
 		codec: (options: ForestCodecOptions) => {
 			const writeVersion = ForestFormatVersion.v2;
@@ -126,4 +128,4 @@ export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Fo
 			};
 		},
 	},
-});
+]);
