@@ -192,7 +192,7 @@ function makeFieldBatchCodecForVersion(
 }
 
 /**
- * Codec builder for field batch codecs.
+ * {@link ClientVersionDispatchingCodecBuilder} for field batch codecs.
  */
 export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
 	"FieldBatch",

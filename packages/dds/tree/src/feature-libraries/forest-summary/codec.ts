@@ -71,8 +71,7 @@ function makeForestSummarizerCodec(
 }
 
 /**
- * Codec builder for forest summarizer codecs.
- * @remarks Uses {@link ClientVersionDispatchingCodecBuilder} to dispatch to the appropriate version based on `minVersionForCollab`.
+ * {@link ClientVersionDispatchingCodecBuilder} for forest summarizer codecs.
  */
 export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Forest", [
 	{
