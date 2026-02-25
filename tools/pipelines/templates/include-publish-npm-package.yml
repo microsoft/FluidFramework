@@ -18,6 +18,22 @@ parameters:
 - name: buildDirectory
   type: string
 
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
+- name: serverManifestPathSegment
+  type: string
+  default: prerelease
+  values:
+  - prerelease
+  - release
+
+# The path to the pnpm store.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
+
 stages:
 
 # This stage only runs for test-branch builds
@@ -89,9 +105,9 @@ stages:
       tagName: ${{ parameters.tagName }}
 
 # Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and
-# for the build of the client release group (we don't need manifests for anything else).
+# for builds of release groups that currently publish manifests.
 # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branches.
-- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
+- ${{ if and(eq(variables['System.TeamProject'], 'internal'), or(eq(parameters.tagName, 'client'), eq(parameters.tagName, 'server'), eq(parameters.tagName, 'historian'), eq(parameters.tagName, 'gitrest')), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
   - stage: upload_manifests
     displayName: Upload release manifests
     dependsOn:
@@ -115,6 +131,22 @@ stages:
     variables:
     - group: ado-feeds
     jobs:
-    - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
-      parameters:
-        buildDirectory: '${{ parameters.buildDirectory }}'
+    - ${{ if or(eq(parameters.tagName, 'server'), eq(parameters.tagName, 'historian'), eq(parameters.tagName, 'gitrest')) }}:
+      - template: /tools/pipelines/templates/upload-server-manifest.yml@self
+        parameters:
+          buildDirectory: '${{ parameters.buildDirectory }}'
+          blobPathPrefix: ${{ format('server/{0}', parameters.serverManifestPathSegment) }}
+          serverManifestPathSegment: ${{ parameters.serverManifestPathSegment }}
+          ${{ if eq(parameters.tagName, 'server') }}:
+            releaseGroup: 'server'
+            releaseReportCategory: 'routerlicious-'
+          ${{ elseif eq(parameters.tagName, 'historian') }}:
+            releaseGroup: 'historian'
+            releaseReportCategory: 'historian-'
+          ${{ else }}:
+            releaseGroup: 'gitrest'
+            releaseReportCategory: 'gitrest-'
+    - ${{ if eq(parameters.tagName, 'client') }}:
+      - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
+        parameters:
+          buildDirectory: '${{ parameters.buildDirectory }}'
