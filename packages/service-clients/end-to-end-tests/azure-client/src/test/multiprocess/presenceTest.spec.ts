@@ -131,11 +131,17 @@ describe(`Presence with AzureClient`, () => {
 			const allAttendeesFullyJoinedTimeoutMs = (2000 + 300 * numClients) * timeoutMultiplier;
 
 			for (const writeClients of [numClients, 1]) {
-				/**
-				 * Note: This test is currently skipped because it is flaky in the Service Clients End to End tests pipelines.
-				 * See AB#59980 for tracking and re-enabling once the flakiness is resolved.
-				 */
-				it.skip(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeConnected() {
+				it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeConnected() {
+					/**
+					 * Note: This test is currently skipped in the AFR driver because it is flaky in the Service Clients End to End tests pipelines.
+					 * See AB#59980 for tracking and re-enabling once the flakiness is resolved.
+					 */
+					if (useAzure && numClients > 50) {
+						// Even with increased timeouts, more than 50 clients can be too large for AFR.
+						// This may be due to slow responses/inactivity from the clients that are
+						// creating pressure on ADO agent.
+						this.skip();
+					}
 					setTestTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 					// Setup
@@ -158,11 +164,11 @@ describe(`Presence with AzureClient`, () => {
 					);
 				});
 
-				/**
-				 * Note: This test is currently skipped because it is flaky in the Service Clients End to End tests pipelines.
-				 * See AB#59980 for tracking and re-enabling once the flakiness is resolved.
-				 */
-				it.skip(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeDisconnected() {
+				it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeDisconnected() {
+					/**
+					 * Note: This test is currently skipped in the AFR driver because it is flaky in the Service Clients End to End tests pipelines.
+					 * See AB#59980 for tracking and re-enabling once the flakiness is resolved.
+					 */
 					if (useAzure && numClients > 50) {
 						// Even with increased timeouts, more than 50 clients can be too large for AFR.
 						// This may be due to slow responses/inactivity from the clients that are
