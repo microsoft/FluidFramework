@@ -116,7 +116,7 @@ export type FieldBatchCodec = ReturnType<typeof fieldBatchCodecBuilder.build>;
  * Creates the encode/decode functions for a specific FieldBatch format version.
  */
 function makeFieldBatchCodecForVersion(
-	writeVersion: FieldBatchFormatVersion,
+	version: FieldBatchFormatVersion,
 	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatch,
 	schemaCompressedEncodeFn: (
 		schema: StoredSchemaCollection,
@@ -144,7 +144,7 @@ function makeFieldBatchCodecForVersion(
 				}
 				case TreeCompressionStrategy.CompressedIncremental: {
 					assert(
-						writeVersion >= FieldBatchFormatVersion.v2,
+						version >= FieldBatchFormatVersion.v2,
 						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 					);
 					// Incremental encoding is only supported for CompressedIncremental.

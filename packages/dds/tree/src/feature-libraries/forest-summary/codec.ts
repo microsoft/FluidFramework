@@ -40,9 +40,9 @@ export interface ForestCodecOptions extends CodecWriteOptions {
 
 function makeForestSummarizerCodec(
 	options: ForestCodecOptions,
-	writeVersion: ForestFormatVersion,
+	version: ForestFormatVersion,
 ): CodecAndSchema<FieldSet, FieldBatchEncodingContext> {
-	const formatSchema = FormatCommon(writeVersion);
+	const formatSchema = FormatCommon(version);
 	return {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
@@ -54,7 +54,7 @@ function makeForestSummarizerCodec(
 			return {
 				keys,
 				fields: options.fieldBatchCodec.encode(fields, context),
-				version: writeVersion,
+				version,
 			};
 		},
 		decode: (data: Format, context: FieldBatchEncodingContext): FieldSet => {
