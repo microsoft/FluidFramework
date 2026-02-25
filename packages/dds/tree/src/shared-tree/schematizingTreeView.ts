@@ -377,6 +377,7 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
+		checkout.closeLabelFrame();
 		checkout.runWithTransactionLabel(() => {
 			checkout.transaction.commit();
 		}, params?.label);

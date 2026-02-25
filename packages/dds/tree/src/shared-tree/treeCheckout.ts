@@ -394,19 +394,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 *
 	 * @remarks
 	 * The label tree is always isomorphic to the actual transaction tree — every transaction
-	 * (whether labeled or not) gets its own node. To find the "current" (deepest) node,
-	 * walk down the right side of the tree (i.e. follow the last child at each level).
+	 * (whether labeled or not) gets its own node. To find the "current" (deepest open) node,
+	 * walk down the right side of the tree, following only nodes in {@link TreeCheckout.openLabelNodes}.
 	 *
 	 * Cleared by {@link TreeCheckout.runWithTransactionLabel} after the commit event is emitted.
 	 */
 	private labelTreeNode: ValueTreeNode | undefined;
 
 	/**
-	 * Count of nodes in the label tree that have a defined label.
-	 * Used to efficiently determine whether the label tree has any meaningful labels
-	 * so that {@link LocalChangeMetadata.labels} can be `undefined` when no labels are present.
+	 * Tracks which label tree nodes belong to transactions that are still in progress.
+	 * Used by {@link TreeCheckout.currentLabelNode} to walk past committed (closed) nodes
+	 * and find the deepest open node.
 	 */
-	private definedLabelCount = 0;
+	private readonly openLabelNodes = new WeakSet<ValueTreeNode>();
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
@@ -471,9 +471,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	public pushLabelFrame(label: unknown): void {
 		const node = new ValueTreeNode(label);
-		if (label !== undefined) {
-			this.definedLabelCount++;
-		}
+		this.openLabelNodes.add(node);
 		if (this.labelTreeNode === undefined) {
 			this.labelTreeNode = node;
 		} else {
@@ -482,60 +480,66 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
-	 * Returns the label tree node at the given depth by walking down the right side
-	 * of the tree from the root. Depth 1 is the root, depth 2 is its last child, etc.
+	 * Returns the deepest open node on the right side of the label tree, which corresponds
+	 * to the current (most recently pushed, not yet committed or aborted) transaction.
 	 * Only valid to call when {@link TreeCheckout.labelTreeNode} is defined.
 	 */
-	private walkLabelTree(depth: number): ValueTreeNode {
+	private currentLabelNode(): ValueTreeNode {
 		assert(this.labelTreeNode !== undefined, "Expected label tree to exist");
 		let node: ValueTreeNode = this.labelTreeNode;
-		for (let i = 1; i < depth; i++) {
+		while (node.children.length > 0) {
 			const lastChild = node.children[node.children.length - 1];
 			assert(lastChild !== undefined, "Expected label tree node to have children");
+			if (!this.openLabelNodes.has(lastChild)) {
+				break;
+			}
 			node = lastChild;
 		}
 		return node;
 	}
 
 	/**
-	 * Returns the deepest node on the right side of the label tree, which corresponds
-	 * to the current (most recently pushed) transaction.
-	 * Only valid to call when {@link TreeCheckout.labelTreeNode} is defined and
-	 * before the corresponding {@link Transactor.start} (so that
-	 * {@link Transactor.size} reflects the current tree depth).
+	 * Returns whether any node in the label tree has a defined value.
 	 */
-	private currentLabelNode(): ValueTreeNode {
-		return this.walkLabelTree(this.transaction.size());
+	private hasDefinedLabels(): boolean {
+		if (this.labelTreeNode === undefined) {
+			return false;
+		}
+		for (const value of this.labelTreeNode.values()) {
+			if (value !== undefined) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
-	 * Removes the label node for an aborted transaction from the tree.
-	 *
-	 * @remarks
-	 * Only called when a transaction is aborted. Committed transactions leave their
-	 * nodes in the tree — the entire tree is cleaned up by
-	 * {@link TreeCheckout.runWithTransactionLabel} after the outermost commit.
+	 * Marks the current label node as closed when a transaction commits.
+	 * The node remains in the tree so it appears in the final {@link LocalChangeMetadata.labels}.
+	 */
+	public closeLabelFrame(): void {
+		if (this.labelTreeNode === undefined) {
+			return;
+		}
+		this.openLabelNodes.delete(this.currentLabelNode());
+	}
+
+	/**
+	 * Removes the current label node from the tree when a transaction is aborted.
 	 */
 	public popLabelFrame(): void {
 		if (this.labelTreeNode === undefined) {
 			return;
 		}
 
-		// transaction.size() still reflects the active (not-yet-aborted) transaction count,
-		// so size === 1 means we are aborting the outermost transaction.
-		if (this.transaction.size() === 1) {
-			// The root itself is the current node — clear the whole tree.
-			if (this.labelTreeNode.value !== undefined) {
-				this.definedLabelCount--;
-			}
+		const node = this.currentLabelNode();
+		this.openLabelNodes.delete(node);
+
+		if (node === this.labelTreeNode) {
 			this.labelTreeNode = undefined;
-			return;
-		}
-		// Find the parent of the current node and remove the current node.
-		const parent = this.walkLabelTree(this.transaction.size() - 1);
-		const removed = parent.children.pop();
-		if (removed?.value !== undefined) {
-			this.definedLabelCount--;
+		} else {
+			// node is now closed, so currentLabelNode() returns its parent.
+			this.currentLabelNode().children.pop();
 		}
 	}
 
@@ -563,7 +567,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			// must remain intact until the outermost commit reads it.
 			if (!this.transaction.isInProgress()) {
 				this.labelTreeNode = undefined;
-				this.definedLabelCount = 0;
 			}
 		}
 	}
@@ -705,7 +708,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.value,
-					labels: this.definedLabelCount > 0 ? this.labelTreeNode : undefined,
+					labels: this.hasDefinedLabels() ? this.labelTreeNode : undefined,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
