@@ -684,11 +684,11 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				processFullBatch(messages, 0 /* batchStartCsn */, false /* groupedBatch */);
-				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				let pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
-				pendingState = pendingStateManager.getLocalState(5).pendingStates;
+				pendingState = pendingStateManager.getLocalState(5).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 5);
-				pendingState = pendingStateManager.getLocalState(10).pendingStates;
+				pendingState = pendingStateManager.getLocalState(10).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 0);
 			});
 
@@ -702,7 +702,7 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				assert.throws(() => pendingStateManager.getLocalState(1));
-				const pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				const pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 			});
 		});
@@ -815,7 +815,7 @@ describe("Pending State Manager", () => {
 			);
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
-			const localStateWithEmptyBatch = oldPsm.getLocalState(0);
+			const localStateWithEmptyBatch = oldPsm.getLocalState(0).pending;
 
 			const applyStashedOps: string[] = [];
 			const pendingStateManager = new PendingStateManager(
