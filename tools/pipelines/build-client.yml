@@ -192,7 +192,7 @@ extends:
     packageManager: pnpm
     testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
     reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
-    buildDirectory: .
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}
     tagName: client
     isReleaseGroup: true
     poolBuild: Large-eastus2

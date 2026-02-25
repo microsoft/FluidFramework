@@ -236,7 +236,7 @@ describe("IdCompressor Perf", () => {
 				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
 					network.allocateAndSendIds(
 						localClient,
-						// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-argument
+						// eslint-disable-next-line @typescript-eslint/dot-notation
 						perfCompressor["nextRequestedClusterSize"],
 					);
 					network.allocateAndSendIds(

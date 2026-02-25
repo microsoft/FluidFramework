@@ -514,7 +514,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						if (viewUpdate !== undefined) {
 							this.applyChange(viewUpdate, newHead.revision);
 						}
-						if (!this.transaction.isInProgress()) {
+						if (this.transaction.size === 0) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
 							this.validateCommit(newHead);
 						}
@@ -597,9 +597,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							originatorId: this.idCompressor.localSessionId,
 							revision,
 						};
-						const encodedChange = this.changeFamily.codecs
-							.resolve(4)
-							.json.encode(change, context);
+						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
 						assert(
 							commit.parent !== undefined,
@@ -666,7 +664,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			originatorId: this.idCompressor.localSessionId,
 			revision,
 		};
-		const decodedChange = this.changeFamily.codecs.resolve(4).json.decode(change, context);
+		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 		this.applyChange(decodedChange, revision);
 	}
 
@@ -872,7 +870,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
 		// Branching after an unfinished transaction would expose the application to a state where its invariants may be violated.
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
@@ -904,7 +902,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	): void {
 		// TODO: Dispose old branch, if necessary
 		assert(
-			!this.#transaction.isInProgress(),
+			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
 		const diff = diffHistories(
@@ -934,12 +932,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		);
 		this.editLock.checkUnlocked("Rebasing");
 
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError(
 				"Views cannot be rebased onto a view that has a pending transaction.",
 			);
 		}
-		if (checkout.transaction.isInProgress()) {
+		if (checkout.transaction.size > 0) {
 			throw new UsageError("A view cannot be rebased while it has a pending transaction.");
 		}
 
@@ -968,12 +966,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
 		this.editLock.checkUnlocked("Merging");
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError(
 				"Views cannot be merged into a view while it has a pending transaction.",
 			);
 		}
-		if (checkout.transaction.isInProgress()) {
+		if (checkout.transaction.size > 0) {
 			throw new UsageError(
 				"Views with an open transaction cannot be merged into another view.",
 			);
@@ -1059,7 +1057,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
 
