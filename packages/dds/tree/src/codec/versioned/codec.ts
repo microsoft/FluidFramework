@@ -36,7 +36,7 @@ import { Versioned } from "./format.js";
 /**
  * Json compatible data with a format version.
  */
-export type VersionedJson = JsonCompatibleReadOnlyObject & Versioned;
+type VersionedJson = JsonCompatibleReadOnlyObject & Versioned;
 
 /**
  * Validate that the version is one of the supported values.
@@ -74,11 +74,13 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			return decoded;
 		},
 	};
+
 	// If undefined is a supported version, skip using withSchemaValidation to enforce there is a version field.
 	// Codec will still assert the content of the field is in supportedVersions, so it is still somewhat validated, just in a different way.
 	if (supportedVersions.has(undefined)) {
 		return codec;
 	}
+
 	const validated: IJsonCodec<TDecoded, Versioned, JsonCompatibleReadOnly, TContext> =
 		withSchemaValidation(Versioned, codec, validator);
 	// Narrow the coded output type to preserve TEncoded which was lost by withSchemaValidation when run with just the Versioned schema.

@@ -34,6 +34,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
 import {
+	FieldBatchFormatVersion,
 	ForestFormatVersion,
 	ForestSummarizer,
 	TreeCompressionStrategy,
@@ -874,21 +875,16 @@ describe("ForestSummarizer", () => {
 		});
 
 		it("loads pre-versioning format with no metadata blob", async () => {
-			// Create a simple test fieldBatchCodec for this test
-			const testFieldBatchCodec = fieldBatchCodecBuilder.build({
-				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab: FluidClientVersion.v2_74,
-			});
-			const testContext: FieldBatchEncodingContext = {
-				encodeType: TreeCompressionStrategy.Uncompressed,
-				idCompressor: testIdCompressor,
-				originatorId: testIdCompressor.localSessionId,
-			};
 			// Create data in v1 summary format.
 			const forestDataV1: FormatV1 = {
 				version: ForestFormatVersion.v1,
 				keys: [],
-				fields: testFieldBatchCodec.encode([], testContext),
+				fields: {
+					version: FieldBatchFormatVersion.v2,
+					identifiers: [],
+					shapes: [],
+					data: [],
+				},
 			};
 			const forestContentBlob: ISummaryBlob = {
 				type: SummaryType.Blob,

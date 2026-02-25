@@ -12,8 +12,6 @@ import {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecAndSchema,
 	FluidClientVersion,
-	type IJsonCodec,
-	type VersionedJson,
 } from "../../../codec/index.js";
 import {
 	CursorLocationType,
@@ -23,11 +21,7 @@ import {
 	type StoredSchemaCollection,
 	type TreeChunk,
 } from "../../../core/index.js";
-import {
-	brandedNumberType,
-	type Brand,
-	type JsonCompatibleReadOnly,
-} from "../../../util/index.js";
+import { brandedNumberType, type Brand } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
@@ -116,37 +110,32 @@ export interface FieldBatchEncodingContext {
  * @remarks
  * Fields in this batch currently don't have field schema for the root, which limits optimizations.
  */
-export type FieldBatchCodec = IJsonCodec<
-	FieldBatch,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	FieldBatchEncodingContext
->;
+export type FieldBatchCodec = ReturnType<typeof fieldBatchCodecBuilder.build>;
 
 /**
  * Creates the encode/decode functions for a specific FieldBatch format version.
  */
 function makeFieldBatchCodecForVersion(
 	writeVersion: FieldBatchFormatVersion,
-	uncompressedEncodeFn: (batch: FieldBatch) => VersionedJson,
+	uncompressedEncodeFn: (batch: FieldBatch) => EncodedFieldBatch,
 	schemaCompressedEncodeFn: (
 		schema: StoredSchemaCollection,
 		policy: SchemaPolicy,
 		fieldBatch: FieldBatch,
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
-	) => VersionedJson,
+	) => EncodedFieldBatch,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext> {
 	return {
-		encode: (data: FieldBatch, context: FieldBatchEncodingContext): VersionedJson => {
+		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
 					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
-			let encoded: VersionedJson;
+			let encoded: EncodedFieldBatch;
 			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
 				case TreeCompressionStrategy.Uncompressed: {
@@ -187,10 +176,7 @@ function makeFieldBatchCodecForVersion(
 			// TODO: consider checking input data was in schema.
 			return encoded;
 		},
-		decode: (
-			data: EncodedFieldBatchV1 | EncodedFieldBatchV2,
-			context: FieldBatchEncodingContext,
-		): FieldBatch => {
+		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
 			return decode(
 				data,

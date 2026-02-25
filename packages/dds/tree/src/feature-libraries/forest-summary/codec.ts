@@ -14,10 +14,9 @@ import {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecWriteOptions,
 	FluidClientVersion,
-	type IJsonCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { ForestFormatVersion, type Format, FormatCommon } from "./formatCommon.js";
@@ -26,18 +25,19 @@ import { ForestFormatVersion, type Format, FormatCommon } from "./formatCommon.j
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = IJsonCodec<
-	FieldSet,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	FieldBatchEncodingContext
->;
+export type ForestCodec = ReturnType<typeof forestCodecBuilder.build>;
 
 /**
  * Options for building the forest summarizer codec.
  * Extends CodecWriteOptions with the required fieldBatchCodec dependency.
  */
 export interface ForestCodecOptions extends CodecWriteOptions {
+	/**
+	 * Codec for encoding the field batches in the forest summary.
+	 * @privateRemarks
+	 * TODO: Select this automatically.
+	 * This is kept for now to limit the scope of changes done at the same time.
+	 */
 	readonly fieldBatchCodec: FieldBatchCodec;
 }
 
