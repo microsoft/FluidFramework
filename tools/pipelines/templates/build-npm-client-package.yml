@@ -373,7 +373,7 @@ extends:
               - task: Bash@3
                 displayName: Archive Build Output Content
                 env:
-                  WORKING_DIRECTORY: '.'
+                  WORKING_DIRECTORY: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                 inputs:
                   targetType: filePath
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
