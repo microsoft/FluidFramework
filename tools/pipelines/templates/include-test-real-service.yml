@@ -443,7 +443,7 @@ stages:
               inlineScript: |
                 set -eu -o pipefail
 
-                tokenResponse=$(az account get-access-token --scope api://d25164f2-e94b-44ea-9ddb-f858dfedb399/.default)
+                tokenResponse=$(az account get-access-token --scope api://d25164f2-e94b-44ea-9ddb-f858dfedb399/.default | jq -r '.accessToken')
                 echo "##vso[task.setvariable variable=ficBearerToken;issecret=true]$tokenResponse"
 
           - task: Bash@3
