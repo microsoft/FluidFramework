@@ -1361,10 +1361,10 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.size, 1);
 		});
 
-		it("labels is undefined when no label is provided", () => {
+		it("labels reflects transaction structure when no labels are provided", () => {
 			const view = getTestObjectView();
 
-			let receivedLabels: ValueTree | undefined | null = null;
+			let receivedLabels: ValueTree | undefined;
 			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					receivedLabels = meta.labels;
@@ -1372,10 +1372,16 @@ describe("SchematizingSimpleTreeView", () => {
 			});
 
 			view.runTransaction(() => {
-				view.root.content = 99;
+				view.runTransaction(() => {
+					view.root.content = 99;
+				});
 			});
 
-			assert.equal(receivedLabels, undefined);
+			assert(receivedLabels !== undefined, "labels should be defined");
+			assert.equal(receivedLabels.value, undefined);
+			assert.equal(receivedLabels.children.length, 1);
+			assert.equal(receivedLabels.children[0]?.value, undefined);
+			assert.equal(receivedLabels.children[0]?.children.length, 0);
 		});
 
 		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {

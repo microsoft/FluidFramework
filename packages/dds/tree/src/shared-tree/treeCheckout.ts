@@ -406,7 +406,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * Used by {@link TreeCheckout.currentLabelNode} to walk past committed (closed) nodes
 	 * and find the deepest open node.
 	 */
-	private readonly openLabelNodes = new WeakSet<ValueTreeNode>();
+	private static readonly openLabelNodes = new WeakSet<ValueTreeNode>();
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
@@ -471,26 +471,30 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	public pushLabelFrame(label: unknown): void {
 		const node = new ValueTreeNode(label);
-		this.openLabelNodes.add(node);
+		TreeCheckout.openLabelNodes.add(node);
 		if (this.labelTreeNode === undefined) {
 			this.labelTreeNode = node;
 		} else {
-			this.currentLabelNode().children.push(node);
+			const current = this.currentLabelNode();
+			assert(current !== undefined, "Expected current label node to exist");
+			current.children.push(node);
 		}
 	}
 
 	/**
 	 * Returns the deepest open node on the right side of the label tree, which corresponds
 	 * to the current (most recently pushed, not yet committed or aborted) transaction.
-	 * Only valid to call when {@link TreeCheckout.labelTreeNode} is defined.
+	 * Returns `undefined` when {@link TreeCheckout.labelTreeNode} is not set.
 	 */
-	private currentLabelNode(): ValueTreeNode {
-		assert(this.labelTreeNode !== undefined, "Expected label tree to exist");
+	private currentLabelNode(): ValueTreeNode | undefined {
+		if (this.labelTreeNode === undefined) {
+			return undefined;
+		}
 		let node: ValueTreeNode = this.labelTreeNode;
 		while (node.children.length > 0) {
 			const lastChild = node.children[node.children.length - 1];
 			assert(lastChild !== undefined, "Expected label tree node to have children");
-			if (!this.openLabelNodes.has(lastChild)) {
+			if (!TreeCheckout.openLabelNodes.has(lastChild)) {
 				break;
 			}
 			node = lastChild;
@@ -499,47 +503,28 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
-	 * Returns whether any node in the label tree has a defined value.
+	 * Pops the current label frame from the label tree.
+	 *
+	 * @param aborted - If true, the node is removed from the tree (transaction was aborted).
+	 * If false, the node is kept in the tree but marked as closed (transaction was committed).
 	 */
-	private hasDefinedLabels(): boolean {
-		if (this.labelTreeNode === undefined) {
-			return false;
-		}
-		for (const value of this.labelTreeNode.values()) {
-			if (value !== undefined) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Marks the current label node as closed when a transaction commits.
-	 * The node remains in the tree so it appears in the final {@link LocalChangeMetadata.labels}.
-	 */
-	public closeLabelFrame(): void {
-		if (this.labelTreeNode === undefined) {
-			return;
-		}
-		this.openLabelNodes.delete(this.currentLabelNode());
-	}
-
-	/**
-	 * Removes the current label node from the tree when a transaction is aborted.
-	 */
-	public popLabelFrame(): void {
-		if (this.labelTreeNode === undefined) {
-			return;
-		}
-
+	public popLabelFrame(aborted: boolean): void {
 		const node = this.currentLabelNode();
-		this.openLabelNodes.delete(node);
+		if (node === undefined) {
+			return;
+		}
 
-		if (node === this.labelTreeNode) {
-			this.labelTreeNode = undefined;
-		} else {
-			// node is now closed, so currentLabelNode() returns its parent.
-			this.currentLabelNode().children.pop();
+		TreeCheckout.openLabelNodes.delete(node);
+
+		if (aborted) {
+			if (node === this.labelTreeNode) {
+				this.labelTreeNode = undefined;
+			} else {
+				// node is now closed, so currentLabelNode() returns its parent.
+				const parent = this.currentLabelNode();
+				assert(parent !== undefined, "Expected parent label node to exist");
+				parent.children.pop();
+			}
 		}
 	}
 
@@ -708,7 +693,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.value,
-					labels: this.hasDefinedLabels() ? this.labelTreeNode : undefined,
+					labels: this.labelTreeNode,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
