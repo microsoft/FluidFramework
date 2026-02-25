@@ -196,6 +196,7 @@ stages:
       displayName: Guardian tasks
       steps:
         - checkout: self
+          path: ${{ variables.FluidFrameworkDirectory }}
           submodules: false
           clean: true
 
