@@ -420,7 +420,7 @@ export class SharedTreeKernel
 
 	public override didAttach(): void {
 		for (const checkout of this.checkouts.values()) {
-			if (checkout.transaction.isInProgress()) {
+			if (checkout.transaction.size > 0) {
 				// Attaching during a transaction is not currently supported.
 				// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
 				throw new UsageError(
@@ -438,7 +438,7 @@ export class SharedTreeKernel
 	): void {
 		for (const checkout of this.checkouts.values()) {
 			assert(
-				!checkout.transaction.isInProgress(),
+				checkout.transaction.size === 0,
 				0x674 /* Unexpected transaction is open while applying stashed ops */,
 			);
 		}
@@ -453,7 +453,7 @@ export class SharedTreeKernel
 	): void {
 		const checkout = this.getCheckout(branchId);
 		assert(
-			!checkout.transaction.isInProgress(),
+			checkout.transaction.size === 0,
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
