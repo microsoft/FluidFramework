@@ -227,7 +227,7 @@ function makeMarkEffectDecoder(
 
 			const attachId = getAttachedRootId(mark);
 			if (cellId !== undefined && !areEqualChangeAtomIds(cellId, attachId)) {
-				context.decodeRootRename(cellId, attachId, count);
+				context.decodeRootRename(cellId, attachId, count, false);
 			}
 
 			return mark;
@@ -268,20 +268,20 @@ function makeMarkEffectDecoder(
 					: changeAtomIdCodec.decode(idOverride, context.baseContext);
 
 			const decodedRevision = decodeRevision(revision, context.baseContext);
-			if (finalEndpoint !== undefined) {
-				const decodedEndpoint = changeAtomIdCodec.decode(finalEndpoint, context.baseContext);
-				return decodeDetach(
-					cellId,
-					count,
-					decodedEndpoint.revision ?? fail("Revision should be defined"),
-					decodedEndpoint.localId,
-					cellRename,
-					{ revision: decodedRevision, localId: id },
-					context,
-				);
-			}
+			const decodedEndpoint =
+				finalEndpoint === undefined
+					? undefined
+					: changeAtomIdCodec.decode(finalEndpoint, context.baseContext);
 
-			return decodeDetach(cellId, count, decodedRevision, id, cellRename, undefined, context);
+			return decodeDetach(
+				cellId,
+				count,
+				decodedRevision,
+				id,
+				cellRename,
+				decodedEndpoint,
+				context,
+			);
 		},
 		attachAndDetach(
 			encoded: Encoded.AttachAndDetach,
@@ -315,7 +315,7 @@ function makeMarkEffectDecoder(
 
 			assert(cellId !== undefined, "Attach and detach should target an empty cell");
 			if (encoded.attach.moveIn === undefined) {
-				context.decodeRootRename(cellId, detachId, count);
+				context.decodeRootRename(cellId, detachId, count, false);
 			} else {
 				context.decodeMoveAndDetach(detachId, count);
 			}
@@ -336,16 +336,18 @@ function decodeDetach(
 	revision: RevisionTag,
 	localId: ChangesetLocalId,
 	cellRename: ChangeAtomId | undefined,
-	detachCellId: ChangeAtomId | undefined,
+	endpoint: ChangeAtomId | undefined,
 	context: FieldChangeEncodingContext,
 ): Detach | Rename {
 	const detachId: ChangeAtomId = { revision, localId };
 	if (cellId !== undefined) {
-		context.decodeRootRename(cellId, detachId, count);
+		context.decodeRootRename(cellId, endpoint ?? detachId, count, false);
 		return {
 			type: "Rename",
-			idOverride: cellRename ?? detachCellId ?? detachId,
+			idOverride: cellRename ?? detachId,
 		};
+	} else if (endpoint !== undefined) {
+		context.decodeRootRename(detachId, endpoint, count, true);
 	}
 
 	const mark: Mutable<Detach> = {
@@ -655,13 +657,13 @@ function encodeMarkEffectV2(
 	switch (type) {
 		case "Attach": {
 			const attachId = getAttachedRootId(mark);
-			const isMove = context.isDetachId(attachId, 1).value;
+			const detachId = context.getInputRootId(attachId, mark.count).value ?? attachId;
+			const isMove = context.isDetachId(detachId, mark.count).value;
 
 			// If the input context ID for these nodes is not the cell ID,
 			// then these nodes are being moved from the location at which they were last detached.
-			const inputId = context.getInputRootId(attachId, mark.count).value ?? attachId;
 			const isInitialAttachLocation =
-				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, inputId);
+				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, detachId);
 
 			if (!isMove && isInitialAttachLocation) {
 				return {
@@ -672,11 +674,9 @@ function encodeMarkEffectV2(
 				};
 			}
 
-			const detachId = context.getInputRootId(attachId, mark.count).value;
-			const encodedEndpoint =
-				detachId === undefined
-					? undefined
-					: changeAtomIdCodec.encode(detachId, context.baseContext);
+			const encodedEndpoint = areEqualChangeAtomIds(detachId, attachId)
+				? undefined
+				: changeAtomIdCodec.encode(detachId, context.baseContext);
 
 			return {
 				moveIn: {
@@ -693,25 +693,23 @@ function encodeMarkEffectV2(
 					: changeAtomIdCodec.encode(mark.cellRename, context.baseContext);
 
 			const detachId = getDetachedRootId(mark);
-			const isMove = context.isAttachId(detachId, 1).value;
+			const attachId = context.getOutputRootId(detachId, mark.count).value ?? detachId;
+			const isMove = context.isAttachId(attachId, 1).value;
 
 			const outputCellId = getDetachOutputCellId(mark);
 
 			// If the final detach location for the nodes were here,
 			// then the output cell ID would be the same as the detach ID.
 			// So if the cell ID is different from the detach ID, the nodes must have been moved.
-			const isFinalDetachLocation = areEqualChangeAtomIds(detachId, outputCellId);
+			const isFinalDetachLocation = areEqualChangeAtomIds(attachId, outputCellId);
 
 			const isMoveOrDetachedMove = isMove || !isFinalDetachLocation;
 
-			const attachId = context.getOutputRootId(detachId, mark.count).value;
-
 			const encodedRevision = encodeRevision(mark.revision);
 			if (isMoveOrDetachedMove) {
-				const encodedEndpoint =
-					attachId === undefined
-						? undefined
-						: changeAtomIdCodec.encode(attachId, context.baseContext);
+				const encodedEndpoint = areEqualChangeAtomIds(attachId, detachId)
+					? undefined
+					: changeAtomIdCodec.encode(attachId, context.baseContext);
 
 				const encoded: Encoded.MarkEffect = {
 					moveOut: {

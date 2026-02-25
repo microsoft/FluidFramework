@@ -176,6 +176,7 @@ export function makeOptionalFieldCodec(
 					changeAtomIdCodec.decode(encodedOldId, context.baseContext),
 					changeAtomIdCodec.decode(encodedNewId, context.baseContext),
 					1,
+					false,
 				);
 			}
 

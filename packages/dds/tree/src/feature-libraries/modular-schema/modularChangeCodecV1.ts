@@ -332,8 +332,14 @@ function decodeFieldChangesFromJson(
 				decodedRootTable.detachLocations.set(detachId, 1, fieldId);
 			},
 
-			decodeRootRename: (oldId, newId, count): void => {
-				addNodeRename(decodedRootTable, oldId, newId, count, fieldId);
+			decodeRootRename: (oldId, newId, count, doesChangeDetachRoot): void => {
+				addNodeRename(
+					decodedRootTable,
+					oldId,
+					newId,
+					count,
+					doesChangeDetachRoot ? undefined : fieldId,
+				);
 			},
 
 			decodeMoveAndDetach: (detachId, count): void => {
@@ -555,11 +561,7 @@ export function encodeChange(
 		count: number,
 	): RangeQueryEntry<ChangeAtomId, boolean> => {
 		const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
-
-		// XXX: Shouldn't this be `newToOldId`?
-		const renameEntry = change.rootNodes.oldToNewId.getFirst(id, detachEntry.length);
-		const isDetach = (detachEntry.value ?? renameEntry.value) !== undefined;
-		return { start: id, value: isDetach, length: renameEntry.length };
+		return { start: id, value: detachEntry.value !== undefined, length: detachEntry.length };
 	};
 
 	const getOldFromNewId = (
@@ -779,9 +781,11 @@ function getFieldToRoots(
 	}
 
 	for (const entry of rootTable.oldToNewId.entries()) {
+		// XXX: We need to query using `entry.length`.
+		// Should `fieldToRoots` include renames that come after a detach?
 		const fieldId = rootTable.detachLocations.getFirst(entry.start, 1).value;
 		if (fieldId === undefined) {
-			fail("Untracked root change");
+			// This is a rename of nodes detached by this changeset.
 		} else {
 			getOrAddInFieldRootMap(fieldToRoots, normalizeFieldId(fieldId, aliases)).renames.set(
 				entry.start,
