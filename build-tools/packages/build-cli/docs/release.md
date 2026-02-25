@@ -210,7 +210,7 @@ Generates a report of Fluid Framework releases.
 ```
 USAGE
   $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
-    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName <value>]
+    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName <value>] [--useCurrentVersion]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -240,6 +240,10 @@ FLAGS
       If provided, the output files will be named using this base name followed by the report kind (caret, simple, full,
       tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
       'foo.caret.json', 'foo.simple.json', etc.
+
+  --useCurrentVersion
+      When selecting versions in in-repo mode, use current build versions (including unreleased in-repo versions) instead
+      of falling back to the latest released version.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
