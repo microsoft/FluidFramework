@@ -821,7 +821,20 @@ export class PerformanceEvent {
 		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
 			globalThis.performance.mark(endMark);
-			globalThis.performance.measure(this.event.eventName, this.startMark, endMark);
+			try {
+				globalThis.performance.measure(this.event.eventName, this.startMark, endMark);
+			} catch (error: unknown) {
+				// The start mark may have been cleared by deferred cleanup from a
+				// previous event with the same name. This is benign — the measure
+				// is best-effort for Performance Timeline observability.
+				// Node.js throws SyntaxError; browsers may throw DOMException.
+				if (
+					!(error instanceof SyntaxError) &&
+					!(typeof DOMException !== "undefined" && error instanceof DOMException)
+				) {
+					throw error;
+				}
+			}
 			// Schedule deferred cleanup so marks/measures remain observable
 			// in the Performance Timeline for a short window.
 			PerformanceEvent.pendingMarkCleanup.add(this.startMark);
