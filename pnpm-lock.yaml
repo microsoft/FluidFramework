@@ -16,6 +16,7 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   axios@<0.30.0: ^0.30.0
   tar: '>=7.5.7'
+  mocha>serialize-javascript@6.0.0: ^6.0.2
 
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
