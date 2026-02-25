@@ -418,5 +418,186 @@ describe("Runtime", () => {
 			});
 			/* eslint-enable @typescript-eslint/consistent-type-assertions */
 		});
+
+		describe("getDataStore - Unbound Context Resolution", () => {
+			/* eslint-disable @typescript-eslint/consistent-type-assertions */
+			let channelCollection: ChannelCollection;
+			let mockLogger: MockLogger;
+			let parentContext: IFluidRootParentContextPrivate;
+
+			const configProvider = (settings: Record<string, ConfigTypes>) => ({
+				getRawConfig: (name: string): ConfigTypes => settings[name],
+			});
+
+			beforeEach(() => {
+				mockLogger = new MockLogger();
+				const mc = mixinMonitoringContext(
+					mockLogger,
+					configProvider({
+						"Fluid.Runtime.DisableShortIds": true,
+					}),
+				);
+				const baseParentContext = createParentContext(mc.logger);
+
+				parentContext = {
+					...baseParentContext,
+					attachState: AttachState.Attached,
+					submitMessage: (_containerRuntimeMessage: unknown, _localOpMetadata: unknown) => {},
+					submitSignal: (_envelope: unknown, _targetClientId?: string) => {},
+					addedGCOutboundRoute: () => {},
+					makeLocallyVisible: () => {},
+					getExtension: () => undefined,
+					getCreateChildSummarizerNodeFn: (id: string) => {
+						const fn = createSummarizerNodeAndGetCreateFn(id).createSummarizerNodeFn;
+						return fn;
+					},
+				} as unknown as IFluidRootParentContextPrivate;
+
+				channelCollection = new ChannelCollection(
+					undefined, // baseSnapshot
+					parentContext,
+					mockLogger,
+					() => {}, // gcNodeUpdated
+					() => false, // isDataStoreDeleted
+					new Map(), // aliasMap
+				);
+			});
+
+			it("should resolve an unbound datastore context via contexts.get (the fix path)", async () => {
+				// Create a local DataStore context - it starts as unbound
+				const localContext = channelCollection.createDataStoreContext(["TestPackage"]);
+				const dataStoreId = localContext.id;
+
+				// Access internal contexts to verify the context state
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
+
+				// The context should exist in contexts.get (returns all contexts including unbound)
+				const contextFromGet = contexts.get(dataStoreId);
+				assert(contextFromGet !== undefined, "contexts.get should return the unbound context");
+
+				// The context should be unbound
+				assert(contexts.isNotBound(dataStoreId), "Context should be in unbound state");
+
+				// getBoundOrRemoted with wait=false should NOT return the unbound context
+				// (this is the old code path that missed unbound contexts)
+				const contextFromGetBoundOrRemoted = await contexts.getBoundOrRemoted(
+					dataStoreId,
+					false,
+				);
+				assert.strictEqual(
+					contextFromGetBoundOrRemoted,
+					undefined,
+					"getBoundOrRemoted with wait=false should return undefined for unbound context",
+				);
+
+				// The fix: contexts.get(id) ?? await contexts.getBoundOrRemoted(id, wait)
+				// This should return the unbound context via the contexts.get fallback
+				const resolvedContext =
+					contexts.get(dataStoreId) ?? (await contexts.getBoundOrRemoted(dataStoreId, false));
+				assert(
+					resolvedContext !== undefined,
+					"The fixed resolution path should find the unbound context",
+				);
+				assert.strictEqual(
+					resolvedContext.id,
+					dataStoreId,
+					"Resolved context should have the correct ID",
+				);
+
+				// Verify the context is still unbound after resolution (it wasn't mutated)
+				assert(
+					contexts.isNotBound(dataStoreId),
+					"Context should still be unbound after resolution",
+				);
+			});
+
+			it("should also resolve bound contexts (existing behavior preserved)", async () => {
+				// Create and bind a local DataStore context
+				const localContext = channelCollection.createDataStoreContext([
+					"TestPackage",
+				]) as LocalFluidDataStoreContext;
+				const dataStoreId = localContext.id;
+
+				localContext.setAttachState(AttachState.Attaching);
+				(
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts.bind(dataStoreId);
+
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
+
+				// Both paths should return the bound context
+				const contextFromGet = contexts.get(dataStoreId);
+				assert(contextFromGet !== undefined, "contexts.get should return the bound context");
+
+				const contextFromGetBoundOrRemoted = await contexts.getBoundOrRemoted(
+					dataStoreId,
+					false,
+				);
+				assert(
+					contextFromGetBoundOrRemoted !== undefined,
+					"getBoundOrRemoted should return the bound context",
+				);
+
+				// The fix path should also work for bound contexts
+				const resolvedContext =
+					contexts.get(dataStoreId) ?? (await contexts.getBoundOrRemoted(dataStoreId, false));
+				assert(
+					resolvedContext !== undefined,
+					"The fixed resolution path should find the bound context",
+				);
+				assert.strictEqual(
+					resolvedContext.id,
+					dataStoreId,
+					"Resolved context should have the correct ID",
+				);
+
+				// Context should NOT be unbound
+				assert(
+					!contexts.isNotBound(dataStoreId),
+					"Context should not be in unbound state after binding",
+				);
+			});
+
+			it("should return undefined for non-existent context with wait=false", async () => {
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
+
+				const nonExistentId = "non-existent-datastore-id";
+
+				// Both paths should return undefined for a non-existent context
+				const contextFromGet = contexts.get(nonExistentId);
+				assert.strictEqual(
+					contextFromGet,
+					undefined,
+					"contexts.get should return undefined for non-existent context",
+				);
+
+				const contextFromGetBoundOrRemoted = await contexts.getBoundOrRemoted(
+					nonExistentId,
+					false,
+				);
+				assert.strictEqual(
+					contextFromGetBoundOrRemoted,
+					undefined,
+					"getBoundOrRemoted should return undefined for non-existent context",
+				);
+
+				// The fix path should also return undefined
+				const resolvedContext =
+					contexts.get(nonExistentId) ??
+					(await contexts.getBoundOrRemoted(nonExistentId, false));
+				assert.strictEqual(
+					resolvedContext,
+					undefined,
+					"The fixed resolution path should return undefined for non-existent context",
+				);
+			});
+			/* eslint-enable @typescript-eslint/consistent-type-assertions */
+		});
 	});
 });
