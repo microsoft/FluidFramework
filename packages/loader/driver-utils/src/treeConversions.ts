@@ -23,9 +23,12 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 		? [
 				...Object.entries(summaryTree.tree[".protocol"].tree),
 				...Object.entries(summaryTree.tree[".app"].tree),
-				...((summaryTree as ISummaryTree).tree[".history"] !== undefined
-					? ([[".history", (summaryTree as ISummaryTree).tree[".history"]]] as [string, ISummaryTree["tree"][string]][])
-					: []),
+				...(summaryTree.tree[".history"] === undefined
+					? []
+					: ([[".history", summaryTree.tree[".history"]]] as [
+							string,
+							ISummaryTree["tree"][string],
+						][])),
 			]
 		: Object.entries(summaryTree.tree);
 
