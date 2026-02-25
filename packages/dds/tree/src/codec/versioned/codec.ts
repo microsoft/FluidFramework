@@ -397,6 +397,11 @@ export class ClientVersionDispatchingCodecBuilder<
 		JsonCompatibleReadOnly,
 		TContext
 	> & {
+		/**
+		 * The format version which this codec writes.
+		 * @remarks
+		 * This is selected based on the provided {@link CodecWriteOptions}.
+		 */
 		readonly writeVersion: TFormatVersion;
 	} {
 		const applied = this.applyOptions(options);
