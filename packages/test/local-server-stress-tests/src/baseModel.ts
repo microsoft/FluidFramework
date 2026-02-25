@@ -63,9 +63,17 @@ const orderSequentiallyReducer = async (
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
-	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
+	createDataStore: async (state, op) => {
+		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
+		if (op.storeHandle) {
+			state.datastore.storeHandleInRoot(op.tag, handle);
+		}
+	},
 	createChannel: async (state, op) => {
-		state.datastore.createChannel(op.tag, op.channelType);
+		const handle = state.datastore.createChannel(op.tag, op.channelType);
+		if (op.storeHandle) {
+			state.datastore.storeHandleInRoot(op.tag, handle);
+		}
 	},
 	uploadBlob: async (state, op) =>
 		// this will hang if we are offline due to disconnect, so we don't wait for blob upload
@@ -78,10 +86,19 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 });
 
 /**
- * Threshold for the "creation phase": the first N operations before attach
- * prioritize creating datastores and channels.
+ * Absolute op-count threshold marking the end of the "datastore creation phase".
+ * Operations 0 through datastoreCreationPhaseEnd-1 prioritize creating datastores
+ * so they exist before channels are created in them.
  */
-const creationPhaseOps = 7;
+const datastoreCreationPhaseEnd = 10;
+
+/**
+ * Absolute op-count threshold marking the end of the "channel creation phase".
+ * Operations datastoreCreationPhaseEnd through channelCreationPhaseEnd-1 prioritize
+ * creating channels across available datastores. After this threshold, DDS operations
+ * are prioritized.
+ */
+const channelCreationPhaseEnd = 20;
 
 export function makeGenerator<T extends BaseOperation>(
 	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
@@ -90,20 +107,29 @@ export function makeGenerator<T extends BaseOperation>(
 	let detachedOpCount = 0;
 
 	/**
-	 * Returns true if we're in the detached "creation phase" (prioritize creating datastores/channels).
-	 * This is the first few operations while detached, before the DDS ops phase.
+	 * Returns true if we're in the detached "datastore creation phase".
+	 * This is the first few operations while detached, before channel creation.
 	 */
-	const isDetachedCreationPhase = (state: LocalServerStressState): boolean =>
+	const isDetachedDatastoreCreationPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount < creationPhaseOps;
+		detachedOpCount < datastoreCreationPhaseEnd;
+
+	/**
+	 * Returns true if we're in the detached "channel creation phase".
+	 * This is after datastore creation but before the DDS ops phase.
+	 */
+	const isDetachedChannelCreationPhase = (state: LocalServerStressState): boolean =>
+		state.client.container.attachState === AttachState.Detached &&
+		detachedOpCount >= datastoreCreationPhaseEnd &&
+		detachedOpCount < channelCreationPhaseEnd;
 
 	/**
 	 * Returns true if we're in the detached "DDS ops phase" (prioritize DDS operations).
-	 * This is after the creation phase but still detached.
+	 * This is after both creation phases but still detached.
 	 */
 	const isDetachedDdsOpsPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount >= creationPhaseOps;
+		detachedOpCount >= channelCreationPhaseEnd;
 
 	const asyncGenerator = createWeightedAsyncGeneratorWithDynamicWeights<
 		StressOperations | T,
@@ -115,13 +141,14 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "createDataStore",
 				asChild: state.random.bool(),
 				tag: state.tag("datastore"),
+				storeHandle: state.random.bool(isDetachedDatastoreCreationPhase(state) ? 0.9 : 0.5),
 			}),
-			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
+			// High weight during datastore creation phase, zero during channel creation and DDS ops phases, low otherwise
 			(state) => {
-				if (isDetachedCreationPhase(state)) {
+				if (isDetachedDatastoreCreationPhase(state)) {
 					return 20;
 				}
-				if (isDetachedDdsOpsPhase(state)) {
+				if (isDetachedChannelCreationPhase(state) || isDetachedDdsOpsPhase(state)) {
 					return 0;
 				}
 				return 1;
@@ -141,13 +168,14 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "createChannel",
 				channelType: state.random.pick([...ddsModelMap.keys()]),
 				tag: state.tag("channel"),
+				storeHandle: state.random.bool(isDetachedChannelCreationPhase(state) ? 0.9 : 0.5),
 			}),
-			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
+			// High weight during channel creation phase, zero during datastore creation and DDS ops phases, low otherwise
 			(state) => {
-				if (isDetachedCreationPhase(state)) {
+				if (isDetachedChannelCreationPhase(state)) {
 					return 20;
 				}
-				if (isDetachedDdsOpsPhase(state)) {
+				if (isDetachedDatastoreCreationPhase(state) || isDetachedDdsOpsPhase(state)) {
 					return 0;
 				}
 				return 5;
@@ -174,9 +202,9 @@ export function makeGenerator<T extends BaseOperation>(
 		],
 		[
 			DDSModelOpGenerator,
-			// Zero weight during detached creation phase, otherwise high weight
+			// Zero weight during creation phases, otherwise high weight
 			(state) => {
-				if (isDetachedCreationPhase(state)) {
+				if (isDetachedDatastoreCreationPhase(state) || isDetachedChannelCreationPhase(state)) {
 					return 0;
 				}
 				return 100;

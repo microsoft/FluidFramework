@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	validateAssertionError,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	findAncestor,
@@ -39,7 +36,7 @@ describe("TransactionStacks", () => {
 			assert.equal(transaction.isInProgress(), true);
 			started = true;
 		});
-		transaction.start(false);
+		transaction.start();
 		assert.equal(started, true);
 	});
 
@@ -50,7 +47,7 @@ describe("TransactionStacks", () => {
 			assert.equal(transaction.isInProgress(), true);
 			aborting = true;
 		});
-		transaction.start(false);
+		transaction.start();
 		transaction.abort();
 		assert.equal(aborting, true);
 	});
@@ -62,7 +59,7 @@ describe("TransactionStacks", () => {
 			assert.equal(transaction.isInProgress(), true);
 			committing = true;
 		});
-		transaction.start(false);
+		transaction.start();
 		transaction.commit();
 		assert.equal(committing, true);
 	});
@@ -70,14 +67,31 @@ describe("TransactionStacks", () => {
 	it("report whether or not a transaction is in progress", () => {
 		const transaction = new TransactionStack();
 		assert.equal(transaction.isInProgress(), false);
-		transaction.start(false);
+		transaction.start();
 		assert.equal(transaction.isInProgress(), true);
-		transaction.start(false);
+		transaction.start();
 		assert.equal(transaction.isInProgress(), true);
 		transaction.commit();
 		assert.equal(transaction.isInProgress(), true);
 		transaction.abort();
 		assert.equal(transaction.isInProgress(), false);
+	});
+
+	it("report the number of transactions in progress", () => {
+		const transaction = new TransactionStack();
+		assert.equal(transaction.size(), 0);
+		transaction.start();
+		assert.equal(transaction.size(), 1);
+		transaction.start();
+		assert.equal(transaction.size(), 2);
+		transaction.start();
+		assert.equal(transaction.size(), 3);
+		transaction.commit();
+		assert.equal(transaction.size(), 2);
+		transaction.abort();
+		assert.equal(transaction.size(), 1);
+		transaction.commit();
+		assert.equal(transaction.size(), 0);
 	});
 
 	it("run a function when a transaction begins", () => {
@@ -86,7 +100,7 @@ describe("TransactionStacks", () => {
 			invoked += 1;
 			assert.equal(transaction.isInProgress(), false);
 		});
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invoked, 1);
 	});
 
@@ -96,11 +110,11 @@ describe("TransactionStacks", () => {
 			invoked += 1;
 			assert.equal(transaction.isInProgress(), invoked > 1);
 		});
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invoked, 1);
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invoked, 2);
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invoked, 3);
 	});
 
@@ -124,19 +138,19 @@ describe("TransactionStacks", () => {
 				},
 			};
 		});
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invokedOuter, 1);
 		assert.equal(invokedInner1, 0);
 		assert.equal(invokedInner2, 0);
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invokedOuter, 1);
 		assert.equal(invokedInner1, 1);
 		assert.equal(invokedInner2, 0);
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invokedOuter, 1);
 		assert.equal(invokedInner1, 1);
 		assert.equal(invokedInner2, 1);
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invokedOuter, 1);
 		assert.equal(invokedInner1, 1);
 		assert.equal(invokedInner2, 2);
@@ -170,9 +184,9 @@ describe("TransactionStacks", () => {
 				},
 			};
 		});
-		transaction.start(false);
-		transaction.start(false);
-		transaction.start(false);
+		transaction.start();
+		transaction.start();
+		transaction.start();
 		transaction.commit();
 		assert.equal(invokedOuter, 0);
 		assert.equal(invokedInner1, 0);
@@ -198,7 +212,7 @@ describe("TransactionStacks", () => {
 				},
 			};
 		});
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invoked, 0);
 		transaction.abort();
 		assert.equal(invoked, 1);
@@ -215,7 +229,7 @@ describe("TransactionStacks", () => {
 				},
 			};
 		});
-		transaction.start(false);
+		transaction.start();
 		assert.equal(invoked, 0);
 		transaction.commit();
 		assert.equal(invoked, 1);
@@ -246,10 +260,8 @@ describe("TransactionStacks", () => {
 			() => transaction.isInProgress(),
 			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(
-			() => transaction.start(false),
-			validateAssertionError("Transactor is disposed"),
-		);
+		assert.throws(() => transaction.size(), validateAssertionError("Transactor is disposed"));
+		assert.throws(() => transaction.start(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.commit(),
 			validateAssertionError("Transactor is disposed"),
@@ -270,21 +282,10 @@ describe("TransactionStacks", () => {
 				},
 			};
 		});
-		transaction.start(false);
-		transaction.start(false);
+		transaction.start();
+		transaction.start();
 		transaction.dispose();
 		assert.equal(aborted, 2);
-	});
-
-	it("throws when attempting to start an async transaction within a sync transaction", () => {
-		const transaction = new TransactionStack();
-		transaction.start(false);
-		assert.throws(
-			() => transaction.start(true),
-			validateUsageError(
-				/An asynchronous transaction cannot be started while a synchronous transaction is in progress./,
-			),
-		);
 	});
 });
 
@@ -293,10 +294,10 @@ describe("SquashingTransactionStacks", () => {
 		const branch = createBranch();
 		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 		assert.equal(transaction.activeBranch, branch);
-		transaction.start(false);
+		transaction.start();
 		assert.notEqual(transaction.activeBranch, branch);
 		editBranch(transaction.activeBranch, "B");
-		transaction.start(false);
+		transaction.start();
 		assert.notEqual(transaction.activeBranch, branch);
 		editBranch(transaction.activeBranch, "C");
 		transaction.commit();
@@ -325,11 +326,11 @@ describe("SquashingTransactionStacks", () => {
 		});
 
 		editBranch(transaction.activeBranch, "A"); // Original branch should be updated
-		transaction.start(false);
+		transaction.start();
 		editBranch(transaction.activeBranch, "B"); // Transaction branch should be updated
 		transaction.abort();
 		editBranch(transaction.activeBranch, "C"); // Original branch should be updated
-		transaction.start(false);
+		transaction.start();
 		editBranch(transaction.activeBranch, "D"); // Transaction branch should be updated
 		transaction.commit();
 		editBranch(transaction.activeBranch, "E"); // Original branch should be updated
@@ -347,7 +348,7 @@ describe("SquashingTransactionStacks", () => {
 		edit(editor, "A");
 		assert.equal(edits(branch), 1);
 		assert.equal(transaction.activeBranch, branch);
-		transaction.start(false);
+		transaction.start();
 		edit(editor, "B");
 		assert.equal(edits(branch), 1);
 		assert.equal(edits(transaction.activeBranch), 2);
@@ -355,7 +356,7 @@ describe("SquashingTransactionStacks", () => {
 		edit(editor, "C");
 		assert.equal(edits(branch), 2);
 		assert.equal(transaction.activeBranch, branch);
-		transaction.start(false);
+		transaction.start();
 		edit(editor, "D");
 		assert.equal(edits(branch), 2);
 		assert.equal(edits(transaction.activeBranch), 3);

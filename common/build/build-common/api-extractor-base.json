@@ -10,14 +10,20 @@
 	 * Can be overridden as necessary for packages with different build structures.
 	 *
 	 * See: <https://api-extractor.com/pages/configs/api-extractor_json/#mainentrypointfilepath>
+	 *
+	 * Usually should be `<projectFolder>/lib/index.d.ts` or `<projectFolder>/dist/index.d.ts`.
 	 */
-	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+	"mainEntryPointFilePath": "INVALID - specify in derived config",
+
+	// All of the outputs are disabled (`"enabled": false`) by default in the base config.
+	// Derived configs should enable the outputs that they need.  This ensures that we
+	// don't accidentally generate outputs without more explicit intent.
 
 	/**
 	 * Configures how the API report file (*.api.md) will be generated.
 	 */
 	"apiReport": {
-		"enabled": true,
+		"enabled": false,
 		"reportFileName": "<unscopedPackageName>",
 		"reportFolder": "<projectFolder>/api-report/",
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp/",
@@ -36,7 +42,7 @@
 	 * Configures how the doc model file (*.api.json) will be generated.
 	 */
 	"docModel": {
-		"enabled": true,
+		"enabled": false,
 		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
 	},
 
@@ -51,7 +57,7 @@
 	 * Configures how the tsdoc-metadata.json file will be generated.
 	 */
 	"tsdocMetadata": {
-		"enabled": true
+		"enabled": false
 	},
 
 	/**
