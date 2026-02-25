@@ -463,42 +463,41 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("should resolve an unbound datastore context via contexts.get (the fix path)", async () => {
+			it("should resolve an unbound datastore context via getDataStore (the fix path)", async () => {
 				// Create a local DataStore context - it starts as unbound
 				const localContext = channelCollection.createDataStoreContext(["TestPackage"]);
 				const dataStoreId = localContext.id;
 
-				// Access internal contexts to verify the context state
+				// Access internal contexts to verify the context is indeed unbound
 				const contexts = (
 					channelCollection as unknown as { readonly contexts: DataStoreContexts }
 				).contexts;
-
-				// The context should exist in contexts.get (returns all contexts including unbound)
-				const contextFromGet = contexts.get(dataStoreId);
-				assert(contextFromGet !== undefined, "contexts.get should return the unbound context");
-
-				// The context should be unbound
 				assert(contexts.isNotBound(dataStoreId), "Context should be in unbound state");
 
-				// getBoundOrRemoted with wait=false should NOT return the unbound context
-				// (this is the old code path that missed unbound contexts)
-				const contextFromGetBoundOrRemoted = await contexts.getBoundOrRemoted(
-					dataStoreId,
-					false,
-				);
+				// Confirm that getBoundOrRemoted alone (the old code path) would miss this context
+				const contextFromOldPath = await contexts.getBoundOrRemoted(dataStoreId, false);
 				assert.strictEqual(
-					contextFromGetBoundOrRemoted,
+					contextFromOldPath,
 					undefined,
 					"getBoundOrRemoted with wait=false should return undefined for unbound context",
 				);
 
-				// The fix: contexts.get(id) ?? await contexts.getBoundOrRemoted(id, wait)
-				// This should return the unbound context via the contexts.get fallback
-				const resolvedContext =
-					contexts.get(dataStoreId) ?? (await contexts.getBoundOrRemoted(dataStoreId, false));
+				// Exercise the real production path: ChannelCollection.getDataStore(id, headerData, request)
+				// This private method was updated to use `contexts.get(id) ?? await contexts.getBoundOrRemoted(id, wait)`.
+				const request = { url: dataStoreId };
+				const resolvedContext = await (
+					channelCollection as unknown as {
+						getDataStore: (
+							id: string,
+							requestHeaderData: { wait?: boolean },
+							originalRequest: { url: string },
+						) => Promise<{ id: string }>;
+					}
+				).getDataStore(dataStoreId, { wait: false }, request);
+
 				assert(
 					resolvedContext !== undefined,
-					"The fixed resolution path should find the unbound context",
+					"getDataStore should find the unbound context when wait=false",
 				);
 				assert.strictEqual(
 					resolvedContext.id,
@@ -513,7 +512,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("should also resolve bound contexts (existing behavior preserved)", async () => {
+			it("should also resolve bound contexts via getDataStore (existing behavior preserved)", async () => {
 				// Create and bind a local DataStore context
 				const localContext = channelCollection.createDataStoreContext([
 					"TestPackage",
@@ -525,30 +524,19 @@ describe("Runtime", () => {
 					channelCollection as unknown as { readonly contexts: DataStoreContexts }
 				).contexts.bind(dataStoreId);
 
-				const contexts = (
-					channelCollection as unknown as { readonly contexts: DataStoreContexts }
-				).contexts;
+				// Exercise the real production path for a bound context
+				const request = { url: dataStoreId };
+				const resolvedContext = await (
+					channelCollection as unknown as {
+						getDataStore: (
+							id: string,
+							requestHeaderData: { wait?: boolean },
+							originalRequest: { url: string },
+						) => Promise<{ id: string }>;
+					}
+				).getDataStore(dataStoreId, { wait: false }, request);
 
-				// Both paths should return the bound context
-				const contextFromGet = contexts.get(dataStoreId);
-				assert(contextFromGet !== undefined, "contexts.get should return the bound context");
-
-				const contextFromGetBoundOrRemoted = await contexts.getBoundOrRemoted(
-					dataStoreId,
-					false,
-				);
-				assert(
-					contextFromGetBoundOrRemoted !== undefined,
-					"getBoundOrRemoted should return the bound context",
-				);
-
-				// The fix path should also work for bound contexts
-				const resolvedContext =
-					contexts.get(dataStoreId) ?? (await contexts.getBoundOrRemoted(dataStoreId, false));
-				assert(
-					resolvedContext !== undefined,
-					"The fixed resolution path should find the bound context",
-				);
+				assert(resolvedContext !== undefined, "getDataStore should find the bound context");
 				assert.strictEqual(
 					resolvedContext.id,
 					dataStoreId,
@@ -556,45 +544,38 @@ describe("Runtime", () => {
 				);
 
 				// Context should NOT be unbound
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
 				assert(
 					!contexts.isNotBound(dataStoreId),
 					"Context should not be in unbound state after binding",
 				);
 			});
 
-			it("should return undefined for non-existent context with wait=false", async () => {
-				const contexts = (
-					channelCollection as unknown as { readonly contexts: DataStoreContexts }
-				).contexts;
-
+			it("should throw 404 for non-existent context with wait=false via getDataStore", async () => {
 				const nonExistentId = "non-existent-datastore-id";
+				const request = { url: nonExistentId };
 
-				// Both paths should return undefined for a non-existent context
-				const contextFromGet = contexts.get(nonExistentId);
-				assert.strictEqual(
-					contextFromGet,
-					undefined,
-					"contexts.get should return undefined for non-existent context",
-				);
-
-				const contextFromGetBoundOrRemoted = await contexts.getBoundOrRemoted(
-					nonExistentId,
-					false,
-				);
-				assert.strictEqual(
-					contextFromGetBoundOrRemoted,
-					undefined,
-					"getBoundOrRemoted should return undefined for non-existent context",
-				);
-
-				// The fix path should also return undefined
-				const resolvedContext =
-					contexts.get(nonExistentId) ??
-					(await contexts.getBoundOrRemoted(nonExistentId, false));
-				assert.strictEqual(
-					resolvedContext,
-					undefined,
-					"The fixed resolution path should return undefined for non-existent context",
+				// The real getDataStore should throw a 404 response exception for non-existent contexts
+				await assert.rejects(
+					(
+						channelCollection as unknown as {
+							getDataStore: (
+								id: string,
+								requestHeaderData: { wait?: boolean },
+								originalRequest: { url: string },
+							) => Promise<unknown>;
+						}
+					).getDataStore(nonExistentId, { wait: false }, request),
+					(error: Error) => {
+						assert(
+							error.message.includes("not found"),
+							`Expected 'not found' error, got: ${error.message}`,
+						);
+						return true;
+					},
+					"getDataStore should throw 404 for non-existent context",
 				);
 			});
 			/* eslint-enable @typescript-eslint/consistent-type-assertions */
