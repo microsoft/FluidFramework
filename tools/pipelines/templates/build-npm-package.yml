@@ -376,7 +376,7 @@ extends:
                         targetType: inline
                         script: |
                           set -eu -o pipefail
-                          PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
+                          PATH_TO_TINYLICIOUS_LOG=$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
                           if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
                             echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
                             echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";

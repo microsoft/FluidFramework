@@ -238,6 +238,7 @@ stages:
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
           # Checks out FluidFramework repo
           - checkout: self
+            path: $(FluidFrameworkDirectory)
             clean: true
           - task: Docker@2
             displayName: 'Login to container registry'
@@ -248,7 +249,7 @@ stages:
             displayName: 'Start routerlicious environment in docker'
             inputs:
               containerregistrytype: 'Container Registry'
-              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              dockerComposeFile: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'up -d --wait'
               projectName: 'routerlicious'
@@ -262,9 +263,9 @@ stages:
             displayName: 'Wait for services to be ready'
             inputs:
               targetType: 'filePath'
-              filePath: $(Build.SourcesDirectory)/FluidFramework/scripts/wait-for-docker-services.sh
+              filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/wait-for-docker-services.sh
             env:
-              DOCKER_COMPOSE_FILE: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              DOCKER_COMPOSE_FILE: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
 
         - task: Bash@3
           displayName: Install base dependencies
@@ -540,7 +541,7 @@ stages:
             condition: always()
             inputs:
               containerregistrytype: 'Container Registry'
-              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              dockerComposeFile: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'down'
               projectName: 'routerlicious'

@@ -97,12 +97,13 @@ stages:
       displayName: 'Check Version Deployment Condition'
       steps:
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
         - task: Bash@3
           name: SetVersion
           displayName: 'Set Build Version'
@@ -110,7 +111,7 @@ stages:
             VERSION_BUILDNUMBER: $(Build.BuildNumber)
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
               flub generate buildVersion
@@ -119,7 +120,7 @@ stages:
           displayName: 'Check Version Deployment Condition'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               # Check if the version is the latest minor of its corresponding major version series
               # Sets variable shouldDeploy to true if the version is the latest minor and false otherwise
@@ -357,7 +358,7 @@ stages:
           inputs:
             skip_app_build: true # site was built in previous stage
             skip_api_build: true # api is written in js, no build needed
-            cwd: $(Build.SourcesDirectory)
+            cwd: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             app_location: 'docs/build'
             api_location: 'docs/api'
             output_location: ''

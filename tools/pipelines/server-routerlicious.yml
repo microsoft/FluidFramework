@@ -143,5 +143,5 @@ extends:
     - prettier
     - check:versions
     - generate:packageList
-    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
+    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     enableDockerImagePull: false

@@ -300,6 +300,7 @@ stages:
       displayName: 'Deploy website'
       steps:
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
 
@@ -315,7 +316,7 @@ stages:
           inputs:
             skip_app_build: true # site was built in previous stage
             skip_api_build: true # api is written in js, no build needed
-            cwd: $(Build.SourcesDirectory)
+            cwd: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             app_location: 'docs/build'
             api_location: 'docs/api'
             output_location: ''

@@ -110,7 +110,7 @@ extends:
     # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
     # Docker to do the actual build in CI. We need the root dependencies so setting package versions works.
     packageManagerInstallCommand: 'pnpm install --workspace-root'
-    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
+    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     packageManager: pnpm
     test: test
     tagName: historian
