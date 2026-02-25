@@ -61,8 +61,7 @@ export const toRedirectTable = (
 		eventName: "AttachmentBlobsLoaded",
 		count: blobManagerLoadInfo.ids?.length ?? 0,
 		redirectTable: blobManagerLoadInfo.redirectTable?.length,
-		// See REFERENCE TO DOC for more details on sampling in Fluid Framework.
-		sampleable: "sessionBased",
+		logLevel: "info",
 	});
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {

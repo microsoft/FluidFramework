@@ -1759,8 +1759,7 @@ export class ContainerRuntime
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
-			// See REFERENCE TO DOC for more details on sampling in Fluid Framework.
-			sampleable: "sessionBased",
+			logLevel: "info"
 		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
