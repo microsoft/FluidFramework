@@ -417,9 +417,7 @@ module.exports = {
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
 			],
-			"npm-package-types-field": [
-				"common/build/eslint-config-fluid/package.json",
-			],
+			"npm-package-types-field": ["common/build/eslint-config-fluid/package.json"],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
