@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { EmptyKey } from "../core/index.js";
+import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
+
+import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	eraseSchemaDetails,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -26,14 +29,47 @@ class TextNode
 			TreeArrayNode.spread(charactersFromString(additionalCharacters)),
 		);
 	}
-	public removeRange(index: number, length: number): void {
-		this.content.removeRange(index, length);
+	public removeRange(index: number | undefined, end: number | undefined): void {
+		this.content.removeRange(index, end);
 	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
 	}
+
+	public characterCount(): number {
+		return this.content.length;
+	}
+
+	public charactersCopy(): string[] {
+		const result = this.content.charactersCopy();
+		debugAssert(
+			() =>
+				compareArrays(result, this.charactersCopy_reference()) ||
+				"invalid charactersCopy optimizations",
+		);
+		return result;
+	}
+
 	public fullString(): string {
+		const result = this.content.fullString();
+		debugAssert(
+			() => result === this.fullString_reference() || "invalid fullString optimizations",
+		);
+		return result;
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of fullString.
+	 */
+	public fullString_reference(): string {
 		return this.content.join("");
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of charactersCopy.
+	 */
+	public charactersCopy_reference(): string[] {
+		return [...this.content];
 	}
 
 	public static fromString(value: string): TextNode {
@@ -58,7 +94,25 @@ export function charactersFromString(value: string): Iterable<string> {
 	return value;
 }
 
-class StringArray extends sf.array("StringArray", SchemaFactory.string) {}
+class StringArray extends sf.array("StringArray", SchemaFactory.string) {
+	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
+		const cursor = getInnerNode(this).borrowCursor();
+		cursor.enterField(EmptyKey);
+		const result = f(cursor);
+		cursor.exitField();
+		return result;
+	}
+
+	public charactersCopy(): string[] {
+		return this.withBorrowedSequenceCursor((cursor) =>
+			mapCursorField(cursor, () => cursor.value as string),
+		);
+	}
+
+	public fullString(): string {
+		return this.charactersCopy().join("");
+	}
+}
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
@@ -161,6 +215,20 @@ export namespace TextAsTree {
 		characters(): Iterable<string>;
 
 		/**
+		 * Optimized way to get a copy of the {@link TextAsTree.Members.characters} in an array.
+		 */
+		charactersCopy(): string[];
+
+		/**
+		 * Gets the number of characters currently in the text.
+		 * @remarks
+		 * The length of {@link TextAsTree.Members.characters}.
+		 * This is not the length of the string returned by {@link TextAsTree.Members.fullString},
+		 * as that string may contain characters which are made up of multiple UTF-16 code units.
+		 */
+		characterCount(): number;
+
+		/**
 		 * Copy the content of this node into a string.
 		 */
 		fullString(): string;
@@ -184,7 +252,7 @@ export namespace TextAsTree {
 		 * Remove a range from a string based on character index.
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
-		removeRange(index: number, length: number): void;
+		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
 	}
 
 	/**

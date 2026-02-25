@@ -31,6 +31,7 @@ import _ from "lodash";
 import Sinon from "sinon";
 import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
+import { SummaryWriterFactory } from "../../scribe";
 
 describe("Routerlicious", () => {
 	describe("Scribe", () => {
@@ -161,6 +162,7 @@ describe("Routerlicious", () => {
 					true,
 					2000,
 					2000,
+					new SummaryWriterFactory(),
 				);
 
 				testContext = new TestContext();

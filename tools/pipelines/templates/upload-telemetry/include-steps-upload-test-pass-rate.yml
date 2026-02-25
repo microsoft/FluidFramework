@@ -30,7 +30,7 @@ steps:
     script: |
       set -eu -o pipefail
       echo "Fetching test pass rate data and saving into JSON files"
-      node "$(Build.SourcesDirectory)/scripts/get-test-pass-rate.mjs"
+      node "$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/scripts/get-test-pass-rate.mjs"
 
 - task: Bash@3
   displayName: Submit telemetry for test pass rate
@@ -41,7 +41,7 @@ steps:
     WORK_FOLDER: $(Agent.TempDirectory)/stageTestPassRate
   inputs:
     targetType: 'inline'
-    workingDirectory: $(Build.SourcesDirectory)
+    workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
     script: |
       set -eu -o pipefail
       echo "Listing files in '$WORK_FOLDER'"
