@@ -162,10 +162,6 @@ describe(`Presence with AzureClient`, () => {
 				});
 
 				it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeDisconnected() {
-					/**
-					 * Note: This test is currently skipped in the AFR driver due to General Network Errors in the Service Clients End to End tests pipelines.
-					 * For more context, see AB#59980.
-					 */
 					if (useAzure && numClients > 50) {
 						// Even with increased timeouts, more than 50 clients can be too large for AFR.
 						// This may be due to slow responses/inactivity from the clients that are
