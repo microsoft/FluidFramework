@@ -41,14 +41,12 @@ import {
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
-	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import { forestCodecBuilder, type ForestCodec } from "./codec.js";
-import { ForestFormatVersion } from "./formatCommon.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
@@ -81,7 +79,6 @@ export class ForestSummarizer
 	public constructor(
 		private readonly forest: IEditableForest,
 		private readonly revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
@@ -95,9 +92,8 @@ export class ForestSummarizer
 			true /* supportPreVersioningFormat */,
 		);
 
-		this.codec = forestCodecBuilder.build({ ...options, fieldBatchCodec });
+		this.codec = forestCodecBuilder.build(options);
 
-		const forestFormatWriteVersion = this.codec.writeVersion;
 		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
 			options.minVersionForCollab,
 		);
@@ -105,9 +101,10 @@ export class ForestSummarizer
 			summaryFormatWriteVersion,
 		);
 
-		// Incremental summary is supported from ForestFormatVersion.v2 and ForestSummaryFormatVersion.v3 onwards.
+		// Incremental summary is supported in ForestSummaryFormatVersion.v3 onwards.
+		// Note that even in versions that support it, it is possible that the
+		// FieldBatchCodec will not use incremental encoding (for example if using its v1 formats which does not support it).
 		const enableIncrementalSummary =
-			forestFormatWriteVersion >= ForestFormatVersion.v2 &&
 			summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&
 			encoderContext.encodeType === TreeCompressionStrategy.CompressedIncremental;
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(

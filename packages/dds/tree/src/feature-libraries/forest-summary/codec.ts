@@ -13,9 +13,12 @@ import {
 	FluidClientVersion,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+import {
+	fieldBatchCodecBuilder,
+	type FieldBatchEncodingContext,
+} from "../chunked-forest/index.js";
 
-import { ForestFormatVersion, type Format, FormatCommon } from "./formatCommon.js";
+import { ForestFormatVersion, FormatCommon } from "./formatCommon.js";
 
 /**
  * Uses field cursors
@@ -23,28 +26,18 @@ import { ForestFormatVersion, type Format, FormatCommon } from "./formatCommon.j
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
 export type ForestCodec = ReturnType<typeof forestCodecBuilder.build>;
 
-/**
- * Options for building the forest summarizer codec.
- * @remarks
- * Extends {@link CodecWriteOptions} with the required `fieldBatchCodec` dependency.
- */
-export interface ForestCodecOptions extends CodecWriteOptions {
-	/**
-	 * Codec for encoding the field batches in the forest summary.
-	 * @privateRemarks
-	 * TODO: Select this automatically.
-	 * This is kept for now to limit the scope of changes done at the same time.
-	 */
-	readonly fieldBatchCodec: FieldBatchCodec;
-}
-
 function makeForestSummarizerCodec(
-	options: ForestCodecOptions,
+	options: CodecWriteOptions,
 	version: ForestFormatVersion,
 ): CodecAndSchema<FieldSet, FieldBatchEncodingContext> {
-	const formatSchema = FormatCommon(version);
+	// Performance: Since multiple places (including multiple versions of this codec) use the field batch codec,
+	// we may end up with multiple copies of it, including compiling its format validation multiple times.
+	// This is not ideal, but is not too bad as it is a small fixed number of copies and thus should not be too expensive.
+	// If this becomes problematic a cache could be added for options to codec instances somewhere.
+	const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
+	const formatSchema = FormatCommon;
 	return {
-		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
+		encode: (data: FieldSet, context: FieldBatchEncodingContext): FormatCommon => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
 			for (const [key, value] of data) {
@@ -53,13 +46,13 @@ function makeForestSummarizerCodec(
 			}
 			return {
 				keys,
-				fields: options.fieldBatchCodec.encode(fields, context),
+				fields: fieldBatchCodec.encode(fields, context),
 				version,
 			};
 		},
-		decode: (data: Format, context: FieldBatchEncodingContext): FieldSet => {
+		decode: (data: FormatCommon, context: FieldBatchEncodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
-			const fields = options.fieldBatchCodec.decode(data.fields, context);
+			const fields = fieldBatchCodec.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (const [index, field] of fields.entries()) {
 				out.set(data.keys[index] ?? oob(), field);
@@ -77,13 +70,13 @@ export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Fo
 	{
 		minVersionForCollab: lowestMinVersionForCollab,
 		formatVersion: ForestFormatVersion.v1,
-		codec: (options: ForestCodecOptions) =>
+		codec: (options: CodecWriteOptions) =>
 			makeForestSummarizerCodec(options, ForestFormatVersion.v1),
 	},
 	{
 		minVersionForCollab: FluidClientVersion.v2_74,
 		formatVersion: ForestFormatVersion.v2,
-		codec: (options: ForestCodecOptions) =>
+		codec: (options: CodecWriteOptions) =>
 			makeForestSummarizerCodec(options, ForestFormatVersion.v2),
 	},
 ]);
