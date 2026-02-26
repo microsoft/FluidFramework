@@ -2755,6 +2755,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		private readonly fieldId: FieldId,
 	) {}
 
+	// XXX: Renmove `newAttachId` parameter.
 	public invertDetach(
 		detachId: ChangeAtomId,
 		count: number,
@@ -2795,26 +2796,38 @@ class InvertNodeManagerI implements InvertNodeManager {
 			}
 		}
 
+		const newDetachId = this.getInvertedMoveId(attachIdEntry.value);
 		for (const entry of doesChangeAttachNodes(
 			this.table.change.crossFieldKeys,
 			attachIdEntry.value,
 			count,
 		)) {
+			const offsetDetachId = offsetChangeAtomId(newDetachId, entry.offset);
+			const offsetAttachId = offsetChangeAtomId(newAttachId, entry.offset);
 			if (entry.value) {
-				if (!areEqualChangeAtomIds(attachIdEntry.value, newAttachId)) {
-					// XXX: This requires that the choice of inverse move IDs is specified by the contrat of `FieldChangeHandler.invert`.
-					this.table.attachToDetachId.set(
-						newAttachId,
-						count,
-						this.getInvertedMoveId(attachIdEntry.value),
-					);
+				if (!areEqualChangeAtomIds(offsetDetachId, offsetAttachId)) {
+					// We are inverting a detach is part of a move, where the detach and attach IDs of the move are different.
+					// We need to create a rename from the new detach ID to the new attach ID.
+					// XXX: This assumes that the field which inverts the attach uses the expected detach ID.
+					// This should be added to the contract of `invertAttach`.
+					this.table.attachToDetachId.set(offsetAttachId, entry.length, offsetDetachId);
 				}
 			} else {
-				if (!areEqualChangeAtomIds(attachIdEntry.value, newAttachId)) {
-					this.table.attachToDetachId.set(newAttachId, count, attachIdEntry.value);
+				const offsetOriginalAttachId = offsetChangeAtomId(attachIdEntry.value, entry.offset);
+				if (!areEqualChangeAtomIds(offsetOriginalAttachId, offsetAttachId)) {
+					// We are inverting a detach which is not part of a move.
+					// The inverted changeset needs to have a rename from the existing root ID (`offsetOriginalAttachId`)
+					// to the new attach ID (`offsetAttachId`).
+					this.table.attachToDetachId.set(
+						offsetAttachId,
+						entry.length,
+						offsetOriginalAttachId,
+					);
+
+					// We also need to set the detach location for the above rename.
 					this.table.invertedRoots.detachLocations.set(
-						attachIdEntry.value,
-						count,
+						offsetOriginalAttachId,
+						entry.length,
 						this.fieldId,
 					);
 				}
