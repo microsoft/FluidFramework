@@ -2764,11 +2764,13 @@ class InvertNodeManagerI implements InvertNodeManager {
 	): void {
 		assert(areEqualChangeAtomIds(newAttachId, this.getInvertedMoveId(detachId)), "XXX");
 
+		let countProcessed = count;
 		const attachIdEntry = firstAttachIdFromDetachId(
 			this.table.change.rootNodes,
 			detachId,
-			count,
+			countProcessed,
 		);
+		countProcessed = attachIdEntry.length;
 
 		if (nodeChange !== undefined) {
 			assert(count === 1, "A node change should only affect one node");
@@ -2800,7 +2802,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 		for (const entry of doesChangeAttachNodes(
 			this.table.change.crossFieldKeys,
 			attachIdEntry.value,
-			count,
+			countProcessed,
 		)) {
 			const offsetDetachId = offsetChangeAtomId(newDetachId, entry.offset);
 			const offsetAttachId = offsetChangeAtomId(newAttachId, entry.offset);
