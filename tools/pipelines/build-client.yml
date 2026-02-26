@@ -60,7 +60,6 @@ trigger:
     - release/*
   paths:
     include:
-    - .devcontainer/*
     - .dockerignore
     - .gitattributes
     - .gitignore
@@ -72,7 +71,6 @@ trigger:
     - .pnpmfile.cjs
     - .prettierignore
     - .releaseGroup
-    - .vscode/*
     - _buildProject.config.cjs
     - assertTagging.config.mjs
     - azure
@@ -129,7 +127,6 @@ pr:
     - release/*
   paths:
     include:
-    - .devcontainer/*
     - .dockerignore
     - .gitattributes
     - .gitignore
@@ -141,7 +138,6 @@ pr:
     - .pnpmfile.cjs
     - .prettierignore
     - .releaseGroup
-    - .vscode/*
     - _buildProject.config.cjs
     - assertTagging.config.mjs
     - azure
