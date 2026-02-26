@@ -15,10 +15,10 @@ export interface ValueTree<T = unknown> {
 	/**
 	 * The value at this node.
 	 */
-	readonly value: T;
+	value: T;
 
 	/**
 	 * The children of this node.
 	 */
-	readonly children: readonly ValueTree<T>[];
+	children: ValueTree<T>[];
 }

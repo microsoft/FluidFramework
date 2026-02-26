@@ -133,17 +133,16 @@ function* collectTreeValues(node: ValueTree): IterableIterator<unknown> {
  * values with the tree attached. Otherwise returns an empty set.
  */
 function buildLabelsSet(labelTreeNode: ValueTree | undefined): TransactionLabels {
-	if (labelTreeNode === undefined) {
-		return emptyLabelsSet;
+	if (labelTreeNode !== undefined) {
+		let set: Set<unknown> | undefined;
+		for (const value of collectTreeValues(labelTreeNode)) {
+			(set ??= new Set()).add(value);
+		}
+		if (set !== undefined) {
+			return Object.assign(set, { tree: labelTreeNode });
+		}
 	}
-	let set: Set<unknown> | undefined;
-	for (const value of collectTreeValues(labelTreeNode)) {
-		(set ??= new Set()).add(value);
-	}
-	if (set === undefined) {
-		return emptyLabelsSet;
-	}
-	return Object.assign(set, { tree: labelTreeNode });
+	return emptyLabelsSet;
 }
 
 /**
@@ -512,7 +511,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		} else {
 			const current = this.currentLabelNode();
 			assert(current !== undefined, "Expected current label node to exist");
-			(current.children as ValueTree[]).push(node);
+			current.children.push(node);
 		}
 	}
 
@@ -561,7 +560,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.mostRecentlyClosedLabelNode = node;
 				const parent = this.currentLabelNode();
 				assert(parent !== undefined, "Expected parent label node to exist");
-				(parent.children as ValueTree[]).pop();
+				parent.children.pop();
 				// Point to the parent's new last child (guaranteed closed if it exists),
 				// or undefined if the parent has no more children.
 				const newLastChild = parent.children[parent.children.length - 1];
