@@ -265,6 +265,32 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
 	 * @remarks This method is used to expose uploadBlob to the IFluidContainer level. UploadBlob will upload data to server side (as of now, ODSP only). There is no downloadBlob provided as it is not needed(blob lifetime managed by server).
 	 */
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+	/**
+	 * Serialize a detached container to a string representation.
+	 *
+	 * @remarks
+	 * The serialized container can be rehydrated using the client-specific rehydrate API
+	 * (e.g., `OdspClient.rehydrateContainer()`).
+	 *
+	 * This method can only be called on detached containers. If the container is attached,
+	 * closed, or disposed, this method will throw an error.
+	 *
+	 * **Compatibility:** The serialized format is intended for short-term, transient storage
+	 * scenarios (e.g., persisting state across a page reload or brief user session interruption).
+	 * The format is only guaranteed to be compatible with:
+	 *
+	 * - The same version of Fluid Framework that produced it
+	 *
+	 * - The same container schema used when the container was serialized
+	 *
+	 * Long-term storage of serialized containers is not recommended. The serialized format
+	 * may change between Fluid Framework versions without notice, and there is no guaranteed
+	 * migration path for stored serialized data.
+	 *
+	 * @throws Will throw an error if the container is not in a detached state.
+	 */
+	serializeDetachedContainer(): string;
 }
 
 /**
@@ -400,5 +426,14 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.rootDataObject.uploadBlob(blob);
+	}
+
+	public serializeDetachedContainer(): string {
+		if (this.container.closed || this.container.attachState !== AttachState.Detached) {
+			throw new Error(
+				"Cannot serialize container. Container must be in detached state and not closed.",
+			);
+		}
+		return this.container.serialize();
 	}
 }

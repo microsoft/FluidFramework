@@ -114,4 +114,68 @@ describe("OdspClient", () => {
 			"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 		);
 	});
+
+	describe("serialize and rehydrate", () => {
+		it("serializeDetachedContainer returns a non-empty string for detached containers", async () => {
+			const { container } = await client.createContainer(schema);
+
+			const serialized = container.serializeDetachedContainer();
+
+			assert.strictEqual(
+				typeof serialized,
+				"string",
+				"Serialized container should be a string",
+			);
+			assert.ok(serialized.length > 0, "Serialized container should not be empty");
+		});
+
+		it("rehydrateContainer creates a detached container from serialized state", async () => {
+			const { container: originalContainer } = await client.createContainer(schema);
+			const serialized = originalContainer.serializeDetachedContainer();
+
+			const { container: rehydratedContainer } = await client.rehydrateContainer(
+				serialized,
+				schema,
+			);
+
+			assert.strictEqual(
+				rehydratedContainer.attachState,
+				AttachState.Detached,
+				"Rehydrated container should be detached",
+			);
+		});
+
+		it("rehydrated container has the same initialObjects", async () => {
+			const { container: originalContainer } = await client.createContainer(schema);
+
+			// Set a value in the original container's map
+			const originalMap = originalContainer.initialObjects.map as SharedMap;
+			originalMap.set("testKey", "testValue");
+
+			const serialized = originalContainer.serializeDetachedContainer();
+			const { container: rehydratedContainer } = await client.rehydrateContainer(
+				serialized,
+				schema,
+			);
+
+			// Verify the rehydrated container has the same data
+			const rehydratedMap = rehydratedContainer.initialObjects.map as SharedMap;
+			assert.strictEqual(
+				rehydratedMap.get("testKey"),
+				"testValue",
+				"Rehydrated container should have the same data as the original",
+			);
+		});
+
+		it("serializeDetachedContainer throws for disposed containers", async () => {
+			const { container } = await client.createContainer(schema);
+			container.dispose();
+
+			assert.throws(
+				() => container.serializeDetachedContainer(),
+				/not in a detached state|closed/i,
+				"Should throw when serializing a disposed container",
+			);
+		});
+	});
 });
