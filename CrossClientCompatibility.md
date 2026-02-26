@@ -115,7 +115,7 @@ We recommend maintaining `minVersionForCollab` at the latest version of Fluid th
 
 We recommend following the below pattern to ensure cross-client compatibility. While these steps are especially important when upgrading major versions of Fluid, keeping your compatibility configuration up-to-date on an ongoing basis ensures you are always within a safe compatibility window.
 
-1. Observe the distribution of Fluid versions across your application's clients. You can determine this by collecting the Fluid version reported in your application's telemetry. See [Logging and telemetry](https://fluidframework.com/docs/testing/telemetry) for how to set up telemetry collection.
+1. Observe the distribution of Fluid versions across your application's clients. See [Observing Client Version Distribution](./FluidCompatibilityConsiderations.md#observing-client-version-distribution) for how to do this using telemetry.
 2. Update your compatibility configuration to match the lowest deployed version that your clients are [saturated](#terminology) on:
    - **Declarative model**: Set `CompatibilityMode` to the appropriate mode for that major version (e.g., `"2"` once clients are saturated on 2.x).
    - **Encapsulated model**: Set `minVersionForCollab` to the specific saturated version (e.g., `"2.10.0"`).
@@ -124,7 +124,7 @@ We recommend following the below pattern to ensure cross-client compatibility. W
 
 ### Errors and Warnings to Monitor
 
-The following are errors and telemetry warnings you may see during and following an upgrade. Monitoring these signals will help ensure a safe rollout. For more details on telemetry, see [Logging and telemetry](https://fluidframework.com/docs/testing/telemetry).
+The following are errors and telemetry warnings you may see during and following an upgrade. Monitoring these signals will help ensure a safe rollout. For more details on telemetry, see [Logging and telemetry](https://fluidframework.com/docs/testing/telemetry) and [Observing Client Version Distribution](./FluidCompatibilityConsiderations.md#observing-client-version-distribution).
 
 | Type | Signal | What it Means | What to Do |
 |------|--------|---------------|------------|
