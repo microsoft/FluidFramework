@@ -33,8 +33,7 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  * Implementation of a consensus stack
  *
  * An derived type of ConsensusOrderedCollection with a queue as the backing data and order.
- * @deprecated Use the `ConsensusQueue` singleton and {@link IConsensusOrderedCollection} for typing. This implementation class will be removed in a future release.
- * @legacy @beta
+ * @internal
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, import-x/no-deprecated
