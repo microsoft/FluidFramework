@@ -564,4 +564,79 @@ describe("Summary Manager", () => {
 			assertState(SummaryManagerState.Running, "summarizer should be running");
 		});
 	});
+
+	describe("Stop Timeout", () => {
+		const summarizerCloseTimeoutMs = 2 * 60 * 1000; // matches production value
+
+		it("Should not assert when stop timeout fires before promise chain completes", async () => {
+			createSummaryManager({ opsToBypassInitialDelay: 0 });
+			connectedState.connect();
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "should request summarizer");
+			completeSummarizerRequest();
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "summarizer should be running");
+
+			// Disconnect triggers stop() which sets the 2-minute timeout
+			connectedState.disconnect();
+			await flushPromises();
+			assertState(SummaryManagerState.Stopping, "should be stopping after disconnect");
+
+			// Simulate the summarizer hanging: advance clock past the stop timeout
+			// WITHOUT resolving the summarizer's run deferred
+			clock.tick(summarizerCloseTimeoutMs);
+			await flushPromises();
+			assertState(SummaryManagerState.Off, "stop timeout should have cleaned up");
+
+			// Now the old summarizer's promise chain completes — this should NOT assert
+			summarizer.runDeferred.resolve();
+			await flushPromises();
+			assertState(SummaryManagerState.Off, "should remain off after old chain completes");
+		});
+
+		it("Should not corrupt new cycle when stop timeout fires and shouldSummarize is true", async () => {
+			createSummaryManager({ opsToBypassInitialDelay: 0 });
+			connectedState.connect();
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "should request summarizer");
+			assertRequests(1, "first summarizer request");
+			const firstSummarizer = summarizer;
+			completeSummarizerRequest();
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "summarizer should be running");
+
+			// Disconnect triggers stop
+			connectedState.disconnect();
+			await flushPromises();
+			assertState(SummaryManagerState.Stopping, "should be stopping after disconnect");
+
+			// Reconnect while stopping — refreshSummarizer can't act in Stopping state
+			connectedState.connect();
+			await flushPromises();
+			assertState(
+				SummaryManagerState.Stopping,
+				"should still be stopping, can't act while stopping",
+			);
+
+			// Stop timeout fires: cleanup → Off → shouldSummarize → startSummarization
+			clock.tick(summarizerCloseTimeoutMs);
+			await flushPromises();
+			assertRequests(2, "timeout cleanup should have triggered a new summarizer request");
+
+			// Old summarizer's promise chain completes — should NOT interfere with new cycle
+			firstSummarizer.runDeferred.resolve();
+			await flushPromises();
+			assertState(
+				SummaryManagerState.Running,
+				"new cycle should not be corrupted by old chain's cleanup",
+			);
+
+			// Complete the new cycle to verify it works end-to-end
+			completeSummarizerRequest();
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "new summarizer should be running");
+		});
+	});
 });
