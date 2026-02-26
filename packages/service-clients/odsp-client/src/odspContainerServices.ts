@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IDisposable, Listenable } from "@fluidframework/core-interfaces";
+import type { IDisposable, IFluidHandle, Listenable } from "@fluidframework/core-interfaces";
 import { createServiceAudience } from "@fluidframework/fluid-static/internal";
 
 import type {
@@ -29,7 +29,10 @@ export class OdspContainerServices implements IOdspContainerServices, IDisposabl
 		return this.#events;
 	}
 
-	public constructor(container: IContainer) {
+	public constructor(
+		container: IContainer,
+		private readonly lookupBlobUrl?: (handle: IFluidHandle) => string | undefined,
+	) {
 		this.#container = container;
 		this.#container.on("readonly", this.#readonlyEventHandler);
 		this.#container.on("metadataUpdate", this.#metadataUpdateEventHandler);
@@ -69,5 +72,9 @@ export class OdspContainerServices implements IOdspContainerServices, IDisposabl
 
 	public getSensitivityLabelsInfo(): string | undefined {
 		return this.#container.containerMetadata.sensitivityLabelsInfo;
+	}
+
+	public lookupTemporaryBlobUrl(handle: IFluidHandle): string | undefined {
+		return this.lookupBlobUrl?.(handle);
 	}
 }
