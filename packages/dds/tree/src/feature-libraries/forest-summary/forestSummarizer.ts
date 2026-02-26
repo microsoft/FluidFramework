@@ -101,8 +101,8 @@ export class ForestSummarizer
 			summaryFormatWriteVersion,
 		);
 
-		// Incremental summary is supported from FieldBatchFormatVersion.v2 and ForestSummaryFormatVersion.v3 onwards.
-		// Note that even if this is true, it is possible for the
+		// Incremental summary is supported in ForestSummaryFormatVersion.v3 onwards.
+		// Note that even in versions that support it, it is possible that the
 		// FieldBatchCodec will not use incremental encoding (for example if using its v1 formats which does not support it).
 		const enableIncrementalSummary =
 			summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&

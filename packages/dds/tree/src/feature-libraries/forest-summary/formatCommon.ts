@@ -19,6 +19,9 @@ export const ForestFormatVersion = strictEnum("ForestFormatVersion", {
 });
 export type ForestFormatVersion = Values<typeof ForestFormatVersion>;
 
+/**
+ * Format used by {@link ForestFormatVersion.v1} and {@link ForestFormatVersion.v2}.
+ */
 export const FormatCommon = Type.Object(
 	{
 		...versionField,
