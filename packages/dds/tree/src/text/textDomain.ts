@@ -261,12 +261,18 @@ export namespace TextAsTree {
 	}
 
 	/**
-	 * Schema for a text node.
+	 * Schema for a {@link TextAsTree.(Tree:variable)} node.
 	 * @remarks
-	 * See {@link TextAsTree.Members} for the API.
-	 * See {@link TextAsTree.Statics} for static APIs on this Schema, including construction.
+	 * See {@link TextAsTree.Statics} for static APIs on this schema, including construction.
 	 * @alpha
 	 */
 	export const Tree = eraseSchemaDetails<Members, Statics>()(TextNode);
+
+	/**
+	 * Node for the {@link TextAsTree.(Tree:type)} schema exposing the {@link TextAsTree.Members} API.
+	 * @remarks
+	 * Create using {@link TextAsTree.Statics.fromString}.
+	 * @alpha
+	 */
 	export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }

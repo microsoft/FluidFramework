@@ -1853,7 +1853,6 @@ export namespace TextAsTree {
         fromString(value: string): Tree;
     }
     const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
-    // (undocumented)
     export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }
 
