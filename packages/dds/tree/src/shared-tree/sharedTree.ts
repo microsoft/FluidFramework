@@ -56,10 +56,9 @@ import {
 	buildForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
-	getCodecTreeForFieldBatchFormat,
-	getCodecTreeForForestFormat,
+	fieldBatchCodecBuilder,
+	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
-	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
@@ -241,7 +240,7 @@ export class SharedTreeKernel
 			schemaCodec,
 			options.minVersionForCollab,
 		);
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
 		const encoderContext = {
 			schema: {
@@ -596,12 +595,12 @@ export function getCodecTreeForSharedTreeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const children: CodecTree[] = [];
-	children.push(getCodecTreeForForestFormat(clientVersion));
+	children.push(forestCodecBuilder.getCodecTree(clientVersion));
 	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
 	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
-	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
+	children.push(fieldBatchCodecBuilder.getCodecTree(clientVersion));
 	return {
 		name: "SharedTree",
 		version: undefined, // SharedTree does not have a version of its own.
