@@ -20,7 +20,7 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
+import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
 	ForestSummaryFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -39,7 +39,6 @@ import {
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
-	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
@@ -99,7 +98,6 @@ function createForestSummarizer(args: {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab,
 	};
-	const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 	const checkout = checkoutWithContent(initialContent, {
 		forestType,
 		shouldEncodeIncrementally,
@@ -115,7 +113,6 @@ function createForestSummarizer(args: {
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
 			testRevisionTagCodec,
-			fieldBatchCodec,
 			encoderContext,
 			options,
 			testIdCompressor,
@@ -876,7 +873,7 @@ describe("ForestSummarizer", () => {
 
 		it("loads pre-versioning format with no metadata blob", async () => {
 			// Create data in v1 summary format.
-			const forestDataV1: FormatV1 = {
+			const forestDataV1: FormatCommon = {
 				version: ForestFormatVersion.v1,
 				keys: [],
 				fields: {

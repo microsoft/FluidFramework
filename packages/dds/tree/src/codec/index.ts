@@ -42,4 +42,5 @@ export {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecVersion,
 	type CodecAndSchema,
+	versionField,
 } from "./versioned/index.js";
