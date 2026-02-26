@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [
-	...minimalDeprecated,
-	{
-		rules: {
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		},
+module.exports = {
+	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated", "prettier"],
+	rules: {
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
-];
-
-export default config;
+};

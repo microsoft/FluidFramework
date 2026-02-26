@@ -3,28 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [
-	...recommended,
-	{
-		rules: {
-			"@typescript-eslint/no-non-null-assertion": "off",
-			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"unicorn/text-encoding-identifier-case": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"@typescript-eslint/unbound-method": "off",
-		},
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			"unicorn/no-null": "off",
-			"unicorn/prefer-module": "off",
-		},
-	},
-];
+	rules: {
+		// TODO: remove these overrides and fix violations
+		"@typescript-eslint/no-non-null-assertion": "off",
+		"@typescript-eslint/no-use-before-define": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
 
-export default config;
+		// This library uses and serializes "utf-8".
+		"unicorn/text-encoding-identifier-case": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		// Disabled because the rule is crashing on this package - AB#51780
+		"@typescript-eslint/unbound-method": "off",
+	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// It's valuable for tests to validate handling of `null` values, regardless of our API policies.
+				"unicorn/no-null": "off",
+
+				// Fine for tests to use `__dirname`
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
+};

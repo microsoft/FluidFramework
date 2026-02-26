@@ -3,9 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [...minimalDeprecated];
-
-export default config;
+module.exports = {
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+		// There are a lot of intentional internal APIs leveraged here for simplicity. Skip common example rules:
+		// "../../.eslintrc.cjs",
+	],
+	rules: {},
+	overrides: [
+		{
+			files: ["src/test/**/*"],
+			parserOptions: {
+				project: ["./src/test/tsconfig.json"],
+			},
+		},
+	],
+};

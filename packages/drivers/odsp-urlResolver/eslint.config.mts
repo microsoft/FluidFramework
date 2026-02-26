@@ -3,17 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [
-	...recommended,
-	{
-		rules: {
-			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-		},
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-];
-
-export default config;
+	rules: {
+		// TODO: remove these overrides and fix violations
+		"@typescript-eslint/no-use-before-define": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
+	},
+};

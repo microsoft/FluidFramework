@@ -3,24 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { recommended } from "../../../../common/build/eslint-config-fluid/flat.mts";
-import sharedConfig from "../../../eslint.config.data.mts";
-
-const config: Linter.Config[] = [
-	...recommended,
-	...sharedConfig,
-	{
-		rules: {
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		},
+module.exports = {
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid"),
+		"prettier",
+		"../../../.eslintrc.cjs",
+	],
+	rules: {
+		// TODO: AB#18875 - Re-enable react/no-deprecated once we replace uses of the deprecated ReactDOM.render()
+		// with the new React 18 createRoot().
+		"react/no-deprecated": "off",
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
-	{
-		files: ["**/*.jsx", "**/*.tsx"],
-		rules: {
-			"react/no-deprecated": "off",
-		},
-	},
-];
-
-export default config;
+};

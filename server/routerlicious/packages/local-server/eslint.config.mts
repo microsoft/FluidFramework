@@ -3,17 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { baseConfig } from "../../eslint.config.base.mts";
+module.exports = {
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 
-const config: Linter.Config[] = [
-	...baseConfig,
-	{
-		files: ["src/test/**/*.ts"],
-		rules: {
-			"import-x/no-nodejs-modules": "off",
-		},
+	parserOptions: {
+		"project": ["./tsconfig.json", "./src/test/tsconfig.json"],
+		"promise/catch-or-return": ["error", { allowFinally: true }],
+
+		// TODO: enable strict null checks in tsconfig and remove this override
+		"@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
-];
-
-export default config;
+	overrides: [
+		{
+			files: ["src/test/**/*.ts"],
+			rules: {
+				"import-x/no-nodejs-modules": "off",
+			},
+		},
+	],
+};

@@ -3,6 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { baseConfig } from "../../eslint.config.base.mts";
+module.exports = {
+	extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+	plugins: ["@typescript-eslint"],
+	parser: "@typescript-eslint/parser",
+	parserOptions: {
+		project: ["./tsconfig.json"],
+	},
+	rules: {
+		"@typescript-eslint/switch-exhaustiveness-check": "error",
+		"@typescript-eslint/no-inferrable-types": "off",
+		"@typescript-eslint/no-var-requires": "off",
 
-export default baseConfig;
+		// This package is exclusively used in a Node.js context
+		"import/no-nodejs-modules": "off",
+	},
+};

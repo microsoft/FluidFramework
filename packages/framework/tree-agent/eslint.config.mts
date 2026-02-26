@@ -3,43 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [
-	...strict,
-	{
-		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/alpha",
-						"@fluidframework/*/beta",
-						"@fluidframework/*/legacy",
-						"@fluidframework/*/internal",
-					],
-				},
-			],
-		},
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
 	},
-	{
-		files: ["src/test/**/*"],
-		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"*/index.js",
-						"@fluidframework/*/alpha",
-						"@fluidframework/*/beta",
-						"@fluidframework/*/legacy",
-						"@fluidframework/*/internal",
-					],
-				},
-			],
-		},
+	rules: {
+		// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
+		"import-x/no-internal-modules": [
+			"error",
+			{
+				allow: [
+					"@fluidframework/*/alpha",
+					"@fluidframework/*/beta",
+					"@fluidframework/*/legacy",
+					"@fluidframework/*/internal",
+				],
+			},
+		],
 	},
-];
-
-export default config;
+	overrides: [
+		{
+			files: ["src/test/**/*"],
+			parserOptions: {
+				project: ["./src/test/tsconfig.json"],
+			},
+			rules: {
+				// Test files can import from submodules for testing purposes
+				"import-x/no-internal-modules": [
+					"error",
+					{
+						allow: [
+							"*/index.js",
+							"@fluidframework/*/alpha",
+							"@fluidframework/*/beta",
+							"@fluidframework/*/legacy",
+							"@fluidframework/*/internal",
+						],
+					},
+				],
+			},
+		},
+	],
+};

@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [
-	...recommended,
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {},
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
 	},
-];
-
-export default config;
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {},
+		},
+	],
+};

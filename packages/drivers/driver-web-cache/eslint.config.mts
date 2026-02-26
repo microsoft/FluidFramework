@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [
-	...minimalDeprecated,
-	{
-		rules: {
-			"@typescript-eslint/no-non-null-assertion": "off",
-			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@typescript-eslint/promise-function-async": "off",
-			"@typescript-eslint/no-misused-promises": "off",
-			"@typescript-eslint/unbound-method": "off",
-		},
+module.exports = {
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-];
+	rules: {
+		"@typescript-eslint/no-non-null-assertion": "off",
+		"@typescript-eslint/no-use-before-define": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
+		"@typescript-eslint/promise-function-async": "off",
+		"@typescript-eslint/no-misused-promises": "off",
 
-export default config;
+		// Disabled because the rule is crashing on this package - AB#51780
+		"@typescript-eslint/unbound-method": "off",
+	},
+};

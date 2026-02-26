@@ -3,24 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
-
-const config: Linter.Config[] = [
-	...strict,
-	{
-		rules: {
-			"unicorn/no-nested-ternary": "off",
-			"@typescript-eslint/no-namespace": "off",
-		},
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json"],
 	},
-	{
-		files: ["*.spec.ts", "*.test.ts", "src/test/**"],
-		rules: {
-			"import-x/no-nodejs-modules": "off",
-			"unicorn/prefer-module": "off",
-		},
-	},
-];
+	rules: {
+		// Disabled because they conflict with Prettier.
+		"unicorn/no-nested-ternary": "off",
 
-export default config;
+		// Disabled because it is incompatible with API-Extractor.
+		"@typescript-eslint/no-namespace": "off",
+	},
+	overrides: [
+		{
+			// Overrides for test files
+			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
+			rules: {
+				"import-x/no-nodejs-modules": "off",
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
+};
