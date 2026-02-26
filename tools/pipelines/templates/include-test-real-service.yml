@@ -450,14 +450,15 @@ stages:
             displayName: 'Run tenant setup script'
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              FIC_BEARER_TOKEN: $(ficBearerToken)
             inputs:
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
 
-                echo "ficBearerToken is set to ${{ variables.ficBearerToken }}"
+                echo "ficBearerToken is set to $(ficBearerToken)"
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --bearerToken=${{ variables.ficBearerToken }}
+                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --bearerToken=$FIC_BEARER_TOKEN
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
