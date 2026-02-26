@@ -3,26 +3,14 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+import type { Linter } from "eslint";
+import { baseConfig } from "../../eslint.config.base.mts";
+
+const config: Linter.Config[] = [
+	...baseConfig,
+	{
+		ignores: ["*.spec.ts"],
 	},
-	rules: {
-		"import-x/no-nodejs-modules": "off",
-		"promise/catch-or-return": ["error", { allowFinally: true }],
+];
 
-		// TODO: enable strict null checks in tsconfig and remove these overrides
-		"@typescript-eslint/prefer-nullish-coalescing": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off",
-
-		// TODO: remove usages of deprecated APIs and remove this override
-		"import-x/no-deprecated": "warn",
-
-		// TODO: fix violations and remove this override
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-	},
-};
+export default config;

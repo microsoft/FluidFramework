@@ -3,28 +3,35 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
+import type { Linter } from "eslint";
+import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-	},
-	rules: {
-		// This has been disabled in the next eslint-config-fluid.
-		// Once the dependency here has been updated, this override can be removed.
-		"unicorn/numeric-separators-style": "off",
-	},
-	overrides: [
-		{
-			// Rules only for test files
-			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
-			rules: {
-				// Test files are run in node only so additional node libraries can be used.
-				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert", "node:process"] }],
-
-				// Does not work well with describe/it block scoping
-				"unicorn/consistent-function-scoping": "off",
-			},
+const config: Linter.Config[] = [
+	...strict,
+	{
+		rules: {
+			// This has been disabled in the next eslint-config-fluid.
+			// Once the dependency here has been updated, this override can be removed.
+			"unicorn/numeric-separators-style": "off",
 		},
-	],
-};
+	},
+
+	// Rules only for test files
+	{
+		files: ["*.spec.ts", "*.test.ts", "src/test/**"],
+		rules: {
+			// Test files are run in node only so additional node libraries can be used.
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					allow: ["node:assert", "node:process"],
+				},
+			],
+
+			// Does not work well with describe/it block scoping
+			"unicorn/consistent-function-scoping": "off",
+		},
+	},
+];
+
+export default config;

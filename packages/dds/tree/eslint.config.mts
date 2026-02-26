@@ -3,100 +3,75 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json"],
-	},
-	rules: {
-		"@typescript-eslint/no-namespace": "off",
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-		// This library leverages empty, derived interface definitions to capture concepts
-		// in a nicely reusable way.
-		"@typescript-eslint/no-empty-interface": "off",
-		"@typescript-eslint/no-empty-object-type": "off",
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"@typescript-eslint/no-namespace": "off",
 
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			// This library leverages empty, derived interface definitions to capture concepts
+			// in a nicely reusable way.
+			"@typescript-eslint/no-empty-interface": "off",
+			"@typescript-eslint/no-empty-object-type": "off",
 
-		// This package is build with noUnusedLocals disabled for a specific use case (see note in tsconfig.json),
-		// but should reject other cases using this rule:
-		"@typescript-eslint/no-unused-vars": [
-			"error",
-			{
-				argsIgnorePattern: "^",
-				varsIgnorePattern: "^_",
-				caughtErrorsIgnorePattern: "^_",
-			},
-		],
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
-		// TODO: Remove this override once this config has been updated to extend the "strict" base config.
-		"@typescript-eslint/explicit-member-accessibility": "error",
+			// This package is build with noUnusedLocals disabled for a specific use case (see note in tsconfig.json),
+			// but should reject other cases using this rule:
+			"@typescript-eslint/no-unused-vars": [
+				"error",
+				{
+					argsIgnorePattern: "^",
+					varsIgnorePattern: "^_",
+					caughtErrorsIgnorePattern: "^_",
+				},
+			],
 
-		// #region TODO:AB#6983: Remove these overrides and fix violations
+			// TODO: Remove this override once this config has been updated to extend the "strict" base config.
+			"@typescript-eslint/explicit-member-accessibility": "error",
 
-		"@typescript-eslint/explicit-module-boundary-types": "off",
+			// #region TODO:AB#6983: Remove these overrides and fix violations
 
-		// Causes eslint to stack-overflow in this package. Will need investigation.
-		"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/explicit-module-boundary-types": "off",
 
-		// Causes eslint to stack-overflow in this package. Will need investigation.
-		"@typescript-eslint/no-unsafe-assignment": "off",
+			// Causes eslint to stack-overflow in this package. Will need investigation.
+			"@typescript-eslint/no-unsafe-argument": "off",
 
-		"@typescript-eslint/no-unsafe-call": "off",
-		"@typescript-eslint/no-unsafe-member-access": "off",
+			// Causes eslint to stack-overflow in this package. Will need investigation.
+			"@typescript-eslint/no-unsafe-assignment": "off",
 
-		"import-x/order": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
 
-		// Set to a warning to encourage adding docs :)
-		"jsdoc/require-description": "warn",
+			"import-x/order": "off",
 
-		"unicorn/consistent-function-scoping": "off",
-		"unicorn/no-array-method-this-argument": "off",
-		"unicorn/no-null": "off",
-		"unicorn/prefer-export-from": "off",
-		"unicorn/text-encoding-identifier-case": "off",
+			// Set to a warning to encourage adding docs :)
+			"jsdoc/require-description": "warn",
 
-		// #endregion
-	},
-	overrides: [
-		{
-			files: ["src/test/**/*"],
-			parserOptions: {
-				project: ["./src/test/tsconfig.json"],
-			},
-			rules: {
-				"@typescript-eslint/no-unused-vars": ["off"],
-				"@typescript-eslint/explicit-function-return-type": "off",
-			},
-		},
-	],
-	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
-			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
-		},
-		"import/resolver": {
-			typescript: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-				conditionNames: [
-					"allow-ff-test-exports",
+			"unicorn/consistent-function-scoping": "off",
+			"unicorn/no-array-method-this-argument": "off",
+			"unicorn/no-await-expression-member": "off",
+			"unicorn/no-null": "off",
+			"unicorn/prefer-export-from": "off",
+			"unicorn/text-encoding-identifier-case": "off",
 
-					// Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
-					"types",
-					"import",
-
-					// APF: https://angular.io/guide/angular-package-format
-					"esm2020",
-					"es2020",
-					"es2015",
-
-					"require",
-					"node",
-					"node-addons",
-					"browser",
-					"default",
-				],
-			},
+			// #endregion
 		},
 	},
-};
+	{
+		files: ["src/test/**/*"],
+		rules: {
+			"@typescript-eslint/no-unused-vars": ["off"],
+			"@typescript-eslint/explicit-function-return-type": "off",
+			// Test files commonly define helper functions inside describe blocks for better readability
+			"unicorn/consistent-function-scoping": "off",
+			// Test files frequently use `as any` casts to access internal/hidden properties for testing
+			"@typescript-eslint/no-unsafe-member-access": "off",
+		},
+	},
+];
+
+export default config;
