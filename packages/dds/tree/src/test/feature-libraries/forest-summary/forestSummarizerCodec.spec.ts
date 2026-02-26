@@ -26,7 +26,7 @@ import {
 import type { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldSet,
-	makeForestSummarizerCodec,
+	forestCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -39,7 +39,7 @@ import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
@@ -55,16 +55,22 @@ const codecOptionsCurrent: CodecWriteOptions = {
 	minVersionForCollab: currentVersion,
 };
 
-const fieldBatchCodecOld = makeFieldBatchCodec(codecOptionsOld);
-const fieldBatchCodecCurrent = makeFieldBatchCodec(codecOptionsCurrent);
+const fieldBatchCodecOld = fieldBatchCodecBuilder.build(codecOptionsOld);
+const fieldBatchCodecCurrent = fieldBatchCodecBuilder.build(codecOptionsCurrent);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 	originatorId: testIdCompressor.localSessionId,
 	idCompressor: testIdCompressor,
 };
 
-const codecOld = makeForestSummarizerCodec(codecOptionsOld, fieldBatchCodecOld);
-const codecCurrent = makeForestSummarizerCodec(codecOptionsCurrent, fieldBatchCodecCurrent);
+const codecOld = forestCodecBuilder.build({
+	...codecOptionsOld,
+	fieldBatchCodec: fieldBatchCodecOld,
+});
+const codecCurrent = forestCodecBuilder.build({
+	...codecOptionsCurrent,
+	fieldBatchCodec: fieldBatchCodecCurrent,
+});
 
 const testFieldChunks: TreeChunk[] = chunkField(
 	cursorForJsonableTreeField([{ type: brand(EmptyObject.identifier) }]),
@@ -223,7 +229,7 @@ describe("ForestSummarizerCodec", () => {
 						context,
 					),
 				validateUsageError(
-					/Unsupported version 2\.5 encountered while decoding data. Supported versions for this data are: 1, 2\./,
+					/Unsupported version 2\.5 encountered while decoding Forest data. Supported versions for this data are: \[1,2]\./,
 				),
 			);
 		});
@@ -244,7 +250,9 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2\.5 encountered while decoding data/),
+				validateUsageError(
+					/Unsupported version 2\.5 encountered while decoding FieldBatch data/,
+				),
 			);
 		});
 
@@ -258,7 +266,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as FormatV1,
 						context,
 					),
-				validateAssertionError("Encoded schema should validate"),
+				validateAssertionError("Data being decoded should validate"),
 			);
 		});
 
@@ -274,7 +282,7 @@ describe("ForestSummarizerCodec", () => {
 						} as unknown as FormatV1,
 						context,
 					),
-				validateAssertionError("Encoded schema should validate"),
+				validateAssertionError("Data being decoded should validate"),
 			);
 		});
 	});

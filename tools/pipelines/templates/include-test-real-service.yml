@@ -155,16 +155,9 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
-        - name: pipelineHostPath
-          ${{ if eq(parameters.runAgainstDocker, true) }}:
-            # Running against docker means we'll check out the FluidFramework repo as well as ff_pipeline_host
-            # When multiple repos are checked out, they are checked out to $(Build.SourcesDirectory)/<REPO_NAME>
-            value: $(Build.SourcesDirectory)/ff_pipeline_host
-          ${{ else }}:
-            value: $(Build.SourcesDirectory)
 
         - name: testPackageDir
-          value: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}'
+          value: '$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -178,6 +171,7 @@ stages:
         steps:
         # Setup
         - checkout: ff_pipeline_host
+          path: $(FFPipelineHostDirectory)
           clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
@@ -229,14 +223,14 @@ stages:
                 testFileTarName=${{ parameters.testFileTarName }}
                 artifactPipeline=${{ variables.artifactPipeline }}
                 artifactBuildId=${{ parameters.artifactBuildId }}
-                pipelineHostPath=${{ variables.pipelineHostPath }}
+                FFPipelineHostDirectory=$(FFPipelineHostDirectory)
               "
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: ${{ variables.pipelineHostPath }}
+            buildDirectory: $(FFPipelineHostDirectory)
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
@@ -244,6 +238,7 @@ stages:
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
           # Checks out FluidFramework repo
           - checkout: self
+            path: $(FluidFrameworkDirectory)
             clean: true
           - task: Docker@2
             displayName: 'Login to container registry'
@@ -254,7 +249,7 @@ stages:
             displayName: 'Start routerlicious environment in docker'
             inputs:
               containerregistrytype: 'Container Registry'
-              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              dockerComposeFile: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'up -d --wait'
               projectName: 'routerlicious'
@@ -268,15 +263,15 @@ stages:
             displayName: 'Wait for services to be ready'
             inputs:
               targetType: 'filePath'
-              filePath: $(Build.SourcesDirectory)/FluidFramework/scripts/wait-for-docker-services.sh
+              filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/wait-for-docker-services.sh
             env:
-              DOCKER_COMPOSE_FILE: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              DOCKER_COMPOSE_FILE: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
 
         - task: Bash@3
           displayName: Install base dependencies
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.pipelineHostPath }}
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             script: |
               set -eu -o pipefail
               pnpm install
@@ -306,7 +301,7 @@ stages:
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.pipelineHostPath }}
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             script: |
               set -eu -o pipefail
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
@@ -325,7 +320,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.pipelineHostPath }}
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
@@ -356,7 +351,7 @@ stages:
             displayName: Unpack test files
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
@@ -373,15 +368,15 @@ stages:
 
           - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
             parameters:
-              sourcePackageLocation: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
-              destPackageLocation: ${{ variables.pipelineHostPath }}
+              sourcePackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Bash@3
             displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/@fluid-private/test-end-to-end-tests
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/@fluid-private/test-end-to-end-tests
               # Using import.meta.resolve to compute this is more resilient to different install tree types.
               # Also note that test-version-utils is esm-only, so cannot be loaded with require.
               script: |
@@ -458,7 +453,7 @@ stages:
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
+            workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -468,6 +463,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
 
@@ -500,7 +496,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
@@ -546,7 +542,7 @@ stages:
             condition: always()
             inputs:
               containerregistrytype: 'Container Registry'
-              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              dockerComposeFile: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
               action: 'Run a Docker Compose command'
               dockerComposeCommand: 'down'
               projectName: 'routerlicious'

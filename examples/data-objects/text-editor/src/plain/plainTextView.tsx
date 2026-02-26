@@ -6,6 +6,7 @@
 import { withMemoizedTreeObservations } from "@fluidframework/react/alpha";
 import * as React from "react";
 
+import { syncTextToTree } from "./plainUtils.js";
 import type { MainViewProps } from "./quillView.js";
 import type { TextAsTree } from "./schema.js";
 
@@ -42,15 +43,7 @@ const PlainTextEditorView = withMemoizedTreeObservations(
 				isUpdatingRef.current = true;
 
 				const newText = event.target.value;
-
-				// Clear existing content and insert new text
-				const length = [...root.characters()].length;
-				if (length > 0) {
-					root.removeRange(0, length);
-				}
-				if (newText.length > 0) {
-					root.insertAt(0, newText);
-				}
+				syncTextToTree(root, newText);
 
 				isUpdatingRef.current = false;
 			},

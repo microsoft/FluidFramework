@@ -167,7 +167,9 @@ async function findLegacyConfigs(
 		"azure",
 		"tools",
 		"server/routerlicious",
-	]; // exclude common/build and server from traversal
+		"server/gitrest",
+		"server/historian",
+	]; // exclude common/build from traversal
 
 	// Build a map of directory paths that have shared configs
 	const sharedConfigDirs = new Set<string>();
