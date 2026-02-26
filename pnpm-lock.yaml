@@ -54,8 +54,8 @@ importers:
         specifier: link:common/build/eslint-config-fluid
         version: link:common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
@@ -276,8 +276,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -403,8 +403,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -530,8 +530,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -690,8 +690,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -829,8 +829,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -968,8 +968,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1116,8 +1116,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1249,8 +1249,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1452,8 +1452,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1573,8 +1573,8 @@ importers:
         specifier: link:../../../../common/build/eslint-config-fluid
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1749,8 +1749,8 @@ importers:
         specifier: link:../../../../common/build/eslint-config-fluid
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1864,8 +1864,8 @@ importers:
         specifier: link:../../../../common/build/eslint-config-fluid
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1970,8 +1970,8 @@ importers:
         specifier: link:../../../../common/build/eslint-config-fluid
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2421,8 +2421,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2539,8 +2539,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -3055,8 +3055,8 @@ importers:
         specifier: link:../../../../common/build/eslint-config-fluid
         version: link:../../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -3741,8 +3741,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -3995,8 +3995,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -4327,8 +4327,8 @@ importers:
         specifier: link:../../common/build/eslint-config-fluid
         version: link:../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/cors':
         specifier: ^2.8.4
         version: 2.8.17
@@ -4496,8 +4496,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/events_pkg':
         specifier: npm:@types/events@^3.0.0
         version: '@types/events@3.0.3'
@@ -4650,8 +4650,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/events_pkg':
         specifier: npm:@types/events@^3.0.0
         version: '@types/events@3.0.3'
@@ -5571,8 +5571,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5722,8 +5722,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5900,8 +5900,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -6060,8 +6060,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -6190,8 +6190,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -6329,8 +6329,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -6450,8 +6450,8 @@ importers:
         specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
+        specifier: ^2.0.0
+        version: 2.0.1
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -18406,8 +18406,8 @@ packages:
   '@fluidframework/test-runtime-utils@2.83.0':
     resolution: {integrity: sha512-6Bt5ON+XM6TLrY29UC2Lntt2TJqsKL4uNmbSkbSp4MI74EfESpuSb8+yxX3Izd0Z+WbqSNUOytleJliEX4ah0Q==}
 
-  '@fluidframework/test-tools@1.0.195075':
-    resolution: {integrity: sha512-N7FiXKoz6uQhDJhJxSunya5uP/GWNEp0ohYs0Jkb8Mmnow1SKuxl29x3rC9Kf5zORjUk8krCjam50+d8aPFGaw==}
+  '@fluidframework/test-tools@2.0.1':
+    resolution: {integrity: sha512-O/32iY/Zzzcw1dyya9sRyDy5g6LEGY2jVMzlIxyF62Afz4TEBgKumLxzP1lyUPZTVEKpugnYjJW5nvrNBKU6EQ==}
     hasBin: true
 
   '@fluidframework/test-utils@2.83.0':
@@ -31047,7 +31047,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/test-tools@1.0.195075': {}
+  '@fluidframework/test-tools@2.0.1':
+    dependencies:
+      nconf: 0.12.1
 
   '@fluidframework/test-utils@2.83.0(encoding@0.1.13)':
     dependencies:

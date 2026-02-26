@@ -172,7 +172,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
-		"@fluidframework/test-tools": "^1.0.195075",
+		"@fluidframework/test-tools": "^2.0.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.12.0",
 		"auto-changelog": "^2.4.0",
