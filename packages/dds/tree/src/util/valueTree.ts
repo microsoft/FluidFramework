@@ -4,10 +4,7 @@
  */
 
 /**
- * A tree of values that mirrors the nesting structure of transactions.
- *
- * @remarks
- * Each node in the tree has a value of type `T` and zero or more children.
+ * A tree where each node holds a value of type `T` and zero or more children.
  *
  * @sealed @alpha
  */
