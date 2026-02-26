@@ -32,7 +32,7 @@ export class BundleBuddyConfigWebpackPlugin {
 		this.config = config;
 	}
 
-	public apply(compiler: Compiler) {
+	public apply(compiler: Compiler): void {
 		compiler.hooks.emit.tapAsync(
 			pluginName,
 			(compilation: Compilation, callback: () => void) => {
@@ -42,7 +42,7 @@ export class BundleBuddyConfigWebpackPlugin {
 				);
 
 				compilation.chunks.forEach((chunk) => {
-					if (chunk.name !== undefined) {
+					if (chunk.name !== undefined && chunk.name !== null) {
 						if (chunkNamesLeftToValidate.has(chunk.name)) {
 							chunkNamesLeftToValidate.delete(chunk.name);
 						}

@@ -4,6 +4,7 @@
  */
 
 export { mochaGlobalSetup } from "./compatConfig.js";
+export { CompatKind } from "./compatOptions.js";
 export {
 	getDataStoreFactory,
 	getVersionedTestObjectProvider,
@@ -58,6 +59,8 @@ export {
 	DataRuntimeApi,
 	ContainerRuntimeApi,
 	LoaderApi,
+	CompatMode,
+	getCompatModeFromKind,
 } from "./testApi.js";
 export {
 	itExpectsSkipsFailureOnSpecificDrivers,

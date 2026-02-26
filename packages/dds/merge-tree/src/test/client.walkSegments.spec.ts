@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISegmentInternal } from "../mergeTreeNodes.js";
+
 import { TestClient } from "./testClient.js";
 
 describe("client.applyMsg", () => {
@@ -64,5 +66,31 @@ describe("client.applyMsg", () => {
 		);
 		assert.equal(segCount, 2);
 		assert.equal(segLen, 4);
+	});
+
+	it("Walk single multi-character segment", () => {
+		client.removeRangeLocal(0, client.getLength());
+		client.insertTextLocal(0, "Blocker");
+		client.annotateRangeLocal(0, 7, { bold: true });
+		let segCount = 0;
+		const segLengths: number[] = [];
+		client.walkSegments(
+			(s: ISegmentInternal) => {
+				segCount++;
+				segLengths.push(s.cachedLength);
+				return true;
+			},
+			0,
+			client.getLength(),
+			undefined,
+			true,
+		);
+		assert.equal(segCount, 1, `Expected one segment, saw ${segCount} segments`);
+		assert.equal(
+			segLengths.length,
+			1,
+			`Expected one segment length, saw ${segLengths.length} lengths`,
+		);
+		assert.equal(segLengths[0], 7, `Expected segment length 7, saw ${segLengths[0]}`);
 	});
 });

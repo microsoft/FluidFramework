@@ -131,16 +131,17 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		return this.getFullSession(key, JSON.parse(sessionJson));
 	}
 
-	public async getAllSessions(): Promise<ICollaborationSession[]> {
+	public async getAllSessions(limit?: number): Promise<ICollaborationSession[]> {
 		const sessions: ICollaborationSession[] = [];
 		await this.iterateAllSessions(async (session: ICollaborationSession) => {
 			sessions.push(session);
-		});
+		}, limit);
 		return sessions;
 	}
 
 	public async iterateAllSessions<T>(
 		callback: (session: ICollaborationSession) => Promise<T>,
+		limit?: number,
 	): Promise<T[]> {
 		// Use HSCAN to iterate over te key:value pairs of the hashmap
 		// in batches to get all sessions with minimal impact on Redis.
@@ -150,6 +151,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 
 		return new Promise((resolve, reject) => {
 			const callbackPs: Promise<T>[] = [];
+			let processedCount = 0;
 			sessionJsonScanStream.on("data", (result: string[]) => {
 				if (result.length === 0) {
 					// When redis scan is done, it pushes null to the stream.
@@ -168,6 +170,13 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 					// Call the callback for each session.
 					// We do not await the callback here to allow for concurrent processing of sessions.
 					callbackPs.push(callback(fullSession));
+					processedCount++;
+					if (limit !== undefined && processedCount >= limit) {
+						// If we have reached the limit, end the stream early.
+						sessionJsonScanStream.destroy();
+						resolve(Promise.all(callbackPs));
+						return;
+					}
 				}
 			});
 			sessionJsonScanStream.on("end", () => {

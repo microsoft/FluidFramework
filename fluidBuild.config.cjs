@@ -9,6 +9,16 @@
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
+// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+// have packages at today. Once we can upgrade to a later version of
+// globby things might be faster.
+const releaseGroupPackageJsonGlobs = [
+	"{azure,examples,experimental,packages}/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+	"tools/markdown-magic/package.json",
+];
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -49,7 +59,9 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			// Note that "api" is included as "compile" intends to build a complete package
+			// and "api" generates package entrypoint files.
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -78,9 +90,9 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc"],
-		"build:test:cjs": ["typetests:gen", "tsc"],
-		"build:test:esm": ["typetests:gen", "build:esnext"],
+		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
@@ -115,6 +127,7 @@ module.exports = {
 		},
 		"depcruise": [],
 		"check:exports": ["api"],
+		"check:exports:bundle-release-tags": ["build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
@@ -132,6 +145,7 @@ module.exports = {
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
+		"eslint:fix": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
@@ -177,13 +191,7 @@ module.exports = {
 			inputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: ["package.json"],
 			gitignore: ["input", "output"],
@@ -224,24 +232,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},
@@ -250,24 +246,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},
@@ -314,12 +298,6 @@ module.exports = {
 		// Entries here are COMPLETELY ignored by the policy checker. Instead of adding entries here, consider adding
 		// entries to the handlerExclusions list below to ignore a particular.
 		exclusions: [
-			// The paths below are for fluidframework.com layouts and code and are not subject to policy.
-			"docs/layouts/",
-			"docs/themes/thxvscode/assets/",
-			"docs/themes/thxvscode/layouts/",
-			"docs/themes/thxvscode/static/assets/",
-
 			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
 
@@ -336,6 +314,9 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
+				// This policy needs to be rethought in light of eslint 9. Disabling everywhere in the meantime.
+				".*",
+
 				// There are no built files, but a tsconfig.json is present to simplify the
 				// eslint config.
 				"azure/packages/azure-local-service/package.json",
@@ -344,8 +325,14 @@ module.exports = {
 				"^packages/test/test-utils/package.json",
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
+
+				// Server packages need to be cleaned up; excluding as a workaround
+				"^server/routerlicious/packages/.*/package.json",
 			],
-			"fluid-build-tasks-tsc": [],
+			"fluid-build-tasks-tsc": [
+				// Server packages need to be cleaned up; excluding as a workaround
+				"^server/routerlicious/packages/.*/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -359,29 +346,37 @@ module.exports = {
 				// minified DOMPurify is not a source file, so it doesn't need a header.
 				"docs/static/dompurify/purify.min.js",
 
-				// Type test files can be excluded since they're generated and known to have the correct header.
-				// This can be removed once the whole repo uses build-tools v0.35.0+.
-				/.*\/validate.*\.generated\.ts/,
+				// printed ESLint configs do not need headers
+				".*/.eslint-print-configs/.*",
+
+				// test data
+				"^build-tools/packages/build-infrastructure/src/test/data/.*",
+
+				// TODO: Once ESLint 9 flat configs are completely in use and the CJS configs are gone
+				// we can remove these exceptions.
+				".*/eslint.*.mts",
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
 				"azure/packages/azure-local-service/index.js",
+
+				// These oclif packages are still CJS vs. build-infrastructure which is ESM so is not excluded here.
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
-				"build-tools/packages/build-cli/test/helpers/init.js",
 				"build-tools/packages/version-tools/bin/dev.js",
 				"build-tools/packages/version-tools/bin/run.js",
+
+				// Could be renamed, but there is tooling that uses this name and it's not worth it.
 				"common/build/build-common/gen_version.js",
+
+				// ESLint shared config and plugin
 				"common/build/eslint-config-fluid/.*",
+				"common/build/eslint-plugin-fluid/.*",
+
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
-				"common/build/eslint-plugin-fluid/.*",
-				"docs/api-markdown-documenter/.*",
-				"docs/api/fallback/index.js",
-				"docs/build-redirects.js",
-				"docs/download-apis.js",
-				"docs/local-api-rollup.js",
+
 				// Avoids MIME-type issues in the browser.
 				"docs/static/trusted-types-policy.js",
 				"docs/static/dompurify/purify.min.js",
@@ -389,20 +384,17 @@ module.exports = {
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
 				"examples/service-clients/odsp-client/shared-tree-demo/tailwind.config.js",
-				"packages/test/mocha-test-setup/mocharc-common.js",
 				"packages/test/test-service-load/scripts/usePrereleaseDeps.js",
-				"packages/tools/devtools/devtools-browser-extension/test-setup.js",
+
+				// Changelog generator wrapper is in js
 				"tools/changelog-generator-wrapper/src/getDependencyReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/index.js",
+
 				"tools/getkeys/index.js",
 			],
-			"npm-package-metadata-and-sorting": [
-				// The root package.json is not checked temporarily due to AB#8640
-				"^package.json",
-			],
 			"npm-package-json-prettier": [
-				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
+				// This rule is disabled for the whole repo because we no longer use prettier in the majority of packages.
 				".*",
 			],
 			"npm-package-json-scripts-args": [
@@ -447,19 +439,9 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 				"^tools/api-markdown-documenter/",
 			],
-			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
-				// We deliberately improperly import from deep in the package tree while we migrate everything into other
-				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
-				"^azure/",
-				"^build-tools/packages/build-tools/package.json",
-				"^build-tools/packages/build-infrastructure/package.json",
-				"^common/",
-				"^examples/",
-				"^experimental/",
-				"^packages/",
-				"^server/",
-				"^tools/",
+				// This policy is no longer correct or applicable to our packages, so all files are excluded.
+				".*",
 			],
 			"npm-package-json-clean-script": [
 				"server/gitrest/package.json",

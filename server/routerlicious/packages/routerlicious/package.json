@@ -59,18 +59,18 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.60.0",
+		"@fluid-tools/build-cli": "^0.63.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.60.0",
-		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^18.19.39",
-		"concurrently": "^8.2.1",
+		"@types/node": "^22",
+		"concurrently": "^9.2.1",
 		"eslint": "~8.57.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {

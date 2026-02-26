@@ -11,16 +11,15 @@ import type {
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 
 export class OdspSampleCache implements IPersistedCache {
-	private readonly cache = new Map<string, any>();
+	private readonly cache = new Map<string, unknown>();
 
 	public constructor() {}
 
-	async get(entry: ICacheEntry): Promise<any> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	async get(entry: ICacheEntry): Promise<unknown> {
 		return this.cache.get(getKeyForCacheEntry(entry));
 	}
 
-	async put(entry: ICacheEntry, value: any) {
+	async put(entry: ICacheEntry, value: unknown): Promise<void> {
 		this.cache.set(getKeyForCacheEntry(entry), value);
 	}
 

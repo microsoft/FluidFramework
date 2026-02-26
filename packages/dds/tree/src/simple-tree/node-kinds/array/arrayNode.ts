@@ -14,6 +14,13 @@ import type {
 } from "../../../feature-libraries/index.js";
 import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
+	brand,
+	validateIndex,
+	validateIndexRange,
+	type JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
+import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
+import {
 	CompatibilityLevel,
 	type WithType,
 	// eslint-disable-next-line import-x/no-deprecated
@@ -45,31 +52,27 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
-	withBufferedTreeEvents,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+} from "../../createContext.js";
+import { nullSchema } from "../../leafNodeSchema.js";
+import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
 	type FactoryContent,
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 	unhydratedFlexTreeFromInsertableNode,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import {
-	getTreeNodeSchemaInitializedData,
-	getUnhydratedContext,
-} from "../../createContext.js";
-import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
+
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
-import { nullSchema } from "../../leafNodeSchema.js";
-import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -123,6 +126,19 @@ export interface TreeArrayNode<
 	 * @param value - The content to insert.
 	 */
 	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+
+	/**
+	 * Inserts new item(s) at the end of the array.
+	 *
+	 * @remarks
+	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
+	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
+	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
+	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 *
+	 * @param value - The content to insert.
+	 */
+	push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -540,11 +556,11 @@ const TreeNodeWithArrayFeatures = (() => {
 	> extends TreeNodeValid<Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>> {}
 
 	// Modify TreeNodeWithArrayFeaturesUntyped to add the members from Array.prototype
-	arrayPrototypeKeys.forEach((key) => {
+	for (const key of arrayPrototypeKeys) {
 		Object.defineProperty(TreeNodeWithArrayFeaturesUntyped.prototype, key, {
 			value: Array.prototype[key],
 		});
-	});
+	}
 
 	return TreeNodeWithArrayFeaturesUntyped as unknown as typeof NodeWithArrayFeatures;
 })();
@@ -575,6 +591,7 @@ const TreeNodeWithArrayFeatures = (() => {
  */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 // prettier-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
 	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
@@ -884,7 +901,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		)[];
 
 		const contentArray = content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+			c instanceof IterableTreeArrayContent ? [...c] : [c],
 		);
 
 		const kernel = getKernel(this);
@@ -914,7 +931,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	public toJSON(): unknown {
 		// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
-		return Array.from(this as unknown as TreeArrayNode);
+		return [...(this as unknown as TreeArrayNode)];
 	}
 
 	// Instances of this class are used as the dispatch object for the proxy,
@@ -951,7 +968,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
-		validateIndex(index, field, "insertAt", true);
+		validateIndex(index, field, "TreeArrayNode.insertAt", true);
 		const content = this.#mapTreesFromFieldData(value);
 		field.editor.insert(index, content);
 	}
@@ -961,34 +978,35 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public insertAtEnd(...value: Insertable<T>): void {
 		this.insertAt(this.length, ...value);
 	}
+	public push(...value: Insertable<T>): void {
+		this.insertAt(this.length, ...value);
+	}
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
-		validateIndex(index, field, "removeAt");
+		validateIndex(index, field, "TreeArrayNode.removeAt");
 		field.editor.remove(index, 1);
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
-		const { length } = field;
+		const { length, editor } = field;
 		const removeStart = start ?? 0;
+		validateIndex(removeStart, field, "TreeArrayNode.removeRange", true);
+
 		const removeEnd = Math.min(length, end ?? length);
-		validatePositiveIndex(removeStart);
-		validatePositiveIndex(removeEnd);
-		if (removeEnd < removeStart) {
-			// This catches both the case where start is > array.length and when start is > end.
-			throw new UsageError('Too large of "start" value passed to TreeArrayNode.removeRange.');
-		}
-		field.editor.remove(removeStart, removeEnd - removeStart);
+		validateIndexRange(removeStart, removeEnd, field, "TreeArrayNode.removeRange");
+
+		editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
-		validateIndex(sourceIndex, sourceField, "moveToStart");
+		validateIndex(sourceIndex, sourceField, "TreeArrayNode.moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
-		validateIndex(sourceIndex, sourceField, "moveToEnd");
+		validateIndex(sourceIndex, sourceField, "TreeArrayNode.moveToEnd");
 		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(
@@ -999,8 +1017,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
 		const destinationField = getSequenceField(this);
-		validateIndex(destinationGap, destinationField, "moveToIndex", true);
-		validateIndex(sourceIndex, sourceField, "moveToIndex");
+		validateIndex(destinationGap, destinationField, "TreeArrayNode.moveToIndex", true);
+		validateIndex(sourceIndex, sourceField, "TreeArrayNode.moveToIndex");
 		this.moveRangeToIndex(destinationGap, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveRangeToStart(
@@ -1012,7 +1030,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			sourceStart,
 			sourceEnd,
 			source ?? getSequenceField(this),
-			"moveRangeToStart",
+			"TreeArrayNode.moveRangeToStart",
 		);
 		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
@@ -1025,7 +1043,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			sourceStart,
 			sourceEnd,
 			source ?? getSequenceField(this),
-			"moveRangeToEnd",
+			"TreeArrayNode.moveRangeToEnd",
 		);
 		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
@@ -1042,10 +1060,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			kernel.context.flexContext.schema.nodeSchema.get(brand(kernel.schema.identifier)) ??
 			fail(0xc16 /* missing schema for array node */)
 		).getFieldSchema(EmptyKey).types;
-		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
+		const sourceField = source === undefined ? destinationField : getSequenceField(source);
 
-		validateIndex(destinationGap, destinationField, "moveRangeToIndex", true);
-		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
+		validateIndex(destinationGap, destinationField, "TreeArrayNode.moveRangeToIndex", true);
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? destinationField,
+			"TreeArrayNode.moveRangeToIndex",
+		);
 
 		// TODO: determine support for move across different sequence types
 		if (sourceField !== destinationField) {
@@ -1067,38 +1090,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 
 		const movedCount = sourceEnd - sourceStart;
-		if (!destinationField.context.isHydrated()) {
-			if (!(sourceField instanceof UnhydratedSequenceField)) {
-				throw new UsageError(
-					"Cannot move elements from a hydrated array to an unhydrated array.",
-				);
-			}
-
-			if (sourceField.context.isHydrated()) {
-				throw new UsageError(
-					"Cannot move elements from an unhydrated array to a hydrated array.",
-				);
-			}
-
-			// We implement move here via subsequent `remove` and `insert`.
-			// This is strictly an implementation detail and should not be observable by the user.
-			// TODO:AB#47457: Implement proper move support for unhydrated trees.
-			// As a temporary mitigation, we will pause tree events until both edits have been completed.
-			// That way, users will only see a single change event for the array instead of 2.
-			withBufferedTreeEvents(() => {
-				if (sourceField !== destinationField || destinationGap < sourceStart) {
-					destinationField.editor.insert(
-						destinationGap,
-						sourceField.editor.remove(sourceStart, movedCount),
-					);
-				} else if (destinationGap > sourceStart + movedCount) {
-					destinationField.editor.insert(
-						destinationGap - movedCount,
-						sourceField.editor.remove(sourceStart, movedCount),
-					);
-				}
-			});
-		} else {
+		if (destinationField.context.isHydrated()) {
 			if (!sourceField.context.isHydrated()) {
 				throw new UsageError(
 					"Cannot move elements from an unhydrated array to a hydrated array.",
@@ -1114,6 +1106,32 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				movedCount,
 				destinationField.getFieldPath(),
 				destinationGap,
+			);
+		} else {
+			if (!(sourceField instanceof UnhydratedSequenceField)) {
+				throw new UsageError(
+					"Cannot move elements from a hydrated array to an unhydrated array.",
+				);
+			}
+
+			if (sourceField.context.isHydrated()) {
+				throw new UsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				);
+			}
+
+			assert(
+				destinationField instanceof UnhydratedSequenceField,
+				0xcd5 /* destinationField should be unhydrated since we're in the else branch of isHydrated() check */,
+			);
+
+			// Use native move which handles the operation atomically for within-field moves
+			// to ensure only a single event is emitted per affected field.
+			destinationField.editor.move(
+				sourceStart,
+				movedCount,
+				destinationGap,
+				sourceField === destinationField ? undefined : sourceField,
 			);
 		}
 	}
@@ -1211,7 +1229,10 @@ export function arraySchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 
@@ -1282,67 +1303,12 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				[normalizedTypes],
-				(storedOptions) =>
-					arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 
 	const output: Output = Schema;
 	return output;
-}
-
-function validateSafeInteger(index: number): void {
-	if (!Number.isSafeInteger(index)) {
-		throw new UsageError(`Expected a safe integer, got ${index}.`);
-	}
-}
-
-function validatePositiveIndex(index: number): void {
-	validateSafeInteger(index);
-	if (index < 0) {
-		throw new UsageError(`Expected non-negative index, got ${index}.`);
-	}
-}
-
-function validateIndex(
-	index: number,
-	array: { readonly length: number },
-	methodName: string,
-	allowOnePastEnd: boolean = false,
-): void {
-	validatePositiveIndex(index);
-	if (allowOnePastEnd) {
-		if (index > array.length) {
-			throw new UsageError(
-				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
-			);
-		}
-	} else {
-		if (index >= array.length) {
-			throw new UsageError(
-				`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
-			);
-		}
-	}
-}
-
-function validateIndexRange(
-	startIndex: number,
-	endIndex: number,
-	array: { readonly length: number },
-	methodName: string,
-): void {
-	validateIndex(startIndex, array, methodName, true);
-	validateIndex(endIndex, array, methodName, true);
-	if (startIndex > endIndex || array.length < endIndex) {
-		throw new UsageError(
-			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
-		);
-	}
 }
 
 /**
@@ -1375,6 +1341,7 @@ function arrayChildToFlexTree(
  */
 function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
@@ -1431,4 +1398,74 @@ function shallowCompatibilityTest(
 	}
 
 	return CompatibilityLevel.None;
+}
+
+/**
+ * A location in a {@link (TreeArrayNode:interface)}.
+ * @remarks
+ * Tracks a location even as the array is mutated.
+ * How this is adjusted for edits depends on the specific anchor being used.
+ * See {@link createArrayInsertionAnchor} for one way to create such an anchor.
+ * @privateRemarks
+ * This being sealed is not important for its current behaviors as nothing downcasts this,
+ * however it is possible we might want to add additional members in the future:
+ * sealing this ensures that such additions are a non-breaking change.
+ * Things we might want to add include status (for example if its deleted) or events (for example to notify when its index changes).
+ * Some specific anchors might even want to add additional method members for things like confidence
+ * (so we can indicate when the anchor goes from being truly robust to a heuristic guess due to an edit).
+ * @alpha
+ * @sealed
+ */
+export interface ArrayPlaceAnchor {
+	/**
+	 * The current index within the array that this anchor refers to.
+	 * @remarks
+	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
+	 * This index may take on a value from 0 to the length of the array (inclusive).
+	 * If used as the index to insert content into the array, this means it can point to any location in the array,
+	 * including just after the last child.
+	 */
+	get index(): number;
+}
+
+/**
+ * Create an {@link ArrayPlaceAnchor} tracking an insertion point in the array which is currently at the provided index.
+ *
+ * @param node - The array node to anchor into.
+ * @param currentIndex - The current index of the place to track.
+ * @remarks
+ * This anchor will track the logical position in the array across changes.
+ * As long as the subsection of the array surrounding the anchor point is not edited,
+ * this anchor will move with them, keeping its relative position to those children fixed.
+ * How exactly it behaves when the adjacent portion of the array is modified is subject to change,
+ * but this will always report a valid index to insert content at (which can be the index after the last item in the array).
+ *
+ * This is intended to track a location that might be used for an insertion point (for example in a text editor): future changes to its details should
+ * make it behave better for such uses.
+ *
+ * The current implementation is known to behave particularly poorly if the child which was at the original anchor point's index is removed
+ * (jumps to the end of the array): this behavior is subject to change.
+ * @privateRemarks
+ * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
+ * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
+ * How this would work, especially for unhydrated nodes is not yet clear.
+ * @alpha
+ */
+export function createArrayInsertionAnchor(
+	node: TreeArrayNode,
+	currentIndex: number,
+): ArrayPlaceAnchor {
+	const field = getInnerNode(node).getBoxed(EmptyKey);
+	const child = field.boxedAt(currentIndex);
+	return {
+		get index() {
+			if (child === undefined) {
+				return field.length;
+			}
+			if (child.parentField.parent !== field) {
+				return field.length;
+			}
+			return child.parentField.index;
+		},
+	};
 }

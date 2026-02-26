@@ -1,0 +1,62 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-stage-upload-telemetry
+
+# This template adds a new stage to a pipeline.
+# The new stage "targets" another stage (specified as a parameter) and uploads telemetry about that stage to Kusto.
+
+parameters:
+
+# Stages that must be completed before telemetry can be uploaded.
+# If a stageIdFilter is specified, it will automatically be depended on without
+# needing to specify it here.
+- name: dependsOn
+  type: object
+  default: []
+
+# Id for the stage whose telemetry will be uploaded to Kusto.
+# Other stages will be filtered out. If set to 'all', all stages will be uploaded.
+- name: stageIdFilter
+  type: string
+
+# The steps to take after configuring for telemetry upload
+- name: telemetry_upload_steps
+  type: stepList
+
+stages:
+- stage: upload_telemetry_${{ parameters.stageIdFilter }}
+  displayName: Upload telemetry to Kusto ('${{ parameters.stageIdFilter }}')
+  condition: succeededOrFailed()
+  dependsOn:
+    - ${{ if ne(parameters.stageIdFilter, 'all') }}:
+      - ${{ parameters.stageIdFilter }}
+    - ${{ each stage in parameters.dependsOn }}:
+      - ${{ stage }}
+  jobs:
+  - job: upload_run_telemetry
+    displayName: Upload telemetry to Kusto
+    pool: Small-eastus2
+    variables:
+    - group: ado-feeds
+
+    steps:
+    - checkout: ff_pipeline_host
+      path: $(FFPipelineHostDirectory)
+
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+      parameters:
+        buildDirectory: $(FFPipelineHostDirectory)
+        primaryRegistry: $(ado-feeds-ff-download-only)
+
+    - task: Bash@3
+      displayName: 'Install dependencies'
+      inputs:
+        targetType: 'inline'
+        script: |
+          set -eu -o pipefail
+          pnpm install
+
+    - ${{ parameters.telemetry_upload_steps }}

@@ -38,6 +38,7 @@ import {
 	type IFileSnapshot,
 } from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	type ITelemetryLoggerExt,
 	createChildLogger,
@@ -62,7 +63,9 @@ let threads = { isMainThread: true };
 try {
 	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	threads = require("worker_threads");
-} catch (error) {}
+} catch (error) {
+	// TODO: document why we are ignoring the error here
+}
 
 function expandTreeForReadability(tree: ITree): ITree {
 	const newTree: ITree = { entries: [], id: undefined };
@@ -78,7 +81,9 @@ function expandTreeForReadability(tree: ITree): ITree {
 					contents: JSON.parse(blob.contents) as string,
 					encoding: blob.encoding,
 				};
-			} catch (e) {}
+			} catch (e) {
+				// TODO: document why we are ignoring the error here
+			}
 		}
 		newTree.entries.push(newNode);
 	}
@@ -156,7 +161,7 @@ class Logger implements ITelemetryBaseLogger {
 	) {}
 
 	// ITelemetryBaseLogger implementation
-	public send(event: ITelemetryBaseEvent) {
+	public send(event: ITelemetryBaseEvent): void {
 		if (event.category === "error" && this.errorHandler(event)) {
 			// Stack is not output properly (with newlines), if done as part of event
 			const stack: string | undefined = event.stack as string | undefined;
@@ -188,15 +193,15 @@ class Document {
 		public readonly containerDescription: string,
 	) {}
 
-	public get currentOp() {
+	public get currentOp(): number {
 		return this.replayer.currentReplayedOp;
 	}
 
-	public get fromOp() {
+	public get fromOp(): number {
 		return this.from;
 	}
 
-	public get logger() {
+	public get logger(): ITelemetryLoggerExt {
 		return this.docLogger;
 	}
 
@@ -204,18 +209,18 @@ class Document {
 		return this.originalSummarySeqs;
 	}
 
-	public getFileName() {
+	public getFileName(): string {
 		return `snapshot_${this.currentOp}_${this.snapshotFileName}`;
 	}
 
-	public appendToFileName(suffix: string) {
+	public appendToFileName(suffix: string): void {
 		this.snapshotFileName = `${this.snapshotFileName}${suffix}`;
 	}
 
 	public async load(
 		deltaStorageService: FileDeltaStorageService,
 		errorHandler: (event: ITelemetryBaseEvent) => boolean,
-	) {
+	): Promise<void> {
 		const deltaConnection = await ReplayFileDeltaConnection.create(deltaStorageService);
 		const documentServiceFactory = new FileDocumentServiceFactory(
 			this.storage,
@@ -257,7 +262,7 @@ class Document {
 		});
 	}
 
-	public async replay(replayTo: number) {
+	public async replay(replayTo: number): Promise<void> {
 		const fetched = this.replayer.replay(replayTo);
 
 		if (fetched > 0 && this.documentSeqNumber !== this.currentOp) {
@@ -271,7 +276,7 @@ class Document {
 		}
 	}
 
-	public async summarize() {
+	public async summarize(): Promise<void> {
 		await uploadSummary(this.container);
 	}
 
@@ -287,11 +292,11 @@ class Document {
 		return content;
 	}
 
-	public close() {
+	public close(): void {
 		this.container.close();
 	}
 
-	private resolveC = () => {};
+	private resolveC = (): void => {};
 }
 
 /**
@@ -318,7 +323,7 @@ export class ReplayTool {
 
 		// Make unhandled exceptions errors, not just warnings
 		// Also report few of them!
-		const listener = (up) => {
+		const listener = (up): void => {
 			this.reportError("UnhandledRejectionPromise", up);
 		};
 		process.on("unhandledRejection", listener);
@@ -346,7 +351,7 @@ export class ReplayTool {
 		return this.errors;
 	}
 
-	private shouldReportError(errorString: string) {
+	private shouldReportError(errorString: string): boolean {
 		// Report only first 5 errors
 		this.errors.push(errorString);
 		const errorsToReport = 5;
@@ -359,7 +364,7 @@ export class ReplayTool {
 		return false;
 	}
 
-	private reportError(description: string, error?: any) {
+	private reportError(description: string, error?: any): void {
 		let errorString: string;
 		if (error === undefined) {
 			errorString = description;
@@ -389,11 +394,11 @@ export class ReplayTool {
 		return this.shouldReportError(errorString);
 	}
 
-	private async loadDoc(doc: Document) {
+	private async loadDoc(doc: Document): Promise<void> {
 		return doc.load(this.deltaStorageService, (event) => this.errorHandler(event));
 	}
 
-	private async setup() {
+	private async setup(): Promise<void> {
 		if (this.args.inDirName === undefined) {
 			throw new Error("Please provide --indir argument");
 		}
@@ -423,7 +428,9 @@ export class ReplayTool {
 							) {
 								this.args.fromVersion = name;
 							}
-						} catch (err) {}
+						} catch (err) {
+							// TODO: document why we are ignoring the error here
+						}
 					}
 					if (this.args.fromVersion === undefined) {
 						console.error(
@@ -562,12 +569,11 @@ export class ReplayTool {
 		}
 	}
 
-	private async mainCycle() {
+	private async mainCycle(): Promise<void> {
 		const originalSummaries = this.args.testSummaries
 			? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
 			: [];
 		let nextSnapPoint = -1;
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			const currentOp = this.mainDocument.currentOp;
 			if (nextSnapPoint <= currentOp) {
@@ -644,7 +650,7 @@ export class ReplayTool {
 		content: ContainerContent,
 		dir: string,
 		final: boolean,
-	) {
+	): Promise<void> {
 		const op = content.op;
 
 		// Add extra container
@@ -675,7 +681,7 @@ export class ReplayTool {
 		content: ContainerContent,
 		dir: string,
 		final: boolean,
-	) {
+	): Promise<void> {
 		const op = content.op;
 
 		const processVersionedSnapshot =
@@ -700,7 +706,11 @@ export class ReplayTool {
 		}
 	}
 
-	private async validateSaveAndLoad(content: ContainerContent, dir: string, final: boolean) {
+	private async validateSaveAndLoad(
+		content: ContainerContent,
+		dir: string,
+		final: boolean,
+	): Promise<void> {
 		const op = content.op;
 
 		// Keep doc from previous iteration and validate here - this gives us shortest
@@ -725,7 +735,7 @@ export class ReplayTool {
 		await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
 	}
 
-	private async generateSummary(final: boolean) {
+	private async generateSummary(final: boolean): Promise<void> {
 		const op = this.mainDocument.currentOp;
 		const dir = this.args.outDirName; // `${this.args.outDirName}/${op}`;
 
@@ -876,7 +886,7 @@ export class ReplayTool {
 		return true;
 	}
 
-	private expandForReadabilityAndWriteOut(content: ContainerContent, filename: string) {
+	private expandForReadabilityAndWriteOut(content: ContainerContent, filename: string): void {
 		fs.writeFileSync(`${filename}.json`, content.snapshotAsString, { encoding: "utf-8" });
 
 		if (this.args.expandFiles) {
@@ -940,9 +950,10 @@ async function assertDdsEqual(
 
 	for (let row = 0; row < matrix1.rowCount; row++) {
 		for (let col = 0; col < matrix1.colCount; col++) {
+			const serializer = new FluidSerializer(dataStoreRuntime);
 			strict.deepStrictEqual(
-				JSON.stringify(matrix1.getCell(row, col)),
-				JSON.stringify(matrix2.getCell(row, col)),
+				serializer.stringify(matrix1.getCell(row, col), matrix1.IFluidLoadable.handle),
+				serializer.stringify(matrix2.getCell(row, col), matrix1.IFluidLoadable.handle),
 			);
 		}
 	}

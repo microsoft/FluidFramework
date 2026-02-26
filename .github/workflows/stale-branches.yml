@@ -23,8 +23,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # ratchet:actions/checkout@v2
+
       - name: Run delete-old-branches-action
-        uses: beatlabs/delete-old-branches-action@db61ade054731e37b5740e23336445fbc75ccd7b # ratchet:beatlabs/delete-old-branches-action@v0.0.9
+        # release notes: https://github.com/beatlabs/delete-old-branches-action/releases/tag/v0.0.11
+        uses: beatlabs/delete-old-branches-action@4eeeb8740ff8b3cb310296ddd6b43c3387734588 # ratchet:beatlabs/delete-old-branches-action@v0.0.11
         with:
           repo_token: ${{ github.token }}
           date: '6 months ago'

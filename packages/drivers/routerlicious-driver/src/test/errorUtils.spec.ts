@@ -187,7 +187,7 @@ describe("ErrorUtils", () => {
 	describe("errorObjectFromSocketError()", () => {
 		const handler = "test_handler";
 		const message = "test error";
-		const assertExpectedMessage = (actualMessage: string) => {
+		const assertExpectedMessage = (actualMessage: string): void => {
 			assert(
 				actualMessage.includes(message),
 				"R11s error should include socket error message",

@@ -36,6 +36,43 @@ export {
 	type MethodKeys,
 	type BindableSchema,
 	type Ctor,
-	type Infer,
 	type IExposedMethods,
 } from "./methodBinding.js";
+export type {
+	exposePropertiesSymbol,
+	PropertyDef,
+	ExposedProperties,
+	IExposedProperties,
+} from "./propertyBinding.js";
+
+export {
+	typeFactory,
+	isTypeFactoryType,
+} from "./treeAgentTypes.js";
+
+export type {
+	TypeFactoryType,
+	TypeFactoryTypeKind,
+	TypeFactoryString,
+	TypeFactoryNumber,
+	TypeFactoryBoolean,
+	TypeFactoryDate,
+	TypeFactoryVoid,
+	TypeFactoryUndefined,
+	TypeFactoryNull,
+	TypeFactoryUnknown,
+	TypeFactoryArray,
+	TypeFactoryPromise,
+	TypeFactoryObject,
+	TypeFactoryRecord,
+	TypeFactoryMap,
+	TypeFactoryTuple,
+	TypeFactoryUnion,
+	TypeFactoryIntersection,
+	TypeFactoryLiteral,
+	TypeFactoryOptional,
+	TypeFactoryReadonly,
+	TypeFactoryFunction,
+	TypeFactoryFunctionParameter,
+	TypeFactoryInstanceOf,
+} from "./treeAgentTypes.js";

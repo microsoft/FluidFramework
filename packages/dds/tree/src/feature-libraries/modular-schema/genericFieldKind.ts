@@ -11,9 +11,9 @@ import {
 	type DeltaMark,
 	type FieldKindIdentifier,
 	Multiplicity,
-	type RevisionTag,
-	replaceAtomRevisions,
+	type RevisionReplacer,
 } from "../../core/index.js";
+import { brandConst } from "../../util/index.js";
 
 import type {
 	FieldChangeDelta,
@@ -25,11 +25,10 @@ import type {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
+import { FlexFieldKind } from "./fieldKind.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
-import { FlexFieldKind } from "./fieldKind.js";
-import { brandConst } from "../../util/index.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -46,7 +45,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
 		buildChildChanges(changes: Iterable<[number, NodeId]>): GenericChangeset {
-			return newGenericChangeset(Array.from(changes));
+			return newGenericChangeset([...changes]);
 		},
 	},
 	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
@@ -61,7 +60,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return { local: markList };
+		return { local: { marks: markList } };
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
@@ -78,7 +77,7 @@ function compose(
 	const composed = change1.clone();
 	for (const [index, id2] of change2.entries()) {
 		const id1 = composed.get(index);
-		const idComposed = id1 !== undefined ? composeChildren(id1, id2) : id2;
+		const idComposed = id1 === undefined ? id2 : composeChildren(id1, id2);
 		composed.set(index, idComposed);
 	}
 
@@ -157,10 +156,9 @@ function pruneGenericChange(
 
 function replaceRevisions(
 	changeset: GenericChangeset,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): GenericChangeset {
-	return changeset.mapValues((node) => replaceAtomRevisions(node, oldRevisions, newRevision));
+	return changeset.mapValues((node) => replacer.getUpdatedAtomId(node));
 }
 
 /**
@@ -169,7 +167,10 @@ function replaceRevisions(
 export const genericFieldKind: FlexFieldKind = new FlexFieldKind(
 	brandConst("ModularEditBuilder.Generic")<FieldKindIdentifier>(),
 	Multiplicity.Sequence,
-	{ changeHandler: genericChangeHandler, allowsTreeSupersetOf: (types, other) => false },
+	{
+		changeHandler: genericChangeHandler,
+		allowMonotonicUpgradeFrom: new Set(),
+	},
 );
 
 /**

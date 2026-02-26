@@ -1,5 +1,16 @@
 # @fluidframework/eslint-plugin-fluid Changelog
 
+## [0.4.2](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.4.2)
+
+The `@fluid-internal/fluid/no-file-path-links-in-jsdoc` rule has been updated to allow file path links in `@privateRemarks` comment blocks, where they won't cause problems for generated API docs.
+
+## [0.4.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.4.1)
+
+Fixes false positives in the following rules:
+
+- `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag`
+- `@fluid-internal/fluid/no-markdown-links-in-jsdoc`
+
 ## [0.4.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.4.0)
 
 Updates plugin to be compatible with both ESLint 8 and ESLint 9.

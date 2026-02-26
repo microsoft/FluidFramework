@@ -1,0 +1,55 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-performance-observability pipeline
+
+name: $(Build.BuildId)
+
+trigger: none
+
+pr: none
+
+variables:
+  - name: foo
+    value: 'bar'
+
+resources:
+  repositories:
+  - repository: m365Pipelines
+    type: git
+    name: 1ESPipelineTemplates/M365GPT
+    ref: refs/tags/release
+
+extends:
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  ${{ else }}:
+    template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
+  parameters:
+    customBuildTags:
+    - ES365AIMigrationTooling
+    pool:
+      name: Small-eastus2
+      os: linux
+    sdl:
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
+
+    stages:
+    - stage: example_stage
+      displayName: Example Stage
+      jobs:
+      - job: example_job
+        displayName: Example Job
+        steps:
+        - checkout: none
+
+        - task: Bash@3
+          displayName: Example step
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "Hello world"
+              echo "Variable value: $(foo)"

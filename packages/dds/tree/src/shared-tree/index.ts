@@ -13,7 +13,6 @@ export {
 	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
@@ -60,8 +59,10 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	independentView,
+	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
+	type CreateIndependentTreeAlphaOptions,
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";

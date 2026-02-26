@@ -6,7 +6,7 @@
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
 import {
-	ITaskSelectionAppModel,
+	type ITaskSelectionAppModel,
 	TaskSelectionContainerRuntimeFactory,
 } from "./containerCode.js";
 import { renderDiceRoller } from "./view.js";
@@ -16,7 +16,7 @@ import { renderDiceRoller } from "./view.js";
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	const tinyliciousModelLoader = new TinyliciousModelLoader<ITaskSelectionAppModel>(
 		new StaticCodeLoader(new TaskSelectionContainerRuntimeFactory()),
 	);
@@ -32,11 +32,12 @@ async function start() {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 	}
 
 	// update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
@@ -62,8 +63,12 @@ async function start() {
 	renderDiceRoller(model.oldestClientDiceRoller, oldestClientViewDiv);
 	oldestClientDiv.append(oldestClientHeaderDiv, oldestClientViewDiv);
 
-	const div = document.getElementById("content") as HTMLDivElement;
+	const div = document.querySelector("#content") as HTMLDivElement;
 	div.append(taskManagerDiv, divider, oldestClientDiv);
 }
 
-start().catch((error) => console.error(error));
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}

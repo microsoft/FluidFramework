@@ -143,7 +143,7 @@ import {
 	isValidMinVersionForCollab,
 	RequestParser,
 	RuntimeHeaders,
-	semanticVersionToMinimumVersionForCollab,
+	validateMinimumVersionForCollab,
 	seqFromTree,
 	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
@@ -854,7 +854,6 @@ export class ContainerRuntime
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
-	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties.
@@ -883,7 +882,6 @@ export class ContainerRuntime
 			registry: new FluidDataStoreRegistry(params.registryEntries),
 		});
 	}
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -1219,6 +1217,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 		};
 
+		validateMinimumVersionForCollab(updatedMinVersionForCollab);
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -1236,7 +1235,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab),
+			updatedMinVersionForCollab,
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1623,10 +1622,11 @@ export class ContainerRuntime
 
 		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+
 		validateLoaderCompatibility(
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
-			this.mc.logger,
+			this.mc,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
@@ -1684,12 +1684,9 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
-		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
-		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
-			// eslint-disable-next-line unicorn/consistent-destructuring
 			if (context.getAbsoluteUrl === undefined) {
 				throw new Error("Driver does not implement getAbsoluteUrl");
 			}
@@ -1829,7 +1826,9 @@ export class ContainerRuntime
 			validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
-		this.summariesDisabled = isSummariesDisabled(this.summaryConfiguration);
+		this.summariesDisabled =
+			isSummariesDisabled(this.summaryConfiguration) ||
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.DisableSummaries") === true;
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
@@ -1868,7 +1867,6 @@ export class ContainerRuntime
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
-		// eslint-disable-next-line unicorn/consistent-destructuring
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 			if (
@@ -2295,7 +2293,10 @@ export class ContainerRuntime
 
 			const defaultAction = (): void => {
 				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-					this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+					this.mc.logger.sendTelemetryEvent({
+						eventName: "SummaryStatus:Behind",
+						opsWithoutSummary: summaryCollection.opsSinceLastAck,
+					});
 					// unregister default to no log on every op after falling behind
 					// and register summary ack handler to re-register this handler
 					// after successful summary
@@ -2337,8 +2338,9 @@ export class ContainerRuntime
 				"summarizerStop",
 				"summarizerStart",
 				"summarizerStartupFailed",
-			]) {
-				this.summaryManager?.on(eventName, (...args: unknown[]) => {
+				"summarizeTimeout",
+			] as const) {
+				this.summaryManager.on(eventName, (...args: unknown[]) => {
 					this.emit(eventName, ...args);
 				});
 			}
@@ -2866,6 +2868,7 @@ export class ContainerRuntime
 			}
 			case ConnectionState.CatchingUp: {
 				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58523 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 					this.getConnectionState !== undefined &&
 						this.getConnectionState() === ConnectionState.CatchingUp,
 					0xc8d /* connection state mismatch between getConnectionState and setConnectionStatus notification */,
@@ -3931,6 +3934,10 @@ export class ContainerRuntime
 		 * True to run GC sweep phase after the mark phase
 		 */
 		runSweep?: boolean;
+		/**
+		 * Telemetry context to populate during summarization.
+		 */
+		telemetryContext?: TelemetryContext;
 	}): Promise<ISummaryTreeWithStats> {
 		this.verifyNotClosed();
 
@@ -3941,9 +3948,9 @@ export class ContainerRuntime
 			runGC = this.garbageCollector.shouldRunGC,
 			runSweep,
 			fullGC,
+			telemetryContext = new TelemetryContext(),
 		} = options;
 
-		const telemetryContext = new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
@@ -4184,6 +4191,7 @@ export class ContainerRuntime
 			finalAttempt = false,
 			summaryLogger,
 			latestSummaryRefSeqNum,
+			telemetryContext = new TelemetryContext(),
 		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
@@ -4348,6 +4356,7 @@ export class ContainerRuntime
 				if (lastAckedContext !== this.lastAckedSummaryContext) {
 					return {
 						continue: false,
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						error: `Last summary changed while summarizing. ${this.lastAckedSummaryContext} !== ${lastAckedContext}`,
 					};
 				}
@@ -4372,6 +4381,7 @@ export class ContainerRuntime
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
+					telemetryContext,
 				});
 			} catch (error) {
 				return {
@@ -5454,7 +5464,6 @@ export class ContainerRuntime
 					entry = factory.resolvePriorInstantiation(entry);
 				}
 			}
-			// eslint-disable-next-line unicorn/consistent-destructuring -- 'entry' may have been update and thus use of 'extension' would be incorrect
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;

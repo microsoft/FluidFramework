@@ -24,7 +24,7 @@ import {
 } from "./container/index.js";
 import { AppView, DebugView } from "./view/index.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -32,13 +32,13 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (groceryList: ISuggestionGroceryList) => {
-	const appDiv = document.getElementById("app") as HTMLDivElement;
+const render = (groceryList: ISuggestionGroceryList): void => {
+	const appDiv = document.querySelector("#app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
 	appRoot.render(createElement(AppView, { groceryList }));
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
-	const debugDiv = document.getElementById("debug") as HTMLDivElement;
+	const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 	const debugRoot = createRoot(debugDiv);
 	debugRoot.render(createElement(DebugView, { groceryList }));
 };
@@ -65,7 +65,7 @@ async function start(): Promise<void> {
 		}
 		id = container.resolvedUrl.id;
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		const container = await loadExistingContainer({
 			request: { url: id },
 			urlResolver,
@@ -79,4 +79,8 @@ async function start(): Promise<void> {
 	updateTabForId(id);
 }
 
-start().catch((error) => console.error(error));
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}

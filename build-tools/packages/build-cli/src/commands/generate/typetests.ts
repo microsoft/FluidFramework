@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
+	getTypeTestPreviousPackageDetails,
 	type Logger,
 	type Package,
 	type PackageJson,
-	getTypeTestPreviousPackageDetails,
+	TscUtils,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
@@ -28,30 +29,23 @@ import {
 	SyntaxKind,
 } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import type { PackageSelectionDefault } from "../../flags.js";
-import {
-	ApiLevel,
-	ensureDevDependencyExists,
-	knownApiLevels,
-	unscopedPackageNameString,
-} from "../../library/index.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
+import { unscopedPackageNameString } from "../../library/commands/constants.js";
+import { ensureDevDependencyExists } from "../../library/package.js";
 import { getTypesPathFromPackage } from "../../library/packageExports.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
-import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import/no-internal-modules
+import { buildTestCase, type TestCaseTypeData } from "../../typeValidator/testGeneration.js";
 import type { TypeData } from "../../typeValidator/typeData.js";
 import {
 	type BrokenCompatSettings,
 	type BrokenCompatTypes,
-	type PackageWithTypeTestSettings,
 	defaultTypeValidationConfig,
-	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-	// eslint-disable-next-line import/no-internal-modules
+	type PackageWithTypeTestSettings,
 } from "../../typeValidator/typeValidatorConfig.js";
+
+/**
+ * Special-cased entry point name to refer to the default (root) entry point of a
+ * package, since a "" value might not be clear in many contexts.
+ */
+const rootEntrypointAlias = "public";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
@@ -59,14 +53,9 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
-		entrypoint: Flags.custom<ApiLevel>({
-			// Temporary alias for back-compat
-			aliases: ["level"],
-			deprecateAliases: true,
-			description:
-				'What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package\'s package.json.',
-			options: knownApiLevels,
-		})(),
+		entrypoint: Flags.string({
+			description: `What entrypoint to generate tests for. Use "${rootEntrypointAlias}" or "" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package's package.json.`,
+		}),
 		outDir: Flags.directory({
 			description: "Where to emit the type tests file.",
 			default: "./src/test/types",
@@ -80,19 +69,25 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 				"Use the public entrypoint as a fallback if the requested entrypoint is not found.",
 			default: false,
 		}),
+		skipVersionOutput: Flags.boolean({
+			description:
+				"Skip updating version information in generated type test files. When set, preserves existing version information instead of updating to current package versions.",
+			env: "FLUB_TYPETEST_SKIP_VERSION_OUTPUT",
+			default: false,
+		}),
 		...PackageCommand.flags,
 	} as const;
 
-	protected defaultSelection = "dir" as PackageSelectionDefault;
+	protected defaultSelection = "dir" as const;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { entrypoint: entrypointFlag, outDir, outFile } = this.flags;
+		const { entrypoint: entrypointFlag, outDir, outFile, skipVersionOutput } = this.flags;
 		const pkgJson: PackageWithTypeTestSettings = pkg.packageJson;
-		const entrypoint: ApiLevel =
+		const entrypoint =
 			entrypointFlag ??
 			pkgJson.typeValidation?.entrypoint ??
 			defaultTypeValidationConfig.entrypoint;
-		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
+		const fallbackLevel = this.flags.publicFallback ? rootEntrypointAlias : undefined;
 
 		this.verbose(
 			`${pkg.nameColored}: Generating type tests for "${entrypoint}" entrypoint with "${fallbackLevel}" as a fallback.`,
@@ -132,13 +127,25 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
-		const { typesPath: previousTypesPathRelative, entrypointUsed: previousEntrypoint } =
-			getTypesPathWithFallback(previousPackageJson, entrypoint, this.logger, fallbackLevel);
+		// Note this assumes that tsconfig found includes test output file, but
+		// does not do any check to confirm that.
+		const conditions = getCustomConditionsFromTsConfig(
+			path.dirname(typeTestOutputFile),
+			this.logger,
+		);
+
+		const { typesPath: previousTypesPathRelative, entrypointSpec } = getTypesPathWithFallback(
+			previousPackageJson,
+			entrypoint,
+			conditions,
+			this.logger,
+			fallbackLevel,
+		);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
 		this.verbose(
-			`Found ${previousEntrypoint} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
+			`Found ${entrypointSpec} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
 		);
 
 		const previousFile = loadTypesSourceFile(previousTypesPath);
@@ -154,12 +161,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const buildToolsPackageName = "@fluidframework/build-tools";
 		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
 
-		// Public API levels are always imported from the primary entrypoint, but everything else is imported from the
-		// /internal entrypoint. This is consistent with our policy for code within the repo - all non-public APIs are
-		// imported from the /internal entrypoint for consistency
-		const previousImport = `import type * as old from "${previousPackageName}${
-			previousEntrypoint === ApiLevel.public ? "" : `/${ApiLevel.internal}`
-		}";`;
+		const previousImport = `import type * as old from "${previousPackageName}${entrypointSpec}";`;
 		const imports =
 			buildToolsPackageName < previousPackageName
 				? [buildToolsImport, previousImport]
@@ -168,6 +170,42 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// Remove pre-release/metadata from the current version (e.g., "1.2.3-foo" -> "1.2.3")
 		const currentVersionBase = `${major(currentPackageJson.version)}.${minor(currentPackageJson.version)}.${patch(currentPackageJson.version)}`;
 
+		// Check if we should skip version output and use existing versions
+		let previousVersionToUse = previousPackageJson.version;
+		let currentVersionToUse = currentVersionBase;
+
+		if (skipVersionOutput) {
+			const existingVersions = readExistingVersions(typeTestOutputFile);
+			if (existingVersions === undefined) {
+				this.verbose(
+					`${pkg.nameColored}: skipVersionOutput is set but no existing file found, using current versions`,
+				);
+			} else {
+				previousVersionToUse = existingVersions.previousVersion;
+				currentVersionToUse = existingVersions.currentVersion;
+				this.verbose(
+					`${pkg.nameColored}: Using existing versions from file: previous=${previousVersionToUse}, current=${currentVersionToUse}`,
+				);
+			}
+		}
+
+		// Args are great to specify in generated header, but complex filtering is
+		// needed when there are multiple commands that might generate the same file.
+		// For now, omit them from the header when the command might be used in
+		// multiple generation commands.
+		// This is only a heuristic.
+		const argsForHeader =
+			// 'dir' is used in default package typetest generation and distinguishes
+			// it as case when batch generation might be used.
+			this.flags.dir === undefined &&
+			!this.flags.all &&
+			!this.flags.packages &&
+			this.flags.releaseGroup === undefined &&
+			this.flags.releaseGroupRoot === undefined &&
+			this.flags.scope === undefined &&
+			this.flags.skipScope === undefined
+				? this.commandLineArgs()
+				: "";
 		const fileHeader: string[] = [
 			`/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
@@ -176,15 +214,14 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 /*
  * THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.
- * Generated by flub generate:typetests in @fluid-tools/build-cli.
+ * Generated by "flub generate typetests${argsForHeader}" from @fluid-tools/build-cli.
  *
- * Baseline (previous) version: ${previousPackageJson.version}
- * Current version: ${currentVersionBase}
+ * Baseline (previous) version: ${previousVersionToUse}
  */
 
 ${imports.join("\n")}
 
-import type * as current from "../../index.js";
+import type * as current from "${currentPackageJson.name}${entrypointSpec}";
 
 declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 `,
@@ -208,28 +245,45 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  */
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
-	entrypoint: ApiLevel,
+	entrypoint: string,
+	conditions: readonly string[],
 	log: Logger,
-	fallbackEntrypoint?: ApiLevel,
-): { typesPath: string; entrypointUsed: ApiLevel } {
-	let chosenEntrypoint: ApiLevel = entrypoint;
+	fallbackEntrypoint?: typeof rootEntrypointAlias,
+): { typesPath: string; entrypointSpec: string } {
+	// The entrypoint spec is the suffix added to the package name in the import statement.
+	// For example, if entrypoint is "beta" then the import would be from "<PACKAGE>/beta"
+	// and the entrypointSpec would be "/beta".
+	// If entrypoint is "" or rootEntrypointAlias ("public") then the import would be from
+	// "<PACKAGE>" and the entrypointSpec would be "".
+	const entrypointSpec =
+		entrypoint === rootEntrypointAlias ? "" : entrypoint ? `/${entrypoint}` : "";
 	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, entrypoint, log);
-
-	if (typesPath === undefined) {
-		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
-		typesPath =
-			fallbackEntrypoint === undefined
-				? undefined
-				: getTypesPathFromPackage(packageJson, fallbackEntrypoint, log);
-		chosenEntrypoint = fallbackEntrypoint ?? entrypoint;
-		if (typesPath === undefined) {
-			throw new Error(
-				`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
-			);
-		}
+	const preferredTypesPath = getTypesPathFromPackage(
+		packageJson,
+		entrypointSpec,
+		conditions,
+		log,
+	);
+	if (preferredTypesPath !== undefined) {
+		return { typesPath: preferredTypesPath, entrypointSpec };
 	}
-	return { typesPath: typesPath, entrypointUsed: chosenEntrypoint };
+
+	if (fallbackEntrypoint === undefined || entrypointSpec === "") {
+		// No fallback or public already checked.
+		throw new Error(
+			`${packageJson.name}: No type definitions found for "${entrypoint}" entrypoint.`,
+		);
+	}
+
+	// Try the public types since configured to do so.
+	const publicTypesPath = getTypesPathFromPackage(packageJson, "", conditions, log);
+	if (publicTypesPath !== undefined) {
+		return { typesPath: publicTypesPath, entrypointSpec: "" };
+	}
+
+	throw new Error(
+		`${packageJson.name}: No type definitions found for "${entrypoint}" or "" (public) entrypoints.`,
+	);
 }
 
 /**
@@ -252,6 +306,78 @@ function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): str
 				)
 			: outFile,
 	);
+}
+
+/**
+ * Reads the tsconfig.json that covers files in the given directory and extracts
+ * any `customConditions` from the resolved compiler options.
+ *
+ * @param directory - The directory to search from for a tsconfig.json.
+ * @param log - A logger to use.
+ * @returns The customConditions array from the resolved tsconfig, or an empty array if none found.
+ */
+function getCustomConditionsFromTsConfig(directory: string, log: Logger): string[] {
+	const tscUtils = TscUtils.getTscUtils(directory);
+	const tsLib = tscUtils.tsLib;
+
+	const configFile = tsLib.findConfigFile(directory, tsLib.sys.fileExists);
+	if (configFile === undefined) {
+		log.verbose(`No TS config found from ${directory}`);
+		return [];
+	}
+
+	const configFileContent = tscUtils.readConfigFile(configFile);
+	if (configFileContent === undefined) {
+		log.verbose(`Error reading TS config at ${configFile}`);
+		return [];
+	}
+
+	const parsedConfig = tsLib.parseJsonConfigFileContent(
+		configFileContent,
+		tsLib.sys,
+		path.dirname(configFile),
+		/* existingOptions */ undefined,
+		configFile,
+	);
+
+	const conditions = parsedConfig.options.customConditions ?? [];
+	if (conditions.length > 0) {
+		log.verbose(`Found customConditions in ${configFile}: ${conditions.join(", ")}`);
+	}
+	return conditions;
+}
+
+/**
+ * Reads the existing version information from a generated type test file.
+ *
+ * @param filePath - The path to the generated type test file.
+ * @returns An object with previousVersion and currentVersion if found, otherwise undefined.
+ */
+export function readExistingVersions(
+	filePath: string,
+): { previousVersion: string; currentVersion: string } | undefined {
+	if (!existsSync(filePath)) {
+		return undefined;
+	}
+
+	try {
+		const content = readFileSync(filePath, "utf8");
+		const previousVersionRegex = /Baseline \(previous\) version: (.+)/;
+		const currentVersionRegex = /Current version: (.+)/;
+		const previousVersionMatch = previousVersionRegex.exec(content);
+		const currentVersionMatch = currentVersionRegex.exec(content);
+
+		if (previousVersionMatch && currentVersionMatch) {
+			return {
+				previousVersion: previousVersionMatch[1].trim(),
+				currentVersion: currentVersionMatch[1].trim(),
+			};
+		}
+	} catch {
+		// If we can't read the file, return undefined
+	}
+
+	return undefined;
 }
 
 /**
@@ -375,8 +501,8 @@ function getNodeTypeData(node: Node, log: Logger, exportedName: string): TypeDat
 			tags: getTags(docs),
 		};
 
-		const escapedTypeName = exportedName.replace(/\./g, "_");
-		const trimmedKind = node.getKindName().replace(/Declaration/g, "");
+		const escapedTypeName = exportedName.replaceAll(".", "_");
+		const trimmedKind = node.getKindName().replaceAll("Declaration", "");
 
 		if (
 			// Covers instance type of the class (including generics of it)

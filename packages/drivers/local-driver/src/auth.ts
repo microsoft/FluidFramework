@@ -21,6 +21,7 @@ export function generateToken(
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
 ): string {
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 	let userClaim = user ? user : generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
 		userClaim = generateUser();
@@ -50,7 +51,7 @@ export function generateToken(
 
 export function generateUser(): IUser {
 	const userId = uuid();
-	const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
+	const match = /^([\da-f]{8})-([\da-f]{4})/.exec(userId);
 	const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
 
 	const randomUser = {

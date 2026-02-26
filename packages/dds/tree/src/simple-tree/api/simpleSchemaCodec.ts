@@ -3,8 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { unreachableCase, transformMapValues } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import {
+	DiscriminatedUnionDispatcher,
+	extractJsonValidator,
+	FormatValidatorNoOp,
+	type FormatValidator,
+} from "../../codec/index.js";
+import type { ValueSchema } from "../../core/index.js";
+import { objectToMap, type JsonCompatibleReadOnly } from "../../util/index.js";
+import { createSchemaUpgrade, NodeKind, SchemaUpgrade } from "../core/index.js";
+import type { FieldKind } from "../fieldSchema.js";
 import type {
 	SimpleAllowedTypeAttributes,
 	SimpleArrayNodeSchema,
@@ -17,28 +28,26 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import { NodeKind } from "../core/index.js";
-import type { FieldKind } from "../fieldSchema.js";
-import type { ValueSchema } from "../../core/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as Format from "../simpleSchemaFormatV1.js";
-import {
-	DiscriminatedUnionDispatcher,
-	extractJsonValidator,
-	FormatValidatorNoOp,
-	type FormatValidator,
-} from "../../codec/index.js";
 
 /**
- * Encodes a simple schema (view or stored) into a serializable format.
+ * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.
+ *
  * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
  * @param treeSchema - The tree schema to convert.
  * @returns A serializable representation of the schema.
  *
+ * @privateRemarks
+ * Encodes to {@link Format.SimpleTreeSchemaFormat}.
+ *
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
-export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatibleReadOnly {
+export function encodeSchemaCompatibilitySnapshot(
+	simpleSchema: SimpleTreeSchema,
+): JsonCompatibleReadOnly {
 	// Convert types to serializable forms
 	const encodedDefinitions: Format.SimpleSchemaDefinitionsFormat = {};
 
@@ -63,9 +72,15 @@ export function encodeSimpleSchema(simpleSchema: SimpleTreeSchema): JsonCompatib
  * @returns A decoded simple schema.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
+ * @privateRemarks
+ * If a validator is not provided, this implicitly performs an unsafe type conversion:
+ * this is something our user facing APIs generally avoid doing, and should be reconsidered before stabilizing.
+ *
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
-export function decodeSimpleSchema(
+export function decodeSchemaCompatibilitySnapshot(
 	encodedSchema: JsonCompatibleReadOnly,
 	validator?: FormatValidator,
 ): SimpleTreeSchema {
@@ -97,16 +112,21 @@ export function decodeSimpleSchema(
 function encodeNodeSchema(schema: SimpleNodeSchema): Format.SimpleNodeSchemaUnionFormat {
 	const kind = schema.kind;
 	switch (kind) {
-		case NodeKind.Leaf:
+		case NodeKind.Leaf: {
 			return { leaf: encodeLeafNode(schema) };
-		case NodeKind.Array:
+		}
+		case NodeKind.Array: {
 			return { array: encodeContainerNode(schema) };
-		case NodeKind.Map:
+		}
+		case NodeKind.Map: {
 			return { map: encodeContainerNode(schema) };
-		case NodeKind.Record:
+		}
+		case NodeKind.Record: {
 			return { record: encodeContainerNode(schema) };
-		case NodeKind.Object:
+		}
+		case NodeKind.Object: {
 			return { object: encodeObjectNode(schema) };
+		}
 		default: {
 			unreachableCase(kind);
 		}
@@ -153,9 +173,8 @@ function encodeSimpleAllowedTypes(
 ): Format.SimpleAllowedTypesFormat {
 	const encodedAllowedTypes: Format.SimpleAllowedTypesFormat = {};
 	for (const [identifier, attributes] of simpleAllowedTypes) {
-		encodedAllowedTypes[identifier] = {
-			isStaged: attributes.isStaged,
-		};
+		const isStaged = attributes.isStaged instanceof SchemaUpgrade ? true : attributes.isStaged;
+		encodedAllowedTypes[identifier] = { isStaged };
 	}
 	return encodedAllowedTypes;
 }
@@ -350,11 +369,13 @@ function decodeSimpleAllowedTypes(
 ): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
 	const untypedMap = objectToMap(encodedAllowedTypes);
 
-	const simpleAllowedTypes = transformMapValues(untypedMap, (value) => {
-		return {
-			isStaged: value.isStaged,
-		} satisfies SimpleAllowedTypeAttributes;
-	});
+	const simpleAllowedTypes = transformMapValues(
+		untypedMap,
+		(value): SimpleAllowedTypeAttributes => {
+			const isStaged = value.isStaged === true ? createSchemaUpgrade() : value.isStaged;
+			return { isStaged };
+		},
+	);
 
 	return simpleAllowedTypes;
 }

@@ -21,6 +21,7 @@ import {
 import {
 	type CodecTree,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	DependentFormatVersion,
 	FluidClientVersion,
 	FormatValidatorNoOp,
@@ -41,7 +42,7 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type TreeTypeSet,
-	getCodecTreeForDetachedFieldIndexFormat,
+	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -55,19 +56,16 @@ import {
 	buildForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
-	getCodecTreeForFieldBatchFormat,
-	getCodecTreeForForestFormat,
-	getCodecTreeForSchemaFormat,
+	fieldBatchCodecBuilder,
+	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
-	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
-	type TreeCompressionStrategyPrivate,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -75,7 +73,7 @@ import {
 	type ClonableSchemaAndPolicy,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
-	type SharedTreCoreOptionsInternal,
+	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
 	SharedTreeCore,
 	EditManagerFormatVersion,
@@ -98,25 +96,24 @@ import {
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
+	type SchemaType,
 } from "../simple-tree/index.js";
-
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
-import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import {
-	brand,
 	type Breakable,
 	breakingClass,
 	type JsonCompatible,
 	throwIfBroken,
 } from "../util/index.js";
+
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	getCodecTreeForChangeFormat,
-	type SharedTreeChangeFormatVersion,
+	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -241,8 +238,9 @@ export class SharedTreeKernel
 				getCurrentSeq: lastSequenceNumber,
 			},
 			schemaCodec,
+			options.minVersionForCollab,
 		);
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
 		const encoderContext = {
 			schema: {
@@ -263,7 +261,10 @@ export class SharedTreeKernel
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
-		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
+			removedRoots,
+			options.minVersionForCollab,
+		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
 			fieldBatchCodec,
@@ -293,7 +294,6 @@ export class SharedTreeKernel
 				throw error;
 			},
 		);
-		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
 			breaker,
 			sharedObject,
@@ -308,8 +308,6 @@ export class SharedTreeKernel
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
-			undefined,
-			changeEnricher,
 		);
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
@@ -325,6 +323,7 @@ export class SharedTreeKernel
 			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 		});
 
+		this.registerSharedBranchForEditing("main", this.checkout);
 		this.registerCheckout("main", this.checkout);
 
 		this.view = {
@@ -341,33 +340,6 @@ export class SharedTreeKernel
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
 		this.checkouts.set(branchId, checkout);
-		const enricher = this.getCommitEnricher(branchId);
-		checkout.transaction.events.on("started", () => {
-			if (this.sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				enricher.startTransaction();
-			}
-		});
-
-		checkout.transaction.events.on("aborting", () => {
-			if (this.sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				enricher.abortTransaction();
-			}
-		});
-		checkout.transaction.events.on("committing", () => {
-			if (this.sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				enricher.commitTransaction();
-			}
-		});
-		checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && this.sharedObject.isAttached()) {
-				if (checkout.transaction.isInProgress()) {
-					enricher.addTransactionCommits(event.newCommits);
-				}
-			}
-		});
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
@@ -435,13 +407,7 @@ export class SharedTreeKernel
 	private checkoutBranch(branchId: BranchId): TreeCheckout {
 		const checkout = this.checkout.branch();
 		checkout.switchBranch(this.getSharedBranch(branchId));
-		const enricher = new SharedTreeReadonlyChangeEnricher(
-			checkout.forest,
-			checkout.storedSchema,
-			checkout.removedRoots,
-		);
-
-		this.registerSharedBranchForEditing(branchId, enricher);
+		this.registerSharedBranchForEditing(branchId, checkout);
 		this.registerCheckout(branchId, checkout);
 		return checkout;
 	}
@@ -453,7 +419,7 @@ export class SharedTreeKernel
 
 	public override didAttach(): void {
 		for (const checkout of this.checkouts.values()) {
-			if (checkout.transaction.isInProgress()) {
+			if (checkout.transaction.size > 0) {
 				// Attaching during a transaction is not currently supported.
 				// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
 				throw new UsageError(
@@ -471,7 +437,7 @@ export class SharedTreeKernel
 	): void {
 		for (const checkout of this.checkouts.values()) {
 			assert(
-				!checkout.transaction.isInProgress(),
+				checkout.transaction.size === 0,
 				0x674 /* Unexpected transaction is open while applying stashed ops */,
 			);
 		}
@@ -486,7 +452,7 @@ export class SharedTreeKernel
 	): void {
 		const checkout = this.getCheckout(branchId);
 		assert(
-			!checkout.transaction.isInProgress(),
+			checkout.transaction.size === 0,
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
@@ -504,7 +470,9 @@ export class SharedTreeKernel
 	public onDisconnect(): void {}
 }
 
-export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
+export function exportSimpleSchema(
+	storedSchema: TreeStoredSchema,
+): SimpleTreeSchema<SchemaType.Stored> {
 	return {
 		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
@@ -575,82 +543,20 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 }
 
 /**
- * Format versions supported by SharedTree.
- *
- * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @alpha
- */
-export const SharedTreeFormatVersion = {
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 *
-	 * @deprecated FF does not currently plan on supporting this format long-term.
-	 * Do not write production documents using this format, as they may not be loadable in the future.
-	 */
-	v1: 1,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v2: 2,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v3: 3,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v5: 5,
-
-	/**
-	 * For testing purposes only.
-	 */
-	vSharedBranches: 100,
-} as const;
-
-/**
- * Format versions supported by SharedTree.
- *
- * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @alpha
- * @privateRemarks
- * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
- *
- * TODO: Before this gets promoted past Alpha,
- * a separate abstraction more suited for use in the public API should be adopted rather than reusing the same types used internally.
- * Such an abstraction should probably be in the form of a Fluid-Framework wide compatibility enum.
- */
-export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
-
-/**
  * Defines for each EditManagerFormatVersion the SharedTreeChangeFormatVersion to use.
  * This is an arbitrary mapping that is injected in the EditManger codec.
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v1),
-		brand<SharedTreeChangeFormatVersion>(1),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v2),
-		brand<SharedTreeChangeFormatVersion>(2),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v3),
-		brand<SharedTreeChangeFormatVersion>(3),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v4),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v5),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
+// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
+export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs<
+	EditManagerFormatVersion,
+	SharedTreeChangeFormatVersion
+>([
+	[EditManagerFormatVersion.v3, SharedTreeChangeFormatVersion.v3],
+	[EditManagerFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
+	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
+	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -659,31 +565,14 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.undefined),
-		brand<SharedTreeChangeFormatVersion>(1),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v1),
-		brand<SharedTreeChangeFormatVersion>(1),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v2),
-		brand<SharedTreeChangeFormatVersion>(2),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v3),
-		brand<SharedTreeChangeFormatVersion>(3),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v4),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v5),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
+export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
+	MessageFormatVersion,
+	SharedTreeChangeFormatVersion
+>([
+	[MessageFormatVersion.v3, SharedTreeChangeFormatVersion.v3],
+	[MessageFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
+	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
+	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
@@ -706,12 +595,12 @@ export function getCodecTreeForSharedTreeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const children: CodecTree[] = [];
-	children.push(getCodecTreeForForestFormat(clientVersion));
-	children.push(getCodecTreeForSchemaFormat(clientVersion));
-	children.push(getCodecTreeForDetachedFieldIndexFormat(clientVersion));
+	children.push(forestCodecBuilder.getCodecTree(clientVersion));
+	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
+	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
-	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
+	children.push(fieldBatchCodecBuilder.getCodecTree(clientVersion));
 	return {
 		name: "SharedTree",
 		version: undefined, // SharedTree does not have a version of its own.
@@ -723,35 +612,34 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export type SharedTreeOptionsBeta = ForestOptions;
+export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
 
 /**
- * Configuration options for SharedTree.
+ * Configuration options for SharedTree with alpha features.
  * @alpha @input
  */
 export interface SharedTreeOptions
-	extends Partial<CodecWriteOptions>,
-		Partial<SharedTreeFormatOptions>,
-		SharedTreeOptionsBeta {
+	extends SharedTreeOptionsBeta,
+		Partial<CodecWriteOptions>,
+		Partial<SharedTreeFormatOptions> {
 	/**
 	 * Experimental feature flag to enable shared branches.
 	 * This feature is not yet complete and should not be used in production.
 	 * Defaults to false.
 	 */
 	readonly enableSharedBranches?: boolean;
-}
-
-export interface SharedTreeOptionsInternal
-	extends Partial<SharedTreCoreOptionsInternal>,
-		Partial<ForestOptions>,
-		Partial<SharedTreeFormatOptionsInternal> {
-	disposeForksAfterTransaction?: boolean;
 	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
 	 * See {@link IncrementalEncodingPolicy}.
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+}
+
+export interface SharedTreeOptionsInternal
+	extends SharedTreeOptions,
+		Partial<SharedTreeCoreOptionsInternal> {
+	disposeForksAfterTransaction?: boolean;
 }
 
 /**
@@ -775,11 +663,6 @@ export interface SharedTreeFormatOptions {
 	 * default: TreeCompressionStrategy.Compressed
 	 */
 	treeEncodeType: TreeCompressionStrategy;
-}
-
-export interface SharedTreeFormatOptionsInternal
-	extends Omit<SharedTreeFormatOptions, "treeEncodeType"> {
-	treeEncodeType: TreeCompressionStrategyPrivate;
 }
 
 /**
@@ -884,6 +767,9 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
+	enableSharedBranches: false,
+	writeVersionOverrides: new Map(),
+	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };
 
 /**
@@ -895,8 +781,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
  */
 function buildSimpleAllowedTypeAttributesForStoredSchema(
 	types: TreeTypeSet,
-): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes>();
+): ReadonlyMap<string, SimpleAllowedTypeAttributes<SchemaType.Stored>> {
+	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes<SchemaType.Stored>>();
 	for (const type of types) {
 		// Stored schemas do not have staged upgrades
 		allowedTypesInfo.set(type, { isStaged: undefined });
@@ -904,24 +790,31 @@ function buildSimpleAllowedTypeAttributesForStoredSchema(
 	return allowedTypesInfo;
 }
 
-function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
+function exportSimpleFieldSchemaStored(
+	schema: TreeFieldStoredSchema,
+): SimpleFieldSchema<SchemaType.Stored> {
 	let kind: FieldKind;
 	switch (schema.kind) {
-		case FieldKinds.identifier.identifier:
+		case FieldKinds.identifier.identifier: {
 			kind = FieldKind.Identifier;
 			break;
-		case FieldKinds.optional.identifier:
+		}
+		case FieldKinds.optional.identifier: {
 			kind = FieldKind.Optional;
 			break;
-		case FieldKinds.required.identifier:
+		}
+		case FieldKinds.required.identifier: {
 			kind = FieldKind.Required;
 			break;
-		case FieldKinds.forbidden.identifier:
+		}
+		case FieldKinds.forbidden.identifier: {
 			kind = FieldKind.Optional;
 			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
-		default:
+		}
+		default: {
 			fail(0xaca /* invalid field kind */);
+		}
 	}
 	return {
 		kind,
@@ -938,7 +831,9 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
  * Note on SimpleNodeSchema construction: In the persisted format `persistedMetadata` is just called `metadata` whereas the `metadata`
  * field on SimpleNodeSchema is not persisted.
  */
-function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+function exportSimpleNodeSchemaStored(
+	schema: TreeNodeStoredSchema,
+): SimpleNodeSchema<SchemaType.Stored> {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
 		return {
@@ -949,7 +844,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
+		const fields = new Map<FieldKey, SimpleObjectFieldSchema<SchemaType.Stored>>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}

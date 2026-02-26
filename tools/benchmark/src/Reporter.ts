@@ -28,7 +28,7 @@ SOFTWARE.
 */
 
 // This file is a reporter used with node, so depending on node is fine.
-/* eslint-disable import/no-nodejs-modules */
+/* eslint-disable import-x/no-nodejs-modules */
 
 /* eslint-disable unicorn/prefer-module */
 

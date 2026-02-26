@@ -12,7 +12,7 @@ import path from "node:path";
 import { type Package, TscUtils } from "@fluidframework/build-tools";
 import type { TsConfigJson } from "type-fest";
 
-import { getGenerateEntrypointsOutput } from "../commands/index.js";
+import { getGenerateEntrypointsOutput } from "../commands/generateEntrypoints.js";
 
 type PackageName = string;
 type Script = string;
@@ -143,6 +143,9 @@ function tscOutput(
 		throw new Error(`Error parsing ${pkg.name} tsc command line: ${commandLine}`);
 	}
 	const configFile = tscUtils.findConfigFile(packageDir, parsedCommand);
+	if (configFile === undefined) {
+		throw new Error(`Could not find config file for ${pkg.name} in ${packageDir}`);
+	}
 	const configJson = tscUtils.readConfigFile(configFile) as TsConfigJson;
 	if (configJson === undefined) {
 		throw new Error(`Failed to load config file '${configFile}'`);
@@ -237,10 +240,7 @@ export class FluidBuildDatabase {
 		packageGroup: ReadonlyMap<PackageName, Package>,
 		packageName: PackageName,
 		script: Script,
-		ignorePackage?: (packageInfo: {
-			name: string;
-			version: string;
-		}) => boolean,
+		ignorePackage?: (packageInfo: { name: string; version: string }) => boolean,
 	): BuildScript[][] {
 		const pkg = packageGroup.get(packageName);
 		if (pkg === undefined) {

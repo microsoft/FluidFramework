@@ -44,6 +44,7 @@ export type {
 	IDocumentStaticProperties,
 	IDocumentStorage,
 	IScribe,
+	IAdditionalQueryParams,
 } from "./document";
 export type { IDocumentManager } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
@@ -169,6 +170,7 @@ export {
 	ThrottlingError,
 } from "./throttler";
 export type { TokenGenerator } from "./token";
+export { StageTrace, IStageTrace } from "./trace";
 export {
 	clientConnectivityStorageId,
 	type IUsageData,

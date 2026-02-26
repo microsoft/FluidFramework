@@ -72,7 +72,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					containerRuntime,
 					constellationComponentName,
 				);
-				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
+				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 				const view = (
 					<DefaultView
 						simpleCoordinate={simpleCoordinate}
@@ -83,16 +83,17 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					/>
 				) as any;
 
-				let getMountableDefaultView = async () => view;
+				let getMountableDefaultView = async (): Promise<any> => view;
 				if (MountableView.canMount(view)) {
-					getMountableDefaultView = async () => new MountableView(view);
+					getMountableDefaultView = async (): Promise<MountableView> =>
+						new MountableView(view);
 				}
 
 				return {
 					getDefaultDataObject: async (): Promise<FluidObject> => ({}),
 					getMountableDefaultView,
 				};
-				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
+				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 			},
 		});
 	}

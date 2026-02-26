@@ -4,48 +4,46 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	type CodecTree,
+	ClientVersionDispatchingCodecBuilder,
+	type CodecAndSchema,
 	type CodecWriteOptions,
-	type IJsonCodec,
-	makeVersionedValidatedCodec,
+	FluidClientVersion,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
-import { Format, ForestFormatVersion } from "./format.js";
-import { brand } from "../../util/index.js";
+import { ForestFormatVersion, type Format, FormatCommon } from "./formatCommon.js";
 
 /**
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = IJsonCodec<FieldSet, Format, Format, FieldBatchEncodingContext>;
+export type ForestCodec = ReturnType<typeof forestCodecBuilder.build>;
 
 /**
- * Convert a MinimumVersionForCollab to a ForestFormatVersion.
- * @param clientVersion - The MinimumVersionForCollab to convert.
- * @returns The ForestFormatVersion that corresponds to the provided MinimumVersionForCollab.
+ * Options for building the forest summarizer codec.
+ * @remarks
+ * Extends {@link CodecWriteOptions} with the required `fieldBatchCodec` dependency.
  */
-function clientVersionToForestSummaryVersion(
-	clientVersion: MinimumVersionForCollab,
-): ForestFormatVersion {
-	// Currently, forest summary codec only writes in version 1.
-	return brand(ForestFormatVersion.v1);
+export interface ForestCodecOptions extends CodecWriteOptions {
+	/**
+	 * Codec for encoding the field batches in the forest summary.
+	 * @privateRemarks
+	 * TODO: Select this automatically.
+	 * This is kept for now to limit the scope of changes done at the same time.
+	 */
+	readonly fieldBatchCodec: FieldBatchCodec;
 }
 
-export function makeForestSummarizerCodec(
-	options: CodecWriteOptions,
-	fieldBatchCodec: FieldBatchCodec,
-): ForestCodec {
-	const inner = fieldBatchCodec;
-	// TODO: AB#41865
-	// This needs to be updated to support multiple versions.
-	// The second version will be used to enable incremental summarization.
-	const writeVersion = clientVersionToForestSummaryVersion(options.minVersionForCollab);
-	return makeVersionedValidatedCodec(options, new Set([ForestFormatVersion.v1]), Format, {
+function makeForestSummarizerCodec(
+	options: ForestCodecOptions,
+	version: ForestFormatVersion,
+): CodecAndSchema<FieldSet, FieldBatchEncodingContext> {
+	const formatSchema = FormatCommon(version);
+	return {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
@@ -53,22 +51,39 @@ export function makeForestSummarizerCodec(
 				keys.push(key);
 				fields.push(value);
 			}
-			return { keys, fields: inner.encode(fields, context), version: writeVersion };
+			return {
+				keys,
+				fields: options.fieldBatchCodec.encode(fields, context),
+				version,
+			};
 		},
 		decode: (data: Format, context: FieldBatchEncodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
-			const fields = inner.decode(data.fields, context);
+			const fields = options.fieldBatchCodec.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (const [index, field] of fields.entries()) {
 				out.set(data.keys[index] ?? oob(), field);
 			}
 			return out;
 		},
-	});
+		schema: formatSchema,
+	};
 }
 
-export function getCodecTreeForForestFormat(
-	clientVersion: MinimumVersionForCollab,
-): CodecTree {
-	return { name: "Forest", version: clientVersionToForestSummaryVersion(clientVersion) };
-}
+/**
+ * {@link ClientVersionDispatchingCodecBuilder} for forest summarizer codecs.
+ */
+export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Forest", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
+		formatVersion: ForestFormatVersion.v1,
+		codec: (options: ForestCodecOptions) =>
+			makeForestSummarizerCodec(options, ForestFormatVersion.v1),
+	},
+	{
+		minVersionForCollab: FluidClientVersion.v2_74,
+		formatVersion: ForestFormatVersion.v2,
+		codec: (options: ForestCodecOptions) =>
+			makeForestSummarizerCodec(options, ForestFormatVersion.v2),
+	},
+]);

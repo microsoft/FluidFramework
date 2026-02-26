@@ -162,7 +162,7 @@ export interface ISensitivityLabel {
 // @beta @legacy
 export interface ISensitivityLabelsInfo {
     labels: ISensitivityLabel[];
-    timestamp: string;
+    timestamp: number;
 }
 
 // @beta @legacy
@@ -240,6 +240,7 @@ export const OdspErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy (undocumented)

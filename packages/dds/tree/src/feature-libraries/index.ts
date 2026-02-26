@@ -11,8 +11,8 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 
 export {
 	ForestSummarizer,
-	getCodecTreeForForestFormat,
-	type ForestFormatVersion,
+	forestCodecBuilder,
+	ForestFormatVersion,
 } from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
@@ -29,11 +29,8 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	encodeTreeSchema,
 	makeSchemaCodec,
-	makeSchemaCodecs,
-	getCodecTreeForSchemaFormat,
-	clientVersionToSchemaVersion,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -51,8 +48,8 @@ export {
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field/index.js";
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
 export { SequenceField };
 
 export {
@@ -83,13 +80,16 @@ export {
 	type NodeExistsConstraint,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
-	EncodedModularChangeset,
+	EncodedModularChangesetV1,
+	EncodedModularChangesetV2,
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultRevisionReplacer,
+	ModularChangeFormatVersion,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -104,9 +104,8 @@ export {
 	type FieldBatch,
 	type FieldBatchCodec,
 	FieldBatchFormatVersion,
-	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
@@ -127,11 +126,6 @@ export {
 
 export {
 	FieldKinds,
-	type Required,
-	type Optional,
-	type Sequence,
-	type Identifier,
-	type Forbidden,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -145,7 +139,6 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 	getCodecTreeForModularChangeFormat,
-	type ModularChangeFormatVersion,
 } from "./default-schema/index.js";
 
 export {
@@ -190,11 +183,7 @@ export {
 	type Observer,
 } from "./flex-tree/index.js";
 
-export {
-	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyPrivate,
-} from "./treeCompressionUtils.js";
+export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
 
@@ -214,6 +203,12 @@ export {
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export {
+	type ChangeAtomIdBTree,
+	newChangeAtomIdBTree,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+} from "./changeAtomIdBTree.js";

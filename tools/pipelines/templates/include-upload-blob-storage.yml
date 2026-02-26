@@ -41,6 +41,10 @@ parameters:
   type: string
   default: ''
 
+- name: contentCache
+  type: string
+  default: ''
+
 steps:
 - task: AzureCLI@2
   displayName: ${{ parameters.displayName }}
@@ -57,8 +61,8 @@ steps:
       ${{ if ne(parameters.sourcePattern, '') }}:
         # Multiple files mode - loop through pattern
         for file in ${{ parameters.sourcePattern }}; do
-            az storage blob upload -f "$file" -c '${{ parameters.containerName }}' -n "$(basename "$file")" --account-name ${{ parameters.storageAccount }} --auth-mode login --overwrite ${{ parameters.overwrite }} --verbose
+            az storage blob upload -f "$file" -c '${{ parameters.containerName }}' -n "$(basename "$file")" --account-name ${{ parameters.storageAccount }} ${{ if ne(parameters.contentCache, '') }}--content-cache ${{ parameters.contentCache }}${{ endif }} --auth-mode login --overwrite ${{ parameters.overwrite }} --verbose
         done
       ${{ if ne(parameters.sourceFile, '') }}:
         # Single file mode
-        az storage blob upload -f '${{ parameters.sourceFile }}' -c '${{ parameters.containerName }}' -n '${{ parameters.blobName }}' --account-name ${{ parameters.storageAccount }} --auth-mode login --overwrite ${{ parameters.overwrite }} --verbose
+        az storage blob upload -f '${{ parameters.sourceFile }}' -c '${{ parameters.containerName }}' -n '${{ parameters.blobName }}' --account-name ${{ parameters.storageAccount }} ${{ if ne(parameters.contentCache, '') }}--content-cache ${{ parameters.contentCache }}${{ endif }} --auth-mode login --overwrite ${{ parameters.overwrite }} --verbose

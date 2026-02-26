@@ -4,14 +4,17 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import {
-	type FieldChangeEncodingContext,
-	SequenceField as SF,
-} from "../../../feature-libraries/index.js";
+
+import { withSchemaValidation } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
 import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	type EncodingTestData,
 	makeEncodingTestSuite,
@@ -19,12 +22,10 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
-import { withSchemaValidation } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
@@ -67,9 +68,9 @@ const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncoding
 	],
 };
 
-export function testCodecs() {
+export function testCodecs(): void {
 	describe("Codecs", () => {
-		const sequenceFieldCodec = SF.sequenceFieldChangeCodecFactory(testRevisionTagCodec);
+		const sequenceFieldCodec = sequenceFieldChangeCodecFactory(testRevisionTagCodec);
 		makeEncodingTestSuite(sequenceFieldCodec, encodingTestData);
 		describe("Rename-like AttachAndDetach from documents prior to 2024-07-23 are decoded as Rename", () => {
 			const expected = [
@@ -84,13 +85,9 @@ export function testCodecs() {
 				it(`version ${version}`, () => {
 					const codec = sequenceFieldCodec.resolve(version);
 					const jsonCodec =
-						codec.json.encodedSchema !== undefined
-							? withSchemaValidation(
-									codec.json.encodedSchema,
-									codec.json,
-									FormatValidatorBasic,
-								)
-							: codec.json;
+						codec.encodedSchema === undefined
+							? codec
+							: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 					const actual = jsonCodec.decode(changeset, context);
 					assertChangesetsEqual(actual, expected);
 				});
@@ -107,55 +104,6 @@ const renameLikeAttachAndDetach: readonly {
 	readonly version: number;
 	readonly changeset: JsonCompatibleReadOnly;
 }[] = [
-	{
-		version: 1,
-		changeset: [
-			{
-				"count": 1,
-				"effect": {
-					"attachAndDetach": {
-						"attach": {
-							"moveIn": {
-								"revision": encodedTag1,
-								"id": 0,
-							},
-						},
-						"detach": {
-							"moveOut": {
-								"revision": encodedTag1,
-								"idOverride": {
-									"type": 0,
-									"id": {
-										"atom": [2, encodedTag2],
-									},
-								},
-								"id": 3,
-							},
-						},
-					},
-				},
-				"cellId": {
-					"atom": [1, encodedTag1],
-				},
-				"changes": {
-					"fieldChanges": [
-						{
-							"fieldKey": "",
-							"fieldKind": "",
-							"change": {
-								"localId": 2,
-								"testChange": {
-									"inputContext": [],
-									"intentions": [1],
-									"outputContext": [1],
-								},
-							},
-						},
-					],
-				},
-			},
-		],
-	},
 	{
 		version: 2,
 		changeset: [

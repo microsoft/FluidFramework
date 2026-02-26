@@ -5,14 +5,17 @@
 
 import type {
 	DeepReadonly,
-	InternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 	OpaqueJsonDeserialized,
 	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
 
-import type { ValidatableOptionalState, ValidatableRequiredState } from "./internalTypes.js";
+import type {
+	ValidatableOptionalState,
+	ValidatableRequiredState,
+} from "./validatableTypes.js";
 
 /**
  * Returns union of types of values in a record.
@@ -111,9 +114,10 @@ export function asDeeplyReadonlyDeserializedJson<T>(
  * Conditional type that reveals the underlying JSON type of an opaque JSON value. If `T` is an object, the key values
  * will be revealed.
  */
-type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
-	? JsonDeserialized<U>
-	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
+type RevealOpaqueJsonDeserialized<T> =
+	T extends OpaqueJsonDeserialized<infer U>
+		? JsonDeserialized<U>
+		: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
 
 /**
  * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
@@ -164,11 +168,12 @@ type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends 
  * Generates a union of types that are the remainder from a simple
  * Pick combination (that is the set of common properties).
  */
-type PickRemainder<T> = Pick<T, keyof T> extends infer Common
-	? T extends unknown
-		? Omit<T, keyof Common>
-		: never
-	: never;
+type PickRemainder<T> =
+	Pick<T, keyof T> extends infer Common
+		? T extends unknown
+			? Omit<T, keyof Common>
+			: never
+		: never;
 
 /**
  * Combines union of structure into a single structure where common properties
@@ -181,17 +186,16 @@ type PickRemainder<T> = Pick<T, keyof T> extends infer Common
  * property. (This can be fixed, but might be best addressed by changing
  * T to be a tuple of types to be combined.)
  */
-export type FlattenUnionWithOptionals<T> = InternalUtilityTypes.FlattenIntersection<
-	Pick<T, keyof T> & UnionToIntersection<Partial<PickRemainder<T>>>
->;
+export type FlattenUnionWithOptionals<T> =
+	InternalCoreInterfacesUtilityTypes.FlattenIntersection<
+		Pick<T, keyof T> & UnionToIntersection<Partial<PickRemainder<T>>>
+	>;
 
 /**
  * Type guard to check if a state is a required state (has a value).
  *
  * @param state - The state to check
  * @returns True if the state has a value and is therefore a {@link ValidatableRequiredState}
- *
- * @system
  */
 export function isValueRequiredState<T>(
 	state: ValidatableRequiredState<T> | ValidatableOptionalState<T>,

@@ -212,7 +212,7 @@ export namespace InternalUtilityTypes {
 						| symbol
 						| undefined
 						? /* not serializable => */ Result["WhenNeverDeserializable"]
-						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 							T extends Function
 							? ExtractFunctionFromIntersection<T> extends {
 									classification: "exactly Function";
@@ -307,7 +307,7 @@ export namespace InternalUtilityTypes {
 						/* extract types that might lead to missing property */ Extract<
 							PossibleTypeLessAllowed,
 							/* types that might lead to missing property, except `bigint` */
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 							undefined | symbol | Function
 						> extends never
 							? /* all types are supported plus possibly `bigint` => */
@@ -371,7 +371,7 @@ export namespace InternalUtilityTypes {
 					? Extract<
 							IfSameType<PossibleTypeLessAllowed, unknown, undefined, PossibleTypeLessAllowed>,
 							/* types that might lead to missing property */
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 							undefined | symbol | Function
 						> extends never
 						? /* exclusively supported types or exactly `never` */ never
@@ -463,7 +463,7 @@ export namespace InternalUtilityTypes {
 						/* exactly replaced => */ T,
 						/* test for known types that become null */ T extends undefined | symbol
 							? /* => */ null
-							: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+							: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 								T extends Function
 								? ExtractFunctionFromIntersection<T> extends {
 										classification: "exactly Function";
@@ -484,7 +484,7 @@ export namespace InternalUtilityTypes {
 		NotEnumLike = unknown,
 	> = T extends readonly (infer _)[]
 		? /* array => */ NotEnumLike
-		: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+		: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 			T extends Function
 			? /* function => */ NotEnumLike
 			: T extends {
@@ -551,7 +551,7 @@ export namespace InternalUtilityTypes {
 	 * @typeParam IfNoMatch - Type to return if no match is found.
 	 *
 	 * @remarks
-	 * In a recursive context, use {@link InternalUtilityTypes.IfExactTypeInTuple} to manage ancestry.
+	 * In a recursive context, use {@link InternalCoreInterfacesUtilityTypes.IfExactTypeInTuple} to manage ancestry.
 	 *
 	 * @privateRemarks
 	 * Perhaps it is a Typescript defect but a simple check that `T` is `never`
@@ -989,7 +989,7 @@ export namespace InternalUtilityTypes {
 	/* eslint-enable @typescript-eslint/no-explicit-any */
 
 	/**
-	 * Helper for {@link JsonSerializableFilter} to determine if a property may
+	 * Helper for {@link InternalCoreInterfacesUtilityTypes.JsonSerializableFilter} to determine if a property may
 	 * be `undefined` and selects from options for result.
 	 * Since `unknown` is a superset of `undefined`, it is given a special case.
 	 * Additionally since index signatures are inherently optional, `unknown` typed
@@ -1050,7 +1050,7 @@ export namespace InternalUtilityTypes {
 								"no match"
 							> extends true
 						? /* exact alternate type => */ T
-						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 							/* test for not a function */ Extract<T, Function> extends never
 							? /* not a function => test for object */ T extends object
 								? /* object => test for array */ T extends readonly (infer _)[]
@@ -1248,7 +1248,7 @@ export namespace InternalUtilityTypes {
 		: never /* unreachable else for infer */;
 
 	/**
-	 * Recurses `T` applying {@link InternalUtilityTypes.JsonDeserializedFilter} up until
+	 * Recurses `T` applying {@link InternalCoreInterfacesUtilityTypes.JsonDeserializedFilter} up until
 	 * `T` is found to be a match of an ancestor type. At that point `T` is wrapped in
 	 * {@link OpaqueJsonDeserialized} to avoid further immediate processing, if
 	 * modification is needed. Caller will need to unwrap the type to continue processing.
@@ -1760,7 +1760,7 @@ export namespace InternalUtilityTypes {
 		: /* unreachable else for infer */ never;
 
 	/**
-	 * Recurses `T` applying {@link InternalUtilityTypes.DeepReadonlyWorker} up to `RecurseLimit` times.
+	 * Recurses `T` applying {@link InternalCoreInterfacesUtilityTypes.DeepReadonlyWorker} up to `RecurseLimit` times.
 	 *
 	 * @system
 	 */
@@ -1783,7 +1783,7 @@ export namespace InternalUtilityTypes {
 		: DeepReadonlyWorker<T, DeepenedGenerics, RecurseLimit, TAncestorTypes | T>;
 
 	/**
-	 * Core implementation of {@link InternalUtilityTypes.DeepReadonlyLimitingRecursion}.
+	 * Core implementation of {@link InternalCoreInterfacesUtilityTypes.DeepReadonlyLimitingRecursion}.
 	 *
 	 * @system
 	 */

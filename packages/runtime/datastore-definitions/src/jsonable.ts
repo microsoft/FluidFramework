@@ -39,7 +39,6 @@ export type JsonableTypeWith<T> =
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
  * @legacy @beta
  */
-// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- Use of mapped type required to prevent circular reference issue
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
 	[index: string | number]: JsonableTypeWith<T>;
 }
@@ -100,7 +99,7 @@ export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extend
 					| string
 					| TReplaced
 			? /* primitive types => */ T
-			: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+			: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 				/* test for not a function */ Extract<T, Function> extends never
 				? /* not a function =>  => test for object */ T extends object
 					? /* object => test for array */ T extends (infer U)[] // prefer ArrayLike test to catch non-array array-like types

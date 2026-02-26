@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions/legacy";
+import type { ICodeDetailsLoader } from "@fluidframework/container-definitions/legacy";
 import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
@@ -15,14 +15,14 @@ import {
 	createTinyliciousTestCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/test-utils";
 
-import { IDetachedModel, IModelLoader } from "./interfaces.js";
+import type { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";
 
 class TinyliciousService {
 	public readonly documentServiceFactory: IDocumentServiceFactory;
 	public readonly urlResolver: IUrlResolver;
 
-	constructor(tinyliciousPort?: number) {
+	constructor() {
 		const tokenProvider = createInsecureTinyliciousTestTokenProvider();
 		this.urlResolver = createInsecureTinyliciousTestUrlResolver();
 		this.documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);

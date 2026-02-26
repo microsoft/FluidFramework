@@ -148,26 +148,23 @@ export function customFromCursor<TChild>(
 		case numberSchema.identifier:
 		case booleanSchema.identifier:
 		case nullSchema.identifier:
-		case stringSchema.identifier:
+		case stringSchema.identifier: {
 			assert(reader.value !== undefined, 0xa50 /* out of schema: missing value */);
 			assert(!isFluidHandle(reader.value), 0xa51 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
-		case handleSchema.identifier:
+		}
+		case handleSchema.identifier: {
 			assert(reader.value !== undefined, 0xa52 /* out of schema: missing value */);
 			assert(isFluidHandle(reader.value), 0xa53 /* out of schema: expected FluidHandle */);
 			return reader.value;
+		}
 		default: {
 			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
 			const nodeSchema =
 				storedSchema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 			const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
 
-			if (arrayTypes !== undefined) {
-				const fields = inCursorField(reader, EmptyKey, () =>
-					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
-				);
-				return fields;
-			} else {
+			if (arrayTypes === undefined) {
 				const fields: Record<string, TChild> = {};
 				forEachField(reader, () => {
 					assert(reader.getFieldLength() === 1, 0xa19 /* invalid children number */);
@@ -182,6 +179,11 @@ export function customFromCursor<TChild>(
 					fields[key] = childHandler(reader, options, storedSchema, schema);
 					reader.exitNode();
 				});
+				return fields;
+			} else {
+				const fields = inCursorField(reader, EmptyKey, () =>
+					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
+				);
 				return fields;
 			}
 		}
@@ -209,11 +211,12 @@ function getKeyFromOptions(
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): string | undefined {
 	switch (options) {
-		case KeyEncodingOptions.allStoredKeys:
+		case KeyEncodingOptions.allStoredKeys: {
 			// Since this case might be inside of an unknown optional field,
 			// it must not depend on there being a view schema.
 			// Fortunately, its possible to implement this case without one.
 			return storedKey;
+		}
 		case KeyEncodingOptions.usePropertyKeys:
 		case KeyEncodingOptions.knownStoredKeys: {
 			// Both these cases avoid traversing into unknown optional fields,
@@ -236,8 +239,9 @@ function getKeyFromOptions(
 				return storedKey;
 			}
 		}
-		default:
+		default: {
 			unreachableCase(options);
+		}
 	}
 }
 

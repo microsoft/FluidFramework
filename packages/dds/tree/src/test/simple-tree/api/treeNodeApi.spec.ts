@@ -4,21 +4,48 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { isStableId } from "@fluidframework/id-compressor/internal";
 import {
 	MockHandle,
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { isStableId } from "@fluidframework/id-compressor/internal";
 
+import { FluidClientVersion } from "../../../codec/index.js";
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
+	currentObserver,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
 	TreeStatus,
 	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
+import {
+	SchematizingSimpleTreeView,
+	TreeAlpha,
+	type TreeCheckout,
+} from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
+import {
+	Context,
+	createField,
+	UnhydratedContext,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/core/index.js";
+import {
+	createTreeNodeFromInner,
+	getInnerNode,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/core/treeNodeKernel.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	type InsertableField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
@@ -30,6 +57,7 @@ import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	toStoredSchema,
+	type TransactionResult,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -41,6 +69,21 @@ import {
 	type VerboseTree,
 } from "../../../simple-tree/index.js";
 import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/leafNodeSchema.js";
+import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
+import { ajvValidator } from "../../codec/index.js";
+import {
+	testDocumentIndependentView,
+	testDocuments,
+	testSimpleTrees,
+} from "../../testTrees.js";
+import {
 	checkoutWithContent,
 	chunkFromJsonableTrees,
 	fieldCursorFromInsertable,
@@ -50,47 +93,6 @@ import {
 	type TreeStoredContentStrict,
 } from "../../utils.js";
 import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
-import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
-
-import {
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/leafNodeSchema.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
-import {
-	testDocumentIndependentView,
-	testDocuments,
-	testSimpleTrees,
-} from "../../testTrees.js";
-import { FluidClientVersion } from "../../../codec/index.js";
-import { ajvValidator } from "../../codec/index.js";
-import {
-	SchematizingSimpleTreeView,
-	TreeAlpha,
-	type TreeCheckout,
-} from "../../../shared-tree/index.js";
-import { FieldKinds } from "../../../feature-libraries/index.js";
-import {
-	Context,
-	createField,
-	UnhydratedContext,
-	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-import {
-	createTreeNodeFromInner,
-	getInnerNode,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 
@@ -286,6 +288,11 @@ describe("treeNodeApi", () => {
 					() => Tree.parent(y),
 				);
 
+				TreeAlpha.trackObservations(
+					() => log.push("deep"),
+					() => currentObserver?.observeNodeDeep(getInnerNode(node)),
+				);
+
 				log.push("change: x.value");
 				node.x.value = 3;
 
@@ -296,10 +303,12 @@ describe("treeNodeApi", () => {
 					"change: x.value",
 					"node.x.value",
 					"x.value",
+					"deep",
 					"change: y",
 					"node.y",
 					"node.y.value",
 					"y.parent",
+					"deep",
 				]);
 			});
 
@@ -1550,11 +1559,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => Tree.shortId(view.root),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/may not be called on a node with more than one identifier/,
-					),
+				validateAssertionError(/node has more than one identifier/),
 			);
 		});
 
@@ -1661,11 +1666,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => TreeAlpha.identifier(view.root),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/may not be called on a node with more than one identifier/,
-					),
+				validateAssertionError(/node has more than one identifier/),
 			);
 		});
 
@@ -1762,11 +1763,7 @@ describe("treeNodeApi", () => {
 				});
 				assert.throws(
 					() => TreeAlpha.identifier.getShort(view.root),
-					(error: Error) =>
-						validateAssertionError(
-							error,
-							/may not be called on a node with more than one identifier/,
-						),
+					validateAssertionError(/node has more than one identifier/),
 				);
 			});
 
@@ -1792,7 +1789,7 @@ describe("treeNodeApi", () => {
 					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
 
-				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
+				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new as well as `TreeIdentifierUtils.getShort`
 				it("returns undefined when unhydrated then local id when hydrated", () => {
 					const config = new TreeViewConfiguration({ schema: HasIdentifier });
 					const view = getView(config);
@@ -3263,10 +3260,7 @@ describe("treeNodeApi", () => {
 
 				const content2 = { x: new C({}) as TreeNode as B };
 				TreeAlpha.tagContentSchema(A, content2);
-				assert.throws(
-					() => new A(content2),
-					validateUsageError(/Invalid schema for this context/),
-				);
+				assert.throws(() => new A(content2), validateUsageError(/Expected insertable for/));
 			});
 		});
 
@@ -3806,6 +3800,108 @@ describe("treeNodeApi", () => {
 			});
 			assert.ok(Tree.is(grandParent.parent, Father));
 			assert.ok(Tree.is(grandParent.parent?.child, Son));
+		});
+	});
+
+	describe("context", () => {
+		const sf = new SchemaFactory(undefined);
+		class Obj extends sf.object("Test", { n: sf.number }) {}
+
+		it("for hydrated nodes is the branch", () => {
+			const obj = hydrate(Obj, { n: 3 });
+			const branch = TreeAlpha.context(obj);
+			assert(branch.isBranch());
+			// Compile check: `isBranch()` should downcast the context to a branch
+			branch.hasRootSchema(Obj); // This is a method on branches but not on context
+		});
+
+		it("for unhydrated nodes is not a branch", () => {
+			const obj = new Obj({ n: 3 });
+			const context = TreeAlpha.context(obj);
+			assert.ok(!context.isBranch());
+		});
+
+		it("has synchronous transaction APIs for both hydrated and unhydrated nodes", () => {
+			const hydratedObj = hydrate(Obj, { n: 3 });
+			const unhydratedObj = new Obj({ n: 3 });
+			for (const obj of [hydratedObj, unhydratedObj]) {
+				const context = TreeAlpha.context(obj);
+				context.runTransaction(() => (obj.n = 4)); // Transaction with no return value
+				const value = context.runTransaction(() => ({ value: obj.n })); // Transaction with return value
+				assert.ok(value.success);
+				assert.equal(obj.n, value.value);
+			}
+		});
+
+		it("has async transaction APIs for both hydrated and unhydrated nodes", async () => {
+			const hydratedObj = hydrate(Obj, { n: 3 });
+			const unhydratedObj = new Obj({ n: 3 });
+			for (const obj of [hydratedObj, unhydratedObj]) {
+				const context = TreeAlpha.context(obj);
+				await context.runTransactionAsync(async () => {
+					obj.n = 4; // Transaction with no return value
+				});
+				const value = await context.runTransactionAsync(async () => ({ value: obj.n })); // Transaction with return value
+				assert.ok(value.success);
+				assert.equal(obj.n, value.value);
+			}
+		});
+
+		it("can successfully run transactions with constraints", () => {
+			const node = hydrate(Obj, { n: 3 });
+			const context = TreeAlpha.context(node);
+			context.runTransaction(() => (node.n = 4), {
+				preconditions: [{ type: "nodeInDocument", node }],
+			});
+			assert.equal(node.n, 4);
+		});
+
+		it("throws if you start a transaction with violated constraints", () => {
+			const node = new Obj({ n: 3 });
+			const context = TreeAlpha.context(node);
+			assert.throws(
+				() =>
+					context.runTransaction(() => {}, {
+						// `obj` belongs to the context, but it is not "in the document"
+						preconditions: [{ type: "nodeInDocument", node }],
+					}),
+				validateAssertionError(/Attempted to add a.*constraint/),
+			);
+		});
+
+		it("rejects async transactions within existing transactions", async () => {
+			const node = new Obj({ n: 3 });
+			const context = TreeAlpha.context(node);
+
+			let transactionPromise: Promise<TransactionResult> | undefined;
+			const expectedError = validateUsageError(
+				/An asynchronous transaction cannot be started while another transaction is already in progress/,
+			);
+
+			// Synchronous -> Asynchronous
+			context.runTransaction(() => {
+				transactionPromise = context.runTransactionAsync(async () => {});
+			});
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
+
+			// Asynchronous -> Asynchronous
+			await assert.rejects(
+				async () =>
+					context.runTransactionAsync(async () => {
+						transactionPromise = context.runTransactionAsync(async () => {});
+						await transactionPromise;
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
 		});
 	});
 });

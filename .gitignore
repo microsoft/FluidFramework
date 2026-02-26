@@ -31,6 +31,11 @@ legacy.d.ts
 # Temporary api-extractor build artifacts
 **/_api-extractor-temp/**
 
+# api-extractor metadata artifact
+# This should not be generically ignored nor checked in. If found, examine settings
+# to see if file is meant to be generated in that location.
+# tsdoc-metadata.json
+
 # Bundle analysis artifacts
 bundleAnalysis
 
@@ -38,9 +43,6 @@ bundleAnalysis
 artifacts
 
 docs/resources/_gen/
-
-# documentation tool artifact
-tsdoc-metadata.json
 
 # PNPM store (when mounting host file system in docker container)
 .pnpm-store/
@@ -52,3 +54,6 @@ UPCOMING.md
 # This is created to later publish its content on the pipeline and do not need to be included on git as
 # artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
 build_output_archive
+
+# Claude Code
+.claude/

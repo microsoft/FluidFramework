@@ -65,7 +65,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 			throw new Error("createWeightedGenerator must have some positive weight");
 		}
 		const { random } = state;
-		const sample = () => {
+		const sample = (): number => {
 			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
@@ -109,7 +109,8 @@ export function take<T, TState>(
 }
 
 /**
- * @returns a deterministic generator that always returns the items of `contents` in order.
+ * Creates a deterministic generator that yields the items of `contents` in order.
+ *
  * @internal
  */
 export function generatorFromArray<T, TAdditionalState>(
@@ -323,7 +324,7 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 	// we could pre-filter the acceptance conditions rather than rejection sample the outcome.
 	return async (state) => {
 		const { random } = state;
-		const sample = () => {
+		const sample = (): number => {
 			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
@@ -367,7 +368,8 @@ export function takeAsync<T, TState>(
 }
 
 /**
- * @returns a deterministic generator that always returns the items of `contents` in order.
+ * Creates a deterministic async generator that yields the items of `contents` in order.
+ *
  * @internal
  */
 export function asyncGeneratorFromArray<T, TAdditionalState>(

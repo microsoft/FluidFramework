@@ -13,6 +13,8 @@ jobs:
     - name: version
       value: $[stageDependencies.build.build.outputs['SetVersion.version']]
     steps:
+    - checkout: self
+      path: $(FluidFrameworkDirectory)
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
     - template: /tools/pipelines/templates/include-install-build-tools.yml@self
       parameters:
@@ -22,7 +24,7 @@ jobs:
       displayName: Generate release reports
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           mkdir generate_release_reports
@@ -32,7 +34,7 @@ jobs:
       displayName: Update release report version
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           mkdir upload_release_reports
@@ -41,7 +43,7 @@ jobs:
     - task: CopyFiles@2
       displayName: Copy release reports
       inputs:
-        SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+        SourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/upload_release_reports
         TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
     - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
@@ -51,7 +53,8 @@ jobs:
         containerName: 'manifest-files'
         sourcePattern: 'upload_release_reports/*'
         displayName: 'Upload release reports to old storage'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        contentCache: 'max-age=300'
 
     - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
       parameters:
@@ -60,13 +63,14 @@ jobs:
         containerName: 'manifest-files'
         sourcePattern: 'upload_release_reports/*'
         displayName: 'Upload release reports to new storage'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        contentCache: 'max-age=300'
 
     - task: Bash@3
       displayName: Clean up temporary directories
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           # Delete generate_release_reports and upload_release_reports folder
           rm -r generate_release_reports upload_release_reports

@@ -5,6 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
+import { TreeAlpha } from "../../shared-tree/index.js";
+import {
+	type FieldKind,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	areImplicitFieldSchemaEqual,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/fieldSchema.js";
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -17,24 +28,11 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
-
-import {
-	type FieldKind,
-	type FieldSchema,
-	type ImplicitFieldSchema,
-	type InsertableField,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeFieldFromImplicitField,
-	areImplicitFieldSchemaEqual,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/fieldSchema.js";
-
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
 } from "../../util/index.js";
-import { TreeAlpha } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 

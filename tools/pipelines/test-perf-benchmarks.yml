@@ -71,7 +71,7 @@ variables:
     value: 1
     readonly: true
   - name: testWorkspace
-    value: $(Build.SourcesDirectory)
+    value: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
     readonly: true
   - name: testFilesPath
     value: $(Pipeline.Workspace)/test-files
@@ -149,7 +149,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         # Run tests
         - task: Npm@1
@@ -211,11 +211,14 @@ stages:
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
     parameters:
-      stageId: perf_unit_tests_runtime
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      testWorkspace: ${{ variables.testWorkspace }}
+      stageIdFilter: perf_unit_tests_runtime
+      telemetry_upload_steps:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+          parameters:
+            stageIdFilter: perf_unit_tests_runtime
+            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
@@ -273,7 +276,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         # Run tests
         - task: Npm@1
@@ -321,11 +324,14 @@ stages:
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
     parameters:
-      stageId: perf_unit_tests_memory
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      testWorkspace: ${{ variables.testWorkspace }}
+      stageIdFilter: perf_unit_tests_memory
+      telemetry_upload_steps:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+          parameters:
+            stageIdFilter: perf_unit_tests_memory
+            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
   # Performance unit tests - customBenchmark
   - stage: perf_unit_tests_customBenchmark
@@ -382,7 +388,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         - task: Npm@1
           displayName: Run custom data performance tests - ${{ testPackage }}
@@ -429,11 +435,14 @@ stages:
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-  - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+  - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
     parameters:
-      stageId: perf_unit_tests_customBenchmark
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      testWorkspace: ${{ variables.testWorkspace }}
+      stageIdFilter: perf_unit_tests_customBenchmark
+      telemetry_upload_steps:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+          parameters:
+            stageIdFilter: perf_unit_tests_customBenchmark
+            pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
   - ${{ each endpointObject in parameters.endpoints }}:
 
@@ -483,7 +492,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/$(testPackage)
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
         # one fails.
@@ -626,8 +635,11 @@ stages:
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-    - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+    - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
       parameters:
-        stageId: perf_e2e_tests_${{ endpointObject.endpointName }}
-        pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-        testWorkspace: ${{ variables.testWorkspace }}
+        stageIdFilter: perf_e2e_tests_${{ endpointObject.endpointName }}
+        telemetry_upload_steps:
+          - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+            parameters:
+              stageIdFilter: perf_e2e_tests_${{ endpointObject.endpointName }}
+              pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}

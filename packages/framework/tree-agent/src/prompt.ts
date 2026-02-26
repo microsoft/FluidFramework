@@ -8,19 +8,21 @@ import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
-import { normalizeFieldSchema } from "@fluidframework/tree/internal";
+import { normalizeFieldSchema, ValueSchema } from "@fluidframework/tree/internal";
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import {
+	IdentifierCollisionResolver,
 	getFriendlyName,
-	getZodSchemaAsTypeScript,
-	isNamedSchema,
 	communize,
-	unqualifySchema,
-	type SchemaDetails,
 	findSchemas,
 } from "./utils.js";
+
+/**
+ * The type name used for handles in generated TypeScript.
+ */
+export const fluidHandleTypeName = "_OpaqueHandle";
 
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.
@@ -36,17 +38,23 @@ export function getPrompt(args: {
 	const mapInterfaceName = "TreeMap";
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
-	const rootTypeUnion = `${rootTypes.map((t) => getFriendlyName(t)).join(" | ")}`;
+	const allSchemas = findSchemas(schema);
+	const resolver = new IdentifierCollisionResolver();
+	for (const schemaNode of allSchemas) {
+		resolver.resolve(schemaNode);
+	}
+
+	const rootTypeUnion = `${rootTypes.map((t) => resolver.resolve(t) ?? getFriendlyName(t)).join(" | ")}`;
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
+	let hasFluidHandles = false;
 	let exampleObjectName: string | undefined;
-	for (const s of findSchemas(schema)) {
+	for (const s of allSchemas) {
 		if (s.kind !== NodeKind.Leaf) {
+			const friendlyName = resolver.resolve(s);
 			nodeTypeUnion =
-				nodeTypeUnion === undefined
-					? getFriendlyName(s)
-					: `${nodeTypeUnion} | ${getFriendlyName(s)}`;
+				nodeTypeUnion === undefined ? friendlyName : `${nodeTypeUnion} | ${friendlyName}`;
 		}
 
 		switch (s.kind) {
@@ -59,26 +67,30 @@ export function getPrompt(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??= getFriendlyName(s);
+				exampleObjectName ??= resolver.resolve(s);
+				break;
+			}
+			case NodeKind.Leaf: {
+				hasFluidHandles ||= s.info === ValueSchema.FluidHandle;
 				break;
 			}
 			// No default
 		}
 	}
 
-	const { domainTypes } = generateEditTypesForPrompt(schema, getSimpleSchema(schema));
-	for (const [key, value] of Object.entries(domainTypes)) {
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete domainTypes[key];
-		if (isNamedSchema(key)) {
-			const friendlyKey = unqualifySchema(key);
-			domainTypes[friendlyKey] = value;
-		}
-	}
+	const { schemaText: typescriptSchemaTypes, hasHelperMethods } = generateEditTypesForPrompt(
+		schema,
+		getSimpleSchema(schema),
+	);
+	const fluidHandleType = hasFluidHandles
+		? `/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type ${fluidHandleTypeName} = unknown;
 
-	const stringified = stringifyTree(field);
-	const details: SchemaDetails = { hasHelperMethods: false };
-	const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
+`
+		: "";
 	const exampleTypeName =
 		nodeTypeUnion === undefined
 			? undefined
@@ -121,23 +133,23 @@ export function getPrompt(args: {
 	 * ${`Example: Check if a node is a ${exampleTypeName} with \`if (context.is.${exampleTypeName}(node)) {}\``}
 	 */
 	is: Record<string, <T extends TreeData>(data: unknown) => data is T>;
-	
+
 	/**
 	 * Checks if the provided data is an array.
 	 * @remarks
 	 * DO NOT use \`Array.isArray\` to check if tree data is an array - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript arrays.
 	 *
 	 * ${`Example: \`if (context.isArray(node)) {}\``}
 	 */
 	isArray(data: any): boolean;
-	
+
 	/**
 	 * Checks if the provided data is a map.
 	 * @remarks
 	 * DO NOT use \`instanceof Map\` to check if tree data is a map - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript Map instances.
 	 *
 	 * ${`Example: \`if (context.isMap(node)) {}\``}
@@ -179,7 +191,7 @@ export function getPrompt(args: {
 }
 \`\`\``;
 
-	const helperMethodExplanation = details.hasHelperMethods
+	const helperMethodExplanation = hasHelperMethods
 		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
 		: "";
@@ -290,7 +302,7 @@ Finally, double check that the edits would accomplish the user's request (if it 
 The JSON tree adheres to the following Typescript schema:
 
 \`\`\`typescript
-${typescriptSchemaTypes}
+${fluidHandleType}${typescriptSchemaTypes}
 \`\`\`
 
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
@@ -303,10 +315,10 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : resolver.resolve(Tree.schema(field))}\`) is:
 
 \`\`\`JSON
-${stringified}
+${stringifyTree(field, resolver)}
 \`\`\``;
 	return prompt;
 }
@@ -315,7 +327,11 @@ ${stringified}
  * Serializes tree data e.g. to include in a prompt or message.
  * @remarks This includes some extra metadata to make it easier to understand the structure of the tree.
  */
-export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string {
+export function stringifyTree(
+	tree: ReadableField<ImplicitFieldSchema>,
+	collisionResolver?: IdentifierCollisionResolver,
+): string {
+	const resolver = collisionResolver ?? new IdentifierCollisionResolver();
 	const typeReplacementKey = "_e944da5a5fd04ea2b8b2eb6109e089ed";
 	const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 	const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";
@@ -328,8 +344,9 @@ export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string 
 				const schema = Tree.schema(node);
 				switch (schema.kind) {
 					case NodeKind.Object: {
+						const friendlyName = resolver.resolve(schema);
 						return {
-							[typeReplacementKey]: getFriendlyName(schema),
+							[typeReplacementKey]: friendlyName,
 							[indexReplacementKey]: index,
 							...node,
 						};

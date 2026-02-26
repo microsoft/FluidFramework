@@ -4,18 +4,17 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	createFromCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/create.js";
-
 import {
-	convertField,
-	normalizeFieldSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactory,
+	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 
@@ -26,10 +25,8 @@ describe("simple-tree create", () => {
 			createFromCursor(
 				SchemaFactory.string,
 				cursor,
-				convertField(
-					normalizeFieldSchema(SchemaFactory.string),
-					restrictiveStoredSchemaGenerationOptions,
-				),
+				toStoredSchema(SchemaFactory.string, restrictiveStoredSchemaGenerationOptions)
+					.rootFieldSchema,
 			);
 		});
 
@@ -40,10 +37,8 @@ describe("simple-tree create", () => {
 					createFromCursor(
 						SchemaFactory.number,
 						cursor,
-						convertField(
-							normalizeFieldSchema(SchemaFactory.number),
-							restrictiveStoredSchemaGenerationOptions,
-						),
+						toStoredSchema(SchemaFactory.number, restrictiveStoredSchemaGenerationOptions)
+							.rootFieldSchema,
 					),
 				validateUsageError(
 					`Failed to parse tree due to occurrence of type "com.fluidframework.leaf.string" which is not defined in this context.`,
@@ -60,7 +55,7 @@ describe("simple-tree create", () => {
 					createFromCursor(
 						Obj,
 						cursor,
-						convertField(normalizeFieldSchema(Obj), restrictiveStoredSchemaGenerationOptions),
+						toStoredSchema(Obj, restrictiveStoredSchemaGenerationOptions).rootFieldSchema,
 					),
 				validateUsageError(/does not conform to schema/),
 			);

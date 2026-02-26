@@ -13,10 +13,7 @@ import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
-import {
-	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/container-runtime/internal/test/summary";
+import { defaultMaxAttemptsForSubmitFailures } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IFluidHandle,
@@ -29,7 +26,12 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import {
+	IFluidDataStoreFactory,
+	type IContainerRuntimeBase,
+	type IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
@@ -81,17 +83,17 @@ describeCompat(
 		 * where data objects are created during summarization.
 		 */
 		class TestDataObject1 extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
 			private readonly datastoreKey = "TestDataObject2";
 
-			protected async hasInitialized() {
+			protected async hasInitialized(): Promise<void> {
 				this.initSync().catch((error) => {});
 			}
 
@@ -100,7 +102,7 @@ describeCompat(
 			 * already exists. The idea behind this is to have data store created during summarization and validate that it
 			 * is handled correctly.
 			 */
-			protected async initSync() {
+			protected async initSync(): Promise<void> {
 				// For non-summarizer (interactive) clients, don't do anything.
 				if (this.context.clientDetails.capabilities.interactive === true) {
 					return;
@@ -131,36 +133,38 @@ describeCompat(
 		 * during summarization.
 		 */
 		class TestDataObject2 extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
-			protected async hasInitialized() {
+			protected async hasInitialized(): Promise<void> {
 				this.root.set("key", "value");
 			}
 		}
 
 		class RootTestDataObject extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
-			public get containerRuntime() {
+			public get containerRuntime(): IContainerRuntimeBase {
 				return this.context.containerRuntime;
 			}
 		}
 
 		// Search does something similar to this, where it loads the data object.
-		const getDataObject = async (runtime: FluidDataStoreRuntime) => {
+		const getDataObject = async (runtime: FluidDataStoreRuntime): Promise<undefined> => {
 			await DataObject.getDataObject(runtime);
 			return undefined;
 		};
 
 		// Search does something similar to this, where it loads the data object.
-		const getDataObjectAndSendOps = async (runtime: FluidDataStoreRuntime) => {
+		const getDataObjectAndSendOps = async (
+			runtime: FluidDataStoreRuntime,
+		): Promise<undefined> => {
 			const dataObject = (await DataObject.getDataObject(runtime)) as TestDataObject2;
 			dataObject._root.set("op", "value");
 			return undefined;
@@ -545,7 +549,7 @@ describeCompat(
 				const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 				const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
-					const handler = (eventProps: ISummarizeEventProps) => {
+					const handler = (eventProps: ISummarizeEventProps): void => {
 						if (eventProps.result !== "failure") {
 							containerRuntime.off("summarize", handler);
 							resolve(eventProps);
@@ -628,7 +632,7 @@ describeCompat(
 				const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 				const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
-					const handler = (eventProps: ISummarizeEventProps) => {
+					const handler = (eventProps: ISummarizeEventProps): void => {
 						if (eventProps.result !== "failure") {
 							containerRuntime.off("summarize", handler);
 							resolve(eventProps);

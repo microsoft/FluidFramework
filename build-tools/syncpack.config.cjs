@@ -26,6 +26,20 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
@@ -65,17 +79,14 @@ module.exports = {
 		{
 			label: "Ignore unsupported pnpm override entries",
 			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["json5@<1.0.2", "json5@>=2.0.0 <2.2.2", "oclif>@aws-sdk/client*"],
+			dependencies: [
+				"json5@<1.0.2",
+				"json5@>=2.0.0 <2.2.2",
+				"oclif>@aws-sdk/client*",
+				"@types/glob>@types/minimatch",
+			],
 			packages: ["build-tools-release-group-root"],
 			isIgnored: true,
-		},
-
-		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
-			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["**"],
-			packages: ["**"],
-			range: "^",
 		},
 
 		{
@@ -102,6 +113,14 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+		{
+			label: "Deps in pnpm overrides should use caret dependency ranges",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["**"],
+			packages: ["**"],
+			range: "^",
 		},
 
 		{
@@ -136,6 +155,29 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
+		{
+			// TODO: This can be removed once biome is fully upgraded to 2.x
+			label: "Ignore @biomejs/biome in pnpm overrides",
+			isIgnored: true,
+			packages: ["build-tools-release-group-root"],
+			dependencies: ["@biomejs/biome"],
+			dependencyTypes: ["pnpmOverrides"],
+		},
+
 		{
 			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
 			dependencies: ["chalk"],
@@ -144,11 +186,7 @@ module.exports = {
 
 		{
 			label: "Versions of common Fluid packages should all match",
-			dependencies: [
-				"@fluidframework/build-common",
-				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
-			],
+			dependencies: ["@fluidframework/build-common", "@fluidframework/common-utils"],
 			packages: ["**"],
 		},
 

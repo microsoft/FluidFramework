@@ -9,6 +9,13 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
+import type {
+	LatestRaw,
+	LatestMapRaw,
+	NotificationsManager,
+} from "@fluidframework/presence/alpha";
+import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
+
 import type { Attendee, PresenceWithNotifications, WorkspaceAddress } from "../index.js";
 import { toOpaqueJson } from "../internalUtils.js";
 import type { GeneralDatastoreMessageContent, InternalWorkspaceAddress } from "../protocol.js";
@@ -19,14 +26,9 @@ import {
 	assertFinalExpectations,
 	prepareConnectedPresence,
 	attendeeId1,
+	localAttendeeId,
+	initialLocalClientConnectionId,
 } from "./testUtils.js";
-
-import type {
-	LatestRaw,
-	LatestMapRaw,
-	NotificationsManager,
-} from "@fluidframework/presence/alpha";
-import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
 
@@ -222,8 +224,8 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				"attendeeId-2",
-				"client2",
+				localAttendeeId,
+				initialLocalClientConnectionId,
 				clock,
 				logger,
 			));
@@ -243,7 +245,9 @@ describe("Presence", () => {
 
 		function setupSharedStatesWorkspace({
 			notifications,
-		}: { notifications?: true } = {}): void {
+		}: {
+			notifications?: true;
+		} = {}): void {
 			const statesWorkspace = presence.states.getWorkspace("name:testWorkspace", {
 				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 				latestMap: StateFactory.latestMap({
@@ -260,6 +264,7 @@ describe("Presence", () => {
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				);
+
 				notificationManager = workspace.states.testEvents;
 			}
 		}

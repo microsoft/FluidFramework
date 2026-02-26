@@ -103,6 +103,7 @@ export class SummaryManager
 	private state = SummaryManagerState.Off;
 	private summarizer?: ISummarizer;
 	private _disposed = false;
+	private summarizerStopTimeout?: ReturnType<typeof setTimeout>;
 
 	public get disposed(): boolean {
 		return this._disposed;
@@ -274,7 +275,7 @@ export class SummaryManager
 
 				const summarizer = await this.createSummarizerFn();
 				this.summarizer = summarizer;
-				this.setupForwardedEvents();
+				this.setupForwardedEvents(summarizer);
 
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// If we can't run the LastSummary, simply return as to avoid paying the cost of launching
@@ -347,16 +348,26 @@ export class SummaryManager
 			})
 			.finally(() => {
 				assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
-				this.state = SummaryManagerState.Off;
-
-				this.cleanupForwardedEvents();
-				this.summarizer?.close();
-				this.summarizer = undefined;
-
-				if (this.getShouldSummarizeState().shouldSummarize) {
-					this.startSummarization();
-				}
+				this.cleanupAfterSummarizerStop();
 			});
+	}
+
+	private cleanupAfterSummarizerStop(): void {
+		this.state = SummaryManagerState.Off;
+
+		// Clear any pending stop timeout to avoid it firing for a different summarizer
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+			this.summarizerStopTimeout = undefined;
+		}
+
+		this.cleanupForwardedEvents();
+		this.summarizer?.close();
+		this.summarizer = undefined;
+
+		if (this.getShouldSummarizeState().shouldSummarize) {
+			this.startSummarization();
+		}
 	}
 
 	private stop(reason: SummarizerStopReason): void {
@@ -368,6 +379,23 @@ export class SummaryManager
 		// Stopping the running summarizer client should trigger a change
 		// in states when the running summarizer closes
 		this.summarizer?.stop(reason);
+
+		const summarizerCloseTimeoutMs = 2 * 60 * 1000; // 2 minutes
+		// Clear any existing timeout before setting a new one
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+		}
+		// Set a timeout to force cleanup if the summarizer doesn't close in time
+		this.summarizerStopTimeout = setTimeout(() => {
+			if (this.state === SummaryManagerState.Stopping && this.summarizer !== undefined) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SummarizerStopTimeout",
+					timeoutMs: summarizerCloseTimeoutMs,
+					stopReason: reason,
+				});
+				this.cleanupAfterSummarizerStop();
+			}
+		}, summarizerCloseTimeoutMs);
 	}
 
 	/**
@@ -453,34 +481,38 @@ export class SummaryManager
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
 		this.cleanupForwardedEvents();
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+		}
 		this._disposed = true;
 	}
 
-	private readonly forwardedEvents = new Map<string, () => void>();
+	private readonly forwardedEventsCleanup: (() => void)[] = [];
 
-	private setupForwardedEvents(): void {
+	private setupForwardedEvents(summarizer: ISummarizer): void {
 		for (const event of [
 			"summarize",
 			"summarizeAllAttemptsFailed",
 			"summarizerStop",
 			"summarizerStart",
 			"summarizerStartupFailed",
-		]) {
+			"summarizeTimeout",
+		] as const) {
 			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
 			// TODO: better typing here
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-			this.summarizer?.on(event as any, listener);
-			this.forwardedEvents.set(event, listener);
+			summarizer.on(event as any, listener);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+			this.forwardedEventsCleanup.push(() => summarizer.off(event as any, listener));
 		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		for (const [event, listener] of this.forwardedEvents.entries()) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-			this.summarizer?.off(event as any, listener);
+		for (const cleanup of this.forwardedEventsCleanup) {
+			cleanup();
 		}
-		this.forwardedEvents.clear();
+		this.forwardedEventsCleanup.length = 0;
 	}
 }

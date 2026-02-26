@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 
+import type { FieldKey, NodeData } from "../../core/index.js";
+import type { UnionToIntersection } from "../../util/index.js";
+import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
+
+import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
+import type { Context } from "./context.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
-import type { UnionToIntersection } from "../../util/index.js";
-import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
-import type { Context } from "./context.js";
-import type { FieldKey, NodeData, TreeNodeStoredSchema } from "../../core/index.js";
 import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
-import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
-import type { StoredSchemaGenerationOptions } from "./toStored.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -389,11 +389,6 @@ export interface TreeNodeSchemaPrivateData {
 	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
 	 */
 	idempotentInitialize(): TreeNodeSchemaInitializedData;
-
-	/**
-	 * Converts a the schema into a {@link TreeNodeStoredSchema}.
-	 */
-	toStored(options: StoredSchemaGenerationOptions): TreeNodeStoredSchema;
 }
 
 /**
@@ -580,15 +575,12 @@ export function isTreeNodeSchemaClass<
  * If a schema is both TreeNodeSchemaClass and TreeNodeSchemaNonClass, prefer TreeNodeSchemaClass since that includes subclasses properly.
  * @public
  */
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<
-	string,
-	NodeKind,
-	infer TNode
->
-	? TNode
-	: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+export type NodeFromSchema<T extends TreeNodeSchema> =
+	T extends TreeNodeSchemaClass<string, NodeKind, infer TNode>
 		? TNode
-		: never;
+		: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+			? TNode
+			: never;
 
 /**
  * Data which can be used as a node to be inserted.

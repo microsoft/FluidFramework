@@ -72,9 +72,11 @@ function LinearDictionary<TKey, TData>(
 			return;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (_start === undefined) {
 			_start = min()!.key;
 		}
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (_end === undefined) {
 			_end = max()!.key;
 		}
@@ -270,6 +272,7 @@ export function fileTest1(): void {
 				if (prop) {
 					// printStringNumProperty(prop);
 					if (
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58520 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 						linProp === undefined ||
 						prop.key !== linProp.key ||
 						prop.data !== linProp.data

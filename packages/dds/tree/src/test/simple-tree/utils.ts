@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeCheckout } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView, Tree } from "../../shared-tree/index.js";
 import {
 	isTreeNode,
 	isTreeNodeSchemaClass,
@@ -15,20 +17,17 @@ import {
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
-	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
-import type { TreeCheckout } from "../../shared-tree/index.js";
-import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 
 /**
  * Initializes a node with the given schema and content.
  * @param schema - The schema of the node being initialized
  * @param content - The content that will be used to construct the node, or an unhydrated node of the correct `schema`.
- * @param hydrateNode - Whether or not the returned value will be hydrated.
+ * @param doHydration - Whether or not the returned value will be hydrated.
  * @returns
- * * If `hydrateNode` is true, a hydrated node will be returned.
- * * If `hydrateNode` is false, then `content` will be used to initialize an unhydrated node (or, if `content` is already a hydrated node, it will be returned directly).
+ * * If `doHydration` is true, a hydrated node will be returned.
+ * * If `doHydration` is false, then `content` will be used to initialize an unhydrated node (or, if `content` is already a hydrated node, it will be returned directly).
  * @remarks This function is useful for writing tests that want to test both the hydrated version of a node and the unhydrated version of a node with minimal code duplication.
  */
 export function initNode<
@@ -37,9 +36,9 @@ export function initNode<
 >(
 	schema: TSchema,
 	content: TInsertable,
-	hydrateNode: boolean,
+	doHydration: boolean,
 ): TreeFieldFromImplicitField<TSchema> {
-	if (hydrateNode) {
+	if (doHydration) {
 		return hydrate(schema, content as InsertableField<TSchema>);
 	}
 
@@ -75,8 +74,8 @@ export function describeHydration(
 		hydrated: boolean,
 	) => void,
 	runOnce?: () => void,
-) {
-	return describe(title, () => {
+): void {
+	describe(title, () => {
 		describe("🐪 Unhydrated", () =>
 			runBoth((schema, tree) => initNode(schema, tree, false), false));
 
@@ -102,15 +101,16 @@ export function hydrate<const TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * {@link hydrate} but unsafe initialTree.
- * This may be required when the schema is not entirely statically typed, for example when looping over multiple test cases and thus using a imprecise schema type.
- * In such cases the "safe" version of hydrate may require `never` for the initial tree.
+ * Given the initial tree node, hydrate it.
+ * @remarks
+ * For minimal/concise targeted unit testing of specific simple-tree content.
+ *
+ * This is a simpler version of {@link hydrate} for when the input is already a node, and thus does not need the schema, type parameters or return value.
  */
-export function hydrateUnsafe<const TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	initialTree: InsertableField<UnsafeUnknownSchema>,
-): TreeFieldFromImplicitField<TSchema> {
-	return hydrate(schema, initialTree as InsertableField<TSchema>);
+export function hydrateNode(initialTree: TreeNode): void {
+	const schema = Tree.schema(initialTree);
+	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
+	view.initialize(initialTree as never);
 }
 
 /**

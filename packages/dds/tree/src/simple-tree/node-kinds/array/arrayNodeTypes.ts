@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeArrayNode } from "./arrayNode.js";
 import { NodeKind } from "../../core/index.js";
 import type {
 	TreeNodeSchemaClass,
@@ -13,8 +12,9 @@ import type {
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
+import type { SchemaType, SimpleArrayNodeSchema } from "../../simpleSchema.js";
 
-import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
+import type { TreeArrayNode } from "./arrayNode.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.
@@ -35,7 +35,7 @@ export interface ArrayNodeCustomizableSchema<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for POJO emulation mode {@link (TreeArrayNode:interface)}s.
@@ -56,7 +56,7 @@ export interface ArrayNodePojoEmulationSchema<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for {@link (TreeArrayNode:interface)}s.

@@ -6,8 +6,14 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { MapNodeStoredSchema } from "../../../core/index.js";
+import {
+	isTreeValue,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+} from "../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
-
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	type TreeNodeSchema,
 	NodeKind,
@@ -31,17 +37,20 @@ import {
 	type FlexContent,
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
+import { recordLikeDataToFlexContent } from "../common.js";
+
 import type {
 	RecordNodeCustomizableSchema,
 	RecordNodeInsertableData,
@@ -49,17 +58,6 @@ import type {
 	RecordNodeSchema,
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
-import {
-	FieldKinds,
-	isTreeValue,
-	type FlexTreeNode,
-	type FlexTreeOptionalField,
-} from "../../../feature-libraries/index.js";
-import { prepareForInsertion } from "../../prepareForInsertion.js";
-import { recordLikeDataToFlexContent } from "../common.js";
-import { MapNodeStoredSchema } from "../../../core/index.js";
-import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -101,9 +99,8 @@ function createRecordNodeProxy(
 						}
 						break;
 					}
-					default: {
-						// No-op
-					}
+					default:
+					// No-op
 				}
 			}
 
@@ -352,7 +349,10 @@ export function recordSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 
@@ -388,19 +388,7 @@ export function recordSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				[normalizedTypes],
-				(storedOptions) =>
-					new MapNodeStoredSchema(
-						{
-							kind: FieldKinds.optional.identifier,
-							types: convertAllowedTypes(info, storedOptions),
-							persistedMetadata,
-						},
-						persistedMetadata,
-					),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 

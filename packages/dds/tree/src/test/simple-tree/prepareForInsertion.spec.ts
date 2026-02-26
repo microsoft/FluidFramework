@@ -4,18 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { hydrate } from "./utils.js";
-import {
-	convertField,
-	normalizeFieldSchema,
-	prepareForInsertionContextless,
-	restrictiveStoredSchemaGenerationOptions,
-	SchemaFactory,
-	stringSchema,
-	TreeArrayNode,
-} from "../../simple-tree/index.js";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -29,14 +20,24 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
-import { brand } from "../../util/index.js";
-import { checkoutWithContent, fieldSchema as createFieldSchema } from "../utils.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	MockNodeIdentifierManager,
 	type FlexTreeHydratedContext,
 } from "../../feature-libraries/index.js";
+import {
+	prepareForInsertionContextless,
+	restrictiveStoredSchemaGenerationOptions,
+	SchemaFactory,
+	stringSchema,
+	toStoredSchema,
+	TreeArrayNode,
+} from "../../simple-tree/index.js";
+import { brand } from "../../util/index.js";
+import { checkoutWithContent, fieldSchema as createFieldSchema } from "../utils.js";
+
+import { hydrate } from "./utils.js";
 
 // proxies.spec.ts has a lot of coverage for this code, but is focused on other things, and more integration test oriented.
 // Here are a few key tests for prepareForInsertion covering cases which are known to be likely to have issues.
@@ -230,10 +231,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myObjectSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 
@@ -245,10 +246,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myObjectSchema, schemaFactory.string],
 								...schemaValidationPolicy,
-								convertField(
-									normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+								toStoredSchema(
+									[myObjectSchema, schemaFactory.string],
 									restrictiveStoredSchemaGenerationOptions,
-								),
+								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
 					);
@@ -264,10 +265,10 @@ describe("prepareForInsertion", () => {
 						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myObjectSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 			});
@@ -299,10 +300,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myMapSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myMapSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myMapSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 
@@ -314,10 +315,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myMapSchema, schemaFactory.string],
 								...schemaValidationPolicy,
-								convertField(
-									normalizeFieldSchema([myMapSchema, schemaFactory.string]),
+								toStoredSchema(
+									[myMapSchema, schemaFactory.string],
 									restrictiveStoredSchemaGenerationOptions,
-								),
+								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
 					);
@@ -351,10 +352,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myArrayNodeSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						convertField(
-							normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
+						toStoredSchema(
+							[myArrayNodeSchema, schemaFactory.string],
 							restrictiveStoredSchemaGenerationOptions,
-						),
+						).rootFieldSchema,
 					);
 				});
 
@@ -366,10 +367,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myArrayNodeSchema, schemaFactory.string],
 								...schemaValidationPolicy,
-								convertField(
-									normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
+								toStoredSchema(
+									[myArrayNodeSchema, schemaFactory.string],
 									restrictiveStoredSchemaGenerationOptions,
-								),
+								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
 					);

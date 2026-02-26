@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -18,11 +18,12 @@ import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
+import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { fieldJsonCursor } from "../json/index.js";
-import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+
 import { initializeForest } from "./initializeForest.js";
 
 describe("object-forest", () => {
@@ -61,11 +62,7 @@ describe("object-forest", () => {
 			visitor.enterField(rootFieldKey);
 			assert.throws(
 				() => visitor.attach(rootFieldKey, 1, 0),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/Attach source field must be different from current field/,
-					),
+				validateAssertionError(/Attach source field must be different from current field/),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
@@ -83,11 +80,9 @@ describe("object-forest", () => {
 			visitor.enterField(rootFieldKey);
 			assert.throws(
 				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey, dummyDetachedNodeId, false),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/Detach destination field must be different from current field/,
-					),
+				validateAssertionError(
+					/Detach destination field must be different from current field/,
+				),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
@@ -126,11 +121,9 @@ describe("object-forest", () => {
 		visitor.enterField(rootFieldKey);
 		assert.throws(
 			() => visitor.destroy(detachedFieldKey, 1),
-			(error: Error) =>
-				validateAssertionError(
-					error,
-					`Found unexpected cursors when editing with the following annotations: ["named","fork: named","namedFork",null,"fork: undefined"]`,
-				),
+			validateAssertionError(
+				`Found unexpected cursors when editing with the following annotations: ["named","fork: named","namedFork",null,"fork: undefined"]`,
+			),
 		);
 		visitor.exitField(rootFieldKey);
 		visitor.free();

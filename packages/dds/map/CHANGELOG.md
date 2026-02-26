@@ -1,5 +1,55 @@
 # @fluidframework/map
 
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+### Minor Changes
+
+- directory: Path parameter added to `cleared` event ([#26112](https://github.com/microsoft/FluidFramework/pull/26112)) [1ded6bf755](https://github.com/microsoft/FluidFramework/commit/1ded6bf75526eefd4d4565f4f9f6c795b8a77acf)
+
+  The `clear` event for SharedDirectory did not include a `path` parameter indicating which directory was cleared. Therefore, the `clear` event is deprecated and will be removed in a future release. Instead use the `cleared` event.
+
+  **Before:**
+
+  ```typescript
+  sharedDirectory.on("clear", (local, target) => {
+    // No way to know which subdirectory was cleared
+  });
+  ```
+
+  **After:**
+
+  ```typescript
+  sharedDirectory.on("cleared", (path, local, target) => {
+    // path tells you which directory was cleared (e.g., "/", "/subdir1", "/subdir2")
+  });
+  ```
+
+  This change provides better observability by allowing listeners to distinguish between clear operations on different subdirectories within the SharedDirectory hierarchy.
+
+## 2.80.0
+
+### Minor Changes
+
+- map: Emit valueChanged events for deleted keys after a clear operation ([#26102](https://github.com/microsoft/FluidFramework/pull/26102)) [7c9be0e2d2c](https://github.com/microsoft/FluidFramework/commit/7c9be0e2d2cd7dd40aaa6bf6812ad9a6d43609f5)
+
+  When a `clear` op is processed on SharedMap, `valueChanged` events are now emitted for each key that was deleted. Previously, only the `clear` event was emitted with no subsequent `valueChanged` events.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
 ## 2.72.0
 
 Dependency updates only.

@@ -61,6 +61,7 @@ import {
 	createSequenceInterval,
 	getSerializedProperties,
 } from "./intervals/index.js";
+import type { ISharedSegmentSequence } from "./sequence.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
 
@@ -145,6 +146,7 @@ export class LocalIntervalCollection {
 	private readonly indexes: Set<SequenceIntervalIndex>;
 
 	constructor(
+		sequence: ISharedSegmentSequence<any>,
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly options: Partial<SequenceOptions>,
@@ -154,9 +156,9 @@ export class LocalIntervalCollection {
 			previousInterval: SequenceIntervalClass,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(sequence);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(client);
+		this.endIntervalIndex = new EndpointIndex(sequence);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -1030,7 +1032,7 @@ export class IntervalCollection
 		return { start, end };
 	}
 
-	public attachGraph(client: Client, label: string) {
+	public attachGraph(sequence: ISharedSegmentSequence<any>, client: Client, label: string) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
 		}
@@ -1054,6 +1056,7 @@ export class IntervalCollection
 		}
 
 		this.localCollection = new LocalIntervalCollection(
+			sequence,
 			client,
 			label,
 			this.options,
@@ -1122,7 +1125,7 @@ export class IntervalCollection
 		previousInterval.start.refType = ReferenceType.Transient;
 		previousInterval.end.refType = ReferenceType.Transient;
 		this.emit("changeInterval", interval, previousInterval, local, op, slide);
-		this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
+		this.emit("changed", interval, {}, previousInterval ?? undefined, local, slide);
 		previousInterval.start.refType = startRefType;
 		previousInterval.end.refType = endRefType;
 	}
@@ -1431,7 +1434,7 @@ export class IntervalCollection
 				}
 			}
 
-			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
+			if (isLatestInterval && deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
 				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
 				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
@@ -1482,17 +1485,18 @@ export class IntervalCollection
 		const rebasedEndpoint = this.computeRebasedPositions(localOpMetadata, squash);
 		const localInterval = this.getIntervalById(id);
 
-		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
+		// if the interval slides off the string, rebase the op to be a noop and delete the interval.
 		if (rebasedEndpoint === "detached") {
 			if (
 				localInterval !== undefined &&
 				(localInterval === interval || localOpMetadata.type === "add")
 			) {
-				this.localCollection?.removeExistingInterval(localInterval);
+				// Use deleteExistingInterval (not removeExistingInterval) to ensure the deleteInterval
+				// event is emitted when intervals slide off during rebasing.
+				this.deleteExistingInterval({ interval: localInterval, local: true });
 			}
 			return undefined;
 		}
-
 		const { start, end } = rebasedEndpoint;
 		if (
 			interval.start.getSegment() !== start.segment ||
@@ -1711,7 +1715,7 @@ export class IntervalCollection
 	}
 
 	/**
-	 * @returns an iterator over all intervals in this collection.
+	 * Creates an iterator over all intervals in this collection.
 	 */
 	public [Symbol.iterator](): IntervalCollectionIterator {
 		const iterator = new IntervalCollectionIterator(this);

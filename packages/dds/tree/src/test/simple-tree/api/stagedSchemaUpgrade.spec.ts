@@ -4,8 +4,19 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
+import { FluidClientVersion } from "../../../codec/index.js";
+import { storedEmptyFieldSchema } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	independentInitializedView,
+	independentView,
+	TreeAlpha,
+	type ViewContent,
+} from "../../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
 	SchemaCompatibilityTester,
@@ -16,16 +27,6 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
-import { storedEmptyFieldSchema } from "../../../core/index.js";
-import {
-	independentInitializedView,
-	independentView,
-	TreeAlpha,
-	type ViewContent,
-} from "../../../shared-tree/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { FluidClientVersion } from "../../../codec/index.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
@@ -48,9 +49,9 @@ describe("staged schema upgrade", () => {
 	]);
 
 	it("using user apis", () => {
-		const provider = new TestTreeProviderLite(3);
+		const provider = new TestTreeProviderLite(4);
 
-		const [treeA, treeB, treeC] = provider.trees;
+		const [treeA, treeB1, treeB2, treeC] = provider.trees;
 
 		const synchronizeTrees = () => {
 			provider.synchronizeMessages();
@@ -70,18 +71,18 @@ describe("staged schema upgrade", () => {
 		const configB = new TreeViewConfiguration({
 			schema: schemaB,
 		});
-		const viewB = treeB.viewWith(configB);
+		const viewB1 = treeB1.viewWith(configB);
 		// check that we can read the tree
-		assert.deepEqual(viewB.root, 5);
+		assert.deepEqual(viewB1.root, 5);
 		// upgrade to schema B: this is a no-op
-		viewB.upgradeSchema();
+		viewB1.upgradeSchema();
 		synchronizeTrees();
 
 		// check view A can read the document
 		assert.deepEqual(viewA.root, 5);
 		// check view B cannot write strings to the root
 		assert.throws(() => {
-			viewB.root = "test";
+			viewB1.root = "test";
 		});
 
 		// view third tree with schema C
@@ -96,15 +97,17 @@ describe("staged schema upgrade", () => {
 
 		// view A is now incompatible with the stored schema
 		assert.equal(viewA.compatibility.canView, false);
-		assert.deepEqual(viewB.root, "test");
+		// After the failed write on viewB1, we treat TreeB1 and its view as potentially unsafe to use and instead create a new view from TreeB2.
+		const viewB2 = treeB2.viewWith(configB);
+		assert.deepEqual(viewB2.root, "test");
 		assert.deepEqual(viewC.root, "test");
 	});
 
 	it("using user apis: minimal example", () => {
 		// This top section of this example uses APIs not available to customers.
 		// TODO: We should ensure the customer facing APIs make writing tests like this easy, and update this test to use them.
-		const provider = new TestTreeProviderLite(3);
-		const [treeA, treeB, treeC] = provider.trees;
+		const provider = new TestTreeProviderLite(4);
+		const [treeA, treeB1, treeB2, treeC] = provider.trees;
 		const synchronizeTrees = () => {
 			provider.synchronizeMessages();
 		};
@@ -126,9 +129,9 @@ describe("staged schema upgrade", () => {
 		const configB = new TreeViewConfiguration({
 			schema: schemaB,
 		});
-		const viewB = treeB.viewWith(configB);
+		const viewB1 = treeB1.viewWith(configB);
 		// B cannot write strings to the root.
-		assert.throws(() => (viewB.root = "test"));
+		assert.throws(() => (viewB1.root = "test"));
 
 		// View the same document with a third tree using schema C.
 		const configC = new TreeViewConfiguration({
@@ -145,8 +148,10 @@ describe("staged schema upgrade", () => {
 		// View A is now incompatible with the stored schema:
 		assert.equal(viewA.compatibility.canView, false);
 
-		// View B can still read the document, and now sees the string root which relies on the staged schema.
-		assert.deepEqual(viewB.root, "test");
+		// Views based on schema B can still read the document, and now see the string root which relies on the staged schema.
+		// After the failed write on viewB1, we treat TreeB1 and its view as potentially unsafe to use and instead create a new view from TreeB2.
+		const viewB2 = treeB2.viewWith(configB);
+		assert.deepEqual(viewB2.root, "test");
 	});
 
 	it("using independent view user apis", () => {
@@ -155,7 +160,7 @@ describe("staged schema upgrade", () => {
 			schema: schemaA,
 		});
 
-		const viewA = independentView(configA, {});
+		const viewA = independentView(configA);
 		viewA.initialize(5);
 
 		assert.deepEqual(viewA.root, 5);

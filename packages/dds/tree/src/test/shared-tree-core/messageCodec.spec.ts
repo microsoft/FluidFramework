@@ -4,32 +4,32 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 import type {
 	EncodedRevisionTag,
 	GraphCommit,
 	ChangeEncodingContext,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
 	type EncodingTestData,
+	makeDiscontinuedEncodingTestSuite,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
-import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
-import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -150,8 +150,18 @@ describe("message codec", () => {
 			jsonValidator: FormatValidatorBasic,
 		},
 	);
-
-	makeEncodingTestSuite(family, testCases);
+	makeEncodingTestSuite(family, testCases, undefined, [
+		MessageFormatVersion.v3,
+		MessageFormatVersion.v4,
+		MessageFormatVersion.v6,
+		MessageFormatVersion.vSharedBranches,
+	]);
+	makeDiscontinuedEncodingTestSuite(family, [
+		undefined,
+		MessageFormatVersion.v1,
+		MessageFormatVersion.v2,
+		MessageFormatVersion.v5,
+	]);
 
 	describe("dispatching codec", () => {
 		const codec = makeMessageCodec(
@@ -192,55 +202,6 @@ describe("message codec", () => {
 			});
 		});
 
-		it("accepts unversioned messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
-		});
-
-		it("accepts version 1 messages as version 1", () => {
-			const revision = 1 as EncodedRevisionTag;
-			const originatorId = createSessionId();
-			const encoded = JSON.stringify({
-				revision,
-				originatorId,
-				changeset: {},
-				version: MessageFormatVersion.v1,
-			} satisfies Message);
-			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
-			assert.deepEqual(actual, {
-				type: "commit",
-				commit: {
-					revision: testRevisionTagCodec.decode(revision, {
-						originatorId,
-						revision: undefined,
-						idCompressor: testIdCompressor,
-					}),
-					change: {},
-				},
-				sessionId: originatorId,
-				branchId: "main",
-			} satisfies DecodedMessage<unknown>);
-		});
-
 		it("rejects messages with invalid versions", () => {
 			const revision = 1 as EncodedRevisionTag;
 			const originatorId = createSessionId();
@@ -249,7 +210,7 @@ describe("message codec", () => {
 				originatorId,
 				changeset: {},
 				version: -1,
-			} satisfies Message);
+			});
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
 				validateUsageError(/Unsupported version -1 encountered while decoding data/),

@@ -8,14 +8,6 @@ import type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 } from "../../util/index.js";
-
-import type {
-	ApplyKind,
-	ApplyKindInput,
-	FieldKind,
-	FieldSchema,
-	FieldSchemaAlpha,
-} from "../fieldSchema.js";
 import type {
 	NodeKind,
 	WithType,
@@ -32,8 +24,19 @@ import type {
 	AnnotatedAllowedType,
 	AnnotatedAllowedTypes,
 } from "../core/index.js";
+import type {
+	ApplyKind,
+	ApplyKindInput,
+	FieldKind,
+	FieldSchema,
+	FieldSchemaAlpha,
+} from "../fieldSchema.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
-import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleArrayNodeSchema,
+	SimpleMapNodeSchema,
+} from "../simpleSchema.js";
 
 /*
  * TODO:
@@ -498,7 +501,7 @@ export interface ArrayNodeCustomizableSchemaUnsafe<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * {@link Unenforced} version of {@link MapNodeCustomizableSchema}s.
@@ -529,7 +532,7 @@ export interface MapNodeCustomizableSchemaUnsafe<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleMapNodeSchema<TCustomMetadata> {}
+		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * {@link Unenforced} version of {@link TreeRecordNode}.

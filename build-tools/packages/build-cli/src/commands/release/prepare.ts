@@ -6,8 +6,9 @@
 import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import {
+	CheckCompatLayerGeneration,
 	CheckDependenciesInstalled,
 	type CheckFunction,
 	CheckHasNoPrereleaseDependencies,
@@ -15,8 +16,6 @@ import {
 	CheckNoLocalChanges,
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,
-	// library is overloaded with too much stuff now, and we should consider allowing interior imports.
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/releasePrepChecks.js";
 
 /**
@@ -32,6 +31,7 @@ const allChecks: ReadonlyMap<string, CheckFunction> = new Map([
 	["Has no pre-release Fluid dependencies", CheckHasNoPrereleaseDependencies],
 	["No repo policy violations", CheckNoPolicyViolations],
 	["No untagged asserts", CheckNoUntaggedAsserts],
+	["Compatibility layer generation is up to date", CheckCompatLayerGeneration],
 ]);
 
 /**

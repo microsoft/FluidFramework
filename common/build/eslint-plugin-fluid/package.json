@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/eslint-plugin-fluid",
-	"version": "0.4.0",
+	"version": "0.4.2",
 	"description": "Custom ESLint rules for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,7 +14,7 @@
 	"scripts": {
 		"build": "npm run build:readme && npm run build:test:examples",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
-		"build:test:examples": "tsc --project ./src/test/example/tsconfig.json",
+		"build:test:examples": "tsc --project ./src/test/test-cases/tsconfig.json",
 		"clean": "rimraf --glob nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -34,13 +34,14 @@
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
+		"@types/eslint": "^9.6.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~9.37.0",
 		"eslint8": "npm:eslint@~8.57.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
-		"rimraf": "^5.0.7",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"peerDependencies": {

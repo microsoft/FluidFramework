@@ -12,6 +12,9 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
+	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
 	type EncodedRevisionTag,
@@ -26,10 +29,11 @@ export {
 	offsetChangeAtomId,
 	StableIdSchema,
 	subtractChangeAtomIds,
-	replaceAtomRevisions,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	compareRevisions,
+	comparePartialRevisions,
+	compareChangesetLocalIds,
+	comparePartialChangesetLocalIds,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {
@@ -43,6 +47,7 @@ export {
 	type TaggedChange,
 	type RevisionMetadataSource,
 	type RevisionInfo,
+	type RevisionReplacer,
 } from "./changeRebaser.js";
 export {
 	findAncestor,

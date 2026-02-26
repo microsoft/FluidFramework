@@ -122,6 +122,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @deprecated Use {@link IConsensusRegisterCollection} for typing and {@link ConsensusRegisterCollectionFactory} to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 export class ConsensusRegisterCollection<T>
@@ -182,14 +183,14 @@ export class ConsensusRegisterCollection<T>
 		// 3. The runtime is disposed
 		// The boolean value returned by the promise is true if the attempted write was ack'd and won, false otherwise.
 		return new Promise<boolean>((resolve) => {
-			const handleAck = (ackMessageId: number, isWinner: boolean) => {
+			const handleAck = (ackMessageId: number, isWinner: boolean): void => {
 				if (ackMessageId === pendingMessageId) {
 					resolve(isWinner);
 					removeListeners();
 				}
 			};
 
-			const handleRollback = (rollbackMessageId: number) => {
+			const handleRollback = (rollbackMessageId: number): void => {
 				if (rollbackMessageId === pendingMessageId) {
 					// If we rolled back the pending message, resolve the promise with false.
 					resolve(false);
@@ -197,12 +198,12 @@ export class ConsensusRegisterCollection<T>
 				}
 			};
 
-			const handleDisposed = () => {
+			const handleDisposed = (): void => {
 				resolve(false);
 				removeListeners();
 			};
 
-			const removeListeners = () => {
+			const removeListeners = (): void => {
 				this.internalEvents.off("pendingMessageAck", handleAck);
 				this.internalEvents.off("pendingMessageRollback", handleRollback);
 				this.runtime.off("dispose", handleDisposed);
@@ -272,7 +273,7 @@ export class ConsensusRegisterCollection<T>
 		}
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
@@ -295,6 +296,7 @@ export class ConsensusRegisterCollection<T>
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
 					// when the refSeq property didn't exist
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (op.refSeq === undefined) {
 						op.refSeq = messageEnvelope.referenceSequenceNumber;
 					}
@@ -431,7 +433,12 @@ export class ConsensusRegisterCollection<T>
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IIncomingRegisterOperation<T>;
+		assert(op.type === "write", 0xccc /* Only write ops should be stashed */);
+		// Submit the original op (preserving its refSeq) so we can match the ACK
+		// when it arrives during remote op processing.
+		const pendingMessageId = this.nextPendingMessageId++;
+		this.submitLocalMessage(op, pendingMessageId);
 	}
 }

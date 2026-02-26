@@ -6,7 +6,7 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecFamily } from "../../codec/index.js";
+import type { CodecWriteOptions, ICodecFamily } from "../../codec/index.js";
 import {
 	type ChangeAtomId,
 	type ChangeEncodingContext,
@@ -36,15 +36,10 @@ import {
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
-import type { OptionalChangeset } from "../optional-field/index.js";
-import type { CellId } from "../sequence-field/index.js";
+import { optional, type OptionalChangeset, required } from "../optional-field/index.js";
+import { sequence, type CellId } from "../sequence-field/index.js";
 
-import {
-	fieldKinds,
-	optional,
-	sequence,
-	required as valueFieldKind,
-} from "./defaultFieldKinds.js";
+import { fieldKinds } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -58,8 +53,11 @@ export class DefaultChangeFamily
 {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
-		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs);
+	public constructor(
+		codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		codecOptions: CodecWriteOptions,
+	) {
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -74,7 +72,12 @@ export class DefaultChangeFamily
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 	): DefaultEditBuilder {
-		return new DefaultEditBuilder(this, mintRevisionTag, changeReceiver);
+		return new DefaultEditBuilder(
+			this,
+			mintRevisionTag,
+			changeReceiver,
+			this.modularFamily.codecOptions,
+		);
 	}
 }
 
@@ -161,16 +164,26 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	): void;
 
 	/**
-	 * Add a constraint that the node at the given path must exist.
+	 * Add a constraint that, for this change to apply, the node at the given path must exist immediately before the change is applied.
 	 * @param path - The path to the node that must exist.
 	 */
 	addNodeExistsConstraint(path: NormalizedUpPath): void;
 
 	/**
-	 * Add a constraint that the node at the given path must exist when reverting a change.
+	 * Add a constraint that, for the revert of this change to apply, the node at the given path must exist immediately before the revert is applied.
 	 * @param path - The path to the node that must exist when reverting a change.
 	 */
 	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
+
+	/**
+	 * Add a constraint that, for this change to apply, the document must be in the same state immediately before this change is applied as it was before this change was authored.
+	 */
+	addNoChangeConstraint(): void;
+
+	/**
+	 * Add a constraint that, for the revert of this change to apply, the document must be in the same state immediately before the revert is applied as it was after this change was applied.
+	 */
+	addNoChangeConstraintOnRevert(): void;
 }
 
 /**
@@ -184,8 +197,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+		codecOptions: CodecWriteOptions,
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(
+			family,
+			fieldKinds,
+			changeReceiver,
+			codecOptions,
+		);
 	}
 
 	public enterTransaction(): void {
@@ -203,6 +222,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
 	}
 
+	public addNoChangeConstraint(): void {
+		this.modularBuilder.addNoChangeConstraint(this.mintRevisionTag());
+	}
+
+	public addNoChangeConstraintOnRevert(): void {
+		this.modularBuilder.addNoChangeConstraintOnRevert(this.mintRevisionTag());
+	}
+
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk): void => {
@@ -215,7 +242,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 				const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set({
+					required.changeHandler.editor.set({
 						fill,
 						detach,
 					}),
@@ -224,7 +251,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const edit: FieldEditDescription = {
 					type: "field",
 					field,
-					fieldKind: valueFieldKind.identifier,
+					fieldKind: required.identifier,
 					change,
 					revision,
 				};
@@ -245,7 +272,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				let optionalChange: OptionalChangeset;
 				const revision = this.mintRevisionTag();
 				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
-				if (newContent !== undefined) {
+				if (newContent === undefined) {
+					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detach);
+				} else {
 					const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 					const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
 					edits.push(build);
@@ -254,8 +283,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						fill,
 						detach,
 					});
-				} else {
-					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detach);
 				}
 
 				const change: FieldChangeset = brand(optionalChange);
@@ -464,13 +491,12 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	while (sharedDepth < minDepth) {
 		const detachStep = pathA[sharedDepth] ?? oob();
 		const attachStep = pathB[sharedDepth] ?? oob();
-		if (detachStep !== attachStep) {
-			if (
-				detachStep.parentField !== attachStep.parentField ||
-				detachStep.parentIndex !== attachStep.parentIndex
-			) {
-				break;
-			}
+		if (
+			detachStep !== attachStep &&
+			(detachStep.parentField !== attachStep.parentField ||
+				detachStep.parentIndex !== attachStep.parentIndex)
+		) {
+			break;
 		}
 		sharedDepth += 1;
 	}

@@ -66,7 +66,7 @@ class GroceryList implements IGroceryList {
 			this.map.on("valueChanged", this.onMapValueChanged);
 
 			for (const [id, groceryName] of this.map) {
-				const preExistingGroceryItem = new GroceryItem(id, groceryName, () => {
+				const preExistingGroceryItem = new GroceryItem(id, groceryName as string, () => {
 					this.map.delete(id);
 				});
 				this._groceryItems.set(id, preExistingGroceryItem);
@@ -74,7 +74,7 @@ class GroceryList implements IGroceryList {
 		}
 	}
 
-	public readonly addItem = (name: string) => {
+	public readonly addItem = (name: string): void => {
 		// Use timestamp as a hack for a consistent sortable order.
 		this.map.set(`${Date.now()}-${uuid()}`, name);
 	};
@@ -85,13 +85,13 @@ class GroceryList implements IGroceryList {
 		);
 	};
 
-	public readonly removeItem = (id: string) => {
+	public readonly removeItem = (id: string): void => {
 		this.map.delete(id);
 	};
 
-	private readonly onMapValueChanged = (changed: IValueChanged) => {
+	private readonly onMapValueChanged = (changed: IValueChanged): void => {
 		const changedId = changed.key;
-		const newName = this.map.get(changedId);
+		const newName = this.map.get<string>(changedId);
 		if (newName === undefined) {
 			const removedItem = this._groceryItems.get(changedId);
 			this._groceryItems.delete(changedId);

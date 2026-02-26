@@ -19,12 +19,13 @@ import {
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
+import type {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -74,7 +75,7 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 
 	class ChildDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 	}
@@ -83,7 +84,7 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends DataObject {
 		private channel?: IChannel;
 
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 

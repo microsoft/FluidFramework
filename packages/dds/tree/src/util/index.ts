@@ -4,12 +4,21 @@
  */
 
 export {
+	validateIndex,
+	validateIndexRange,
+	validatePositiveIndex,
+	validateSafeInteger,
+} from "./arrayUtilities.js";
+export {
 	brand,
 	type Brand,
 	BrandedType,
 	type NameFromBranded,
 	type ValueFromBranded,
 	brandConst,
+	type Values,
+	strictEnum,
+	unbrand,
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
@@ -80,14 +89,15 @@ export {
 	objectToMap,
 	invertMap,
 	oneFromIterable,
-	type Named,
-	compareNamed,
 	disposeSymbol,
 	type IDisposable,
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
+	compareNumbers,
+	comparePartialNumbers,
 	compareStrings,
+	comparePartialStrings,
 	find,
 	count,
 	getLast,
@@ -144,6 +154,13 @@ export {
 	breakingClass,
 } from "./breakable.js";
 
-export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
+export {
+	type TupleBTree,
+	newTupleBTree,
+	mergeTupleBTrees,
+	createTupleComparator,
+} from "./bTreeUtils.js";
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
+
+export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";

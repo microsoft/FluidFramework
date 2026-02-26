@@ -30,6 +30,7 @@ export const DriverErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy
@@ -373,6 +374,7 @@ export interface IPersistedCache {
     get(entry: ICacheEntry): Promise<unknown>;
     put(entry: ICacheEntry, value: unknown): Promise<void>;
     removeEntries(file: IFileEntry): Promise<void>;
+    removeEntry?(entry: ICacheEntry): Promise<void>;
 }
 
 // @beta @legacy (undocumented)

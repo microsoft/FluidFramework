@@ -12,7 +12,7 @@ import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
-	validateAssertionError2 as validateAssertionError,
+	validateAssertionError,
 } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 

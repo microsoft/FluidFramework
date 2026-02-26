@@ -6,17 +6,16 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
-
+import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
+import type { TreeChunk } from "./chunk.js";
 import { mapCursorField, type ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
 import { areDetachedNodeIdsEqual, offsetDetachId } from "./deltaUtil.js";
 import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
-import type { RevisionTag } from "../rebase/index.js";
-import type { TreeChunk } from "./chunk.js";
 
 /**
  * Implementation notes:
@@ -64,13 +63,16 @@ export function visitDelta(
 	const rootTransfers: Delta.DetachedNodeRename[] = [];
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
-	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {
+	for (const {
+		id: { major, minor },
+		trees,
+	} of delta.refreshers ?? []) {
 		const treeCursors = nodeCursorsFromChunk(trees);
 		for (let i = 0; i < trees.topLevelLength; i += 1) {
 			const offsettedId = minor + i;
 			setInNestedMap(refreshers, major, offsettedId, treeCursors[i]);
 		}
-	});
+	}
 	const detachConfig: PassConfig = {
 		func: detachPass,
 		latestRevision,
@@ -204,6 +206,7 @@ function transferRoots(
 				delayed.push({ oldId, newId });
 				continue;
 			}
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
 			newRootId = detachedFieldIndex.createEntry(newId, revision);
 			const fields = mapToUpdate.get(oldRootId);
 			if (fields !== undefined) {
@@ -399,7 +402,7 @@ function detachPass(
 	config: PassConfig,
 ): void {
 	let index = 0;
-	for (const mark of fieldChanges) {
+	for (const mark of fieldChanges.marks) {
 		if (mark.fields !== undefined) {
 			assert(
 				mark.attach === undefined || mark.detach !== undefined,
@@ -509,7 +512,7 @@ function attachPass(
 	config: PassConfig,
 ): void {
 	let index = 0;
-	for (const mark of fieldChanges) {
+	for (const mark of fieldChanges.marks) {
 		if (mark.attach !== undefined) {
 			for (let i = 0; i < mark.count; i += 1) {
 				const offsetAttachId = offsetDetachId(mark.attach, i);

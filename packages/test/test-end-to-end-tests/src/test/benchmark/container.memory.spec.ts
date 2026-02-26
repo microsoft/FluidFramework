@@ -65,11 +65,11 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 			title = "Create loader";
 			private loader: ILoader | undefined;
 
-			beforeIteration() {
+			beforeIteration(): void {
 				this.loader = undefined;
 			}
 
-			async run() {
+			async run(): Promise<void> {
 				this.loader = createLoader();
 			}
 		})(),
@@ -80,11 +80,11 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 			title = "Create detached container";
 			private container: IContainer | undefined;
 
-			beforeIteration() {
+			beforeIteration(): void {
 				this.container = undefined;
 			}
 
-			async run() {
+			async run(): Promise<void> {
 				this.container = await loader.createDetachedContainer(codeDetails);
 			}
 		})(),
@@ -95,11 +95,11 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 			title = "Create detached container and attach it";
 			private container: IContainer | undefined;
 
-			beforeIteration() {
+			beforeIteration(): void {
 				this.container = undefined;
 			}
 
-			async run() {
+			async run(): Promise<void> {
 				this.container = await loader.createDetachedContainer(codeDetails);
 				await this.container.attach(provider.driver.createCreateNewRequest("containerTest"));
 			}
@@ -109,7 +109,7 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			title = "Load existing container";
-			async run() {
+			async run(): Promise<void> {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
 				const container = await loader.resolve(testRequest);

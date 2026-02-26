@@ -4,27 +4,13 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+
 import {
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	createTreeNodeSchemaPrivateData,
-	type MostDerivedData,
-	TreeNodeValid,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/core/treeNodeValid.js";
-
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../util/index.js";
-import {
-	getTreeNodeSchemaInitializedData,
-	getUnhydratedContext,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/createContext.js";
 import {
 	inPrototypeChain,
 	NodeKind,
@@ -39,7 +25,21 @@ import {
 	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-import { LeafNodeStoredSchema, ValueSchema } from "../../core/index.js";
+import {
+	createTreeNodeSchemaPrivateData,
+	type MostDerivedData,
+	TreeNodeValid,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/treeNodeValid.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/createContext.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
+import { brand } from "../../util/index.js";
 
 describe("TreeNodeValid", () => {
 	class MockFlexNode extends UnhydratedFlexTreeNode {
@@ -63,6 +63,7 @@ describe("TreeNodeValid", () => {
 			public static readonly metadata = {};
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
+			public static readonly simpleAllowedTypes = [];
 
 			public static override prepareInstance<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -104,11 +105,7 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(
-					this,
-					[],
-					() => new LeafNodeStoredSchema(ValueSchema.Null),
-				));
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
 			}
 
 			public constructor(input: number | InternalTreeNode) {
@@ -153,15 +150,9 @@ describe("TreeNodeValid", () => {
 			}
 		}
 
-		assert.throws(
-			() => new Subclass(),
-			(error: Error) => validateAssertionError(error, /invalid schema class/),
-		);
+		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
 		// Ensure oneTimeSetup doesn't prevent error from rethrowing
-		assert.throws(
-			() => new Subclass(),
-			(error: Error) => validateAssertionError(error, /invalid schema class/),
-		);
+		assert.throws(() => new Subclass(), validateAssertionError(/invalid schema class/));
 	});
 
 	it("multiple subclass valid", () => {
@@ -175,6 +166,7 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly simpleAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -195,11 +187,7 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(
-					this,
-					[],
-					() => new LeafNodeStoredSchema(ValueSchema.Null),
-				));
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
 			}
 		}
 
@@ -240,6 +228,7 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly simpleAllowedTypes = [];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -268,11 +257,7 @@ describe("TreeNodeValid", () => {
 				return getTreeNodeSchemaInitializedData(this, handler);
 			}
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(
-					this,
-					[],
-					() => new LeafNodeStoredSchema(ValueSchema.Null),
-				));
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
 			}
 		}
 

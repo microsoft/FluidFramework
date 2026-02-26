@@ -136,7 +136,9 @@ export interface ISocketIoServerConfig {
 	 */
 	pingPongLatencyTrackingAggregationThreshold: number;
 	/**
-	 * Whether to enable Socket.io [perMessageDeflate](https://socket.io/docs/v4/server-options/#permessagedeflate) option.
+	 * Whether to enable the Socket.io
+	 * {@link https://socket.io/docs/v4/server-options/#permessagedeflate|perMessageDeflate}
+	 * option.
 	 * Default is `true`.
 	 */
 	perMessageDeflate: boolean;
@@ -156,7 +158,8 @@ class SocketIoServer implements core.IWebSocketServer {
 			/**
 			 * Fluid Socket.io connection URL looks like:
 			 * "<hostname>/socket.io/?documentId=[documentId]&tenantId=[tenantId]&EIO=[3/4]&transport=[websocket/polling]"
-			 * [socket.handshake.query](https://socket.io/docs/v4/server-socket-instance/#sockethandshake) contains parsed query params.
+			 * {@link https://socket.io/docs/v4/server-socket-instance/#sockethandshake|socket.handshake.query} contains
+			 * parsed query params.
 			 * The following properties are used for **telemetry purposes only.**
 			 * These should **not** be used to identify the tenant and document associated with the socket connection
 			 * for real logic and access purposes without validating against the JWT access token.

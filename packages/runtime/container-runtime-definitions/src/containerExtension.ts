@@ -7,7 +7,7 @@ import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
 import type {
 	BrandedType,
-	InternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes,
 	ITelemetryBaseLogger,
 	JsonDeserialized,
 	JsonSerializable,
@@ -46,7 +46,7 @@ export type ExtensionMessage<
 	},
 > = // `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
-		? InternalUtilityTypes.FlattenIntersection<
+		? InternalCoreInterfacesUtilityTypes.FlattenIntersection<
 				TMessage & {
 					/**
 					 * Client ID of the singular client the message is being (or has been) sent to.
@@ -120,7 +120,7 @@ export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unkn
 export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
 	// `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
-		? InternalUtilityTypes.FlattenIntersection<
+		? InternalCoreInterfacesUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: string;
 					content: OpaqueJsonDeserialized<unknown>;
@@ -145,7 +145,7 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
 export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = TypedMessage> =
 	// `TMessage extends TypedMessage` encourages processing union elements individually
 	TMessage extends TypedMessage
-		? InternalUtilityTypes.FlattenIntersection<
+		? InternalCoreInterfacesUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: TMessage["type"];
 					content: unknown extends TMessage["content"]
@@ -303,7 +303,14 @@ export type JoinedStatus =
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
+	/**
+	 * @privateRemarks There are no known listeners to this event. `presence`
+	 * package listens to Signal-based Audience `addMember` event for self.
+	 */
 	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
+	/**
+	 * @privateRemarks There are no known listeners to this event.
+	 */
 	"operabilityChanged": (canWrite: boolean) => void;
 }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { type FC, useEffect, useRef, useState } from "react";
 
 import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
 
@@ -35,7 +35,7 @@ const GroceryItemView: FC<IGroceryItemViewProps> = ({
 			</button>
 		);
 	return (
-		<tr style={backgroundColor !== undefined ? { backgroundColor } : undefined}>
+		<tr style={backgroundColor === undefined ? undefined : { backgroundColor }}>
 			<td>{groceryItem.name}</td>
 			<td>{action}</td>
 		</tr>
@@ -46,10 +46,10 @@ interface IAddItemViewProps {
 	readonly addItem: (name: string) => void;
 }
 
-const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
+const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps): JSX.Element => {
 	const nameRef = useRef<HTMLInputElement>(null);
 
-	const onAddItemButtonClick = () => {
+	const onAddItemButtonClick = (): void => {
 		if (nameRef.current === null) {
 			throw new Error("Couldn't get the new item info");
 		}
@@ -91,7 +91,7 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 		groceryList.getItems(),
 	);
 	useEffect(() => {
-		const updateItems = () => {
+		const updateItems = (): void => {
 			// TODO: This blows away all the grocery items, making the granular add/delete events
 			// not so useful.  Is there a good way to make a more granular change?
 			setGroceryItems(groceryList.getItems());

@@ -27,7 +27,7 @@ import {
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { TreeStatus } from "../flex-tree/index.js";
 
-import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
+import type { TreeIndex, TreeIndexNodes } from "./types.js";
 
 /**
  * A function that gets the value to index a node on, must be pure and functional.
@@ -40,7 +40,7 @@ import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
  * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
  * and must be disposed elsewhere.
  */
-export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCursor) => TKey;
+export type KeyFinder<TKey> = (tree: ITreeSubscriptionCursor) => TKey;
 
 /**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
@@ -50,9 +50,7 @@ export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCurso
  * Detached nodes are stored in the index but filtered out when any public facing apis are called. This means that
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
  */
-export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
-	implements TreeIndex<TKey, TValue>
-{
+export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	public disposed = false;
 	/**
 	 * Caches {@link KeyFinder}s for each schema definition. If a schema maps to null, it does not
@@ -394,12 +392,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Given a cursor in field mode, indexes all nodes under the field and then indexes all nodes up the spine.
 	 */
 	private indexSpine(cursor: ITreeSubscriptionCursor): void {
-		if (keyAsDetachedField(cursor.getFieldKey()) !== rootField) {
-			cursor.exitField();
-			cursor.exitNode();
-		} else {
+		if (keyAsDetachedField(cursor.getFieldKey()) === rootField) {
 			// return early if we're already at the root field
 			return;
+		} else {
+			cursor.exitField();
+			cursor.exitNode();
 		}
 
 		// walk up the spine and index nodes until we reach the root
@@ -470,5 +468,5 @@ function filterNodes(
  * Checks that an array is of the type {@link TreeIndexNodes} and has at least one element.
  */
 export function hasElement<T>(array: readonly T[]): array is TreeIndexNodes<T> {
-	return array.length >= 1;
+	return array.length > 0;
 }

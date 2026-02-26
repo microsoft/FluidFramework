@@ -35,7 +35,6 @@ import {
 	type MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
@@ -335,6 +334,7 @@ export class OdspDelayLoadedDeltaStream {
 					);
 					resolve();
 				}).catch((error) => {
+					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 					reject(error);
 				});
 			}, delta);
@@ -512,8 +512,11 @@ export class OdspDelayLoadedDeltaStream {
 	private emitSensitivityLabelUpdateEvent(
 		sensitivityLabelsInfo: ISensitivityLabelsInfo,
 	): void {
-		const createdTimestamp = Date.parse(sensitivityLabelsInfo.timestamp);
-		assert(createdTimestamp > 0, 0x8e0 /* time should be positive */);
+		const createdTimestamp = sensitivityLabelsInfo.timestamp;
+		assert(
+			typeof createdTimestamp === "number" && createdTimestamp > 0,
+			0x8e0 /* time should be a positive number */,
+		);
 		if (createdTimestamp > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = createdTimestamp;
 			this.metadataUpdateHandler({

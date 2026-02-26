@@ -41,13 +41,12 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 */
 	public async find(query: any, sort: any): Promise<any[]> {
 		// split the keys and get the corresponding value
-		function getValueByKey(propertyBag, key: string) {
+		function getValueByKey(propertyBag, key: string): any {
 			const keys = key.split(".");
 			let value = propertyBag;
 			keys.forEach((splitKey) => {
 				value = value[splitKey];
 			});
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value;
 		}
 
@@ -77,8 +76,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		});
 
 		if (sort && Object.keys(sort).length === 1) {
-			// eslint-disable-next-line no-inner-declarations
-			function compare(a, b) {
+			function compare(a, b): number {
 				// Non null asserting here because of the length check above
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sortKey = Object.keys(sort)[0]!;
@@ -89,7 +87,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
 			filteredCollection = filteredCollection.sort(compare);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return filteredCollection;
 	}
 
@@ -97,7 +94,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 * {@inheritDoc @fluidframework/server-services-core#ICollection.findAll}
 	 */
 	public async findAll(): Promise<any[]> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.getAllInternal();
 	}
 
@@ -108,7 +104,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 * Query is expected to have a member "_id" which is a string used to find value in the database.
 	 */
 	public async findOne(query: any): Promise<any> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.findOneInternal(query);
 	}
 
@@ -238,9 +233,10 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 *
 	 * @param values - data to insert to the database
 	 */
-	private insertInternal(...values: any[]) {
+	private insertInternal(...values: any[]): void {
 		for (const value of values) {
 			if (value) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (!value._id) {
 					value._id = uuid();
 				}

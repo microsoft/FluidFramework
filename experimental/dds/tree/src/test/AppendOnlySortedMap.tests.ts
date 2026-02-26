@@ -7,13 +7,13 @@
 
 import { strict as assert } from 'assert';
 
-import { validateAssertionError2 as validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { assertNotUndefined, compareFiniteNumbers } from '../Common.js';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap.js';
 
-function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
+function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>): void {
 	it('detects out-of-order keys', () => {
 		const map = mapBuilder();
 		map.append(0, 0);
@@ -185,7 +185,7 @@ describe('AppendOnlySortedMap', () => {
 });
 
 describe('AppendOnlyDoublySortedMap', () => {
-	const mapBuilder = () =>
+	const mapBuilder = (): AppendOnlyDoublySortedMap<number, number, number> =>
 		new AppendOnlyDoublySortedMap<number, number, number>(compareFiniteNumbers, (value) => value, compareFiniteNumbers);
 	runAppendOnlyMapTests(mapBuilder);
 

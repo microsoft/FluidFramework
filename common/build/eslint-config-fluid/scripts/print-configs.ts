@@ -19,65 +19,106 @@ import { fileURLToPath } from "node:url";
 import { ESLint } from "eslint";
 import sortJson from "sort-json";
 
+// Import flat configs directly from flat.mjs
+import { recommended, strict, minimalDeprecated } from "../flat.mjs";
+import type { FlatConfigArray } from "../library/configs/base.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface ConfigToPrint {
 	name: string;
-	configPath: string;
+	config: FlatConfigArray;
 	sourceFilePath: string;
 }
 
-const configsToPrint: ConfigToPrint[] = [
+const configsToPrint = [
 	{
 		name: "default",
-		configPath: path.join(__dirname, "..", "index.js"),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "minimal",
-		configPath: path.join(__dirname, "..", "minimal-deprecated.js"),
+		config: minimalDeprecated,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "react",
-		configPath: path.join(__dirname, "..", "index.js"),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.tsx"),
 	},
 	{
 		name: "recommended",
-		configPath: path.join(__dirname, "..", "recommended.js"),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict",
-		configPath: path.join(__dirname, "..", "strict.js"),
+		config: strict,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "strict-biome",
-		configPath: path.join(__dirname, "..", "strict-biome.js"),
+		// strict-biome uses the same flat config as strict; biome integration is handled separately
+		config: strict,
 		sourceFilePath: path.join(__dirname, "..", "src", "file.ts"),
 	},
 	{
 		name: "test",
-		configPath: path.join(__dirname, "..", "recommended.js"),
+		config: recommended,
 		sourceFilePath: path.join(__dirname, "..", "src", "test", "file.ts"),
 	},
-];
+] as const satisfies readonly ConfigToPrint[];
 
 /**
- * Generates the applied ESLint config for a specific file and config path.
+ * Generates the applied ESLint config for a specific file and config.
  */
-async function generateConfig(filePath: string, configPath: string): Promise<string> {
-	console.log(`Generating config for ${filePath} using ${configPath}`);
+async function generateConfig(filePath: string, config: FlatConfigArray): Promise<string> {
+	console.log(`Generating config for ${filePath}`);
+
+	// ESLint 9's default ESLint class uses flat config format.
+	// Use overrideConfigFile: true to prevent loading eslint.config.js,
+	// and pass the config directly via overrideConfig.
 	const eslint = new ESLint({
-		overrideConfigFile: configPath,
+		overrideConfigFile: true,
+		overrideConfig: [...config],
 	});
 
-	const config = await eslint.calculateConfigForFile(filePath);
-	// Remove the parser property because it's an absolute path and will vary based on the local environment.
-	delete (config as { parser?: unknown }).parser;
+	const resolvedConfig = (await eslint.calculateConfigForFile(filePath)) as unknown;
+	if (!resolvedConfig) {
+		console.warn("Warning: ESLint returned undefined config for " + filePath);
+		return "{}\n";
+	}
+
+	// Serialize and parse to create a clean copy without any circular references or non-serializable values
+	const cleanConfig = JSON.parse(JSON.stringify(resolvedConfig));
+
+	// Remove globals from languageOptions (very large) but keep the rest (parserOptions, etc.)
+	if (cleanConfig.languageOptions?.globals) {
+		delete cleanConfig.languageOptions.globals;
+	}
+
+	// Remove tsconfigRootDir since it varies by environment (it's set to process.cwd())
+	if (typeof cleanConfig.languageOptions?.parserOptions === "object") {
+		delete cleanConfig.languageOptions.parserOptions.tsconfigRootDir;
+	}
+
+	// Convert numeric severities to string equivalents in rules
+	if (cleanConfig.rules) {
+		for (const [ruleName, ruleConfig] of Object.entries(cleanConfig.rules)) {
+			if (Array.isArray(ruleConfig) && ruleConfig.length > 0) {
+				const severity = ruleConfig[0];
+				if (severity === 0) ruleConfig[0] = "off";
+				else if (severity === 1) ruleConfig[0] = "warn";
+				else if (severity === 2) ruleConfig[0] = "error";
+			} else if (ruleConfig === 0 || ruleConfig === 1 || ruleConfig === 2) {
+				// Handle standalone severity values
+				const stringValue = ruleConfig === 0 ? "off" : ruleConfig === 1 ? "warn" : "error";
+				cleanConfig.rules[ruleName] = stringValue;
+			}
+		}
+	}
 
 	// Generate the new content with sorting applied
 	// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
@@ -86,8 +127,8 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 	// some eslint settings depend on object key order ("import-x/resolver" being a known one, see
 	// https://github.com/un-ts/eslint-plugin-import-x/blob/master/src/utils/resolve.ts).
 	// Using depth 2 is a nice compromise.
-	const sortedConfig = sortJson(config, { indentSize: 4, depth: 2 });
-	const finalConfig = JSON.stringify(sortedConfig, null, 4);
+	const sortedConfig = sortJson(cleanConfig, { depth: 2 });
+	const finalConfig = JSON.stringify(sortedConfig, null, "\t");
 
 	// Add a trailing newline to match preferred output formatting
 	return finalConfig + "\n";
@@ -101,11 +142,12 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		process.exit(1);
 	}
 
-	const outputPath = args[0];
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated by the args.length check above
+	const outputPath = args[0]!;
 	await fs.mkdir(outputPath, { recursive: true });
 	const expectedFiles = new Set<string>();
 
-	for (const { name, configPath, sourceFilePath } of configsToPrint) {
+	for (const { name, config, sourceFilePath } of configsToPrint) {
 		const outputFilePath = path.join(outputPath, `${name}.json`);
 		expectedFiles.add(`${name}.json`);
 
@@ -116,7 +158,7 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 			// File doesn't exist yet, which is OK - we'll create it
 		}
 
-		const newContent = await generateConfig(sourceFilePath, configPath);
+		const newContent = await generateConfig(sourceFilePath, config);
 
 		// Only write the file if the content has changed
 		if (newContent !== originalContent) {

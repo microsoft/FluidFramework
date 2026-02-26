@@ -14,7 +14,7 @@ steps:
   displayName: Set node version
   inputs:
     targetType: 'inline'
-    workingDirectory: $(Build.SourcesDirectory)
+    workingDirectory: $(Pipeline.Workspace)
     script: |
       set -eu -o pipefail
 

@@ -4,6 +4,13 @@
 
 ```ts
 
+// @beta
+export class BrandedType<out Brand> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected constructor();
+    protected readonly brand: (dummy: never) => Brand;
+}
+
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -29,6 +36,7 @@ export const FluidErrorTypes: {
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy (undocumented)
@@ -36,12 +44,12 @@ export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTy
 
 // @alpha @legacy
 export const FluidErrorTypesAlpha: {
-    readonly layerIncompatibilityError: "layerIncompatibilityError";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @alpha @legacy (undocumented)
@@ -310,12 +318,12 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ILayerIncompatibilityError extends IErrorBase {
     readonly actualDifferenceInMonths: number;
     readonly compatibilityRequirementsInMonths: number;
     readonly details: string;
-    readonly errorType: typeof FluidErrorTypesAlpha.layerIncompatibilityError;
+    readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
     readonly incompatibleLayer: string;
     readonly incompatibleLayerVersion: string;
     readonly layer: string;
@@ -418,7 +426,6 @@ export interface IThrottlingWarning extends IErrorBase {
 // @public @sealed
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
-    // (undocumented)
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 

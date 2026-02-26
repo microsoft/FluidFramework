@@ -18,7 +18,9 @@ import {
 	identifierFieldKindIdentifier,
 	type SchemaPolicy,
 } from "../../../core/index.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
 
+import type { IncrementalEncoder } from "./codecs.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
@@ -39,10 +41,8 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
-import type { IncrementalEncoder } from "./codecs.js";
-import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { brand, oneFromIterable } from "../../../util/index.js";
+import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -143,7 +143,7 @@ export function getFieldEncoder(
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromIterable(field.types);
 	const nodeEncoder =
-		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
+		type === undefined ? anyNodeEncoder : nodeBuilder.nodeEncoderFromSchema(type);
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
 			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);
@@ -180,16 +180,16 @@ export function getNodeEncoder(
 	schemaName: TreeNodeSchemaIdentifier,
 	incrementalEncoder?: IncrementalEncoder,
 ): NodeShapeBasedEncoder {
+	const shouldEncodeIncrementally =
+		incrementalEncoder?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
 	const schema =
 		storedSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
 
+	// This handles both object and array nodes.
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
 		// consider moving some optional and sequence fields to extra fields if they are commonly empty
 		// to reduce encoded size.
-
-		const shouldEncodeIncrementally =
-			incrementalEncoder?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
 			const fieldEncoder = shouldEncodeIncrementally(schemaName, key)
@@ -213,13 +213,13 @@ export function getNodeEncoder(
 		);
 		return shape;
 	}
+
+	// This handles both maps and record nodes.
 	if (schema instanceof MapNodeStoredSchema) {
-		const shape = new NodeShapeBasedEncoder(
-			schemaName,
-			false,
-			[],
-			fieldBuilder.fieldEncoderFromSchema(schema.mapFields),
-		);
+		const fieldEncoder = shouldEncodeIncrementally(schemaName)
+			? incrementalFieldEncoder
+			: fieldBuilder.fieldEncoderFromSchema(schema.mapFields);
+		const shape = new NodeShapeBasedEncoder(schemaName, false, [], fieldEncoder);
 		return shape;
 	}
 	fail(0xb54 /* unsupported node kind */);
@@ -227,16 +227,20 @@ export function getNodeEncoder(
 
 function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {
 	switch (schema) {
-		case undefined:
+		case undefined: {
 			return false;
+		}
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.FluidHandle:
+		case ValueSchema.FluidHandle: {
 			return true;
-		case ValueSchema.Null:
+		}
+		case ValueSchema.Null: {
 			return [null];
-		default:
+		}
+		default: {
 			unreachableCase(schema);
+		}
 	}
 }

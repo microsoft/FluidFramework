@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { describeHydration, hydrate } from "../utils.js";
+
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -21,6 +22,8 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import type {
 	areSafelyAssignable,
 	Mutable,
@@ -28,9 +31,8 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { asIndex } from "../../../simple-tree/node-kinds/index.js";
 import { TestTreeProviderLite } from "../../utils.js";
+import { describeHydration, hydrate } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -199,7 +201,9 @@ describe("ArrayNode", () => {
 					// Index is negative
 					assert.throws(
 						() => array.removeAt(-1),
-						validateUsageError(/Expected non-negative index, got -1./),
+						validateUsageError(
+							/Expected non-negative index passed to TreeArrayNode.removeAt, got -1./,
+						),
 					);
 				});
 			});
@@ -223,9 +227,21 @@ describe("ArrayNode", () => {
 					// Index is negative
 					assert.throws(
 						() => array.insertAt(-1, 0),
-						validateUsageError(/Expected non-negative index, got -1./),
+						validateUsageError(
+							/Expected non-negative index passed to TreeArrayNode.insertAt, got -1./,
+						),
 					);
 				});
+			});
+
+			it("insertAtStart, insertAtEnd, and push insert at expected positions", () => {
+				const array = init(schemaType, [2]);
+				array.insertAtStart(1);
+				assert.deepEqual([...array], [1, 2]);
+				array.insertAtEnd(3);
+				assert.deepEqual([...array], [1, 2, 3]);
+				array.push(4);
+				assert.deepEqual([...array], [1, 2, 3, 4]);
 			});
 
 			describe("removeRange", () => {
@@ -282,9 +298,19 @@ describe("ArrayNode", () => {
 				it("invalid", () => {
 					const list = init(schemaType, [0, 1, 2, 3]);
 					// Past end
-					assert.throws(() => list.removeRange(5, 6), validateUsageError(/Too large/));
+					assert.throws(
+						() => list.removeRange(5, 6),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.removeRange is out of bounds. Expected at most 4, got 5./,
+						),
+					);
 					// start after end
-					assert.throws(() => list.removeRange(3, 2), validateUsageError(/Too large/));
+					assert.throws(
+						() => list.removeRange(3, 2),
+						validateUsageError(
+							/Malformed range passed to TreeArrayNode.removeRange. Start index 3 is greater than end index 2./,
+						),
+					);
 					// negative index
 					assert.throws(() => list.removeRange(-1, 2), validateUsageError(/index/));
 					// non-integer index
@@ -295,13 +321,20 @@ describe("ArrayNode", () => {
 					// If someday someone optimized empty ranges to no op earlier, they still need to error in these cases:
 					const list = init(schemaType, [0, 1, 2, 3]);
 					// Past end
-					assert.throws(() => list.removeRange(5, 5), validateUsageError(/Too large/));
+					assert.throws(
+						() => list.removeRange(5, 5),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.removeRange is out of bounds. Expected at most 4, got 5./,
+						),
+					);
 					// negative index
 					assert.throws(() => list.removeRange(-1, -1), validateUsageError(/index/));
 					// non-integer index
 					assert.throws(
 						() => list.removeRange(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
-						validateUsageError(/safe integer/),
+						validateUsageError(
+							/Expected a safe integer passed to TreeArrayNode.removeRange, got Infinity./,
+						),
 					);
 					assert.throws(() => list.removeRange(1.5, 1.5), validateUsageError(/integer/));
 				});
@@ -347,7 +380,9 @@ describe("ArrayNode", () => {
 					// Index is negative
 					assert.throws(
 						() => array.moveToStart(-1),
-						validateUsageError(/Expected non-negative index, got -1./),
+						validateUsageError(
+							/Expected non-negative index passed to TreeArrayNode.moveToStart, got -1./,
+						),
 					);
 				});
 			});
@@ -392,7 +427,9 @@ describe("ArrayNode", () => {
 					// Index is negative
 					assert.throws(
 						() => array.moveToEnd(-1),
-						validateUsageError(/Expected non-negative index, got -1./),
+						validateUsageError(
+							/Expected non-negative index passed to TreeArrayNode.moveToEnd, got -1./,
+						),
 					);
 				});
 			});
@@ -467,12 +504,16 @@ describe("ArrayNode", () => {
 							// Destination index is negative
 							assert.throws(
 								() => array.moveToIndex(-1, 0),
-								validateUsageError(/Expected non-negative index, got -1./),
+								validateUsageError(
+									/Expected non-negative index passed to TreeArrayNode.moveToIndex, got -1./,
+								),
 							);
 							// Source index is negative
 							assert.throws(
 								() => array.moveToIndex(0, -1),
-								validateUsageError(/Expected non-negative index, got -1./),
+								validateUsageError(
+									/Expected non-negative index passed to TreeArrayNode.moveToIndex, got -1./,
+								),
 							);
 						});
 					});
@@ -555,12 +596,16 @@ describe("ArrayNode", () => {
 						// Destination index is negative
 						assert.throws(
 							() => destination.moveToIndex(-1, 0, source),
-							validateUsageError(/Expected non-negative index, got -1./),
+							validateUsageError(
+								/Expected non-negative index passed to TreeArrayNode.moveToIndex, got -1./,
+							),
 						);
 						// Source index is negative
 						assert.throws(
 							() => destination.moveToIndex(0, -1, source),
-							validateUsageError(/Expected non-negative index, got -1./),
+							validateUsageError(
+								/Expected non-negative index passed to TreeArrayNode.moveToIndex, got -1./,
+							),
 						);
 					});
 				});
@@ -602,13 +647,15 @@ describe("ArrayNode", () => {
 					assert.throws(
 						() => array.moveRangeToStart(2, 1),
 						validateUsageError(
-							/Index value passed to TreeArrayNode.moveRangeToStart is out of bounds./,
+							/Malformed range passed to TreeArrayNode.moveRangeToStart. Start index 2 is greater than end index 1./,
 						),
 					);
 					// Index is negative
 					assert.throws(
 						() => array.moveRangeToStart(-1, 0),
-						validateUsageError(/Expected non-negative index, got -1./),
+						validateUsageError(
+							/Expected non-negative index passed to TreeArrayNode.moveRangeToStart, got -1./,
+						),
 					);
 				});
 			});
@@ -649,13 +696,15 @@ describe("ArrayNode", () => {
 					assert.throws(
 						() => array.moveRangeToEnd(2, 1),
 						validateUsageError(
-							/Index value passed to TreeArrayNode.moveRangeToEnd is out of bounds./,
+							/Malformed range passed to TreeArrayNode.moveRangeToEnd. Start index 2 is greater than end index 1./,
 						),
 					);
 					// Index is negative
 					assert.throws(
 						() => array.moveRangeToEnd(-1, 0),
-						validateUsageError(/Expected non-negative index, got -1./),
+						validateUsageError(
+							/Expected non-negative index passed to TreeArrayNode.moveRangeToEnd, got -1./,
+						),
 					);
 				});
 			});
@@ -717,13 +766,15 @@ describe("ArrayNode", () => {
 					assert.throws(
 						() => array.moveRangeToIndex(0, 2, 1),
 						validateUsageError(
-							/Index value passed to TreeArrayNode.moveRangeToIndex is out of bounds./,
+							/Malformed range passed to TreeArrayNode.moveRangeToIndex. Start index 2 is greater than end index 1./,
 						),
 					);
 					// Index is negative
 					assert.throws(
 						() => array.moveRangeToIndex(-1, 0, 1),
-						validateUsageError(/Expected non-negative index, got -1./),
+						validateUsageError(
+							/Expected non-negative index passed to TreeArrayNode.moveRangeToIndex, got -1./,
+						),
 					);
 				});
 			});
@@ -770,8 +821,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 
@@ -786,8 +836,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 
@@ -805,8 +854,7 @@ describe("ArrayNode", () => {
 
 				assert.throws(
 					() => init(Array, [0, 1, 2]),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 		},
@@ -827,8 +875,7 @@ describe("ArrayNode", () => {
 					// False positive
 					// eslint-disable-next-line @typescript-eslint/no-array-constructor
 					() => new Array([0, 1, 2], 42),
-					(error: Error) =>
-						validateAssertionError(error, /Shadowing of array indices is not permitted/),
+					validateAssertionError(/Shadowing of array indices is not permitted/),
 				);
 			});
 		},
@@ -1000,6 +1047,51 @@ describe("ArrayNode", () => {
 			assert.equal(JSON.stringify(fromMap), json);
 			const fromIterable = new Schema(new Map(data).entries());
 			assert.equal(JSON.stringify(fromIterable), json);
+		});
+	});
+
+	describeHydration("createArrayInsertionAnchor", (init) => {
+		it("creates valid anchors", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+		});
+
+		it("updates anchors correctly", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			array.removeAt(0);
+			assert.equal(anchor.index, 0);
+			array.insertAtStart(4);
+			assert.equal(anchor.index, 1);
+		});
+
+		it("past end", () => {
+			const array = init(CustomizableNumberArray, [1]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			array.insertAt(anchor.index, 4);
+			assert.equal(anchor.index, 2);
+		});
+
+		it("empty array", () => {
+			const array = init(CustomizableNumberArray, []);
+			const anchor = createArrayInsertionAnchor(array, 0);
+			assert.equal(anchor.index, 0);
+			array.insertAt(anchor.index, 4);
+			assert.equal(anchor.index, 1);
+			array.insertAt(anchor.index, 5);
+			assert.equal(anchor.index, 2);
+		});
+
+		// This case sticks to the end of the array, which is not ideal, and will need to be fixed with a more sophisticated anchor implementation.
+		it("removed item", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			array.removeAt(1);
+			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
+			assert.equal(anchor.index, 2);
 		});
 	});
 });

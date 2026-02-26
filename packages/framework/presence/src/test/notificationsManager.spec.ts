@@ -15,8 +15,9 @@ import type {
 	NotificationsManager,
 	NotificationsWorkspace,
 	PresenceWithNotifications,
-} from "../index.js";
-import { Notifications } from "../index.js";
+} from "@fluidframework/presence/alpha";
+import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
+
 import { toOpaqueJson } from "../internalUtils.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -24,17 +25,24 @@ import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	assertIdenticalTypes,
-	connectionId2,
+	initialLocalClientConnectionId,
 	createInstanceOf,
 	createSpecificAttendeeId,
 	prepareConnectedPresence,
-	attendeeId2,
+	localAttendeeId,
 } from "./testUtils.js";
 
 const attendeeId3 = createSpecificAttendeeId("attendeeId-3");
 const connectionId3 = "client3" as const satisfies ClientConnectionId;
 
 describe("Presence", () => {
+	describe("Notifications Workspace", () => {
+		/**
+		 * See {@link checkCompiles} below
+		 */
+		it("API use compiles", () => {});
+	});
+
 	describe("NotificationsManager", () => {
 		// Note: this test setup mimics the setup in src/test/presenceManager.spec.ts
 		let runtime: MockEphemeralRuntime;
@@ -43,8 +51,6 @@ describe("Presence", () => {
 		let clock: SinonFakeTimers;
 		let presence: PresenceWithNotifications;
 		let processSignal: ProcessSignalFunction;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
-		let notificationsWorkspace: NotificationsWorkspace<{}>;
 
 		before(async () => {
 			clock = useFakeTimers();
@@ -62,17 +68,11 @@ describe("Presence", () => {
 			// Set up the presence connection
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				"attendeeId-2",
-				"client2",
+				localAttendeeId,
+				initialLocalClientConnectionId,
 				clock,
 				logger,
 			));
-
-			// Get a notifications workspace
-			notificationsWorkspace = presence.notifications.getWorkspace(
-				"name:testNotificationWorkspace",
-				{},
-			);
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -89,18 +89,61 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
+		it("can be created with explicit schema via `Notifications` in `getWorkspace` schema", () => {
+			// Act
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications<{
+						newId: (id: number) => void;
+					}>(
+						// A default handler is not required
+						{},
+					),
+				},
+			);
+
+			// Verify
+			assert.notEqual(notificationsWorkspace.notifications.testEvents, undefined);
+			assertIdenticalTypes(
+				notificationsWorkspace.notifications.testEvents,
+				createInstanceOf<NotificationsManager<{ newId: (id: number) => void }>>(),
+			);
+		});
+
+		it("can be created with inferred schema via `Notifications` in `getWorkspace` schema", () => {
+			// Act
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						newId: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
+			);
+
+			// Verify
+			assert.notEqual(notificationsWorkspace.notifications.testEvents, undefined);
+			assertIdenticalTypes(
+				notificationsWorkspace.notifications.testEvents,
+				createInstanceOf<NotificationsManager<{ newId: (id: number) => void }>>(),
+			);
+		});
+
 		it("can be created via `Notifications` added to workspace", async () => {
+			// Setup
+			// Get an empty notifications workspace
+			// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+			type EmptyNotificationsWorkspace = NotificationsWorkspace<{}>;
+			const notificationsWorkspace: EmptyNotificationsWorkspace =
+				presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
+
 			// Act
 			notificationsWorkspace.add(
 				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required
-					// when default handler is specified.
-					{
-						newId: (id: number) => void;
-					},
-					"testEvents"
-				>(
+				Notifications<{
+					newId: (id: number) => void;
+				}>(
 					// A default handler is not required
 					{},
 				),
@@ -114,19 +157,109 @@ describe("Presence", () => {
 			);
 		});
 
+		it("typing won't be updated attempting duplicate `add` to workspace with different schema", () => {
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotifications",
+				{
+					testEvents: Notifications({
+						hotSpot: (_sender: Attendee, _: { x: number; y: number }): void => {},
+					}),
+				},
+			);
+			// For type checking that "hotSpot" is a valid event name
+			notificationsWorkspace.notifications.testEvents.notifications.on(
+				"hotSpot",
+				(_sender: Attendee, _position: { x: number; y: number }) => {},
+			);
+
+			// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
+			const workspace: typeof notificationsWorkspace = notificationsWorkspace;
+
+			// Act
+			assert.throws(() => {
+				workspace.add(
+					// Same name as existing NotificationsManager
+					"testEvents",
+					// Different schema than existing NotificationsManager
+					Notifications<{
+						moveCaret: (moveDetails: { id: string; pos: number }) => void;
+					}>({}),
+				);
+			});
+
+			// Verify
+			// Typing is unchanged - "moveCaret" is not a valid event name
+			workspace.notifications.testEvents.notifications.on(
+				// @ts-expect-error - "moveCaret" is not a valid event name
+				"moveCaret",
+				() => {},
+			);
+
+			// For type checking that "hotSpot" is still a valid event name
+			workspace.notifications.testEvents.notifications.on(
+				"hotSpot",
+				// @ts-expect-error - "position" is the wrong type
+				(_sender: Attendee, _position: number) => {},
+			);
+		});
+
+		it("can be created with explicit schema and partial subscribers via `Notifications`", () => {
+			// Act
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications<{
+						newId: (id: number) => void;
+						hotSpot: (pos: { x: number; y: number }) => void;
+					}>({
+						newId: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
+			);
+
+			// Verify
+			assert.notEqual(notificationsWorkspace.notifications.testEvents, undefined);
+			assertIdenticalTypes(
+				notificationsWorkspace.notifications.testEvents,
+				createInstanceOf<
+					NotificationsManager<{
+						newId: (id: number) => void;
+						hotSpot: (pos: { x: number; y: number }) => void;
+					}>
+				>(),
+			);
+		});
+
+		it("strips bad events when created with improperly typed subscribers", () => {
+			// Act
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						missingAttendeeParam: (_id: number) => {},
+						nonSerializableArg: (_attendee: Attendee, _fn: () => void) => {},
+						okay: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
+			);
+
+			// Verify
+			assert.notEqual(notificationsWorkspace.notifications.testEvents, undefined);
+			assertIdenticalTypes(
+				notificationsWorkspace.notifications.testEvents,
+				createInstanceOf<NotificationsManager<{ okay: (id: number) => void }>>(),
+			);
+		});
+
 		it("emit.broadcast sends broadcast signal", async () => {
 			// Setup
-			notificationsWorkspace.add(
-				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required.
-					{
-						newId: (id: number) => void;
-					},
-					"testEvents"
-				>({
-					newId: (_attendee: Attendee, _id: number) => {},
-				}),
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						newId: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
 			);
 
 			const { testEvents } = notificationsWorkspace.notifications;
@@ -142,16 +275,16 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: {
+									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": attendeeId2,
+										"value": localAttendeeId,
 									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									[attendeeId2]: {
+									[localAttendeeId]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
@@ -173,17 +306,13 @@ describe("Presence", () => {
 		// TODO: Implement `unicast` method in NotificationsManager and in supporting code.
 		it.skip("emit.unicast sends directed signal", async () => {
 			// Setup
-			notificationsWorkspace.add(
-				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required.
-					{
-						newId: (id: number) => void;
-					},
-					"testEvents"
-				>({
-					newId: (_attendee: Attendee, _id: number) => {},
-				}),
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						newId: (_attendee: Attendee, _id: number) => {},
+					}),
+				},
 			);
 
 			const { testEvents } = notificationsWorkspace.notifications;
@@ -199,16 +328,16 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: {
+									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": attendeeId2,
+										"value": localAttendeeId,
 									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									[attendeeId2]: {
+									[localAttendeeId]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
@@ -219,7 +348,7 @@ describe("Presence", () => {
 						},
 					},
 					// Targeting self for simplicity
-					targetClientId: "client2",
+					targetClientId: initialLocalClientConnectionId,
 				},
 			]);
 
@@ -243,17 +372,13 @@ describe("Presence", () => {
 				eventHandlerCalls.original.push({ attendee, id });
 			}
 
-			notificationsWorkspace.add(
-				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required.
-					{
-						newId: (id: number) => void;
-					},
-					"testEvents"
-				>({
-					newId: originalEventHandler,
-				}),
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						newId: originalEventHandler,
+					}),
+				},
 			);
 
 			const { testEvents } = notificationsWorkspace.notifications;
@@ -324,19 +449,15 @@ describe("Presence", () => {
 		it("raises `unattendedEvent` event when unrecognized notification is received", async () => {
 			let unattendedEventCalled = false;
 
-			notificationsWorkspace.add(
-				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required.
-					{
-						newId: (id: number) => void;
-					},
-					"testEvents"
-				>({
-					newId: (attendee: Attendee, id: number) => {
-						fail(`Unexpected newId event`);
-					},
-				}),
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						newId: (attendee: Attendee, id: number) => {
+							fail(`Unexpected newId event`);
+						},
+					}),
+				},
 			);
 
 			const { testEvents } = notificationsWorkspace.notifications;
@@ -390,17 +511,13 @@ describe("Presence", () => {
 				fail(`Unexpected newId event`);
 			}
 
-			notificationsWorkspace.add(
-				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required.
-					{
-						newId: (id: number) => void;
-					},
-					"testEvents"
-				>({
-					newId: newIdEventHandler,
-				}),
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						newId: newIdEventHandler,
+					}),
+				},
 			);
 
 			const { testEvents } = notificationsWorkspace.notifications;
@@ -459,17 +576,13 @@ describe("Presence", () => {
 				originalEventHandlerCalled = true;
 			}
 
-			notificationsWorkspace.add(
-				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required.
-					{
-						newId: (id: number) => void;
-					},
-					"testEvents"
-				>({
-					newId: originalEventHandler,
-				}),
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications({
+						newId: originalEventHandler,
+					}),
+				},
 			);
 
 			const { testEvents } = notificationsWorkspace.notifications;
@@ -523,18 +636,16 @@ describe("Presence", () => {
 		});
 
 		it(".presence provides Presence it was created under", () => {
-			notificationsWorkspace.add(
-				"testEvents",
-				Notifications<
-					// Below explicit generic specification should not be required.
-					{
+			const notificationsWorkspace = presence.notifications.getWorkspace(
+				"name:testNotificationWorkspace",
+				{
+					"testEvents": Notifications<{
 						newId: (id: number) => void;
-					},
-					"testEvents"
-				>(
-					// A default handler is not required
-					{},
-				),
+					}>(
+						// A default handler is not required
+						{},
+					),
+				},
 			);
 
 			assert.strictEqual(notificationsWorkspace.notifications.testEvents.presence, presence);
@@ -542,3 +653,20 @@ describe("Presence", () => {
 		});
 	});
 });
+
+// ---- test (example) code ----
+
+/**
+ * Check that the code compiles.
+ */
+export function checkCompiles(): void {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const presence = {} as PresenceWithNotifications;
+	presence.notifications.getWorkspace("name:testNotifications", {
+		testEvents: Notifications({
+			hotSpot: (_sender: Attendee, _: { x: number; y: number }): void => {},
+		}),
+		// @ts-expect-error - Notifications Workspace only permits NotificationsManagers
+		camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
+	});
+}

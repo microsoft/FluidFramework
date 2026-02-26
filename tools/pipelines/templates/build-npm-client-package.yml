@@ -56,14 +56,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: preCG
-  type: stepList
-  default: []
-
-- name: cgSubDirectory
-  type: string
-  default:
-
 - name: checkoutSubmodules
   type: boolean
   default: false
@@ -85,10 +77,6 @@ parameters:
   type: boolean
   default: false
 
-- name: includeInternalVersions
-  type: boolean
-  default: false
-
 - name: buildToolsVersionToInstall
   type: string
   default: repo
@@ -106,10 +94,6 @@ parameters:
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
-
-- name: additionalBuildSteps
-  type: stepList
-  default: []
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
@@ -152,6 +136,10 @@ resources:
       type: git
       name: 1ESPipelineTemplates/M365GPT
       ref: refs/tags/release
+    - repository: ff_pipeline_host
+      type: git
+      # Specify internal project, since this pipeline runs in both the public and internal projects
+      name: internal/ff_pipeline_host
   # Listing a pipeline as a resource makes its artifacts available for download in any job
   pipelines:
     # Access to this pipelines artifacts allows 1ES deployment jobs to install build tools without checking out out a repo.
@@ -184,6 +172,15 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
+      sourceRepositoriesToScan:
+        # We must specify whether the ff_pipeline_host resource should be scanned or not, but it is only accessible
+        # when this pipeline is run in the internal project.
+        ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+          include:
+            - repository: ff_pipeline_host
+        ${{ else }}:
+          exclude:
+            - repository: ff_pipeline_host
       # Tentative workaround for the occasional Credscan failures
       credscan:
         batchSize: 4
@@ -200,7 +197,6 @@ extends:
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
-
 
       # Install / Build / Test Stage
       - stage: build
@@ -233,6 +229,7 @@ extends:
             steps:
               # Setup
               - checkout: self
+                path: $(FluidFrameworkDirectory)
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -247,7 +244,7 @@ extends:
                 displayName: Parameters
                 inputs:
                   targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
                     # even in an error case
@@ -274,6 +271,9 @@ extends:
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
+                      consistentSourcesDirectory=$(consistentSourcesDirectory)
+                      FluidFrameworkDirectory=$(FluidFrameworkDirectory)
+                      FFPipelineHostDirectory=$(FFPipelineHostDirectory)
                       pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
@@ -367,22 +367,22 @@ extends:
                 displayName: 'npm run webpack'
                 inputs:
                   command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
+                  workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   customCommand: 'run webpack'
 
               - task: Bash@3
                 displayName: Archive Build Output Content
                 env:
-                  WORKING_DIRECTORY: '${{ parameters.buildDirectory }}'
+                  WORKING_DIRECTORY: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                 inputs:
                   targetType: filePath
-                  workingDirectory: '${{ parameters.buildDirectory }}'
-                  filePath: $(Build.SourcesDirectory)/scripts/pack-build-output.sh
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                  filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
                 displayName: Copy build_output_archive to artifact staging directory
                 inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}/build_output_archive
+                  sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build_output_archive
                   targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
 
               # Pack
@@ -395,8 +395,8 @@ extends:
                       STAGING_PATH: $(Build.ArtifactStagingDirectory)
                     inputs:
                       targetType: filePath
-                      workingDirectory: '${{ parameters.buildDirectory }}'
-                      filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
+                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                      filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -407,7 +407,7 @@ extends:
                     displayName: 'Calculate bundle sizes'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:collect'
 
                   # Copy files so all artifacts we publish end up under the same parent folder.
@@ -415,7 +415,7 @@ extends:
                   - task: CopyFiles@2
                     displayName: Copy bundle size files to artifact staging directory
                     inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
                   # At this point we want to publish the artifact with the bundle size analysis,
@@ -431,7 +431,7 @@ extends:
                       TARGET_BRANCH_NAME: '$(targetBranchName)'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:run'
 
                   - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
@@ -439,7 +439,7 @@ extends:
                         displayName: List report.json
                         inputs:
                           targetType: inline
-                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                           script: |
                             set -eu -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
@@ -460,7 +460,7 @@ extends:
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                             npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
@@ -469,7 +469,7 @@ extends:
                     displayName: 'npm run ci:build:docs'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build:docs'
 
                   # Copy files so all artifacts we publish end up under the same parent folder.
@@ -477,7 +477,7 @@ extends:
                   - task: CopyFiles@2
                     displayName: Copy _api-extractor-temp files to artifact staging directory
                     inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/_api-extractor-temp'
                       targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
 
                   # At this point we want to publish the artifact with the _api-extractor-temp folder,
@@ -492,7 +492,7 @@ extends:
                   displayName: Reset lockfile
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     script: |
                       set -eu -o pipefail
                       git checkout HEAD -- pnpm-lock.yaml
@@ -502,7 +502,7 @@ extends:
                   displayName: Prune pnpm store
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     script: |
                       set -eu -o pipefail
                       pnpm store prune
@@ -521,9 +521,29 @@ extends:
                       exit -1;
                     fi
 
-              # This additional build step is used to run step not part of the main build. In build client pipeline,
-              # this is used to inject telemetry key file and upload built devtools extension.
-              - ${{ parameters.additionalBuildSteps }}
+              # Devtools
+              - task: Bash@3
+                displayName: Inject devtools telemetry logger token
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    set -eu -o pipefail
+                    echo Generating .env
+                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/.env
+
+              - task: Npm@1
+                displayName: Build devtools
+                inputs:
+                  command: 'custom'
+                  workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/
+                  customCommand: 'run webpack'
+
+              - task: 1ES.PublishPipelineArtifact@1
+                displayName: Publish Artifact - Devtools Browser Extension
+                inputs:
+                  targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+                  artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
+                  publishLocation: 'pipeline'
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -575,7 +595,7 @@ extends:
               # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
               # used in a few places in the pipeline to push custom telemetry to Kusto.
               - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                value: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/tools/telemetry-generator
                 readonly: true
               # We already run CodeQL in the main build job, so we don't need to run it again here.
               # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
@@ -587,6 +607,7 @@ extends:
             steps:
               # Setup
               - checkout: self
+                path: $(FluidFrameworkDirectory)
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -619,7 +640,7 @@ extends:
 
               - script: |
                   echo "Extracting build output archive contents..."
-                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                 displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
@@ -640,7 +661,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                 inputs:
                   command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
+                  workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   customCommand: 'run test:copyresults'
 
               # Test - Upload coverage results
@@ -652,7 +673,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                 inputs:
                   targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     set -eu -o pipefail
                     test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
@@ -662,7 +683,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
                   targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report'
                   script: |
                     set -eu -o pipefail
                     sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
@@ -671,13 +692,13 @@ extends:
                 displayName: Publish Code Coverage
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
-                  summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                  summaryFileLocation: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                   failIfCoverageEmpty: true
               - task: CopyFiles@2
                 displayName: Copy code coverage report to artifact staging directory
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
-                  sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                  sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report
                   targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
               - task: Bash@3
                 displayName: Report Code Coverage Comparison
@@ -694,7 +715,7 @@ extends:
                   ADO_CI_BUILD_DEFINITION_ID_PR: 11
                 inputs:
                   targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     set -eu -o pipefail
                     echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
@@ -735,7 +756,7 @@ extends:
                 # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
                 # used in a few places in the pipeline to push custom telemetry to Kusto.
                 - name: absolutePathToTelemetryGenerator
-                  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                  value: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/tools/telemetry-generator
                   readonly: true
                 # We already run CodeQL in the main build job, so we don't need to run it again here.
                 # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
@@ -746,6 +767,7 @@ extends:
               steps:
                 # Setup
                 - checkout: self
+                  path: $(FluidFrameworkDirectory)
                   clean: true
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
@@ -771,7 +793,7 @@ extends:
 
                 - script: |
                     echo "Extracting build output archive contents..."
-                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                   displayName: Extract Build Output Contents
 
                 # Test
@@ -792,24 +814,63 @@ extends:
                   displayName: 'npm run test:copyresults'
                   inputs:
                     command: custom
-                    workingDir: '${{ parameters.buildDirectory }}'
+                    workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     customCommand: 'run test:copyresults'
 
                 - ${{ if contains(test.name, 'tinylicious') }}:
+                  # We upload the log file for the tinylicious server as a preventive troubleshooting mechanism.
+                  # It's not really too relevant unless tests fail, but when they do it's helpful to have it available
+                  # so we can investigate if there were issues on the server side.
+                  # It's also slightly tricky to only upload it conditionally based on things like whether the tests
+                  # failed, because in some scenarios (stress tests in particular) the pipeline steps might not actually fail.
+                  # Since the log files are not extremely huge (they average ~150Mb), we can afford to upload them unconditionally.
+                  # Note: these logs are not published as artifacts; to get them, click on "..." -> "Download Logs"
+                  # from the pipeline run page in Azure DevOps and extract the downloaded zip file.
+                  # Note: the full paths to the files can get pretty long, so they might end up truncated.
                   - task: Bash@3
-                    displayName: Upload tinylicious log
+                    displayName: Upload tinylicious log(s)
                     condition: always()
                     continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                     inputs:
                       targetType: inline
                       script: |
                         set -eu -o pipefail
-                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
-                        if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
-                          echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
-                          echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
-                        else
-                          echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
+                        FOUND=0
+
+                        # Sanitize the test name by removing colons and replacing other problematic characters
+                        TEST_NAME="${{ test.name }}"
+                        SAFE_TEST_NAME="${TEST_NAME//:/}"
+                        SAFE_TEST_NAME="${SAFE_TEST_NAME// /_}"
+
+                        # Process each tinylicious.log file found in the repo
+                        # Uses process substitution (< <(...)) to avoid creating a subshell, which would prevent
+                        # the FOUND variable from being updated properly
+                        while IFS= read -r LOG; do
+                          # Extract the relative path by removing the source directory prefix
+                          # Example: /build/source/packages/test/foo/tinylicious.log -> packages/test/foo/tinylicious.log
+                          RELATIVE_PATH="${LOG#$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/}"
+
+                          # Extract the directory path and filename separately
+                          DIR_PATH=$(dirname "$RELATIVE_PATH")
+                          FILENAME=$(basename "$RELATIVE_PATH")
+
+                          # Note: Azure DevOps only preserves the filename when uploading, not the directory structure,
+                          # so multiple files named "tinylicious.log" would overwrite each other.
+                          # Thus we create a unique name for each log file by using the test name and a safe version of its directory path.
+                          # Example: packages/test/foo/tinylicious.log -> test_tinylicious-packages_test_foo-tinylicious.log
+                          SAFE_DIR="${DIR_PATH//\//_}"
+                          SAFE_NAME="${SAFE_TEST_NAME}-${SAFE_DIR}-${FILENAME}"
+
+                          TEMP_LOG="$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/$SAFE_NAME"
+                          cp "$LOG" "$TEMP_LOG"
+
+                          echo "Found tinylicious log at '$LOG'. Uploading as '$SAFE_NAME'.";
+                          echo "##vso[task.uploadfile]$TEMP_LOG";
+                          FOUND=1
+                        done < <(find "$(Pipeline.Workspace)/${{ parameters.buildDirectory }}" -maxdepth 5 -name "tinylicious.log" -type f 2>/dev/null)
+
+                        if [ "$FOUND" -eq 0 ]; then
+                          echo "##vso[task.logissue type=warning]No tinylicious log files found.";
                         fi
 
                 # Process test result, include publishing and logging
@@ -825,66 +886,30 @@ extends:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
             buildDirectory: ${{ parameters.buildDirectory }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
-        - stage: upload_run_telemetry
-          displayName: Upload pipeline run telemetry to Kusto
-          condition: succeededOrFailed()
-          dependsOn:
-            - build
-            # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
-            - publish_npm_internal_test
-            - publish_npm_internal_build
-            - publish_npm_public
-            # NOTE: This is brittle; since the publish_npm_internal_dev stage is addded to the pipeline conditionally,
-            # we create a dependency on it based on the same condition.
-            # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
-            # At some point it might be preferable to always create the stage, control its execution solely with
-            # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
-            - ${{ if eq(parameters.isReleaseGroup, true) }}:
-              - publish_npm_internal_dev
-          jobs:
-            - job: upload_run_telemetry
-              displayName: Upload pipeline run telemetry to Kusto
-              pool: Small-eastus2
-              variables:
-              - group: ado-feeds
-              - name: pipelineTelemetryWorkdir
-                value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
-                readonly: true
-              steps:
-              - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+        - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
+          parameters:
+            dependsOn:
+              - build
+              # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
+              - publish_npm_internal_test
+              - publish_npm_internal_build
+              - publish_npm_public
+              # NOTE: This is brittle; since the publish_npm_internal_dev stage is added to the pipeline conditionally,
+              # we create a dependency on it based on the same condition.
+              # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
+              # At some point it might be preferable to always create the stage, control its execution solely with
+              # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
+              - ${{ if eq(parameters.isReleaseGroup, true) }}:
+                - publish_npm_internal_dev
+              - upload_manifests
+            # Using 'all' signifies that we will upload all stages
+            stageIdFilter: 'all'
+            telemetry_upload_steps:
+              - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
                 parameters:
-                  pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
-              - task: Bash@3
-                displayName: Get stage timing and result data from ADO
-                env:
-                  BUILD_ID: $(Build.BuildId)
-                  ADO_API_TOKEN: $(System.AccessToken)
-                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
-                inputs:
-                  targetType: inline
-                  script: |
-                    set -eu -o pipefail
-                    echo "Creating work folder '$WORK_FOLDER'";
-                    mkdir -p $WORK_FOLDER;
-
-                    echo "Retrieving data from ADO API";
-                    echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
-                    curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
-              - task: Bash@3
-                displayName: Submit telemetry for stage timing and result
-                env:
-                  BUILD_ID: $(Build.BuildId)
-                  PIPELINE: BuildClient
-                  WORK_FOLDER: $(pipelineTelemetryWorkdir)
-                inputs:
-                  targetType: inline
-                  workingDirectory: $(pathToTelemetryGenerator)
-                  script: |
-                    set -eu -o pipefail
-                    echo "Listing files in '$WORK_FOLDER'"
-                    ls -laR $WORK_FOLDER;
-                    npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+                  # Using 'all' signifies that we will upload all stages
+                  stageIdFilter: 'all'
+                  pipelineIdentifierForTelemetry: BuildClient

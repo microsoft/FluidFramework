@@ -13,9 +13,9 @@ import type { Machine } from "jssm";
 import chalk from "picocolors";
 
 import type { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
-import type { Context } from "../library/index.js";
+import type { Context } from "../library/context.js";
 import type { CommandLogger } from "../logging.js";
-import type { MachineState } from "../machines/index.js";
+import type { MachineState } from "../machines/types.js";
 import type { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
 import { askForReleaseType } from "./askFunctions.js";
 import {
@@ -23,6 +23,7 @@ import {
 	checkBranchName,
 	checkBranchUpToDate,
 	checkChangelogs,
+	checkCompatLayerGeneration,
 	checkDependenciesInstalled,
 	checkDoesReleaseFromReleaseBranch,
 	checkHasRemote,
@@ -158,6 +159,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 		["CheckBranchName3", checkBranchName],
 		["CheckBranchUpToDate", checkBranchUpToDate],
 		["CheckChangelogs", checkChangelogs],
+		["CheckCompatLayerGeneration", checkCompatLayerGeneration],
 		["CheckDependenciesInstalled", checkDependenciesInstalled],
 		["CheckDoesReleaseFromReleaseBranch", checkDoesReleaseFromReleaseBranch],
 		["CheckDoesReleaseFromReleaseBranch2", checkDoesReleaseFromReleaseBranch],

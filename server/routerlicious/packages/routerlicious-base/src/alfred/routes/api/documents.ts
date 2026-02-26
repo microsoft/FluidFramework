@@ -23,17 +23,18 @@ import {
 	InternalErrorCode,
 	getNetworkInformationFromIP,
 } from "@fluidframework/server-services-client";
-import type {
-	IDocumentStorage,
-	IThrottler,
-	ITenantManager,
-	ICache,
-	IDocumentRepository,
-	ITokenRevocationManager,
-	IRevokeTokenOptions,
-	IRevokedTokenChecker,
-	IClusterDrainingChecker,
-	IDenyList,
+import {
+	type IDocumentStorage,
+	type IThrottler,
+	type ITenantManager,
+	type ICache,
+	type IDocumentRepository,
+	type ITokenRevocationManager,
+	type IRevokeTokenOptions,
+	type IRevokedTokenChecker,
+	type IClusterDrainingChecker,
+	type IDenyList,
+	StageTrace,
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
@@ -63,7 +64,6 @@ import {
 	generateCacheKey,
 	getSession,
 	setGetSessionResultInCache,
-	StageTrace,
 } from "../../../utils";
 import type { IDocumentDeleteService } from "../../services";
 

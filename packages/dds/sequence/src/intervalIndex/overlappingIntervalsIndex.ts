@@ -3,21 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Client,
-	SequencePlace,
-	endpointPosAndSide,
-} from "@fluidframework/merge-tree/internal";
+import { SequencePlace, endpointPosAndSide } from "@fluidframework/merge-tree/internal";
 
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	SequenceInterval,
-	SequenceIntervalClass,
-	createTransientInterval,
+	BaseSequenceInterval,
+	createTransientIntervalFromSequence,
 } from "../intervals/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @legacy @beta
@@ -41,12 +38,9 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 }
 
 export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
-	protected readonly intervalTree = new IntervalTree<SequenceIntervalClass>();
-	protected readonly client: Client;
+	protected readonly intervalTree = new IntervalTree<BaseSequenceInterval>();
 
-	constructor(client: Client) {
-		this.client = client;
-	}
+	constructor(protected readonly sequence: ISharedSegmentSequence<any>) {}
 
 	public map(fn: (interval: SequenceInterval) => void) {
 		this.intervalTree.map(fn);
@@ -69,7 +63,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		if (start === undefined && end === undefined) {
 			// No start/end provided. Gather the whole tree in the specified order.
 			if (iteratesForward) {
-				this.intervalTree.map((interval: SequenceIntervalClass) => {
+				this.intervalTree.map((interval: SequenceInterval) => {
 					results.push(interval);
 				});
 			} else {
@@ -78,23 +72,23 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceIntervalClass = createTransientInterval(
+			const transientInterval: BaseSequenceInterval = createTransientIntervalFromSequence(
 				start ?? "start",
 				end ?? "end",
-				this.client,
+				this.sequence,
 			);
 
 			if (start === undefined) {
 				// Only end position provided. Since the tree is not sorted by end position,
 				// walk the whole tree in the specified order, gathering intervals that match the end.
 				if (iteratesForward) {
-					this.intervalTree.map((interval: SequenceIntervalClass) => {
+					this.intervalTree.map((interval: SequenceInterval) => {
 						if (transientInterval.compareEnd(interval) === 0) {
 							results.push(interval);
 						}
 					});
 				} else {
-					this.intervalTree.mapBackward((interval: SequenceIntervalClass) => {
+					this.intervalTree.mapBackward((interval: SequenceInterval) => {
 						if (transientInterval.compareEnd(interval) === 0) {
 							results.push(interval);
 						}
@@ -105,15 +99,15 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				// this start position.
 				const compareFn =
 					end === undefined
-						? (node: IntervalNode<SequenceIntervalClass>) => {
+						? (node: IntervalNode<BaseSequenceInterval>) => {
 								return transientInterval.compareStart(node.key);
 							}
-						: (node: IntervalNode<SequenceIntervalClass>) => {
+						: (node: IntervalNode<BaseSequenceInterval>) => {
 								return transientInterval.compare(node.key);
 							};
 				const continueLeftFn = (cmpResult: number) => cmpResult <= 0;
 				const continueRightFn = (cmpResult: number) => cmpResult >= 0;
-				const actionFn = (node: IntervalNode<SequenceIntervalClass>) => {
+				const actionFn = (node: IntervalNode<BaseSequenceInterval>) => {
 					results.push(node.key);
 				};
 
@@ -152,27 +146,28 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = createTransientInterval(start, end, this.client);
+		const transientInterval = createTransientIntervalFromSequence(start, end, this.sequence);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
 	}
 
-	public remove(interval: SequenceIntervalClass) {
+	public remove(interval: BaseSequenceInterval) {
 		this.intervalTree.removeExisting(interval);
 	}
 
-	public add(interval: SequenceIntervalClass) {
+	public add(interval: BaseSequenceInterval) {
 		this.intervalTree.put(interval);
 	}
 }
 
 /**
+ * Creates an overlapping intervals index for the provided SharedString.
+ *
  * @legacy @beta
  */
 export function createOverlappingIntervalsIndex(
 	sharedString: ISharedString,
 ): ISequenceOverlappingIntervalsIndex {
-	const client = (sharedString as unknown as { client: Client }).client;
-	return new OverlappingIntervalsIndex(client);
+	return new OverlappingIntervalsIndex(sharedString);
 }

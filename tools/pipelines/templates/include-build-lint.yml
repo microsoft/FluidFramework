@@ -4,28 +4,32 @@
 # include-build-lint template for the Build and Lint step in client build and test stability pipeline
 
 parameters:
-- name: taskBuild 
-  type: string 
+- name: taskBuild
+  type: string
   default: ci:build
 
-- name: taskLint 
-  type: boolean 
+- name: taskLint
+  type: boolean
   default: true
 
 - name: taskLintName
   type: string
-  default: lint 
+  default: lint
 
 - name: buildDirectory
-  type: string 
+  type: string
 
 steps:
 - ${{ if ne(parameters.taskBuild, 'false') }}:
   - task: Npm@1
     displayName: npm run ${{ parameters.taskBuild }}
+    env:
+      # Set FLUB_TYPETEST_SKIP_VERSION_OUTPUT to 1 when building from test/* branches
+      # This preserves existing version info in generated type test files
+      FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskBuild }}'
 
 - ${{ if ne(parameters.taskLint, false) }}:
@@ -33,5 +37,5 @@ steps:
     displayName: npm run ${{ parameters.taskLintName }}
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskLintName }}'

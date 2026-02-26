@@ -9,11 +9,11 @@ import { table } from "table";
 
 import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
-	MINIMUM_PUBLIC_VERSION,
 	bumpInternalVersion,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionScheme,
+	MINIMUM_PUBLIC_VERSION,
 	toInternalScheme,
 } from "../internalVersionScheme";
 
@@ -37,7 +37,6 @@ interface VersionInfo {
 /**
  * The root `version` command.
  */
-// eslint-disable-next-line import/no-default-export
 export default class VersionCommand extends Command {
 	static readonly description =
 		"Convert version strings between regular semver and the Fluid internal version scheme.";

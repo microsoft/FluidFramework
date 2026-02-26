@@ -45,7 +45,12 @@ import {
 	type ContainerAlpha,
 	PendingLocalStateStore,
 } from "@fluidframework/container-loader/internal";
-import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	FluidObject,
+	IErrorBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -374,7 +379,7 @@ export interface LocalServerStressOptions {
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: 100,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 20,
+		numOpsBeforeAttach: 100,
 	},
 	numberOfClients: 3,
 	clientJoinOptions: {
@@ -691,7 +696,6 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
 	(op as SelectedClientSpec).clientTag !== undefined;
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link LocalServerStressState.client}
@@ -702,7 +706,6 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 function mixinClientSelection<TOperation extends BaseOperation>(
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	model: LocalServerStressModel<TOperation>,
 	_: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation> {
@@ -716,24 +719,54 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
 			const globalObjects = await client.entryPoint.getContainerObjects();
-			const entry = state.random.pick(
-				globalObjects.filter((v) => v.type === "stressDataObject"),
-			);
-			assert(entry?.type === "stressDataObject");
-			const datastore = entry.stressDataObject;
-			const channels = await datastore.StressDataObject.getChannels();
-			const channel = state.random.pick(channels);
-			assert(channel !== undefined, "channel must exist");
-			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
-				baseGenerator(state),
+			const datastoreEntries = globalObjects.filter((v) => v.type === "stressDataObject");
+
+			// Collect all channels across all datastores, grouped by type globally
+			interface ChannelEntry {
+				channel: IChannel;
+				datastore: StressDataObject;
+				datastoreTag: `datastore-${number}`;
+			}
+			const channelsByType = new Map<string, ChannelEntry[]>();
+			for (const dsEntry of datastoreEntries) {
+				assert(dsEntry.type === "stressDataObject");
+				const channels = await dsEntry.stressDataObject.StressDataObject.getChannels();
+				for (const ch of channels) {
+					const channelType = ch.attributes.type;
+					const entry: ChannelEntry = {
+						channel: ch,
+						datastore: dsEntry.stressDataObject,
+						datastoreTag: dsEntry.tag,
+					};
+					const existing = channelsByType.get(channelType);
+					if (existing !== undefined) {
+						existing.push(entry);
+					} else {
+						channelsByType.set(channelType, [entry]);
+					}
+				}
+			}
+
+			// Pick a channel type globally, then pick a channel of that type
+			const channelTypes = Array.from(channelsByType.keys());
+			const selectedType = state.random.pick(channelTypes);
+			const entriesOfSelectedType = channelsByType.get(selectedType);
+			assert(entriesOfSelectedType !== undefined, "channels of selected type must exist");
+			const selected = state.random.pick(entriesOfSelectedType);
+			const baseOp = await runInStateWithClient(
+				state,
+				client,
+				selected.datastore,
+				selected.channel,
+				async () => baseGenerator(state),
 			);
 			return baseOp === done
 				? done
 				: ({
 						...baseOp,
 						clientTag: client.tag,
-						datastoreTag: entry.tag,
-						channelTag: channel.id as `channel-${number}`,
+						datastoreTag: selected.datastoreTag,
+						channelTag: selected.channel.id as `channel-${number}`,
 					} satisfies SelectedClientSpec);
 		};
 	};
@@ -808,7 +841,7 @@ async function runInStateWithClient<Result>(
 	}
 }
 
-function createStressLogger(seed: number) {
+function createStressLogger(seed: number): ITelemetryBaseLogger | undefined {
 	const logger = getTestLogger?.();
 	return createChildLogger({ logger, properties: { all: { seed } } });
 }
@@ -829,7 +862,7 @@ async function createDetachedClient(
 			codeDetails,
 			logger: createStressLogger(seed),
 			configProvider: {
-				getRawConfig: (name) => options.configurations?.[name],
+				getRawConfig: (name): ConfigTypes | undefined => options.configurations?.[name],
 			},
 		}),
 	);
@@ -864,7 +897,7 @@ async function loadClient(
 				codeLoader,
 				logger: createStressLogger(seed),
 				configProvider: {
-					getRawConfig: (name) => options.configurations?.[name],
+					getRawConfig: (name): ConfigTypes | undefined => options.configurations?.[name],
 				},
 				pendingLocalState,
 			}),
@@ -889,9 +922,12 @@ async function loadClient(
 	};
 }
 
-async function synchronizeClients(connectedClients: Client[]) {
+async function synchronizeClients(connectedClients: Client[]): Promise<void> {
 	return timeoutPromise((resolve, reject) => {
-		const rejectHandler = (error?: IErrorBase | undefined) => {
+		let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
+
+		const rejectHandler = (error?: IErrorBase | undefined): void => {
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- nullable boolean in array predicate
 			const client = connectedClients.find((c) => c.container.closed || c.container.disposed);
 			if (client !== undefined) {
 				reject(
@@ -903,20 +939,44 @@ async function synchronizeClients(connectedClients: Client[]) {
 				off();
 			}
 		};
-		const resolveHandler = () => {
-			if (
-				connectedClients.every(
-					(c) =>
-						c.container.connectionState === ConnectionState.Connected &&
-						c.container.isDirty === false &&
-						c.container.deltaManager.lastSequenceNumber ===
-							connectedClients[0].container.deltaManager.lastSequenceNumber,
-				)
-			) {
-				resolve();
-				off();
-			}
+
+		const areClientsSynchronized = (): boolean => {
+			return connectedClients.every(
+				(c) =>
+					c.container.connectionState === ConnectionState.Connected &&
+					c.container.isDirty === false &&
+					c.container.deltaManager.lastSequenceNumber ===
+						connectedClients[0].container.deltaManager.lastSequenceNumber,
+			);
 		};
+
+		const resolveHandler = (): void => {
+			if (!areClientsSynchronized()) {
+				return;
+			}
+
+			// Clear any previously scheduled timeout to avoid scheduling multiple timeouts.
+			if (pendingTimeout !== undefined) {
+				clearTimeout(pendingTimeout);
+			}
+
+			// There are some cases where more ops are generated as a result of processing ops.
+			// For example, for ConsensusOrderedCollection, a `complete`/`release` op will be generated
+			// when processing an `acquire` op.
+			// If that type of op is the last op before a final sync, then we will miss it by waiting
+			// for the initial saved event. To ensure we process all ops we wait for one JS turn.
+			// This allows any ops generated during the processing of ops to be submitted and processed.
+			// TODO: AB#53704: Support async reducers in DDS Fuzz models to avoid this workaround.
+			pendingTimeout = setTimeout(() => {
+				// After one JS turn, check again if all clients are synchronized.
+				// If they are, we can resolve. Otherwise, we continue waiting for the listeners to check again.
+				if (areClientsSynchronized()) {
+					off();
+					resolve();
+				}
+			}, 0);
+		};
+
 		// if you hit timeout issues in the
 		// stress tests, this can help to diagnose
 		// if the error is in synchronization, as it
@@ -927,8 +987,11 @@ async function synchronizeClients(connectedClients: Client[]) {
 		// const timeout = setInterval(() => {
 		// 	resolveHandler();
 		// }, 1000);
-		const off = () => {
+		const off = (): void => {
 			// clearInterval(timeout);
+			if (pendingTimeout !== undefined) {
+				clearTimeout(pendingTimeout);
+			}
 			for (const c of connectedClients) {
 				c.container.off("closed", rejectHandler);
 				c.container.off("disposed", rejectHandler);
@@ -937,6 +1000,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 				c.container.off("saved", resolveHandler);
 			}
 		};
+
 		for (const c of connectedClients) {
 			c.container.on("closed", rejectHandler);
 			c.container.on("disposed", rejectHandler);
@@ -944,6 +1008,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 			c.container.on("op", resolveHandler);
 			c.container.on("saved", resolveHandler);
 		}
+
 		resolveHandler();
 	});
 }

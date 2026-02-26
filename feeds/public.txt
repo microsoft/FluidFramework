@@ -40,7 +40,6 @@ fluid-framework
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
-@fluidframework/ai-collab
 @fluidframework/agent-scheduler
 @fluidframework/tinylicious-driver
 @fluidframework/routerlicious-urlresolver

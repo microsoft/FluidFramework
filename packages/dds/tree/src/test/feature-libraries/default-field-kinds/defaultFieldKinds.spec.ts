@@ -7,24 +7,31 @@ import { strict as assert, fail } from "node:assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
-	type RequiredFieldEditor,
-	requiredFieldChangeHandler,
-	requiredFieldEditor,
+	defaultSchemaPolicy,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import type {
 	CrossFieldManager,
 	FieldChangeHandler,
+	FullSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
+	allowsMultiplicitySuperset,
 	type NodeId,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
+import {
+	type RequiredFieldEditor,
+	requiredFieldChangeHandler,
+	requiredFieldEditor,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/requiredField.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
 	Change,
@@ -33,7 +40,6 @@ import {
 	tagChangeInline,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
-import { TestNodeId } from "../../testNodeId.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -61,7 +67,42 @@ const childComposer1_2 = (
 	return arbitraryChildChange;
 };
 
+/**
+ * Test suite that a given FullSchemaPolicy has valid field kind relationships.
+ */
+function validateFieldKindSet(policy: FullSchemaPolicy): void {
+	describe("validateFieldKindSet", () => {
+		for (const [key, kind] of policy.fieldKinds) {
+			describe(key, () => {
+				it("correct key", () => {
+					assert.equal(key, kind.identifier);
+				});
+
+				it("valid migrations", () => {
+					const s = kind.options.allowMonotonicUpgradeFrom;
+					assert(s.has(kind.identifier) === false);
+					for (const other of s) {
+						const referenced = policy.fieldKinds.get(other);
+						assert(referenced !== undefined);
+
+						assert(allowsMultiplicitySuperset(referenced.multiplicity, kind.multiplicity));
+
+						for (const otherKey of referenced.options.allowMonotonicUpgradeFrom) {
+							assert(
+								s.has(otherKey) === true,
+								`Missing migration from ${otherKey} to ${key}: it is transitively allowed via ${other} but not directly allowed`,
+							);
+						}
+					}
+				});
+			});
+		}
+	});
+}
+
 describe("defaultFieldKinds", () => {
+	validateFieldKindSet(defaultSchemaPolicy);
+
 	describe("requiredFieldEditor.set", () => {
 		it("requiredFieldEditor.set", () => {
 			const expected = Change.atOnce(

@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/server-services-client";
 
 import { IWholeFlatSnapshot } from "./contracts.js";
-import { type QueryStringType } from "./queryStringUtils.js";
+import type { QueryStringType } from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
 import { RestWrapper } from "./restWrapperBase.js";
 import { IHistorian } from "./storageContracts.js";
@@ -82,7 +82,8 @@ export class Historian implements IHistorian {
 							propsToLog: {},
 							requestUrl: "",
 						}
-					: Promise.reject<IR11sResponse<IGitCommitDetails[]>>(error),
+					: // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+						Promise.reject<IR11sResponse<IGitCommitDetails[]>>(error),
 			);
 	}
 
