@@ -41,7 +41,7 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 The APIs described in this section are currently `@alpha` and may change in future releases.
 
-Unlike `Tree.runTransaction`, the Alpha `runTransaction` does **not** automatically roll back the transaction if the callback throws an error. If your callback may throw, you should handle errors explicitly and return { rollback: true } when required
+Unlike `Tree.runTransaction`, the Alpha `runTransaction` does **not** automatically roll back the transaction if the callback throws an error. If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required
 
 :::
 
