@@ -117,10 +117,10 @@ extends:
             customCommand: 'run layer-check'
 
         - task: Npm@1
-          displayName: Format Check (repo)
+          displayName: Repo-wide checks
           inputs:
             command: 'custom'
-            customCommand: 'run check:format:repo'
+            customCommand: 'run checks'
 
         - task: Bash@3
           displayName: Prune pnpm store
