@@ -101,7 +101,6 @@ import {
 	hasSome,
 	type JsonCompatibleReadOnly,
 	type ValueTree,
-	ValueTreeNode,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -117,30 +116,15 @@ import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditB
 const emptyLabelsSet: ReadonlySet<unknown> = new Set<unknown>();
 
 /**
- * Recursively collects all defined (non-`undefined`) values from a {@link ValueTree} into a target set.
+ * Yields all defined (non-`undefined`) values from a {@link ValueTree}, depth-first.
  */
-function collectTreeValues(node: ValueTree, target: Set<unknown>): void {
+function* collectTreeValues(node: ValueTree): IterableIterator<unknown> {
 	if (node.value !== undefined) {
-		target.add(node.value);
+		yield node.value;
 	}
 	for (const child of node.children) {
-		collectTreeValues(child, target);
+		yield* collectTreeValues(child);
 	}
-}
-
-/**
- * Returns `true` if the tree contains any node with a non-`undefined` value.
- */
-function hasDefinedLabel(node: ValueTree): boolean {
-	if (node.value !== undefined) {
-		return true;
-	}
-	for (const child of node.children) {
-		if (hasDefinedLabel(child)) {
-			return true;
-		}
-	}
-	return false;
 }
 
 /**
@@ -148,13 +132,18 @@ function hasDefinedLabel(node: ValueTree): boolean {
  * If the tree exists and contains at least one defined label, returns a set of all
  * values with the tree attached. Otherwise returns an empty set.
  */
-function buildLabelsSet(labelTreeNode: ValueTreeNode | undefined): TransactionLabels {
-	if (labelTreeNode === undefined || !hasDefinedLabel(labelTreeNode)) {
+function buildLabelsSet(labelTreeNode: ValueTree | undefined): TransactionLabels {
+	if (labelTreeNode === undefined) {
 		return emptyLabelsSet;
 	}
-	const set = new Set<unknown>();
-	collectTreeValues(labelTreeNode, set);
-	return Object.assign(set, { tree: labelTreeNode as ValueTree });
+	let set: Set<unknown> | undefined;
+	for (const value of collectTreeValues(labelTreeNode)) {
+		(set ??= new Set()).add(value);
+	}
+	if (set === undefined) {
+		return emptyLabelsSet;
+	}
+	return Object.assign(set, { tree: labelTreeNode });
 }
 
 /**
@@ -447,18 +436,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 *
 	 * Cleared by {@link TreeCheckout.runWithTransactionLabel} after the commit event is emitted.
 	 */
-	private labelTreeNode: ValueTreeNode | undefined;
+	private labelTreeNode: ValueTree | undefined;
 
 	/**
-	 * Points to the most recently closed (committed) label node on the right spine of the tree.
+	 * Points to the most recently closed (committed) label node.
 	 * Used by {@link TreeCheckout.currentLabelNode} to stop descending past committed nodes.
-	 *
-	 * @remarks
-	 * Only one closed node is ever reachable during the right-spine traversal, so a single
-	 * pointer suffices instead of tracking all closed nodes. On abort, this is updated to
-	 * the parent's new last child (which is guaranteed to be closed if it exists).
 	 */
-	private mostRecentlyClosedLabelNode: ValueTreeNode | undefined;
+	private mostRecentlyClosedLabelNode: ValueTree | undefined;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
@@ -518,17 +502,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 *
 	 * @remarks
 	 * Called at the start of each transaction (including nested ones).
-	 * Creates a new {@link ValueTreeNode} as a child of the current deepest node (if any),
+	 * Creates a new {@link ValueTree} as a child of the current deepest node (if any),
 	 * or as the root if this is the outermost transaction.
 	 */
 	public pushLabelFrame(label: unknown): void {
-		const node = new ValueTreeNode(label);
+		const node: ValueTree = { value: label, children: [] };
 		if (this.labelTreeNode === undefined) {
 			this.labelTreeNode = node;
 		} else {
 			const current = this.currentLabelNode();
 			assert(current !== undefined, "Expected current label node to exist");
-			current.children.push(node);
+			(current.children as ValueTree[]).push(node);
 		}
 	}
 
@@ -537,11 +521,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * to the current (most recently pushed, not yet committed or aborted) transaction.
 	 * Returns `undefined` when {@link TreeCheckout.labelTreeNode} is not set.
 	 */
-	private currentLabelNode(): ValueTreeNode | undefined {
+	private currentLabelNode(): ValueTree | undefined {
 		if (this.labelTreeNode === undefined) {
 			return undefined;
 		}
-		let node: ValueTreeNode = this.labelTreeNode;
+		// Walk down the right spine of the tree. Only one closed node is ever reachable
+		// during this traversal, so a single pointer (mostRecentlyClosedLabelNode) suffices
+		// to stop descending past committed nodes.
+		let node: ValueTree = this.labelTreeNode;
 		while (node.children.length > 0) {
 			const lastChild = node.children[node.children.length - 1];
 			assert(lastChild !== undefined, "Expected label tree node to have children");
@@ -574,7 +561,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.mostRecentlyClosedLabelNode = node;
 				const parent = this.currentLabelNode();
 				assert(parent !== undefined, "Expected parent label node to exist");
-				parent.children.pop();
+				(parent.children as ValueTree[]).pop();
 				// Point to the parent's new last child (guaranteed closed if it exists),
 				// or undefined if the parent has no more children.
 				const newLastChild = parent.children[parent.children.length - 1];
