@@ -233,6 +233,8 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+              - checkout: ff_pipeline_host
+                path: $(FFPipelineHostDirectory)
 
               - script: |
                   echo "commit sha: $(Build.SourceVersion)"
