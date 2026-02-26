@@ -46,6 +46,7 @@ trigger:
     - scripts/*
     - tools/pipelines/build-protocol-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -76,6 +77,7 @@ pr:
     - scripts/*
     - tools/pipelines/build-protocol-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml

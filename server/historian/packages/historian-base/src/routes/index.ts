@@ -20,7 +20,7 @@ import type {
 	IPostEphemeralContainerChecker,
 } from "../services";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
@@ -31,7 +31,7 @@ import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
 import * as summaries from "./summaries";
 import type { CommonRouteParams } from "./utils";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 export interface IRoutes {
 	git: {
