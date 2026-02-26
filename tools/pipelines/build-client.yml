@@ -216,7 +216,8 @@ extends:
     - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
     - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
     coverageTests:
-    - { name: "ci:test:mocha", jobName: "MochaTest" }
+    - { name: "ci:test:mocha:dds", jobName: "MochaTestDds" }
+    - { name: "ci:test:mocha:non-dds", jobName: "MochaTestNonDds" }
     - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
     testResultDirs:
     - nyc/examples
