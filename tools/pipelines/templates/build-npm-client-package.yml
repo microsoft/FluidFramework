@@ -742,6 +742,7 @@ extends:
               - ${{ each test in parameters.coverageTests }}:
                 - task: DownloadPipelineArtifact@2
                   displayName: 'Download coverage data (${{ test.jobName }})'
+                  continueOnError: true
                   inputs:
                     artifact: 'coverage_data_${{ test.jobName }}'
                     targetPath: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/.nyc_output_${{ test.jobName }}'
@@ -772,7 +773,7 @@ extends:
               # Generate combined coverage report
               - script: |
                   set -eu -o pipefail
-                  npx c8 report
+                  npx c8 report --temp-directory nyc/.nyc_output --report-dir nyc/report
                 displayName: Generate combined coverage report
                 workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
 
