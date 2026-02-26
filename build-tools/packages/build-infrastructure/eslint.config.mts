@@ -3,39 +3,17 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	plugins: ["@typescript-eslint", "chai-friendly"],
-	extends: [
-		// eslint-disable-next-line node/no-extraneous-require
-		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
-		"prettier",
-	],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+import { baseConfig, chaiFriendlyConfig } from "../../eslint.config.base.mts";
+
+export default [
+	...baseConfig,
+	// Ignore test data files
+	{
+		ignores: ["src/test/data/**"],
 	},
-	rules: {
-		// Catch unused variables in at lint time instead of compile time
-		"@typescript-eslint/no-unused-vars": "error",
-
-		// This package is exclusively used in a Node.js context
-		"import-x/no-nodejs-modules": "off",
-
-		"tsdoc/syntax": ["warn"],
+	// Chai-friendly rules for test files
+	{
+		files: ["**/*.spec.ts", "src/test/**"],
+		...chaiFriendlyConfig,
 	},
-	overrides: [
-		{
-			// Rules only for test files
-			files: ["*.spec.ts", "src/test/**"],
-			rules: {
-				// Test files can import from anywhere
-				"import-x/no-internal-modules": "off",
-
-				// Superseded by chai-friendly/no-unused-expressions
-				"no-unused-expressions": "off",
-				"@typescript-eslint/no-unused-expressions": "off",
-
-				"chai-friendly/no-unused-expressions": "error",
-			},
-		},
-	],
-};
+];

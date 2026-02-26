@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
-	rules: {
-		"promise/catch-or-return": ["error", { allowFinally: true }],
+import type { Linter } from "eslint";
+import { recommendedConfig } from "../../eslint.config.base.mts";
 
-		// TODO: enable strict null checks in tsconfig and remove this override
-		"@typescript-eslint/prefer-nullish-coalescing": "off",
+const config: Linter.Config[] = [
+	...recommendedConfig,
+	{
+		ignores: ["*.spec.ts"],
 	},
-};
+];
+
+export default config;

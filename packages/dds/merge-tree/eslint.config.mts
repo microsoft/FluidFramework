@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"@typescript-eslint/no-use-before-define": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"keyword-spacing": "off", // Off because it conflicts with typescript-formatter
+			"no-case-declarations": "off",
+			"prefer-arrow/prefer-arrow-functions": "off",
+			"unicorn/no-useless-spread": "off", // Off because it generates incorrect code in autofixes and cannot distinguish useful copies of arrays from useless ones
+		},
 	},
-	rules: {
-		"@typescript-eslint/no-use-before-define": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off",
-		"keyword-spacing": "off", // Off because it conflicts with typescript-formatter
-		"no-case-declarations": "off",
-		"prefer-arrow/prefer-arrow-functions": "off",
-		"unicorn/no-useless-spread": "off", // Off because it generates incorrect code in autofixes and cannot distinguish useful copies of arrays from useless ones
-	},
-};
+];
+
+export default config;

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { Linter } from "eslint";
+import { recommended } from "../../../../common/build/eslint-config-fluid/flat.mts";
+
 const importInternalModulesAllowedForTest = [
 	// Allow import of Fluid Framework external API exports.
 	"@fluidframework/*/{beta,alpha,legacy}",
@@ -24,41 +27,64 @@ const importInternalModulesAllowedForTest = [
 	"@fluidframework/test-runtime-utils/internal",
 ];
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
-	rules: {
-		"prefer-arrow-callback": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"prefer-arrow-callback": "off",
+			// requires strictNullChecks=true in tsconfig
+			"@typescript-eslint/strict-boolean-expressions": "off",
 
-		// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
-		"@typescript-eslint/consistent-type-exports": [
-			"error",
-			{ fixMixedExportsWithInlineTypeSpecifier: true },
-		],
-		"@typescript-eslint/consistent-type-imports": [
-			"error",
-			{ fixStyle: "inline-type-imports" },
-		],
-		"@typescript-eslint/no-import-type-side-effects": "error",
-		// #endregion
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
+			"@typescript-eslint/consistent-type-imports": [
+				"error",
+				{
+					fixStyle: "inline-type-imports",
+				},
+			],
+			"@typescript-eslint/no-import-type-side-effects": "error",
+			// #endregion
+		},
 	},
-	overrides: [
-		{
-			// Rules only for test files
-			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
-			rules: {
-				// Some deprecated APIs are permissible in tests; use `warn` to keep them visible
-				"import-x/no-deprecated": "warn",
-				"import-x/no-internal-modules": [
-					"error",
-					{
-						allow: importInternalModulesAllowedForTest,
-					},
-				],
+	{
+		files: ["**/*.{ts,tsx}"],
+		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
+		rules: {
+			"@typescript-eslint/consistent-type-exports": [
+				"error",
+				{
+					fixMixedExportsWithInlineTypeSpecifier: true,
+				},
+			],
+		},
+	},
+
+	// Rules only for test files
+	{
+		files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+		rules: {
+			// Some deprecated APIs are permissible in tests; use `warn` to keep them visible
+			"import-x/no-deprecated": "warn",
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: importInternalModulesAllowedForTest,
+				},
+			],
+		},
+	},
+	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// This is a test-only package without a root tsconfig.json, so typescript-eslint's
+		// projectService can't auto-discover the project configuration.
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./src/test/tsconfig.json"],
 			},
 		},
-	],
-	parserOptions: {
-		project: ["./src/test/tsconfig.json"],
 	},
-};
+];
+
+export default config;

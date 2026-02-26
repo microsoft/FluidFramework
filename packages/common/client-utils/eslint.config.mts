@@ -3,14 +3,28 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-	parserOptions: {
-		project: [
-			"./tsconfig.json",
-			"./src/test/mocha/tsconfig.json",
-			"./src/test/jest/tsconfig.cjs.json",
-			"./src/test/types/tsconfig.json",
-		],
+import type { Linter } from "eslint";
+import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...strict,
+	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// This package has non-standard test directories (mocha/, jest/, types/) that
+		// typescript-eslint's projectService can't auto-discover.
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: [
+					"./tsconfig.json",
+					"./src/test/mocha/tsconfig.json",
+					"./src/test/jest/tsconfig.cjs.json",
+					"./src/test/types/tsconfig.json",
+				],
+			},
+		},
 	},
-};
+];
+
+export default config;

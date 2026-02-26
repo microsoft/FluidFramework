@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-// To facilitate reuse of configuration elements this module exports some
-// pieces of configuration and composed configuration.
+/**
+ * Shared ESLint configuration for examples.
+ * Extend this in child package eslint.config.mts files to avoid duplicating common rules.
+ * Named exports (e.g., importInternalModulesAllowed) can be imported and extended by consumers.
+ */
 
-const importInternalModulesAllowed = [
+import type { Linter } from "eslint";
+
+/**
+ * Patterns allowed for internal module imports in examples.
+ */
+export const importInternalModulesAllowed: string[] = [
 	// Allow import of Fluid Framework external API exports.
 	"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
 	"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
@@ -26,7 +34,12 @@ const importInternalModulesAllowed = [
 	"*/index.js",
 ];
 
-const importInternalModulesAllowedForTest = importInternalModulesAllowed.concat([
+/**
+ * Extended patterns for test files, including additional internal imports.
+ */
+export const importInternalModulesAllowedForTest: string[] = [
+	...importInternalModulesAllowed,
+
 	// TODO #26906: `test-utils` internal used in examples (test)
 	// Should `test-utils` provide support through `/test-utils` instead of `/internal`?
 	"@fluidframework/test-utils/internal",
@@ -34,38 +47,34 @@ const importInternalModulesAllowedForTest = importInternalModulesAllowed.concat(
 	// Allow internal reaching within test directories.
 	// (And also some external packages that aren't setup as modules.)
 	"*/*.js",
-]);
+];
 
-const lintConfig = {
-	rules: {
-		/**
-		 * Allow Fluid Framework examples to import from unstable and legacy APIs.
-		 * https://github.com/import-js/eslint-plugin-import-x/blob/main/docs/rules/no-internal-modules.md
-		 */
-		"import-x/no-internal-modules": [
-			"error",
-			{
-				allow: importInternalModulesAllowed,
-			},
-		],
-	},
-	overrides: [
-		{
-			files: ["*.spec.ts", "src/test/**", "tests/**"],
-			rules: {
-				"import-x/no-internal-modules": [
-					"error",
-					{
-						allow: importInternalModulesAllowedForTest,
-					},
-				],
-			},
+const config: Linter.Config[] = [
+	{
+		rules: {
+			/**
+			 * Allow Fluid Framework examples to import from unstable and legacy APIs.
+			 * @see https://github.com/import-js/eslint-plugin-import-x/blob/main/docs/rules/no-internal-modules.md
+			 */
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: importInternalModulesAllowed,
+				},
+			],
 		},
-	],
-};
+	},
+	{
+		files: ["*.spec.ts", "src/test/**", "tests/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: importInternalModulesAllowedForTest,
+				},
+			],
+		},
+	},
+];
 
-module.exports = {
-	importInternalModulesAllowed: importInternalModulesAllowed,
-	importInternalModulesAllowedForTest: importInternalModulesAllowedForTest,
-	lintConfig: lintConfig,
-};
+export default config;

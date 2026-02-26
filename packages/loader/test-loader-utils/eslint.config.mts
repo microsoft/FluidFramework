@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: ["@fluidframework/eslint-config-fluid/recommended", "prettier"],
-};
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [...recommended];
+
+export default config;
