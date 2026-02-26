@@ -66,7 +66,7 @@ module.exports = (env) => {
 				silent: Boolean(process.env.CI || process.env.TF_BUILD),
 			}),
 		],
-		// This is an example app — disable webpack's default 244 KiB asset/entrypoint size warnings.
+		// This is an example app — disable webpack's default 244 KiB asset/entrypoint size warnings to keep webpack output cleaner (we don't need to address this for a sample app)
 		performance: {
 			hints: false,
 		},
