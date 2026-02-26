@@ -8,7 +8,7 @@ Cross-client compatibility is Fluid's ability to support collaboration between t
 1. **Rolling upgrades**: During version upgrades, there is an unavoidable transition window when clients running different versions must coexist and collaborate. This compatibility ensures users can continue working together seamlessly, whether or not their application instance has been updated yet.
 2. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
 
-> **Note on scope:** The cross-client compatibility guarantee applies to all Fluid layers (Driver, Loader, Runtime, and Datastore). However, the enforcement mechanisms described in this document — `minVersionForCollab`, feature gating, and client version checks — are currently implemented only at the **Runtime and Datastore layers**. The Driver layer does not currently have cross-client compatibility concerns because it does not exchange data formats between clients. Enforcement at the Loader layer may be added in the future. See the [Interaction with Layer Compatibility](./FluidCompatibilityConsiderations.md#interaction-with-layer-compatibility) section for more details.
+> **Note:** The cross-client compatibility guarantee applies to all Fluid layers (Driver, Loader, Runtime, and Datastore). However, the enforcement mechanisms described in this document — `minVersionForCollab`, feature gating, and client version checks — are currently implemented only at the **Runtime and Datastore layers**. The Driver layer does not currently have cross-client compatibility concerns because it does not exchange data formats between clients. Enforcement at the Loader layer may be added in the future. See the [Interaction with Layer Compatibility](./FluidCompatibilityConsiderations.md#interaction-with-layer-compatibility) section for more details.
 
 This document explains:
 
@@ -56,11 +56,56 @@ If `minVersionForCollab` is not explicitly set, a default value is used. The def
 
 As an application developer, you need to manage your Fluid version upgrades carefully to ensure uninterrupted collaboration for your users. By configuring `minVersionForCollab` appropriately and monitoring your client version distribution, you can safely upgrade while maintaining compatibility across your user base.
 
-### Configuring Cross-Client Compatibility
+### Encapsulated vs Declarative Models
 
-We encourage you to set the `minVersionForCollab` property for best results. It represents the minimum Fluid version allowed to collaborate in a document. It will automatically disable any features that prevent safe cross-client collaboration for clients that are at least the version specified.
+The cross-client compatibility policy applies to both application models. Both models use the same underlying enforcement and feature-gating mechanisms. They differ only in how you configure them, which is described in the sections below.
 
-For example, if you want to ensure collaboration between N/N-1 clients, the proper configuration for `minVersionForCollab` would be the latest minor release corresponding to the N-1 major version series.
+### Configuring Cross-Client Compatibility (Declarative Model)
+
+If you are using a service client (i.e. `AzureClient` or `OdspClient`), cross-client compatibility is configured via the `CompatibilityMode` parameter. This is a required argument when creating or loading a container:
+
+```typescript
+// Creating a new container
+const { container } = await azureClient.createContainer(schema, compatibilityMode);
+
+// Loading an existing container
+const { container } = await azureClient.getContainer(id, schema, compatibilityMode);
+```
+
+The client will map `CompatibilityMode` to a `minVersionForCollab` value (see [utils.ts](./packages/framework/fluid-static/src/utils.ts) for details) and automatically configure runtime options via [compatibilityConfiguration.ts](./packages/framework/fluid-static/src/compatibilityConfiguration.ts). This means you do not need to manage individual runtime options or version strings directly.
+
+Below is the mapping of `CompatibilityMode` values to `minVersionForCollab` at the time of writing. For the most up-to-date mapping, please refer to `compatibilityModeToMinVersionForCollab` in [utils.ts](./packages/framework/fluid-static/src/utils.ts).
+
+| Mode | Meaning | Mapped `minVersionForCollab` |
+|------|---------|------------------------------|
+| `"1"` | Supports collaboration with 1.x clients. Uses a conservative set of runtime options. | `"1.0.0"` |
+| `"2"` | Supports collaboration with 2.x clients only. Enables newer features (e.g., runtime ID compressor for SharedTree support). | `"2.0.0"` |
+
+### Configuring Cross-Client Compatibility (Encapsulated Model)
+
+If you construct a container runtime directly, cross-client compatibility is configured by setting `minVersionForCollab` in the `LoadContainerRuntimeParams` passed into the `loadContainerRuntime` function:
+
+```typescript
+  const loadContainerRuntimeParams: LoadContainerRuntimeParams = {
+    // Other props
+    context,
+    registryEntries,
+    existing,
+    requestHandler,
+    runtimeOptions,
+    containerScope,
+    provideEntryPoint,
+    // Configure cross-client compatibility by setting the minimum version
+    minVersionForCollab: "2.0.0",
+  };
+  const runtime = await loadContainerRuntime(loadContainerRuntimeParams);
+```
+
+`minVersionForCollab` is a semver string representing the minimum Fluid version allowed to collaborate on a document. It automatically configures default values for runtime options to ensure compatibility with the specified version. For example, setting `minVersionForCollab` to `"2.0.0"` enables features like grouped batching that are safe for all 2.x clients.
+
+You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `minVersionForCollab` value. If there is a mismatch (e.g., enabling a 2.x feature with `minVersionForCollab: "1.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
+
+If `minVersionForCollab` is not explicitly set, a conservative default is used (see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)).
 
 We recommend maintaining `minVersionForCollab` at the latest version of Fluid that your users are [saturated](#terminology) on. This will ensure:
 1. Older and newer clients can collaborate with each other safely.
@@ -68,11 +113,13 @@ We recommend maintaining `minVersionForCollab` at the latest version of Fluid th
 
 ### Best Practices
 
-We recommend following the below pattern to ensure cross-client compatibility. While these steps are especially important when upgrading major versions of Fluid, keeping `minVersionForCollab` up-to-date on an ongoing basis ensures you are always within a safe compatibility window.
+We recommend following the below pattern to ensure cross-client compatibility. While these steps are especially important when upgrading major versions of Fluid, keeping your compatibility configuration up-to-date on an ongoing basis ensures you are always within a safe compatibility window.
 
 1. Observe the distribution of Fluid versions across your application's clients.
-2. Set `minVersionForCollab` to the lowest deployed version that the application's clients are [saturated](#terminology) on.
-3. If `minVersionForCollab` is within the cross-client compatibility window of the Fluid version you want to upgrade then bump Fluid dependencies and no further action is required. If `minVersionForCollab` is not within the cross-client compatibility window, then wait for further saturation and return to step 1.
+2. Update your compatibility configuration to match the lowest deployed version that your clients are [saturated](#terminology) on:
+   - **Declarative model**: Set `CompatibilityMode` to the appropriate mode for that major version (e.g., `"2"` once clients are saturated on 2.x).
+   - **Encapsulated model**: Set `minVersionForCollab` to the specific saturated version (e.g., `"2.10.0"`).
+3. Verify that the configured compatibility is within the cross-client compatibility window of the Fluid version you want to upgrade to. If it is, bump your Fluid dependencies and no further action is required. If not, wait for further saturation and return to step 1.
 4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients that are not saturated may be blocked from accessing the document.
 
 ### Errors and Warnings to Monitor
