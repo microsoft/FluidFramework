@@ -205,7 +205,6 @@ export abstract class SharedObjectCore<
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
-				logLevel: "info",
 			},
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
@@ -219,7 +218,6 @@ export abstract class SharedObjectCore<
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
-				logLevel: "info",
 			},
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,

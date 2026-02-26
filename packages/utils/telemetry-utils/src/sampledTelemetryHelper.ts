@@ -291,6 +291,7 @@ export class SampledTelemetryHelper<
 				...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
 				...measurements,
 				...processedCustomData,
+				logLevel: "info",
 			};
 
 			this.logger.sendPerformanceEvent(telemetryEvent);
