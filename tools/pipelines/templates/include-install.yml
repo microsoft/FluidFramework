@@ -34,7 +34,7 @@ steps:
     retryCountOnTaskFailure: 4
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
       script: |
         set -eu -o pipefail
         ${{ parameters.packageManagerInstallCommand }}
