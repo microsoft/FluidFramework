@@ -60,6 +60,7 @@ trigger:
     - release/*
   paths:
     include:
+    - .devcontainer/*
     - .dockerignore
     - .gitattributes
     - .gitignore
@@ -68,8 +69,12 @@ trigger:
     - .markdownlint.json
     - .npmrc
     - .nvmrc
+    - .pnpmfile.cjs
     - .prettierignore
     - .releaseGroup
+    - .vscode/*
+    - _buildProject.config.cjs
+    - assertTagging.config.mjs
     - azure
     - biome.json
     - biome.jsonc
@@ -124,6 +129,7 @@ pr:
     - release/*
   paths:
     include:
+    - .devcontainer/*
     - .dockerignore
     - .gitattributes
     - .gitignore
@@ -132,8 +138,12 @@ pr:
     - .markdownlint.json
     - .npmrc
     - .nvmrc
+    - .pnpmfile.cjs
     - .prettierignore
     - .releaseGroup
+    - .vscode/*
+    - _buildProject.config.cjs
+    - assertTagging.config.mjs
     - azure
     - biome.json
     - biome.jsonc
