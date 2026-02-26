@@ -585,9 +585,103 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-          - job: Coverage_tests
-            displayName: "Coverage tests"
-            dependsOn: build
+          # Parallel jobs for coverage tests
+          - ${{ each test in parameters.coverageTests }}:
+            - job: Coverage_${{ test.jobName }}
+              displayName: "Coverage ${{ test.jobName }}"
+              dependsOn: build
+              variables:
+                - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  - name: targetBranchName
+                    value: $(System.PullRequest.TargetBranch)
+                # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
+                # used in a few places in the pipeline to push custom telemetry to Kusto.
+                - name: absolutePathToTelemetryGenerator
+                  value: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/tools/telemetry-generator
+                  readonly: true
+                # We already run CodeQL in the main build job, so we don't need to run it again here.
+                # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
+                - name: ONEES_ENFORCED_CODEQL_ENABLED
+                  value: 'false'
+                - name: COMMIT_SHA
+                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+
+              steps:
+                # Setup
+                - checkout: self
+                  path: $(FluidFrameworkDirectory)
+                  clean: true
+                  lfs: '${{ parameters.checkoutSubmodules }}'
+                  submodules: '${{ parameters.checkoutSubmodules }}'
+
+                - script: |
+                    echo "commit: $(COMMIT_SHA)"
+                    git fetch origin $(COMMIT_SHA)
+                    git checkout $(COMMIT_SHA)
+                  displayName: "Checkout build commit"
+
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+                - template: /tools/pipelines/templates/include-install.yml@self
+                  parameters:
+                    packageManager: '${{ parameters.packageManager }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
+
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
+
+                # Set variable startTest if everything is good so far and we'll start running tests,
+                # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
+                - script: |
+                    echo "##vso[task.setvariable variable=startTest]true"
+                  displayName: Start Test
+
+                - template: /tools/pipelines/templates/include-test-task.yml@self
+                  parameters:
+                    taskTestStep: '${{ test.name }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    testCoverage: '${{ parameters.testCoverage }}'
+
+                - task: Npm@1
+                  displayName: 'npm run test:copyresults'
+                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                  inputs:
+                    command: custom
+                    workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    customCommand: 'run test:copyresults'
+
+                # Process test result, include publishing and logging
+                - template: /tools/pipelines/templates/include-process-test-results.yml@self
+                  parameters:
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    testResultDirs: '${{ parameters.testResultDirs }}'
+
+              templateContext:
+                outputs:
+                  # Publish raw coverage data for merge job
+                  - output: pipelineArtifact
+                    displayName: Publish Artifact - coverage data (${{ test.jobName }})
+                    condition: succeededOrFailed()
+                    targetPath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/.nyc_output
+                    artifactName: 'coverage_data_${{ test.jobName }}'
+                    sbomEnabled: false
+                    publishLocation: pipeline
+
+          # Merge coverage data from parallel jobs and generate combined report
+          - job: Merge_coverage
+            displayName: "Merge Coverage Reports"
+            dependsOn:
+              - build
+              - ${{ each test in parameters.coverageTests }}:
+                - Coverage_${{ test.jobName }}
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -643,26 +737,35 @@ extends:
                   tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                 displayName: Extract Build Output Contents
 
-              # Set variable startTest if everything is good so far and we'll start running tests,
-              # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
-              - script: |
-                  echo "##vso[task.setvariable variable=startTest]true"
-                displayName: Start Test
-
+              # Download raw coverage data from each parallel job
               - ${{ each test in parameters.coverageTests }}:
-                - template: /tools/pipelines/templates/include-test-task.yml@self
-                  parameters:
-                    taskTestStep: '${{ test.name }}'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-                    testCoverage: '${{ parameters.testCoverage }}'
+                - task: DownloadPipelineArtifact@2
+                  displayName: 'Download coverage data (${{ test.jobName }})'
+                  inputs:
+                    artifact: 'coverage_data_${{ test.jobName }}'
+                    targetPath: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/.nyc_output_${{ test.jobName }}'
 
-              - task: Npm@1
-                displayName: 'npm run test:copyresults'
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                inputs:
-                  command: custom
-                  workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  customCommand: 'run test:copyresults'
+              # Merge all coverage data into single .nyc_output directory
+              - script: |
+                  set -eu -o pipefail
+                  mkdir -p nyc/.nyc_output
+                  for dir in nyc/.nyc_output_*/; do
+                    if [ -d "$dir" ]; then
+                      echo "Merging coverage data from $dir"
+                      cp -r "$dir"* nyc/.nyc_output/ 2>/dev/null || true
+                    fi
+                  done
+                  echo "Merged coverage files:"
+                  ls -la nyc/.nyc_output/ | head -20
+                displayName: Merge coverage data
+                workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+
+              # Generate combined coverage report
+              - script: |
+                  set -eu -o pipefail
+                  npx c8 report
+                displayName: Generate combined coverage report
+                workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
 
               # Test - Upload coverage results
               # Some webpacked file using externals introduce file name with quotes in them
@@ -670,7 +773,7 @@ extends:
               # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
               - task: Bash@3
                 displayName: Check for nyc/report directory
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                condition: succeededOrFailed()
                 inputs:
                   targetType: 'inline'
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
@@ -726,12 +829,6 @@ extends:
                     echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
                     echo "Running code coverage comparison"
                     flub report codeCoverage --verbose
-
-            # Process test result, include publishing and logging
-              - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  testResultDirs: '${{ parameters.testResultDirs }}'
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
