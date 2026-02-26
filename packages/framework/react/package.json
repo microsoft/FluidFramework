@@ -38,6 +38,8 @@
 			}
 		}
 	},
+	"main": "lib/index.js",
+	"types": "./lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
