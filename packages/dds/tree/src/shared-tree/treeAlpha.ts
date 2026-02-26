@@ -26,7 +26,7 @@ import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	isTreeValue,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	mapTreeFromCursor,
 	TreeCompressionStrategy,
 	type FieldBatch,
@@ -904,7 +904,7 @@ export const TreeAlpha: TreeAlpha = {
 		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const codec = makeFieldBatchCodec({
+		const codec = fieldBatchCodecBuilder.build({
 			jsonValidator: FormatValidatorNoOp,
 			minVersionForCollab: options.minVersionForCollab,
 		});
@@ -926,7 +926,8 @@ export const TreeAlpha: TreeAlpha = {
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
-		return result;
+		// TODO: codecs should better track which ones can contain handles, and which cannot. When done properly, casts like this can be removed.
+		return result as JsonCompatible<IFluidHandle>;
 	},
 
 	importCompressed<const TSchema extends ImplicitFieldSchema>(
