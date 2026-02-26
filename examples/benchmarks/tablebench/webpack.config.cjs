@@ -46,5 +46,6 @@ module.exports = (env) => {
 		devServer: {
 			open: false,
 		},
+		performance: { hints: false },
 	};
 };

@@ -60,4 +60,5 @@ module.exports = {
 		library: "FluidLoader",
 		publicPath: "/",
 	},
+	performance: { hints: false },
 };

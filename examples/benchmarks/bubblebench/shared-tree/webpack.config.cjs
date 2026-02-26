@@ -41,4 +41,5 @@ module.exports = (env) => ({
 	},
 	mode: env?.production ? "production" : "development",
 	devtool: env?.production ? "source-map" : "inline-source-map",
+	performance: { hints: false },
 });
