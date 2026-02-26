@@ -124,7 +124,7 @@ We recommend following the below pattern to ensure cross-client compatibility. W
 
 ### Errors and Warnings to Monitor
 
-The following are errors and telemetry warnings you may see during and following an upgrade. Monitoring these signals will help ensure a safe rollout.
+The following are errors and telemetry warnings you may see during and following an upgrade. Monitoring these signals will help ensure a safe rollout. For more details on telemetry, see [Logging and telemetry](https://fluidframework.com/docs/testing/telemetry).
 
 | Type | Signal | What it Means | What to Do |
 |------|--------|---------------|------------|
