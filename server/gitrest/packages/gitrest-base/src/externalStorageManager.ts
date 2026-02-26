@@ -36,7 +36,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
 			"Accept": "application/json",
 			"Content-Type": "application/json",
 			"x-correlation-id":
-				// eslint-disable-next-line import/namespace
+				// eslint-disable-next-line import-x/namespace
 				getGlobalTelemetryContext().getProperties().correlationId ?? uuid.v4(),
 		};
 	}
