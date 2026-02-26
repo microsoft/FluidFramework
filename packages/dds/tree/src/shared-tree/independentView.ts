@@ -23,7 +23,7 @@ import {
 } from "../core/index.js";
 import {
 	createNodeIdentifierManager,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	makeSchemaCodec,
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
@@ -236,14 +236,14 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	});
 
 	if (options?.content !== undefined) {
-		// Any version can be passed down to `makeSchemaCodec` and `makeFieldBatchCodec` here.
+		// Any version can be passed down to `makeSchemaCodec` and `fieldBatchCodecBuilder.build` here.
 		// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not `minVersionForCollab`.
 		const writeOptions: CodecWriteOptions = {
 			...options,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
 		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
-		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
+		const fieldBatchCodec = fieldBatchCodecBuilder.build(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 
 		const context: FieldBatchEncodingContext = {
