@@ -85,7 +85,7 @@ export type ISequencedMessageEnvelope = Omit<
 /**
  * These are the contents of a runtime message as it is processed throughout the stack.
  * @privateRemarks
- * TODO: this should become internal once SharedObject core is internal.
+ * TODO: This type should only be needed for implementing DDSs, and thus should eventually be made internal as the legacy API surface is cleaned up.
  * @legacy @beta
  * @sealed
  */
