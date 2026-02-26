@@ -41,6 +41,7 @@ trigger:
     - tools/markdown-magic # Required since eslint-config-fluid takes a `file:` dependency on this package
     - tools/pipelines/build-eslint-config-fluid.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -68,6 +69,7 @@ pr:
     - tools/markdown-magic
     - tools/pipelines/build-eslint-config-fluid.yml # Required since eslint-config-fluid takes a `file:` dependency on this package
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
