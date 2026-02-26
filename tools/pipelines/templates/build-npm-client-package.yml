@@ -766,7 +766,7 @@ extends:
                     exit 1
                   fi
                   echo "Merged coverage files:"
-                  ls -la nyc/.nyc_output/ | head -20
+                  ls nyc/.nyc_output/ | wc -l | xargs -I{} echo "{} coverage files merged"
                 displayName: Merge coverage data
                 workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
 
