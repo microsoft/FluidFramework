@@ -59,7 +59,7 @@ interface ChunkLoadProperties {
 /**
  * The properties of a chunk that is tracked for every summary.
  * If a chunk doesn't change between summaries,
- * these properties will be used to generate a summary handle for the chunk.
+ * these properties can be used to generate a summary handle for the chunk.
  */
 interface ChunkSummaryProperties {
 	/**
@@ -75,7 +75,7 @@ interface ChunkSummaryProperties {
 }
 
 /**
- * The properties of a summary being tracked.
+ * The properties of a summary being tracked (aka encoded).
  */
 interface TrackedSummaryProperties {
 	/**
@@ -134,6 +134,9 @@ export enum ForestIncrementalSummaryBehavior {
 
 /* eslint-disable jsdoc/check-indentation */
 /**
+ * Remembers the chunks a forest was loaded from, allowing them to be reused when re-summarizing.
+ * @remarks
+ *
  * Tracks and builds the incremental summary tree for a forest where chunks that support incremental encoding are
  * stored in a separate tree in the summary under its {@link ChunkReferenceId}.
  * The summary tree for a chunk is self-sufficient and can be independently loaded and used to reconstruct the
@@ -170,13 +173,21 @@ export enum ForestIncrementalSummaryBehavior {
 /* eslint-enable jsdoc/check-indentation */
 export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecoder {
 	/**
-	 * The next reference ID to use for a chunk.
+	 * The next {@link ChunkReferenceId} to use for a chunk.
+	 * @remarks
+	 * Because these are only used to refer to a specific child of a given chunk, these ids are only required to be unique withing a given chunk's set of child references.
+	 * To simplify the implementation, this implementation uses a single counter across all chunks:
+	 * changing to a more local scoping of the ids would allow slightly smaller sizes due to shorter ids being used, but such gains would be almost negligible.
 	 */
 	private nextReferenceId: ChunkReferenceId = brand(0);
 
 	/**
 	 * For a given summary sequence number, keeps track of a chunk's properties that will be used to generate
 	 * a summary handle for the chunk if it does not change between summaries.
+	 * @remarks
+	 * This owns a refcount for all chunks that it includes which ensures they are not modified in place, and thus keeping their contents matching the referenced summary objects.
+	 *
+	 * Populated both when loading a summary (with the chunks that the summary was loaded from) and when summarizing (with the chunks that are being summarized).
 	 */
 	private readonly chunkTrackingPropertiesMap: NestedMap<
 		number,
@@ -212,17 +223,25 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	private trackedSummaryProperties: TrackedSummaryProperties | undefined;
 
 	/**
-	 * A map of chunk reference IDs to their encoded contents. This is typically used during the loading of the
-	 * forest to retrieve the contents of the chunks that were summarized incrementally.
-	 */
-	/**
 	 * A map of chunk reference IDs to their {@link ChunkLoadProperties}.
 	 * This is used during the loading of the forest to track each chunk that is retrieved and decoded.
 	 */
 	private readonly loadedChunksMap: Map<string, ChunkLoadProperties> = new Map();
 
 	public constructor(
+		/**
+		 * Controls if incremental summaries will be written when possible.
+		 * @remarks
+		 * This has no impact on what is supported for decoding:
+		 * decode will always support all known formats.
+		 */
 		private readonly enableIncrementalSummary: boolean,
+		/**
+		 * This callback injects the policy for how chunking should be done when encoding content.
+		 * @remarks
+		 * For reuse across summaries, this must return the same chunks that were produced by
+		 * {@link decodeIncrementalChunk}'s chunkDecoder callback when decoding the summary that this client was loaded from.
+		 */
 		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk[],
 		public readonly shouldEncodeIncrementally: IncrementalEncodingPolicy,
 		private readonly initialSequenceNumber: number,
@@ -400,6 +419,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				trackedSummaryProperties.chunkSummaryPath.pop();
 			}
 
+			// Currently Fluid's summary client won't every be created and used in a way that benefits from this,
+			// but store it in case future versions can leverage it.
+			// Currently Fluid it will only use content from the summary which was loaded (not a previously encoded one).
 			setInNestedMap(
 				this.chunkTrackingPropertiesMap,
 				trackedSummaryProperties.summarySequenceNumber,
@@ -489,8 +511,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		// This prevents prevent whoever this chunk is returned to from modifying it in-place.
 		chunk.referenceAdded();
 		// Track the decoded chunk. This will recreate the tracking state when the summary that this client
-		// is loaded from was generated. This is needed to ensure that incremental summaries work correctly
-		// when a new client starts to summarize.
+		// is loaded from was generated. This is needed to enable chunk reuse if this client is used to write a summary.
 		setInNestedMap(this.chunkTrackingPropertiesMap, this.initialSequenceNumber, chunk, {
 			referenceId,
 			summaryPath: ChunkLoadProperties.summaryPath,

@@ -26,7 +26,6 @@ import {
 } from "../../../core/index.js";
 import {
 	brand,
-	brandedNumberType,
 	type Brand,
 	type JsonCompatibleReadOnly,
 	unbrand,
@@ -42,9 +41,14 @@ import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
+ * @remarks
+ * These are how an encoded chunk refers to its child chunks.
+ * The indirection via these ids is needed since the child chunk references are inside the ISummaryBlob
+ * (encoded with the {@link FieldBatchCodec}) which can not directly own child summary objects.
+ * Instead a parent summary tree wraps the blob, and the children which logically belong to that blob are siblings to it (stored under these ids).
+ * See {@link ForestIncrementalSummaryBuilder} for more details.
  */
 export type ChunkReferenceId = Brand<number, "forest.ChunkReferenceId">;
-const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
 
 /**
  * Properties for incremental encoding.
@@ -96,9 +100,18 @@ export interface IncrementalDecoder {
 }
 /**
  * Combines the properties of {@link IncrementalEncoder} and {@link IncrementalDecoder}.
+ * @remarks
+ * These are combined on a single object to allow the {@link IncrementalEncoder} functionality to reuse chunks from when the content was loaded.
+ *
+ * Since a given Fluid summary client only ever has to complete a single summary, and that summary can only reuse content from the single summary it was loaded from,
+ * there is no need for implementers of this interface to support remembering chunks created during summarization for use in future summaries.
+ * Future optimization or changes to Fluid's summary strategy could change this: if this occurs implementations will need to be updated accordingly.
  */
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
+/**
+ * A stateful context object, used when encoding and decoding forests.
+ */
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
@@ -107,6 +120,8 @@ export interface FieldBatchEncodingContext {
 	/**
 	 * An encoder / decoder for encoding and decoding of incremental fields.
 	 * This will be defined if incremental encoding is supported and enabled.
+	 * @remarks
+	 * Using this to load content has the side-effect of remembering that content to allow it to be reused when summarizing.
 	 */
 	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
 }
