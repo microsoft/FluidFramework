@@ -4,12 +4,9 @@
  */
 
 /**
- * Shared ESLint configuration for server/routerlicious packages.
+ * Shared ESLint configuration for server/gitrest packages.
  *
  * Re-exports the server config from @fluidframework/eslint-config-fluid.
  */
 
-export {
-	server as baseConfig,
-	serverRecommended as recommendedConfig,
-} from "@fluidframework/eslint-config-fluid/server.mts";
+export { server as baseConfig } from "@fluidframework/eslint-config-fluid/server.mts";

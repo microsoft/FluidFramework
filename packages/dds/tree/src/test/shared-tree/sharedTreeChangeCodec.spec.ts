@@ -13,11 +13,15 @@ import { TreeStoredSchemaRepository } from "../../core/index.js";
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
+import type {
+	EncodedFieldBatch,
+	FieldBatchCodec,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	FieldBatchFormatVersion,
 	FieldKinds,
 	type ModularChangeset,
 	defaultSchemaPolicy,
@@ -42,7 +46,7 @@ const codecOptions: CodecWriteOptions = {
 
 describe("sharedTreeChangeCodec", () => {
 	it("passes down the context's schema to the fieldBatchCodec", () => {
-		const dummyFieldBatchCodec = {
+		const dummyFieldBatchCodec: FieldBatchCodec = {
 			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 				// Checks that the context's schema matches the schema passed into the sharedTreeChangeCodec.
 				assert.equal(context.schema?.schema, dummyTestSchema);
@@ -54,6 +58,7 @@ describe("sharedTreeChangeCodec", () => {
 					originatorId: context.originatorId,
 				}).map((chunk) => chunk.cursor());
 			},
+			writeVersion: FieldBatchFormatVersion.v2,
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(
 			fieldKindConfigurations,

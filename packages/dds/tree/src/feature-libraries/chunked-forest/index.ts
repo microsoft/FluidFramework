@@ -16,12 +16,11 @@ export {
 } from "./chunkTree.js";
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
-	EncodedFieldBatch,
+	type EncodedFieldBatch,
 	FieldBatchFormatVersion,
-	getCodecTreeForFieldBatchFormat,
 	type FieldBatch,
 	type FieldBatchCodec,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	type IncrementalEncoderDecoder,
 	type ChunkReferenceId,

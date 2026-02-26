@@ -19,7 +19,7 @@ import type {
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	type FieldBatchEncodingContext,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,
 	type IncrementalDecoder,
@@ -471,7 +471,7 @@ describe("schemaBasedEncoding", () => {
 						idCompressor,
 					};
 					idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-					const codec = makeFieldBatchCodec({
+					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,
 					});
