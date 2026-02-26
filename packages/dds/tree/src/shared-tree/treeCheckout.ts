@@ -55,6 +55,7 @@ import {
 	LeafNodeStoredSchema,
 	diffHistories,
 	type ChangeMetadata,
+	type TransactionLabels,
 	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
@@ -99,6 +100,7 @@ import {
 	getOrCreate,
 	hasSome,
 	type JsonCompatibleReadOnly,
+	type ValueTree,
 	ValueTreeNode,
 	type WithBreakable,
 } from "../util/index.js";
@@ -108,6 +110,52 @@ import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+
+/**
+ * Shared empty set used as the `labels` value for remote changes and non-transactional local changes.
+ */
+const emptyLabelsSet: ReadonlySet<unknown> = new Set<unknown>();
+
+/**
+ * Recursively collects all defined (non-`undefined`) values from a {@link ValueTree} into a target set.
+ */
+function collectTreeValues(node: ValueTree, target: Set<unknown>): void {
+	if (node.value !== undefined) {
+		target.add(node.value);
+	}
+	for (const child of node.children) {
+		collectTreeValues(child, target);
+	}
+}
+
+/**
+ * Returns `true` if the tree contains any node with a non-`undefined` value.
+ */
+function hasDefinedLabel(node: ValueTree): boolean {
+	if (node.value !== undefined) {
+		return true;
+	}
+	for (const child of node.children) {
+		if (hasDefinedLabel(child)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Builds the labels set for a change event from the label tree.
+ * If the tree exists and contains at least one defined label, returns a set of all
+ * values with the tree attached. Otherwise returns an empty set.
+ */
+function buildLabelsSet(labelTreeNode: ValueTreeNode | undefined): TransactionLabels {
+	if (labelTreeNode === undefined || !hasDefinedLabel(labelTreeNode)) {
+		return emptyLabelsSet;
+	}
+	const set = new Set<unknown>();
+	collectTreeValues(labelTreeNode, set);
+	return Object.assign(set, { tree: labelTreeNode as ValueTree });
+}
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -703,7 +751,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.value,
-					labels: this.labelTreeNode,
+					labels: buildLabelsSet(this.labelTreeNode),
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -714,6 +762,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.#events.emit("changed", {
 				isLocal: false,
 				kind: CommitKind.Default,
+				labels: emptyLabelsSet,
 			});
 		}
 	};

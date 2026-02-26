@@ -237,27 +237,30 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	readonly label?: unknown;
 
 	/**
-	 * A collection of {@link RunTransactionParams.label | labels} for all transactions (nested or otherwise)
+	 * A set of {@link RunTransactionParams.label | labels} for all transactions (nested or otherwise)
 	 * that made up this change.
 	 * This can be used to identify, group, or filter changes — for example, to decide whether a change
 	 * should be included in an undo/redo stack.
 	 *
 	 * @remarks
-	 * The collection is structured as a {@link ValueTree} that mirrors the nesting of the transactions.
+	 * The set contains all label values from the transaction tree. Use standard `Set` methods
+	 * like {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/has | has}
+	 * to check for specific labels.
+	 *
+	 * The optional {@link ValueTree | tree} property provides the structural nesting of the transactions.
 	 * Each transaction contributes a node whose {@link ValueTree.value} is its label
 	 * (or `undefined` if no label was provided).
 	 * When transactions are nested, inner transaction nodes become children of outer ones.
 	 *
-	 * Use {@link ValueTree.has} to check whether any transaction in the change
-	 * used a specific label, or iterate with {@link ValueTree.values} to inspect all of them.
-	 *
-	 * This is defined whenever the change was produced by a transaction.
+	 * The `tree` property is present whenever the change was produced by a transaction that
+	 * includes at least one defined (non-`undefined`) label. If all transactions are unlabeled,
+	 * `tree` is `undefined` and the set is empty.
 	 *
 	 * @example
 	 * Checking whether a change was produced by a specific kind of transaction:
 	 * ```typescript
 	 * branch.events.on("changed", (metadata) => {
-	 *   if (metadata.labels?.has("testLabel")) {
+	 *   if (metadata.labels.has("testLabel")) {
 	 *     // This change came from a transaction labeled "testLabel"
 	 *   }
 	 * });
@@ -269,13 +272,28 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * tree.runTransaction(() => {
 	 *   tree.runTransaction(() => { ... }, { label: "inner" });
 	 * }, { label: "outer" });
-	 * // metadata.labels will be:
-	 * //   { value: "outer", children: [{ value: "inner", children: [] }] }
 	 * // metadata.labels.has("inner") === true
+	 * // metadata.labels.tree will be:
+	 * //   { value: "outer", children: [{ value: "inner", children: [] }] }
 	 * ```
 	 */
-	readonly labels?: ValueTree;
+	readonly labels: TransactionLabels;
 }
+
+/**
+ * A set of transaction labels with an optional structural tree.
+ *
+ * @remarks
+ * The set contains all label values from the transactions that produced the change.
+ * Use standard {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set | Set}
+ * methods to check for specific labels.
+ *
+ * The optional {@link TransactionLabels.tree | tree} property provides the structural nesting
+ * of the transactions as a {@link ValueTree}.
+ *
+ * @sealed @alpha
+ */
+export type TransactionLabels = ReadonlySet<unknown> & { readonly tree?: ValueTree };
 
 /**
  * Information about a change that has been applied by a remote client.
@@ -302,10 +320,10 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 */
 	readonly label?: undefined;
 	/**
-	 * A label tree auto-composed from nested transaction labels.
-	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
+	 * A set of labels from nested transaction labels.
+	 * @remarks This is always empty for remote changes. Labels are only available for {@link LocalChangeMetadata | local changes}.
 	 */
-	readonly labels?: undefined;
+	readonly labels: TransactionLabels;
 }
 
 /**

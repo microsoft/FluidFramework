@@ -8,6 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import type { TransactionLabels } from "../../core/index.js";
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -37,7 +38,7 @@ import {
 	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
-import { type ValueTree, brand } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "../json/index.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
@@ -1293,7 +1294,7 @@ describe("SchematizingSimpleTreeView", () => {
 		it("composes a ValueTree from nested transaction labels", () => {
 			const view = getTestObjectView();
 
-			let receivedLabels: ValueTree | undefined;
+			let receivedLabels: TransactionLabels | undefined;
 			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					receivedLabels = meta.labels;
@@ -1323,25 +1324,28 @@ describe("SchematizingSimpleTreeView", () => {
 				{ label: "outer" },
 			);
 
-			assert(receivedLabels !== undefined, "labels should be defined");
-			assert.equal(receivedLabels.value, "outer");
-			assert.equal(receivedLabels.children.length, 2);
-			assert.equal(receivedLabels.children[0]?.value, "middle1");
-			assert.equal(receivedLabels.children[0]?.children.length, 1);
-			assert.equal(receivedLabels.children[0]?.children[0]?.value, "deep");
-			assert.equal(receivedLabels.children[1]?.value, "middle2");
-			assert.equal(receivedLabels.children[1]?.children.length, 0);
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
 			assert.equal(receivedLabels.has("outer"), true);
 			assert.equal(receivedLabels.has("middle1"), true);
 			assert.equal(receivedLabels.has("deep"), true);
 			assert.equal(receivedLabels.has("middle2"), true);
 			assert.equal(receivedLabels.size, 4);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.value, "outer");
+			assert.equal(receivedLabels.tree.children.length, 2);
+			assert.equal(receivedLabels.tree.children[0]?.value, "middle1");
+			assert.equal(receivedLabels.tree.children[0]?.children.length, 1);
+			assert.equal(receivedLabels.tree.children[0]?.children[0]?.value, "deep");
+			assert.equal(receivedLabels.tree.children[1]?.value, "middle2");
+			assert.equal(receivedLabels.tree.children[1]?.children.length, 0);
 		});
 
 		it("creates a single-node ValueTree for a non-nested labeled transaction", () => {
 			const view = getTestObjectView();
 
-			let receivedLabels: ValueTree | undefined;
+			let receivedLabels: TransactionLabels | undefined;
 			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					receivedLabels = meta.labels;
@@ -1355,16 +1359,18 @@ describe("SchematizingSimpleTreeView", () => {
 				{ label: "single" },
 			);
 
-			assert(receivedLabels !== undefined, "labels should be defined");
-			assert.equal(receivedLabels.value, "single");
-			assert.equal(receivedLabels.children.length, 0);
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("single"), true);
 			assert.equal(receivedLabels.size, 1);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.value, "single");
+			assert.equal(receivedLabels.tree.children.length, 0);
 		});
 
-		it("labels reflects transaction structure when no labels are provided", () => {
+		it("labels is an empty set with no tree when no labels are provided", () => {
 			const view = getTestObjectView();
 
-			let receivedLabels: ValueTree | undefined;
+			let receivedLabels: TransactionLabels | undefined;
 			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					receivedLabels = meta.labels;
@@ -1377,17 +1383,15 @@ describe("SchematizingSimpleTreeView", () => {
 				});
 			});
 
-			assert(receivedLabels !== undefined, "labels should be defined");
-			assert.equal(receivedLabels.value, undefined);
-			assert.equal(receivedLabels.children.length, 1);
-			assert.equal(receivedLabels.children[0]?.value, undefined);
-			assert.equal(receivedLabels.children[0]?.children.length, 0);
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.size, 0);
+			assert.equal(receivedLabels.tree, undefined);
 		});
 
 		it("aborted transaction labels are excluded and subsequent siblings are correctly placed", () => {
 			const view = getTestObjectView();
 
-			let receivedLabels: ValueTree | undefined;
+			let receivedLabels: TransactionLabels | undefined;
 			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					receivedLabels = meta.labels;
@@ -1434,24 +1438,27 @@ describe("SchematizingSimpleTreeView", () => {
 				{ label: "outer" },
 			);
 
-			assert(receivedLabels !== undefined, "labels should be defined");
-			assert.equal(receivedLabels.value, "outer");
-			assert.equal(receivedLabels.children.length, 2);
-			assert.equal(receivedLabels.children[0]?.value, "middle");
-			assert.equal(receivedLabels.children[0]?.children.length, 1);
-			assert.equal(receivedLabels.children[0]?.children[0]?.value, "deep");
-			assert.equal(receivedLabels.children[1]?.value, "after");
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
 			assert.equal(receivedLabels.has("middle"), true);
 			assert.equal(receivedLabels.has("deep"), true);
 			assert.equal(receivedLabels.has("after"), true);
 			assert.equal(receivedLabels.has("abortedOuter"), false);
 			assert.equal(receivedLabels.has("abortedInner"), false);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.value, "outer");
+			assert.equal(receivedLabels.tree.children.length, 2);
+			assert.equal(receivedLabels.tree.children[0]?.value, "middle");
+			assert.equal(receivedLabels.tree.children[0]?.children.length, 1);
+			assert.equal(receivedLabels.tree.children[0]?.children[0]?.value, "deep");
+			assert.equal(receivedLabels.tree.children[1]?.value, "after");
 		});
 
 		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {
 			const view = getTestObjectView();
 
-			let receivedLabels: ValueTree | undefined;
+			let receivedLabels: TransactionLabels | undefined;
 			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					receivedLabels = meta.labels;
@@ -1467,12 +1474,14 @@ describe("SchematizingSimpleTreeView", () => {
 				);
 			});
 
-			// When outer has no label but inner labels exist, a ValueTree with
-			// undefined root is created to surface the inner labels.
-			assert(receivedLabels !== undefined, "labels should be defined");
-			assert.equal(receivedLabels.value, undefined);
-			assert.equal(receivedLabels.children.length, 1);
-			assert.equal(receivedLabels.children[0].value, "inner");
+			// When outer has no label but inner labels exist, the tree is present
+			// with an undefined root to surface the inner labels.
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("inner"), true);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.value, undefined);
+			assert.equal(receivedLabels.tree.children.length, 1);
+			assert.equal(receivedLabels.tree.children[0]?.value, "inner");
 		});
 	});
 });

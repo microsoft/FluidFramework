@@ -15,6 +15,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,
 	type EncodedRevisionTag,

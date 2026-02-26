@@ -730,7 +730,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
-    readonly labels?: ValueTree;
+    readonly labels: TransactionLabels;
 }
 
 // @public @sealed
@@ -901,7 +901,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getRevertible?: undefined;
     readonly isLocal: false;
     readonly label?: undefined;
-    readonly labels?: undefined;
+    readonly labels: TransactionLabels;
 }
 
 // @alpha
@@ -1470,6 +1470,11 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 // @alpha @sealed
 export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
+// @alpha @sealed
+export type TransactionLabels = ReadonlySet<unknown> & {
+    readonly tree?: ValueTree;
+};
+
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
 
@@ -1891,11 +1896,7 @@ export enum ValueSchema {
 // @alpha @sealed
 export interface ValueTree<T = unknown> {
     readonly children: readonly ValueTree<T>[];
-    forEach(callbackfn: (value: T) => void): void;
-    has(value: T, areEqual?: (a: T, b: T) => boolean): boolean;
-    readonly size: number;
     readonly value: T;
-    values(): IterableIterator<T>;
 }
 
 // @alpha
