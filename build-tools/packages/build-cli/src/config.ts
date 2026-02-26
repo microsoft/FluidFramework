@@ -325,6 +325,12 @@ export interface ScriptRequirement {
 	 * @defaultValue `false`
 	 */
 	bodyMustMatch?: boolean;
+
+	/**
+	 * When set, the requirement only applies to packages whose names are in this list.
+	 * When absent, the requirement applies to all public packages.
+	 */
+	packageNames?: string[];
 }
 
 const configName = "flub";

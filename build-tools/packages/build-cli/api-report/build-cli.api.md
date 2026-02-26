@@ -124,6 +124,7 @@ export interface ScriptRequirement {
     body: string;
     bodyMustMatch?: boolean;
     name: string;
+    packageNames?: string[];
 }
 
 // (No @packageDocumentation comment for this package)

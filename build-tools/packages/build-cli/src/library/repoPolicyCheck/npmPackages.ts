@@ -1889,6 +1889,14 @@ export const handlers: Handler[] = [
 			if (requirements.requiredScripts !== undefined) {
 				const scriptNames = Object.keys(packageJson.scripts ?? {});
 				for (const requiredScript of requirements.requiredScripts) {
+					// If the requirement is scoped to specific packages, skip packages not in the list.
+					if (
+						requiredScript.packageNames !== undefined &&
+						!requiredScript.packageNames.includes(packageJson.name)
+					) {
+						continue;
+					}
+
 					if (!scriptNames.includes(requiredScript.name)) {
 						// Enforce the script is present
 						errors.push(`Missing script: "${requiredScript.name}"`);
@@ -1934,6 +1942,14 @@ export const handlers: Handler[] = [
 				 * Updates the package.json contents to ensure the requirements of the specified script are met.
 				 */
 				function applyScriptCorrection(script: ScriptRequirement): void {
+					// If the requirement is scoped to specific packages, skip packages not in the list.
+					if (
+						script.packageNames !== undefined &&
+						!script.packageNames.includes(packageJson.name)
+					) {
+						return;
+					}
+
 					// If the script is missing, or if it exists but its body doesn't satisfy the requirement,
 					// apply the correct script configuration.
 					if (

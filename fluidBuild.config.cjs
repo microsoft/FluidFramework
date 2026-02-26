@@ -587,6 +587,15 @@ module.exports = {
 				// 	name: "api",
 				// 	body: "fluid-build . --task api",
 				// },
+				{
+					name: "ci:build",
+					body: "fluid-build . --task ci:build",
+					bodyMustMatch: true,
+					packageNames: [
+						"@fluidframework/protocol-definitions",
+						"@fluidframework/common-utils",
+					],
+				},
 			],
 			requiredDevDependencies: [],
 		},
