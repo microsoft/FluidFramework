@@ -365,6 +365,9 @@ extends:
 
               - task: Npm@1
                 displayName: 'npm run webpack'
+                env:
+                  # Suppress baseline-browser-mapping staleness warnings during webpack.
+                  BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
                 inputs:
                   command: custom
                   workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
@@ -533,6 +536,9 @@ extends:
 
               - task: Npm@1
                 displayName: Build devtools
+                env:
+                  # Suppress baseline-browser-mapping staleness warnings during webpack.
+                  BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
                 inputs:
                   command: 'custom'
                   workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/
