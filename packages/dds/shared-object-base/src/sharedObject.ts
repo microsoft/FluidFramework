@@ -396,28 +396,19 @@ export abstract class SharedObjectCore<
 		return;
 	}
 
-	/* eslint-disable jsdoc/check-indentation */
 	/**
 	 * Apply a 'bunch' of sequenced ops to this shared object.
 	 * @remarks
+	 * See {@link @fluidframework/runtime-definitions#IRuntimeMessageCollection} for what a "bunch" is.
+	 *
 	 * These ops have been sequenced by the service and now have a finalized ordering.
 	 * They may be local or remote ops, but they cannot be ops that are still pending acknowledgement from the service.
 	 *
-	 * A 'bunch' is a group of messages that have the following properties:
-	 * - They are all part of the same grouped batch, which entails:
-	 *   - They are contiguous in sequencing order.
-	 *   - They are all from the same client.
-	 *   - They are all based on the same reference sequence number.
-	 *   - They are not interleaved with messages from other clients.
-	 * - They are not interleaved with messages from other DDS in the container.
 	 * @param messageCollection - The 'bunch' of sequenced ops to apply to this shared object.
 	 * @privateRemarks
-	 * TODO: We should have central linkable documentation (and ideally more specific types) for the
-	 * "grouped batch" and "bunch" cases of `IRuntimeMessageCollection`.
 	 * TODO:Performance: AB#59783: Allowing this to process more messages at once (more than the current definition of 'bunch') could improve performance of clients which fall behind,
 	 * which is one of the most important performance sensitive scenarios.
 	 */
-	/* eslint-enable jsdoc/check-indentation */
 	protected abstract processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
