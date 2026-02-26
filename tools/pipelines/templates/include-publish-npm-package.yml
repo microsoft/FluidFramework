@@ -117,4 +117,4 @@ stages:
     jobs:
     - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
       parameters:
-        buildDirectory: '${{ parameters.buildDirectory }}'
+        buildDirectory: ${{ parameters.buildDirectory }}
