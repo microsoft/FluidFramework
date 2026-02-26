@@ -559,7 +559,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			// Only clear the label tree when the outermost transaction has completed.
 			// Inner transactions' commits don't fire the "changed" event, so the label tree
 			// must remain intact until the outermost commit reads it.
-			if (!this.transaction.isInProgress()) {
+			if (this.transaction.size === 0) {
 				this.labelTreeNode = undefined;
 				this.mostRecentlyClosedLabelNode = undefined;
 			}
