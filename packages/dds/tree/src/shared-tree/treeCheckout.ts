@@ -395,18 +395,22 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * @remarks
 	 * The label tree is always isomorphic to the actual transaction tree — every transaction
 	 * (whether labeled or not) gets its own node. To find the "current" (deepest open) node,
-	 * walk down the right side of the tree, following only nodes in {@link TreeCheckout.openLabelNodes}.
+	 * walk down the right side of the tree, stopping at {@link TreeCheckout.mostRecentlyClosedLabelNode}.
 	 *
 	 * Cleared by {@link TreeCheckout.runWithTransactionLabel} after the commit event is emitted.
 	 */
 	private labelTreeNode: ValueTreeNode | undefined;
 
 	/**
-	 * Tracks which label tree nodes belong to transactions that are still in progress.
-	 * Used by {@link TreeCheckout.currentLabelNode} to walk past committed (closed) nodes
-	 * and find the deepest open node.
+	 * Points to the most recently closed (committed) label node on the right spine of the tree.
+	 * Used by {@link TreeCheckout.currentLabelNode} to stop descending past committed nodes.
+	 *
+	 * @remarks
+	 * Only one closed node is ever reachable during the right-spine traversal, so a single
+	 * pointer suffices instead of tracking all closed nodes. On abort, this is updated to
+	 * the parent's new last child (which is guaranteed to be closed if it exists).
 	 */
-	private static readonly openLabelNodes = new WeakSet<ValueTreeNode>();
+	private mostRecentlyClosedLabelNode: ValueTreeNode | undefined;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
@@ -471,7 +475,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	public pushLabelFrame(label: unknown): void {
 		const node = new ValueTreeNode(label);
-		TreeCheckout.openLabelNodes.add(node);
 		if (this.labelTreeNode === undefined) {
 			this.labelTreeNode = node;
 		} else {
@@ -494,7 +497,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		while (node.children.length > 0) {
 			const lastChild = node.children[node.children.length - 1];
 			assert(lastChild !== undefined, "Expected label tree node to have children");
-			if (!TreeCheckout.openLabelNodes.has(lastChild)) {
+			if (lastChild === this.mostRecentlyClosedLabelNode) {
 				break;
 			}
 			node = lastChild;
@@ -514,17 +517,23 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			return;
 		}
 
-		TreeCheckout.openLabelNodes.delete(node);
-
 		if (aborted) {
 			if (node === this.labelTreeNode) {
 				this.labelTreeNode = undefined;
+				this.mostRecentlyClosedLabelNode = undefined;
 			} else {
-				// node is now closed, so currentLabelNode() returns its parent.
+				// Temporarily mark node as closed so currentLabelNode() returns its parent.
+				this.mostRecentlyClosedLabelNode = node;
 				const parent = this.currentLabelNode();
 				assert(parent !== undefined, "Expected parent label node to exist");
 				parent.children.pop();
+				// Point to the parent's new last child (guaranteed closed if it exists),
+				// or undefined if the parent has no more children.
+				const newLastChild = parent.children[parent.children.length - 1];
+				this.mostRecentlyClosedLabelNode = newLastChild;
 			}
+		} else {
+			this.mostRecentlyClosedLabelNode = node;
 		}
 	}
 
@@ -552,6 +561,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			// must remain intact until the outermost commit reads it.
 			if (!this.transaction.isInProgress()) {
 				this.labelTreeNode = undefined;
+				this.mostRecentlyClosedLabelNode = undefined;
 			}
 		}
 	}

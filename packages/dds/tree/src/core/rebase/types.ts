@@ -237,15 +237,42 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	readonly label?: unknown;
 
 	/**
-	 * A value tree auto-composed from nested transaction labels.
-	 * Each nesting level that provides a {@link RunTransactionParams.label | label} contributes
-	 * a node, with inner transaction labels becoming children of outer ones.
+	 * A collection of {@link RunTransactionParams.label | labels} for all transactions (nested or otherwise)
+	 * that made up this change.
+	 * This can be used to identify, group, or filter changes — for example, to decide whether a change
+	 * should be included in an undo/redo stack.
 	 *
 	 * @remarks
-	 * This is defined whenever at least one transaction in the nested stack has a label.
-	 * If the outermost transaction has no label but the inner transactions do, a {@link ValueTree}
-	 * with an undefined root is created.
-	 * This can be used by undo/redo to hierarchically group or classify edits.
+	 * The collection is structured as a {@link ValueTree} that mirrors the nesting of the transactions.
+	 * Each transaction contributes a node whose {@link ValueTree.value} is its label
+	 * (or `undefined` if no label was provided).
+	 * When transactions are nested, inner transaction nodes become children of outer ones.
+	 *
+	 * Use {@link ValueTree.has} to check whether any transaction in the change
+	 * used a specific label, or iterate with {@link ValueTree.values} to inspect all of them.
+	 *
+	 * This is defined whenever the change was produced by a transaction.
+	 *
+	 * @example
+	 * Checking whether a change was produced by a specific kind of transaction:
+	 * ```typescript
+	 * branch.events.on("changed", (metadata) => {
+	 *   if (metadata.labels?.has("testLabel")) {
+	 *     // This change came from a transaction labeled "testLabel"
+	 *   }
+	 * });
+	 * ```
+	 *
+	 * @example
+	 * A nested transaction produces a tree that reflects the nesting:
+	 * ```typescript
+	 * tree.runTransaction(() => {
+	 *   tree.runTransaction(() => { ... }, { label: "inner" });
+	 * }, { label: "outer" });
+	 * // metadata.labels will be:
+	 * //   { value: "outer", children: [{ value: "inner", children: [] }] }
+	 * // metadata.labels.has("inner") === true
+	 * ```
 	 */
 	readonly labels?: ValueTree;
 }

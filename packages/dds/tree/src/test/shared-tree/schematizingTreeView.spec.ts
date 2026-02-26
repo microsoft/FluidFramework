@@ -1384,6 +1384,70 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.children[0]?.children.length, 0);
 		});
 
+		it("aborted transaction labels are excluded and subsequent siblings are correctly placed", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: ValueTree | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					// Committed nested transactions — closes happen at multiple levels.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle" },
+					);
+					// Aborted subtree with its own nested commits.
+					// After abort, the previously-closed "middle" node is re-exposed on the right spine.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 2;
+								},
+								{ label: "abortedInner" },
+							);
+							return { rollback: true };
+						},
+						{ label: "abortedOuter" },
+					);
+					// This transaction runs after the abort. It should be a sibling of "middle"
+					// under "outer", not a descendant of "deep".
+					view.runTransaction(
+						() => {
+							view.root.content = 3;
+						},
+						{ label: "after" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be defined");
+			assert.equal(receivedLabels.value, "outer");
+			assert.equal(receivedLabels.children.length, 2);
+			assert.equal(receivedLabels.children[0]?.value, "middle");
+			assert.equal(receivedLabels.children[0]?.children.length, 1);
+			assert.equal(receivedLabels.children[0]?.children[0]?.value, "deep");
+			assert.equal(receivedLabels.children[1]?.value, "after");
+			assert.equal(receivedLabels.has("middle"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("after"), true);
+			assert.equal(receivedLabels.has("abortedOuter"), false);
+			assert.equal(receivedLabels.has("abortedInner"), false);
+		});
+
 		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {
 			const view = getTestObjectView();
 
