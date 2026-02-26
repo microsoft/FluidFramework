@@ -12,7 +12,6 @@
 }
 
 .ffcom-not-found-code {
-	font-family: "Segoe UI";
 	font-weight: 600;
 	font-size: 120px;
 	letter-spacing: -0.05em;
@@ -22,7 +21,6 @@
 }
 
 .ffcom-not-found-title {
-	font-family: "Segoe UI";
 	font-weight: 600;
 	font-size: 32px;
 	margin-top: 0.5rem;
@@ -30,15 +28,18 @@
 }
 
 .ffcom-not-found-description {
-	font-family: "Segoe UI";
 	font-size: 18px;
-	color: #666c77;
+	color: var(--docsearch-muted-color);
 	max-width: 480px;
 	margin-bottom: 2rem;
 }
 
 [data-theme="dark"] .ffcom-not-found-description {
-	color: #748497;
+	color: #798a9e;
+}
+
+[data-theme="dark"] .ffcom-not-found-link {
+	background-color: #007a9d;
 }
 
 .ffcom-not-found-link {
@@ -47,11 +48,10 @@
 	border-radius: 8px;
 	background-color: var(--ifm-color-primary);
 	color: #fff;
-	font-family: "Segoe UI";
 	font-weight: 600;
 	font-size: 16px;
 	text-decoration: none;
-	transition: opacity 0.2s;
+	transition: opacity var(--ifm-transition-fast) var(--ifm-transition-timing-default);
 }
 
 .ffcom-not-found-link:hover {
