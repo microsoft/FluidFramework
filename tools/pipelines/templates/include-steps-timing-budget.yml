@@ -5,6 +5,9 @@
 # Include at the beginning of a job's steps with step: start, and at the end with step: check.
 # If the job exceeds its budget, a pipeline warning is logged (visible in ADO UI).
 # This catches gradual performance regressions before they hit the hard timeoutInMinutes ceiling.
+#
+# IMPORTANT: budgetMinutes must match between the start and check invocations for the same job.
+# The start step records the time and logs the budget; the check step enforces it.
 
 parameters:
 - name: budgetMinutes
@@ -35,13 +38,17 @@ steps:
     - task: Bash@3
       displayName: 'Check timing budget'
       condition: always()
+      env:
+        TIMING_START: $(TIMING_BUDGET_START)
       inputs:
         targetType: inline
         script: |
-          set -eu -o pipefail
-          START=$(TIMING_BUDGET_START)
+          if [ -z "$TIMING_START" ] || ! [ "$TIMING_START" -eq "$TIMING_START" ] 2>/dev/null; then
+            echo "Timing budget check skipped: start time not recorded."
+            exit 0
+          fi
           NOW=`date +%s`
-          ELAPSED_SECONDS=$((NOW - START))
+          ELAPSED_SECONDS=$((NOW - TIMING_START))
           ELAPSED_MINUTES=$((ELAPSED_SECONDS / 60))
           ELAPSED_REMAINDER=$((ELAPSED_SECONDS % 60))
           BUDGET=${{ parameters.budgetMinutes }}
