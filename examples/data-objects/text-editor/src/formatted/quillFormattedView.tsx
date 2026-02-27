@@ -4,9 +4,7 @@
  */
 
 import { type PropTreeNode, unwrapPropTreeNode } from "@fluidframework/react/alpha";
-// eslint-disable-next-line import-x/no-internal-modules
-import { treeDataObjectInternal } from "@fluidframework/react/internal";
-import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
+import { Tree } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -19,11 +17,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import type { UndoRedo } from "../undoRedo.js";
-
-export const FormattedTextEditorFactory = treeDataObjectInternal(
-	new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree }),
-	() => FormattedTextAsTree.Tree.fromString(""),
-).factory;
 
 /**
  * Represents a single operation in a Quill Delta.
