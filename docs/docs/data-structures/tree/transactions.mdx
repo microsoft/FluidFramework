@@ -3,8 +3,6 @@ title: Transactions
 sidebar_position: 6
 ---
 
-TODO:#27374: update this page to describe the new transaction API
-
 If you want the `SharedTree` to treat a set of changes atomically, then you can wrap these changes in a transaction.
 Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously and no other changes (either from this client or from a remote client) can be interleaved with those changes.
 Note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously.
@@ -36,3 +34,181 @@ Tree.runTransaction(myTreeView, (treeView) => {
 ```
 
 There are example transactions here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).
+
+## New Transaction API
+
+:::caution
+
+The APIs described in this section are currently `@alpha` and may change in future releases.
+
+Unlike `Tree.runTransaction`, the Alpha `runTransaction` does **not** automatically roll back the transaction if the callback throws an error. If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required
+
+:::
+
+The TreeBranchAlpha API introduces `TreeBranchAlpha.runTransaction` as a replacement for `Tree.runTransaction`. This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state. This new API enables developers to customize how their application handles this error case.
+
+### Running a Transaction
+
+A transaction can either be run on a `TreeViewAlpha` directly, or a `TreeBranchAlpha` can be obtained from any tree node via `TreeAlpha.branch(node)`.
+
+```typescript
+import { TreeAlpha } from "@fluidframework/tree/alpha";
+
+// Using a branch:
+const branch = TreeAlpha.branch(myNode);
+if (branch !== undefined) {
+    branch.runTransaction(/* ... */);
+}
+
+// Using a view directly:
+const view = tree.viewWith(config);
+view.runTransaction(/* ... */);
+```
+
+### The `transaction` Callback Function
+The callback function passed to runTransaction is the actual implementation of the transaction to apply. It can optionally return a status object indicating success or failure and include a user-defined value.
+
+**Simple form (no return value):**
+
+```typescript
+const result = view.runTransaction(() => {
+    view.root.name = "Alice";
+    view.root.score = 100;
+});
+
+if (result.success) {
+    // Transaction was committed
+} else {
+    // Transaction was rolled back
+}
+```
+
+**With return values:**
+
+```typescript
+const result = view.runTransaction(() => {
+    const oldName = view.root.name;
+    view.root.name = "Bob";
+    return { rollback: false, value: oldName };
+});
+
+if (result.success) {
+    console.log("Previous name was:", result.value);
+}
+```
+
+### Asynchronous Transactions
+
+`runTransactionAsync` works like `runTransaction` but accepts an `async` callback.
+
+```typescript
+const result = await view.runTransactionAsync(async () => {
+    const data = await fetchExternalData();
+    view.root.externalValue = data;
+});
+```
+
+### Transaction Labels
+
+You can attach a label to a transaction via the `params` argument. The label is surfaced through `ChangeMetadata`, and can be useful for grouping related actions.
+
+```typescript
+view.runTransaction(
+    () => {
+        view.root.name = "Dave";
+    },
+    { label: "rename-user" },
+);
+```
+
+If transactions are nested, only the outermost transaction's label is used.
+
+### Nested Transactions
+
+`runTransaction` and `runTransactionAsync` can be called from within the callback of another transaction, with some limitations. Nested transactions have the following behavior:
+
+-   If the inner transaction rolls back, only the inner transaction's changes are discarded. The outer transaction continues.
+-   Constraints are applied to the outermost transaction. A single commit is generated for the outermost transaction, encompassing all inner transactions.
+-   Undo reverts the outermost transaction and all of its inner transactions together.
+-   Only the outermost transaction's label is used; inner labels are ignored.
+
+:::warning
+
+An asynchronous transaction cannot be started inside a synchronous transaction. The other three nesting combinations (sync-in-sync, sync-in-async, async-in-async) are all supported.
+
+:::
+
+## Constraints
+
+Constraints let you opt in to stricter validation when your application needs it. A violated constraint causes the **entire transaction** to be dropped. Constraints can be applied as preconditions to a transaction (or as preconditions on revert, to be applied if the transaction is reverted), thereby ensuring that its effect will only apply if some specific conditions are met.
+
+This is useful when the transaction's effect may be rendered undesirable by the effects of concurrent edits that are sequenced before the transaction.
+
+### Specifying Constraints
+
+Constraints are specified via the `preconditions` field in the `params` argument to `runTransaction`, or returned from the transaction callback via the `preconditionsOnRevert` field:
+
+```typescript
+view.runTransaction(
+    () => {
+        view.root.content = "new value";
+    },
+    {
+        preconditions: [
+            { type: "nodeInDocument", node: someNode },
+        ],
+    },
+);
+```
+
+```typescript
+view.runTransaction(() => {
+    view.root.content = "updated";
+    return {
+        rollback: false,
+        preconditionsOnRevert: [
+            { type: "nodeInDocument", node: view.root },
+        ],
+    };
+});
+```
+
+### Supported Constraint Types
+
+// TODO:#59981: Document new constraint types as they are implemented. Consider breaking this section into its own page when we have enough constraint types to warrant it.
+
+#### `nodeInDocument`
+
+Requires that a specific node exists in the document.
+
+```typescript
+const importantNode = view.root;
+
+view.runTransaction(
+    () => {
+        view.root.value = 42;
+    },
+    {
+        preconditions: [
+            { type: "nodeInDocument", node: importantNode },
+        ],
+    },
+);
+```
+
+If `importantNode` is removed by a concurrent edit that is sequenced before this transaction, the transaction will be rolled back.
+
+#### `noChange` (Alpha)
+
+Requires that the document is in the exact same state when the transaction is applied as it was when the transaction was authored. If _any_ concurrent edit is sequenced before the transaction, the constraint is violated and the transaction is rolled back.
+
+```typescript
+view.runTransaction(
+    () => {
+        view.root.items.insertAtEnd("new item");
+    },
+    {
+        preconditions: [{ type: "noChange" }],
+    },
+);
+```
