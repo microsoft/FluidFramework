@@ -12,12 +12,8 @@
 		// Suppress type errors in Quill's use of quill-delta.
 		// Without this, the quill code gives a lot of errors like:
 		// node_modules/.pnpm/quill@2.0.3/node_modules/quill/blots/block.d.ts:6:17 - error TS2709: Cannot use namespace 'Delta' as a type.
+		// These issues (and others, see imports of quill-delta) are likely related to quill-delta's export style not working well with node16 module resolution.
+		// Quill internally uses `"moduleResolution": "bundler"` which seems to work properly with quill-delta's exports, but would be inconsistent with the rest of this repo.
 		"skipLibCheck": true,
-		// "esModuleInterop": true,
-
-		// "allowSyntheticDefaultImports": true,
-		// "target": "ES2021",
-		// "module": "es2020",
-		// "moduleResolution": "bundler",
 	},
 }
