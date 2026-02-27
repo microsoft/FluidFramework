@@ -2287,8 +2287,8 @@ export enum ValueSchema {
 
 // @alpha @sealed
 export interface ValueTree<T = unknown> {
-    readonly children: readonly ValueTree<T>[];
-    readonly value: T;
+    children: ValueTree<T>[];
+    value: T;
 }
 
 // @alpha
