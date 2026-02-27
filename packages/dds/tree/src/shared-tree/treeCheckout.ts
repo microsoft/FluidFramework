@@ -111,11 +111,6 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
- * Shared empty set used as the `labels` value for remote changes and non-transactional local changes.
- */
-const emptyLabelsSet: ReadonlySet<unknown> = new Set<unknown>();
-
-/**
  * Yields all defined (non-`undefined`) values from a {@link ValueTree}, depth-first.
  */
 function* collectTreeValues(node: ValueTree): IterableIterator<unknown> {
@@ -133,16 +128,16 @@ function* collectTreeValues(node: ValueTree): IterableIterator<unknown> {
  * values with the tree attached. Otherwise returns an empty set.
  */
 function buildLabelsSet(labelTreeNode: ValueTree | undefined): TransactionLabels {
+	const set: Set<unknown> & { tree?: ValueTree } = new Set<unknown>();
 	if (labelTreeNode !== undefined) {
-		let set: Set<unknown> | undefined;
 		for (const value of collectTreeValues(labelTreeNode)) {
-			(set ??= new Set()).add(value);
+			set.add(value);
 		}
-		if (set !== undefined) {
-			return Object.assign(set, { tree: labelTreeNode });
+		if (set.size > 0) {
+			set.tree = labelTreeNode;
 		}
 	}
-	return emptyLabelsSet;
+	return set;
 }
 
 /**
@@ -748,7 +743,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.#events.emit("changed", {
 				isLocal: false,
 				kind: CommitKind.Default,
-				labels: emptyLabelsSet,
+				labels: new Set<unknown>(),
 			});
 		}
 	};

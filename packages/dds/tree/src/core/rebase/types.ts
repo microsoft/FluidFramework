@@ -293,7 +293,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
  *
  * @sealed @alpha
  */
-export type TransactionLabels = ReadonlySet<unknown> & { readonly tree?: ValueTree };
+export type TransactionLabels = Set<unknown> & { tree?: ValueTree };
 
 /**
  * Information about a change that has been applied by a remote client.

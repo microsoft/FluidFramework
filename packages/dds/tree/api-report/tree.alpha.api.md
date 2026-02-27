@@ -1471,8 +1471,8 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
 // @alpha @sealed
-export type TransactionLabels = ReadonlySet<unknown> & {
-    readonly tree?: ValueTree;
+export type TransactionLabels = Set<unknown> & {
+    tree?: ValueTree;
 };
 
 // @alpha
