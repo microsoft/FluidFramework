@@ -352,8 +352,9 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 	/**
 	 * Indicates the attachment state of the container to a host service.
+	 * Will be `undefined` when the container is being loaded and the state is not yet known.
 	 */
-	readonly attachState: AttachState;
+	readonly attachState: AttachState | undefined;
 
 	/**
 	 * Get the code details that are currently specified for the container.
