@@ -30,6 +30,15 @@ importers:
       '@types/eslint':
         specifier: ^9.6.1
         version: 9.6.1
+      '@types/eslint8':
+        specifier: npm:@types/eslint@^8.56.12
+        version: '@types/eslint@8.56.12'
+      '@types/mocha':
+        specifier: ^10.0.0
+        version: 10.0.10
+      '@types/node':
+        specifier: ^20.12.12
+        version: 20.12.12
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -190,6 +199,9 @@ packages:
   '@types/concat-stream@1.6.1':
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
 
+  '@types/eslint@8.56.12':
+    resolution: {integrity: sha512-03ruubjWyOHlmljCVoxSuNDdmfZDzsrrz0P2LeJsOXr+ZwFQ+0yQIwNCwt/GYhV7Z31fgtXJTAEs+FYlEL851g==}
+
   '@types/eslint@9.6.1':
     resolution: {integrity: sha512-FXx2pKgId/WyYo2jXw63kk7/+TY7u7AziEJxJAnSFzHlqTAS3Ync6SvgYAN/k4/PQpnnVuzoMuVnByKK2qp0ag==}
 
@@ -210,6 +222,9 @@ packages:
 
   '@types/minimatch@5.1.2':
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
+
+  '@types/mocha@10.0.10':
+    resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
 
   '@types/node@10.17.60':
     resolution: {integrity: sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==}
@@ -2087,6 +2102,11 @@ snapshots:
     dependencies:
       '@types/node': 20.12.12
 
+  '@types/eslint@8.56.12':
+    dependencies:
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+
   '@types/eslint@9.6.1':
     dependencies:
       '@types/estree': 1.0.8
@@ -2110,6 +2130,8 @@ snapshots:
       '@types/unist': 2.0.10
 
   '@types/minimatch@5.1.2': {}
+
+  '@types/mocha@10.0.10': {}
 
   '@types/node@10.17.60': {}
 

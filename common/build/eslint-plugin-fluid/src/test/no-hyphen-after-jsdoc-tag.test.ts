@@ -3,25 +3,30 @@
  * Licensed under the MIT License.
  */
 
-const assert = require("assert");
-const path = require("path");
-const { createESLintConfig, eslintVersion, ESLint } = require("./eslintConfigHelper.cjs");
+import assert from "node:assert";
+import * as path from "node:path";
+import type { ESLint } from "eslint";
+import {
+	createESLintConfig,
+	eslintVersion,
+	ESLint as ESLintClass,
+	getTestCasesDir,
+} from "./eslintConfigHelper.js";
 
 describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion})`, function () {
 	/**
-	 *
-	 * @param {string} file - Path to the file being linted. Relative to the `example/no-hyphen-after-jsdoc-tag` folder.
-	 * @returns
+	 * @param file - Path to the file being linted. Relative to the `example/no-hyphen-after-jsdoc-tag` folder.
 	 */
-	async function lintFile(file) {
+	async function lintFile(file: string): Promise<ESLint.LintResult> {
 		const eslintOptions = createESLintConfig({
 			rules: {
 				"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
 			},
 		});
 
-		const eslint = new ESLint(eslintOptions);
-		const fileToLint = path.join(__dirname, "./test-cases/no-hyphen-after-jsdoc-tag", file);
+		// Cast to any because CompatESLintOptions is a union type that works for both ESLint 8 and 9
+		const eslint = new ESLintClass(eslintOptions as any);
+		const fileToLint = path.join(getTestCasesDir(), "no-hyphen-after-jsdoc-tag", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");
 		return results[0];
@@ -41,8 +46,8 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 		assert.strictEqual(error1.column, 12); // 1-based, inclusive
 		assert.strictEqual(error1.endColumn, 15); // 1-based, exclusive
 		assert.notEqual(error1.fix, undefined);
-		assert.deepEqual(error1.fix.range, [234, 237]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
-		assert.deepEqual(error1.fix.text, " "); // Replace hyphen and surrounding whitespace with a single space.
+		assert.deepEqual(error1.fix?.range, [234, 237]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error1.fix?.text, " "); // Replace hyphen and surrounding whitespace with a single space.
 
 		// Error 2
 		const error2 = result.messages[1];
@@ -51,8 +56,8 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 		assert.strictEqual(error2.column, 15); // 1-based, inclusive
 		assert.strictEqual(error2.endColumn, 19); // 1-based, exclusive
 		assert.notEqual(error2.fix, undefined);
-		assert.deepEqual(error2.fix.range, [274, 278]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
-		assert.deepEqual(error2.fix.text, " "); // Replace hyphen and surrounding whitespace with a single space.
+		assert.deepEqual(error2.fix?.range, [274, 278]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error2.fix?.text, " "); // Replace hyphen and surrounding whitespace with a single space.
 
 		// Error 3
 		const error3 = result.messages[2];
@@ -61,7 +66,7 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 		assert.strictEqual(error3.column, 12); // 1-based, inclusive
 		assert.strictEqual(error3.endColumn, 16); // 1-based, exclusive
 		assert.notEqual(error3.fix, undefined);
-		assert.deepEqual(error3.fix.range, [338, 342]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
-		assert.deepEqual(error3.fix.text, " "); // Replace hyphen and surrounding whitespace with a single space.
+		assert.deepEqual(error3.fix?.range, [338, 342]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error3.fix?.text, " "); // Replace hyphen and surrounding whitespace with a single space.
 	});
 });
