@@ -105,6 +105,7 @@ export class LocalWebSocketServer implements IWebSocketServer {
     on(event: string, listener: (...args: any[]) => void): void;
     // (undocumented)
     readonly pubsub: IPubSub;
+    removeConnection(socket: LocalWebSocket): void;
 }
 
 // (No @packageDocumentation comment for this package)

@@ -65,14 +65,12 @@
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@types/debug": "^4.1.5",
 		"@types/double-ended-queue": "^2.1.0",
-		"@types/lodash": "^4.14.118",
 		"@types/node": "^22",
 		"@types/ws": "^6.0.1",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",
-		"lodash": "^4.17.21",
 		"sillyname": "^0.1.0",
 		"uuid": "^11.1.0",
 		"ws": "^7.5.10"
@@ -95,7 +93,19 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_LocalKafka": {
+				"forwardCompat": false
+			},
+			"Class_LocalOrderer": {
+				"forwardCompat": false
+			},
+			"Class_PubSub": {
+				"forwardCompat": false
+			},
 			"Class_WebSocketSubscriber": {
+				"forwardCompat": false
+			},
+			"Interface_IPubSub": {
 				"forwardCompat": false
 			},
 			"Interface_ISubscriber": {

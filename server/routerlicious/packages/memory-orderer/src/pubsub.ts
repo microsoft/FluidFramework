@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import type { IWebSocket } from "@fluidframework/server-services-core";
 
 /**
@@ -43,6 +41,9 @@ export interface IPubSub {
 
 	// Publishes a message to the given topic
 	publish(topic: string, event: string, ...args: any[]): void;
+
+	// Closes the pubsub and clears all subscriptions
+	close(): void;
 }
 
 /**
@@ -81,19 +82,28 @@ export class PubSub implements IPubSub {
 	}
 
 	public unsubscribe(topic: string, subscriber: ISubscriber): void {
-		assert(this.topics.has(topic));
 		const subscriptions = this.topics.get(topic);
-
-		assert(subscriptions?.has(subscriber.id));
-		const details = subscriptions?.get(subscriber.id);
-		if (details !== undefined) {
-			details.count--;
-			if (details.count === 0) {
-				subscriptions?.delete(subscriber.id);
-			}
+		if (subscriptions === undefined) {
+			// Topic doesn't exist, nothing to unsubscribe
+			return;
 		}
-		if (subscriptions?.size === 0) {
+
+		const details = subscriptions.get(subscriber.id);
+		if (details === undefined) {
+			// Subscriber not found in topic, nothing to unsubscribe
+			return;
+		}
+
+		details.count--;
+		if (details.count === 0) {
+			subscriptions.delete(subscriber.id);
+		}
+		if (subscriptions.size === 0) {
 			this.topics.delete(topic);
 		}
+	}
+
+	public close(): void {
+		this.topics.clear();
 	}
 }

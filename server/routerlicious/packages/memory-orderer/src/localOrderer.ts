@@ -38,7 +38,6 @@ import {
 	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { merge } from "lodash";
 
 import type { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -146,7 +145,11 @@ export class LocalOrderer implements IOrderer {
 			scribeContext,
 			deliContext,
 			moiraContext,
-			merge({}, DefaultServiceConfiguration, serviceConfiguration),
+			// Note: This is a shallow merge. Nested objects in serviceConfiguration will fully
+			// replace the corresponding objects from DefaultServiceConfiguration rather than
+			// being deep-merged. Callers that need to override nested properties should spread
+			// the nested defaults themselves.
+			{ ...DefaultServiceConfiguration, ...serviceConfiguration },
 		);
 	}
 

@@ -79,7 +79,9 @@ export class TestConsumer implements IConsumer {
 		return this;
 	}
 
-	public async close(): Promise<void> {}
+	public async close(): Promise<void> {
+		this.emitter.removeAllListeners();
+	}
 
 	public async pause() {
 		if (!this.pausedQueue) {

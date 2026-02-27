@@ -21,7 +21,6 @@ import {
 	type CheckpointService,
 } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
-import * as _ from "lodash";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 
@@ -138,9 +137,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			null,
 		);
 
-		// eslint-disable-next-line import-x/namespace
-		const result = _.clone(existing);
-		result.expiration = newExpiration;
+		const result = { ...existing, expiration: newExpiration };
 
 		return result;
 	}
@@ -154,6 +151,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 	private readonly webSocketServer: IWebSocketServer;
 	private readonly orderMap = new Map<string, LocalOrderer>();
 	private readonly connectionMap = new Map<number, IOrdererConnection>();
+	private heartbeatTimer: ReturnType<typeof setTimeout> | undefined;
+	private closed = false;
 
 	private constructor(
 		private readonly webSocketServerFactory: () => IWebSocketServer,
@@ -286,6 +285,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 	}
 
 	private scheduleHeartbeat() {
+		if (this.closed) {
+			return;
+		}
+
 		const now = Date.now();
 
 		// Check to see if we can even renew at this point
@@ -301,7 +304,10 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			const targetTime = this.node.expiration - this.timeoutLength / 2;
 			const delta = Math.max(0, targetTime - Date.now());
 
-			setTimeout(() => {
+			this.heartbeatTimer = setTimeout(() => {
+				if (this.closed) {
+					return;
+				}
 				const updateP = LocalNode.updateExpiration(
 					this.node,
 					this.databaseManager,
@@ -325,5 +331,43 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 					});
 			}, delta);
 		}
+	}
+
+	/**
+	 * Closes the node and cleans up all resources.
+	 */
+	public async close(): Promise<void> {
+		if (this.closed) {
+			return;
+		}
+		this.closed = true;
+
+		// Cancel heartbeat timer
+		if (this.heartbeatTimer !== undefined) {
+			clearTimeout(this.heartbeatTimer);
+			this.heartbeatTimer = undefined;
+		}
+
+		// Close all orderers
+		const closePromises: Promise<void>[] = [];
+		for (const orderer of this.orderMap.values()) {
+			closePromises.push(orderer.close());
+		}
+		await Promise.all(closePromises);
+		this.orderMap.clear();
+
+		// Disconnect all connections
+		const disconnectPromises: Promise<void>[] = [];
+		for (const connection of this.connectionMap.values()) {
+			disconnectPromises.push(connection.disconnect());
+		}
+		await Promise.all(disconnectPromises);
+		this.connectionMap.clear();
+
+		// Close the web socket server
+		await this.webSocketServer.close();
+
+		// Remove all event listeners
+		this.removeAllListeners();
 	}
 }

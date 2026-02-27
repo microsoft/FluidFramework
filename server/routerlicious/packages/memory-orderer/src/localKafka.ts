@@ -34,7 +34,7 @@ export class LocalKafka implements IProducer {
 		return true;
 	}
 
-	public subscribe(kafakaSubscriber: IKafkaSubscriber) {
+	public subscribe(kafakaSubscriber: IKafkaSubscriber): LocalKafkaSubscription {
 		const kafkaSubscription = new LocalKafkaSubscription(kafakaSubscriber, this.qeueue);
 		kafkaSubscription.on("processed", (queueOffset) => {
 			if (this.minimumQueueOffset >= queueOffset) {
@@ -63,6 +63,15 @@ export class LocalKafka implements IProducer {
 		});
 
 		this.subscriptions.push(kafkaSubscription);
+		return kafkaSubscription;
+	}
+
+	public unsubscribe(subscription: LocalKafkaSubscription): void {
+		const index = this.subscriptions.indexOf(subscription);
+		if (index !== -1) {
+			this.subscriptions.splice(index, 1);
+			subscription.close();
+		}
 	}
 
 	public async send(messages: object[], topic: string): Promise<any> {

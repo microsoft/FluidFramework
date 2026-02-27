@@ -131,6 +131,8 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			testDbFactory,
 			testStorage,
 			logger,
+			pubsub,
+			mongoManager,
 		);
 	}
 
@@ -141,11 +143,17 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 		public testDbFactory: ITestDbFactory,
 		public documentStorage: IDocumentStorage,
 		private readonly logger: ILogger,
+		private readonly pubsub: IPubSub,
+		private readonly mongoManager: MongoManager,
 	) {}
 
 	public async close() {
+		// Note: These are closed sequentially because later resources may depend on earlier ones.
+		// If any close() throws, subsequent resources will not be cleaned up.
 		await this.webSocketServer.close();
 		await this.ordererManager.close();
+		this.pubsub.close();
+		await this.mongoManager.close();
 	}
 
 	/**
@@ -196,14 +204,30 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			};
 			socket.on("signal", earlySignalHandler);
 
-			// Listen for connection issues
-			socket.on("connect_error", (error) => {
-				reject(error);
-			});
-
-			socket.on("connect_document_success", (response: IConnected) => {
+			// Helper to remove all temporary handlers (must be defined before error handlers)
+			const removeAllTempHandlers = () => {
 				socket.removeListener("op", earlyOpHandler);
 				socket.removeListener("signal", earlySignalHandler);
+				socket.removeListener("connect_error", connectErrorHandler);
+				socket.removeListener("connect_document_error", connectDocumentErrorHandler);
+				socket.removeListener("connect_document_success", connectDocumentSuccessHandler);
+			};
+
+			// Listen for connection issues
+			const connectErrorHandler = (error: unknown) => {
+				removeAllTempHandlers();
+				reject(error);
+			};
+			socket.on("connect_error", connectErrorHandler);
+
+			const connectDocumentErrorHandler = (error: unknown) => {
+				removeAllTempHandlers();
+				reject(error);
+			};
+			socket.on("connect_document_error", connectDocumentErrorHandler);
+
+			const connectDocumentSuccessHandler = (response: IConnected) => {
+				removeAllTempHandlers();
 
 				if (queuedMessages.length > 0) {
 					// Some messages were queued.
@@ -219,9 +243,8 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 				}
 
 				resolve(response);
-			});
-
-			socket.on("connect_document_error", reject);
+			};
+			socket.on("connect_document_success", connectDocumentSuccessHandler);
 
 			socket.emit("connect_document", connectMessage);
 		});

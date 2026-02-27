@@ -150,7 +150,10 @@ export class LocalOrdererManager implements IOrdererManager {
 	}
 
 	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
-		// No-op for local orderer. Orderer connections are managed separately.
+		// No-op for local orderer. This method is called when individual clients disconnect
+		// (from disconnect.ts), but the orderer serves all clients for a document. Closing it
+		// here would break other connected clients. The orderer is only closed when the entire
+		// server shuts down via the close() method.
 	}
 
 	private getOrdererMapKey(tenantId: string, documentId: string) {

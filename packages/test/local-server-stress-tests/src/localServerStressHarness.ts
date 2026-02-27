@@ -1112,14 +1112,25 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		);
 	} finally {
 		if (finalState !== undefined) {
+			// Dispose all client containers
 			for (const client of finalState.clients) {
 				client.container.dispose();
 			}
+			// Clear the clients array to release references
+			finalState.clients.length = 0;
 
 			await maybeSaveFluidOpsTofile(finalState, saveInfo);
 
+			// Dispose validation client
 			finalState.validationClient.container.dispose();
+
+			// Close the server and all its components
 			await finalState.localDeltaConnectionServer.close();
+
+			// Help GC by clearing references
+			(finalState as any).localDeltaConnectionServer = undefined;
+			(finalState as any).validationClient = undefined;
+			(finalState as any).codeLoader = undefined;
 		}
 	}
 

@@ -42,6 +42,7 @@ declare type current_as_old_for_Class_LocalContext = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_LocalKafka": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalKafka = requireAssignableTo<TypeOnly<old.LocalKafka>, TypeOnly<current.LocalKafka>>
 
 /*
@@ -96,6 +97,7 @@ declare type current_as_old_for_Class_LocalNodeFactory = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_LocalOrderer": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalOrderer = requireAssignableTo<TypeOnly<old.LocalOrderer>, TypeOnly<current.LocalOrderer>>
 
 /*
@@ -150,6 +152,7 @@ declare type current_as_old_for_Class_NodeManager = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_PubSub": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_PubSub = requireAssignableTo<TypeOnly<old.PubSub>, TypeOnly<current.PubSub>>
 
 /*
@@ -439,6 +442,7 @@ declare type current_as_old_for_Interface_IOpMessage = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IPubSub": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IPubSub = requireAssignableTo<TypeOnly<old.IPubSub>, TypeOnly<current.IPubSub>>
 
 /*

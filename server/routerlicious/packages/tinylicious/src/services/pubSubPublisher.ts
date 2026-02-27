@@ -20,4 +20,7 @@ export class PubSubPublisher implements IPubSub {
 
 	// The sockets directly unsubscibe when the client disconnects. So, we do nothing here.
 	public unsubscribe(topic: string, subscriber: ISubscriber): void {}
+
+	// Nothing to clean up since subscriptions are managed by socket.io directly.
+	public close(): void {}
 }

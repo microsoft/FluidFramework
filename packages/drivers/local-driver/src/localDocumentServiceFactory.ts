@@ -29,6 +29,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection> =
 		new Map();
 
+	private _disposed = false;
+
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
 	 */
@@ -132,5 +134,21 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 			throw new Error(`No client with the id: ${clientId}`);
 		}
 		documentDeltaConnection.nackClient(code, type, message);
+	}
+
+	/**
+	 * Disposes the factory and cleans up all tracked connections.
+	 */
+	public dispose(): void {
+		if (this._disposed) {
+			return;
+		}
+		this._disposed = true;
+
+		// Disconnect all tracked connections before clearing the map
+		for (const connection of this.documentDeltaConnectionsMap.values()) {
+			connection.disconnectClient("LocalDocumentServiceFactory disposed");
+		}
+		this.documentDeltaConnectionsMap.clear();
 	}
 }

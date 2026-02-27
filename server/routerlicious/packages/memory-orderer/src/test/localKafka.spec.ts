@@ -102,4 +102,75 @@ describe("LocalKafka", () => {
 
 		assert.strictEqual(localKafka.length, 0);
 	});
+
+	it("unsubscribe removes subscription", async () => {
+		const localKafka = new LocalKafka();
+
+		let sequenceNumber = 0;
+		const subscription = localKafka.subscribe({
+			context: new LocalContext(undefined),
+			process: (message: IQueuedMessage) => {
+				const parsed = JSON.parse(message.value);
+				assert.strictEqual(parsed.sequenceNumber, sequenceNumber + 1);
+				sequenceNumber++;
+				return undefined;
+			},
+		});
+
+		localKafka.send([createMessage(1), createMessage(2)], "topic");
+		assert.strictEqual(sequenceNumber, 2);
+
+		// Unsubscribe
+		localKafka.unsubscribe(subscription);
+
+		// Messages after unsubscribe should not be processed
+		localKafka.send([createMessage(3)], "topic");
+		assert.strictEqual(sequenceNumber, 2, "Should not process messages after unsubscribe");
+
+		localKafka.close();
+	});
+
+	it("unsubscribe one of two subscriptions", async () => {
+		const localKafka = new LocalKafka();
+
+		let sequenceNumber1 = 0;
+		const subscription1 = localKafka.subscribe({
+			context: new LocalContext(undefined),
+			process: (message: IQueuedMessage) => {
+				const parsed = JSON.parse(message.value);
+				assert.strictEqual(parsed.sequenceNumber, sequenceNumber1 + 1);
+				sequenceNumber1++;
+				return undefined;
+			},
+		});
+
+		let sequenceNumber2 = 0;
+		localKafka.subscribe({
+			context: new LocalContext(undefined),
+			process: (message: IQueuedMessage) => {
+				const parsed = JSON.parse(message.value);
+				assert.strictEqual(parsed.sequenceNumber, sequenceNumber2 + 1);
+				sequenceNumber2++;
+				return undefined;
+			},
+		});
+
+		localKafka.send([createMessage(1), createMessage(2)], "topic");
+		assert.strictEqual(sequenceNumber1, 2);
+		assert.strictEqual(sequenceNumber2, 2);
+
+		// Unsubscribe first subscription
+		localKafka.unsubscribe(subscription1);
+
+		// Second subscription should still receive messages
+		localKafka.send([createMessage(3)], "topic");
+		assert.strictEqual(
+			sequenceNumber1,
+			2,
+			"First subscription should not process after unsubscribe",
+		);
+		assert.strictEqual(sequenceNumber2, 3, "Second subscription should still process");
+
+		localKafka.close();
+	});
 });
