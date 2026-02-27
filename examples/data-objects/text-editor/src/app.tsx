@@ -4,6 +4,7 @@
  */
 
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { toPropTreeNode } from "@fluidframework/react/alpha";
 /**
  * InsecureTokenProvider is used here for local development and demo purposes only.
@@ -15,6 +16,7 @@ import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframe
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
+import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
 import * as React from "react";
@@ -86,11 +88,23 @@ async function initFluid(): Promise<DualUserViews> {
 	const user1Id = `user1-${Math.random().toString(36).slice(2, 6)}`;
 	const user2Id = `user2-${Math.random().toString(36).slice(2, 6)}`;
 
-	const client1 = new AzureClient({ connection: getConnectionConfig(user1Id) });
-	const client2 = new AzureClient({ connection: getConnectionConfig(user2Id) });
+	// Initialize telemetry logger for use with Devtools
+	const devtoolsLogger = createDevtoolsLogger();
+
+	const client1 = new AzureClient({
+		connection: getConnectionConfig(user1Id),
+		logger: devtoolsLogger,
+	});
+	const client2 = new AzureClient({
+		connection: getConnectionConfig(user2Id),
+		logger: devtoolsLogger,
+	});
 
 	let containerId: string;
-
+	let user1Container: IFluidContainer;
+	let user1View: TreeView<typeof TextEditorRoot>;
+	let user2Container: IFluidContainer;
+	let user2View: TreeView<typeof TextEditorRoot>;
 	if (location.hash) {
 		// Load existing document for both users
 		const rawContainerId = location.hash.slice(1);
@@ -111,22 +125,23 @@ async function initFluid(): Promise<DualUserViews> {
 			containerSchema,
 			"2",
 		);
+		user1Container = container1;
+
 		const { container: container2 } = await client2.getContainer(
 			containerId,
 			containerSchema,
 			"2",
 		);
+		user2Container = container2;
 
-		return {
-			user1: container1.initialObjects.tree.viewWith(treeConfig),
-			user2: container2.initialObjects.tree.viewWith(treeConfig),
-			containerId,
-		};
+		user1View = container1.initialObjects.tree.viewWith(treeConfig);
+		user2View = container2.initialObjects.tree.viewWith(treeConfig);
 	} else {
 		// User 1 creates the document
 		const { container: container1 } = await client1.createContainer(containerSchema, "2");
+		user1Container = container1;
 
-		const user1View = container1.initialObjects.tree.viewWith(treeConfig);
+		user1View = container1.initialObjects.tree.viewWith(treeConfig);
 
 		// Initialize tree with root containing both plain and formatted text
 		user1View.initialize(
@@ -147,14 +162,32 @@ async function initFluid(): Promise<DualUserViews> {
 			containerSchema,
 			"2",
 		);
+		user2Container = container2;
 		console.log(`User 2 connected to document: ${containerId}`);
 
-		return {
-			user1: user1View,
-			user2: container2.initialObjects.tree.viewWith(treeConfig),
-			containerId,
-		};
+		user2View = container2.initialObjects.tree.viewWith(treeConfig);
 	}
+
+	// Initialize Devtools
+	initializeDevtools({
+		logger: devtoolsLogger,
+		initialContainers: [
+			{
+				container: user1Container,
+				containerKey: "User 1 Container",
+			},
+			{
+				container: user2Container,
+				containerKey: "User 2 Container",
+			},
+		],
+	});
+
+	return {
+		user1: user1View,
+		user2: user2View,
+		containerId,
+	};
 }
 
 const viewLabels = {
