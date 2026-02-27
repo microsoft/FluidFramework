@@ -407,7 +407,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 // @public
 export interface ITelemetryBaseLogger {
-    minLogLevel?: LogLevel;
+    readonly minLogLevel?: LogLevel;
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
