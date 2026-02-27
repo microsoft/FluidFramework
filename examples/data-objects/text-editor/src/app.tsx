@@ -82,7 +82,7 @@ interface DualUserViews {
 }
 
 async function createAndAttachNewContainer(client: AzureClient): Promise<{
-	container: IFluidContainer;
+	container: IFluidContainer<typeof containerSchema>;
 	containerId: string;
 	treeView: TreeView<typeof TextEditorRoot>;
 }> {
@@ -111,7 +111,7 @@ async function loadExistingContainer(
 	client: AzureClient,
 	containerId: string,
 ): Promise<{
-	container: IFluidContainer;
+	container: IFluidContainer<typeof containerSchema>;
 	treeView: TreeView<typeof TextEditorRoot>;
 }> {
 	const { container } = await client.getContainer(containerId, containerSchema, "2");
