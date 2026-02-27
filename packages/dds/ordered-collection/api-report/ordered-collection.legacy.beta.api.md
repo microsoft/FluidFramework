@@ -23,6 +23,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
+    // (undocumented)
     protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
     // (undocumented)
     protected release(acquireId: string): void;

@@ -27,6 +27,8 @@ import {
 	type SchemaChange,
 	intoDelta,
 	DefaultRevisionReplacer,
+	type FieldBatchCodec,
+	FieldBatchFormatVersion,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,
@@ -51,9 +53,10 @@ const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
 	minVersionForCollab: currentVersion,
 };
-const fieldBatchCodec = {
+const fieldBatchCodec: FieldBatchCodec = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
+	writeVersion: FieldBatchFormatVersion.v2,
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);

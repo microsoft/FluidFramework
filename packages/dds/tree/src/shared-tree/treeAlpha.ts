@@ -26,7 +26,7 @@ import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	isTreeValue,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	mapTreeFromCursor,
 	TreeCompressionStrategy,
 	type FieldBatch,
@@ -597,9 +597,10 @@ export interface ObservationResults<TResult> {
 class NodeSubscription {
 	/**
 	 * If undefined, subscribes to all keys.
+	 * If "deep", subscribes to all changes in the subtree.
 	 * Otherwise only subscribes to the keys in the set.
 	 */
-	private keys: Set<FieldKey> | undefined;
+	private keys: Set<FieldKey> | undefined | "deep";
 	private readonly unsubscribe: () => void;
 	private constructor(
 		private readonly onInvalidation: () => void,
@@ -610,6 +611,9 @@ class NodeSubscription {
 		assert(node instanceof TreeNode, 0xc54 /* Unexpected leaf value */);
 
 		const handler = (data: NodeChangedData): void => {
+			if (this.keys === "deep") {
+				return;
+			}
 			if (this.keys === undefined || data.changedProperties === undefined) {
 				this.onInvalidation();
 			} else {
@@ -630,7 +634,18 @@ class NodeSubscription {
 				}
 			}
 		};
-		this.unsubscribe = TreeBeta.on(node, "nodeChanged", handler);
+
+		// TODO:Performance: It would be better to defer subscribing to events so that this can subscribe to the correct one instead of both.
+		const shallow = TreeBeta.on(node, "nodeChanged", handler);
+		const deep = TreeBeta.on(node, "treeChanged", () => {
+			if (this.keys === "deep") {
+				this.onInvalidation();
+			}
+		});
+		this.unsubscribe = () => {
+			shallow();
+			deep();
+		};
 	}
 
 	/**
@@ -642,18 +657,39 @@ class NodeSubscription {
 	): { observer: Observer; unsubscribe: () => void } {
 		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
 		const observer: Observer = {
-			observeNodeFields(flexNode: FlexTreeNode): void {
+			observeNodeDeep(flexNode: FlexTreeNode): void {
 				if (flexNode.value !== undefined) {
-					// Leaf value, nothing to observe.
+					// Leaf value: the set of fields (and thus their content) is always empty, and cannot change, so no need to subscribe.
 					return;
 				}
+
+				const subscription = subscriptions.get(flexNode);
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = "deep";
+					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node.
+					subscription.keys = "deep"; // Now subscribed to subtree changes (deep observation).
+				}
+			},
+			observeNodeFields(flexNode: FlexTreeNode): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value: the set of fields is always empty, and cannot change, so no need to subscribe.
+					return;
+				}
+
+				// Subscribe to any change to any field to ensure that any change which empties or fills a field will invalidate.
+				// This could be more targeted by detecting specifically edits which change the emptiness of fields if desired.
 				const subscription = subscriptions.get(flexNode);
 				if (subscription === undefined) {
 					const newSubscription = new NodeSubscription(invalidate, flexNode);
 					subscriptions.set(flexNode, newSubscription);
 				} else {
 					// Already subscribed to this node.
-					subscription.keys = undefined; // Now subscribed to all keys.
+					if (subscription.keys instanceof Set) {
+						subscription.keys = undefined; // Now subscribed to all keys.
+					}
 				}
 			},
 			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
@@ -667,10 +703,12 @@ class NodeSubscription {
 					newSubscription.keys = new Set([key]);
 					subscriptions.set(flexNode, newSubscription);
 				} else {
-					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
-					// TODO:Performance: due to how JavaScript set ordering works,
-					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
-					subscription.keys?.add(key);
+					// Already subscribed to this node: if not subscribed to all keys or "deep", subscribe to this one.
+					if (subscription.keys instanceof Set) {
+						// TODO:Performance: due to how JavaScript set ordering works,
+						// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
+						subscription.keys.add(key);
+					}
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {
@@ -866,7 +904,7 @@ export const TreeAlpha: TreeAlpha = {
 		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const codec = makeFieldBatchCodec({
+		const codec = fieldBatchCodecBuilder.build({
 			jsonValidator: FormatValidatorNoOp,
 			minVersionForCollab: options.minVersionForCollab,
 		});
@@ -888,7 +926,8 @@ export const TreeAlpha: TreeAlpha = {
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
-		return result;
+		// TODO: codecs should better track which ones can contain handles, and which cannot. When done properly, casts like this can be removed.
+		return result as JsonCompatible<IFluidHandle>;
 	},
 
 	importCompressed<const TSchema extends ImplicitFieldSchema>(

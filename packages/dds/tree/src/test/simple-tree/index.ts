@@ -3,8 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export {
-	type Adapters,
-	type TreeAdapter,
-	AdaptedViewSchema,
-} from "./view.js";
+export { describeHydration, hydrateNode } from "./utils.js";

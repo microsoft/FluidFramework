@@ -33,7 +33,7 @@ describe("TransactionStacks", () => {
 		const transaction = new TransactionStack();
 		let started = false;
 		transaction.events.on("started", () => {
-			assert.equal(transaction.isInProgress(), true);
+			assert.equal(transaction.size, 1);
 			started = true;
 		});
 		transaction.start();
@@ -44,7 +44,7 @@ describe("TransactionStacks", () => {
 		const transaction = new TransactionStack();
 		let aborting = false;
 		transaction.events.on("aborting", () => {
-			assert.equal(transaction.isInProgress(), true);
+			assert.equal(transaction.size, 1);
 			aborting = true;
 		});
 		transaction.start();
@@ -56,7 +56,7 @@ describe("TransactionStacks", () => {
 		const transaction = new TransactionStack();
 		let committing = false;
 		transaction.events.on("committing", () => {
-			assert.equal(transaction.isInProgress(), true);
+			assert.equal(transaction.size, 1);
 			committing = true;
 		});
 		transaction.start();
@@ -66,22 +66,39 @@ describe("TransactionStacks", () => {
 
 	it("report whether or not a transaction is in progress", () => {
 		const transaction = new TransactionStack();
-		assert.equal(transaction.isInProgress(), false);
+		assert.equal(transaction.size, 0);
 		transaction.start();
-		assert.equal(transaction.isInProgress(), true);
+		assert.equal(transaction.size, 1);
 		transaction.start();
-		assert.equal(transaction.isInProgress(), true);
+		assert.equal(transaction.size, 2);
 		transaction.commit();
-		assert.equal(transaction.isInProgress(), true);
+		assert.equal(transaction.size, 1);
 		transaction.abort();
-		assert.equal(transaction.isInProgress(), false);
+		assert.equal(transaction.size, 0);
+	});
+
+	it("report the number of transactions in progress", () => {
+		const transaction = new TransactionStack();
+		assert.equal(transaction.size, 0);
+		transaction.start();
+		assert.equal(transaction.size, 1);
+		transaction.start();
+		assert.equal(transaction.size, 2);
+		transaction.start();
+		assert.equal(transaction.size, 3);
+		transaction.commit();
+		assert.equal(transaction.size, 2);
+		transaction.abort();
+		assert.equal(transaction.size, 1);
+		transaction.commit();
+		assert.equal(transaction.size, 0);
 	});
 
 	it("run a function when a transaction begins", () => {
 		let invoked = 0;
 		const transaction = new TransactionStack((): void => {
 			invoked += 1;
-			assert.equal(transaction.isInProgress(), false);
+			assert.equal(transaction.size, 0);
 		});
 		transaction.start();
 		assert.equal(invoked, 1);
@@ -91,7 +108,7 @@ describe("TransactionStacks", () => {
 		let invoked = 0;
 		const transaction = new TransactionStack((): void => {
 			invoked += 1;
-			assert.equal(transaction.isInProgress(), invoked > 1);
+			assert.equal(transaction.size, invoked - 1);
 		});
 		transaction.start();
 		assert.equal(invoked, 1);
@@ -107,15 +124,15 @@ describe("TransactionStacks", () => {
 		let invokedInner2 = 0;
 		const transaction: TransactionStack = new TransactionStack(() => {
 			invokedOuter += 1;
-			assert.equal(transaction.isInProgress(), false);
+			assert.equal(transaction.size, 0);
 			return {
 				onPush: () => {
 					invokedInner1 += 1;
-					assert.equal(transaction.isInProgress(), true);
+					assert.equal(transaction.size, 1);
 					return {
 						onPush: () => {
 							invokedInner2 += 1;
-							assert.equal(transaction.isInProgress(), true);
+							assert.equal(transaction.size, invokedInner2 + 1);
 						},
 					};
 				},
@@ -147,19 +164,19 @@ describe("TransactionStacks", () => {
 			return {
 				onPop: () => {
 					invokedOuter += 1;
-					assert.equal(transaction.isInProgress(), false);
+					assert.equal(transaction.size, 0);
 				},
 				onPush: () => {
 					return {
 						onPop: () => {
 							invokedInner1 += 1;
-							assert.equal(transaction.isInProgress(), true);
+							assert.equal(transaction.size, 1);
 						},
 						onPush: () => {
 							return {
 								onPop: () => {
 									invokedInner2 += 1;
-									assert.equal(transaction.isInProgress(), true);
+									assert.equal(transaction.size, 2);
 								},
 							};
 						},
@@ -191,7 +208,7 @@ describe("TransactionStacks", () => {
 				onPop: (result) => {
 					invoked += 1;
 					assert.equal(result, TransactionResult.Abort);
-					assert.equal(transaction.isInProgress(), false);
+					assert.equal(transaction.size, 0);
 				},
 			};
 		});
@@ -208,7 +225,7 @@ describe("TransactionStacks", () => {
 				onPop: (result) => {
 					invoked += 1;
 					assert.equal(result, TransactionResult.Commit);
-					assert.equal(transaction.isInProgress(), false);
+					assert.equal(transaction.size, 0);
 				},
 			};
 		});
@@ -239,10 +256,7 @@ describe("TransactionStacks", () => {
 		assert.equal(transaction.disposed, false);
 		transaction.dispose();
 		assert.equal(transaction.disposed, true);
-		assert.throws(
-			() => transaction.isInProgress(),
-			validateAssertionError("Transactor is disposed"),
-		);
+		assert.throws(() => transaction.size, validateAssertionError("Transactor is disposed"));
 		assert.throws(() => transaction.start(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.commit(),

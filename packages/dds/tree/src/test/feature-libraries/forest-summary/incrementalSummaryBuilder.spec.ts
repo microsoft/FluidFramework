@@ -24,7 +24,6 @@ import {
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
-	ForestSummaryTrackingState,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
 import {
@@ -139,7 +138,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		});
 		it("returns ForestIncrementalSummaryBehavior.Incremental when fullTree is true", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			const incrementalSummaryBehavior = builder.startSummary({
 				fullTree: true,
@@ -148,7 +147,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				builder: new SummaryTreeBuilder(),
 			});
 			assert.equal(incrementalSummaryBehavior, ForestIncrementalSummaryBehavior.Incremental);
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.Tracking);
+			assert.equal(builder.isSummarizing, true);
 		});
 
 		it("throws when already tracking", () => {
@@ -162,7 +161,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				stringify,
 				builder: new SummaryTreeBuilder(),
 			});
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.Tracking);
+			assert.equal(builder.isSummarizing, true);
 
 			// Attempting to start another should throw
 			assert.throws(
@@ -175,14 +174,14 @@ describe("ForestIncrementalSummaryBuilder", () => {
 					}),
 				validateAssertionError(/Already tracking/),
 			);
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.Tracking);
+			assert.equal(builder.isSummarizing, true);
 		});
 	});
 
 	describe("completeSummary", () => {
 		it("returns tree without incremental chunks when incrementalSummaryContext is undefined", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 			const summaryTreeBuilder = new SummaryTreeBuilder();
 			builder.completeSummary({
 				incrementalSummaryContext: undefined,
@@ -193,12 +192,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const summary = summaryTreeBuilder.getSummaryTree();
 			// The summary tree should only contain the forest top-level content blob.
 			assert.equal(Object.keys(summary.summary.tree).length, 1);
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 		});
 
 		it("returns tree with incremental chunks when incremental field is encoded", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			const summaryTreeBuilder = new SummaryTreeBuilder();
 			builder.startSummary({
@@ -217,12 +216,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const summary = summaryTreeBuilder.getSummaryTree();
 			// The summary tree should contain the forest top-level content blob and incremental summary chunk node.
 			assert.equal(Object.keys(summary.summary.tree).length, 2);
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 		});
 
 		it("clears tracking state when called after starting summary", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 			const localIncrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			const summaryTreeBuilder = new SummaryTreeBuilder();
 			builder.startSummary({
@@ -231,7 +230,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				stringify,
 				builder: summaryTreeBuilder,
 			});
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.Tracking);
+			assert.equal(builder.isSummarizing, true);
 
 			builder.completeSummary({
 				incrementalSummaryContext: localIncrementalSummaryContext,
@@ -239,12 +238,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder,
 			});
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 		});
 
 		it("throws when not tracking summary", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 			const localIncrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			assert.throws(
 				() =>
@@ -256,7 +255,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 					}),
 				validateAssertionError(/Not tracking/),
 			);
-			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
+			assert.equal(builder.isSummarizing, false);
 		});
 	});
 

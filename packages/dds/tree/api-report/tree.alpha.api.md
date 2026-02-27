@@ -711,6 +711,12 @@ export enum KeyEncodingOptions {
     usePropertyKeys = "usePropertyKeys"
 }
 
+// @alpha @sealed
+export interface LabelTree {
+    label: unknown;
+    sublabels: LabelTree[];
+}
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -730,6 +736,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
+    readonly labels: TransactionLabels;
 }
 
 // @public @sealed
@@ -900,6 +907,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getRevertible?: undefined;
     readonly isLocal: false;
     readonly label?: undefined;
+    readonly labels: TransactionLabels;
 }
 
 // @alpha
@@ -1194,7 +1202,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
-// @alpha @input
+// @beta @input
 export interface SnapshotFileSystem {
     join(parentPath: string, childPath: string): string;
     mkdirSync(dir: string, options: {
@@ -1207,10 +1215,10 @@ export interface SnapshotFileSystem {
     }): void;
 }
 
-// @alpha
+// @beta
 export function snapshotSchemaCompatibility(options: SnapshotSchemaCompatibilityOptions): void;
 
-// @alpha @input
+// @beta @input
 export interface SnapshotSchemaCompatibilityOptions {
     readonly fileSystem: SnapshotFileSystem;
     readonly minVersionForCollaboration: string;
@@ -1451,6 +1459,23 @@ export namespace TableSchema {
 }
 
 // @alpha
+export namespace TextAsTree {
+    export interface Members {
+        characterCount(): number;
+        characters(): Iterable<string>;
+        charactersCopy(): string[];
+        fullString(): string;
+        insertAt(index: number, additionalCharacters: string): void;
+        removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
+    }
+    export interface Statics {
+        fromString(value: string): Tree;
+    }
+    const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
+    export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
+}
+
+// @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
 // @alpha
@@ -1467,6 +1492,11 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @alpha @sealed
 export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
+
+// @alpha @sealed
+export type TransactionLabels = Set<unknown> & {
+    tree?: LabelTree;
+};
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;

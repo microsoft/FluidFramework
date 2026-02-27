@@ -788,9 +788,6 @@ export class SharedDirectory
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {

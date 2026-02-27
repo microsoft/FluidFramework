@@ -332,11 +332,12 @@ export class SchematizingSimpleTreeView<
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.ensureUndisposed();
 		const { checkout } = this;
-		if (isAsync && checkout.transaction.isInProgress()) {
+		if (isAsync && checkout.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
 			);
 		}
+		checkout.pushLabelFrame(params?.label);
 		checkout.transaction.start();
 
 		// Validate preconditions before running the transaction callback.
@@ -362,6 +363,7 @@ export class SchematizingSimpleTreeView<
 		)?.value;
 
 		if (rollback === true) {
+			checkout.popLabelFrame(true);
 			checkout.transaction.abort();
 			return value === undefined
 				? { success: false }
@@ -375,6 +377,7 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
+		checkout.popLabelFrame(false);
 		checkout.runWithTransactionLabel(() => {
 			checkout.transaction.commit();
 		}, params?.label);

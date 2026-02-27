@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { TextAsTree, treeConfiguration } from "./schema.js";
-export { TextEditorFactory } from "./textEditorFactory.js";
+export { TextAsTree } from "./schema.js";
 export { MainView as PlainTextMainView } from "./plainTextView.js";
 export { MainView as QuillMainView, type MainViewProps } from "./quillView.js";
