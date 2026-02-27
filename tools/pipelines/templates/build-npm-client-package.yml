@@ -437,8 +437,8 @@ extends:
                           echo "Bundle size comparison completed successfully."
                         else
                           exit_code=$?
-                          if grep -q "Bad credentials" /tmp/bundle-analysis.log; then
-                            echo "##[warning]Bundle size comparison skipped — GitHub token (githubPublicRepoSecret) returned 'Bad credentials'. Token may need rotation."
+                          if grep -qE "Bad credentials|forbids access via a personal access token" /tmp/bundle-analysis.log; then
+                            echo "##[warning]Bundle size comparison skipped — GitHub token (githubPublicRepoSecret) was rejected. Token may need rotation or its lifetime may exceed enterprise policy limits."
                           else
                             echo "##[error]Bundle size comparison failed (exit code $exit_code). See log above."
                             exit 1
