@@ -421,18 +421,29 @@ extends:
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-                  - task: Npm@1
+                  - task: Bash@3
                     displayName: (PR only) Compare bundle sizes against baseline
                     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-                    continueOnError: true
                     env:
                       ADO_API_TOKEN: $(System.AccessToken)
                       DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
                       TARGET_BRANCH_NAME: '$(targetBranchName)'
                     inputs:
-                      command: custom
-                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:run'
+                      targetType: inline
+                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                      script: |
+                        set -uo pipefail
+                        if npm run bundle-analysis:run 2>&1 | tee /tmp/bundle-analysis.log; then
+                          echo "Bundle size comparison completed successfully."
+                        else
+                          exit_code=$?
+                          if grep -qi "Bad credentials\|401\|authentication\|DANGER_GITHUB_API_TOKEN" /tmp/bundle-analysis.log; then
+                            echo "##[warning]Bundle size comparison failed due to GitHub authentication (exit code $exit_code). The GitHub token (githubPublicRepoSecret) may need to be rotated."
+                            echo "##[warning]Skipping bundle size comparison — this does not affect build correctness."
+                          else
+                            echo "##[warning]Bundle size comparison failed (exit code $exit_code). See log above for details."
+                          fi
+                        fi
 
                   - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
                       - task: Bash@3
