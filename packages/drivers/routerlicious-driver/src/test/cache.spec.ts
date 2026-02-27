@@ -54,4 +54,34 @@ describe("InMemoryCache", () => {
 		assert.equal(await cache.get("two"), 2.1, "'two' shouldn't be expired after 5ms");
 		assert.equal(await cache.get("three"), 3, "'three' shouldn't be expired after 5ms");
 	});
+
+	it("clear removes all entries", async () => {
+		cache = new InMemoryCache<number>();
+
+		await cache.put("key1", 1);
+		await cache.put("key2", 2);
+		await cache.put("key3", 3);
+
+		cache.clear();
+
+		assert.equal(await cache.get("key1"), undefined, "key1 should be removed");
+		assert.equal(await cache.get("key2"), undefined, "key2 should be removed");
+		assert.equal(await cache.get("key3"), undefined, "key3 should be removed");
+	});
+
+	it("removeByPrefix removes only entries with matching prefix", async () => {
+		cache = new InMemoryCache<number>();
+
+		await cache.put("doc1:blob1", 1);
+		await cache.put("doc1:blob2", 2);
+		await cache.put("doc2:blob1", 3);
+		await cache.put("doc2:blob2", 4);
+
+		cache.removeByPrefix("doc1:");
+
+		assert.equal(await cache.get("doc1:blob1"), undefined, "doc1:blob1 should be removed");
+		assert.equal(await cache.get("doc1:blob2"), undefined, "doc1:blob2 should be removed");
+		assert.equal(await cache.get("doc2:blob1"), 3, "doc2:blob1 should remain");
+		assert.equal(await cache.get("doc2:blob2"), 4, "doc2:blob2 should remain");
+	});
 });

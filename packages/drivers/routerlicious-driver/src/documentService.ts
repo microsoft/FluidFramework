@@ -96,7 +96,9 @@ export class DocumentService
 		return this._policies;
 	}
 
-	public dispose(): void {}
+	public dispose(): void {
+		this.documentStorageService?.dispose();
+	}
 
 	/**
 	 * Connects to a storage endpoint for snapshot service.
