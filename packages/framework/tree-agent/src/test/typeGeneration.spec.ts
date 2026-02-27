@@ -311,6 +311,47 @@ type MapWithProperty = Map<string, string> & {
 		);
 	});
 
+	it("renames user schemas that collide with built-in primitive type names", () => {
+		const sf1 = new SchemaFactory("user");
+
+		// User defines schemas with names matching built-in primitives
+		class UserNull extends sf1.object("null", { value: sf1.string }) {}
+		class UserString extends sf1.object("string", { value: sf1.number }) {}
+
+		class Container extends sf.object("Container", {
+			userNull: UserNull,
+			userString: UserString,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: Container }));
+		view.initialize({
+			userNull: { value: "hello" },
+			userString: { value: 42 },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		// User schemas named "null" and "string" should be renamed to avoid shadowing primitives
+		assert.ok(
+			schemaText.includes("interface null_1 {"),
+			`User schema "null" should be renamed to "null_1", got:\n${schemaText}`,
+		);
+		assert.ok(
+			schemaText.includes("interface string_1 {"),
+			`User schema "string" should be renamed to "string_1", got:\n${schemaText}`,
+		);
+		// The field types referencing these renamed schemas should use the new names
+		assert.ok(
+			schemaText.includes("userNull: null_1;"),
+			`Field referencing user "null" schema should use "null_1", got:\n${schemaText}`,
+		);
+		assert.ok(
+			schemaText.includes("userString: string_1;"),
+			`Field referencing user "string" schema should use "string_1", got:\n${schemaText}`,
+		);
+	});
+
 	it("handles schema short name collisions", () => {
 		const sf1 = new SchemaFactory("scope1");
 		const sf2 = new SchemaFactory("scope2");

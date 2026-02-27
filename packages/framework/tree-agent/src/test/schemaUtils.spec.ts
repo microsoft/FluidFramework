@@ -223,41 +223,49 @@ describe("unqualifySchema", () => {
 
 describe("isNamedSchema", () => {
 	it("returns true for named object schema", () => {
-		assert.equal(isNamedSchema(TestObject.identifier), true);
+		assert.equal(isNamedSchema(TestObject), true);
 	});
 
 	it("returns true for named array schema", () => {
-		assert.equal(isNamedSchema(NamedStringArray.identifier), true);
+		assert.equal(isNamedSchema(NamedStringArray), true);
 	});
 
 	it("returns true for named map schema", () => {
-		assert.equal(isNamedSchema(NamedStringMap.identifier), true);
+		assert.equal(isNamedSchema(NamedStringMap), true);
 	});
 
 	it("returns true for named record schema", () => {
-		assert.equal(isNamedSchema(NamedStringRecord.identifier), true);
+		assert.equal(isNamedSchema(NamedStringRecord), true);
 	});
 
-	it("returns false for primitive schema identifiers", () => {
-		assert.equal(isNamedSchema("com.fluidframework.leaf.string"), false);
-		assert.equal(isNamedSchema("string"), false);
-		assert.equal(isNamedSchema("com.fluidframework.leaf.number"), false);
-		assert.equal(isNamedSchema("number"), false);
-		assert.equal(isNamedSchema("com.fluidframework.leaf.boolean"), false);
-		assert.equal(isNamedSchema("boolean"), false);
-		assert.equal(isNamedSchema("com.fluidframework.leaf.null"), false);
-		assert.equal(isNamedSchema("null"), false);
-		assert.equal(isNamedSchema("com.fluidframework.leaf.handle"), false);
-		assert.equal(isNamedSchema("handle"), false);
+	it("returns false for primitive/leaf schemas", () => {
+		assert.equal(isNamedSchema(sf.string), false);
+		assert.equal(isNamedSchema(sf.number), false);
+		assert.equal(isNamedSchema(sf.boolean), false);
+		assert.equal(isNamedSchema(sf.null), false);
 	});
 
 	it("returns false for inline array/map/record schemas", () => {
 		const InlineArray = sf.array(sf.string);
 		const InlineMap = sf.map(sf.string);
 		const InlineRecord = sf.record(sf.string);
-		assert.equal(isNamedSchema(InlineArray.identifier), false);
-		assert.equal(isNamedSchema(InlineMap.identifier), false);
-		assert.equal(isNamedSchema(InlineRecord.identifier), false);
+		assert.equal(isNamedSchema(InlineArray), false);
+		assert.equal(isNamedSchema(InlineMap), false);
+		assert.equal(isNamedSchema(InlineRecord), false);
+	});
+
+	it("returns true for user-defined schemas named after primitives", () => {
+		const sfUser = new SchemaFactoryAlpha("user.scope");
+		class UserNull extends sfUser.object("null", { value: sfUser.string }) {}
+		class UserString extends sfUser.object("string", { value: sfUser.string }) {}
+		class UserBoolean extends sfUser.object("boolean", { value: sfUser.string }) {}
+		class UserNumber extends sfUser.object("number", { value: sfUser.string }) {}
+		class UserHandle extends sfUser.object("handle", { value: sfUser.string }) {}
+		assert.equal(isNamedSchema(UserNull), true);
+		assert.equal(isNamedSchema(UserString), true);
+		assert.equal(isNamedSchema(UserBoolean), true);
+		assert.equal(isNamedSchema(UserNumber), true);
+		assert.equal(isNamedSchema(UserHandle), true);
 	});
 });
 
@@ -280,7 +288,7 @@ describe("findNamedSchemas", () => {
 		}) {}
 
 		const identifiers: string[] = [];
-		for (const s of findSchemas(Root, (schema) => isNamedSchema(schema.identifier))) {
+		for (const s of findSchemas(Root, (schema) => isNamedSchema(schema))) {
 			identifiers.push((s as { identifier: string }).identifier);
 		}
 		assert.equal(identifiers.length, new Set(identifiers).size);
@@ -405,5 +413,29 @@ describe("IdentifierCollisionResolver", () => {
 		assert.equal(result[3], "Map<string, TestObject>[]");
 		assert.equal(result[4], "Map<string, Record<string, number>>");
 		assert.equal(result[5], "Record<string, string[]>");
+	});
+
+	it("renames schemas that collide with reserved names, starting at _1", () => {
+		const resolver = new IdentifierCollisionResolver(["string", "number", "boolean", "null"]);
+		const userNull = createSchema("user", "null");
+		const userString = createSchema("user", "string");
+		assert.equal(resolver.resolve(userNull), "null_1");
+		assert.equal(resolver.resolve(userString), "string_1");
+	});
+
+	it("does not affect non-reserved names when reserved names are set", () => {
+		const resolver = new IdentifierCollisionResolver(["string", "number", "boolean", "null"]);
+		const foo = createSchema("scope", "Foo");
+		const bar = createSchema("scope", "Bar");
+		assert.equal(resolver.resolve(foo), "Foo");
+		assert.equal(resolver.resolve(bar), "Bar");
+	});
+
+	it("handles multiple user schemas colliding with the same reserved name", () => {
+		const resolver = new IdentifierCollisionResolver(["null"]);
+		const userNull1 = createSchema("scope1", "null");
+		const userNull2 = createSchema("scope2", "null");
+		assert.equal(resolver.resolve(userNull1), "null_1");
+		assert.equal(resolver.resolve(userNull2), "null_2");
 	});
 });

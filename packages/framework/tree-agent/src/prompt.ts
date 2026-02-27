@@ -5,7 +5,7 @@
 
 import { oob } from "@fluidframework/core-utils/internal";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
-import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeMapNode, TreeNodeSchema } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema, ValueSchema } from "@fluidframework/tree/internal";
@@ -39,12 +39,20 @@ export function getPrompt(args: {
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
 	const allSchemas = findSchemas(schema);
-	const resolver = new IdentifierCollisionResolver();
+	const reservedNames = ["string", "number", "boolean", "null", fluidHandleTypeName];
+	const resolver = new IdentifierCollisionResolver(reservedNames);
 	for (const schemaNode of allSchemas) {
-		resolver.resolve(schemaNode);
+		if (schemaNode.kind !== NodeKind.Leaf) {
+			resolver.resolve(schemaNode);
+		}
 	}
 
-	const rootTypeUnion = `${rootTypes.map((t) => resolver.resolve(t) ?? getFriendlyName(t)).join(" | ")}`;
+	/** Resolves a schema's display name, bypassing the collision resolver for leaf/primitive schemas. */
+	function resolveName(s: TreeNodeSchema): string {
+		return s.kind === NodeKind.Leaf ? getFriendlyName(s) : resolver.resolve(s);
+	}
+
+	const rootTypeUnion = `${rootTypes.map((t) => resolveName(t)).join(" | ")}`;
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
@@ -298,6 +306,8 @@ Finally, double check that the edits would accomplish the user's request (if it 
 
 `;
 
+	const rootSchemaName = field === undefined ? "undefined" : resolveName(Tree.schema(field));
+
 	const prompt = `You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.
 The JSON tree adheres to the following Typescript schema:
 
@@ -315,7 +325,7 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : resolver.resolve(Tree.schema(field))}\`) is:
+The current state of \`context.root\` (a \`${rootSchemaName}\`) is:
 
 \`\`\`JSON
 ${stringifyTree(field, resolver)}

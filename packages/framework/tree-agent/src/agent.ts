@@ -264,7 +264,7 @@ export function createContext<TSchema extends ImplicitFieldSchema>(
 	// Stick the tree schema constructors on an object passed to the function so that the LLM can create new nodes.
 	const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
 	const is: Record<string, <T extends TreeNode>(input: unknown) => input is T> = {};
-	for (const schema of findSchemas(subTree.schema, (s) => isNamedSchema(s.identifier))) {
+	for (const schema of findSchemas(subTree.schema, (s) => isNamedSchema(s))) {
 		const name = unqualifySchema(schema.identifier);
 		create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
 		is[name] = <T extends TreeNode>(input: unknown): input is T => Tree.is(input, schema);
