@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
-import * as semver from "semver";
 
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
 import { BaseCommandWithBuildProject } from "../../../library/commands/base.js";
 import { getVersionsFromTags } from "../../../library/git.js";
-
-type MajorVersion = number;
+import { isLatestInMajor } from "../../../library/latestVersions.js";
 
 export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 	typeof LatestVersionsCommand
@@ -61,50 +58,36 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 			this.error(`No versions found for ${releaseGroup.name}`);
 		}
 
-		// Filter out non-internal version schemes
-		const stableVersions = versions.filter((v) => {
-			return !isInternalVersionScheme(v);
-		});
+		const result = isLatestInMajor(versions, versionInput.version);
 
-		// Sort the semver versions ordered from highest to lowest
-		const sortedByVersion = stableVersions.sort((a, b) => semver.rcompare(a, b));
-
-		const inputMajorVersion: MajorVersion = semver.major(versionInput.version);
-
-		for (const v of sortedByVersion) {
-			const majorVersion: MajorVersion = semver.major(v);
-
-			// Since sortedByVersion is sorted, the first encountered version is the highest one
-			if (majorVersion === inputMajorVersion) {
-				if (v === versionInput.version) {
-					// Check if the input version is the latest version for the major version
-					this.log(
-						`Version ${versionInput.version} is the latest version for major version ${majorVersion}`,
-					);
-					this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
-					this.log(
-						`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`,
-					);
-					return;
-				}
-
-				// If versions do not match on first major version encounter, then the input version is not the latest
-				this.log(
-					`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${v}`,
-				);
-				this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
-				this.log(`##vso[task.setvariable variable=majorVersion;isoutput=true]${majorVersion}`);
-				return;
-			}
+		if (result.isLatest) {
+			this.log(
+				`Version ${versionInput.version} is the latest version for major version ${result.majorVersion}`,
+			);
+			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+			this.log(
+				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+			);
+			return;
 		}
 
-		// Error if no major version corresponds to input version
+		if (result.latestVersion !== undefined) {
+			this.log(
+				`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${result.latestVersion}`,
+			);
+			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+			this.log(
+				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+			);
+			return;
+		}
+
 		this.log(
 			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
 		);
 		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
 		this.log(
-			`##vso[task.setvariable variable=majorVersion;isoutput=true]${inputMajorVersion}`,
+			`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
 		);
 	}
 }
