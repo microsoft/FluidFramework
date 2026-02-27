@@ -13,12 +13,10 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-duplicates
-import type { TreeNode, WithType } from "../simple-tree/index.js";
-// Add some unused imports which show up in the generated d.ts file.
-// This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
+// Add some unused type imports which show up in the generated .d.ts file.
+// This prevents inline imports in the generated typings / API reports.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
-import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
+import type { NodeKind, TreeNode, TreeNodeSchema, WithType } from "../simple-tree/index.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
@@ -34,8 +32,8 @@ class TextNode
 			TreeArrayNode.spread(charactersFromString(additionalCharacters)),
 		);
 	}
-	public removeRange(index: number | undefined, end: number | undefined): void {
-		this.content.removeRange(index, end);
+	public removeRange(startIndex: number | undefined, endIndex: number | undefined): void {
+		this.content.removeRange(startIndex, endIndex);
 	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
@@ -78,9 +76,9 @@ class TextNode
 	}
 
 	public static fromString(value: string): TextNode {
-		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
-		// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
-		// Thus the array construction here is necessary to avoid a runtime error.
+		// Constructing an ArrayNode from an iterator is generally supported, so an intermediate array would usually be unnecessary.
+		// However, we explicitly disallow using a `string` directly as an iterable here to avoid accidental misinterpretation.
+		// Convert to an array first to avoid that runtime error.
 		return new TextNode({ content: [...charactersFromString(value)] });
 	}
 }

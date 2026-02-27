@@ -136,12 +136,11 @@ export class ForestSummarizer
 		const { stringify, fullTree = false, incrementalSummaryContext, builder } = props;
 
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
-		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
-			new Map();
+		const fieldMap = new Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor>();
 		// TODO: Encode all detached fields in one operation for better performance and compression
 		forEachField(rootCursor, (cursor) => {
 			const key = cursor.getFieldKey();
-			const innerCursor = this.forest.allocateCursor("getTreeString");
+			const innerCursor = this.forest.allocateCursor("forestSummary");
 			assert(
 				this.forest.tryMoveCursorToField({ fieldKey: key, parent: undefined }, innerCursor) ===
 					TreeNavigationResult.Ok,
@@ -150,32 +149,35 @@ export class ForestSummarizer
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
 
-		// Let the incremental summary builder know that we are starting a new summary.
-		// It returns whether incremental encoding is enabled.
-		const incrementalSummaryBehavior = this.incrementalSummaryBuilder.startSummary({
-			fullTree,
-			incrementalSummaryContext,
-			stringify,
-			builder,
-		});
-		const encoderContext: FieldBatchEncodingContext = {
-			...this.encoderContext,
-			incrementalEncoderDecoder:
-				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
-					? this.incrementalSummaryBuilder
-					: undefined,
-		};
-		const encoded = this.codec.encode(fieldMap, encoderContext);
-		for (const value of fieldMap.values()) {
-			value.free();
-		}
+		try {
+			// Let the incremental summary builder know that we are starting a new summary.
+			// It returns whether incremental encoding is enabled.
+			const incrementalSummaryBehavior = this.incrementalSummaryBuilder.startSummary({
+				fullTree,
+				incrementalSummaryContext,
+				stringify,
+				builder,
+			});
+			const encoderContext: FieldBatchEncodingContext = {
+				...this.encoderContext,
+				incrementalEncoderDecoder:
+					incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
+						? this.incrementalSummaryBuilder
+						: undefined,
+			};
+			const encoded = this.codec.encode(fieldMap, encoderContext);
 
-		this.incrementalSummaryBuilder.completeSummary({
-			incrementalSummaryContext,
-			forestSummaryRootContent: stringify(encoded),
-			forestSummaryRootContentKey: this.forestRootSummaryContentKey,
-			builder,
-		});
+			this.incrementalSummaryBuilder.completeSummary({
+				incrementalSummaryContext,
+				forestSummaryRootContent: stringify(encoded),
+				forestSummaryRootContentKey: this.forestRootSummaryContentKey,
+				builder,
+			});
+		} finally {
+			for (const cursor of fieldMap.values()) {
+				cursor.free();
+			}
+		}
 	}
 
 	protected async loadInternal(

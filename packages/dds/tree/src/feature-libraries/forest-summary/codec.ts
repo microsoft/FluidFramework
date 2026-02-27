@@ -40,9 +40,9 @@ function makeForestSummarizerCodec(
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): FormatCommon => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
-			for (const [key, value] of data) {
+			for (const [key, cursor] of data) {
 				keys.push(key);
-				fields.push(value);
+				fields.push(cursor);
 			}
 			return {
 				keys,
@@ -51,7 +51,7 @@ function makeForestSummarizerCodec(
 			};
 		},
 		decode: (data: FormatCommon, context: FieldBatchEncodingContext): FieldSet => {
-			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
+			const out = new Map<FieldKey, ITreeCursorSynchronous>();
 			const fields = fieldBatchCodec.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (const [index, field] of fields.entries()) {
