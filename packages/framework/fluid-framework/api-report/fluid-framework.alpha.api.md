@@ -1060,6 +1060,12 @@ export enum KeyEncodingOptions {
     usePropertyKeys = "usePropertyKeys"
 }
 
+// @alpha @sealed
+export interface LabelTree {
+    label: unknown;
+    sublabels: LabelTree[];
+}
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -1084,6 +1090,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
+    readonly labels: TransactionLabels;
 }
 
 // @public @sealed
@@ -1265,6 +1272,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getRevertible?: undefined;
     readonly isLocal: false;
     readonly label?: undefined;
+    readonly labels: TransactionLabels;
 }
 
 // @alpha
@@ -1873,6 +1881,11 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @alpha @sealed
 export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
+
+// @alpha @sealed
+export type TransactionLabels = Set<unknown> & {
+    tree?: LabelTree;
+};
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
