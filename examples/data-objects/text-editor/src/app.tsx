@@ -4,7 +4,15 @@
  */
 
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { toPropTreeNode } from "@fluidframework/react/alpha";
+import {
+	toPropTreeNode,
+	FormattedMainView,
+	PlainTextMainView,
+	PlainQuillView,
+	UndoRedoStacks,
+	type UndoRedo,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/react/internal";
 /**
  * InsecureTokenProvider is used here for local development and demo purposes only.
  * Do not use in production - implement proper authentication for production scenarios.
@@ -20,10 +28,6 @@ import "quill/dist/quill.snow.css";
 import * as React from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
-
-import { FormattedMainView } from "./formatted/index.js";
-import { PlainTextMainView, QuillMainView as PlainQuillView } from "./plain/index.js";
-import { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
 
 /**
  * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
@@ -53,12 +57,12 @@ const containerSchema = {
 
 const sf = new SchemaFactory("com.fluidframework.example.text-editor");
 
-class TextEditorRoot extends sf.object("TextEditorRoot", {
+export class TextEditorRoot extends sf.object("TextEditorRoot", {
 	plainText: TextAsTree.Tree,
 	formattedText: FormattedTextAsTree.Tree,
 }) {}
 
-const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
+export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
 
 function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 	return {
@@ -198,6 +202,7 @@ const UserPanel: React.FC<{
 		return () => undoRedo.dispose();
 	}, [undoRedo]);
 
+	// TODO: handle root invalidation, schema upgrades and out of schema documents.
 	const renderView = (): JSX.Element => {
 		const root = treeView.root;
 		return viewLabels[viewType].component(root, treeView, undoRedo);
@@ -229,7 +234,7 @@ const UserPanel: React.FC<{
 	);
 };
 
-const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
+export const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
 	const [viewType, setViewType] = React.useState<ViewType>("formatted");
 
 	return (

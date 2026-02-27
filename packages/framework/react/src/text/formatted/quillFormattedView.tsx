@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { type PropTreeNode, unwrapPropTreeNode } from "@fluidframework/react/alpha";
 import { Tree } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "@fluidframework/tree/alpha";
@@ -16,7 +15,8 @@ import Delta from "quill-delta";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import type { UndoRedo } from "../undoRedo.js";
+import { type PropTreeNode, unwrapPropTreeNode } from "../../propNode.js";
+import type { UndoRedo } from "../../undoRedo.js";
 
 /**
  * Represents a single operation in a Quill Delta.
@@ -39,16 +39,28 @@ interface QuillDelta {
 	ops?: QuillDeltaOp[];
 }
 
-/** Props for the FormattedMainView component. */
+/**
+ * Props for the FormattedMainView component.
+ * @input @internal
+ */
 export interface FormattedMainViewProps {
-	root: PropTreeNode<FormattedTextAsTree.Tree>;
+	readonly root: PropTreeNode<FormattedTextAsTree.Tree>;
 	/** Optional undo/redo stack for the editor. */
-	undoRedo?: UndoRedo;
+	readonly undoRedo?: UndoRedo;
 }
 
-/** Ref handle exposing undo/redo methods for the formatted editor. */
+/**
+ * Ref handle exposing undo/redo methods for the formatted editor.
+ * @input @internal
+ */
 export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 
+/**
+ * A React component for formatted text editing.
+ * @remarks
+ * Uses {@link @fluidframework/tree#FormattedTextAsTree.Tree} for the data-model and Quill for the rich text editor UI.
+ * @internal
+ */
 export const FormattedMainView = React.forwardRef<
 	FormattedEditorHandle,
 	FormattedMainViewProps
@@ -62,7 +74,7 @@ const sizeMap = { small: 10, large: 18, huge: 24 } as const;
 /** Reverse mapping: pixel values back to Quill size names for display. */
 const sizeReverse = { 10: "small", 18: "large", 24: "huge" } as const;
 /** Set of recognized font families for Quill. */
-const fontSet: Set<string> = new Set(["monospace", "serif", "sans-serif", "Arial"]);
+const fontSet = new Set<string>(["monospace", "serif", "sans-serif", "Arial"]);
 /** Default formatting values when no explicit format is specified. */
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */

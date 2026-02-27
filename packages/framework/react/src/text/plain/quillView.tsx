@@ -3,20 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { type PropTreeNode, withMemoizedTreeObservations } from "@fluidframework/react/alpha";
+import type { TextAsTree } from "@fluidframework/tree/internal";
 import Quill from "quill";
 import * as React from "react";
 
+import type { PropTreeNode } from "../../propNode.js";
+import { withMemoizedTreeObservations } from "../../useTree.js";
+
 import { syncTextToTree } from "./plainUtils.js";
-import type { TextAsTree } from "./schema.js";
 
 /**
  * Props for the MainView component.
+ * @input @alpha
  */
 export interface MainViewProps {
 	root: PropTreeNode<TextAsTree.Tree>;
 }
 
+/**
+ * A React component for plain text editing.
+ * @remarks
+ * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and Quill for the UI.
+ * @alpha
+ */
 export const MainView: React.FC<MainViewProps> = ({ root }) => {
 	return <TextEditorView root={root} />;
 };
