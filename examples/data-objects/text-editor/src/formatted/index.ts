@@ -5,7 +5,6 @@
 
 export {
 	FormattedTextAsTree,
-	FormattedTextEditorFactory,
 	FormattedMainView,
 	type FormattedMainViewProps,
 } from "./quillFormattedView.js";
