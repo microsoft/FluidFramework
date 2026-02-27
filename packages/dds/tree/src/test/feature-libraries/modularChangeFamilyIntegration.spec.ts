@@ -1993,6 +1993,83 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(composed, expected);
 		});
+
+		it("[return2, move1] and [move2, move3]", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(
+				family,
+				mintRevisionTag,
+				changeReceiver,
+				codecOptions,
+			);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.move(fieldAPath, 0, 1, fieldAPath, 2);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 3);
+			editor.move(fieldAPath, 2, 1, fieldAPath, 4);
+
+			const [move1Untagged, move2Untagged, move3Untagged] = getChanges();
+			const move1 = tagChangeInline(move1Untagged, tag1);
+			const move2Original = tagChangeInline(move2Untagged, tag2);
+			const move2 = tagChange(
+				family.rebase(
+					move2Original,
+					move1,
+					revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				),
+				tag2,
+			);
+
+			const move3 = tagChangeInline(move3Untagged, tag3);
+			const rollback2 = tagRollbackInverse(
+				family.invert(move2Original, true, tag4),
+				tag4,
+				tag2,
+			);
+
+			const composedA = makeAnonChange(family.compose([rollback2, move1]));
+			const composedB = makeAnonChange(family.compose([move2, move3]));
+
+			const composed = family.compose([composedA, composedB]);
+
+			const moveId2: ChangeAtomId = { revision: tag2, localId: brand(2) };
+			const moveId3: ChangeAtomId = { revision: tag3, localId: brand(4) };
+			const expected = Change.build(
+				{
+					family,
+					maxId: 5,
+					renames: [
+						{
+							oldId: moveId2,
+							newId: moveId3,
+							count: 1,
+							detachLocation: undefined,
+						},
+					],
+					revisions: [
+						{ revision: tag4, rollbackOf: tag2 },
+						{ revision: tag1 },
+						{ revision: tag2 },
+						{ revision: tag3 },
+					],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.rename(
+						1,
+						{ revision: tag2, localId: brand(2) },
+						{ revision: tag1, localId: brand(0) },
+					),
+					MarkMaker.skip(1),
+					MarkMaker.rename(1, { revision: tag1, localId: brand(1) }, moveId2),
+					MarkMaker.skip(1),
+					MarkMaker.detach(1, moveId2, { cellRename: moveId3 }),
+					MarkMaker.skip(1),
+					MarkMaker.attach(1, moveId3, { cellId: { revision: tag3, localId: brand(5) } }),
+				]),
+			);
+
+			assertEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {
