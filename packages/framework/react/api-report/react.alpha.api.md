@@ -27,18 +27,6 @@ export interface ObservationOptions {
     onInvalidation?: () => void;
 }
 
-// @alpha @input
-export interface PlainMainViewProps {
-    // (undocumented)
-    root: PropTreeNode<TextAsTree.Tree>;
-}
-
-// @alpha
-export const PlainQuillView: React_2.FC<PlainMainViewProps>;
-
-// @alpha
-export const PlainTextMainView: React_2.FC<PlainMainViewProps>;
-
 // @alpha
 export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {
 }

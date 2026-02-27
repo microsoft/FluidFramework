@@ -15,7 +15,7 @@ import type { MainViewProps } from "./quillView.js";
  * A React component for plain text editing.
  * @remarks
  * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
- * @alpha
+ * @internal
  */
 export const MainView: React.FC<MainViewProps> = ({ root }) => {
 	return <PlainTextEditorView root={root} />;
