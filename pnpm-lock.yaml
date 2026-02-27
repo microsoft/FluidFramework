@@ -3942,7 +3942,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
       quill:
-        specifier: ^2.0.2
+        specifier: ^2.0.3
         version: 2.0.3
       react:
         specifier: ^18.3.1
