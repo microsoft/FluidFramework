@@ -156,24 +156,19 @@ async function initFluid(): Promise<DualUserViews> {
 		console.log(`Loading document for both users: ${containerId}`);
 
 		// User 1 connects to existing document
-		const { container: container1, treeView: treeView1 } = await loadExistingContainer(
+		({ container: user1Container, treeView: user1View } = await loadExistingContainer(
 			client1,
 			containerId,
-		);
-		user1Container = container1;
-		user1View = treeView1;
+		));
 
 		console.log(`User 1 connected to document: ${containerId}`);
 	} else {
 		// User 1 creates the document
-		const {
-			container: container1,
-			treeView: treeView1,
-			containerId: newContainerId,
-		} = await createAndAttachNewContainer(client1);
-		user1Container = container1;
-		user1View = treeView1;
-		containerId = newContainerId;
+		({
+			container: user1Container,
+			treeView: user1View,
+			containerId,
+		} = await createAndAttachNewContainer(client1));
 
 		// eslint-disable-next-line require-atomic-updates
 		location.hash = containerId;
@@ -186,12 +181,10 @@ async function initFluid(): Promise<DualUserViews> {
 		connection: getConnectionConfig(user2Id),
 		logger: devtoolsLogger,
 	});
-	const { container: container2, treeView: treeView2 } = await loadExistingContainer(
+	const { container: user2Container, treeView: user2View } = await loadExistingContainer(
 		client2,
 		containerId,
 	);
-	const user2Container = container2;
-	const user2View = treeView2;
 
 	console.log(`User 2 connected to document: ${containerId}`);
 
