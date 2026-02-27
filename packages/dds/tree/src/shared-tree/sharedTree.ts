@@ -254,7 +254,6 @@ export class SharedTreeKernel
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			encoderContext,
 			options,
 			idCompressor,

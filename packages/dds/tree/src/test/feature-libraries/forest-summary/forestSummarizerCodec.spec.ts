@@ -32,9 +32,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV2 } from "../../../feature-libraries/forest-summary/formatV2.js";
+import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
@@ -65,11 +63,9 @@ const context = {
 
 const codecOld = forestCodecBuilder.build({
 	...codecOptionsOld,
-	fieldBatchCodec: fieldBatchCodecOld,
 });
 const codecCurrent = forestCodecBuilder.build({
 	...codecOptionsCurrent,
-	fieldBatchCodec: fieldBatchCodecCurrent,
 });
 
 const testFieldChunks: TreeChunk[] = chunkField(
@@ -98,7 +94,7 @@ const malformedData: [string, unknown][] = [
 const validData: [
 	string,
 	FieldSet,
-	FormatV1 | FormatV2 | undefined,
+	FormatCommon | undefined,
 	ForestFormatVersion | undefined,
 ][] = [
 	[
@@ -263,7 +259,7 @@ describe("ForestSummarizerCodec", () => {
 						{
 							version: brand<ForestFormatVersion>(ForestFormatVersion.v1),
 							keys: [],
-						} as unknown as FormatV1,
+						} as unknown as FormatCommon,
 						context,
 					),
 				validateAssertionError("Data being decoded should validate"),
@@ -279,7 +275,7 @@ describe("ForestSummarizerCodec", () => {
 							fields: { version: brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1) },
 							keys: [],
 							wrong: 5,
-						} as unknown as FormatV1,
+						} as unknown as FormatCommon,
 						context,
 					),
 				validateAssertionError("Data being decoded should validate"),

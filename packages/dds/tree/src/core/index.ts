@@ -220,12 +220,6 @@ export {
 } from "./rebase/index.js";
 
 export {
-	type Adapters,
-	AdaptedViewSchema,
-	type TreeAdapter,
-} from "./schema-view/index.js";
-
-export {
 	type Revertible,
 	RevertibleStatus,
 	type RevertibleFactory,
