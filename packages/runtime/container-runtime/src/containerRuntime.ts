@@ -1832,6 +1832,13 @@ export class ContainerRuntime
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
 
 		this._flushMode = runtimeOptions.flushMode;
+		if (this._flushMode !== FlushMode.Immediate && this._flushMode !== FlushMode.TurnBased) {
+			const error = new UsageError(
+				"Invalid flushMode runtime option. Expected FlushMode.Immediate or FlushMode.TurnBased.",
+			);
+			this.closeFn(error);
+			throw error;
+		}
 		this.batchIdTrackingEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
