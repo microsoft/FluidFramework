@@ -97,6 +97,7 @@
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",

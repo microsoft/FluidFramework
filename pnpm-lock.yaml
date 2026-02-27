@@ -3941,6 +3941,9 @@ importers:
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
+      quill:
+        specifier: ^2.0.2
+        version: 2.0.3
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -11850,6 +11853,9 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions

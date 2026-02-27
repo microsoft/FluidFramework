@@ -10,7 +10,7 @@ import { TreeAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import Delta from "quill-delta";
+import DeltaPackage from "quill-delta";
 import * as React from "react";
 
 import { toPropTreeNode } from "../../propNode.js";
@@ -32,6 +32,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../text/plain/index.js";
 import { UndoRedoStacks } from "../../undoRedo.js";
+
+// Workaround for quill-delta's export style not working well with node16 module resolution.
+type Delta = DeltaPackage.default;
+const Delta = DeltaPackage.default;
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });

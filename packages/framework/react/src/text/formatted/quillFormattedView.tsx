@@ -3,41 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { Tree } from "@fluidframework/tree";
-// eslint-disable-next-line import-x/no-internal-modules
-import { TreeAlpha } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree } from "@fluidframework/tree/internal";
-// eslint-disable-next-line import-x/no-internal-modules
+import { assert } from "@fluidframework/core-utils/internal";
+import { Tree, TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
-import Quill from "quill";
-import Delta from "quill-delta";
+import Quill, { type EmitterSource } from "quill";
+import DeltaPackage from "quill-delta";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { type PropTreeNode, unwrapPropTreeNode } from "../../propNode.js";
 import type { UndoRedo } from "../../undoRedo.js";
 
-/**
- * Represents a single operation in a Quill Delta.
- * Deltas describe changes to document content as a sequence of operations.
- */
-interface QuillDeltaOp {
-	/** Text or embed object to insert at current position. */
-	insert?: string | Record<string, unknown>;
-	/** Number of characters to delete at current position. */
-	delete?: number;
-	/** Number of characters to keep/skip, optionally applying attributes. */
-	retain?: number;
-	/** Formatting attributes (bold, italic, size, etc.) for insert/retain ops. */
-	attributes?: Record<string, unknown>;
-}
-
-/** Represents a Quill Delta. */
-interface QuillDelta {
-	/** Sequence of operations that make up this delta. */
-	ops?: QuillDeltaOp[];
-}
+// Workaround for quill-delta's export style not working well with node16 module resolution.
+type Delta = DeltaPackage.default;
+type QuillDeltaOp = DeltaPackage.Op;
+const Delta = DeltaPackage.default;
 
 /**
  * Props for the FormattedMainView component.
@@ -243,7 +223,7 @@ function formatToQuillAttrs(
  * This is used to sync Quill's display when the tree changes externally
  * (e.g., from a remote collaborator's edit).
  */
-function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
+function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 	const ops: QuillDeltaOp[] = [];
 	// Accumulator for current run of identically-formatted text
 	let text = "";
@@ -286,7 +266,7 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
 	if (typeof last?.insert !== "string" || !last.insert.endsWith("\n")) {
 		ops.push({ insert: "\n" });
 	}
-	return { ops };
+	return ops;
 }
 
 /**
@@ -353,7 +333,12 @@ const FormattedTextEditorView = React.forwardRef<
 		// We process delta operations to make targeted edits, preserving collaboration integrity.
 		// Note: Quill uses UTF-16 code units for positions, but the tree uses Unicode codepoints.
 		// We must convert between them to handle emoji and other non-BMP characters correctly.
-		quill.on("text-change", (delta, _oldDelta, source) => {
+		//
+		// The typing here is very fragile: if no parameter types are given,
+		// the inference for this event is strongly typed, but the types are wrong (The wrong "Delta" type is provided).
+		// This is likely related to the node16 module resolution issues with quill-delta.
+		// If we break that inference by adding types, `any` is inferred for all of them, so incorrect types here would still compile.
+		quill.on("text-change", (delta: Delta, _oldDelta: Delta, source: EmitterSource) => {
 			if (source !== "user" || isUpdating.current) return;
 			isUpdating.current = true;
 
@@ -370,8 +355,12 @@ const FormattedTextEditorView = React.forwardRef<
 				let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
 				let cpPos = 0; // Position in codepoints (tree's view)
 
-				for (const op of (delta as QuillDelta).ops ?? []) {
+				for (const op of delta.ops) {
 					if (op.retain !== undefined) {
+						// The docs for retain imply this is always a number, but the type definitions allow a record here.
+						// It is unknown why the type definitions allow a record as the have no doc comments.
+						// For now this assert seems to be passing, so we just assume its always a number.
+						assert(typeof op.retain === "number", "Expected retain count to be a number");
 						// Convert UTF-16 retain count to codepoint count
 						const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
 						const cpCount = codepointCount(retainedStr);
@@ -438,17 +427,20 @@ const FormattedTextEditorView = React.forwardRef<
 			// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
 			// Use it in tests and possibly occasionally in debug builds.
 			const treeDelta = buildDeltaFromTree(root);
-			const quillDelta = quillRef.current.getContents() as QuillDelta;
+
+			// eslint doesn't seem to be resolving the types correctly here.
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const quillDelta: Delta = quillRef.current.getContents();
 
 			// Compute diff between current Quill state and tree state
-			const diff = new Delta(quillDelta.ops).diff(new Delta(treeDelta.ops)) as QuillDelta;
+			const diff = new Delta(quillDelta).diff(new Delta(treeDelta));
 
 			// Only update if there are actual differences
-			if (diff.ops && diff.ops.length > 0) {
+			if (diff.ops.length > 0) {
 				isUpdating.current = true;
 
 				// Apply only the diff for surgical updates (better cursor preservation)
-				quillRef.current.updateContents(diff);
+				quillRef.current.updateContents(diff.ops);
 
 				isUpdating.current = false;
 			}
