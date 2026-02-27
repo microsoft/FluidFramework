@@ -171,6 +171,15 @@ module.exports = {
 			range: "~",
 		},
 
+		// eslint-config-fluid is an independent workspace linked via the link: protocol,
+		// which syncpack cannot resolve. Ignore it from semver range checks.
+		{
+			label: "Ignore eslint-config-fluid (independent workspace with link: protocol)",
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		// All deps should use caret ranges unless previously overridden
 		{
 			label: "Dependencies should use caret dependency ranges",
@@ -214,6 +223,15 @@ module.exports = {
 			isIgnored: true,
 		},
 
+		// eslint-config-fluid is an independent workspace linked via the link: protocol,
+		// which syncpack cannot resolve. Ignore it from version matching.
+		{
+			label: "Ignore eslint-config-fluid (independent workspace with link: protocol)",
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
@@ -223,8 +241,6 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
-				// Temporarily disabled while eslint-config-fluid is part of the client release group
-				// "@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
 			],

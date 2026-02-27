@@ -111,7 +111,7 @@
 		"@fluid-tools/build-cli": "^0.63.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "~9.0.0",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@testing-library/react": "^16.3.0",

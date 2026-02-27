@@ -80,6 +80,7 @@
 		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
 		"generate:packagesMd": "flub check layers --info layerInfo.json --md .",
 		"preinstall": "node scripts/only-pnpm.cjs",
+		"postinstall": "cd common/build/eslint-config-fluid && pnpm install",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",
 		"lint:fix": "fluid-build --task lint:fix",
@@ -170,8 +171,8 @@
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
-		"@fluidframework/test-tools": "^1.0.195075",
+		"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
+		"@fluidframework/test-tools": "^2.0.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.12.0",
 		"auto-changelog": "^2.4.0",
@@ -354,6 +355,7 @@
 	},
 	"pnpm": {
 		"comments": [
+			"eslint-config-fluid is an independent package in a separate workspace; the override resolves it to the local copy for all client packages.",
 			"biome is overridden to make review of the upgrade easier. This can be removed once merged.",
 			"node types are forced to a consistent version to avoid conflicts between globals.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
@@ -365,6 +367,7 @@
 		],
 		"overrides": {
 			"@biomejs/biome": "~2.3.11",
+			"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
 			"@types/node": "~20.19.30",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",

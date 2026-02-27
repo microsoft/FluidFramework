@@ -10,7 +10,6 @@
 
 packages:
   - "azure/packages/**"
-  - "common/build/eslint-config-fluid"
   - "examples/**"
   - "experimental/**"
   - "packages/**"
