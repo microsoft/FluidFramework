@@ -198,37 +198,63 @@ stages:
                   verbose: true # Optional
                   #quiet: # Optional
 
-              - task: AzureCLI@2
-                displayName: 'Upload JSON'
-                continueOnError: true
-                inputs:
-                  azureSubscription: 'fluid-docs'
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --verbose
+              - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+                parameters:
+                  serviceConnection: 'fluid-docs'
+                  storageAccount: $(STORAGE_ACCOUNT)
+                  containerName: 'api-extractor-json'
+                  sourceFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  blobName: '$(Build.SourceVersion).tar.gz'
+                  displayName: 'Upload JSON to old storage'
 
-              - task: AzureCLI@2
-                displayName: 'Upload JSON as latest.tar.gz'
-                continueOnError: true
-                condition: eq(variables['Build.SourceBranchName'], 'main')
-                inputs:
-                  azureSubscription: 'fluid-docs'
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+              - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+                parameters:
+                  serviceConnection: 'fluid-docs-torus'
+                  storageAccount: $(STORAGE_ACCOUNT_NEW)
+                  containerName: 'api-extractor-json'
+                  sourceFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  blobName: '$(Build.SourceVersion).tar.gz'
+                  displayName: 'Upload JSON to new storage'
 
-              - task: AzureCLI@2
-                displayName: 'Upload JSON as latest-v*.tar.gz'
-                continueOnError: true
-                condition: eq(variables.isLatestMinorOfMajorTrain, true)
-                inputs:
-                  azureSubscription: 'fluid-docs'
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+              - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+                parameters:
+                  serviceConnection: 'fluid-docs'
+                  storageAccount: $(STORAGE_ACCOUNT)
+                  containerName: 'api-extractor-json'
+                  sourceFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  blobName: 'latest.tar.gz'
+                  displayName: 'Upload JSON as latest.tar.gz to old storage'
+                  condition: eq(variables['Build.SourceBranchName'], 'main')
+
+              - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+                parameters:
+                  serviceConnection: 'fluid-docs-torus'
+                  storageAccount: $(STORAGE_ACCOUNT_NEW)
+                  containerName: 'api-extractor-json'
+                  sourceFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  blobName: 'latest.tar.gz'
+                  displayName: 'Upload JSON as latest.tar.gz to new storage'
+                  condition: eq(variables['Build.SourceBranchName'], 'main')
+
+              - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+                parameters:
+                  serviceConnection: 'fluid-docs'
+                  storageAccount: $(STORAGE_ACCOUNT)
+                  containerName: 'api-extractor-json'
+                  sourceFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  blobName: 'latest-v$(majorVersion).tar.gz'
+                  displayName: 'Upload JSON as latest-v*.tar.gz to old storage'
+                  condition: eq(variables.isLatestMinorOfMajorTrain, true)
+
+              - template: /tools/pipelines/templates/include-upload-blob-storage.yml@self
+                parameters:
+                  serviceConnection: 'fluid-docs-torus'
+                  storageAccount: $(STORAGE_ACCOUNT_NEW)
+                  containerName: 'api-extractor-json'
+                  sourceFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  blobName: 'latest-v$(majorVersion).tar.gz'
+                  displayName: 'Upload JSON as latest-v*.tar.gz to new storage'
+                  condition: eq(variables.isLatestMinorOfMajorTrain, true)
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter
