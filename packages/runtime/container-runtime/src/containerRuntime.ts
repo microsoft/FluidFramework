@@ -1417,7 +1417,7 @@ export class ContainerRuntime
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
-	private readonly stagingModeAutoFlushThreshold: number | undefined;
+	private readonly stagingModeAutoFlushThreshold: number;
 	/**
 	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
 	 * where the same local state is pending in two different running Containers, each of
@@ -1874,7 +1874,10 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
-		this.stagingModeAutoFlushThreshold = runtimeOptions.stagingModeAutoFlushThreshold;
+		this.stagingModeAutoFlushThreshold =
+			this.mc.config.getNumber("Fluid.ContainerRuntime.StagingModeAutoFlushThreshold") ??
+			runtimeOptions.stagingModeAutoFlushThreshold ??
+			defaultStagingModeAutoFlushThreshold;
 		this.batchIdTrackingEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
@@ -4844,8 +4847,7 @@ export class ContainerRuntime
 		// sequence number changes and forces a flush as a safety net.
 		if (
 			this.inStagingMode &&
-			this.outbox.mainBatchMessageCount <
-				(this.stagingModeAutoFlushThreshold ?? defaultStagingModeAutoFlushThreshold)
+			this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold
 		) {
 			return;
 		}
