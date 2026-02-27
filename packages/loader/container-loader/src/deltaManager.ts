@@ -79,6 +79,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 		event: "cancelEstablishingConnection",
 		listener: (reason: IConnectionStateChangeReason) => void,
 	);
+	(event: "storageFetchComplete", listener: (reason: string) => void);
 }
 
 /**
@@ -171,6 +172,21 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private pending: ISequencedDocumentMessage[] = [];
 	private fetchReason: string | undefined;
+	/**
+	 * Tracks whether a storage fetch triggered by a new connection is pending.
+	 * Set to true before emitting the "connect" event so that ConnectionStateHandler
+	 * sees the correct value synchronously. Reset to false in two cases:
+	 * 1. When the fetch completes (in fetchMissingDeltasCore's finally block)
+	 * 2. When a new connection is established and no fetch is needed (connectHandler)
+	 *
+	 * Cross-connection note: If a disconnect happens while a fetch is in progress and
+	 * reconnection triggers a new connectionFetchPending=true, the old fetch's completion
+	 * in the finally block will emit storageFetchComplete for the new connection. This is
+	 * acceptable because: (a) the old fetch already updated lastKnownSeqNumber, (b)
+	 * processPendingOps triggers a follow-up fetch if still behind, and (c) the
+	 * CatchUpMonitor still gates on lastKnownSeqNumber vs lastSequenceNumber.
+	 */
+	private connectionFetchPending: boolean = false;
 
 	// A boolean used to assert that ops are not being sent while processing another op.
 	private currentlyProcessingOps: boolean = false;
@@ -276,6 +292,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// Valid to be called only if we have active connection.
 		assert(this.connectionManager.connected, 0x0df /* "Missing active connection" */);
 		return this._checkpointSequenceNumber !== undefined;
+	}
+
+	/**
+	 * Tells if there is a connection-triggered storage fetch currently in progress.
+	 * Used to delay Connected state until we know the true latest sequence number.
+	 */
+	public get isConnectionFetchPending(): boolean {
+		return this.connectionFetchPending;
 	}
 
 	// Forwarding connection manager properties / IDeltaManager implementation
@@ -542,6 +566,21 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.opsSize = 0;
 		this.noOpCount = 0;
 
+		// If we got some initial ops, then we know the gap and call above fetched ops to fill it.
+		// Same is true for "write" mode even if we have no ops - we will get "join" own op very very soon.
+		// However if we are connecting as view-only, then there is no good signal to realize if client is behind.
+		// Thus we have to hit storage to see if any ops are there.
+		const needsFetch =
+			(checkpointSequenceNumber !== undefined &&
+				checkpointSequenceNumber > this.lastQueuedSequenceNumber) ||
+			(checkpointSequenceNumber === undefined && connection.mode === "read");
+
+		// Set connectionFetchPending BEFORE emitting connect, so that handlers
+		// checking isConnectionFetchPending see the correct value synchronously.
+		// Always reset to false first, then set to true if needed, to handle the case
+		// where a disconnect happened during a previous fetch and reconnection doesn't need a fetch.
+		this.connectionFetchPending = needsFetch;
+
 		this.emit(
 			"connect",
 			connection,
@@ -550,18 +589,24 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				: this.lastObservedSeqNumber - this.lastSequenceNumber,
 		);
 
-		// If we got some initial ops, then we know the gap and call above fetched ops to fill it.
-		// Same is true for "write" mode even if we have no ops - we will get "join" own op very very soon.
-		// However if we are connecting as view-only, then there is no good signal to realize if client is behind.
-		// Thus we have to hit storage to see if any ops are there.
-		if (checkpointSequenceNumber !== undefined) {
-			// We know how far we are behind (roughly). If it's non-zero gap, fetch ops right away.
-			if (checkpointSequenceNumber > this.lastQueuedSequenceNumber) {
-				this.fetchMissingDeltas("AfterConnection");
+		// After emitting connect, start the fetch or emit storageFetchComplete.
+		if (needsFetch) {
+			// If no fetch is in progress, start one now. If a fetch is already in progress,
+			// that fetch will emit storageFetchComplete when it completes.
+			if (this.fetchReason === undefined) {
+				const reason =
+					checkpointSequenceNumber === undefined ? "AfterReadConnection" : "AfterConnection";
+				this.fetchMissingDeltas(reason);
 			}
-			// we do not know the gap, and we will not learn about it if socket is quite - have to ask.
-		} else if (connection.mode === "read") {
-			this.fetchMissingDeltas("AfterReadConnection");
+		} else {
+			// No fetch needed, emit completion via microtask to ensure connect handlers finish first.
+			// Check we're still connected and that no fetch has started in the meantime before emitting,
+			// in case a disconnect/reconnect or state change happened during the microtask delay.
+			queueMicrotask(() => {
+				if (this.connectionManager.connected && !this.connectionFetchPending) {
+					this.emit("storageFetchComplete", "NoFetchNeeded");
+				}
+			});
 		}
 	}
 
@@ -1242,7 +1287,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.close(normalizeError(error));
 		} finally {
 			this.refreshDelayInfo(this.deltaStorageDelayId);
+			const wasConnectionFetch = this.connectionFetchPending;
+			const completedReason = this.fetchReason;
 			this.fetchReason = undefined;
+			if (wasConnectionFetch) {
+				this.connectionFetchPending = false;
+				this.emit("storageFetchComplete", completedReason ?? "unknown");
+			}
 			this.processPendingOps(reason);
 		}
 	}

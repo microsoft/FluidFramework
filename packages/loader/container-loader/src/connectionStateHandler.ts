@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
@@ -17,8 +16,14 @@ import {
 
 import { CatchUpMonitor, type ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
-import type { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
+import type {
+	IConnectionDetailsInternal,
+	IConnectionManager,
+	IConnectionStateChangeReason,
+} from "./contracts.js";
+import type { DeltaManager } from "./deltaManager.js";
 import type { IProtocolHandler } from "./protocol.js";
+import { StorageFetchMonitor } from "./storageFetchMonitor.js";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -104,7 +109,7 @@ export interface IConnectionStateHandler {
 
 export function createConnectionStateHandler(
 	inputs: IConnectionStateHandlerInputs,
-	deltaManager: IDeltaManager<unknown, unknown>,
+	deltaManager: DeltaManager<IConnectionManager>,
 	clientId?: string,
 ): ConnectionStateHandler | ConnectionStateCatchup {
 	const config = inputs.mc.config;
@@ -121,7 +126,7 @@ export function createConnectionStateHandlerCore(
 	connectedRaisedWhenCaughtUp: boolean,
 	readClientsWaitForJoinSignal: boolean,
 	inputs: IConnectionStateHandlerInputs,
-	deltaManager: IDeltaManager<unknown, unknown>,
+	deltaManager: DeltaManager<IConnectionManager>,
 	clientId?: string,
 ): ConnectionStateCatchup | ConnectionStateHandler {
 	const factory = (handler: IConnectionStateHandlerInputs): ConnectionStateHandler =>
@@ -243,19 +248,34 @@ class ConnectionStateHandlerPassThrough
  */
 export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	private catchUpMonitor: ICatchUpMonitor | undefined;
+	private storageFetchMonitor: IDisposable | undefined;
+	private storageFetchComplete: boolean = false;
+	private caughtUpToOps: boolean = false;
+	private readonly waitForStorageFetch: boolean;
 
 	constructor(
 		inputs: IConnectionStateHandlerInputs,
 		pimplFactory: (handler: IConnectionStateHandlerInputs) => IConnectionStateHandler,
-		private readonly deltaManager: IDeltaManager<unknown, unknown>,
+		private readonly deltaManager: DeltaManager<IConnectionManager>,
 	) {
 		super(inputs, pimplFactory);
 		this._connectionState = this.pimpl.connectionState;
+		// Config flag to opt-out of waiting for storage fetch (default is to wait)
+		this.waitForStorageFetch =
+			inputs.mc.config.getBoolean("Fluid.Container.DisableStorageFetchWait") !== true;
 	}
 
 	private _connectionState: ConnectionState;
 	public get connectionState(): ConnectionState {
 		return this._connectionState;
+	}
+
+	public override dispose(): void {
+		this.catchUpMonitor?.dispose();
+		this.catchUpMonitor = undefined;
+		this.storageFetchMonitor?.dispose();
+		this.storageFetchMonitor = undefined;
+		super.dispose();
 	}
 
 	public connectionStateChanged(
@@ -269,22 +289,45 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 					this._connectionState === ConnectionState.CatchingUp,
 					0x3e1 /* connectivity transitions */,
 				);
+
+				// Reset completion flags
+				this.storageFetchComplete = false;
+				this.caughtUpToOps = false;
+
+				// Wait for storage fetch to complete (applies to both read and write connections)
+				if (this.waitForStorageFetch) {
+					const fetchPending = this.deltaManager.isConnectionFetchPending;
+					this.storageFetchComplete = !fetchPending;
+					if (fetchPending) {
+						this.storageFetchMonitor = new StorageFetchMonitor(
+							this.deltaManager,
+							this.onStorageFetchComplete,
+						);
+					}
+				} else {
+					// If not waiting for storage fetch, mark it as complete
+					this.storageFetchComplete = true;
+				}
+
 				// Create catch-up monitor here (not earlier), as we might get more exact info by now about how far
 				// client is behind through join signal. This is only true if base layer uses signals (i.e. audience,
-				// not quorum, including for "rea" connections) to make decisions about moving to "connected" state.
+				// not quorum, including for "read" connections) to make decisions about moving to "connected" state.
 				// In addition to that, in its current form, doing this in ConnectionState.CatchingUp is dangerous as
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
+				// Note: CatchUpMonitor may call onCaughtUpToOps synchronously during construction if already caught up.
+				// This is fine because checkTransitionToConnected will only transition if both conditions are met.
 				assert(this.catchUpMonitor === undefined, 0x3eb /* catchUpMonitor should be gone */);
-				this.catchUpMonitor = new CatchUpMonitor(
-					this.deltaManager,
-					this.transitionToConnectedState,
-				);
+				this.catchUpMonitor = new CatchUpMonitor(this.deltaManager, this.onCaughtUpToOps);
 				return;
 			}
 			case ConnectionState.Disconnected: {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
+				this.storageFetchMonitor?.dispose();
+				this.storageFetchMonitor = undefined;
+				this.storageFetchComplete = false;
+				this.caughtUpToOps = false;
 				break;
 			}
 			// ConnectionState.EstablishingConnection state would be set when we start establishing connection
@@ -309,8 +352,33 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		this.inputs.connectionStateChanged(value, oldState, reason);
 	}
 
+	private readonly onStorageFetchComplete = (): void => {
+		this.storageFetchComplete = true;
+		this.storageFetchMonitor?.dispose();
+		this.storageFetchMonitor = undefined;
+		this.checkTransitionToConnected();
+	};
+
+	private readonly onCaughtUpToOps = (): void => {
+		this.caughtUpToOps = true;
+		this.catchUpMonitor?.dispose();
+		this.catchUpMonitor = undefined;
+		this.checkTransitionToConnected();
+	};
+
+	private readonly checkTransitionToConnected = (): void => {
+		if (
+			this.storageFetchComplete &&
+			this.caughtUpToOps &&
+			this._connectionState === ConnectionState.CatchingUp
+		) {
+			this.transitionToConnectedState();
+		}
+	};
+
 	private readonly transitionToConnectedState = (): void => {
-		// Defensive measure, we should always be in Connecting state when this is called.
+		// Defensive measure: when this is called, the outer connection should already be Connected
+		// and this handler should be in the CatchingUp state.
 		const state = this.pimpl.connectionState;
 		assert(state === ConnectionState.Connected, 0x3e5 /* invariant broken */);
 		assert(this._connectionState === ConnectionState.CatchingUp, 0x3e6 /* invariant broken */);

@@ -924,7 +924,7 @@ export class Container
 					this.close(normalizeError(error));
 				},
 			},
-			this.deltaManager,
+			this._deltaManager,
 			pendingLocalState?.clientId,
 		);
 

@@ -6,10 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IDeltaManager,
-	IDeltaManagerEvents,
-} from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type {
 	ConnectionMode,
@@ -34,19 +30,28 @@ import {
 	type IConnectionStateHandlerInputs,
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
-import type { IConnectionDetailsInternal } from "../contracts.js";
+import type { IConnectionDetailsInternal, IConnectionManager } from "../contracts.js";
+import type { IDeltaManagerInternalEvents, DeltaManager } from "../deltaManager.js";
 import { ProtocolHandler } from "../protocol.js";
 
-class MockDeltaManagerForCatchingUp
-	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
-{
+/**
+ * Mock DeltaManager that implements the subset of DeltaManager needed for ConnectionStateHandler tests.
+ * Uses IDeltaManagerInternalEvents to support the storageFetchComplete event.
+ */
+class MockDeltaManagerForCatchingUp extends TypedEventEmitter<IDeltaManagerInternalEvents> {
 	lastSequenceNumber: number = 5;
 	lastKnownSeqNumber: number = 10;
+	isConnectionFetchPending: boolean = false;
+
 	catchUp(seq = 10): void {
 		this.lastKnownSeqNumber = seq;
 		this.lastSequenceNumber = seq;
 		this.emit("op", { sequenceNumber: this.lastKnownSeqNumber });
+	}
+
+	emitStorageFetchComplete(reason: string = "test"): void {
+		this.isConnectionFetchPending = false;
+		this.emit("storageFetchComplete", reason);
 	}
 }
 
@@ -96,7 +101,7 @@ describe("ConnectionStateHandler Tests", () => {
 			connectedRaisedWhenCaughtUp,
 			readClientsWaitForJoinSignal,
 			handlerInputs,
-			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
+			deltaManagerForCatchingUp as unknown as DeltaManager<IConnectionManager>,
 			undefined,
 		);
 		handler.initProtocol(protocolHandler);
@@ -446,7 +451,7 @@ describe("ConnectionStateHandler Tests", () => {
 			false, // connectedRaisedWhenCaughtUp,
 			false, // readClientsWaitForJoinSignal
 			handlerInputs,
-			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
+			deltaManagerForCatchingUp as unknown as DeltaManager<IConnectionManager>,
 			undefined,
 		);
 
@@ -481,7 +486,7 @@ describe("ConnectionStateHandler Tests", () => {
 			false, // connectedRaisedWhenCaughtUp,
 			false, // readClientsWaitForJoinSignal
 			handlerInputs,
-			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
+			deltaManagerForCatchingUp as unknown as DeltaManager<IConnectionManager>,
 			undefined,
 		);
 
@@ -1154,6 +1159,185 @@ describe("ConnectionStateHandler Tests", () => {
 			await tickClock(expectedTimeout);
 		},
 	);
+
+	it("Storage fetch wait: stays in CatchingUp until both ops caught up and storage fetch completes", async () => {
+		connectionStateHandler = createHandler(
+			true, // connectedRaisedWhenCaughtUp
+			false, // readClientsWaitForJoinSignal
+		);
+
+		deltaManagerForCatchingUp.isConnectionFetchPending = true;
+
+		connectionStateHandler.establishingConnection({ text: "read" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Should be in CatchingUp after connect",
+		);
+
+		// Catch up ops first - should still be CatchingUp because storage fetch is pending
+		deltaManagerForCatchingUp.catchUp();
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Should remain in CatchingUp after ops caught up but storage fetch still pending",
+		);
+
+		// Now complete the storage fetch - should transition to Connected
+		deltaManagerForCatchingUp.emitStorageFetchComplete();
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Should be Connected after both ops and storage fetch complete",
+		);
+	});
+
+	it("Storage fetch wait: stays in CatchingUp until ops catch up even after storage fetch completes", async () => {
+		connectionStateHandler = createHandler(
+			true, // connectedRaisedWhenCaughtUp
+			false, // readClientsWaitForJoinSignal
+		);
+
+		deltaManagerForCatchingUp.isConnectionFetchPending = true;
+
+		connectionStateHandler.establishingConnection({ text: "read" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Should be in CatchingUp after connect",
+		);
+
+		// Complete storage fetch first - should still be CatchingUp because ops not caught up
+		deltaManagerForCatchingUp.emitStorageFetchComplete();
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Should remain in CatchingUp after storage fetch complete but ops not caught up",
+		);
+
+		// Now catch up ops - should transition to Connected
+		deltaManagerForCatchingUp.catchUp();
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Should be Connected after both conditions met",
+		);
+	});
+
+	it("Storage fetch wait: transitions immediately when isConnectionFetchPending is false", async () => {
+		connectionStateHandler = createHandler(
+			true, // connectedRaisedWhenCaughtUp
+			false, // readClientsWaitForJoinSignal
+		);
+
+		// isConnectionFetchPending defaults to false
+		assert.strictEqual(
+			deltaManagerForCatchingUp.isConnectionFetchPending,
+			false,
+			"isConnectionFetchPending should default to false",
+		);
+
+		connectionStateHandler.establishingConnection({ text: "read" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Should be in CatchingUp after connect",
+		);
+
+		// Only ops catch-up is needed since no fetch is pending
+		deltaManagerForCatchingUp.catchUp();
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Should be Connected after ops catch up (no storage fetch wait needed)",
+		);
+	});
+
+	it("Storage fetch wait: disconnect during wait properly cleans up monitors", async () => {
+		connectionStateHandler = createHandler(
+			true, // connectedRaisedWhenCaughtUp
+			false, // readClientsWaitForJoinSignal
+		);
+
+		deltaManagerForCatchingUp.isConnectionFetchPending = true;
+
+		connectionStateHandler.establishingConnection({ text: "read" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Should be in CatchingUp after connect",
+		);
+
+		// Verify a listener was added for storageFetchComplete
+		assert.ok(
+			deltaManagerForCatchingUp.listenerCount("storageFetchComplete") > 0,
+			"Should have storageFetchComplete listener while waiting",
+		);
+
+		// Disconnect while both conditions are pending
+		connectionStateHandler.receivedDisconnectEvent({ text: "test disconnect" });
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Disconnected,
+			"Should be Disconnected after disconnect",
+		);
+
+		// Verify listeners are cleaned up
+		assert.strictEqual(
+			deltaManagerForCatchingUp.listenerCount("storageFetchComplete"),
+			0,
+			"storageFetchComplete listener should be cleaned up after disconnect",
+		);
+
+		// Emitting events after disconnect should not cause errors
+		deltaManagerForCatchingUp.emitStorageFetchComplete();
+		deltaManagerForCatchingUp.catchUp();
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Disconnected,
+			"Should remain Disconnected after events fired post-disconnect",
+		);
+	});
+
+	it("Storage fetch wait: dispose during CatchingUp cleans up monitors", async () => {
+		connectionStateHandler = createHandler(
+			true, // connectedRaisedWhenCaughtUp
+			false, // readClientsWaitForJoinSignal
+		);
+
+		deltaManagerForCatchingUp.isConnectionFetchPending = true;
+
+		connectionStateHandler.establishingConnection({ text: "read" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Should be in CatchingUp after connect",
+		);
+
+		// Verify listeners are active
+		assert.ok(
+			deltaManagerForCatchingUp.listenerCount("storageFetchComplete") > 0,
+			"Should have storageFetchComplete listener while waiting",
+		);
+
+		// Disconnect first (required before dispose to avoid assertion error in joinTimer check)
+		connectionStateHandler.receivedDisconnectEvent({ text: "before dispose" });
+
+		// Dispose should clean up monitors
+		connectionStateHandler.dispose();
+
+		// Verify listeners are cleaned up
+		assert.strictEqual(
+			deltaManagerForCatchingUp.listenerCount("storageFetchComplete"),
+			0,
+			"storageFetchComplete listener should be cleaned up after dispose",
+		);
+	});
 
 	// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 	it("test 'read' reconnect & races ", async () => {
