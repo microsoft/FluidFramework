@@ -12,6 +12,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
 	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
@@ -353,7 +354,6 @@ export type {
 	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
-export type { ValueTree } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
 /**

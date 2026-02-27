@@ -178,6 +178,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
 	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,

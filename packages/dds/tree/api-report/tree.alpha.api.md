@@ -711,6 +711,12 @@ export enum KeyEncodingOptions {
     usePropertyKeys = "usePropertyKeys"
 }
 
+// @alpha @sealed
+export interface LabelTree {
+    label: unknown;
+    sublabels: LabelTree[];
+}
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -1472,7 +1478,7 @@ export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstra
 
 // @alpha @sealed
 export type TransactionLabels = Set<unknown> & {
-    tree?: ValueTree;
+    tree?: LabelTree;
 };
 
 // @alpha
@@ -1891,12 +1897,6 @@ export enum ValueSchema {
     Number = 0,
     // (undocumented)
     String = 1
-}
-
-// @alpha @sealed
-export interface ValueTree<T = unknown> {
-    children: ValueTree<T>[];
-    value: T;
 }
 
 // @alpha

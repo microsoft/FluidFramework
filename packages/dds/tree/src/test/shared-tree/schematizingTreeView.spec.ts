@@ -1291,7 +1291,7 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.deepEqual(labels2, [label2]);
 		});
 
-		it("composes a ValueTree from nested transaction labels", () => {
+		it("composes a LabelTree from nested transaction labels", () => {
 			const view = getTestObjectView();
 
 			let receivedLabels: TransactionLabels | undefined;
@@ -1333,16 +1333,16 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.size, 4);
 			// Tree structure
 			assert(receivedLabels.tree !== undefined, "tree should be defined");
-			assert.equal(receivedLabels.tree.value, "outer");
-			assert.equal(receivedLabels.tree.children.length, 2);
-			assert.equal(receivedLabels.tree.children[0]?.value, "middle1");
-			assert.equal(receivedLabels.tree.children[0]?.children.length, 1);
-			assert.equal(receivedLabels.tree.children[0]?.children[0]?.value, "deep");
-			assert.equal(receivedLabels.tree.children[1]?.value, "middle2");
-			assert.equal(receivedLabels.tree.children[1]?.children.length, 0);
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle1");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "middle2");
+			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
 		});
 
-		it("creates a single-node ValueTree for a non-nested labeled transaction", () => {
+		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
 			const view = getTestObjectView();
 
 			let receivedLabels: TransactionLabels | undefined;
@@ -1363,8 +1363,8 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.has("single"), true);
 			assert.equal(receivedLabels.size, 1);
 			assert(receivedLabels.tree !== undefined, "tree should be defined");
-			assert.equal(receivedLabels.tree.value, "single");
-			assert.equal(receivedLabels.tree.children.length, 0);
+			assert.equal(receivedLabels.tree.label, "single");
+			assert.equal(receivedLabels.tree.sublabels.length, 0);
 		});
 
 		it("labels is an empty set with no tree when no labels are provided", () => {
@@ -1447,12 +1447,12 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.has("abortedInner"), false);
 			// Tree structure
 			assert(receivedLabels.tree !== undefined, "tree should be defined");
-			assert.equal(receivedLabels.tree.value, "outer");
-			assert.equal(receivedLabels.tree.children.length, 2);
-			assert.equal(receivedLabels.tree.children[0]?.value, "middle");
-			assert.equal(receivedLabels.tree.children[0]?.children.length, 1);
-			assert.equal(receivedLabels.tree.children[0]?.children[0]?.value, "deep");
-			assert.equal(receivedLabels.tree.children[1]?.value, "after");
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "after");
 		});
 
 		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {
@@ -1479,9 +1479,9 @@ describe("SchematizingSimpleTreeView", () => {
 			assert(receivedLabels !== undefined, "labels should be captured");
 			assert.equal(receivedLabels.has("inner"), true);
 			assert(receivedLabels.tree !== undefined, "tree should be defined");
-			assert.equal(receivedLabels.tree.value, undefined);
-			assert.equal(receivedLabels.tree.children.length, 1);
-			assert.equal(receivedLabels.tree.children[0]?.value, "inner");
+			assert.equal(receivedLabels.tree.label, undefined);
+			assert.equal(receivedLabels.tree.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "inner");
 		});
 	});
 });

@@ -163,6 +163,4 @@ export {
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 
-export type { ValueTree } from "./valueTree.js";
-
 export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";

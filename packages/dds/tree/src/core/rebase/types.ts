@@ -14,7 +14,6 @@ import { Type } from "@sinclair/typebox";
 import {
 	type Brand,
 	type JsonCompatibleReadOnly,
-	type ValueTree,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -243,17 +242,11 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * should be included in an undo/redo stack.
 	 *
 	 * @remarks
-	 * The set contains all label values from the transaction tree. Use standard `Set` methods
-	 * like {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/has | has}
-	 * to check for specific labels.
-	 *
-	 * The optional {@link ValueTree | tree} property provides the structural nesting of the transactions.
-	 * Each transaction contributes a node whose {@link ValueTree.value} is its label
-	 * (or `undefined` if no label was provided).
-	 * When transactions are nested, inner transaction nodes become children of outer ones.
+	 * The optional {@link TransactionLabels.tree | tree} property provides the structural nesting
+	 * of the transactions as a {@link LabelTree}.
 	 *
 	 * The `tree` property is present whenever the change was produced by a transaction that
-	 * includes at least one defined (non-`undefined`) label. If all transactions are unlabeled,
+	 * includes at least one label. If the change was unlabeled,
 	 * `tree` is `undefined` and the set is empty.
 	 *
 	 * @example
@@ -274,10 +267,33 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * }, { label: "outer" });
 	 * // metadata.labels.has("inner") === true
 	 * // metadata.labels.tree will be:
-	 * //   { value: "outer", children: [{ value: "inner", children: [] }] }
+	 * //   { label: "outer", sublabels: [{ label: "inner", sublabels: [] }] }
 	 * ```
 	 */
 	readonly labels: TransactionLabels;
+}
+
+/**
+ * A tree representing the nesting structure of transaction labels.
+ *
+ * @remarks
+ * Each transaction contributes a node whose {@link LabelTree.label} is its
+ * {@link RunTransactionParams.label | label} (or `undefined` if no label was provided).
+ * When transactions are nested, inner transaction nodes become {@link LabelTree.sublabels | sublabels}
+ * of outer ones.
+ *
+ * @sealed @alpha
+ */
+export interface LabelTree {
+	/**
+	 * The label for this transaction, or `undefined` if no label was provided.
+	 */
+	label: unknown;
+
+	/**
+	 * The label trees of any nested transactions within this one.
+	 */
+	sublabels: LabelTree[];
 }
 
 /**
@@ -289,11 +305,11 @@ export interface LocalChangeMetadata extends CommitMetadata {
  * methods to check for specific labels.
  *
  * The optional {@link TransactionLabels.tree | tree} property provides the structural nesting
- * of the transactions as a {@link ValueTree}.
+ * of the transactions as a {@link LabelTree}.
  *
  * @sealed @alpha
  */
-export type TransactionLabels = Set<unknown> & { tree?: ValueTree };
+export type TransactionLabels = Set<unknown> & { tree?: LabelTree };
 
 /**
  * Information about a change that has been applied by a remote client.
