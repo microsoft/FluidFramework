@@ -9,7 +9,9 @@
 		"noUnusedLocals": false,
 		// ES2021 needed for FinalizationRegistry
 		"lib": ["ES2021", "DOM", "DOM.Iterable"],
-		// Needed to suppress type errors in Quill's third-party type declarations
+		// Suppress type errors in Quill's use of quill-delta.
+		// Without this, the quill code gives a lot of errors like:
+		// node_modules/.pnpm/quill@2.0.3/node_modules/quill/blots/block.d.ts:6:17 - error TS2709: Cannot use namespace 'Delta' as a type.
 		"skipLibCheck": true,
 	},
 }

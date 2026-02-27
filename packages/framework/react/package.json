@@ -102,8 +102,8 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"quill": "^2.0.2",
-		"quill-delta": "^4.2.2",
+		"quill": "^2.0.3",
+		"quill-delta": "^5.1.0",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},

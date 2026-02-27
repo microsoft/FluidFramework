@@ -3941,12 +3941,6 @@ importers:
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
-      quill:
-        specifier: ^2.0.2
-        version: 2.0.3
-      quill-delta:
-        specifier: ^4.2.2
-        version: 4.2.2
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -7139,8 +7133,8 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)
       quill-delta:
-        specifier: ^4.2.2
-        version: 4.2.2
+        specifier: ^5.1.0
+        version: 5.1.0
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11872,11 +11866,11 @@ importers:
         specifier: workspace:~
         version: link:../../dds/tree
       quill:
-        specifier: ^2.0.2
+        specifier: ^2.0.3
         version: 2.0.3
       quill-delta:
-        specifier: ^4.2.2
-        version: 4.2.2
+        specifier: ^5.1.0
+        version: 5.1.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -22785,9 +22779,6 @@ packages:
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
-  fast-diff@1.2.0:
-    resolution: {integrity: sha512-xJuoT5+L99XlZ8twedaRf6Ax2TgQVxvgZOYoPKqZufmJib0tL2tegPBOZb1pVNgIhlqDlA0eO0c3wBvQcmzx4w==}
-
   fast-diff@1.3.0:
     resolution: {integrity: sha512-VxPP4NqbUjj6MaAOafWeUn2cXWLcCtljklUtZf0Ind4XQ+QPtmA0b18zZy0jIQx+ExRVCR/ZQpBmik5lXshNsw==}
 
@@ -26180,9 +26171,6 @@ packages:
   quick-lru@5.1.1:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
-
-  quill-delta@4.2.2:
-    resolution: {integrity: sha512-qjbn82b/yJzOjstBgkhtBjN2TNK+ZHP/BgUQO+j6bRhWQQdmj2lH6hXG7+nwwLF41Xgn//7/83lxs9n2BkTtTg==}
 
   quill-delta@5.1.0:
     resolution: {integrity: sha512-X74oCeRI4/p0ucjb5Ma8adTXd9Scumz367kkMK5V/IatcX6A0vlgLgKbzXWy5nZmCGeNJm2oQX0d2Eqj+ZIlCA==}
@@ -36759,8 +36747,6 @@ snapshots:
 
   fast-deep-equal@3.1.3: {}
 
-  fast-diff@1.2.0: {}
-
   fast-diff@1.3.0: {}
 
   fast-equals@4.0.3: {}
@@ -41037,12 +41023,6 @@ snapshots:
   queue-tick@1.0.1: {}
 
   quick-lru@5.1.1: {}
-
-  quill-delta@4.2.2:
-    dependencies:
-      fast-diff: 1.2.0
-      lodash.clonedeep: 4.5.0
-      lodash.isequal: 4.5.0
 
   quill-delta@5.1.0:
     dependencies:
