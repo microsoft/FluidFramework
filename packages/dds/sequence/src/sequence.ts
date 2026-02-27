@@ -142,14 +142,14 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	/**
 	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
 	 * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
-	 * @param segment - Segment to add the local reference on
+	 * @param segment - Segment to add the local reference on, or "start"/"end" for endpoint segments
 	 * @param offset - Offset on the segment at which to place the local reference
 	 * @param refType - ReferenceType for the created local reference
 	 * @param properties - PropertySet to place on the created local reference
 	 */
 	createLocalReferencePosition(
-		segment: T,
-		offset: number,
+		segment: T | "start" | "end",
+		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
@@ -617,8 +617,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	public createLocalReferencePosition(
-		segment: T,
-		offset: number,
+		segment: T | "start" | "end",
+		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
@@ -865,10 +865,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -1024,7 +1021,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			(key: string, local: boolean) => {
 				const intervalCollection = this.intervalCollections.get(key);
 				if (!intervalCollection.attached) {
-					intervalCollection.attachGraph(this.client, key);
+					intervalCollection.attachGraph(this, this.client, key);
 				}
 				this.emit("createIntervalCollection", key, local, this);
 			},
@@ -1033,7 +1030,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// Initialize existing SharedIntervalCollections
 		for (const key of this.intervalCollections.keys()) {
 			const intervalCollection = this.intervalCollections.get(key);
-			intervalCollection.attachGraph(this.client, key);
+			intervalCollection.attachGraph(this, this.client, key);
 		}
 	}
 

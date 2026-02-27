@@ -13,6 +13,8 @@ jobs:
     - name: version
       value: $[stageDependencies.build.build.outputs['SetVersion.version']]
     steps:
+    - checkout: self
+      path: $(FluidFrameworkDirectory)
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
     - template: /tools/pipelines/templates/include-install-build-tools.yml@self
       parameters:
@@ -22,7 +24,7 @@ jobs:
       displayName: Generate release reports
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           mkdir generate_release_reports
@@ -32,7 +34,7 @@ jobs:
       displayName: Update release report version
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           mkdir upload_release_reports
@@ -41,7 +43,7 @@ jobs:
     - task: CopyFiles@2
       displayName: Copy release reports
       inputs:
-        SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+        SourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/upload_release_reports
         TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
     - task: AzureCLI@2
@@ -50,11 +52,15 @@ jobs:
       inputs:
         azureSubscription: 'fluid-docs'
         scriptType: bash
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         scriptLocation: inlineScript
         inlineScript: |
           for file in upload_release_reports/*; do
-              az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite true --verbose
+              # Use 5 minute TTL for manifest files. This could be lengthened significantly
+              # for manifest files for a particular build (immutable) or for those for a particular
+              # release (updates with our release cycle), but using a shorter TTL for all risks only small
+              # perf losses while remaining simple.
+              az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
           done
           # Delete generate_release_reports and upload_release_reports folder
           rm -r generate_release_reports upload_release_reports
