@@ -4441,6 +4441,187 @@ describe("Runtime", () => {
 
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
+
+			describe("stagingModeMaxBatchOps", () => {
+				let runtimeWithThreshold: ContainerRuntime_WithPrivates;
+				let mockContext: Partial<IContainerContext>;
+
+				async function createRuntimeWithThreshold(
+					threshold: number,
+				): Promise<ContainerRuntime_WithPrivates> {
+					mockContext = getMockContext() as IContainerContext;
+					return (await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							stagingModeMaxBatchOps: threshold,
+							// Disable grouped batching so each op is individually submitted to the wire,
+							// making it easier to verify op counts.
+							enableGroupedBatching: false,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					})) as unknown as ContainerRuntime_WithPrivates;
+				}
+
+				afterEach(() => {
+					runtimeWithThreshold?.dispose();
+					runtimeWithThreshold = undefined as unknown as ContainerRuntime_WithPrivates;
+				});
+
+				it("ops accumulate under threshold during staging mode", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(10);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					const controls = runtimeWithThreshold.enterStagingMode();
+
+					// Submit 5 ops across multiple turns — under the threshold of 10
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+					await Promise.resolve();
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
+					await Promise.resolve();
+					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("op3"));
+					await Promise.resolve();
+					submitDataStoreOp(runtimeWithThreshold, "4", genTestDataStoreMessage("op4"));
+					await Promise.resolve();
+					submitDataStoreOp(runtimeWithThreshold, "5", genTestDataStoreMessage("op5"));
+					await Promise.resolve();
+
+					assert.equal(
+						submittedOps.length,
+						0,
+						"No ops should be submitted while under threshold in staging mode",
+					);
+
+					controls.commitChanges();
+					assert.equal(
+						submittedOps.length,
+						5,
+						"All 5 ops should be submitted after commitChanges",
+					);
+				});
+
+				it("ops flush when threshold is reached", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(3);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					runtimeWithThreshold.enterStagingMode();
+
+					// Submit 3 ops — exactly at the threshold
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
+					assert.equal(submittedOps.length, 0, "Under threshold, no flush yet");
+
+					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("op3"));
+					// The 3rd op should trigger scheduleFlush to fall through to normal scheduling
+					await Promise.resolve();
+
+					assert.equal(
+						submittedOps.length,
+						0,
+						"Ops should not be submitted while in staging mode (flushed into PSM only)",
+					);
+				});
+
+				it("incoming ops break the batch regardless of threshold", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(Infinity);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					runtimeWithThreshold.enterStagingMode();
+
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
+					assert.equal(submittedOps.length, 0, "No ops submitted yet");
+
+					// Simulate an incoming op — bumps lastSequenceNumber and emits "op"
+					// The deltaManager "op" handler calls this.flush() directly,
+					// which moves pending ops from outbox into PSM (as staged batches).
+					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+					++mockDeltaManager.lastSequenceNumber;
+					mockDeltaManager.emit("op", {
+						clientId: mockClientId,
+						sequenceNumber: mockDeltaManager.lastSequenceNumber,
+						clientSequenceNumber: 1,
+						type: MessageType.ClientJoin,
+						contents: "test content",
+					});
+
+					// Ops are not submitted to the wire during staging mode — they're flushed to PSM
+					assert.equal(
+						submittedOps.length,
+						0,
+						"Ops should not be submitted to wire while in staging mode",
+					);
+				});
+
+				it("exit staging mode flushes remaining ops", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(Infinity);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					const controls = runtimeWithThreshold.enterStagingMode();
+
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
+					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("op3"));
+					assert.equal(submittedOps.length, 0, "No ops submitted while staging");
+
+					controls.commitChanges();
+
+					assert(submittedOps.length > 0, "Ops should be submitted after commitChanges");
+				});
+
+				it("has no effect outside staging mode", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(Infinity);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					// Submit ops without entering staging mode
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+
+					// Normal turn-based flush should still happen
+					await Promise.resolve();
+
+					assert.equal(
+						submittedOps.length,
+						1,
+						"Op should flush normally when not in staging mode",
+					);
+				});
+
+				it("default threshold suppresses turn-based flushing during staging mode", async () => {
+					// Create runtime WITHOUT explicit stagingModeMaxBatchOps — uses the default (1000)
+					mockContext = getMockContext() as IContainerContext;
+					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					})) as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					const controls = runtimeWithThreshold.enterStagingMode();
+
+					// Submit a few ops across turns — well under the default threshold
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+					await Promise.resolve();
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
+					await Promise.resolve();
+
+					assert.equal(
+						submittedOps.length,
+						0,
+						"Default threshold should suppress turn-based flushing during staging mode",
+					);
+
+					controls.commitChanges();
+				});
+			});
 		});
 	});
 });

@@ -513,6 +513,18 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching: boolean;
+
+	/**
+	 * Controls automatic batch flushing during staging mode.
+	 * Normal turn-based/async flush scheduling is suppressed while in staging mode
+	 * until the accumulated batch reaches this many ops, at which point the batch
+	 * is flushed. Incoming ops always break the current batch regardless of this setting.
+	 *
+	 * Set to Infinity to only break batches on system events (incoming ops).
+	 *
+	 * @defaultValue 1000
+	 */
+	readonly stagingModeMaxBatchOps?: number;
 }
 
 /**
@@ -607,6 +619,16 @@ const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconn
 const defaultMaxBatchSizeInBytes = 700 * 1024;
 
 const defaultChunkSizeInBytes = 204800;
+
+/**
+ * Default maximum ops per staging-mode batch before automatic flush scheduling resumes.
+ *
+ * Chosen based on production telemetry: copy-paste operations routinely produce batches
+ * of 1000+ ops (435K instances over 30 days), and receivers on modern Fluid versions
+ * handle them without issues. 1000 also matches the existing "large batch" telemetry
+ * threshold ({@link OpGroupingManager}).
+ */
+const defaultStagingModeMaxBatchOps = 1000;
 
 /**
  * The default time to wait for pending ops to be processed during summarization
@@ -987,6 +1009,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			stagingModeMaxBatchOps,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1215,6 +1238,7 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			stagingModeMaxBatchOps,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1393,6 +1417,7 @@ export class ContainerRuntime
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
+	private readonly stagingModeMaxBatchOps: number | undefined;
 	/**
 	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
 	 * where the same local state is pending in two different running Containers, each of
@@ -1849,6 +1874,7 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
+		this.stagingModeMaxBatchOps = runtimeOptions.stagingModeMaxBatchOps;
 		this.batchIdTrackingEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
@@ -4809,6 +4835,21 @@ export class ContainerRuntime
 	}
 
 	private scheduleFlush(): void {
+		// During staging mode with a batch threshold, suppress automatic flush scheduling.
+		// Only flush when the main batch exceeds the threshold.
+		// Incoming ops still break the batch via direct this.flush() calls elsewhere
+		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
+		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
+		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
+		// sequence number changes and forces a flush as a safety net.
+		if (
+			this.inStagingMode &&
+			this.outbox.mainBatchMessageCount <
+				(this.stagingModeMaxBatchOps ?? defaultStagingModeMaxBatchOps)
+		) {
+			return;
+		}
+
 		if (this.flushScheduled) {
 			return;
 		}
