@@ -358,7 +358,7 @@ const FormattedTextEditorView = React.forwardRef<
 				for (const op of delta.ops) {
 					if (op.retain !== undefined) {
 						// The docs for retain imply this is always a number, but the type definitions allow a record here.
-						// It is unknown why the type definitions allow a record as the have no doc comments.
+						// It is unknown why the type definitions allow a record as they have no doc comments.
 						// For now this assert seems to be passing, so we just assume its always a number.
 						assert(typeof op.retain === "number", "Expected retain count to be a number");
 						// Convert UTF-16 retain count to codepoint count
