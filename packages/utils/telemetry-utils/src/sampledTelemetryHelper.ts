@@ -7,6 +7,7 @@ import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
+import { LogLevelValue } from "./logger.js";
 import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
@@ -291,7 +292,7 @@ export class SampledTelemetryHelper<
 				...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
 				...measurements,
 				...processedCustomData,
-				logLevel: "info",
+				logLevel: LogLevelValue.info,
 			};
 
 			this.logger.sendPerformanceEvent(telemetryEvent);

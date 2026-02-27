@@ -999,3 +999,32 @@ export const tagCodeArtifacts = <
 					})
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
+
+/**
+ * String values that indicate the importance of a telemetry event for diagnostics,
+ * enabling consumers to make sampling or filtering decisions.
+ *
+ * If an event does not contain a `logLevel` value, it should be treated as `essential`.
+ *
+ * @internal
+ */
+export const LogLevelValue = {
+	/**
+	 * Chatty logs useful for local debugging.
+	 * They need not be collected in production.
+	 */
+	verbose: "verbose",
+
+	/**
+	 * Information about the session. These logs could be omitted in some sessions
+	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
+	 * from a particular session, all should be.
+	 */
+	info: "info",
+
+	/**
+	 * Essential information about the operation of Fluid. It is recommended that
+	 * these should always be collected, even in production, for diagnostic purposes.
+	 */
+	essential: "essential",
+};

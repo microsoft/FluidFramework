@@ -69,6 +69,7 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	type TelemetryEventPropertyTypes,
+	LogLevelValue,
 } from "./logger.js";
 export {
 	createMockLoggerExt,
