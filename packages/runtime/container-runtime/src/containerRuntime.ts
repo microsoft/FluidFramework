@@ -524,7 +524,7 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 *
 	 * @defaultValue 1000
 	 */
-	readonly stagingModeMaxBatchOps?: number;
+	readonly stagingModeAutoFlushThreshold?: number;
 }
 
 /**
@@ -628,7 +628,7 @@ const defaultChunkSizeInBytes = 204800;
  * handle them without issues. 1000 also matches the existing "large batch" telemetry
  * threshold ({@link OpGroupingManager}).
  */
-const defaultStagingModeMaxBatchOps = 1000;
+const defaultStagingModeAutoFlushThreshold = 1000;
 
 /**
  * The default time to wait for pending ops to be processed during summarization
@@ -1009,7 +1009,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
-			stagingModeMaxBatchOps,
+			stagingModeAutoFlushThreshold,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1238,7 +1238,7 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
-			stagingModeMaxBatchOps,
+			stagingModeAutoFlushThreshold,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1417,7 +1417,7 @@ export class ContainerRuntime
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
-	private readonly stagingModeMaxBatchOps: number | undefined;
+	private readonly stagingModeAutoFlushThreshold: number | undefined;
 	/**
 	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
 	 * where the same local state is pending in two different running Containers, each of
@@ -1874,7 +1874,7 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
-		this.stagingModeMaxBatchOps = runtimeOptions.stagingModeMaxBatchOps;
+		this.stagingModeAutoFlushThreshold = runtimeOptions.stagingModeAutoFlushThreshold;
 		this.batchIdTrackingEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
@@ -4845,7 +4845,7 @@ export class ContainerRuntime
 		if (
 			this.inStagingMode &&
 			this.outbox.mainBatchMessageCount <
-				(this.stagingModeMaxBatchOps ?? defaultStagingModeMaxBatchOps)
+				(this.stagingModeAutoFlushThreshold ?? defaultStagingModeAutoFlushThreshold)
 		) {
 			return;
 		}

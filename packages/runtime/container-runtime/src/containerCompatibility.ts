@@ -43,7 +43,7 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 	| "maxBatchSizeInBytes"
 	| "loadSequenceNumberVerification"
 	| "summaryOptions"
-	| "stagingModeMaxBatchOps"
+	| "stagingModeAutoFlushThreshold"
 >;
 
 /**

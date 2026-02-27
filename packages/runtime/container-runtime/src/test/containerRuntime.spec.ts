@@ -4442,7 +4442,7 @@ describe("Runtime", () => {
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
 
-			describe("stagingModeMaxBatchOps", () => {
+			describe("stagingModeAutoFlushThreshold", () => {
 				let runtimeWithThreshold: ContainerRuntime_WithPrivates;
 				let mockContext: Partial<IContainerContext>;
 
@@ -4455,7 +4455,7 @@ describe("Runtime", () => {
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
 						runtimeOptions: {
-							stagingModeMaxBatchOps: threshold,
+							stagingModeAutoFlushThreshold: threshold,
 							// Disable grouped batching so each op is individually submitted to the wire,
 							// making it easier to verify op counts.
 							enableGroupedBatching: false,
@@ -4593,7 +4593,7 @@ describe("Runtime", () => {
 				});
 
 				it("default threshold suppresses turn-based flushing during staging mode", async () => {
-					// Create runtime WITHOUT explicit stagingModeMaxBatchOps — uses the default (1000)
+					// Create runtime WITHOUT explicit stagingModeAutoFlushThreshold — uses the default (1000)
 					mockContext = getMockContext() as IContainerContext;
 					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
 						context: mockContext as IContainerContext,
