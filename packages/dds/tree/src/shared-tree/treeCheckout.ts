@@ -55,6 +55,8 @@ import {
 	LeafNodeStoredSchema,
 	diffHistories,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
@@ -67,9 +69,9 @@ import {
 	buildForest,
 	createNodeIdentifierManager,
 	defaultSchemaPolicy,
+	fieldBatchCodecBuilder,
 	intoDelta,
 	jsonableTreeFromCursor,
-	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import {
 	SquashingTransactionStack,
@@ -107,6 +109,36 @@ import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+
+/**
+ * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
+ */
+function* collectTreeLabels(node: LabelTree): IterableIterator<unknown> {
+	if (node.label !== undefined) {
+		yield node.label;
+	}
+	for (const child of node.sublabels) {
+		yield* collectTreeLabels(child);
+	}
+}
+
+/**
+ * Builds the labels set for a change event from the label tree.
+ * If the tree exists and contains at least one defined label, returns a set of all
+ * values with the tree attached. Otherwise returns an empty set.
+ */
+function buildLabelsSet(labelTreeNode: LabelTree | undefined): TransactionLabels {
+	const set: Set<unknown> & { tree?: LabelTree } = new Set<unknown>();
+	if (labelTreeNode !== undefined) {
+		for (const value of collectTreeLabels(labelTreeNode)) {
+			set.add(value);
+		}
+		if (set.size > 0) {
+			set.tree = labelTreeNode;
+		}
+	}
+	return set;
+}
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -322,7 +354,7 @@ export function createTreeCheckout(
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? makeFieldBatchCodec(codecOptions),
+			args?.fieldBatchCodec ?? fieldBatchCodecBuilder.build(codecOptions),
 			codecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,
@@ -389,12 +421,22 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private editLock: EditLock;
 
 	/**
-	 * User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	 * Root of the mutable label tree tracking transaction nesting.
 	 *
 	 * @remarks
-	 * This label is used to implement {@link TreeCheckout.runWithTransactionLabel}.
+	 * The label tree is always isomorphic to the actual transaction tree — every transaction
+	 * (whether labeled or not) gets its own node. To find the "current" (deepest open) node,
+	 * walk down the right side of the tree, stopping at {@link TreeCheckout.mostRecentlyClosedLabelNode}.
+	 *
+	 * Cleared by {@link TreeCheckout.runWithTransactionLabel} after the commit event is emitted.
 	 */
-	private transactionLabel?: unknown;
+	private labelTreeNode: LabelTree | undefined;
+
+	/**
+	 * Points to the most recently closed (committed) label node.
+	 * Used by {@link TreeCheckout.currentLabelNode} to stop descending past committed nodes.
+	 */
+	private mostRecentlyClosedLabelNode: LabelTree | undefined;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
@@ -448,6 +490,82 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
+	 * Pushes a new label node for a transaction nesting level.
+	 *
+	 * @param label - The label for this transaction level.
+	 *
+	 * @remarks
+	 * Called at the start of each transaction (including nested ones).
+	 * Creates a new {@link LabelTree} node as a child of the current deepest node (if any),
+	 * or as the root if this is the outermost transaction.
+	 */
+	public pushLabelFrame(label: unknown): void {
+		const node: LabelTree = { label, sublabels: [] };
+		if (this.labelTreeNode === undefined) {
+			this.labelTreeNode = node;
+		} else {
+			const current = this.currentLabelNode();
+			assert(current !== undefined, "Expected current label node to exist");
+			current.sublabels.push(node);
+		}
+	}
+
+	/**
+	 * Returns the deepest open node on the right side of the label tree, which corresponds
+	 * to the current (most recently pushed, not yet committed or aborted) transaction.
+	 * Returns `undefined` when {@link TreeCheckout.labelTreeNode} is not set.
+	 */
+	private currentLabelNode(): LabelTree | undefined {
+		if (this.labelTreeNode === undefined) {
+			return undefined;
+		}
+		// Walk down the right spine of the tree. Only one closed node is ever reachable
+		// during this traversal, so a single pointer (mostRecentlyClosedLabelNode) suffices
+		// to stop descending past committed nodes.
+		let node: LabelTree = this.labelTreeNode;
+		while (node.sublabels.length > 0) {
+			const lastChild = node.sublabels[node.sublabels.length - 1];
+			assert(lastChild !== undefined, "Expected label tree node to have children");
+			if (lastChild === this.mostRecentlyClosedLabelNode) {
+				break;
+			}
+			node = lastChild;
+		}
+		return node;
+	}
+
+	/**
+	 * Pops the current label frame from the label tree.
+	 * @param aborted - If true, the node is removed from the tree (transaction was aborted).
+	 * If false, the node is kept in the tree but marked as closed (transaction was committed).
+	 */
+	public popLabelFrame(aborted: boolean): void {
+		const node = this.currentLabelNode();
+		if (node === undefined) {
+			return;
+		}
+
+		if (aborted) {
+			if (node === this.labelTreeNode) {
+				this.labelTreeNode = undefined;
+				this.mostRecentlyClosedLabelNode = undefined;
+			} else {
+				// Temporarily mark node as closed so currentLabelNode() returns its parent.
+				this.mostRecentlyClosedLabelNode = node;
+				const parent = this.currentLabelNode();
+				assert(parent !== undefined, "Expected parent label node to exist");
+				parent.sublabels.pop();
+				// Point to the parent's new last child (guaranteed closed if it exists),
+				// or undefined if the parent has no more children.
+				const newLastChild = parent.sublabels[parent.sublabels.length - 1];
+				this.mostRecentlyClosedLabelNode = newLastChild;
+			}
+		} else {
+			this.mostRecentlyClosedLabelNode = node;
+		}
+	}
+
+	/**
 	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes.
 	 *
 	 * @remarks
@@ -463,15 +581,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		fn: (label?: TLabel) => TResult,
 		label: TLabel | undefined,
 	): TResult {
-		// If a transaction label is already set, nesting is occurring, so we should not override it.
-		if (this.transactionLabel !== undefined) {
-			return fn(this.transactionLabel as TLabel);
-		}
-		this.transactionLabel = label;
 		try {
-			return fn(this.transactionLabel as TLabel);
+			return fn(label);
 		} finally {
-			this.transactionLabel = undefined;
+			// Only clear the label tree when the outermost transaction has completed.
+			// Inner transactions' commits don't fire the "changed" event, so the label tree
+			// must remain intact until the outermost commit reads it.
+			if (this.transaction.size === 0) {
+				this.labelTreeNode = undefined;
+				this.mostRecentlyClosedLabelNode = undefined;
+			}
 		}
 	}
 
@@ -514,7 +633,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						if (viewUpdate !== undefined) {
 							this.applyChange(viewUpdate, newHead.revision);
 						}
-						if (!this.transaction.isInProgress()) {
+						if (this.transaction.size === 0) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
 							this.validateCommit(newHead);
 						}
@@ -611,7 +730,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						} satisfies SerializedChange;
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
-					label: this.transactionLabel,
+					label: this.labelTreeNode?.label,
+					labels: buildLabelsSet(this.labelTreeNode),
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -622,6 +742,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.#events.emit("changed", {
 				isLocal: false,
 				kind: CommitKind.Default,
+				labels: new Set<unknown>(),
 			});
 		}
 	};
@@ -870,7 +991,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
 		// Branching after an unfinished transaction would expose the application to a state where its invariants may be violated.
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
@@ -902,7 +1023,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	): void {
 		// TODO: Dispose old branch, if necessary
 		assert(
-			!this.#transaction.isInProgress(),
+			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
 		const diff = diffHistories(
@@ -932,12 +1053,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		);
 		this.editLock.checkUnlocked("Rebasing");
 
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError(
 				"Views cannot be rebased onto a view that has a pending transaction.",
 			);
 		}
-		if (checkout.transaction.isInProgress()) {
+		if (checkout.transaction.size > 0) {
 			throw new UsageError("A view cannot be rebased while it has a pending transaction.");
 		}
 
@@ -966,12 +1087,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
 		this.editLock.checkUnlocked("Merging");
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError(
 				"Views cannot be merged into a view while it has a pending transaction.",
 			);
 		}
-		if (checkout.transaction.isInProgress()) {
+		if (checkout.transaction.size > 0) {
 			throw new UsageError(
 				"Views with an open transaction cannot be merged into another view.",
 			);
@@ -1057,7 +1178,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
-		if (this.transaction.isInProgress()) {
+		if (this.transaction.size > 0) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
 

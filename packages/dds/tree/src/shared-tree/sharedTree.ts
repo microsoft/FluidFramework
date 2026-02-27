@@ -56,10 +56,9 @@ import {
 	buildForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
-	getCodecTreeForFieldBatchFormat,
-	getCodecTreeForForestFormat,
+	fieldBatchCodecBuilder,
+	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
-	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
@@ -241,7 +240,7 @@ export class SharedTreeKernel
 			schemaCodec,
 			options.minVersionForCollab,
 		);
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
 		const encoderContext = {
 			schema: {
@@ -255,7 +254,6 @@ export class SharedTreeKernel
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			encoderContext,
 			options,
 			idCompressor,
@@ -420,7 +418,7 @@ export class SharedTreeKernel
 
 	public override didAttach(): void {
 		for (const checkout of this.checkouts.values()) {
-			if (checkout.transaction.isInProgress()) {
+			if (checkout.transaction.size > 0) {
 				// Attaching during a transaction is not currently supported.
 				// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
 				throw new UsageError(
@@ -438,7 +436,7 @@ export class SharedTreeKernel
 	): void {
 		for (const checkout of this.checkouts.values()) {
 			assert(
-				!checkout.transaction.isInProgress(),
+				checkout.transaction.size === 0,
 				0x674 /* Unexpected transaction is open while applying stashed ops */,
 			);
 		}
@@ -453,7 +451,7 @@ export class SharedTreeKernel
 	): void {
 		const checkout = this.getCheckout(branchId);
 		assert(
-			!checkout.transaction.isInProgress(),
+			checkout.transaction.size === 0,
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
@@ -596,12 +594,12 @@ export function getCodecTreeForSharedTreeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const children: CodecTree[] = [];
-	children.push(getCodecTreeForForestFormat(clientVersion));
+	children.push(forestCodecBuilder.getCodecTree(clientVersion));
 	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
 	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
-	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
+	children.push(fieldBatchCodecBuilder.getCodecTree(clientVersion));
 	return {
 		name: "SharedTree",
 		version: undefined, // SharedTree does not have a version of its own.
