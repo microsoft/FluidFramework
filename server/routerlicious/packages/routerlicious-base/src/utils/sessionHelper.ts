@@ -284,7 +284,7 @@ export function generateCacheKey(tenantId: string, documentId: string): string {
  * If the document is deleted, we store a session object with empty URLs and isSessionAlive=false.
  * @internal
  */
-async function getSessionFromCache(
+export async function getSessionFromCache(
 	tenantId: string,
 	documentId: string,
 	redisCacheForGetSession: ICache,
