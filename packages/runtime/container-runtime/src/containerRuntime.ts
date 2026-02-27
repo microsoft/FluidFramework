@@ -1832,7 +1832,7 @@ export class ContainerRuntime
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
 
 		this._flushMode = runtimeOptions.flushMode;
-		// TODO: Remove this validation once we've released and confirmed no consumer passes an invalid flushMode value.
+		// TODO: Added in 2.90.0 - Remove this validation once we've released and confirmed no consumer passes an invalid flushMode value.
 		if (this._flushMode !== FlushMode.Immediate && this._flushMode !== FlushMode.TurnBased) {
 			const error = new UsageError(
 				"Invalid flushMode runtime option. Expected FlushMode.Immediate or FlushMode.TurnBased.",
