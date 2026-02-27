@@ -5,7 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { computeSync } from "../plain/plainUtils.js";
+// Allow import of file being tested
+// eslint-disable-next-line import-x/no-internal-modules
+import { computeSync } from "../../text/plain/plainUtils.js";
 
 describe("plainUtils", () => {
 	describe("computeSync", () => {

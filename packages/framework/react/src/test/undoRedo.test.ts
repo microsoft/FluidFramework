@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { Listenable } from "@fluidframework/core-interfaces";
 import {
 	CommitKind,
 	type CommitMetadata,
@@ -13,7 +14,6 @@ import {
 	RevertibleStatus,
 	type TreeViewEvents,
 } from "@fluidframework/tree";
-import type { Listenable } from "fluid-framework";
 
 import { UndoRedoStacks } from "../undoRedo.js";
 

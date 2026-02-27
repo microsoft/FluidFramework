@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Listenable } from "@fluidframework/core-interfaces";
 import {
 	CommitKind,
 	type CommitMetadata,
@@ -10,19 +11,19 @@ import {
 	type RevertibleFactory,
 	type TreeViewEvents,
 } from "@fluidframework/tree";
-import type { Listenable } from "fluid-framework";
 
 /**
  * Interface for undo/redo stack operations.
+ * @internal
  */
 export interface UndoRedo {
 	/**
-	 * Reverts the most recent change. Only valid to call when {@link canUndo} returns true.
+	 * Reverts the most recent change. Only valid to call when {@link UndoRedo.canUndo} returns true.
 	 * @throws Error if there is nothing to undo.
 	 */
 	undo(): void;
 	/**
-	 * Reapplies the most recently undone change. Only valid to call when {@link canRedo} returns true.
+	 * Reapplies the most recently undone change. Only valid to call when {@link UndoRedo.canRedo} returns true.
 	 * @throws Error if there is nothing to redo.
 	 */
 	redo(): void;
@@ -40,6 +41,7 @@ export interface UndoRedo {
 /**
  * Manages undo and redo stacks for a TreeView.
  * Listens to commitApplied events and manages Revertible objects.
+ * @sealed @internal
  */
 export class UndoRedoStacks implements UndoRedo {
 	private readonly undoStack: Revertible[] = [];

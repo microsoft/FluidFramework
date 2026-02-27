@@ -5,16 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { toPropTreeNode } from "@fluidframework/react/alpha";
 import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-// eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import-x/no-internal-modules
-import { independentView } from "@fluidframework/tree/internal";
+import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
-import Delta from "quill-delta";
+import globalJsdom from "global-jsdom";
+import DeltaPackage from "quill-delta";
 import * as React from "react";
 
+import { toPropTreeNode } from "../../propNode.js";
 import {
 	clipboardFormatMatcher,
 	FormattedTextAsTree,
@@ -22,14 +21,21 @@ import {
 	type FormattedEditorHandle,
 	parseCssFontFamily,
 	parseCssFontSize,
-} from "../formatted/quillFormattedView.js";
+	// Allow import of files being tested
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../text/formatted/quillFormattedView.js";
 import {
 	PlainTextMainView,
 	QuillMainView,
-	TextAsTree,
 	type MainViewProps,
-} from "../plain/index.js";
-import { UndoRedoStacks } from "../undoRedo.js";
+	// Allow import of files being tested
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../text/plain/index.js";
+import { UndoRedoStacks } from "../../undoRedo.js";
+
+// Workaround for quill-delta's export style not working well with node16 module resolution.
+type Delta = DeltaPackage.default;
+const Delta = DeltaPackage.default;
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
@@ -64,9 +70,21 @@ const views: { name: string; component: React.FC<MainViewProps> }[] = [
 // TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
 // @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
 describe("textEditor", () => {
-	// Note: JSDOM is initialized once in mochaHooks.mjs before Quill is imported,
-	// since Quill requires document at import time. DOM state may accumulate
-	// across tests. See src/test/mochaHooks.mjs.
+	// Note: JSDOM is initialized once in mochaHooks.ts before Quill is imported,
+	// since Quill requires document at import time. See src/test/mochaHooks.ts.
+	// These tests reset up a clean DOM.
+
+	let cleanup: () => void;
+
+	// TODO: why does making this beforeEach/afterEach instead of before/after cause cleanup to crash?
+	// It seems like each test should be able to have its own clean DOM.
+	before(() => {
+		cleanup = globalJsdom();
+	});
+
+	after(() => {
+		cleanup();
+	});
 
 	// Loop through all registered views
 	for (const view of views) {

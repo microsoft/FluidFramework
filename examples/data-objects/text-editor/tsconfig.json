@@ -5,7 +5,6 @@
 		"outDir": "./lib",
 		"types": ["react"],
 		"exactOptionalPropertyTypes": false,
-		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**"],
