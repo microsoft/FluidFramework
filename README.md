@@ -305,7 +305,7 @@ Then:
 
 -   Navigate to the example of your choice (same as above)
 -   `npm run start:tinylicious`
--   Browse to <http://localhost:8080,> copy the full URL you're redirected to, and open in a second window to collaborate
+-   Browse to <http://localhost:8080> copy the full URL you're redirected to, and open in a second window to collaborate
 
 ## Tools
 
