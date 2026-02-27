@@ -12,7 +12,7 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
 import {
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
@@ -163,13 +163,13 @@ export function testSchemaCompatibilitySnapshots(
 	forceUpdate: boolean = false,
 ): void {
 	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
-	checkSchemaCompatibilitySnapshots({
+	snapshotSchemaCompatibility({
 		snapshotDirectory,
 		fileSystem: { ...fs, ...path },
 		version: cleanedPackageVersion,
 		schema: currentViewSchema,
 		minVersionForCollaboration,
-		mode: regenerateSnapshots || forceUpdate ? "update" : "test",
+		mode: regenerateSnapshots || forceUpdate ? "update" : "assert",
 	});
 	assert(
 		forceUpdate === false,

@@ -8,12 +8,17 @@ import { type PropTreeNode, unwrapPropTreeNode } from "@fluidframework/react/alp
 import { treeDataObjectInternal } from "@fluidframework/react/internal";
 import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
+import { TreeAlpha } from "@fluidframework/tree/alpha";
+// eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill from "quill";
 import Delta from "quill-delta";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
+
+import type { UndoRedo } from "../undoRedo.js";
 
 export const FormattedTextEditorFactory = treeDataObjectInternal(
 	new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree }),
@@ -44,20 +49,102 @@ interface QuillDelta {
 /** Props for the FormattedMainView component. */
 export interface FormattedMainViewProps {
 	root: PropTreeNode<FormattedTextAsTree.Tree>;
+	/** Optional undo/redo stack for the editor. */
+	undoRedo?: UndoRedo;
 }
 
-export const FormattedMainView: React.FC<FormattedMainViewProps> = ({ root }) => {
-	return <FormattedTextEditorView root={root} />;
-};
+/** Ref handle exposing undo/redo methods for the formatted editor. */
+export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
+
+export const FormattedMainView = React.forwardRef<
+	FormattedEditorHandle,
+	FormattedMainViewProps
+>(({ root, undoRedo }, ref) => {
+	return <FormattedTextEditorView root={root} undoRedo={undoRedo} ref={ref} />;
+});
+FormattedMainView.displayName = "FormattedMainView";
 
 /** Quill size names mapped to pixel values for tree storage. */
 const sizeMap = { small: 10, large: 18, huge: 24 } as const;
 /** Reverse mapping: pixel values back to Quill size names for display. */
 const sizeReverse = { 10: "small", 18: "large", 24: "huge" } as const;
+/** Set of recognized font families for Quill. */
+const fontSet: Set<string> = new Set(["monospace", "serif", "sans-serif", "Arial"]);
 /** Default formatting values when no explicit format is specified. */
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
+/**
+ * Parse CSS font-size from a pasted HTML element's inline style.
+ * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
+ * 12px is the default size and returns undefined (no Quill attribute needed).
+ */
+export function parseCssFontSize(node: HTMLElement): string | undefined {
+	const style = node.style.fontSize;
+	if (!style) return undefined;
+
+	// check if pixel value is in <size>px format
+	if (style.endsWith("px")) {
+		// Parse pixel value (e.g., "18px" -> 18)
+		const parsed = Number.parseFloat(style);
+		if (Number.isNaN(parsed)) return undefined;
+
+		// Round to nearest integer and look up Quill size name
+		const rounded = Math.round(parsed);
+		if (rounded in sizeReverse) {
+			return sizeReverse[rounded as keyof typeof sizeReverse];
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Parse CSS font-family from a pasted HTML element's inline style.
+ * Tries fonts in priority order (first to last per CSS spec) and returns
+ * the first recognized Quill font value.
+ */
+export function parseCssFontFamily(node: HTMLElement): string | undefined {
+	const style = node.style.fontFamily;
+	if (style === "") return undefined;
+
+	// Splitting on "," does not handle commas inside quoted font names, and escape
+	// sequences within font names are not supported. This is fine since none of the
+	// font names we match against contain commas or escapes.
+	const fonts = style.split(",");
+	for (const raw of fonts) {
+		// Trim whitespace and leading and trailing quotes
+		const font = raw.trim().replace(/^["']/, "").replace(/["']$/, "");
+		// check if font is in our supported font set
+		if (fontSet.has(font)) {
+			return font;
+		}
+	}
+	// No recognized font family found; fall back to default (Arial)
+	return undefined;
+}
+
+/**
+ * Clipboard matcher that preserves recognized font-size and font-family
+ * from pasted HTML elements. Applies each format independently via
+ * compose/retain so new attributes can be added without risk of an
+ * early return skipping them.
+ * @see https://quilljs.com/docs/modules/clipboard#addmatcher
+ */
+export function clipboardFormatMatcher(node: Node, delta: Delta): Delta {
+	if (!(node instanceof HTMLElement)) return delta;
+
+	const size = parseCssFontSize(node);
+	const font = parseCssFontFamily(node);
+
+	let result = delta;
+	if (size !== undefined) {
+		result = result.compose(new Delta().retain(result.length(), { size }));
+	}
+	if (font !== undefined) {
+		result = result.compose(new Delta().retain(result.length(), { font }));
+	}
+	return result;
+}
 
 /**
  * Parse a size value from Quill into a numeric pixel value.
@@ -157,6 +244,7 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
 	let text = "";
 	let attrs: Record<string, unknown> = {};
 	// JSON key for current attributes, used for equality comparison
+	// TODO:Performance: implement faster equality check.
 	let key = "";
 
 	// Helper to push accumulated text as an insert operation
@@ -168,6 +256,8 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
 	};
 
 	// Iterate through each formatted character in the tree
+	// TODO:Performance: Optimize this loop by adding an API to get runs to FormattedTextAsTree.Tree, and implementing that using cursors.
+	// Something like `getUniformRun(startIndex, maxLength): number` and `substring(startIndex, length): string`.
 	for (const atom of root.charactersWithFormatting()) {
 		const a = formatToQuillAttrs(atom.format);
 		const k = JSON.stringify(a);
@@ -205,9 +295,13 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
  * to make targeted edits (insert at index, delete range, format range) rather
  * than replacing all content on each change.
  */
-const FormattedTextEditorView: React.FC<{
-	root: PropTreeNode<FormattedTextAsTree.Tree>;
-}> = ({ root: propRoot }) => {
+const FormattedTextEditorView = React.forwardRef<
+	FormattedEditorHandle,
+	{
+		root: PropTreeNode<FormattedTextAsTree.Tree>;
+		undoRedo?: UndoRedo;
+	}
+>(({ root: propRoot, undoRedo }, ref) => {
 	// Unwrap the PropTreeNode to get the actual tree node
 	const root = unwrapPropTreeNode(propRoot);
 	// DOM element where Quill will mount its editor
@@ -216,6 +310,18 @@ const FormattedTextEditorView: React.FC<{
 	const quillRef = React.useRef<Quill | null>(null);
 	// Guards against update loops between Quill and the tree
 	const isUpdating = React.useRef(false);
+	// Container element for undo/redo button portal
+	const [undoRedoContainer, setUndoRedoContainer] = React.useState<HTMLElement | undefined>(
+		undefined,
+	);
+	// Force re-render when undo/redo state changes
+	const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
+
+	// Expose undo/redo methods via ref
+	React.useImperativeHandle(ref, () => ({
+		undo: () => undoRedo?.undo(),
+		redo: () => undoRedo?.redo(),
+	}));
 
 	// Initialize Quill editor with formatting toolbar using Quill provided CSS
 	React.useEffect(() => {
@@ -224,23 +330,14 @@ const FormattedTextEditorView: React.FC<{
 			theme: "snow",
 			placeholder: "Start typing with formatting...",
 			modules: {
-				toolbar: {
-					container: [
-						["undo", "redo"],
-						["bold", "italic", "underline"],
-						[{ size: ["small", false, "large", "huge"] }],
-						[{ font: [] }],
-						["clean"],
-					],
-					handlers: {
-						undo(this: { quill: Quill }) {
-							this.quill.history.undo();
-						},
-						redo(this: { quill: Quill }) {
-							this.quill.history.redo();
-						},
-					},
-				},
+				history: false, // Disable Quill's built-in undo/redo
+				toolbar: [
+					["bold", "italic", "underline"],
+					[{ size: ["small", false, "large", "huge"] }],
+					[{ font: [] }],
+					["clean"],
+				],
+				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
 			},
 		});
 
@@ -255,53 +352,70 @@ const FormattedTextEditorView: React.FC<{
 			if (source !== "user" || isUpdating.current) return;
 			isUpdating.current = true;
 
-			// Helper to count Unicode codepoints in a string
-			const codepointCount = (s: string): number => [...s].length;
+			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
+			// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
+			const branch = TreeAlpha.branch(root);
+			const applyDelta = (): void => {
+				// Helper to count Unicode codepoints in a string
+				const codepointCount = (s: string): number => [...s].length;
 
-			// Get current content for UTF-16 to codepoint position mapping
-			// We update this as we process operations to keep positions accurate
-			let content = root.fullString();
-			let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
-			let cpPos = 0; // Position in codepoints (tree's view)
+				// Get current content for UTF-16 to codepoint position mapping
+				// We update this as we process operations to keep positions accurate
+				let content = root.fullString();
+				let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
+				let cpPos = 0; // Position in codepoints (tree's view)
 
-			for (const op of (delta as QuillDelta).ops ?? []) {
-				if (op.retain !== undefined) {
-					// Convert UTF-16 retain count to codepoint count
-					const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
-					const cpCount = codepointCount(retainedStr);
+				for (const op of (delta as QuillDelta).ops ?? []) {
+					if (op.retain !== undefined) {
+						// Convert UTF-16 retain count to codepoint count
+						const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
+						const cpCount = codepointCount(retainedStr);
 
-					if (op.attributes) {
-						root.formatRange(cpPos, cpCount, quillAttrsToPartial(op.attributes));
+						if (op.attributes) {
+							root.formatRange(cpPos, cpPos + cpCount, quillAttrsToPartial(op.attributes));
+						}
+						utf16Pos += op.retain;
+						cpPos += cpCount;
+					} else if (op.delete !== undefined) {
+						// Convert UTF-16 delete count to codepoint count
+						const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
+						const cpCount = codepointCount(deletedStr);
+
+						root.removeRange(cpPos, cpPos + cpCount);
+						// Update content to reflect deletion for future position calculations
+						content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
+						// Don't advance positions - next op starts at same position
+					} else if (typeof op.insert === "string") {
+						// Insert: add new text with formatting at current position
+						root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
+							quillAttrsToFormat(op.attributes),
+						);
+						root.insertAt(cpPos, op.insert);
+						// Update content to reflect insertion
+						content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
+						// Advance by inserted content length
+						utf16Pos += op.insert.length;
+						cpPos += codepointCount(op.insert);
 					}
-					utf16Pos += op.retain;
-					cpPos += cpCount;
-				} else if (op.delete !== undefined) {
-					// Convert UTF-16 delete count to codepoint count
-					const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
-					const cpCount = codepointCount(deletedStr);
-
-					root.removeRange(cpPos, cpPos + cpCount);
-					// Update content to reflect deletion for future position calculations
-					content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
-					// Don't advance positions - next op starts at same position
-				} else if (typeof op.insert === "string") {
-					// Insert: add new text with formatting at current position
-					root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
-						quillAttrsToFormat(op.attributes),
-					);
-					root.insertAt(cpPos, op.insert);
-					// Update content to reflect insertion
-					content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
-					// Advance by inserted content length
-					utf16Pos += op.insert.length;
-					cpPos += codepointCount(op.insert);
 				}
+			};
+			if (branch === undefined) {
+				applyDelta();
+			} else {
+				branch.runTransaction(applyDelta);
 			}
 
 			isUpdating.current = false;
 		});
 
 		quillRef.current = quill;
+
+		// Create container for React-controlled undo/redo buttons and prepend to toolbar
+		const toolbar = editorRef.current.previousElementSibling as HTMLElement;
+		const container = document.createElement("span");
+		container.className = "ql-formats";
+		toolbar.prepend(container);
+		setUndoRedoContainer(container);
 		// In React strict mode, effects run twice. The `!quillRef.current` check above
 		// makes the second call a no-op, preventing double-initialization of Quill.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -314,6 +428,10 @@ const FormattedTextEditorView: React.FC<{
 			// Skip if we caused the tree change ourselves via the text-change handler
 			if (!quillRef.current || isUpdating.current) return;
 
+			// TODO:Performance: Once SharedTree has better ArrayNode change events,
+			// use those events to construct a delta, instead of rebuilding a new delta then diffing every edit.
+			// After doing the optimization, keep this diffing logic as a way to test for de-sync between the tree and Quill:
+			// Use it in tests and possibly occasionally in debug builds.
 			const treeDelta = buildDeltaFromTree(root);
 			const quillDelta = quillRef.current.getContents() as QuillDelta;
 
@@ -332,6 +450,35 @@ const FormattedTextEditorView: React.FC<{
 		});
 	}, [root]);
 
+	// Subscribe to undo/redo state changes to update button disabled state
+	React.useEffect(() => {
+		if (!undoRedo) return;
+		return undoRedo.onStateChange(() => {
+			forceUpdate();
+		});
+	}, [undoRedo]);
+
+	// Render undo/redo buttons via portal into Quill toolbar
+	const undoRedoButtons = undoRedoContainer
+		? ReactDOM.createPortal(
+				<>
+					<button
+						type="button"
+						className="ql-undo"
+						disabled={undoRedo?.canUndo() !== true}
+						onClick={() => undoRedo?.undo()}
+					/>
+					<button
+						type="button"
+						className="ql-redo"
+						disabled={undoRedo?.canRedo() !== true}
+						onClick={() => undoRedo?.redo()}
+					/>
+				</>,
+				undoRedoContainer,
+			)
+		: undefined;
+
 	return (
 		<div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
 			<style>{`
@@ -343,6 +490,7 @@ const FormattedTextEditorView: React.FC<{
 				.ql-undo, .ql-redo { width: 28px !important; }
 				.ql-undo::after { content: "↶"; font-size: 18px; }
 				.ql-redo::after { content: "↷"; font-size: 18px; }
+				.ql-undo:disabled, .ql-redo:disabled { opacity: 0.3; cursor: not-allowed; }
 			`}</style>
 			<h2 style={{ margin: "10px 0" }}>Collaborative Formatted Text Editor</h2>
 			<div
@@ -354,6 +502,8 @@ const FormattedTextEditorView: React.FC<{
 					borderRadius: "4px",
 				}}
 			/>
+			{undoRedoButtons}
 		</div>
 	);
-};
+});
+FormattedTextEditorView.displayName = "FormattedTextEditorView";

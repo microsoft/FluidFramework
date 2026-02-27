@@ -4,7 +4,10 @@
  */
 
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import type { IGitManager } from "@fluidframework/server-services-client";
+import type {
+	IGitManager,
+	GitManagerConfigDecorator,
+} from "@fluidframework/server-services-client";
 
 /**
  * @internal
@@ -174,6 +177,7 @@ export interface ITenantManager {
 		storageName?: string,
 		includeDisabledTenant?: boolean,
 		isEphemeralContainer?: boolean,
+		configDecorator?: GitManagerConfigDecorator,
 	): Promise<IGitManager>;
 
 	/**

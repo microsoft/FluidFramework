@@ -1,0 +1,14 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.entrypoint.json",
+	"mainEntryPointFilePath": "<projectFolder>/lib/api-extractor/exposedUtilityTypes.d.ts",
+	"messages": {
+		"extractorMessageReporting": {
+			// This API set is complete and should not have any broken links, so
+			// we keep this error enabled here unlike other linting configurations.
+			"ae-unresolved-link": {
+				"logLevel": "error"
+			}
+		}
+	}
+}

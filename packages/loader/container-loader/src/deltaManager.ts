@@ -782,7 +782,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				fetchReason,
 			);
 
-			// eslint-disable-next-line no-constant-condition
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {

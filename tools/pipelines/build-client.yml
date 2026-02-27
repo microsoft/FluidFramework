@@ -68,8 +68,11 @@ trigger:
     - .markdownlint.json
     - .npmrc
     - .nvmrc
+    - .pnpmfile.cjs
     - .prettierignore
     - .releaseGroup
+    - _buildProject.config.cjs
+    - assertTagging.config.mjs
     - azure
     - biome.json
     - biome.jsonc
@@ -102,6 +105,7 @@ trigger:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -131,8 +135,11 @@ pr:
     - .markdownlint.json
     - .npmrc
     - .nvmrc
+    - .pnpmfile.cjs
     - .prettierignore
     - .releaseGroup
+    - _buildProject.config.cjs
+    - assertTagging.config.mjs
     - azure
     - biome.json
     - biome.jsonc
@@ -165,6 +172,7 @@ pr:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -192,7 +200,7 @@ extends:
     packageManager: pnpm
     testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
     reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
-    buildDirectory: .
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}
     tagName: client
     isReleaseGroup: true
     poolBuild: Large-eastus2

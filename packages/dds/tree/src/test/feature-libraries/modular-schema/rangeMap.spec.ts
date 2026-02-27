@@ -272,4 +272,132 @@ describe("RangeMap", () => {
 			assert.equal(length, 4);
 		}
 	});
+
+	describe("union", () => {
+		it("two empty maps", () => {
+			const map1 = newRangeMap();
+			const map2 = newRangeMap();
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), []);
+		});
+
+		it("editing the returned range map does not mutate the inputs", () => {
+			const map1 = newRangeMap();
+			const map2 = newRangeMap();
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), []);
+
+			result.set(1, 1, "a");
+			assert.deepEqual(result.entries(), [{ start: 1, length: 1, value: "a" }]);
+			assert.deepEqual(map1.entries(), []);
+			assert.deepEqual(map2.entries(), []);
+		});
+
+		it("first map empty", () => {
+			const map1 = newRangeMap();
+			const map2 = newRangeMap();
+			map2.set(3, 4, "a");
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [{ start: 3, length: 4, value: "a" }]);
+		});
+
+		it("second map empty", () => {
+			const map1 = newRangeMap();
+			map1.set(3, 4, "a");
+			const map2 = newRangeMap();
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [{ start: 3, length: 4, value: "a" }]);
+		});
+
+		it("non-overlapping interleaved ranges", () => {
+			const map1 = newRangeMap();
+			map1.set(10, 1, "a");
+			map1.set(30, 3, "c");
+
+			const map2 = newRangeMap();
+			map2.set(20, 2, "b");
+			map2.set(40, 4, "d");
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [
+				{ start: 10, length: 1, value: "a" },
+				{ start: 20, length: 2, value: "b" },
+				{ start: 30, length: 3, value: "c" },
+				{ start: 40, length: 4, value: "d" },
+			]);
+		});
+
+		it("isomorphic overlap", () => {
+			const map1 = newRangeMap();
+			map1.set(1, 4, "a");
+
+			const map2 = newRangeMap();
+			map2.set(1, 4, "b");
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [{ start: 1, length: 4, value: "b" }]);
+		});
+
+		it("identical start keys but different lengths", () => {
+			const map1 = newRangeMap();
+			map1.set(1, 4, "a");
+
+			const map2 = newRangeMap();
+			map2.set(1, 2, "b");
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [
+				{ start: 1, length: 2, value: "b" },
+				{ start: 3, length: 2, value: "a" },
+			]);
+		});
+
+		it("identical ends but different starts", () => {
+			const map1 = newRangeMap();
+			map1.set(1, 4, "a");
+
+			const map2 = newRangeMap();
+			map2.set(3, 2, "b");
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [
+				{ start: 1, length: 2, value: "a" },
+				{ start: 3, length: 2, value: "b" },
+			]);
+		});
+
+		it("large range merged with smaller overlapping ranges", () => {
+			const map1 = newRangeMap();
+			map1.set(1, 10, "a");
+
+			const map2 = newRangeMap();
+			map2.set(2, 2, "b");
+			map2.set(6, 2, "c");
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [
+				{ start: 1, length: 1, value: "a" },
+				{ start: 2, length: 2, value: "b" },
+				{ start: 4, length: 2, value: "a" },
+				{ start: 6, length: 2, value: "c" },
+				{ start: 8, length: 3, value: "a" },
+			]);
+		});
+
+		it("small ranges merged with wider overlapping range", () => {
+			const map1 = newRangeMap();
+			map1.set(2, 2, "a");
+			map1.set(6, 2, "b");
+
+			const map2 = newRangeMap();
+			map2.set(1, 10, "c");
+
+			const result = RangeMap.union(map1, map2);
+			assert.deepEqual(result.entries(), [{ start: 1, length: 10, value: "c" }]);
+		});
+	});
 });

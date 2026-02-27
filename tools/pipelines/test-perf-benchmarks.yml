@@ -71,7 +71,7 @@ variables:
     value: 1
     readonly: true
   - name: testWorkspace
-    value: $(Build.SourcesDirectory)
+    value: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
     readonly: true
   - name: testFilesPath
     value: $(Pipeline.Workspace)/test-files
@@ -149,7 +149,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         # Run tests
         - task: Npm@1
@@ -276,7 +276,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         # Run tests
         - task: Npm@1
@@ -388,7 +388,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         - task: Npm@1
           displayName: Run custom data performance tests - ${{ testPackage }}
@@ -492,7 +492,7 @@ stages:
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
             sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/$(testPackage)
-            destPackageLocation: $(Build.SourcesDirectory)
+            destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
         # one fails.

@@ -102,6 +102,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
+ * @deprecated Use {@link IConsensusOrderedCollection} for typing and the appropriate factory to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 
@@ -304,10 +305,7 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);

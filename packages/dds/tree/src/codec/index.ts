@@ -6,7 +6,6 @@
 export {
 	type FormatVersion,
 	DependentFormatVersion,
-	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
 	type CodecWriteOptions,
@@ -14,12 +13,10 @@ export {
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	type JsonValidator,
 	makeCodecFamily,
 	type SchemaValidationFunction,
 	unitCodec,
-	withDefaultBinaryEncoding,
 	withSchemaValidation,
 	FluidClientVersion,
 	currentVersion,
@@ -45,4 +42,5 @@ export {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecVersion,
 	type CodecAndSchema,
+	versionField,
 } from "./versioned/index.js";

@@ -122,6 +122,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @deprecated Use {@link IConsensusRegisterCollection} for typing and {@link ConsensusRegisterCollectionFactory} to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 export class ConsensusRegisterCollection<T>
@@ -274,10 +275,7 @@ export class ConsensusRegisterCollection<T>
 
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
