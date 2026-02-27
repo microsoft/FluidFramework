@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import { AttachState, IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeWithResolveHandle_Deprecated,
@@ -46,18 +46,18 @@ async function resolveHandleWithoutWait(
 }
 
 /**
- * Creates a non-root data object and validates that it is not visible from the root of the container.
+ * Creates a non-root data object and validates it is initially detached.
  */
 async function createNonRootDataObject(
 	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
 	const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
-	// Non-root data stores are not visible (unreachable) from the root unless their handles are stored in a
-	// visible DDS.
-	await assert.rejects(
-		resolveHandleWithoutWait(containerRuntime, dataObject._context.id),
-		"Non root data object must not be visible from root after creation",
+	// Non-root data stores are detached until their handles are stored in a visible DDS.
+	assert.equal(
+		dataObject._context.attachState,
+		AttachState.Detached,
+		"Non root data object must be detached after creation",
 	);
 	return dataObject;
 }
@@ -386,15 +386,15 @@ describeCompat(
 			const dataObject3 = await createNonRootDataObject(testContainerRuntime);
 
 			// Add the handle of dataObject3 to dataObject2's DDS. Since dataObject2 and its DDS are not visible yet,
-			// dataObject2 should also be not visible (reachable).
+			// dataObject3 should also remain detached.
 			dataObject2._root.set("dataObject3", dataObject3.handle);
-			await assert.rejects(
-				resolveHandleWithoutWait(testContainerRuntime, dataObject3._context.id),
-				"Data object 3 must not be visible from root yet",
+			assert.equal(
+				dataObject3._context.attachState,
+				AttachState.Detached,
+				"Data object 3 must still be detached since its parent is not visible",
 			);
 
-			// Adding handle of dataObject2 to a visible DDS should make it and dataObject3 visible (reachable)
-			// from the root.
+			// Adding handle of dataObject2 to a visible DDS.
 			testDataObject._root.set("dataObject2", dataObject2.handle);
 			await assert.doesNotReject(
 				resolveHandleWithoutWait(testContainerRuntime, dataObject2._context.id),

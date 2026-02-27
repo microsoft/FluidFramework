@@ -10,6 +10,7 @@ import type {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
@@ -17,10 +18,11 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type {
-	ISnapshot,
-	ISnapshotTree,
-	ISequencedDocumentMessage,
+import {
+	type ISnapshot,
+	type ISnapshotTree,
+	type ISequencedDocumentMessage,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
@@ -69,6 +71,7 @@ import {
 	isSerializedHandle,
 	processAttachMessageGCData,
 	responseToException,
+	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
 import {
@@ -100,11 +103,13 @@ import {
 	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
+	PendingStateLocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 	createAttributesBlob,
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import { findAllHandlePaths } from "./findHandles.js";
 import { GCNodeType, type IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import type {
 	ContainerRuntimeAliasMessage,
@@ -1066,9 +1071,10 @@ export class ChannelCollection
 			);
 		}
 
-		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
+		const context =
+			this.contexts.get(id) ?? (await this.contexts.getBoundOrRemoted(id, headerData.wait));
 		if (context === undefined) {
-			// The requested data store does not exits. Throw a 404 response exception.
+			// The requested data store does not exist. Throw a 404 response exception.
 			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
@@ -1673,6 +1679,95 @@ export class ChannelCollection
 		);
 
 		return dataStore.request(subRequest);
+	}
+
+	/**
+	 * Recursively collects summaries for all referenced but not-yet-attached datastores.
+	 * Returns a map of datastore id to its summary.
+	 * This is used for pending local state serialization.
+	 */
+	public getPendingLocalState(
+		input: Set<IFluidHandle>,
+	): Record<string, ISummaryTreeWithStats> | undefined {
+		const paths: string[] = [...input]
+			.filter((h) => !h.isAttached)
+			.map((h) => toFluidHandleInternal(h).absolutePath);
+		const visitedDataStores: Set<string> = new Set(["_blobs"]);
+
+		let summaries: Record<string, ISummaryTreeWithStats> | undefined;
+
+		while (paths.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const path = paths.shift()!;
+			const [datastoreId, channelId, ...things] = (
+				path.startsWith("/") ? path.slice(1) : path
+			).split("/");
+			assert(things.length === 0, "Handle paths deeper than datastoreId/channelId are not supported");
+
+			if (visitedDataStores.has(datastoreId)) continue;
+			visitedDataStores.add(datastoreId);
+			const context = this.contexts.get(datastoreId);
+			assert(context !== undefined, "must have context");
+
+			if (this.contexts.isNotBound(datastoreId) || channelId) {
+				const summary = context.getAttachSummary();
+				summaries ??= {};
+				summaries[datastoreId] = summary;
+				paths.push(...findAllHandlePaths(summary));
+			}
+		}
+		return summaries;
+	}
+
+	/**
+	 * Load pending attachment summaries from pending state.
+	 * This is called during container load to rehydrate datastores that were referenced but not yet attached.
+	 * This must be called before ops are applied to ensure the datastores are available.
+	 */
+	public async loadPendingAttachmentSummaries(
+		pendingAttachmentSummaries: Record<string, ISummaryTreeWithStats> | undefined,
+	): Promise<void> {
+		if (pendingAttachmentSummaries === undefined) {
+			return;
+		}
+
+		for (const [id, summary] of Object.entries(pendingAttachmentSummaries)) {
+			const existingContext = this.contexts.get(id);
+
+			if (existingContext === undefined) {
+				// Datastore doesn't exist yet - create it from the summary
+				// Convert the summary tree to an ITree, then to a snapshot tree
+				const itree = convertSummaryTreeToITree(summary.summary);
+				const blobs = new Map<string, ArrayBufferLike>();
+				const snapshotTree = buildSnapshotTree(itree.entries, blobs);
+
+				// Create a context for this datastore with Detached attach state
+				const dataStoreContext = new PendingStateLocalFluidDataStoreContext({
+					id,
+					pkg: undefined,
+					parentContext: this.wrapContextForInnerChannel(id),
+					storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, blobs),
+					scope: this.parentContext.scope,
+					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
+						type: CreateSummarizerNodeSource.Local,
+					}),
+					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
+					snapshotTree,
+				});
+
+				// Add it to the contexts as unbound (not yet attached)
+				this.contexts.addUnbound(dataStoreContext);
+			} else {
+				// Datastore already exists - it has pending channels that need to be added
+				// Get the .channels subtree which contains the DDSes
+				const channelsTree = summary.summary.tree[channelsTreeName];
+				assert(channelsTree?.type === SummaryType.Tree, "must have channels tree");
+
+				// Realize the datastore runtime and load the pending channels into it
+				const channel = await existingContext.realize();
+				channel.loadPendingChannels?.(channelsTree);
+			}
+		}
 	}
 }
 

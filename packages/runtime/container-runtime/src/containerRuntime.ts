@@ -131,6 +131,8 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
+	ContainerRuntimeBaseAlpha,
+	StageControlsAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -596,6 +598,10 @@ export interface IPendingRuntimeState {
 	 * Time at which session expiry timer started.
 	 */
 	sessionExpiryTimerStarted?: number | undefined;
+	/**
+	 * Attachment summaries for all datastores that have yet to be attached
+	 */
+	pendingAttachmentSummaries?: Record<string, ISummaryTreeWithStats>;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -805,6 +811,37 @@ export async function loadContainerRuntime(
 	return ContainerRuntime.loadRuntime(params);
 }
 
+/**
+ * Alpha variant of {@link loadContainerRuntime} that returns additional staging mode controls.
+ *
+ * This function is used when loading a container runtime from pending local state that includes
+ * pending changes from staging mode. It returns both the runtime and staging mode controls, which
+ * allow the caller to commit or discard the pending staged changes.
+ *
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns An object containing:
+ * - `runtime`: The container runtime instance
+ * - `stageControls`: Controls for managing staged changes if the container was loaded with pending staged state,
+ * or `undefined` if there is no pending staged state
+ *
+ * @remarks
+ * When loading from pending local state, the returned `stageControls`
+ * can be used to either commit the staged changes (making them visible to other clients) or discard them.
+ * If the container is being loaded normally (not from pending staged state), `stageControls` will be `undefined`.
+ *
+ * @legacy @alpha
+ */
+export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+	stageControls: StageControlsAlpha | undefined;
+}> {
+	return ContainerRuntime.loadRuntime2({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+		enableStagingModeOnPendingState: true,
+	});
+}
+
 const defaultMaxConsecutiveReconnects = 7;
 
 /**
@@ -880,7 +917,7 @@ export class ContainerRuntime
 		return ContainerRuntime.loadRuntime2({
 			...params,
 			registry: new FluidDataStoreRegistry(params.registryEntries),
-		});
+		}).then((r) => r.runtime);
 	}
 
 	/**
@@ -905,8 +942,14 @@ export class ContainerRuntime
 			 * {@link LoadContainerRuntimeParams.runtimeOptions}, except with additional internal only options.
 			 */
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
+			/**
+			 * If true, automatically enter staging mode when loading with pending local state.
+			 * This allows the caller to review and commit/discard pending changes via stageControls.
+			 * @defaultValue false
+			 */
+			enableStagingModeOnPendingState?: boolean;
 		},
-	): Promise<ContainerRuntime> {
+	): Promise<{ runtime: ContainerRuntime; stageControls: StageControlsInternal | undefined }> {
 		const {
 			context,
 			registry,
@@ -917,6 +960,7 @@ export class ContainerRuntime
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 			minVersionForCollab = defaultMinVersionForCollab,
+			enableStagingModeOnPendingState = false,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -1243,6 +1287,23 @@ export class ContainerRuntime
 
 		runtime.sharePendingBlobs();
 
+		// Load pending attachment summaries before entering staging mode and applying ops.
+		// This rehydrates datastores that were referenced but not yet attached,
+		// and must happen before enterStagingMode so all contexts receive the notification.
+		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
+		await runtime.channelCollection.loadPendingAttachmentSummaries(
+			pendingRuntimeState?.pendingAttachmentSummaries,
+		);
+
+		// Enter staging mode if enabled and we have pending local state (and not detached)
+		// This allows the caller to review and commit or discard the pending changes
+		const stageControls =
+			!enableStagingModeOnPendingState ||
+			context.pendingLocalState === undefined ||
+			context.attachState === AttachState.Detached
+				? undefined
+				: runtime.enterStagingMode();
+
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
 
@@ -1250,7 +1311,7 @@ export class ContainerRuntime
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
-		return runtime;
+		return { runtime, stageControls };
 	}
 
 	public readonly options: Record<string | number, unknown>;
@@ -5188,11 +5249,6 @@ export class ContainerRuntime
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
-		// AB#46464 - Add support for serializing pending state while in staging mode
-		if (this.inStagingMode) {
-			throw new UsageError("getPendingLocalState is not yet supported in staging mode");
-		}
-
 		this.verifyNotClosed();
 		if (props?.notifyImminentClosure === true) {
 			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");
@@ -5213,22 +5269,30 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
-				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const { pending, stagedHandleCache: handleCache } =
+					this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
 				const pendingIdCompressorState = this._idCompressor?.serialize(true);
 				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
 
+				// Use channelCollection to collect summaries for all referenced but not-yet-attached datastores
+				const pendingAttachmentSummaries = this.inStagingMode
+					? this.channelCollection.getPendingLocalState(handleCache)
+					: undefined;
+
 				const pendingRuntimeState: IPendingRuntimeState = {
 					pending,
 					pendingIdCompressorState,
 					pendingAttachmentBlobs,
 					sessionExpiryTimerStarted,
+					pendingAttachmentSummaries,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
 					pendingOpsSize: pendingRuntimeState?.pending?.pendingStates.length,
+					pendingAttachmentSummariesSize: Object.keys(pendingAttachmentSummaries ?? {}).length,
 				});
 				return pendingRuntimeState;
 			},

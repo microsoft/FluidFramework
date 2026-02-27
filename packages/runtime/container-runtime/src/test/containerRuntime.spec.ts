@@ -1713,10 +1713,10 @@ describe("Runtime", () => {
 				const state = pendingStateManager.getLocalState();
 
 				assert.notStrictEqual(state, undefined, "expect pending local state");
-				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
+				assert.strictEqual(state?.pending.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
+					JSON.parse(state?.pending.pendingStates?.[0].content).contents.contents,
 					{
 						type: "op",
 						content: { address: "test", contents: { prop1: 1 } },
