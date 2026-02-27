@@ -2354,15 +2354,16 @@ describeCompat(
 					"container3 should have incremented to 3 (at least locally)",
 				);
 
-				// Container1 is not used directly in this test, but is present and observing the session.
-				// It should close when processing the duplicate batch. Depending on the race, it may
-				// or may not have processed the winning batch's counter increment before closing:
-				// - If the first (winning) batch is fully processed before the duplicate arrives: counter1.value === incrementValue
-				// - If the duplicate triggers closure before the first batch's ops are applied: counter1.value === 0
+				// Container1 is not used directly in this test, but is present and observing the session,
+				// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first).
+				// Note: this assertion has been observed to flake (AB#TBD) — container1 may close with counter=0,
+				// suggesting the duplicate batch detection fires before the winning batch's ops are applied.
+				// If this flakes again, investigate whether BatchTracker/PSM is closing the container too eagerly.
 				assert(container1.closed, "container1 should be closed");
-				assert(
-					counter1.value === 0 || counter1.value === incrementValue,
-					`container1 counter should be 0 (closed before processing) or ${incrementValue} (processed before closing), but was ${counter1.value}`,
+				assert.strictEqual(
+					counter1.value,
+					incrementValue,
+					"container1 should have incremented to 3 before closing",
 				);
 			},
 		);
