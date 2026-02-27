@@ -30,6 +30,7 @@ import type {
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
+	FieldPropsAlpha,
 } from "../fieldSchema.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
 import type {
@@ -465,7 +466,8 @@ export interface FieldSchemaAlphaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	out TCustomMetadata = unknown,
-> extends FieldSchemaAlpha<Kind, any, TCustomMetadata>,
+	out TProps extends FieldPropsAlpha<TCustomMetadata> | undefined = undefined,
+> extends FieldSchemaAlpha<Kind, any, TCustomMetadata, TProps>,
 		System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
 	/**
 	 * {@inheritDoc FieldSchema.allowedTypes}

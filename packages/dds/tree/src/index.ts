@@ -190,6 +190,10 @@ export {
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
 	type SchemaType,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+	type InsertableObjectFromSchemaRecordAlpha,
+	type FieldHasDefaultAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,

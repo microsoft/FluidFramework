@@ -272,11 +272,26 @@ export function createFieldSchema<
 	Kind extends FieldKind,
 	Types extends ImplicitAllowedTypes,
 	TCustomMetadata = unknown,
+>(kind: Kind, annotatedTypes: Types): FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+export function createFieldSchema<
+	Kind extends FieldKind,
+	Types extends ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
+	TProps extends FieldProps<TCustomMetadata> = FieldProps<TCustomMetadata>,
+>(
+	kind: Kind,
+	annotatedTypes: Types,
+	props: TProps,
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata, TProps>;
+export function createFieldSchema<
+	Kind extends FieldKind,
+	Types extends ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlpha<Kind, Types, TCustomMetadata> {
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldProps<TCustomMetadata> | undefined> {
 	return createFieldSchemaPrivate(kind, annotatedTypes, props);
 }
 
@@ -291,7 +306,7 @@ let createFieldSchemaPrivate: <
 	kind: Kind,
 	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldProps<TCustomMetadata> | undefined>;
 
 /**
  * All policy for a specific field,
@@ -384,11 +399,14 @@ export class FieldSchemaAlpha<
 		Kind extends FieldKind = FieldKind,
 		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TCustomMetadata = unknown,
+		TProps extends FieldPropsAlpha<TCustomMetadata> | undefined =
+			| FieldPropsAlpha<TCustomMetadata>
+			| undefined,
 	>
 	extends FieldSchema<Kind, Types, TCustomMetadata>
 	implements SimpleFieldSchema<SchemaType.View>
 {
-	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
+	private readonly propsAlpha: TProps;
 
 	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
 		return this.propsAlpha?.persistedMetadata;
@@ -403,7 +421,13 @@ export class FieldSchemaAlpha<
 			kind: Kind2,
 			annotatedAllowedTypes: Types2,
 			props?: FieldPropsAlpha<TCustomMetadata2>,
-		) => new FieldSchemaAlpha(kind, annotatedAllowedTypes, props);
+		) =>
+			// TCustomMetadata2 requires type assertion due to limitations with dependent type parameters
+			new FieldSchemaAlpha(kind, annotatedAllowedTypes, props) as unknown as FieldSchemaAlpha<
+				Kind2,
+				Types2,
+				TCustomMetadata2
+			>;
 	}
 
 	/**
@@ -432,7 +456,7 @@ export class FieldSchemaAlpha<
 
 		const normalizedTypes = normalizeAllowedTypes(types);
 		this.allowedTypesFull = normalizedTypes;
-		this.propsAlpha = props;
+		this.propsAlpha = props as TProps;
 	}
 }
 

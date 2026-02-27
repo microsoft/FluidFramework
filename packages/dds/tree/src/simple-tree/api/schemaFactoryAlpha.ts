@@ -4,20 +4,27 @@
  */
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type {
-	NodeKind,
-	TreeNodeSchemaClass,
-	ImplicitAllowedTypes,
-	WithType,
+import {
+	type NodeKind,
+	type TreeNodeSchemaClass,
+	type ImplicitAllowedTypes,
+	type WithType,
+	normalizeAllowedTypes,
+	isTreeNode,
 } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
-import type {
-	FieldProps,
-	FieldSchemaAlpha,
-	FieldPropsAlpha,
-	FieldKind,
+import {
+	type FieldProps,
+	type FieldSchemaAlpha,
+	type FieldPropsAlpha,
+	type FieldKind,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type FieldSchema,
+	getDefaultProvider,
+	createFieldSchema,
+	type DefaultProvider,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -32,6 +39,7 @@ import {
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import { unhydratedFlexTreeFromInsertableNode } from "../unhydratedFlexTreeFromInsertable.js";
 
 import {
 	defaultSchemaFactoryObjectOptions,
@@ -42,6 +50,7 @@ import {
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 import { schemaStatics } from "./schemaStatics.js";
+import { TreeBeta } from "./treeBeta.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
@@ -50,6 +59,143 @@ import type {
 } from "./typesUnsafe.js";
 import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
+
+/**
+ * A provider for default values in tree nodes.
+ *
+ * @remarks
+ * This type represents two ways to provide default values:
+ *
+ * 1. **A value**: Provide any value directly (number, string, object, array, etc.). When a value is provided,
+ * the data is copied for each use to ensure independence between instances. The value must be of an allowed type for the field.
+ *
+ * 2. **A generator function**: A function that returns a value. The function is called each time a default is needed,
+ * allowing for dynamic defaults or explicit control over value creation. The return value must be of an allowed type for the field.
+ *
+ * @example
+ * ```typescript
+ * // Provide a value directly
+ * factory.withDefault(factory.required(factory.string), "default")
+ * factory.withDefault(factory.optional(Person), new Person({ name: "Guest" }))
+ *
+ * // Use a generator function
+ * factory.withDefault(factory.required(factory.string), () => crypto.randomUUID())
+ * factory.withDefault(factory.optional(Person), () => new Person({ name: "Guest" }))
+ * ```
+ *
+ * @alpha @sealed
+ */
+export type NodeProvider<T> = T | (() => T);
+
+/**
+ * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
+ * @see {@link SchemaStatics} for why this is useful.
+ * @system @sealed @alpha
+ */
+export interface SchemaStaticsAlpha {
+	/**
+	 * Creates a field schema with a default value.
+	 *
+	 * @param fieldSchema - The field schema to add a default to (e.g., `factory.required(factory.string)` or `factory.optional(factory.number)`)
+	 * @param defaultValue - A {@link NodeProvider} specifying the default value. Can be a value directly (which will be copied for each use) or a generator function.
+	 *
+	 * @remarks
+	 * This function wraps an existing field schema and adds a default value provider to it.
+	 * The default value will be used when constructing nodes if the field is not explicitly provided or set to `undefined`.
+	 *
+	 * Fields with defaults (whether required or optional) are recognized by the type system as optional in constructors,
+	 * allowing them to be omitted when creating new nodes.
+	 *
+	 * **Default value handling:**
+	 * - **Values**: When a value is provided directly, the data is copied for each use to ensure independence
+	 * - **Generator functions**: Called each time to produce a fresh value (useful for dynamic defaults)
+	 *
+	 * Defaults are evaluated eagerly during node construction, unlike identifier defaults which require context.
+	 *
+	 * @example
+	 * ```typescript
+	 * const MySchema = factory.objectAlpha("MyObject", {
+	 *     // Provide values directly
+	 *     name: factory.withDefault(factory.required(factory.string), "untitled"),
+	 *     count: factory.withDefault(factory.required(factory.number), 0),
+	 *     metadata: factory.withDefault(factory.optional(Metadata), new Metadata({ version: 1 })),
+	 *
+	 *     // Use generator functions for dynamic values
+	 *     timestamp: factory.withDefault(factory.required(factory.number), () => Date.now()),
+	 *     id: factory.withDefault(factory.required(factory.string), () => crypto.randomUUID()),
+	 * });
+	 *
+	 * const obj1 = new MySchema({}); // All defaults applied
+	 * const obj2 = new MySchema({ name: "custom" }); // name="custom", other defaults applied
+	 * ```
+	 */
+	readonly withDefault: <
+		Kind extends FieldKind,
+		Types extends ImplicitAllowedTypes,
+		TCustomMetadata = unknown,
+	>(
+		fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
+		defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>,
+	) => FieldSchemaAlpha<
+		Kind,
+		Types,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
+	>;
+}
+
+const withDefault = <
+	Kind extends FieldKind,
+	Types extends ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
+>(
+	fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
+	defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>,
+): FieldSchemaAlpha<
+	Kind,
+	Types,
+	TCustomMetadata,
+	FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
+> => {
+	const typedFieldSchema = fieldSchema as FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+
+	// create the default provider function, it is called eagerly during node construction
+	const defaultProvider = getDefaultProvider(() => {
+		// Resolve the value: if it's a function, call it; otherwise use it directly
+		let insertableValue =
+			typeof defaultValue === "function" ? (defaultValue as () => unknown)() : defaultValue;
+
+		// If the value is an already-constructed TreeNode (e.g., from a generator function that
+		// returns the same instance repeatedly), clone it to ensure each use gets a fresh instance.
+		// This prevents multi-parenting errors.
+		if (isTreeNode(insertableValue)) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			insertableValue = TreeBeta.clone(insertableValue as any);
+		}
+
+		// Convert the insertable value to an unhydrated flex tree.
+		// For insertable data, this creates a fresh tree structure.
+		const allowedTypeSet = normalizeAllowedTypes(typedFieldSchema.allowedTypes).evaluateSet();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return [unhydratedFlexTreeFromInsertableNode(insertableValue as any, allowedTypeSet)];
+	});
+
+	// create a new field schema with the default provider
+	const propsWithDefault = {
+		...typedFieldSchema.props,
+		defaultProvider,
+	};
+
+	return createFieldSchema(
+		typedFieldSchema.kind,
+		typedFieldSchema.allowedTypes,
+		propsWithDefault,
+	);
+};
+
+const schemaStaticsAlpha: SchemaStaticsAlpha = {
+	withDefault,
+};
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -208,6 +354,16 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
 	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
+	 */
+	public readonly withDefault = schemaStaticsAlpha.withDefault;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
+	 */
+	public static readonly withDefault = schemaStaticsAlpha.withDefault;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
