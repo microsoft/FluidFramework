@@ -1066,8 +1066,14 @@ export class ChannelCollection
 			);
 		}
 
-		const context =
-			this.contexts.get(id) ?? (await this.contexts.getBoundOrRemoted(id, headerData.wait));
+		// When wait is true, also check for unbound (locally created but not yet visible) contexts.
+		// This is needed for pending state rehydration: datastores created in a previous session
+		// exist in the contexts map but haven't been bound yet, and getBoundOrRemoted would hang
+		// forever waiting for them. When wait is false, only return bound/remoted contexts to
+		// preserve the existing behavior where unbound datastores are not resolvable.
+		const context = headerData.wait
+			? (this.contexts.get(id) ?? (await this.contexts.getBoundOrRemoted(id, true)))
+			: await this.contexts.getBoundOrRemoted(id, false);
 		if (context === undefined) {
 			// The requested data store does not exist. Throw a 404 response exception.
 			const request: IRequest = { url: id };

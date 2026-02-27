@@ -463,7 +463,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("should resolve an unbound datastore context via getDataStore (the fix path)", async () => {
+			it("should resolve an unbound datastore context via getDataStore with wait=true", async () => {
 				// Create a local DataStore context - it starts as unbound
 				const localContext = channelCollection.createDataStoreContext(["TestPackage"]);
 				const dataStoreId = localContext.id;
@@ -482,8 +482,8 @@ describe("Runtime", () => {
 					"getBoundOrRemoted with wait=false should return undefined for unbound context",
 				);
 
-				// Exercise the real production path: ChannelCollection.getDataStore(id, headerData, request)
-				// This private method was updated to use `contexts.get(id) ?? await contexts.getBoundOrRemoted(id, wait)`.
+				// Exercise the real production path with wait=true (used during pending state rehydration).
+				// With wait=true, getDataStore falls back to contexts.get(id) which finds unbound contexts.
 				const request = { url: dataStoreId };
 				const resolvedContext = await (
 					channelCollection as unknown as {
@@ -493,11 +493,11 @@ describe("Runtime", () => {
 							originalRequest: { url: string },
 						) => Promise<{ id: string }>;
 					}
-				).getDataStore(dataStoreId, { wait: false }, request);
+				).getDataStore(dataStoreId, { wait: true }, request);
 
 				assert(
 					resolvedContext !== undefined,
-					"getDataStore should find the unbound context when wait=false",
+					"getDataStore should find the unbound context when wait=true",
 				);
 				assert.strictEqual(
 					resolvedContext.id,
@@ -509,6 +509,41 @@ describe("Runtime", () => {
 				assert(
 					contexts.isNotBound(dataStoreId),
 					"Context should still be unbound after resolution",
+				);
+			});
+
+			it("should NOT resolve an unbound datastore context via getDataStore with wait=false", async () => {
+				// Create a local DataStore context - it starts as unbound
+				const localContext = channelCollection.createDataStoreContext(["TestPackage"]);
+				const dataStoreId = localContext.id;
+
+				// Access internal contexts to verify the context is indeed unbound
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
+				assert(contexts.isNotBound(dataStoreId), "Context should be in unbound state");
+
+				// With wait=false, getDataStore should NOT resolve unbound contexts (preserving
+				// the original behavior used by resolveHandle probes).
+				const request = { url: dataStoreId };
+				await assert.rejects(
+					(
+						channelCollection as unknown as {
+							getDataStore: (
+								id: string,
+								requestHeaderData: { wait?: boolean },
+								originalRequest: { url: string },
+							) => Promise<unknown>;
+						}
+					).getDataStore(dataStoreId, { wait: false }, request),
+					(error: Error) => {
+						assert(
+							error.message.includes("not found"),
+							`Expected 'not found' error, got: ${error.message}`,
+						);
+						return true;
+					},
+					"getDataStore should throw 404 for unbound context when wait=false",
 				);
 			});
 
