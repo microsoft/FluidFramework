@@ -59,6 +59,7 @@ import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/intern
 import {
 	type IFluidErrorBase,
 	MockLogger,
+	UsageError,
 	createChildLogger,
 	isFluidError,
 	isILoggingError,
@@ -393,6 +394,47 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
 			});
 
+			it("Throws UsageError and calls closeFn for invalid flushMode", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext(),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				// Cast through unknown to simulate a stale/invalid numeric flushMode value (e.g., the former FlushModeExperimental.Async = 2)
+				const invalidFlushMode = 2 as unknown as FlushMode;
+
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { flushMode: invalidFlushMode },
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => {
+						assert.ok(
+							error instanceof UsageError,
+							"Should throw a UsageError for invalid flushMode",
+						);
+						return true;
+					},
+				);
+
+				assert.strictEqual(
+					containerErrors.length,
+					1,
+					"closeFn should have been called with the error",
+				);
+				assert.ok(
+					containerErrors[0] instanceof UsageError,
+					"closeFn should have been called with a UsageError",
+				);
+			});
+
 			it("Process empty batch", async () => {
 				let batchBegin = 0;
 				let batchEnd = 0;
@@ -639,15 +681,10 @@ describe("Runtime", () => {
 
 		const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
 		describe("orderSequentially (rollback not enabled)", () => {
-			for (const flushMode of [
-				FlushMode.TurnBased,
-				FlushMode.Immediate,
-			]) {
+			for (const flushMode of [FlushMode.TurnBased, FlushMode.Immediate]) {
 				const fakeClientId = "fakeClientId";
 
-				describe(`orderSequentially with flush mode: ${
-					FlushMode[flushMode]
-				}`, () => {
+				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
 					let containerRuntime: ContainerRuntime_WithPrivates;
 					let mockContext: Partial<IContainerContext>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -877,13 +914,8 @@ describe("Runtime", () => {
 		});
 
 		describe("orderSequentially with rollback", () => {
-			for (const flushMode of [
-				FlushMode.TurnBased,
-				FlushMode.Immediate,
-			]) {
-				describe(`orderSequentially with flush mode: ${
-					FlushMode[flushMode]
-				}`, () => {
+			for (const flushMode of [FlushMode.TurnBased, FlushMode.Immediate]) {
+				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
 					let containerRuntime: ContainerRuntime_WithPrivates;
 					const containerErrors: ICriticalContainerError[] = [];
 					let submittedOpsCount: number = 0;
