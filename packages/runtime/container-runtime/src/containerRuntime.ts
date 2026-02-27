@@ -4838,13 +4838,15 @@ export class ContainerRuntime
 	}
 
 	private scheduleFlush(): void {
-		// During staging mode with a batch threshold, suppress automatic flush scheduling.
-		// Only flush when the main batch exceeds the threshold.
+		// During staging mode, suppress automatic flush scheduling until the main batch
+		// reaches or exceeds the threshold.
 		// Incoming ops still break the batch via direct this.flush() calls elsewhere
 		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
 		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
 		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
-		// sequence number changes and forces a flush as a safety net.
+		// sequence number changes. By default it throws if unexpected changes are detected; it only
+		// forces a flush as a safety net when partial-batch flushing is enabled via
+		// Fluid.ContainerRuntime.DisableFlushBeforeProcess.
 		if (
 			this.inStagingMode &&
 			this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold

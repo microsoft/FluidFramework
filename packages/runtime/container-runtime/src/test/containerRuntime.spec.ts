@@ -4513,15 +4513,29 @@ describe("Runtime", () => {
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
 					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
 					assert.equal(submittedOps.length, 0, "Under threshold, no flush yet");
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						2,
+						"2 ops in outbox",
+					);
 
 					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("op3"));
-					// The 3rd op should trigger scheduleFlush to fall through to normal scheduling
+					// The 3rd op reaches the threshold, so scheduleFlush falls through to normal scheduling
 					await Promise.resolve();
 
+					// Ops are not submitted to the wire during staging mode, but the outbox should be
+					// emptied (ops moved from outbox into PendingStateManager as a staged batch).
 					assert.equal(
 						submittedOps.length,
 						0,
-						"Ops should not be submitted while in staging mode (flushed into PSM only)",
+						"Ops should not be submitted to wire while in staging mode",
+					);
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						0,
+						"Outbox should be empty after threshold flush",
 					);
 				});
 
@@ -4535,6 +4549,12 @@ describe("Runtime", () => {
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
 					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
 					assert.equal(submittedOps.length, 0, "No ops submitted yet");
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						2,
+						"2 ops in outbox",
+					);
 
 					// Simulate an incoming op — bumps lastSequenceNumber and emits "op"
 					// The deltaManager "op" handler calls this.flush() directly,
@@ -4549,11 +4569,18 @@ describe("Runtime", () => {
 						contents: "test content",
 					});
 
-					// Ops are not submitted to the wire during staging mode — they're flushed to PSM
+					// Ops are not submitted to the wire during staging mode, but the incoming op
+					// should have flushed the outbox into PendingStateManager as a staged batch.
 					assert.equal(
 						submittedOps.length,
 						0,
 						"Ops should not be submitted to wire while in staging mode",
+					);
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						0,
+						"Outbox should be empty after incoming op flush",
 					);
 				});
 
