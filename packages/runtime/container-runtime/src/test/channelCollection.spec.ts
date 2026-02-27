@@ -418,5 +418,202 @@ describe("Runtime", () => {
 			});
 			/* eslint-enable @typescript-eslint/consistent-type-assertions */
 		});
+
+		describe("getDataStore - Unbound Context Resolution", () => {
+			/* eslint-disable @typescript-eslint/consistent-type-assertions */
+			let channelCollection: ChannelCollection;
+			let mockLogger: MockLogger;
+			let parentContext: IFluidRootParentContextPrivate;
+
+			const configProvider = (settings: Record<string, ConfigTypes>) => ({
+				getRawConfig: (name: string): ConfigTypes => settings[name],
+			});
+
+			beforeEach(() => {
+				mockLogger = new MockLogger();
+				const mc = mixinMonitoringContext(
+					mockLogger,
+					configProvider({
+						"Fluid.Runtime.DisableShortIds": true,
+					}),
+				);
+				const baseParentContext = createParentContext(mc.logger);
+
+				parentContext = {
+					...baseParentContext,
+					attachState: AttachState.Attached,
+					submitMessage: (_containerRuntimeMessage: unknown, _localOpMetadata: unknown) => {},
+					submitSignal: (_envelope: unknown, _targetClientId?: string) => {},
+					addedGCOutboundRoute: () => {},
+					makeLocallyVisible: () => {},
+					getExtension: () => undefined,
+					getCreateChildSummarizerNodeFn: (id: string) => {
+						const fn = createSummarizerNodeAndGetCreateFn(id).createSummarizerNodeFn;
+						return fn;
+					},
+				} as unknown as IFluidRootParentContextPrivate;
+
+				channelCollection = new ChannelCollection(
+					undefined, // baseSnapshot
+					parentContext,
+					mockLogger,
+					() => {}, // gcNodeUpdated
+					() => false, // isDataStoreDeleted
+					new Map(), // aliasMap
+				);
+			});
+
+			it("should resolve an unbound datastore context via getDataStore with wait=true", async () => {
+				// Create a local DataStore context - it starts as unbound
+				const localContext = channelCollection.createDataStoreContext(["TestPackage"]);
+				const dataStoreId = localContext.id;
+
+				// Access internal contexts to verify the context is indeed unbound
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
+				assert(contexts.isNotBound(dataStoreId), "Context should be in unbound state");
+
+				// Confirm that getBoundOrRemoted alone (the old code path) would miss this context
+				const contextFromOldPath = await contexts.getBoundOrRemoted(dataStoreId, false);
+				assert.strictEqual(
+					contextFromOldPath,
+					undefined,
+					"getBoundOrRemoted with wait=false should return undefined for unbound context",
+				);
+
+				// Exercise the real production path with wait=true (used during pending state rehydration).
+				// With wait=true, getDataStore falls back to contexts.get(id) which finds unbound contexts.
+				const request = { url: dataStoreId };
+				const resolvedContext = await (
+					channelCollection as unknown as {
+						getDataStore: (
+							id: string,
+							requestHeaderData: { wait?: boolean },
+							originalRequest: { url: string },
+						) => Promise<{ id: string }>;
+					}
+				).getDataStore(dataStoreId, { wait: true }, request);
+
+				assert(
+					resolvedContext !== undefined,
+					"getDataStore should find the unbound context when wait=true",
+				);
+				assert.strictEqual(
+					resolvedContext.id,
+					dataStoreId,
+					"Resolved context should have the correct ID",
+				);
+
+				// Verify the context is still unbound after resolution (it wasn't mutated)
+				assert(
+					contexts.isNotBound(dataStoreId),
+					"Context should still be unbound after resolution",
+				);
+			});
+
+			it("should NOT resolve an unbound datastore context via getDataStore with wait=false", async () => {
+				// Create a local DataStore context - it starts as unbound
+				const localContext = channelCollection.createDataStoreContext(["TestPackage"]);
+				const dataStoreId = localContext.id;
+
+				// Access internal contexts to verify the context is indeed unbound
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
+				assert(contexts.isNotBound(dataStoreId), "Context should be in unbound state");
+
+				// With wait=false, getDataStore should NOT resolve unbound contexts (preserving
+				// the original behavior used by resolveHandle probes).
+				const request = { url: dataStoreId };
+				await assert.rejects(
+					(
+						channelCollection as unknown as {
+							getDataStore: (
+								id: string,
+								requestHeaderData: { wait?: boolean },
+								originalRequest: { url: string },
+							) => Promise<unknown>;
+						}
+					).getDataStore(dataStoreId, { wait: false }, request),
+					(error: Error) => {
+						assert(
+							error.message.includes("not found"),
+							`Expected 'not found' error, got: ${error.message}`,
+						);
+						return true;
+					},
+					"getDataStore should throw 404 for unbound context when wait=false",
+				);
+			});
+
+			it("should also resolve bound contexts via getDataStore (existing behavior preserved)", async () => {
+				// Create and bind a local DataStore context
+				const localContext = channelCollection.createDataStoreContext([
+					"TestPackage",
+				]) as LocalFluidDataStoreContext;
+				const dataStoreId = localContext.id;
+
+				localContext.setAttachState(AttachState.Attaching);
+				(
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts.bind(dataStoreId);
+
+				// Exercise the real production path for a bound context
+				const request = { url: dataStoreId };
+				const resolvedContext = await (
+					channelCollection as unknown as {
+						getDataStore: (
+							id: string,
+							requestHeaderData: { wait?: boolean },
+							originalRequest: { url: string },
+						) => Promise<{ id: string }>;
+					}
+				).getDataStore(dataStoreId, { wait: false }, request);
+
+				assert(resolvedContext !== undefined, "getDataStore should find the bound context");
+				assert.strictEqual(
+					resolvedContext.id,
+					dataStoreId,
+					"Resolved context should have the correct ID",
+				);
+
+				// Context should NOT be unbound
+				const contexts = (
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts;
+				assert(
+					!contexts.isNotBound(dataStoreId),
+					"Context should not be in unbound state after binding",
+				);
+			});
+
+			it("should throw 404 for non-existent context with wait=false via getDataStore", async () => {
+				const nonExistentId = "non-existent-datastore-id";
+				const request = { url: nonExistentId };
+
+				// The real getDataStore should throw a 404 response exception for non-existent contexts
+				await assert.rejects(
+					(
+						channelCollection as unknown as {
+							getDataStore: (
+								id: string,
+								requestHeaderData: { wait?: boolean },
+								originalRequest: { url: string },
+							) => Promise<unknown>;
+						}
+					).getDataStore(nonExistentId, { wait: false }, request),
+					(error: Error) => {
+						assert(
+							error.message.includes("not found"),
+							`Expected 'not found' error, got: ${error.message}`,
+						);
+						return true;
+					},
+					"getDataStore should throw 404 for non-existent context",
+				);
+			});
+			/* eslint-enable @typescript-eslint/consistent-type-assertions */
+		});
 	});
 });
