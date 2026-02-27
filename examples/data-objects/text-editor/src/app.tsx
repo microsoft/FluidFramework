@@ -81,6 +81,47 @@ interface DualUserViews {
 	containerId: string;
 }
 
+async function createAndAttachNewContainer(client: AzureClient): Promise<{
+	container: IFluidContainer;
+	containerId: string;
+	treeView: TreeView<typeof TextEditorRoot>;
+}> {
+	const { container } = await client.createContainer(containerSchema, "2");
+
+	const treeView = container.initialObjects.tree.viewWith(treeConfig);
+
+	// Initialize tree with root containing both plain and formatted text
+	treeView.initialize(
+		new TextEditorRoot({
+			plainText: TextAsTree.Tree.fromString(""),
+			formattedText: FormattedTextAsTree.Tree.fromString(""),
+		}),
+	);
+
+	const containerId = await container.attach();
+
+	return {
+		container,
+		containerId,
+		treeView,
+	};
+}
+
+async function loadExistingContainer(
+	client: AzureClient,
+	containerId: string,
+): Promise<{
+	container: IFluidContainer;
+	treeView: TreeView<typeof TextEditorRoot>;
+}> {
+	const { container } = await client.getContainer(containerId, containerSchema, "2");
+	const treeView = container.initialObjects.tree.viewWith(treeConfig);
+	return {
+		container,
+		treeView,
+	};
+}
+
 async function initFluid(): Promise<DualUserViews> {
 	const endpoint = getTinyliciousEndpoint();
 	console.log(`Connecting to Tinylicious at: ${endpoint}`);
@@ -95,16 +136,10 @@ async function initFluid(): Promise<DualUserViews> {
 		connection: getConnectionConfig(user1Id),
 		logger: devtoolsLogger,
 	});
-	const client2 = new AzureClient({
-		connection: getConnectionConfig(user2Id),
-		logger: devtoolsLogger,
-	});
 
 	let containerId: string;
 	let user1Container: IFluidContainer;
 	let user1View: TreeView<typeof TextEditorRoot>;
-	let user2Container: IFluidContainer;
-	let user2View: TreeView<typeof TextEditorRoot>;
 	if (location.hash) {
 		// Load existing document for both users
 		const rawContainerId = location.hash.slice(1);
@@ -120,53 +155,45 @@ async function initFluid(): Promise<DualUserViews> {
 		containerId = rawContainerId;
 		console.log(`Loading document for both users: ${containerId}`);
 
-		const { container: container1 } = await client1.getContainer(
+		// User 1 connects to existing document
+		const { container: container1, treeView: treeView1 } = await loadExistingContainer(
+			client1,
 			containerId,
-			containerSchema,
-			"2",
 		);
 		user1Container = container1;
+		user1View = treeView1;
 
-		const { container: container2 } = await client2.getContainer(
-			containerId,
-			containerSchema,
-			"2",
-		);
-		user2Container = container2;
-
-		user1View = container1.initialObjects.tree.viewWith(treeConfig);
-		user2View = container2.initialObjects.tree.viewWith(treeConfig);
+		console.log(`User 1 connected to document: ${containerId}`);
 	} else {
 		// User 1 creates the document
-		const { container: container1 } = await client1.createContainer(containerSchema, "2");
+		const {
+			container: container1,
+			treeView: treeView1,
+			containerId: newContainerId,
+		} = await createAndAttachNewContainer(client1);
 		user1Container = container1;
+		user1View = treeView1;
+		containerId = newContainerId;
 
-		user1View = container1.initialObjects.tree.viewWith(treeConfig);
-
-		// Initialize tree with root containing both plain and formatted text
-		user1View.initialize(
-			new TextEditorRoot({
-				plainText: TextAsTree.Tree.fromString(""),
-				formattedText: FormattedTextAsTree.Tree.fromString(""),
-			}),
-		);
-
-		containerId = await container1.attach();
 		// eslint-disable-next-line require-atomic-updates
 		location.hash = containerId;
+
 		console.log(`User 1 created document: ${containerId}`);
-
-		// User 2 connects to the same document
-		const { container: container2 } = await client2.getContainer(
-			containerId,
-			containerSchema,
-			"2",
-		);
-		user2Container = container2;
-		console.log(`User 2 connected to document: ${containerId}`);
-
-		user2View = container2.initialObjects.tree.viewWith(treeConfig);
 	}
+
+	// User 2 connects to the loaded document
+	const client2 = new AzureClient({
+		connection: getConnectionConfig(user2Id),
+		logger: devtoolsLogger,
+	});
+	const { container: container2, treeView: treeView2 } = await loadExistingContainer(
+		client2,
+		containerId,
+	);
+	const user2Container = container2;
+	const user2View = treeView2;
+
+	console.log(`User 2 connected to document: ${containerId}`);
 
 	// Initialize Devtools
 	initializeDevtools({
