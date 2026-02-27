@@ -231,6 +231,12 @@ extends:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
             steps:
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 30
+                  jobDisplayName: 'Build'
+                  step: start
+
               # Setup
               - checkout: self
                 path: $(FluidFrameworkDirectory)
@@ -454,6 +460,12 @@ extends:
 
               # Devtools, docs, and bundle analysis moved to parallel post-build jobs
 
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 30
+                  jobDisplayName: 'Build'
+                  step: check
+
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
@@ -482,6 +494,7 @@ extends:
           - job: Coverage_tests
             displayName: "Coverage tests"
             dependsOn: build
+            timeoutInMinutes: 60
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -499,6 +512,12 @@ extends:
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
 
             steps:
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 35
+                  jobDisplayName: 'Coverage tests'
+                  step: start
+
               # Setup
               - checkout: self
                 path: $(FluidFrameworkDirectory)
@@ -627,6 +646,12 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
                   testResultDirs: '${{ parameters.testResultDirs }}'
 
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 35
+                  jobDisplayName: 'Coverage tests'
+                  step: check
+
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
               outputs:
@@ -643,6 +668,7 @@ extends:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
               dependsOn: build
+              timeoutInMinutes: 45
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -659,6 +685,12 @@ extends:
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 25
+                    jobDisplayName: 'Test ${{ test.jobName }}'
+                    step: start
+
                 # Setup
                 - checkout: self
                   path: $(FluidFrameworkDirectory)
@@ -773,17 +805,30 @@ extends:
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testResultDirs: '${{ parameters.testResultDirs }}'
 
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 25
+                    jobDisplayName: 'Test ${{ test.jobName }}'
+                    step: check
+
           # Parallel post-build jobs (docs, bundle analysis, devtools)
           - ${{ if or(eq(parameters.publishDocs, true), ne(parameters.taskBuildDocs, false)) }}:
             - job: Build_Docs
               displayName: "Build Docs"
               dependsOn: build
+              timeoutInMinutes: 30
               variables:
                 - name: ONEES_ENFORCED_CODEQL_ENABLED
                   value: 'false'
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Build Docs'
+                    step: start
+
                 # Setup
                 - checkout: self
                   path: $(FluidFrameworkDirectory)
@@ -829,6 +874,12 @@ extends:
                     sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/_api-extractor-temp'
                     targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
 
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Build Docs'
+                    step: check
+
               templateContext:
                 outputParentDirectory: $(Build.ArtifactStagingDirectory)
                 outputs:
@@ -843,6 +894,7 @@ extends:
             - job: Bundle_Analysis
               displayName: "Bundle Analysis"
               dependsOn: build
+              timeoutInMinutes: 30
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -852,6 +904,12 @@ extends:
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Bundle Analysis'
+                    step: start
+
                 # Setup
                 - checkout: self
                   path: $(FluidFrameworkDirectory)
@@ -948,6 +1006,12 @@ extends:
                           ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                           npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Bundle Analysis'
+                    step: check
+
               templateContext:
                 outputParentDirectory: $(Build.ArtifactStagingDirectory)
                 outputs:
@@ -962,6 +1026,7 @@ extends:
           - job: Build_Devtools
             displayName: "Build Devtools"
             dependsOn: build
+            timeoutInMinutes: 30
             variables:
               - group: storage-vars
               - name: ONEES_ENFORCED_CODEQL_ENABLED
@@ -969,6 +1034,12 @@ extends:
               - name: COMMIT_SHA
                 value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
             steps:
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 10
+                  jobDisplayName: 'Build Devtools'
+                  step: start
+
               # Setup
               - checkout: self
                 path: $(FluidFrameworkDirectory)
@@ -1022,6 +1093,12 @@ extends:
                 inputs:
                   sourceFolder: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
                   targetFolder: $(Build.ArtifactStagingDirectory)/devtools-extension-bundle
+
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 10
+                  jobDisplayName: 'Build Devtools'
+                  step: check
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)

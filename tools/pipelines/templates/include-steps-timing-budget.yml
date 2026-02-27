@@ -1,0 +1,51 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# Reusable template for timing budget enforcement.
+# Include at the beginning of a job's steps with step: start, and at the end with step: check.
+# If the job exceeds its budget, a pipeline warning is logged (visible in ADO UI).
+# This catches gradual performance regressions before they hit the hard timeoutInMinutes ceiling.
+
+parameters:
+- name: budgetMinutes
+  type: number
+
+- name: jobDisplayName
+  type: string
+
+- name: step
+  type: string
+  values:
+    - start
+    - check
+
+steps:
+- ${{ if eq(parameters.step, 'start') }}:
+    - task: Bash@3
+      displayName: 'Record job start time'
+      inputs:
+        targetType: inline
+        script: |
+          set -eu -o pipefail
+          START_TIME=`date +%s`
+          echo "##vso[task.setvariable variable=TIMING_BUDGET_START]$START_TIME"
+          echo "Timing budget for '${{ parameters.jobDisplayName }}': ${{ parameters.budgetMinutes }} minutes"
+
+- ${{ if eq(parameters.step, 'check') }}:
+    - task: Bash@3
+      displayName: 'Check timing budget'
+      condition: always()
+      inputs:
+        targetType: inline
+        script: |
+          set -eu -o pipefail
+          START=$(TIMING_BUDGET_START)
+          NOW=`date +%s`
+          ELAPSED_SECONDS=$((NOW - START))
+          ELAPSED_MINUTES=$((ELAPSED_SECONDS / 60))
+          ELAPSED_REMAINDER=$((ELAPSED_SECONDS % 60))
+          BUDGET=${{ parameters.budgetMinutes }}
+          echo "Job '${{ parameters.jobDisplayName }}' completed in ${ELAPSED_MINUTES}m ${ELAPSED_REMAINDER}s (budget: ${BUDGET}m)"
+          if [ "$ELAPSED_SECONDS" -gt "$((BUDGET * 60))" ]; then
+            echo "##vso[task.logissue type=warning]Timing budget exceeded for '${{ parameters.jobDisplayName }}': ${ELAPSED_MINUTES}m elapsed, budget was ${BUDGET}m"
+          fi
