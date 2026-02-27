@@ -66,36 +66,6 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 }
 
 // @alpha
-export interface UndoRedo {
-    // (undocumented)
-    canRedo(): boolean;
-    // (undocumented)
-    canUndo(): boolean;
-    // (undocumented)
-    dispose(): void;
-    onStateChange(callback: () => void): () => void;
-    redo(): void;
-    undo(): void;
-}
-
-// @alpha @sealed
-export class UndoRedoStacks implements UndoRedo {
-    constructor(events: Listenable<TreeViewEvents>);
-    // (undocumented)
-    canRedo(): boolean;
-    // (undocumented)
-    canUndo(): boolean;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    onStateChange(callback: () => void): () => void;
-    // (undocumented)
-    redo(): void;
-    // (undocumented)
-    undo(): void;
-}
-
-// @alpha
 export type UnwrapPropTreeNode<T extends TreeLeafValue | PropTreeNode<TreeNode> | undefined> = T extends PropTreeNode<infer Node> ? Node : T;
 
 // @alpha

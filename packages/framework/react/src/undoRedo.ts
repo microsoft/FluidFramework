@@ -14,7 +14,7 @@ import {
 
 /**
  * Interface for undo/redo stack operations.
- * @alpha
+ * @internal
  */
 export interface UndoRedo {
 	/**
@@ -41,7 +41,7 @@ export interface UndoRedo {
 /**
  * Manages undo and redo stacks for a TreeView.
  * Listens to commitApplied events and manages Revertible objects.
- * @sealed @alpha
+ * @sealed @internal
  */
 export class UndoRedoStacks implements UndoRedo {
 	private readonly undoStack: Revertible[] = [];
