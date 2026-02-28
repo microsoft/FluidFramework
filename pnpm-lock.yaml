@@ -3966,6 +3966,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)
+      '@fluidframework/devtools':
+        specifier: workspace:~
+        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
