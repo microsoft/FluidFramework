@@ -8,7 +8,7 @@ import { resolve } from 'path';
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { AttachState } from '@fluidframework/container-definitions';
 import type { IContainer, IFluidCodeDetails, IHostLoader } from '@fluidframework/container-definitions/internal';
-import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { asLegacyAlpha, createLoader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -376,7 +376,7 @@ export async function setUpLocalServerTestSharedTree(
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
-		provider = new TestObjectProvider(Loader, driver, runtimeFactory);
+		provider = new TestObjectProvider(createLoader, driver, runtimeFactory);
 		testObjectProviders.push(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.makeTestContainer` instead.
 		const loader = makeTestLoader(provider);

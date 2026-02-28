@@ -10,7 +10,7 @@ import type { Client } from "@fluid-private/test-dds-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type {
@@ -328,7 +328,7 @@ export class TestTreeProvider {
 				},
 			);
 
-		const objProvider = new TestObjectProvider(Loader, driver, containerRuntimeFactory);
+		const objProvider = new TestObjectProvider(createLoader, driver, containerRuntimeFactory);
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();

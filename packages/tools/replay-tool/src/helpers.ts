@@ -10,7 +10,7 @@ import type {
 	IContainer,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { loadExistingContainer } from "@fluidframework/container-loader/internal";
 import type {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -207,16 +207,15 @@ export async function loadContainer(
 	};
 
 	// Load the Fluid document while forcing summarizeProtocolTree option
-	const loader = new Loader({
+	return loadExistingContainer({
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
 		options: loaderOptions ? { ...loaderOptions } : {},
 		logger,
 		configProvider,
+		request: { url: resolved.url },
 	});
-
-	return loader.resolve({ url: resolved.url });
 }
 
 /**

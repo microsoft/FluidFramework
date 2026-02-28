@@ -224,7 +224,15 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_Loader": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_Loader": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

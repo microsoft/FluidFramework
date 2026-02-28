@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/aqueduct/internal";
 import * as cell from "@fluidframework/cell/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
@@ -162,7 +162,7 @@ const driverCache = new Map<string, typeof DriverApi>();
  */
 export const LoaderApi = {
 	version: pkgVersion,
-	Loader,
+	createLoader,
 };
 
 /**
@@ -276,9 +276,14 @@ async function loadLoader(baseVersion: string, requested?: number | string): Pro
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!loaderCache.has(version)) {
 		const loadedPackages = await loadPackages(loaderPackageEntries, version, modulePath);
+		const containerLoaderPkg = loadedPackages["@fluidframework/container-loader"];
+		// For older versions that don't have createLoader, wrap the Loader class
+		const loaderCreateFn =
+			containerLoaderPkg.createLoader ??
+			((props: any) => new containerLoaderPkg.Loader(props));
 		const loader: typeof LoaderApi = {
 			version,
-			Loader: loadedPackages["@fluidframework/container-loader"].Loader,
+			createLoader: loaderCreateFn,
 		};
 		loaderCache.set(version, loader);
 	}
