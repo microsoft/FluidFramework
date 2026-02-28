@@ -104,6 +104,25 @@ export interface IRuntimeMessagesContent {
 
 /**
  * A collection of messages that are processed by the runtime.
+ * @remarks
+ * Some places which use this interface may have additional constraints on the messages
+ * which are collected together, and those cases have special names:
+ *
+ * A "grouped batch" requires that all contained messages:
+ * - Are contiguous in sequencing order.
+ * - Are all from the same client.
+ * - Are all based on the same reference sequence number.
+ * - Are not interleaved with messages from other clients.
+ * - Were actually grouped together into a "grouped batch" by the client when they were submitted:
+ * even ops meeting the other requirements arn't considered a grouped batch if they were not send and processed as one.
+ *
+ * A "bunch" requires that all contained messages:
+ * - Are a contiguous subsequence of messages from the same grouped batch (in order and cannot skip any messages).
+ * - Are all for the same DDS in the container.
+ *
+ * @privateRemarks
+ * TODO: We should have more specific types for the "grouped batch" and "bunch" cases.
+ * TODO: This type should only be needed for implementing DDSs, and thus should eventually be made internal as the legacy API surface is cleaned up.
  * @legacy @beta
  * @sealed
  */
