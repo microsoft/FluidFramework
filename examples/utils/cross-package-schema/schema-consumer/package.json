@@ -1,0 +1,71 @@
+{
+	"name": "@fluid-example/cross-package-schema-consumer",
+	"version": "2.90.0",
+	"private": true,
+	"description": "Example schema consumer demonstrating cross-package SharedTree schema consumption via /schema subpath export.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "examples/utils/cross-package-schema/schema-consumer"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:biome": "biome check .",
+		"check:direct-import": "tsc --project ./tsconfig.direct-import.json --noEmit",
+		"check:format": "npm run check:biome",
+		"check:schema-import": "tsc --project ./tsconfig.schema-import.json --noEmit",
+		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format"
+	},
+	"dependencies": {
+		"@fluid-example/cross-package-schema-provider": "workspace:~",
+		"@fluidframework/tree": "workspace:~"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"eslint": "~9.39.1",
+		"jiti": "^2.6.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:direct-import": [
+				"@fluid-example/cross-package-schema-provider#build:esnext",
+				"@fluidframework/tree#build:esnext"
+			],
+			"check:schema-import": [
+				"@fluid-example/cross-package-schema-provider#build:esnext",
+				"@fluidframework/tree#build:esnext"
+			]
+		},
+		"version": 1
+	},
+	"typeValidation": {
+		"disabled": true
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/consume-direct.ts"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"exactOptionalPropertyTypes": false,
+	},
+}
