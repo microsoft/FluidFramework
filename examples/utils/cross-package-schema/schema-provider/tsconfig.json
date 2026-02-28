@@ -1,9 +1,16 @@
 {
-	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
-	"include": ["src/**/*"],
+	"extends": "./tsconfig.base.json",
+	"include": ["src/index.ts"],
 	"compilerOptions": {
-		"rootDir": "./src",
-		"outDir": "./lib",
-		"exactOptionalPropertyTypes": false,
+		// Need to skip lib check since .d.ts from noWrapper is invalid.
+		"skipLibCheck": true,
 	},
+	"references": [
+		{
+			"path": "./tsconfig.noWrapper.json",
+		},
+		{
+			"path": "./tsconfig.viaWrapper.json",
+		},
+	],
 }

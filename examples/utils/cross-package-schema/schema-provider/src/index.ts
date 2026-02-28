@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { Position, Dimensions, Container, AppState } from "./schema.js";
+/* eslint-disable no-restricted-syntax */
+
+export * as Failing from "./schema.noWrapper.js";
+export * as Okay from "./schema.viaWrapper.js";
