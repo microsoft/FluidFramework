@@ -49,6 +49,12 @@ steps:
     env:
       # Suppress baseline-browser-mapping staleness warnings during lint as well.
       BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
+      # Enable content-hash mode for fluid-build tasks that default to mtime-based
+      # done file checks (consistent with the build step above).
+      FLUID_BUILD_ENABLE_COPYFILES_HASH: 1
+      FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH: 1
+      FLUID_BUILD_ENABLE_GOODFENCE_HASH: 1
+      FLUID_BUILD_ENABLE_DEPCRUISE_HASH: 1
     inputs:
       command: 'custom'
       workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
