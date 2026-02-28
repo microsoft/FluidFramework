@@ -5,11 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	stringToBuffer,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
-} from "@fluid-internal/client-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type ICriticalContainerError,
@@ -58,14 +54,12 @@ import type {
 	ITelemetryContext,
 	ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	FlushMode,
-	FlushModeExperimental,
-} from "@fluidframework/runtime-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
 	MockLogger,
+	UsageError,
 	createChildLogger,
 	isFluidError,
 	isILoggingError,
@@ -400,6 +394,47 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
 			});
 
+			it("Throws UsageError and calls closeFn for invalid flushMode", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext(),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				// Cast through unknown to simulate a stale/invalid numeric flushMode value (e.g., the former FlushModeExperimental.Async = 2)
+				const invalidFlushMode = 2 as unknown as FlushMode;
+
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { flushMode: invalidFlushMode },
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => {
+						assert.ok(
+							error instanceof UsageError,
+							"Should throw a UsageError for invalid flushMode",
+						);
+						return true;
+					},
+				);
+
+				assert.strictEqual(
+					containerErrors.length,
+					1,
+					"closeFn should have been called with the error",
+				);
+				assert.ok(
+					containerErrors[0] instanceof UsageError,
+					"closeFn should have been called with a UsageError",
+				);
+			});
+
 			it("Process empty batch", async () => {
 				let batchBegin = 0;
 				let batchEnd = 0;
@@ -646,16 +681,10 @@ describe("Runtime", () => {
 
 		const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
 		describe("orderSequentially (rollback not enabled)", () => {
-			for (const flushMode of [
-				FlushMode.TurnBased,
-				FlushMode.Immediate,
-				FlushModeExperimental.Async as unknown as FlushMode,
-			]) {
+			for (const flushMode of [FlushMode.TurnBased, FlushMode.Immediate]) {
 				const fakeClientId = "fakeClientId";
 
-				describe(`orderSequentially with flush mode: ${
-					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
-				}`, () => {
+				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
 					let containerRuntime: ContainerRuntime_WithPrivates;
 					let mockContext: Partial<IContainerContext>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -885,14 +914,8 @@ describe("Runtime", () => {
 		});
 
 		describe("orderSequentially with rollback", () => {
-			for (const flushMode of [
-				FlushMode.TurnBased,
-				FlushMode.Immediate,
-				FlushModeExperimental.Async as unknown as FlushMode,
-			]) {
-				describe(`orderSequentially with flush mode: ${
-					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
-				}`, () => {
+			for (const flushMode of [FlushMode.TurnBased, FlushMode.Immediate]) {
+				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
 					let containerRuntime: ContainerRuntime_WithPrivates;
 					const containerErrors: ICriticalContainerError[] = [];
 					let submittedOpsCount: number = 0;
@@ -1759,7 +1782,6 @@ describe("Runtime", () => {
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				chunkSizeInBytes: 800 * 1024,
-				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
 			} as const satisfies IContainerRuntimeOptionsInternal;
 
@@ -1825,107 +1847,6 @@ describe("Runtime", () => {
 							disableFlushBeforeProcess: true,
 						}),
 						groupedBatchingEnabled: true,
-					},
-				]);
-			});
-		});
-
-		describe("Container feature detection", () => {
-			const mockLogger = new MockLogger();
-
-			beforeEach(() => {
-				mockLogger.clear();
-			});
-
-			const localGetMockContext = (
-				features?: ReadonlyMap<string, unknown>,
-				compatibilityDetails?: ILayerCompatDetails,
-			): Partial<IContainerContext & IProvideLayerCompatDetails> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					audience: new MockAudience(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: mockLogger,
-					supportedFeatures: features,
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-					getLoadedFromVersion: () => undefined,
-					ILayerCompatDetails: compatibilityDetails,
-				};
-			};
-
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
-				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-			};
-
-			for (const features of [
-				undefined,
-				new Map([["referenceSequenceNumbers", false]]),
-				new Map([
-					["other", true],
-					["feature", true],
-				]),
-			]) {
-				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
-					const runtime = await ContainerRuntime.loadRuntime2({
-						context: localGetMockContext(features) as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						runtimeOptions,
-						provideEntryPoint: mockProvideEntryPoint,
-					});
-
-					assert.equal(runtime.flushMode, FlushMode.TurnBased);
-					mockLogger.assertMatchAny([
-						{
-							eventName: "ContainerRuntime:FlushModeFallback",
-							category: "error",
-						},
-					]);
-				});
-			}
-
-			it("Loader supported for async FlushMode", async () => {
-				const runtime = await ContainerRuntime.loadRuntime2({
-					context: localGetMockContext(
-						new Map([["referenceSequenceNumbers", true]]),
-					) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions,
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-
-				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
-				mockLogger.assertMatchNone([
-					{
-						eventName: "ContainerRuntime:FlushModeFallback",
-						category: "error",
-					},
-				]);
-			});
-
-			it("Loader supported for async FlushMode with ILayerCompatDetails", async () => {
-				const compatDetails: ILayerCompatDetails = {
-					pkgVersion: "0.1.0",
-					generation: 1,
-					supportedFeatures: new Set(),
-				};
-				const runtime = await ContainerRuntime.loadRuntime2({
-					context: localGetMockContext(undefined, compatDetails) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions,
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-
-				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
-				mockLogger.assertMatchNone([
-					{
-						eventName: "ContainerRuntime:FlushModeFallback",
-						category: "error",
 					},
 				]);
 			});
