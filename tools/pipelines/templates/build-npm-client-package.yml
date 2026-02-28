@@ -358,19 +358,16 @@ extends:
               # Incremental build cache: restore .tsbuildinfo and .done.build.log files from previous builds.
               # TypeScript and fluid-build use content hashes (not mtimes) to validate these files,
               # so stale caches are safe — tasks simply re-run when their inputs change.
-              # Note: the cache directory must exist before Cache@2 runs so the post-job save is registered.
-              - script: mkdir -p $(Pipeline.Workspace)/.fluid-tsc-cache
-                displayName: Create incremental build cache directory
-
               - task: Cache@2
                 displayName: Restore incremental build cache
                 continueOnError: true
-                timeoutInMinutes: 5
+                timeoutInMinutes: 10
                 inputs:
-                  key: 'tsc-cache | "$(Agent.OS)" | $(Build.SourceVersion)'
-                  path: $(Pipeline.Workspace)/.fluid-tsc-cache
+                  key: 'tsc-cache-v2 | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+                  path: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/.fluid-tsc-cache
                   restoreKeys: |
-                    tsc-cache | "$(Agent.OS)"
+                    tsc-cache-v2 | "$(Agent.OS)"
+                  cacheHitVar: TSC_CACHE_RESTORED
 
               - task: Bash@3
                 displayName: Extract incremental build cache
@@ -380,11 +377,12 @@ extends:
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     set -eu -o pipefail
-                    CACHE_DIR="$(Pipeline.Workspace)/.fluid-tsc-cache"
+                    echo "TSC_CACHE_RESTORED=$(TSC_CACHE_RESTORED)"
+                    CACHE_DIR=".fluid-tsc-cache"
                     if [ -f "$CACHE_DIR/incremental-cache.tar.gz" ]; then
                       echo "Restoring incremental build cache..."
                       tar xzf "$CACHE_DIR/incremental-cache.tar.gz" 2>/dev/null || echo "Warning: cache extraction had issues, continuing with clean build"
-                      FILE_COUNT=$(find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) -not -path '*/node_modules/*' | wc -l)
+                      FILE_COUNT=$(find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) -not -path '*/node_modules/*' -not -path './.fluid-tsc-cache/*' | wc -l)
                       echo "Restored $FILE_COUNT cached build files."
                     else
                       echo "No incremental build cache archive found."
@@ -407,13 +405,14 @@ extends:
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     set -eu -o pipefail
-                    CACHE_DIR="$(Pipeline.Workspace)/.fluid-tsc-cache"
+                    CACHE_DIR=".fluid-tsc-cache"
                     mkdir -p "$CACHE_DIR"
                     # Collect .tsbuildinfo and .done.build.log files into a tar archive.
                     # Exclude api-extractor done files (~115 MB) — they're large and get
                     # regenerated quickly from their tsbuildinfo dependencies.
                     find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) \
                       -not -path '*/node_modules/*' \
+                      -not -path './.fluid-tsc-cache/*' \
                       -not -name 'api-extractor-*.done.build.log' \
                       > "$CACHE_DIR/file-list.txt"
                     FILE_COUNT=$(wc -l < "$CACHE_DIR/file-list.txt")
