@@ -90,10 +90,8 @@ The client which encoded this data likely specified an "minVersionForCollab" val
  * @remarks
  * The passed in codec should not perform its own schema validation.
  * The schema validation gets added here.
- *
- * TODO: users of this should migrate to {@link ClientVersionDispatchingCodecBuilder}.
  */
-export function makeVersionedValidatedCodec<
+function makeVersionedValidatedCodec<
 	EncodedSchema extends TSchema,
 	TDecoded,
 	TEncoded extends Versioned = VersionedJson,
@@ -104,12 +102,16 @@ export function makeVersionedValidatedCodec<
 	supportedVersions: Set<FormatVersion>,
 	schema: EncodedSchema,
 	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
-): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
-	return makeVersionedCodec(
-		supportedVersions,
-		options,
-		withSchemaValidation(schema, codec, options.jsonValidator),
-	);
+): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> &
+	Pick<CodecAndSchema<TDecoded, TContext>, "schema"> {
+	return {
+		...makeVersionedCodec(
+			supportedVersions,
+			options,
+			withSchemaValidation(schema, codec, options.jsonValidator),
+		),
+		schema,
+	};
 }
 
 /**
@@ -218,7 +220,7 @@ export interface CodecVersion<
 	TDecoded,
 	TContext,
 	TFormatVersion extends FormatVersion,
-	TBuildOptions extends CodecWriteOptions,
+	TBuildOptions extends ICodecOptions,
 > extends CodecVersionBase<
 		| CodecAndSchema<TDecoded, TContext>
 		| ((options: TBuildOptions) => CodecAndSchema<TDecoded, TContext>),
@@ -235,11 +237,9 @@ export interface NormalizedCodecVersion<
 	TDecoded,
 	TContext,
 	TFormatVersion extends FormatVersion,
-	TBuildOptions extends CodecWriteOptions,
+	TBuildOptions extends ICodecOptions,
 > extends CodecVersionBase<
-		(
-			options: TBuildOptions,
-		) => IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>,
+		(options: TBuildOptions) => CodecAndSchema<TDecoded, TContext>,
 		TFormatVersion
 	> {}
 
@@ -249,10 +249,7 @@ export interface NormalizedCodecVersion<
  * Produced by {@link ClientVersionDispatchingCodecBuilder.applyOptions}.
  */
 interface EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion extends FormatVersion>
-	extends CodecVersionBase<
-		IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>,
-		TFormatVersion
-	> {}
+	extends CodecVersionBase<CodecAndSchema<TDecoded, TContext>, TFormatVersion> {}
 
 /**
  * Normalize the codec to a single format.
@@ -263,7 +260,7 @@ function normalizeCodecVersion<
 	TDecoded,
 	TContext,
 	TFormatVersion extends FormatVersion,
-	TBuildOptions extends CodecWriteOptions,
+	TBuildOptions extends ICodecOptions,
 >(
 	codecVersion: CodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions>,
 ): NormalizedCodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions> {
@@ -271,9 +268,7 @@ function normalizeCodecVersion<
 		typeof codecVersion.codec === "function"
 			? codecVersion.codec
 			: () => codecVersion.codec as CodecAndSchema<TDecoded, TContext>;
-	const codec = (
-		options: TBuildOptions,
-	): IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext> => {
+	const codec = (options: TBuildOptions): CodecAndSchema<TDecoded, TContext> => {
 		const built = codecBuilder(options);
 		return makeVersionedValidatedCodec(
 			options,
@@ -297,11 +292,11 @@ function normalizeCodecVersion<
  * This is a two stage builder so the first stage can encapsulate all codec specific details and the second can bring in configuration.
  */
 export class ClientVersionDispatchingCodecBuilder<
-	Name extends CodecName,
-	TDecoded,
-	TContext,
-	TFormatVersion extends FormatVersion,
-	TBuildOptions extends CodecWriteOptions,
+	TBuildOptions extends ICodecOptions = ICodecOptions,
+	TDecoded = unknown,
+	TContext = unknown,
+	TFormatVersion extends FormatVersion = FormatVersion,
+	Name extends CodecName = string,
 > {
 	public readonly registry: readonly NormalizedCodecVersion<
 		TDecoded,
@@ -391,7 +386,7 @@ export class ClientVersionDispatchingCodecBuilder<
 	/**
 	 * Produce a single codec which can read any supported format, and writes a version selected based on the provided options.
 	 */
-	public build(options: TBuildOptions): IJsonCodec<
+	public build(options: TBuildOptions & CodecWriteOptions): IJsonCodec<
 		TDecoded,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -470,11 +465,11 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		const input = inputRegistry as readonly unknown[] as readonly CodecFinal[];
 
 		const builder = new ClientVersionDispatchingCodecBuilder<
-			Name,
+			TBuildOptions2,
 			TDecoded2,
 			unknown extends TContext2 ? void : TContext2,
 			TFormatVersion2,
-			TBuildOptions2
+			Name
 		>(name, input);
 		return builder;
 	}

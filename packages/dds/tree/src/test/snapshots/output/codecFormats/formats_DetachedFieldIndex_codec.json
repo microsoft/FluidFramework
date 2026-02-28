@@ -1,0 +1,212 @@
+[
+  {
+    "version": 1,
+    "minVersionForCollab": "1.0.0",
+    "schema": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "version": {
+          "const": 1,
+          "type": "number"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "anyOf": [
+                      {
+                        "const": "root",
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": [
+                        {
+                          "multipleOf": 1,
+                          "type": "number"
+                        },
+                        {
+                          "minimum": -1,
+                          "multipleOf": 1,
+                          "type": "number"
+                        }
+                      ],
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  }
+                ],
+                "additionalItems": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "anyOf": [
+                      {
+                        "const": "root",
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  {
+                    "multipleOf": 1,
+                    "type": "number"
+                  },
+                  {
+                    "minimum": -1,
+                    "multipleOf": 1,
+                    "type": "number"
+                  }
+                ],
+                "additionalItems": false,
+                "minItems": 3,
+                "maxItems": 3
+              }
+            ]
+          }
+        },
+        "maxId": {
+          "minimum": -1,
+          "multipleOf": 1,
+          "type": "number"
+        }
+      },
+      "required": [
+        "version",
+        "data",
+        "maxId"
+      ]
+    }
+  },
+  {
+    "version": 2,
+    "minVersionForCollab": "2.52.0",
+    "schema": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "version": {
+          "const": 2,
+          "type": "number"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "const": "root",
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": [
+                        {
+                          "multipleOf": 1,
+                          "type": "number"
+                        },
+                        {
+                          "minimum": -1,
+                          "multipleOf": 1,
+                          "type": "number"
+                        }
+                      ],
+                      "additionalItems": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  }
+                ],
+                "additionalItems": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "const": "root",
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "multipleOf": 1,
+                    "type": "number"
+                  },
+                  {
+                    "minimum": -1,
+                    "multipleOf": 1,
+                    "type": "number"
+                  }
+                ],
+                "additionalItems": false,
+                "minItems": 3,
+                "maxItems": 3
+              }
+            ]
+          }
+        },
+        "maxId": {
+          "minimum": -1,
+          "multipleOf": 1,
+          "type": "number"
+        }
+      },
+      "required": [
+        "version",
+        "data",
+        "maxId"
+      ]
+    }
+  }
+]

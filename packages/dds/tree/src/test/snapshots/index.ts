@@ -9,4 +9,5 @@ export {
 	useSnapshotDirectory,
 	regenerateSnapshots,
 	testSchemaCompatibilitySnapshots,
+	snapshotCodecFormats,
 } from "./snapshotTools.js";
