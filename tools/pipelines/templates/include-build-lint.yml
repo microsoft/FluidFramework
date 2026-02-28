@@ -31,6 +31,13 @@ steps:
       # a transitive dependency of browserslist. Without this, the warning fires once
       # per package during builds, producing 100+ identical warnings in build logs.
       BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
+      # Enable content-hash mode for fluid-build tasks that default to mtime-based
+      # done file checks. This is required for incremental build caching across CI runs,
+      # since git checkout resets file mtimes but content hashes remain stable.
+      FLUID_BUILD_ENABLE_COPYFILES_HASH: 1
+      FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH: 1
+      FLUID_BUILD_ENABLE_GOODFENCE_HASH: 1
+      FLUID_BUILD_ENABLE_DEPCRUISE_HASH: 1
     inputs:
       command: 'custom'
       workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}

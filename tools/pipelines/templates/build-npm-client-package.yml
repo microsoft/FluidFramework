@@ -355,6 +355,37 @@ extends:
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
+              # Incremental build cache: restore .tsbuildinfo and .done.build.log files from previous builds.
+              # TypeScript and fluid-build use content hashes (not mtimes) to validate these files,
+              # so stale caches are safe — tasks simply re-run when their inputs change.
+              - task: Cache@2
+                displayName: Restore incremental build cache
+                continueOnError: true
+                timeoutInMinutes: 5
+                inputs:
+                  key: 'tsc-cache | "$(Agent.OS)" | $(Build.SourceVersion)'
+                  path: $(Pipeline.Workspace)/.fluid-tsc-cache
+                  restoreKeys: |
+                    tsc-cache | "$(Agent.OS)"
+
+              - task: Bash@3
+                displayName: Extract incremental build cache
+                continueOnError: true
+                inputs:
+                  targetType: inline
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                  script: |
+                    set -eu -o pipefail
+                    CACHE_DIR="$(Pipeline.Workspace)/.fluid-tsc-cache"
+                    if [ -f "$CACHE_DIR/incremental-cache.tar.gz" ]; then
+                      echo "Restoring incremental build cache..."
+                      tar xzf "$CACHE_DIR/incremental-cache.tar.gz" 2>/dev/null || echo "Warning: cache extraction had issues, continuing with clean build"
+                      FILE_COUNT=$(find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) -not -path '*/node_modules/*' | wc -l)
+                      echo "Restored $FILE_COUNT cached build files."
+                    else
+                      echo "No incremental build cache archive found."
+                    fi
+
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
                 parameters:
@@ -362,6 +393,30 @@ extends:
                   taskLint: '${{ parameters.taskLint }}'
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
+
+              - task: Bash@3
+                displayName: Save incremental build cache
+                continueOnError: true
+                condition: succeededOrFailed()
+                inputs:
+                  targetType: inline
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                  script: |
+                    set -eu -o pipefail
+                    CACHE_DIR="$(Pipeline.Workspace)/.fluid-tsc-cache"
+                    mkdir -p "$CACHE_DIR"
+                    # Collect .tsbuildinfo and .done.build.log files into a tar archive
+                    find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) -not -path '*/node_modules/*' > "$CACHE_DIR/file-list.txt"
+                    FILE_COUNT=$(wc -l < "$CACHE_DIR/file-list.txt")
+                    if [ "$FILE_COUNT" -gt 0 ]; then
+                      echo "Caching $FILE_COUNT incremental build files..."
+                      tar czf "$CACHE_DIR/incremental-cache.tar.gz" -T "$CACHE_DIR/file-list.txt"
+                      rm "$CACHE_DIR/file-list.txt"
+                      ls -lh "$CACHE_DIR/incremental-cache.tar.gz"
+                      echo "Incremental build cache saved."
+                    else
+                      echo "No incremental build files found to cache."
+                    fi
 
               - task: Npm@1
                 displayName: 'npm run webpack'
