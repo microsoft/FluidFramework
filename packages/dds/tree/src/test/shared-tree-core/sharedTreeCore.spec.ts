@@ -48,9 +48,10 @@ import { Tree } from "../../shared-tree/index.js";
 import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
 import {
 	EditManagerSummarizer,
-	stringKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree-core/editManagerSummarizer.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "../../shared-tree-core/editManagerSummaryFormatV1ToV2.js";
 import {
 	EditManagerFormatVersion,
 	SharedTreeSummaryFormatVersion,
@@ -222,7 +223,7 @@ describe("SharedTreeCore", () => {
 							[EditManagerSummarizer.key]: {
 								type: SummaryType.Tree,
 								tree: {
-									[stringKey]: editManagerBlob,
+									[summaryContentBlobKeyV1ToV2]: editManagerBlob,
 								},
 							},
 						},

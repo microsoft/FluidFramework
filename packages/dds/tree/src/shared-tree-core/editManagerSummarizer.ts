@@ -12,22 +12,26 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+	type SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 
-import type { IJsonCodec } from "../codec/index.js";
+import { FluidClientVersion, type IJsonCodec } from "../codec/index.js";
 import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
 import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
+import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./editManagerSummaryFormatV1ToV2.js";
+import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./editManagerSummaryFormatV3.js";
 import type {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
-
-export const stringKey = "String";
 
 /**
  * The versions for the edit manager summary format.
@@ -42,14 +46,20 @@ export const enum EditManagerSummaryFormatVersion {
 	 */
 	v2 = 2,
 	/**
+	 * This version changes the key where the summary content is stored.
+	 * This is not backward compatible with version 1 or 2.
+	 */
+	v3 = 3,
+	/**
 	 * The latest version of the summary. Must be updated when a new version is added.
 	 */
-	vLatest = v2,
+	vLatest = v3,
 }
 
 const supportedVersions = new Set<EditManagerSummaryFormatVersion>([
 	EditManagerSummaryFormatVersion.v1,
 	EditManagerSummaryFormatVersion.v2,
+	EditManagerSummaryFormatVersion.v3,
 ]);
 
 /**
@@ -58,8 +68,24 @@ const supportedVersions = new Set<EditManagerSummaryFormatVersion>([
 function minVersionToEditManagerSummaryFormatVersion(
 	version: MinimumVersionForCollab,
 ): EditManagerSummaryFormatVersion {
-	// Currently, version 2 is written which adds metadata blob to the summary.
-	return EditManagerSummaryFormatVersion.v2;
+	return getConfigForMinVersionForCollab(version, {
+		[lowestMinVersionForCollab]: EditManagerSummaryFormatVersion.v2,
+		[FluidClientVersion.v2_90]: EditManagerSummaryFormatVersion.v3,
+	});
+}
+
+/**
+ * Gets the key for the blob containing the edit manager summary content based on the summary format version.
+ * @param summaryFormatVersion - The version of the edit manager summary format.
+ * @returns The key for the edit manager summary content blob.
+ */
+function getEditManagerSummaryContentKey(
+	summaryFormatVersion: EditManagerSummaryFormatVersion | undefined,
+): string {
+	return summaryFormatVersion === undefined ||
+		summaryFormatVersion < EditManagerSummaryFormatVersion.v3
+		? summaryContentBlobKeyV1ToV2
+		: summaryContentBlobKeyV3;
 }
 
 /**
@@ -70,6 +96,8 @@ export class EditManagerSummarizer<TChangeset>
 	implements Summarizable
 {
 	public static readonly key = "EditManager";
+	private readonly writeSummaryContentBlobKey: string;
+
 	public constructor(
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
@@ -92,6 +120,9 @@ export class EditManagerSummarizer<TChangeset>
 			supportedVersions,
 			true /* supportPreVersioningFormat */,
 		);
+		this.writeSummaryContentBlobKey = getEditManagerSummaryContentKey(
+			minVersionToEditManagerSummaryFormatVersion(minVersionForCollab),
+		);
 	}
 
 	protected summarizeInternal(props: {
@@ -109,14 +140,16 @@ export class EditManagerSummarizer<TChangeset>
 				: { schema: this.schemaAndPolicy, idCompressor: this.idCompressor };
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
-		builder.addBlob(stringKey, dataString);
+		builder.addBlob(this.writeSummaryContentBlobKey, dataString);
 	}
 
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
+		version: EditManagerSummaryFormatVersion | undefined,
 	): Promise<void> {
-		const schemaBuffer: ArrayBufferLike = await services.readBlob(stringKey);
+		const summaryContentBlobKey = getEditManagerSummaryContentKey(version);
+		const schemaBuffer: ArrayBufferLike = await services.readBlob(summaryContentBlobKey);
 
 		// After the awaits, validate that the data is in a clean state.
 		// This detects any data that could have been accidentally added through
