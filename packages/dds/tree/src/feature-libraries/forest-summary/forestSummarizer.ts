@@ -243,5 +243,13 @@ export class ForestSummarizer
 			this.forest,
 			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
 		);
+
+		// Free the raw encoded chunk data that was downloaded during load.
+		// After decode and applyDelta, the decoded chunks are tracked in
+		// chunkTrackingPropertiesMap and the raw data is no longer needed.
+		// Note: this assumes all chunks have been decoded by this point, which is true
+		// for the current implementation. If virtualization is added in the future
+		// (lazy/on-demand chunk decoding), this will need to be revisited.
+		this.incrementalSummaryBuilder.clearLoadedChunks();
 	}
 }
