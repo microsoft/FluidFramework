@@ -1,0 +1,36 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+
+import type {
+	ComposeNodeManager,
+	InvertNodeManager,
+	RebaseNodeManager,
+} from "../../../feature-libraries/index.js";
+
+const failingDelegate = (): never => assert.fail("Should not be called");
+
+export const failInvertManager: InvertNodeManager = {
+	invertDetach: failingDelegate,
+	invertAttach: failingDelegate,
+};
+
+export const failRebaseManager: RebaseNodeManager = {
+	getNewChangesForBaseAttach: failingDelegate,
+	rebaseOverDetach: failingDelegate,
+	addDetach: failingDelegate,
+	removeDetach: failingDelegate,
+	doesBaseAttachNodes: failingDelegate,
+	getBaseRename: failingDelegate,
+	getNewRenameForBaseRename: failingDelegate,
+};
+
+export const failComposeManager: ComposeNodeManager = {
+	getNewChangesForBaseDetach: failingDelegate,
+	sendNewChangesToBaseSourceLocation: failingDelegate,
+	composeAttachDetach: failingDelegate,
+	composeDetachAttach: failingDelegate,
+};

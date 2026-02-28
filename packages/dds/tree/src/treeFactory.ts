@@ -26,7 +26,9 @@ import {
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
 import {
+	editManagerFormatVersionSelectorForDetachedRootEditing,
 	editManagerFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForDetachedRootEditing,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
@@ -212,16 +214,23 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 }
 
 function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
-	const enableSharedBranches = options.enableSharedBranches ?? false;
-
-	if (enableSharedBranches) {
+	if (options.enableSharedBranches === true && options.enableDetachedRootEditing === true) {
+		throw new UsageError("enableDetachRootEditing cannot be used with enableSharedBranches.");
+	}
+	if (options.enableSharedBranches === true) {
 		return sharedBranchesOptions;
 	}
-
+	if (options.enableDetachedRootEditing === true) {
+		return detachRootEditingOptions;
+	}
 	return {};
 }
 
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
 	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};
+const detachRootEditingOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForDetachedRootEditing,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForDetachedRootEditing,
 };

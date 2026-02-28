@@ -7,6 +7,7 @@ import type { TAnySchema } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
 import type {
+	ChangeAtomId,
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
@@ -18,9 +19,14 @@ import {
 } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
-import { makeV2CodecHelpers } from "./sequenceFieldCodecV2.js";
+import {
+	decodeSequenceChangeset,
+	encodeRevisionWithContext,
+	encodeSequenceChangeset,
+	makeV2CodecHelpers,
+	tryGetEncodedCellRename,
+} from "./sequenceFieldCodecV2.js";
 import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
-import { isNoopMark } from "./utils.js";
 
 export function makeV3Codec(
 	revisionTagCodec: IJsonCodec<
@@ -37,46 +43,55 @@ export function makeV3Codec(
 > {
 	const {
 		changeAtomIdCodec: atomIdCodec,
-		markEffectCodec: markEffectV2Codec,
+		encodeMarkEffect: encodeV2MarkEffect,
 		decoderLibrary: decoderLibraryV2,
 	} = makeV2CodecHelpers(revisionTagCodec);
 
-	const markEffectCodec: IJsonCodec<
-		MarkEffect,
-		Encoded.MarkEffect,
-		Encoded.MarkEffect,
-		ChangeEncodingContext
-	> = {
-		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
-			const type = effect.type;
-			switch (type) {
-				case "Rename": {
-					return {
-						rename: {
-							idOverride: atomIdCodec.encode(effect.idOverride, context),
-						},
-					};
-				}
-				default: {
-					return markEffectV2Codec.encode(effect, context);
-				}
-			}
-		},
-		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {
-			return decoderLibrary.dispatch(encoded, context);
-		},
-	};
+	function encodeMarkEffect(
+		mark: Mark,
+		context: FieldChangeEncodingContext,
+	): Encoded.MarkEffect {
+		const encoded = encodeV2MarkEffect(mark, context);
+		const encodedRenameId = tryGetEncodedCellRename(encoded);
+		if (encodedRenameId !== undefined) {
+			return {
+				rename: {
+					idOverride: encodedRenameId,
+				},
+			};
+		}
+
+		return encoded;
+	}
+
+	function decodeMarkEffect(
+		encoded: Encoded.MarkEffect,
+		count: number,
+		cellId: ChangeAtomId | undefined,
+		context: FieldChangeEncodingContext,
+	): MarkEffect {
+		return decoderLibrary.dispatch(encoded, count, cellId, context);
+	}
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
-		/* args */ [context: ChangeEncodingContext],
+		/* args */ [
+			count: number,
+			cellId: ChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		],
 		MarkEffect
 	>({
 		...decoderLibraryV2,
-		rename(encoded: Encoded.Rename, context: ChangeEncodingContext): Rename {
+		rename(
+			encoded: Encoded.Rename,
+			count: number,
+			cellId: ChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		): Rename {
 			return {
 				type: "Rename",
-				idOverride: atomIdCodec.decode(encoded.idOverride, context),
+				idOverride: atomIdCodec.decode(encoded.idOverride, context.baseContext),
 			};
 		},
 	});
@@ -91,48 +106,19 @@ export function makeV3Codec(
 		encode: (
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
-		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
-			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
-			for (const mark of changeset) {
-				const encodedMark: Encoded.Mark<NodeChangeSchema> = {
-					count: mark.count,
-				};
-				if (!isNoopMark(mark)) {
-					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
-				}
-				if (mark.cellId !== undefined) {
-					encodedMark.cellId = atomIdCodec.encode(mark.cellId, context.baseContext);
-				}
-				if (mark.changes !== undefined) {
-					encodedMark.changes = context.encodeNode(mark.changes);
-				}
-				jsonMarks.push(encodedMark);
-			}
-			return jsonMarks;
-		},
+		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> =>
+			encodeSequenceChangeset(
+				changeset,
+				context,
+				(revision) =>
+					encodeRevisionWithContext(revision, context.baseContext, revisionTagCodec),
+				atomIdCodec,
+				encodeMarkEffect,
+			),
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
 			context: FieldChangeEncodingContext,
-		): Changeset => {
-			const marks: Changeset = [];
-			for (const mark of changeset) {
-				const decodedMark: Mark = {
-					count: mark.count,
-				};
-
-				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
-				}
-				if (mark.cellId !== undefined) {
-					decodedMark.cellId = atomIdCodec.decode(mark.cellId, context.baseContext);
-				}
-				if (mark.changes !== undefined) {
-					decodedMark.changes = context.decodeNode(mark.changes);
-				}
-				marks.push(decodedMark);
-			}
-			return marks;
-		},
+		): Changeset => decodeSequenceChangeset(changeset, context, atomIdCodec, decodeMarkEffect),
 		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};
 }

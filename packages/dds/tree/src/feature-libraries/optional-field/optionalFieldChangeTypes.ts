@@ -7,47 +7,28 @@ import type { ChangeAtomId } from "../../core/index.js";
 import type { NodeId } from "../modular-schema/index.js";
 
 /**
- * Uniquely identifies a register within the scope of this changeset.
- * The sentinel value "self" is used for the active register, which is a universally shared register
- * (as in, any changeset referring to "self" refers to the register containing the active value of the field).
- *
- * See the model description in {@link OptionalChangeset} for more details.
- */
-export type RegisterId = ChangeAtomId | "self";
-
-export type Move = readonly [src: ChangeAtomId, dst: ChangeAtomId];
-
-export type ChildChange = readonly [register: RegisterId, childChange: NodeId];
-
-/**
  * Changes to an optional field.
  *
- * The model used is that optional field consists of a collection of "registers" with one designated as the "active" register.
- * In a given change input or output context, registers may hold 0 or 1 nodes.
- * Each register is identified using a {@link RegisterId}.
- * The active register holds the current value of the field, and other registers hold detached roots.
+ * The model used is that optional field consists of a single register.
+ * In a given change input or output context, this register may hold 0 or 1 nodes.
  */
 export interface OptionalChangeset {
-	/**
-	 * Each entry signifies the intent to move a node from `src` to `dst`.
-	 * Moves to or from the "self" register are represented in {@link valueReplace}.
-	 *
-	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
-	 * As such, changesets should not contain duplicated src or dst entries.
-	 */
-	readonly moves: readonly Move[];
-
-	/**
-	 * Nested changes to nodes that occupy registers.
-	 *
-	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
-	 */
-	readonly childChanges: readonly ChildChange[];
-
 	/**
 	 * An optional description of how to replace the current value of the field.
 	 */
 	readonly valueReplace?: Replace;
+
+	/**
+	 * If defined, this represents an intention to detach the node current in this field, using `nodeDetach` as the detach ID.
+	 * If this node is moved elsewhere, this detach will follow it to the new location.
+	 * This detach will be applied before any detach in `valueReplace`.
+	 * This should be undefined if this field is empty in the input context of this changeset.
+	 */
+	readonly nodeDetach?: ChangeAtomId;
+	/**
+	 * The ID of the node changeset for the node which is in this field in the input context of this changeset.
+	 */
+	readonly childChange?: NodeId;
 }
 
 export interface Replace {
@@ -57,13 +38,28 @@ export interface Replace {
 	readonly isEmpty: boolean;
 
 	/**
-	 * The ID for the node to put in this field, or undefined if the field should be emptied.
-	 * Will be "self" when the intention is to keep the current node in this field.
-	 */
-	readonly src?: RegisterId;
-
-	/**
 	 * An ID to associate with the node (if any) which is detached by this edit.
+	 *
+	 * When the field is empty in the input context, this ID is dormant in the sense that it would not be used if the changeset were applied as is.
+	 * However, it can become active if the changeset is rebased over a change that attaches a node in the field.
 	 */
 	readonly dst: ChangeAtomId;
+
+	/**
+	 * The ID for the node to attach in this field, or undefined if no node should be attached.
+	 *
+	 * Note that this ID may refer to the node detached by this changeset:
+	 * The node in the field is detached and associated with ID `dst`,
+	 * then that node is renamed from `dst` to `src` (at the ModularChangeset level),
+	 * then that node is attached back into the field.
+	 * When this is the case, we say that the node is being pinned in the field.
+	 * While a pin has no effect on the document state if applied as-is, its merge semantics are different from an empty changeset.
+	 * This is because rebasing a pin over a change that detaches the node from the field will result in a changeset that re-attaches the node to the field.
+	 * In other words, a pin guarantees that the node will be in the field after the changeset is rebased and applied, whereas an empty changeset does not.
+	 *
+	 * `src` must be structurally different from `dst` even when the changeset is a pin.
+	 * An optional field changeset that aims to attach a node must be able to affect two nodes,
+	 * so unless we want to mint new IDs during rebasing, such a changeset must have two different IDs.
+	 */
+	readonly src?: ChangeAtomId;
 }

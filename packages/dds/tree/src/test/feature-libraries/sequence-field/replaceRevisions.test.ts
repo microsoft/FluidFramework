@@ -102,90 +102,24 @@ function runCases(outputRev: RevisionTag) {
 
 	it("insert and remove marks", () => {
 		const input: Changeset = [
-			Mark.insert(1, atom0),
-			Mark.insert(1, atom1),
-			Mark.insert(1, atom2),
-			Mark.insert(1, atom3),
-			Mark.remove(1, atom0, { idOverride: atom1 }),
-			Mark.remove(1, atom1, { idOverride: atom2 }),
-			Mark.remove(1, atom2, { idOverride: atom3 }),
-			Mark.remove(1, atom3, { idOverride: atom0 }),
+			Mark.attach(1, atom0),
+			Mark.attach(1, atom1),
+			Mark.attach(1, atom2),
+			Mark.attach(1, atom3),
+			Mark.detach(1, atom0, { cellRename: atom1 }),
+			Mark.detach(1, atom1, { cellRename: atom2 }),
+			Mark.detach(1, atom2, { cellRename: atom3 }),
+			Mark.detach(1, atom3, { cellRename: atom0 }),
 		];
 		const expected: Changeset = [
-			Mark.insert(1, atom0),
-			Mark.insert(1, atomOut1),
-			Mark.insert(1, atomOut2),
-			Mark.insert(1, atomOut3),
-			Mark.remove(1, atom0, { idOverride: atomOut1 }),
-			Mark.remove(1, atomOut1, { idOverride: atomOut2 }),
-			Mark.remove(1, atomOut2, { idOverride: atomOut3 }),
-			Mark.remove(1, atomOut3, { idOverride: atom0 }),
-		];
-		const actual = process(input);
-		assertChangesetsEqual(actual, expected);
-	});
-
-	it("move marks", () => {
-		const input: Changeset = [
-			Mark.moveOut(1, atom0, { finalEndpoint: atom0, idOverride: atom1 }),
-			Mark.moveOut(1, atom1, { finalEndpoint: atom1, idOverride: atom2 }),
-			Mark.moveOut(1, atom2, { finalEndpoint: atom2, idOverride: atom3 }),
-			Mark.moveOut(1, atom3, { finalEndpoint: atom3, idOverride: atom0 }),
-			Mark.moveIn(1, atom0, { finalEndpoint: atom0 }),
-			Mark.moveIn(1, atom1, { finalEndpoint: atom1 }),
-			Mark.moveIn(1, atom2, { finalEndpoint: atom2 }),
-			Mark.moveIn(1, atom3, { finalEndpoint: atom3 }),
-		];
-		const expected: Changeset = [
-			Mark.moveOut(1, atom0, { finalEndpoint: atom0, idOverride: atomOut1 }),
-			Mark.moveOut(1, atomOut1, { finalEndpoint: atomOut1, idOverride: atomOut2 }),
-			Mark.moveOut(1, atomOut2, { finalEndpoint: atomOut2, idOverride: atomOut3 }),
-			Mark.moveOut(1, atomOut3, { finalEndpoint: atomOut3, idOverride: atom0 }),
-			Mark.moveIn(1, atom0, { finalEndpoint: atom0 }),
-			Mark.moveIn(1, atomOut1, { finalEndpoint: atomOut1 }),
-			Mark.moveIn(1, atomOut2, { finalEndpoint: atomOut2 }),
-			Mark.moveIn(1, atomOut3, { finalEndpoint: atomOut3 }),
-		];
-		const actual = process(input);
-		assertChangesetsEqual(actual, expected);
-	});
-
-	it("attach an detach marks", () => {
-		const input: Changeset = [
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atom0, { finalEndpoint: atom0 }),
-				Mark.remove(1, atom0, { idOverride: atom1 }),
-			),
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atom1, { finalEndpoint: atom1 }),
-				Mark.remove(1, atom2, { idOverride: atom2 }),
-			),
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atom2, { finalEndpoint: atom2 }),
-				Mark.remove(1, atom3, { idOverride: atom3 }),
-			),
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atom3, { finalEndpoint: atom3 }),
-				Mark.remove(1, atom1, { idOverride: atom0 }),
-			),
-		];
-		const expected: Changeset = [
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atom0, { finalEndpoint: atom0 }),
-				Mark.remove(1, atom0, { idOverride: atomOut1 }),
-			),
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atomOut1, { finalEndpoint: atomOut1 }),
-				Mark.remove(1, atomOut2, { idOverride: atomOut2 }),
-			),
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atomOut2, { finalEndpoint: atomOut2 }),
-				Mark.remove(1, atomOut3, { idOverride: atomOut3 }),
-			),
-			Mark.attachAndDetach(
-				Mark.moveIn(1, atomOut3, { finalEndpoint: atomOut3 }),
-				Mark.remove(1, atomOut1, { idOverride: atom0 }),
-			),
+			Mark.attach(1, atom0),
+			Mark.attach(1, atomOut1),
+			Mark.attach(1, atomOut2),
+			Mark.attach(1, atomOut3),
+			Mark.detach(1, atom0, { cellRename: atomOut1 }),
+			Mark.detach(1, atomOut1, { cellRename: atomOut2 }),
+			Mark.detach(1, atomOut2, { cellRename: atomOut3 }),
+			Mark.detach(1, atomOut3, { cellRename: atom0 }),
 		];
 		const actual = process(input);
 		assertChangesetsEqual(actual, expected);

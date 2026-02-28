@@ -15695,6 +15695,223 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
 
+  packages/test/version-compat-tests:
+    dependencies:
+      '@fluid-experimental/attributor':
+        specifier: workspace:~
+        version: link:../../framework/attributor
+      '@fluid-experimental/sequence-deprecated':
+        specifier: workspace:~
+        version: link:../../../experimental/dds/sequence-deprecated
+      '@fluid-experimental/tree':
+        specifier: workspace:~
+        version: link:../../../experimental/dds/tree
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../mocha-test-setup
+      '@fluid-internal/test-driver-definitions':
+        specifier: workspace:~
+        version: link:../test-driver-definitions
+      '@fluid-private/test-drivers':
+        specifier: workspace:~
+        version: link:../test-drivers
+      '@fluid-private/test-loader-utils':
+        specifier: workspace:~
+        version: link:../../loader/test-loader-utils
+      '@fluid-private/test-pairwise-generator':
+        specifier: workspace:~
+        version: link:../test-pairwise-generator
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../test-version-utils
+      '@fluid-tools/benchmark':
+        specifier: ^0.52.0
+        version: 0.52.0
+      '@fluidframework/agent-scheduler':
+        specifier: workspace:~
+        version: link:../../framework/agent-scheduler
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../framework/aqueduct
+      '@fluidframework/cell':
+        specifier: workspace:~
+        version: link:../../dds/cell
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/counter':
+        specifier: workspace:~
+        version: link:../../dds/counter
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
+      '@fluidframework/id-compressor':
+        specifier: workspace:~
+        version: link:../../runtime/id-compressor
+      '@fluidframework/legacy-dds':
+        specifier: workspace:~
+        version: link:../../dds/legacy-dds
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../dds/map
+      '@fluidframework/matrix':
+        specifier: workspace:~
+        version: link:../../dds/matrix
+      '@fluidframework/merge-tree':
+        specifier: workspace:~
+        version: link:../../dds/merge-tree
+      '@fluidframework/odsp-doclib-utils':
+        specifier: workspace:~
+        version: link:../../utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver':
+        specifier: workspace:~
+        version: link:../../drivers/odsp-driver
+      '@fluidframework/odsp-driver-definitions':
+        specifier: workspace:~
+        version: link:../../drivers/odsp-driver-definitions
+      '@fluidframework/ordered-collection':
+        specifier: workspace:~
+        version: link:../../dds/ordered-collection
+      '@fluidframework/register-collection':
+        specifier: workspace:~
+        version: link:../../dds/register-collection
+      '@fluidframework/request-handler':
+        specifier: workspace:~
+        version: link:../../framework/request-handler
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../drivers/routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/sequence':
+        specifier: workspace:~
+        version: link:../../dds/sequence
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/test-runtime-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../test-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
+      '@fluidframework/undo-redo':
+        specifier: workspace:~
+        version: link:../../framework/undo-redo
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      semver:
+        specifier: ^7.7.1
+        version: 7.7.3
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
+      tinylicious:
+        specifier: ^7.0.0
+        version: 7.0.0
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~2.3.11
+        version: 2.3.11
+      '@fluid-tools/build-cli':
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.63.0
+        version: 0.63.0(@types/node@20.19.30)
+      '@fluidframework/eslint-config-fluid':
+        specifier: workspace:~
+        version: link:../../../common/build/eslint-config-fluid
+      '@fluidframework/protocol-definitions':
+        specifier: ^3.2.0
+        version: 3.2.0
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/nock':
+        specifier: ^9.3.0
+        version: 9.3.1
+      '@types/node':
+        specifier: ~20.19.30
+        version: 20.19.30
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      eslint:
+        specifier: ~9.39.1
+        version: 9.39.1(jiti@2.6.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      nock:
+        specifier: ^13.3.3
+        version: 13.5.6
+      rimraf:
+        specifier: ^6.1.2
+        version: 6.1.2
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   packages/tools/changelog-generator-wrapper:
     dependencies:
       '@changesets/cli':

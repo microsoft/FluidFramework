@@ -74,6 +74,15 @@ export function editManagerFormatVersionSelectorForSharedBranches(
 	return brand(EditManagerFormatVersion.vSharedBranches);
 }
 
+/**
+ * Returns the version that should be used for testing shared branches.
+ */
+export function editManagerFormatVersionSelectorForDetachedRootEditing(
+	clientVersion: MinimumVersionForCollab,
+): EditManagerFormatVersion {
+	return brand(EditManagerFormatVersion.vDetachedRoots);
+}
+
 export interface EditManagerCodecOptions {
 	readonly editManagerFormatSelector?: (
 		minVersionForCollab: MinimumVersionForCollab,
@@ -141,7 +150,8 @@ export function makeEditManagerCodecs<TChangeset>(
 			}
 			case unbrand(EditManagerFormatVersion.v3):
 			case unbrand(EditManagerFormatVersion.v4):
-			case unbrand(EditManagerFormatVersion.v6): {
+			case unbrand(EditManagerFormatVersion.v6):
+			case unbrand(EditManagerFormatVersion.vDetachedRoots): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,

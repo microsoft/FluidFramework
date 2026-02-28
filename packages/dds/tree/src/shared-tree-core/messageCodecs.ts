@@ -83,6 +83,15 @@ export function messageFormatVersionSelectorForSharedBranches(
 	return brand(MessageFormatVersion.vSharedBranches);
 }
 
+/**
+ * Returns the version that should be used for testing detached root editing.
+ */
+export function messageFormatVersionSelectorForDetachedRootEditing(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageFormatVersion.vDetachedRoots);
+}
+
 export function makeMessageCodec<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
 	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>,
@@ -145,7 +154,8 @@ export function makeMessageCodecs<TChangeset>(
 			}
 			case unbrand(MessageFormatVersion.v3):
 			case unbrand(MessageFormatVersion.v4):
-			case unbrand(MessageFormatVersion.v6): {
+			case unbrand(MessageFormatVersion.v6):
+			case unbrand(MessageFormatVersion.vDetachedRoots): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,

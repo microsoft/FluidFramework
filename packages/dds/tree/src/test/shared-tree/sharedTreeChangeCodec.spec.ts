@@ -30,7 +30,9 @@ import {
 	newChangeAtomIdBTree,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+import { newRootTable } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { newCrossFieldRangeTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -80,13 +82,15 @@ describe("sharedTreeChangeCodec", () => {
 		};
 		const changeA: Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
+			rebaseVersion: 1,
+			rootNodes: newRootTable(),
 			nodeChanges: newChangeAtomIdBTree(),
 			fieldChanges: new Map([
 				[brand("fA"), { fieldKind: FieldKinds.sequence.identifier, change: brand(changeA) }],
 			]),
 			nodeToParent: newChangeAtomIdBTree(),
 			nodeAliases: newChangeAtomIdBTree(),
-			crossFieldKeys: newCrossFieldKeyTable(),
+			crossFieldKeys: newCrossFieldRangeTable(),
 		};
 		sharedTreeChangeCodec.encode(
 			{ changes: [{ type: "data", innerChange: dummyModularChangeSet }] },

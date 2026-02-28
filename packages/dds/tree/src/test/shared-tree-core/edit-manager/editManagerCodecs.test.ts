@@ -211,11 +211,12 @@ export function testCodec(): void {
 				jsonValidator: FormatValidatorBasic,
 			},
 		);
-		// Versions 1 through 4 do not encode the summary originator ID.
+		// These versions do not encode the summary originator ID.
 		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
 			EditManagerFormatVersion.v3,
 			EditManagerFormatVersion.v4,
 			EditManagerFormatVersion.v6,
+			EditManagerFormatVersion.vDetachedRoots,
 		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,

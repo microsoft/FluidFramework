@@ -101,10 +101,8 @@ describe("Editing", () => {
 		});
 
 		it("can rebase remove over move", () => {
-			const tree1 = makeTreeFromJsonSequence([]);
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
 			const tree2 = tree1.branch();
-			insert(tree1, 0, "a", "b");
-			tree2.rebaseOnto(tree1);
 
 			// Move b before a
 			tree1.editor.move(rootField, 1, 1, rootField, 0);
@@ -117,6 +115,48 @@ describe("Editing", () => {
 
 			const expected = ["a"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase move over remove", () => {
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
+			const tree2 = tree1.branch();
+
+			// Remove b
+			remove(tree1, 1, 1);
+
+			// Move b before a
+			tree2.editor.move(rootField, 1, 1, rootField, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expected = ["b", "a"];
+			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can apply a composition of [move + undo]", () => {
+			const tree1 = makeTreeFromJsonSequence(["a"]);
+			const tree2 = tree1.branch();
+
+			const { undoStack } = createTestUndoRedoStacks(tree2.events);
+
+			tree2.editor.move(
+				rootField,
+				0,
+				1,
+				{
+					parent: undefined,
+					field: brand("foo"),
+				},
+				0,
+			);
+			undoStack.pop()?.revert();
+
+			expectJsonTree(tree2, ["a"]);
+
+			tree1.merge(tree2);
+
+			expectJsonTree(tree1, ["a"]);
 		});
 
 		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
@@ -261,6 +301,20 @@ describe("Editing", () => {
 			addY.rebaseOnto(tree);
 
 			expectJsonTree([tree, delAB, delCD, addX, addY], ["x", "y"]);
+		});
+
+		it("can edit node created in same transaction", () => {
+			const tree1 = makeTreeFromJsonSequence([]);
+			const tree2 = tree1.branch();
+			tree2.transaction.start(false);
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([{}]));
+			const aEditor = tree2.editor.sequenceField({ parent: rootNode, field: brand("foo") });
+			aEditor.insert(0, chunkFromJsonTrees(["a"]));
+
+			tree2.transaction.commit();
+
+			tree1.merge(tree2);
+			expectJsonTree([tree1, tree2], [{ foo: "a" }]);
 		});
 
 		it("can rebase a change under a node whose insertion is also rebased", () => {
@@ -1073,6 +1127,7 @@ describe("Editing", () => {
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			// Move to bar: [{}, { bar: ["a"] }}]
+			// TODO: Is this edit supposed to be to tree2?
 			tree.editor.move(
 				{ parent: rootNode, field: brand("foo") },
 				0,
@@ -3440,43 +3495,6 @@ describe("Editing", () => {
 				unsubscribe();
 			});
 		});
-	});
-
-	it.skip("edit removed content", () => {
-		const tree = makeTreeFromJson({ foo: "A" });
-		const cursor = tree.forest.allocateCursor();
-		moveToDetachedField(tree.forest, cursor);
-		cursor.enterNode(0);
-		const anchor = cursor.buildAnchor();
-		cursor.free();
-
-		// Fork the tree so we can undo the removal of the root without undoing later changes
-		// Note: if forking of the undo/redo stack is supported, this test can be simplified
-		// slightly by deleting the root node before forking.
-		const restoreRoot = tree.branch();
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(restoreRoot.events);
-		restoreRoot.editor.sequenceField(rootField).remove(0, 1);
-		tree.merge(restoreRoot, false);
-		expectJsonTree([tree, restoreRoot], []);
-
-		undoStack.pop()?.revert();
-		expectJsonTree(restoreRoot, [{ foo: "A" }]);
-
-		// Get access to the removed node
-		const parent = tree.locate(anchor) ?? assert.fail();
-		// Make some nested change to it (remove A)
-		tree.editor.sequenceField({ parent, field: brand("foo") }).remove(0, 1);
-
-		// Restore the root node so we can see the effect of the edit
-		tree.merge(restoreRoot, false);
-		expectJsonTree(tree, [{}]);
-
-		// TODO: this doesn't work because the removal of A was described as occurring under the detached field where
-		// the root resided while removed. The rebaser is unable to associate that with the ChangeAtomId of the root.
-		// That removal of A is therefore carried out under that detached field even though the root is restored.
-		restoreRoot.rebaseOnto(tree);
-		expectJsonTree(restoreRoot, [{}]);
-		unsubscribe();
 	});
 
 	describe("Anchors", () => {

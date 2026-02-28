@@ -17,3 +17,6 @@
 // (such as those in the nested directories in test which reexport contents of those directories for use within this package).
 
 export { baseTreeModel } from "./shared-tree/index.js";
+
+// eslint-disable-next-line import-x/no-internal-modules
+export { createCompatFuzzSuite } from "./shared-tree/fuzz/compatFuzzUtils.js";

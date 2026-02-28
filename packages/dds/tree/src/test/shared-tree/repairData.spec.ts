@@ -360,6 +360,7 @@ function advanceCollabWindow(provider: TestTreeProviderLite, removeSequenceNumbe
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,
+				detachedNodeId: undefined,
 			});
 			tree.kernel.getEditor().exitTransaction();
 			provider.synchronizeMessages();

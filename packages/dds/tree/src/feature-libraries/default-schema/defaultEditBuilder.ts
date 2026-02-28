@@ -15,7 +15,6 @@ import {
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
 	type DeltaRoot,
-	type FieldUpPath,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
 	type RevisionTag,
@@ -214,11 +213,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.exitTransaction();
 	}
 
-	public addNodeExistsConstraint(path: UpPath): void {
+	public addNodeExistsConstraint(path: NormalizedUpPath): void {
 		this.modularBuilder.addNodeExistsConstraint(path, this.mintRevisionTag());
 	}
 
-	public addNodeExistsConstraintOnRevert(path: UpPath): void {
+	public addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void {
 		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
 	}
 
@@ -230,7 +229,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		this.modularBuilder.addNoChangeConstraintOnRevert(this.mintRevisionTag());
 	}
 
-	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
+	public valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk): void => {
 				assert(
@@ -260,7 +259,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		};
 	}
 
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
+	public optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk | undefined, wasEmpty: boolean): void => {
 				// The choice to ban empty chunks here instead of treating them as a clear is a subjective choice made to err of the side of more explicitness and stricter validation.
@@ -301,10 +300,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	}
 
 	public move(
-		sourceField: FieldUpPath,
+		sourceField: NormalizedFieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destinationField: FieldUpPath,
+		destinationField: NormalizedFieldUpPath,
 		destIndex: number,
 	): void {
 		if (count === 0) {
@@ -335,13 +334,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			const attachPath = topDownPath(destinationField.parent);
 			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
 			let adjustedAttachField = destinationField;
-			// After the above loop, `sharedDepth` is the number of elements, starting from the root,
-			// that both paths have in common.
+			// `sharedDepth` is the number of elements, starting from the root, that both paths have in common.
 			if (sharedDepth === detachPath.length) {
-				const attachField = attachPath[sharedDepth]?.parentField ?? destinationField.field;
+				const lowestCommonAncestor: NormalizedUpPath | undefined = attachPath[sharedDepth];
+				const attachField = lowestCommonAncestor?.parentField ?? destinationField.field;
 				if (attachField === sourceField.field) {
 					// The detach occurs in an ancestor field of the field where the attach occurs.
-					let attachAncestorIndex = attachPath[sharedDepth]?.parentIndex ?? sourceIndex;
+					const attachAncestorIndex = lowestCommonAncestor?.parentIndex ?? destIndex;
 					if (attachAncestorIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
@@ -349,14 +348,19 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// The attach path runs through a node located after the detached nodes.
 						// adjust the index for the node at that depth of the path, so that it is interpreted correctly
 						// in the composition performed by `submitChanges`.
-						attachAncestorIndex -= count;
-						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
-						const parentField = attachPath[sharedDepth] ?? oob();
-						parent = {
-							parent,
-							parentIndex: attachAncestorIndex,
-							parentField: parentField.parentField,
-						};
+						const adjustedAttachAncestorIndex = attachAncestorIndex - count;
+						let parent: NormalizedUpPath =
+							lowestCommonAncestor === undefined
+								? {
+										parent: undefined,
+										detachedNodeId: undefined,
+										parentIndex: adjustedAttachAncestorIndex,
+										parentField: destinationField.field,
+									}
+								: {
+										...lowestCommonAncestor,
+										parentIndex: adjustedAttachAncestorIndex,
+									};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
 								...(attachPath[i] ?? oob()),
@@ -371,19 +375,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					}
 				}
 			}
-			const moveOut = sequence.changeHandler.editor.moveOut(
+			const moveOut = sequence.changeHandler.editor.remove(
 				sourceIndex,
 				count,
 				detachCellId,
 				revision,
 			);
-			const moveIn = sequence.changeHandler.editor.moveIn(
+			const moveIn = sequence.changeHandler.editor.insert(
 				destIndex,
 				count,
-				detachCellId,
 				attachCellId,
 				revision,
+				detachCellId,
 			);
+
 			this.modularBuilder.submitChanges(
 				[
 					{
@@ -406,7 +411,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
+	public sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
 		return {
 			insert: (index: number, content: TreeChunk): void => {
 				const length = content.topLevelLength;
@@ -418,7 +423,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const firstId: CellId = { localId: this.modularBuilder.generateId(length), revision };
 				const build = this.modularBuilder.buildTrees(firstId.localId, content, revision);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, length, firstId, revision),
+					sequence.changeHandler.editor.insert(
+						index,
+						length,
+						firstId,
+						revision,
+						firstId.localId,
+					),
 				);
 				const attach: FieldEditDescription = {
 					type: "field",
@@ -440,7 +451,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.remove(index, count, id, revision),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change, revision);
+
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: sequence.identifier,
+					change,
+					revision,
+				};
+				this.modularBuilder.submitChanges([fieldEdit], revision);
 			},
 		};
 	}

@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec } from "../../codec/index.js";
-import type {
-	ChangeAtomId,
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	RevisionTag,
+import {
+	areEqualChangeAtomIdOpts,
+	type ChangeAtomId,
+	type ChangeEncodingContext,
+	type EncodedRevisionTag,
+	type RevisionTag,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -21,7 +23,9 @@ import {
 } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
-import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
+import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
+
+type RegisterId = ChangeAtomId | "self";
 
 function makeRegisterIdCodec(
 	changeAtomIdCodec: IJsonCodec<
@@ -66,14 +70,13 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
-			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
+			assert(
+				change.nodeDetach === undefined ||
+					areEqualChangeAtomIdOpts(change.valueReplace?.src, change.nodeDetach),
+				"This format only supports node detach when it represents a pin",
+			);
 
-			if (change.moves.length > 0) {
-				encoded.m = change.moves.map(([src, dst]) => [
-					changeAtomIdCodec.encode(src, context.baseContext),
-					changeAtomIdCodec.encode(dst, context.baseContext),
-				]);
-			}
+			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
@@ -81,18 +84,48 @@ export function makeOptionalFieldCodec(
 					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 				if (change.valueReplace.src !== undefined) {
-					encoded.r.s = registerIdCodec.encode(change.valueReplace.src, context.baseContext);
+					const srcRegister =
+						change.nodeDetach === undefined ? change.valueReplace.src : "self";
+
+					encoded.r.s = registerIdCodec.encode(srcRegister, context.baseContext);
 				}
 			}
 
-			if (change.childChanges.length > 0) {
-				encoded.c = [];
-				for (const [id, childChange] of change.childChanges) {
-					encoded.c.push([
-						registerIdCodec.encode(id, context.baseContext),
-						context.encodeNode(childChange),
-					]);
-				}
+			const encodedChildChanges: [EncodedRegisterId, EncodedNodeChangeset][] = [];
+
+			if (change.childChange !== undefined) {
+				encodedChildChanges.push([null, context.encodeNode(change.childChange)]);
+			}
+
+			for (const [detachId, nodeId] of context.rootNodeChanges.entries()) {
+				encodedChildChanges.push([
+					changeAtomIdCodec.encode(
+						{ revision: detachId[0], localId: detachId[1] },
+						context.baseContext,
+					),
+					context.encodeNode(nodeId),
+				]);
+			}
+
+			if (encodedChildChanges.length > 0) {
+				encoded.c = encodedChildChanges;
+			}
+
+			const encodedMoves: [EncodedChangeAtomId, EncodedChangeAtomId][] = [];
+			for (const {
+				start: oldId,
+				value: newId,
+				length: count,
+			} of context.rootRenames.entries()) {
+				assert(count === 1, "Unexpected range rename in optional field");
+				encodedMoves.push([
+					changeAtomIdCodec.encode(oldId, context.baseContext),
+					changeAtomIdCodec.encode(newId, context.baseContext),
+				]);
+			}
+
+			if (encodedMoves.length > 0) {
+				encoded.m = encodedMoves;
 			}
 
 			return encoded;
@@ -102,18 +135,7 @@ export function makeOptionalFieldCodec(
 			encoded: EncodedOptionalChangeset<TAnySchema>,
 			context: FieldChangeEncodingContext,
 		) => {
-			const decoded: Mutable<OptionalChangeset> = {
-				moves:
-					encoded.m?.map(([encodedSrc, encodedDst]) => [
-						changeAtomIdCodec.decode(encodedSrc, context.baseContext),
-						changeAtomIdCodec.decode(encodedDst, context.baseContext),
-					]) ?? [],
-				childChanges:
-					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id, context.baseContext),
-						context.decodeNode(encodedChange),
-					]) ?? [],
-			};
+			const decoded: Mutable<OptionalChangeset> = {};
 
 			if (encoded.r !== undefined) {
 				const replace: Mutable<Replace> = {
@@ -121,10 +143,42 @@ export function makeOptionalFieldCodec(
 					dst: changeAtomIdCodec.decode(encoded.r.d, context.baseContext),
 				};
 				if (encoded.r.s !== undefined) {
-					replace.src = registerIdCodec.decode(encoded.r.s, context.baseContext);
+					const register = registerIdCodec.decode(encoded.r.s, context.baseContext);
+					if (register === "self") {
+						// Note that this is safe as long as we assume that this change will not be rebased
+						// over a move to a sequence field.
+						// The ID of an attach and accompanying detach/rename is arbitrary, except in sequence field where
+						// the ID of the detach becomes a cell ID which may be referenced by other changes.
+						replace.src = context.generateId();
+						decoded.nodeDetach = replace.src;
+					} else {
+						replace.src = register;
+					}
 				}
 				decoded.valueReplace = replace;
 			}
+
+			if (encoded.c !== undefined) {
+				for (const [encodedDetachId, nodeChange] of encoded.c) {
+					if (encodedDetachId === null) {
+						decoded.childChange = context.decodeNode(nodeChange);
+					} else {
+						context.decodeRootNodeChange(
+							changeAtomIdCodec.decode(encodedDetachId, context.baseContext),
+							nodeChange,
+						);
+					}
+				}
+			}
+
+			for (const [encodedOldId, encodedNewId] of encoded.m ?? []) {
+				context.decodeRootRename(
+					changeAtomIdCodec.decode(encodedOldId, context.baseContext),
+					changeAtomIdCodec.decode(encodedNewId, context.baseContext),
+					1,
+				);
+			}
+
 			return decoded;
 		},
 		encodedSchema: EncodedOptionalChangeset(EncodedNodeChangeset),

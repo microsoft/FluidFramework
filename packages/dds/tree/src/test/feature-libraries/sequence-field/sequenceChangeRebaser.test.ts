@@ -9,6 +9,7 @@ import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils
 import { assert } from "@fluidframework/core-utils/internal";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
+import { currentVersion } from "../../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	type RevisionInfo,
@@ -16,18 +17,34 @@ import {
 	type TaggedChange,
 	emptyDelta,
 	makeAnonChange,
+	rootFieldKey,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import type {
-	NodeId,
-	RebaseRevisionMetadata,
+import {
+	fieldKindConfigurations,
+	fieldKinds,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
+import {
+	makeFieldBatchCodec,
+	type DefaultChangeset,
+	FieldKinds as defaultFieldKinds,
+} from "../../../feature-libraries/index.js";
+import {
+	makeModularChangeCodecFamily,
+	type FieldEditDescription,
+	type NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	ModularChangeFamily,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type * as SF from "../../../feature-libraries/sequence-field/types.js";
+import type { CodecWriteOptions } from "../../../index.js";
 import {
 	type IdAllocator,
 	brand,
@@ -35,14 +52,13 @@ import {
 	makeArray,
 } from "../../../util/index.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
-import type {
-	BoundFieldChangeRebaser,
-	ChildStateGenerator,
-	FieldStateTree,
-} from "../../exhaustiveRebaserUtils.js";
+import { ajvValidator } from "../../codec/index.js";
+import type { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
-import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
+import { chunkFromJsonTrees, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { defaultFieldRebaser } from "../default-field-kinds/defaultChangesetUtil.js";
 
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
@@ -59,13 +75,14 @@ import {
 	withoutTombstonesDeep,
 	assertWrappedChangesetsEqual,
 	composeDeep,
-	pruneDeep,
 	type WrappedChange,
 	withoutTombstones,
 	tagChangeInline,
 	inlineRevision,
 	toDeltaWrapped,
 } from "./utils.js";
+
+const sequence = defaultFieldKinds.sequence;
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -145,12 +162,12 @@ const testChanges: [
 			),
 	],
 	[
-		"MInsert",
+		"MAttach",
 		(i) =>
 			ChangesetWrapper.create(
 				[
 					...(i > 0 ? [Mark.skip(i)] : []),
-					Mark.insert(1, brand(42), {
+					Mark.attach(1, brand(42), {
 						changes: nodeId3,
 					}),
 				],
@@ -158,7 +175,7 @@ const testChanges: [
 			),
 	],
 	[
-		"Insert",
+		"Attach",
 		(i) =>
 			ChangesetWrapper.create(
 				Change.insert(i, 2, undefined /* revision */, { localId: brand(42) }),
@@ -170,10 +187,10 @@ const testChanges: [
 		(i) =>
 			ChangesetWrapper.create([
 				...(i > 0 ? [Mark.skip(i)] : []),
-				Mark.remove(1, brand(0), { cellId: { localId: brand(0) } }),
+				Mark.detach(1, brand(0), { cellId: { localId: brand(0) } }),
 			]),
 	],
-	["Remove", (i) => ChangesetWrapper.create(Change.remove(i, 2, undefined /* revision */))],
+	["Detach", (i) => ChangesetWrapper.create(Change.remove(i, 2, undefined /* revision */))],
 	[
 		"Revive",
 		(i, max) =>
@@ -181,7 +198,7 @@ const testChanges: [
 				Mark.skip(2),
 				...withAdjacentTombstones(
 					[Mark.revive(2, { revision: tag1, localId: brand(i) })],
-					"Insert",
+					"Attach",
 					max,
 				),
 			]),
@@ -191,7 +208,7 @@ const testChanges: [
 		(i) =>
 			ChangesetWrapper.create([
 				...(i > 0 ? [Mark.skip(i)] : []),
-				Mark.remove(1, brand(0), {
+				Mark.detach(1, brand(0), {
 					cellId: {
 						revision: tag1,
 						localId: brand(0),
@@ -221,7 +238,7 @@ const testChanges: [
 						{ revision: tag3, localId: brand(i) },
 						undefined /* revision */,
 					),
-					"MoveIn",
+					"Attach",
 					max,
 				),
 			),
@@ -239,7 +256,7 @@ const testChanges: [
 						{ revision: tag3, localId: brand(i) },
 						undefined /* revision */,
 					),
-					"MoveIn",
+					"Attach",
 					max,
 				),
 			),
@@ -536,15 +553,29 @@ interface TestConfig {
 	allocator: IdAllocator;
 }
 
-type SequenceFieldTestState = FieldStateTree<TestState, WrappedChange>;
+type SequenceFieldTestState = FieldStateTree<TestState, DefaultChangeset>;
+
+const codecOptions: CodecWriteOptions = {
+	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
+};
+
+const codec = makeModularChangeCodecFamily(
+	fieldKindConfigurations,
+	testRevisionTagCodec,
+	makeFieldBatchCodec(codecOptions),
+	codecOptions,
+);
+const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);
+const editor = family.buildEditor(mintRevisionTag, () => undefined);
 
 /**
  * See {@link ChildStateGenerator}
  */
-const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = function* (
+const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = function* (
 	state: SequenceFieldTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
+	mintIntention: (count?: number) => number,
 ): Iterable<SequenceFieldTestState> {
 	const { currentState, config } = state.content;
 
@@ -554,11 +585,11 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 		assert(state.parent?.content !== undefined, "Must have parent state to undo");
 		const undoIntention = mintIntention();
 		const undoTag = tagFromIntention(undoIntention);
-		const invertedEdit = invertDeep(state.mostRecentEdit.changeset, undoTag);
+		const modularEdit = family.invert(state.mostRecentEdit.changeset, false, undoTag);
 		yield {
 			content: state.parent.content,
 			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(invertedEdit, undoTag),
+				changeset: tagChange(modularEdit, undoTag),
 				intention: undoIntention,
 				description: `Undo(${state.mostRecentEdit.description})`,
 			},
@@ -579,16 +610,32 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 				const insertRevision = tagFromIntention(insertIntention);
 				const newState = [...currentState];
 				newState.splice(i, 0, ...inserted);
+
+				const localId: ChangesetLocalId = brand(mintIntention(nodeCount));
+				const build = editor.buildTrees(
+					localId,
+					chunkFromJsonTrees(inserted.map((n) => n.id)),
+					insertRevision,
+				);
+				const fieldChange = Change.insert(i, nodeCount, insertRevision, {
+					localId,
+					revision: insertRevision,
+				});
+				const fieldEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: sequence.identifier,
+					change: brand(fieldChange),
+					revision: insertRevision,
+				};
+				const modularEdit = editor.buildChanges([build, fieldEdit]);
 				yield {
 					content: {
 						currentState: newState,
 						config,
 					},
 					mostRecentEdit: {
-						changeset: tagWrappedChangeInline(
-							ChangesetWrapper.create(Change.insert(i, nodeCount, insertRevision)),
-							insertRevision,
-						),
+						changeset: tagChange(modularEdit, insertRevision),
 						intention: insertIntention,
 						description: `Add(${insertedString}@${i})`,
 					},
@@ -606,16 +653,21 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 			const detachedString = detached.map((n) => n.id).join(",");
 			const removeIntention = mintIntention();
 			const removeRevision = tagFromIntention(removeIntention);
+			const fieldRemoveEdit: FieldEditDescription = {
+				type: "field",
+				field: { parent: undefined, field: rootFieldKey },
+				fieldKind: sequence.identifier,
+				change: brand(Change.remove(iSrc, nodeCount, removeRevision)),
+				revision: removeRevision,
+			};
+			const modularRemoveEdit = editor.buildChanges([fieldRemoveEdit]);
 			yield {
 				content: {
 					currentState: stateWithoutDetached,
 					config,
 				},
 				mostRecentEdit: {
-					changeset: tagWrappedChangeInline(
-						ChangesetWrapper.create(Change.remove(iSrc, nodeCount, removeRevision)),
-						removeRevision,
-					),
+					changeset: tagChange(modularRemoveEdit, removeRevision),
 					intention: removeIntention,
 					description: `Del(${detachedString})`,
 				},
@@ -636,16 +688,21 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 					}
 				}
 				newState.splice(adjustedDst, 0, ...detached);
+				const fieldMoveEdit: FieldEditDescription = {
+					type: "field",
+					field: { parent: undefined, field: rootFieldKey },
+					fieldKind: sequence.identifier,
+					change: brand(Change.move(iSrc, nodeCount, iDst, moveRevision)),
+					revision: moveRevision,
+				};
+				const modularMoveEdit = editor.buildChanges([fieldMoveEdit]);
 				yield {
 					content: {
 						currentState: newState,
 						config,
 					},
 					mostRecentEdit: {
-						changeset: tagWrappedChangeInline(
-							ChangesetWrapper.create(Change.move(iSrc, nodeCount, iDst, moveRevision)),
-							moveRevision,
-						),
+						changeset: tagChange(modularMoveEdit, moveRevision),
 						intention: moveInIntention,
 						description: `Mov(${detachedString})To${iDst}`,
 					},
@@ -658,74 +715,49 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 	// Make nested changes to a node
 	for (let i = 0; i < currentState.length; i += 1) {
 		const modifyIntention = mintIntention();
+		const modifyRevision = tagFromIntention(modifyIntention);
 		const nestedChange = config.allocator.allocate();
 		const newState = [...currentState];
 		const node = currentState[i];
 		newState.splice(i, 1, { ...node, nested: [...node.nested, nestedChange] });
-		const nodeId: NodeId = { localId: brand(0) };
+		const shallowFieldEdit: FieldEditDescription = {
+			type: "field",
+			field: { parent: undefined, field: rootFieldKey },
+			fieldKind: sequence.identifier,
+			// This no-op change is used to force ModularChangeFamily to generate a shallow sequence changeset with a child change.
+			// Otherwise, it would generate a generic changeset with a child change.
+			change: brand(sequence.changeHandler.createEmpty()),
+			revision: modifyRevision,
+		};
+		const nestedFieldEdit: FieldEditDescription = {
+			type: "field",
+			field: {
+				parent: {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: i,
+					detachedNodeId: undefined,
+				},
+				field: brand("foo"),
+			},
+			fieldKind: sequence.identifier,
+			change: brand(Change.remove(0, 1, modifyRevision, brand(mintIntention()))),
+			revision: modifyRevision,
+		};
+		const modularEdit = editor.buildChanges([shallowFieldEdit, nestedFieldEdit]);
 		yield {
 			content: {
 				currentState: newState,
 				config,
 			},
 			mostRecentEdit: {
-				changeset: tagWrappedChangeInline(
-					ChangesetWrapper.create(Change.modify(i, nodeId), [
-						nodeId,
-						TestChange.mint(node.nested, nestedChange),
-					]),
-					tagFromIntention(modifyIntention),
-				),
+				changeset: tagChange(modularEdit, modifyRevision),
 				intention: modifyIntention,
 				description: `Mod(${nestedChange}on${node.id})`,
 			},
 			parent: state,
 		};
 	}
-};
-
-const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
-	rebase: (
-		change: TaggedChange<WrappedChange>,
-		base: TaggedChange<WrappedChange>,
-		metadata?: RebaseRevisionMetadata,
-	): WrappedChange => rebaseDeepTagged(change, base, metadata).change,
-	invert: invertDeep,
-	compose: (change1, change2, metadata) => composeDeep([change1, change2], metadata),
-	rebaseComposed: (metadata, change, ...baseChanges) => {
-		const composedChanges = composeDeep(baseChanges, metadata);
-		return rebaseDeepTagged(change, makeAnonChange(composedChanges), metadata).change;
-	},
-	inlineRevision: inlineRevisionWrapped,
-	createEmpty: () => ChangesetWrapper.create([]),
-	assertEqual: (change1, change2) => {
-		if (change1 === undefined && change2 === undefined) {
-			return true;
-		}
-
-		if (change1 === undefined || change2 === undefined) {
-			return false;
-		}
-
-		const pruned1 = pruneDeep(change1.change);
-		const pruned2 = pruneDeep(change2.change);
-
-		return assertWrappedChangesetsEqual(pruned1, pruned2, true);
-	},
-	isEmpty: (change): boolean => {
-		return withoutTombstonesDeep(pruneDeep(change)).fieldChange.length === 0;
-	},
-	assertChangesetsEquivalent: (change1, change2) => {
-		const metadata = defaultRevisionMetadataFromChanges([change1, change2]);
-		// We are composing the single changesets to inline the revision tags, as some are undefined.
-		const pruned1 = pruneDeep(composeDeep([change1], metadata));
-		const pruned2 = pruneDeep(composeDeep([change2], metadata));
-		return assertWrappedChangesetsEqual(
-			withoutTombstonesDeep(pruned1),
-			withoutTombstonesDeep(pruned2),
-			true,
-		);
-	},
 };
 
 export function testStateBasedRebaserAxioms(): void {
@@ -747,7 +779,7 @@ export function testStateBasedRebaserAxioms(): void {
 				},
 			],
 			generateChildStates,
-			fieldRebaser,
+			defaultFieldRebaser,
 			{
 				groupSubSuites: true,
 				numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 3 : 4,
@@ -855,14 +887,14 @@ export function testSandwichRebasing(): void {
 			// C: Remove y
 			// This test simulates rebasing C back to the trunk.
 
-			const changeC = tagChangeInline([Mark.remove(1, brand(0))], tag3);
+			const changeC = tagChangeInline([Mark.detach(1, brand(0))], tag3);
 
 			const rollbackTag2 = mintRevisionTag();
-			const changeB = tagChangeInline([Mark.insert(1, brand(0))], tag2);
+			const changeB = tagChangeInline([Mark.attach(1, brand(0))], tag2);
 			const inverseB = tagChangeInline(testInvert(changeB, rollbackTag2), rollbackTag2, tag2);
 
 			const rollbackTag1 = mintRevisionTag();
-			const changeA = tagChangeInline([Mark.insert(1, brand(0))], tag1);
+			const changeA = tagChangeInline([Mark.attach(1, brand(0))], tag1);
 			const inverseA = tagChangeInline(testInvert(changeA, rollbackTag1), rollbackTag1, tag1);
 
 			const revInfos: RevisionInfo[] = [
@@ -874,7 +906,7 @@ export function testSandwichRebasing(): void {
 
 			const cRebasedToTrunk = rebaseOverChanges(changeC, [inverseB, inverseA], revInfos);
 			const expected = [
-				Mark.remove(1, brand(0), {
+				Mark.detach(1, brand(0), {
 					cellId: { revision: tag2, localId: brand(0) },
 					revision: tag3,
 				}),
@@ -884,13 +916,13 @@ export function testSandwichRebasing(): void {
 		});
 
 		it("[insert, insert] ↷ insert", () => {
-			const insertT = tagChangeInline([Mark.insert(1, brand(0))], tag1);
-			const insertA = tagChangeInline([Mark.insert(1, brand(0))], tag2);
+			const insertT = tagChangeInline([Mark.attach(1, brand(0))], tag1);
+			const insertA = tagChangeInline([Mark.attach(1, brand(0))], tag2);
 			const insertA2 = rebaseOverChanges(insertA, [insertT]);
 			const inverseA = tagChangeInline(testInvert(insertA, tag4), tag4, tag2);
-			const insertB = tagChangeInline([{ count: 1 }, Mark.insert(1, brand(0))], tag3);
+			const insertB = tagChangeInline([{ count: 1 }, Mark.attach(1, brand(0))], tag3);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, insertT, insertA2]);
-			const expected = [{ count: 1 }, Mark.insert(1, { revision: tag3, localId: brand(0) })];
+			const expected = [{ count: 1 }, Mark.attach(1, { revision: tag3, localId: brand(0) })];
 			assertChangesetsEqual(insertB2.change, expected);
 		});
 
@@ -899,10 +931,10 @@ export function testSandwichRebasing(): void {
 				[Mark.revive(2, { revision: tag1, localId: brand(0) })],
 				tag2,
 			);
-			const insertB = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+			const insertB = tagChangeInline([Mark.skip(1), Mark.attach(1, brand(0))], tag3);
 			const inverseA = tagChangeInline(testInvert(reviveA, tag4), tag4, tag2);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, reviveA]);
-			const expected = [Mark.skip(1), Mark.insert(1, { revision: tag3, localId: brand(0) })];
+			const expected = [Mark.skip(1), Mark.attach(1, { revision: tag3, localId: brand(0) })];
 
 			assertChangesetsEqual(insertB2.change, expected);
 		});
@@ -912,17 +944,17 @@ export function testSandwichRebasing(): void {
 export function testSandwichComposing(): void {
 	describe("Sandwich composing", () => {
 		it("insert ↷ redundant remove", () => {
-			const insertA = tagChangeInline([Mark.insert(1, { localId: brand(0) })], tag3);
+			const insertA = tagChangeInline([Mark.attach(1, { localId: brand(0) })], tag3);
 			const uninsertA = tagChangeInline(testInvert(insertA, tag4), tag4, tag3);
 			const redundantRemoveT = tagChangeInline(
-				[Mark.remove(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
+				[Mark.detach(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
 				tag2,
 			);
 
 			const composed = testCompose([uninsertA, redundantRemoveT, insertA]);
 			const expected = [
 				Mark.skip(1),
-				Mark.remove(
+				Mark.detach(
 					1,
 					{ revision: tag2, localId: brand(0) },
 					{ cellId: { revision: tag1, localId: brand(0) } },
@@ -933,11 +965,11 @@ export function testSandwichComposing(): void {
 		});
 
 		it("[insert, insert] ↷ adjacent remove", () => {
-			const removeT = tagChangeInline([Mark.remove(1, brand(0))], tag1);
-			const insertA = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
+			const removeT = tagChangeInline([Mark.detach(1, brand(0))], tag1);
+			const insertA = tagChangeInline([Mark.skip(1), Mark.attach(1, brand(0))], tag2);
 			const insertA2 = rebaseTagged(insertA, removeT);
 			const inverseA = tagChangeInline(testInvert(insertA, tag4), tag4, tag2);
-			const insertB = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+			const insertB = tagChangeInline([Mark.skip(1), Mark.attach(1, brand(0))], tag3);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, removeT, insertA2]);
 			const TAB = testCompose([removeT, insertA2, insertB2]);
 			const AiTAB = testCompose(
@@ -951,8 +983,8 @@ export function testSandwichComposing(): void {
 			);
 
 			const expected = [
-				Mark.remove(1, { revision: tag1, localId: brand(0) }),
-				Mark.insert(1, { revision: tag3, localId: brand(0) }),
+				Mark.detach(1, { revision: tag1, localId: brand(0) }),
+				Mark.attach(1, { revision: tag3, localId: brand(0) }),
 			];
 
 			assertChangesetsEqual(AiTAB, expected);
@@ -960,7 +992,7 @@ export function testSandwichComposing(): void {
 
 		it("[removeB, reviveB, reviveA] ↷ []", () => {
 			// Note: this test presupposes the existence of a cell A, located before cell B, emptied by tag1
-			const removeB = tagChangeInline([Mark.remove(1, brand(1))], tag2);
+			const removeB = tagChangeInline([Mark.detach(1, brand(1))], tag2);
 			const reviveB = tagChangeInline(
 				[Mark.revive(1, { revision: tag2, localId: brand(1) })],
 				tag3,
@@ -1008,7 +1040,7 @@ export function testSandwichComposing(): void {
 			const mod = tagChangeInline([Mark.modify(nodeId)], tag3);
 			const [mo3, mi3] = Mark.move(1, brand(3));
 			const move3 = tagChangeInline([mi3, mo3], tag4);
-			const del = tagChangeInline([Mark.remove(1, brand(0))], tag0);
+			const del = tagChangeInline([Mark.detach(1, brand(0))], tag0);
 			const return1 = tagChangeInline(testInvert(move1, tag5), tag5, move1.revision);
 			const return2 = tagChangeInline(testInvert(move2, tag6), tag6, move2.revision);
 			const unMod = tagChangeInline(testInvert(mod, tag7), tag7, mod.revision);
@@ -1044,12 +1076,12 @@ export function testExamples(): void {
 				[Mark.revive(1, { revision: tag1, localId: brand(0) })],
 				tag3,
 			);
-			const concurrentRemove = tagChangeInline([Mark.remove(1, brand(42))], tag2);
+			const concurrentRemove = tagChangeInline([Mark.detach(1, brand(42))], tag2);
 			const rebasedRevive = rebaseTagged(revive, concurrentRemove);
 			const redetach = testInvert(rebasedRevive, tag4);
 			const expected = [
-				Mark.remove(1, brand(0), {
-					idOverride: { revision: tag1, localId: brand(0) },
+				Mark.detach(1, brand(0), {
+					cellRename: { revision: tag1, localId: brand(0) },
 					revision: tag4,
 				}),
 				Mark.tomb(tag2, brand(42)),

@@ -5,11 +5,15 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, brand } from "../../util/index.js";
 import {
-	type CrossFieldManager,
-	CrossFieldTarget,
+	areEqualChangeAtomIds,
+	type ChangeAtomId,
+	type RevisionMetadataSource,
+	type RevisionTag,
+} from "../../core/index.js";
+import type { IdAllocator, Mutable } from "../../util/index.js";
+import {
+	type RebaseNodeManager,
 	type NodeChangeRebaser,
 	NodeAttachState,
 	type NodeId,
@@ -18,16 +22,9 @@ import {
 
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
+import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
 import {
-	type MoveEffect,
-	type MoveEffectTable,
-	getMoveEffect,
-	isMoveIn,
-	isMoveMark,
-	isMoveOut,
-	setMoveEffect,
-} from "./moveEffectTable.js";
-import {
+	type Attach,
 	type CellId,
 	type CellMark,
 	type Changeset,
@@ -36,8 +33,6 @@ import {
 	type MarkEffect,
 	type MarkList,
 	type MoveId,
-	type MoveIn,
-	type MoveOut,
 	type NoopMark,
 	NoopMarkType,
 } from "./types.js";
@@ -49,17 +44,18 @@ import {
 	cloneMark,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
+	getAttachedRootId,
 	getDetachOutputCellId,
-	getEndpoint,
+	getDetachedRootId,
 	getInputCellId,
-	isAttachAndDetachEffect,
+	getOutputCellId,
+	isAttach,
 	isDetach,
 	isNewAttach,
 	isRename,
 	isTombstone,
 	markEmptiesCells,
 	markFillsCells,
-	splitMarkEffect,
 	withNodeChange,
 } from "./utils.js";
 
@@ -74,17 +70,10 @@ export function rebase(
 	base: Changeset,
 	rebaseChild: NodeChangeRebaser,
 	genId: IdAllocator,
-	manager: CrossFieldManager,
+	manager: RebaseNodeManager,
 	revisionMetadata: RebaseRevisionMetadata,
 ): Changeset {
-	return rebaseMarkList(
-		change,
-		base,
-		revisionMetadata,
-		rebaseChild,
-		genId,
-		manager as MoveEffectTable,
-	);
+	return rebaseMarkList(change, base, revisionMetadata, rebaseChild, genId, manager);
 }
 
 function rebaseMarkList(
@@ -93,7 +82,7 @@ function rebaseMarkList(
 	metadata: RebaseRevisionMetadata,
 	rebaseChild: NodeChangeRebaser,
 	genId: IdAllocator,
-	moveEffects: CrossFieldManager<MoveEffect>,
+	moveEffects: RebaseNodeManager,
 ): MarkList {
 	const factory = new MarkListFactory();
 	const queue = new RebaseQueue(baseMarkList, currMarkList, metadata, moveEffects);
@@ -129,10 +118,28 @@ class RebaseQueue {
 		baseMarks: Changeset,
 		newMarks: Changeset,
 		private readonly metadata: RevisionMetadataSource,
-		private readonly moveEffects: MoveEffectTable,
+		private readonly moveEffects: RebaseNodeManager,
 	) {
-		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
-		this.newMarks = new MarkQueue(newMarks, moveEffects);
+		const queryFunc: NodeRangeQueryFunc = (mark) => {
+			if (isAttach(mark)) {
+				return moveEffects.getNewChangesForBaseAttach(getAttachedRootId(mark), mark.count)
+					.length;
+			} else if (isDetach(mark)) {
+				return moveEffects.doesBaseAttachNodes(getDetachedRootId(mark), mark.count).length;
+			}
+
+			let count = mark.count;
+			if (mark.type === "Rename") {
+				count = moveEffects.getNewRenameForBaseRename(mark.idOverride, count).length;
+			}
+
+			return mark.cellId === undefined
+				? count
+				: moveEffects.doesBaseAttachNodes(mark.cellId, count).length;
+		};
+
+		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
+		this.newMarks = new MarkQueue(newMarks, (mark) => mark.count);
 		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getInputCellId);
 		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
@@ -243,12 +250,14 @@ class RebaseQueue {
  * @returns a mark which has the composite effect of `mark` and `effect`.
  */
 function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
-	if (isMoveIn(mark) && isMoveOut(effect)) {
-		return { ...mark, type: "Insert" };
-	} else if (isRename(mark) && isMoveOut(effect)) {
-		return { ...effect, count: mark.count, idOverride: mark.idOverride };
-	} else if (isAttachAndDetachEffect(mark) && isMoveIn(mark.attach) && isMoveOut(effect)) {
-		return { ...mark.detach, count: mark.count };
+	if (isAttach(mark) && isDetach(effect)) {
+		return { ...mark, type: "Attach" };
+	} else if (isRename(mark) && isDetach(effect)) {
+		const result = { ...effect, count: mark.count };
+		if (!areEqualChangeAtomIds(mark.idOverride, getDetachedRootId(effect))) {
+			result.detachCellId = mark.idOverride;
+		}
+		return result;
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
@@ -268,7 +277,7 @@ function rebaseMark(
 	currMark: Mark,
 	baseMark: Mark,
 	rebaseChild: NodeChangeRebaser,
-	moveEffects: MoveEffectTable,
+	moveEffects: RebaseNodeManager,
 ): Mark {
 	const rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const movedNodeChanges = getMovedChangesFromBaseMark(moveEffects, baseMark);
@@ -278,7 +287,6 @@ function rebaseMark(
 			0x8dc /* Unexpected collision of new node changes */,
 		);
 		rebasedMark.changes = movedNodeChanges;
-		moveEffects.onMoveIn(movedNodeChanges);
 	}
 
 	return rebaseMarkIgnoreChild(rebasedMark, baseMark, moveEffects);
@@ -287,7 +295,7 @@ function rebaseMark(
 function rebaseMarkIgnoreChild(
 	currMark: Mark,
 	baseMark: Mark,
-	moveEffects: MoveEffectTable,
+	moveEffects: RebaseNodeManager,
 ): Mark {
 	let rebasedMark: Mark;
 	if (isDetach(baseMark)) {
@@ -300,95 +308,114 @@ function rebaseMarkIgnoreChild(
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
 		const baseCellId = getDetachOutputCellId(baseMark);
+		const baseDetachId = getDetachedRootId(baseMark);
 
-		if (isMoveOut(baseMark)) {
-			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
-			assert(
-				!isNewAttach(currMark),
-				0x819 /* New attaches should not be rebased over moves */,
-			);
-			const { remains, follows } = separateEffectsForMove(extractMarkEffect(currMark));
-			if (follows !== undefined) {
-				sendEffectToDest(follows, moveEffects, getEndpoint(baseMark), baseMark.count);
-			}
+		const { remains, follows } = separateEffectsForMove(
+			extractMarkEffect(currMark),
+			baseMark,
+			moveEffects,
+		);
 
-			if (currMark.changes !== undefined) {
-				moveRebasedChanges(currMark.changes, moveEffects, getEndpoint(baseMark));
-			}
-			rebasedMark = { ...remains, count: baseMark.count };
-		} else {
-			rebasedMark = currMark;
-		}
-		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
+		moveRebasedChanges(moveEffects, baseDetachId, baseMark.count, currMark.changes, follows);
+		rebasedMark = { ...remains, count: baseMark.count };
+		return makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		rebasedMark = isAttachAndDetachEffect(currMark)
-			? withNodeChange({ ...currMark.detach, count: currMark.count }, currMark.changes)
-			: withCellId(currMark, undefined);
-	} else if (isAttachAndDetachEffect(baseMark)) {
-		assert(
-			baseMark.cellId !== undefined,
-			0x81a /* AttachAndDetach mark should target an empty cell */,
-		);
-		const halfRebasedMark = rebaseMarkIgnoreChild(
-			currMark,
-			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
-			moveEffects,
-		);
-		rebasedMark = rebaseMarkIgnoreChild(
-			halfRebasedMark,
-			{ ...baseMark.detach, count: baseMark.count },
-			moveEffects,
-		);
+		return withCellId(currMark, undefined);
 	} else if (isRename(baseMark)) {
-		return withCellId(currMark, getDetachOutputCellId(baseMark));
+		if (currMark.type === "Rename") {
+			const doesBaseMoveAndAttach = moveEffects.doesBaseAttachNodes(
+				baseMark.idOverride,
+				baseMark.count,
+			).value;
+
+			assert(baseMark.cellId !== undefined, "Rename should target empty cells");
+			const baseRootRename = moveEffects.getBaseRename(baseMark.cellId, baseMark.count).value;
+			const doesBaseMoveAndDetach =
+				baseRootRename !== undefined &&
+				!areEqualChangeAtomIds(baseRootRename, baseMark.idOverride);
+
+			if (doesBaseMoveAndAttach || doesBaseMoveAndDetach) {
+				// `newMark` represents a node-targeting rename.
+				// The base changeset has moved the node which was last detached from the cell,
+				// so we should remove the rename from this location.
+				return { cellId: baseMark.idOverride, count: baseMark.count };
+			}
+		}
+
+		const newRenameId = moveEffects.getNewRenameForBaseRename(
+			baseMark.idOverride,
+			baseMark.count,
+		).value;
+
+		if (newRenameId !== undefined && currMark.type !== "Attach") {
+			return {
+				type: "Rename",
+				cellId: baseMark.idOverride,
+				count: baseMark.count,
+				idOverride: newRenameId,
+			};
+		}
+
+		return withCellId(currMark, getOutputCellId(baseMark));
 	} else {
-		rebasedMark = currMark;
+		return currMark;
 	}
-	return rebasedMark;
 }
 
 /**
  * Returns a pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
-function separateEffectsForMove(mark: MarkEffect): {
+function separateEffectsForMove(
+	mark: MarkEffect,
+	baseMark: CellMark<Detach>,
+	nodeManager: RebaseNodeManager,
+): {
 	remains?: MarkEffect;
 	follows?: Detach;
 } {
 	const type = mark.type;
 	switch (type) {
-		case "Remove":
-		case "MoveOut": {
-			// There are two scenarios that lead to a Detach mark having an idOverride:
-			// 1. The detach is a rollback (the idOverride the original id that the cell had in the input context of the attach being rolled back).
-			// 2. The detach has been composed with a Rename (the idOverride is the cell id in the output context of the rename).
-			// Since rollbacks are never rebased, we can safely assume that the idOverride is due to a Rename (scenario #2).
-			// While the detach must follow the node that it targets, the rename must remain in place because it targets the cell.
-			if (mark.idOverride !== undefined) {
-				const remains: MarkEffect = { type: "Rename", idOverride: mark.idOverride };
-				const follows: Mutable<MarkEffect> = { ...mark };
-				delete follows.idOverride;
-				return { remains, follows };
-			}
-			return { follows: mark };
-		}
-		case "AttachAndDetach": {
-			return { follows: mark.detach, remains: mark.attach };
-		}
-		case "MoveIn":
-		case "Rename": {
-			return { remains: mark };
-		}
 		case NoopMarkType: {
 			return {};
 		}
-		case "Insert": {
-			const follows: MoveOut = {
-				type: "MoveOut",
+		case "Detach": {
+			if (mark.cellRename !== undefined) {
+				return { remains: { type: "Rename", idOverride: mark.cellRename }, follows: mark };
+			}
+
+			const baseDetachId = getDetachedRootId(baseMark);
+			const outputCellId = getDetachOutputCellId(baseMark);
+			const doesBaseMoveNodes =
+				!areEqualChangeAtomIds(outputCellId, baseDetachId) ||
+				nodeManager.doesBaseAttachNodes(baseDetachId, baseMark.count).value;
+
+			// We should rename these cells unless the nodes are reattached elsewhere,
+			// in which case we will rename those cells instead.
+			const remains: MarkEffect = doesBaseMoveNodes
+				? {}
+				: {
+						type: "Rename",
+						idOverride: getDetachOutputCellId(mark),
+					};
+
+			return { remains, follows: mark };
+		}
+		case "Rename": {
+			return { remains: mark };
+		}
+		case "Attach": {
+			const follows: Mutable<Detach> = {
+				type: "Detach",
 				id: mark.id,
 			};
-			const remains: MoveIn = {
-				type: "MoveIn",
+
+			if (mark.detachCellId !== undefined) {
+				follows.detachCellId = mark.detachCellId;
+			}
+
+			const remains: Attach = {
+				type: "Attach",
 				id: mark.id,
 			};
 			if (mark.revision !== undefined) {
@@ -403,70 +430,16 @@ function separateEffectsForMove(mark: MarkEffect): {
 	}
 }
 
-// TODO: Reduce the duplication between this and other MoveEffect helpers
-function sendEffectToDest(
-	markEffect: Detach,
-	moveEffects: MoveEffectTable,
-	{ revision, localId: id }: ChangeAtomId,
-	count: number,
-): void {
-	const effect = getMoveEffect(
-		moveEffects,
-		CrossFieldTarget.Destination,
-		revision,
-		id,
-		count,
-		false,
-	);
-	if (effect.length < count) {
-		const [markEffect1, markEffect2] = splitMarkEffect(markEffect, effect.length);
-		const newEffect =
-			effect.value === undefined
-				? { movedMark: markEffect1 }
-				: { ...effect.value, movedMark: markEffect1 };
-		setMoveEffect(
-			moveEffects,
-			CrossFieldTarget.Destination,
-			revision,
-			id,
-			effect.length,
-			newEffect,
-		);
-		sendEffectToDest(
-			markEffect2,
-			moveEffects,
-			{ revision, localId: brand(id + effect.length) },
-			count - effect.length,
-		);
-	} else {
-		const newEffect: MoveEffect =
-			effect.value === undefined
-				? { movedEffect: markEffect }
-				: { ...effect.value, movedEffect: markEffect };
-		setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
-	}
-}
-
 function moveRebasedChanges(
-	nodeChange: NodeId,
-	moveEffects: MoveEffectTable,
-	{ revision, localId: id }: ChangeAtomId,
+	moveEffects: RebaseNodeManager,
+	baseId: ChangeAtomId,
+	count: number,
+	nodeChange: NodeId | undefined,
+	newDetach: Detach | undefined,
 ): void {
-	const effect = getMoveEffect(
-		moveEffects,
-		CrossFieldTarget.Destination,
-		revision,
-		id,
-		1,
-		false,
-	).value;
-
-	const newEffect =
-		effect === undefined
-			? { rebasedChanges: nodeChange }
-			: { ...effect, rebasedChanges: nodeChange };
-
-	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1, newEffect);
+	const newId = newDetach === undefined ? undefined : getDetachedRootId(newDetach);
+	const detachCellId = newDetach?.detachCellId;
+	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange, detachCellId);
 }
 
 function rebaseNodeChange(
@@ -509,21 +482,12 @@ function withCellId<TMark extends Mark>(mark: TMark, cellId: CellId | undefined)
 }
 
 function getMovedEffectFromBaseMark(
-	moveEffects: MoveEffectTable,
+	moveEffects: RebaseNodeManager,
 	baseMark: Mark,
 ): Detach | undefined {
-	if (isMoveIn(baseMark)) {
-		return getMovedEffect(moveEffects, baseMark.revision, baseMark.id, baseMark.count);
-	} else if (isAttachAndDetachEffect(baseMark) && isMoveIn(baseMark.attach)) {
-		return getMovedEffect(
-			moveEffects,
-			baseMark.attach.revision,
-			baseMark.attach.id,
-			baseMark.count,
-		);
-	} else {
-		return undefined;
-	}
+	return isAttach(baseMark)
+		? getMovedEffect(moveEffects, baseMark.revision, baseMark.id, baseMark.count)
+		: undefined;
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.
@@ -531,47 +495,47 @@ function getMovedEffectFromBaseMark(
 // to match the ranges in `moveEffects`.
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function getMovedEffect(
-	moveEffects: MoveEffectTable,
+	moveEffects: RebaseNodeManager,
 	revision: RevisionTag | undefined,
-	id: MoveId,
+	localId: MoveId,
 	count: number,
 ): Detach | undefined {
-	const effect = getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count);
-	assert(effect.length === count, 0x6f3 /* Expected effect to cover entire mark */);
-	const movedEffect = effect.value?.movedEffect;
-	if (movedEffect === undefined) {
+	const entry = moveEffects.getNewChangesForBaseAttach({ revision, localId }, count);
+	assert(entry.length === count, 0x6f3 /* Expected effect to cover entire mark */);
+	const detachId = entry.value?.detachId;
+	if (detachId === undefined) {
+		assert(
+			entry.value?.cellRename === undefined,
+			"Cell detach should be accompanied by node detach",
+		);
 		return undefined;
 	}
-	if (isMoveOut(movedEffect)) {
-		moveEffects.moveKey(CrossFieldTarget.Source, movedEffect.revision, movedEffect.id, count);
+
+	const detach: Mutable<Detach> = {
+		type: "Detach",
+		revision: detachId.revision,
+		id: detachId.localId,
+	};
+	if (entry.value?.cellRename !== undefined) {
+		detach.detachCellId = entry.value.cellRename;
 	}
-	return movedEffect;
+
+	return detach;
 }
 
 function getMovedChangesFromBaseMark(
-	moveEffects: MoveEffectTable,
+	moveEffects: RebaseNodeManager,
 	baseMark: Mark,
 ): NodeId | undefined {
-	if (isMoveIn(baseMark)) {
-		return getMovedNodeChanges(moveEffects, baseMark.revision, baseMark.id, baseMark.count);
-	} else if (isAttachAndDetachEffect(baseMark) && isMoveIn(baseMark.attach)) {
-		return getMovedNodeChanges(
-			moveEffects,
-			baseMark.attach.revision,
-			baseMark.attach.id,
-			baseMark.count,
-		);
-	} else {
-		return undefined;
-	}
+	return isAttach(baseMark)
+		? getMovedNodeChanges(moveEffects, baseMark.revision, baseMark.id)
+		: undefined;
 }
 
 function getMovedNodeChanges(
-	moveEffects: MoveEffectTable,
+	moveEffects: RebaseNodeManager,
 	revision: RevisionTag | undefined,
-	id: MoveId,
-	count: number,
+	localId: MoveId,
 ): NodeId | undefined {
-	return getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count).value
-		?.rebasedChanges;
+	return moveEffects.getNewChangesForBaseAttach({ revision, localId }, 1).value?.nodeChange;
 }

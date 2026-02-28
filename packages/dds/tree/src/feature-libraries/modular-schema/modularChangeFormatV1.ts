@@ -132,6 +132,7 @@ export const EncodedModularChangesetV1 = Type.Object(
 		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
 		builds: Type.Optional(EncodedBuilds),
 		refreshers: Type.Optional(EncodedBuilds),
+
 		/**
 		 * The number of constraints within this changeset that are violated.
 		 */
