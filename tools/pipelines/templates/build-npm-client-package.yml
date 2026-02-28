@@ -358,6 +358,10 @@ extends:
               # Incremental build cache: restore .tsbuildinfo and .done.build.log files from previous builds.
               # TypeScript and fluid-build use content hashes (not mtimes) to validate these files,
               # so stale caches are safe — tasks simply re-run when their inputs change.
+              # Note: the cache directory must exist before Cache@2 runs so the post-job save is registered.
+              - script: mkdir -p $(Pipeline.Workspace)/.fluid-tsc-cache
+                displayName: Create incremental build cache directory
+
               - task: Cache@2
                 displayName: Restore incremental build cache
                 continueOnError: true
@@ -405,8 +409,13 @@ extends:
                     set -eu -o pipefail
                     CACHE_DIR="$(Pipeline.Workspace)/.fluid-tsc-cache"
                     mkdir -p "$CACHE_DIR"
-                    # Collect .tsbuildinfo and .done.build.log files into a tar archive
-                    find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) -not -path '*/node_modules/*' > "$CACHE_DIR/file-list.txt"
+                    # Collect .tsbuildinfo and .done.build.log files into a tar archive.
+                    # Exclude api-extractor done files (~115 MB) — they're large and get
+                    # regenerated quickly from their tsbuildinfo dependencies.
+                    find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) \
+                      -not -path '*/node_modules/*' \
+                      -not -name 'api-extractor-*.done.build.log' \
+                      > "$CACHE_DIR/file-list.txt"
                     FILE_COUNT=$(wc -l < "$CACHE_DIR/file-list.txt")
                     if [ "$FILE_COUNT" -gt 0 ]; then
                       echo "Caching $FILE_COUNT incremental build files..."
