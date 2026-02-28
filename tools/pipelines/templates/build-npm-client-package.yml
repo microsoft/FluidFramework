@@ -44,6 +44,10 @@ parameters:
   type: boolean
   default: false
 
+- name: taskCheckAreTheTypesWrong
+  type: boolean
+  default: false
+
 - name: taskPublishBundleSizeArtifacts
   type: boolean
   default: false
@@ -227,6 +231,12 @@ extends:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
             steps:
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 30
+                  jobDisplayName: 'Build'
+                  step: start
+
               # Setup
               - checkout: self
                 path: $(FluidFrameworkDirectory)
@@ -401,88 +411,6 @@ extends:
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-              # Collect/publish/run bundle analysis
-              - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-                  - task: Npm@1
-                    displayName: 'Calculate bundle sizes'
-                    inputs:
-                      command: custom
-                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:collect'
-
-                  # Copy files so all artifacts we publish end up under the same parent folder.
-                  # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
-                  - task: CopyFiles@2
-                    displayName: Copy bundle size files to artifact staging directory
-                    inputs:
-                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-
-                  # At this point we want to publish the artifact with the bundle size analysis,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
-
-                  - task: Npm@1
-                    displayName: (PR only) Compare bundle sizes against baseline
-                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-                    continueOnError: true
-                    env:
-                      ADO_API_TOKEN: $(System.AccessToken)
-                      DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-                      TARGET_BRANCH_NAME: '$(targetBranchName)'
-                    inputs:
-                      command: custom
-                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      customCommand: 'run bundle-analysis:run'
-
-                  - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
-                      - task: Bash@3
-                        displayName: List report.json
-                        inputs:
-                          targetType: inline
-                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                          script: |
-                            set -eu -o pipefail
-                            echo "Build Directory is ${{ parameters.buildDirectory }}";
-                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
-                            echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
-                            ls -la $BUNDLE_SIZE_TESTS_DIR;
-
-                      - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-                        parameters:
-                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
-
-                      - task: Bash@3
-                        displayName: Write bundle sizes measurements to Aria/Kusto
-                        inputs:
-                          targetType: inline
-                          workingDirectory: $(pathToTelemetryGenerator)
-                          script: |
-                            set -eu -o pipefail
-                            echo "Writing the following performance tests results to Aria/Kusto"
-                            echo "Report Size:"
-                            ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
-
-              # Docs
-              - ${{ if ne(parameters.taskBuildDocs, false) }}:
-                  - task: Npm@1
-                    displayName: 'npm run ci:build:docs'
-                    inputs:
-                      command: custom
-                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      customCommand: 'run ci:build:docs'
-
-                  # Copy files so all artifacts we publish end up under the same parent folder.
-                  # The sourceFolder should be wherever the 'npm run ci:build:docs' task places its output.
-                  - task: CopyFiles@2
-                    displayName: Copy _api-extractor-temp files to artifact staging directory
-                    inputs:
-                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/_api-extractor-temp'
-                      targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
-
-                  # At this point we want to publish the artifact with the _api-extractor-temp folder,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
-
               - ${{ if eq(parameters.packageManager, 'pnpm') }}:
                 # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
                 # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
@@ -521,29 +449,22 @@ extends:
                       exit -1;
                     fi
 
-              # Devtools
-              - task: Bash@3
-                displayName: Inject devtools telemetry logger token
-                inputs:
-                  targetType: 'inline'
-                  script: |
-                    set -eu -o pipefail
-                    echo Generating .env
-                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/.env
+              # AreTheTypesWrong check (moved from separate test job into build job)
+              - ${{ if eq(parameters.taskCheckAreTheTypesWrong, true) }}:
+                  - task: Npm@1
+                    displayName: 'npm run ci:check:are-the-types-wrong'
+                    inputs:
+                      command: 'custom'
+                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                      customCommand: 'run ci:check:are-the-types-wrong'
 
-              - task: Npm@1
-                displayName: Build devtools
-                inputs:
-                  command: 'custom'
-                  workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/
-                  customCommand: 'run webpack'
+              # Devtools, docs, and bundle analysis moved to parallel post-build jobs
 
-              - task: 1ES.PublishPipelineArtifact@1
-                displayName: Publish Artifact - Devtools Browser Extension
-                inputs:
-                  targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-                  artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
-                  publishLocation: 'pipeline'
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 30
+                  jobDisplayName: 'Build'
+                  step: check
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -568,187 +489,308 @@ extends:
                       publishLocation: pipeline
                       sbomEnabled: false
 
-                - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
-                    - output: pipelineArtifact
-                      displayName: Publish Artifacts - bundle-analysis
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
-                      targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-                      artifactName: bundleAnalysis
-                      sbomEnabled: false
-                      publishLocation: pipeline
+                # bundleAnalysis and _api-extractor-temp artifacts moved to their own parallel jobs
 
-                - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
-                    - output: pipelineArtifact
-                      displayName: Publish Artifact - _api-extractor-temp
-                      targetPath: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
-                      artifactName: _api-extractor-temp
-                      sbomEnabled: false
-                      publishLocation: pipeline
+          # Parallel jobs for coverage tests
+          - ${{ each test in parameters.coverageTests }}:
+            - job: Coverage_${{ test.jobName }}
+              displayName: "Coverage ${{ test.jobName }}"
+              dependsOn: build
+              timeoutInMinutes: 45
+              variables:
+                - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  - name: targetBranchName
+                    value: $(System.PullRequest.TargetBranch)
+                # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
+                # used in a few places in the pipeline to push custom telemetry to Kusto.
+                - name: absolutePathToTelemetryGenerator
+                  value: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/tools/telemetry-generator
+                  readonly: true
+                # We already run CodeQL in the main build job, so we don't need to run it again here.
+                # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
+                - name: ONEES_ENFORCED_CODEQL_ENABLED
+                  value: 'false'
+                - name: COMMIT_SHA
+                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
 
-          - job: Coverage_tests
-            displayName: "Coverage tests"
-            dependsOn: build
-            variables:
-              - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-                - name: targetBranchName
-                  value: $(System.PullRequest.TargetBranch)
-              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
-              # used in a few places in the pipeline to push custom telemetry to Kusto.
-              - name: absolutePathToTelemetryGenerator
-                value: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/tools/telemetry-generator
-                readonly: true
-              # We already run CodeQL in the main build job, so we don't need to run it again here.
-              # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
-              - name: ONEES_ENFORCED_CODEQL_ENABLED
-                value: 'false'
-              - name: COMMIT_SHA
-                value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 25
+                    jobDisplayName: 'Coverage ${{ test.jobName }}'
+                    step: start
 
-            steps:
-              # Setup
-              - checkout: self
-                path: $(FluidFrameworkDirectory)
-                clean: true
-                lfs: '${{ parameters.checkoutSubmodules }}'
-                submodules: '${{ parameters.checkoutSubmodules }}'
+                # Setup
+                - checkout: self
+                  path: $(FluidFrameworkDirectory)
+                  clean: true
+                  lfs: '${{ parameters.checkoutSubmodules }}'
+                  submodules: '${{ parameters.checkoutSubmodules }}'
 
-              - script: |
-                  echo "commit: $(COMMIT_SHA)"
-                  git fetch origin $(COMMIT_SHA)
-                  git checkout $(COMMIT_SHA)
-                displayName: "Checkout build commit"
+                - script: |
+                    echo "commit: $(COMMIT_SHA)"
+                    git fetch origin $(COMMIT_SHA)
+                    git checkout $(COMMIT_SHA)
+                  displayName: "Checkout build commit"
 
-              - template: /tools/pipelines/templates/include-use-node-version.yml@self
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-              - template: /tools/pipelines/templates/include-install.yml@self
-                parameters:
-                  packageManager: '${{ parameters.packageManager }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+                - template: /tools/pipelines/templates/include-install.yml@self
+                  parameters:
+                    packageManager: '${{ parameters.packageManager }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
-              # We need it in order to run flub where the code coverage comparison logic calls for it
-              - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-                parameters:
-                  buildDirectory: ${{ parameters.buildDirectory }}
-                  buildToolsVersionToInstall: repo
-                  pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
 
-              - task: DownloadPipelineArtifact@2
-                inputs:
-                  artifact: build_output_archive
-                  targetPath: $(Build.StagingDirectory)
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
 
-              - script: |
-                  echo "Extracting build output archive contents..."
-                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                displayName: Extract Build Output Contents
+                # Set variable startTest if everything is good so far and we'll start running tests,
+                # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
+                - script: |
+                    echo "##vso[task.setvariable variable=startTest]true"
+                  displayName: Start Test
 
-              # Set variable startTest if everything is good so far and we'll start running tests,
-              # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
-              - script: |
-                  echo "##vso[task.setvariable variable=startTest]true"
-                displayName: Start Test
-
-              - ${{ each test in parameters.coverageTests }}:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: '${{ parameters.testCoverage }}'
 
-              - task: Npm@1
-                displayName: 'npm run test:copyresults'
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                inputs:
-                  command: custom
-                  workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  customCommand: 'run test:copyresults'
+                - task: Npm@1
+                  displayName: 'npm run test:copyresults'
+                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                  inputs:
+                    command: custom
+                    workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    customCommand: 'run test:copyresults'
 
-              # Test - Upload coverage results
-              # Some webpacked file using externals introduce file name with quotes in them
-              # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-              # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-              - task: Bash@3
-                displayName: Check for nyc/report directory
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                inputs:
-                  targetType: 'inline'
+                # Process test result, include publishing and logging
+                - template: /tools/pipelines/templates/include-process-test-results.yml@self
+                  parameters:
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    testResultDirs: '${{ parameters.testResultDirs }}'
+
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 25
+                    jobDisplayName: 'Coverage ${{ test.jobName }}'
+                    step: check
+
+              templateContext:
+                outputs:
+                  # Publish raw coverage data for merge job (only when coverage is enabled)
+                  - ${{ if parameters.testCoverage }}:
+                    - output: pipelineArtifact
+                      displayName: Publish Artifact - coverage data (${{ test.jobName }})
+                      condition: succeededOrFailed()
+                      targetPath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/.nyc_output
+                      artifactName: 'coverage_data_${{ test.jobName }}'
+                      sbomEnabled: false
+                      publishLocation: pipeline
+
+          # Merge coverage data from parallel jobs and generate combined report (only when coverage is enabled)
+          - ${{ if parameters.testCoverage }}:
+            - job: Merge_coverage
+              displayName: "Merge Coverage Reports"
+              dependsOn:
+                - build
+                - ${{ each test in parameters.coverageTests }}:
+                  - Coverage_${{ test.jobName }}
+              condition: succeededOrFailed()
+              timeoutInMinutes: 45
+              variables:
+                - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  - name: targetBranchName
+                    value: $(System.PullRequest.TargetBranch)
+                # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
+                # used in a few places in the pipeline to push custom telemetry to Kusto.
+                - name: absolutePathToTelemetryGenerator
+                  value: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/tools/telemetry-generator
+                  readonly: true
+                # We already run CodeQL in the main build job, so we don't need to run it again here.
+                # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
+                - name: ONEES_ENFORCED_CODEQL_ENABLED
+                  value: 'false'
+                - name: COMMIT_SHA
+                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+
+              steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 35
+                    jobDisplayName: 'Coverage tests'
+                    step: start
+
+                # Setup
+                - checkout: self
+                  path: $(FluidFrameworkDirectory)
+                  clean: true
+                  lfs: '${{ parameters.checkoutSubmodules }}'
+                  submodules: '${{ parameters.checkoutSubmodules }}'
+
+                - script: |
+                    echo "commit: $(COMMIT_SHA)"
+                    git fetch origin $(COMMIT_SHA)
+                    git checkout $(COMMIT_SHA)
+                  displayName: "Checkout build commit"
+
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+                - template: /tools/pipelines/templates/include-install.yml@self
+                  parameters:
+                    packageManager: '${{ parameters.packageManager }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
+                # We need it in order to run flub where the code coverage comparison logic calls for it
+                - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+                  parameters:
+                    buildDirectory: ${{ parameters.buildDirectory }}
+                    buildToolsVersionToInstall: repo
+                    pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
+
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
+
+                # Download raw coverage data from each parallel job
+                - ${{ each test in parameters.coverageTests }}:
+                  - task: DownloadPipelineArtifact@2
+                    displayName: 'Download coverage data (${{ test.jobName }})'
+                    continueOnError: true
+                    inputs:
+                      artifact: 'coverage_data_${{ test.jobName }}'
+                      targetPath: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/.nyc_output_${{ test.jobName }}'
+
+                # Merge all coverage data into single .nyc_output directory
+                - script: |
+                    set -eu -o pipefail
+                    mkdir -p nyc/.nyc_output
+                    for dir in nyc/.nyc_output_*/; do
+                      if [ -d "$dir" ]; then
+                        if compgen -G "$dir"/* > /dev/null; then
+                          echo "Merging coverage data from $dir"
+                          cp -r "$dir"/* nyc/.nyc_output/
+                        else
+                          echo "No coverage files found in $dir; skipping."
+                        fi
+                      fi
+                    done
+                    if ! compgen -G "nyc/.nyc_output/*" > /dev/null; then
+                      echo "Error: No coverage files were merged into nyc/.nyc_output."
+                      exit 1
+                    fi
+                    echo "Merged coverage files:"
+                    ls nyc/.nyc_output/ | wc -l | xargs -I{} echo "{} coverage files merged"
+                  displayName: Merge coverage data
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  script: |
-                    set -eu -o pipefail
-                    test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
 
-              - task: Bash@3
-                displayName: Patch Coverage Results
-                condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report'
-                  script: |
+                # Generate combined coverage report
+                - script: |
                     set -eu -o pipefail
-                    sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-
-              - task: PublishCodeCoverageResults@2
-                displayName: Publish Code Coverage
-                condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                inputs:
-                  summaryFileLocation: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
-                  failIfCoverageEmpty: true
-              - task: CopyFiles@2
-                displayName: Copy code coverage report to artifact staging directory
-                condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                inputs:
-                  sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report
-                  targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-              - task: Bash@3
-                displayName: Report Code Coverage Comparison
-                condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
-                continueOnError: false
-                env:
-                  ADO_API_TOKEN: '$(System.AccessToken)'
-                  GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
-                  TARGET_BRANCH_NAME: '$(targetBranchName)'
-                  ADO_BUILD_ID: '$(Build.BuildId)'
-                  GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
-                  GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
-                  ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
-                  ADO_CI_BUILD_DEFINITION_ID_PR: 11
-                inputs:
-                  targetType: inline
+                    npx c8 report --temp-directory nyc/.nyc_output --report-dir nyc/report
+                  displayName: Generate combined coverage report
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  script: |
-                    set -eu -o pipefail
-                    echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
-                    echo "Github PR number: $GITHUB_PR_NUMBER"
-                    echo "ADO Build Number: $ADO_BUILD_ID"
-                    echo "Target Branch Name: $TARGET_BRANCH_NAME"
-                    echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
-                    echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
-                    echo "Running code coverage comparison"
-                    flub report codeCoverage --verbose
 
-            # Process test result, include publishing and logging
-              - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  testResultDirs: '${{ parameters.testResultDirs }}'
+                # Test - Upload coverage results
+                # Some webpacked file using externals introduce file name with quotes in them
+                # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+                # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
+                - task: Bash@3
+                  displayName: Check for nyc/report directory
+                  condition: succeededOrFailed()
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    script: |
+                      set -eu -o pipefail
+                      test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
 
-            templateContext:
-              outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-              outputs:
-                - output: pipelineArtifact
-                  displayName: Publish Artifacts - code-coverage
-                  condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                  targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                  artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
-                  sbomEnabled: false
-                  publishLocation: pipeline
+                - task: Bash@3
+                  displayName: Patch Coverage Results
+                  condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                  inputs:
+                    targetType: 'inline'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report'
+                    script: |
+                      set -eu -o pipefail
+                      sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+
+                - task: PublishCodeCoverageResults@2
+                  displayName: Publish Code Coverage
+                  condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                  inputs:
+                    summaryFileLocation: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                    failIfCoverageEmpty: true
+                - task: CopyFiles@2
+                  displayName: Copy code coverage report to artifact staging directory
+                  condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                  inputs:
+                    sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report
+                    targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                - task: Bash@3
+                  displayName: Report Code Coverage Comparison
+                  condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
+                  continueOnError: false
+                  env:
+                    ADO_API_TOKEN: '$(System.AccessToken)'
+                    GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
+                    TARGET_BRANCH_NAME: '$(targetBranchName)'
+                    ADO_BUILD_ID: '$(Build.BuildId)'
+                    GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+                    GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
+                    ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
+                    ADO_CI_BUILD_DEFINITION_ID_PR: 11
+                  inputs:
+                    targetType: inline
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    script: |
+                      set -eu -o pipefail
+                      echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
+                      echo "Github PR number: $GITHUB_PR_NUMBER"
+                      echo "ADO Build Number: $ADO_BUILD_ID"
+                      echo "Target Branch Name: $TARGET_BRANCH_NAME"
+                      echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
+                      echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
+                      echo "Running code coverage comparison"
+                      flub report codeCoverage --verbose
+
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 35
+                    jobDisplayName: 'Coverage tests'
+                    step: check
+
+              templateContext:
+                outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                outputs:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifacts - code-coverage
+                    condition: and( succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+                    targetPath: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+                    artifactName: 'codeCoverageAnalysis-$(System.JobAttempt)'
+                    sbomEnabled: false
+                    publishLocation: pipeline
 
           # Parallel jobs for test tasks
           - ${{ each test in parameters.taskTest }}:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
               dependsOn: build
+              timeoutInMinutes: 45
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
@@ -765,6 +807,12 @@ extends:
                 - name: COMMIT_SHA
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 25
+                    jobDisplayName: 'Test ${{ test.jobName }}'
+                    step: start
+
                 # Setup
                 - checkout: self
                   path: $(FluidFrameworkDirectory)
@@ -878,6 +926,310 @@ extends:
                   parameters:
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testResultDirs: '${{ parameters.testResultDirs }}'
+
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 25
+                    jobDisplayName: 'Test ${{ test.jobName }}'
+                    step: check
+
+          # Parallel post-build jobs (docs, bundle analysis, devtools)
+          - ${{ if or(eq(parameters.publishDocs, true), ne(parameters.taskBuildDocs, false)) }}:
+            - job: Build_Docs
+              displayName: "Build Docs"
+              dependsOn: build
+              timeoutInMinutes: 30
+              variables:
+                - name: ONEES_ENFORCED_CODEQL_ENABLED
+                  value: 'false'
+                - name: COMMIT_SHA
+                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Build Docs'
+                    step: start
+
+                # Setup
+                - checkout: self
+                  path: $(FluidFrameworkDirectory)
+                  clean: true
+                  lfs: '${{ parameters.checkoutSubmodules }}'
+                  submodules: '${{ parameters.checkoutSubmodules }}'
+
+                - script: |
+                    echo "commit: $(COMMIT_SHA)"
+                    git fetch origin $(COMMIT_SHA)
+                    git checkout $(COMMIT_SHA)
+                  displayName: "Checkout build commit"
+
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+                - template: /tools/pipelines/templates/include-install.yml@self
+                  parameters:
+                    packageManager: '${{ parameters.packageManager }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
+
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
+
+                # Build docs
+                - task: Npm@1
+                  displayName: 'npm run ci:build:docs'
+                  inputs:
+                    command: custom
+                    workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    customCommand: 'run ci:build:docs'
+
+                - task: CopyFiles@2
+                  displayName: Copy _api-extractor-temp files to artifact staging directory
+                  inputs:
+                    sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/_api-extractor-temp'
+                    targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
+
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Build Docs'
+                    step: check
+
+              templateContext:
+                outputParentDirectory: $(Build.ArtifactStagingDirectory)
+                outputs:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifact - _api-extractor-temp
+                    targetPath: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
+                    artifactName: _api-extractor-temp
+                    sbomEnabled: false
+                    publishLocation: pipeline
+
+          - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+            - job: Bundle_Analysis
+              displayName: "Bundle Analysis"
+              dependsOn: build
+              timeoutInMinutes: 30
+              variables:
+                - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+                  - name: targetBranchName
+                    value: $(System.PullRequest.TargetBranch)
+                - name: ONEES_ENFORCED_CODEQL_ENABLED
+                  value: 'false'
+                - name: COMMIT_SHA
+                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+              steps:
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Bundle Analysis'
+                    step: start
+
+                # Setup
+                - checkout: self
+                  path: $(FluidFrameworkDirectory)
+                  clean: true
+                  lfs: '${{ parameters.checkoutSubmodules }}'
+                  submodules: '${{ parameters.checkoutSubmodules }}'
+
+                - script: |
+                    echo "commit: $(COMMIT_SHA)"
+                    git fetch origin $(COMMIT_SHA)
+                    git checkout $(COMMIT_SHA)
+                  displayName: "Checkout build commit"
+
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+                - template: /tools/pipelines/templates/include-install.yml@self
+                  parameters:
+                    packageManager: '${{ parameters.packageManager }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
+                # Bundle analysis needs flub (build-tools)
+                - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+                  parameters:
+                    buildDirectory: ${{ parameters.buildDirectory }}
+                    buildToolsVersionToInstall: repo
+                    pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
+
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
+
+                # Collect bundle sizes
+                - task: Npm@1
+                  displayName: 'Calculate bundle sizes'
+                  inputs:
+                    command: custom
+                    workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    customCommand: 'run bundle-analysis:collect'
+
+                - task: CopyFiles@2
+                  displayName: Copy bundle size files to artifact staging directory
+                  inputs:
+                    sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                    targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+
+                # PR: compare bundle sizes against baseline
+                - task: Npm@1
+                  displayName: (PR only) Compare bundle sizes against baseline
+                  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+                  continueOnError: true
+                  env:
+                    ADO_API_TOKEN: $(System.AccessToken)
+                    DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+                    TARGET_BRANCH_NAME: '$(targetBranchName)'
+                  inputs:
+                    command: custom
+                    workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    customCommand: 'run bundle-analysis:run'
+
+                # CI: upload telemetry to Kusto
+                - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
+                    - task: Bash@3
+                      displayName: List report.json
+                      inputs:
+                        targetType: inline
+                        workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                        script: |
+                          set -eu -o pipefail
+                          echo "Build Directory is ${{ parameters.buildDirectory }}";
+                          BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
+                          echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
+                          ls -la $BUNDLE_SIZE_TESTS_DIR;
+
+                    - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
+                      parameters:
+                        pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+
+                    - task: Bash@3
+                      displayName: Write bundle sizes measurements to Aria/Kusto
+                      inputs:
+                        targetType: inline
+                        workingDirectory: $(pathToTelemetryGenerator)
+                        script: |
+                          set -eu -o pipefail
+                          echo "Writing the following performance tests results to Aria/Kusto"
+                          echo "Report Size:"
+                          ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                          npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
+
+                - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                  parameters:
+                    budgetMinutes: 12
+                    jobDisplayName: 'Bundle Analysis'
+                    step: check
+
+              templateContext:
+                outputParentDirectory: $(Build.ArtifactStagingDirectory)
+                outputs:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifacts - bundle-analysis
+                    condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+                    targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
+                    artifactName: bundleAnalysis
+                    sbomEnabled: false
+                    publishLocation: pipeline
+
+          - job: Build_Devtools
+            displayName: "Build Devtools"
+            dependsOn: build
+            timeoutInMinutes: 30
+            variables:
+              - group: storage-vars
+              - name: ONEES_ENFORCED_CODEQL_ENABLED
+                value: 'false'
+              - name: COMMIT_SHA
+                value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+            steps:
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 10
+                  jobDisplayName: 'Build Devtools'
+                  step: start
+
+              # Setup
+              - checkout: self
+                path: $(FluidFrameworkDirectory)
+                clean: true
+                lfs: '${{ parameters.checkoutSubmodules }}'
+                submodules: '${{ parameters.checkoutSubmodules }}'
+
+              - script: |
+                  echo "commit: $(COMMIT_SHA)"
+                  git fetch origin $(COMMIT_SHA)
+                  git checkout $(COMMIT_SHA)
+                displayName: "Checkout build commit"
+
+              - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+              - template: /tools/pipelines/templates/include-install.yml@self
+                parameters:
+                  packageManager: '${{ parameters.packageManager }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  artifact: build_output_archive
+                  targetPath: $(Build.StagingDirectory)
+
+              - script: |
+                  echo "Extracting build output archive contents..."
+                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                displayName: Extract Build Output Contents
+
+              # Build devtools
+              - task: Bash@3
+                displayName: Inject devtools telemetry logger token
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    set -eu -o pipefail
+                    echo Generating .env
+                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/.env
+
+              - task: Npm@1
+                displayName: Build devtools
+                inputs:
+                  command: 'custom'
+                  workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/
+                  customCommand: 'run webpack'
+
+              - task: CopyFiles@2
+                displayName: Copy devtools bundle to artifact staging directory
+                inputs:
+                  sourceFolder: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+                  targetFolder: $(Build.ArtifactStagingDirectory)/devtools-extension-bundle
+
+              - template: /tools/pipelines/templates/include-steps-timing-budget.yml@self
+                parameters:
+                  budgetMinutes: 10
+                  jobDisplayName: 'Build Devtools'
+                  step: check
+
+            templateContext:
+              outputParentDirectory: $(Build.ArtifactStagingDirectory)
+              outputs:
+                - output: pipelineArtifact
+                  displayName: Publish Artifact - Devtools Browser Extension
+                  targetPath: $(Build.ArtifactStagingDirectory)/devtools-extension-bundle
+                  artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
+                  publishLocation: 'pipeline'
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
