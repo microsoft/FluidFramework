@@ -27,3 +27,6 @@ resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
 strictDepBuilds: true
+
+minimumReleaseAgeExclude:
+  - repopo
