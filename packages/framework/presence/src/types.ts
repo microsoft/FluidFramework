@@ -91,7 +91,8 @@ export interface StatesWorkspace<
 	/**
 	 * Registers a new State object with the {@link StatesWorkspace}.
 	 * @param key - new unique key for the State object within the workspace
-	 * @param manager - factory for creating a State object
+	 * @param configuration - factory/settings for creating a State object. Use
+	 * {@link StateFactory} to create.
 	 */
 	add<
 		TKey extends string,
@@ -99,7 +100,7 @@ export interface StatesWorkspace<
 		TManager extends TManagerConstraints,
 	>(
 		key: TKey,
-		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
+		configuration: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
 	): asserts this is StatesWorkspace<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>,
 		TManagerConstraints

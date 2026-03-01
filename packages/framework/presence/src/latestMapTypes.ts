@@ -378,6 +378,48 @@ export interface LatestMapArguments<T, Keys extends string = string>
 // Overloads should be ordered from most specific to least specific when combined.
 
 /**
+ * Type alias for the return type of {@link LatestMapFactory} when called with
+ * {@link LatestMapArguments}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @beta
+ * @sealed
+ */
+export type LatestMapConfiguration<
+	T,
+	Keys extends string,
+	RegistrationKey extends string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMap<T, Keys>
+>;
+
+/**
+ * Type alias for the return type of {@link LatestMapFactory} when called with
+ * {@link LatestMapArgumentsRaw}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @beta
+ * @sealed
+ */
+export type LatestMapRawConfiguration<
+	T,
+	Keys extends string,
+	RegistrationKey extends string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMapRaw<T, Keys>
+>;
+
+/**
  * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
  *
  * @beta
@@ -393,11 +435,7 @@ export interface LatestMapFactory {
 	 */
 	<T, Keys extends string = string, RegistrationKey extends string = string>(
 		args: LatestMapArguments<T, Keys>,
-	): InternalTypes.ManagerFactory<
-		RegistrationKey,
-		InternalTypes.MapValueState<T, Keys>,
-		LatestMap<T, Keys>
-	>;
+	): LatestMapConfiguration<T, Keys, RegistrationKey>;
 
 	/**
 	 * Factory for creating a {@link LatestMapRaw} State object.
@@ -408,11 +446,7 @@ export interface LatestMapFactory {
 	 */
 	<T, Keys extends string = string, RegistrationKey extends string = string>(
 		args?: LatestMapArgumentsRaw<T, Keys>,
-	): InternalTypes.ManagerFactory<
-		RegistrationKey,
-		InternalTypes.MapValueState<T, Keys>,
-		LatestMapRaw<T, Keys>
-	>;
+	): LatestMapRawConfiguration<T, Keys, RegistrationKey>;
 }
 
 // #endregion

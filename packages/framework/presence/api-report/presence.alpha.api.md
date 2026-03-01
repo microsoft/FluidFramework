@@ -179,6 +179,9 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = P
 }
 
 // @beta @sealed
+export type LatestConfiguration<T extends object | null, Key extends string> = InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, Latest<T>>;
+
+// @beta @sealed
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     metadata: LatestMetadata;
     value: Accessor<T, TValueAccessor>;
@@ -196,8 +199,8 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T> =
 
 // @beta @sealed
 export interface LatestFactory {
-    <T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, Latest<T>>;
-    <T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, LatestRaw<T>>;
+    <T extends object | null, Key extends string = string>(args: LatestArguments<T>): LatestConfiguration<T, Key>;
+    <T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): LatestRawConfiguration<T, Key>;
 }
 
 // @beta @sealed
@@ -232,6 +235,9 @@ export interface LatestMapClientData<T, Keys extends string, TValueAccessor exte
 }
 
 // @beta @sealed
+export type LatestMapConfiguration<T, Keys extends string, RegistrationKey extends string> = InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+
+// @beta @sealed
 export interface LatestMapEvents<T, K extends string, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
     localItemRemoved: (removedItem: {
@@ -252,8 +258,8 @@ export interface LatestMapEvents<T, K extends string, TRemoteValueAccessor exten
 
 // @beta @sealed
 export interface LatestMapFactory {
-    <T, Keys extends string = string, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
-    <T, Keys extends string = string, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+    <T, Keys extends string = string, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): LatestMapConfiguration<T, Keys, RegistrationKey>;
+    <T, Keys extends string = string, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): LatestMapRawConfiguration<T, Keys, RegistrationKey>;
 }
 
 // @beta @sealed
@@ -272,6 +278,9 @@ export interface LatestMapItemUpdatedClientData<T, K extends string, TValueAcces
 export type LatestMapRaw<T, Keys extends string = string> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
 // @beta @sealed
+export type LatestMapRawConfiguration<T, Keys extends string, RegistrationKey extends string> = InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+
+// @beta @sealed
 export type LatestMapRawEvents<T, K extends string> = LatestMapEvents<T, K, RawValueAccessor<T>>;
 
 // @beta @sealed
@@ -282,6 +291,9 @@ export interface LatestMetadata {
 
 // @beta @sealed
 export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
+
+// @beta @sealed
+export type LatestRawConfiguration<T extends object | null, Key extends string> = InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @beta @sealed
 export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
@@ -299,10 +311,13 @@ export interface NotificationListenable<TListeners extends InternalPresenceUtili
 }
 
 // @alpha
-export function Notifications<T extends InternalPresenceUtilityTypes.NotificationListeners<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<T>>;
+export function Notifications<T extends InternalPresenceUtilityTypes.NotificationListeners<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>): NotificationsConfiguration<T, Key>;
 
 // @alpha
-export function Notifications<TSubscriptions extends InternalPresenceUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, Key extends string = string>(initialSubscriptions: Partial<TSubscriptions>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<InternalPresenceUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>>>;
+export function Notifications<TSubscriptions extends InternalPresenceUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, Key extends string = string>(initialSubscriptions: Partial<TSubscriptions>): NotificationsWithSubscriptionsConfiguration<TSubscriptions, Key>;
+
+// @alpha @sealed
+export type NotificationsConfiguration<T extends InternalPresenceUtilityTypes.NotificationListeners<T>, Key extends string> = InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<T>>;
 
 // @alpha @sealed
 export interface NotificationsManager<T extends InternalPresenceUtilityTypes.NotificationListeners<T>> {
@@ -322,6 +337,9 @@ export interface NotificationsManagerEvents {
 export type NotificationSubscriberSignatures<E extends InternalPresenceUtilityTypes.NotificationListeners<E>> = {
     [K in keyof InternalPresenceUtilityTypes.NotificationListeners<E>]: (sender: Attendee, ...args: InternalPresenceUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
 };
+
+// @alpha @sealed
+export type NotificationsWithSubscriptionsConfiguration<TSubscriptions extends InternalPresenceUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, Key extends string> = InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<InternalPresenceUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>>>;
 
 // @alpha @sealed
 export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
@@ -381,8 +399,8 @@ export interface RawValueAccessor<T> {
 
 // @beta
 export const StateFactory: {
-    latest: LatestFactory_2;
-    latestMap: LatestMapFactory_2;
+    readonly latest: LatestFactory_2;
+    readonly latestMap: LatestMapFactory_2;
 };
 
 // @beta @sealed
@@ -403,7 +421,7 @@ unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
-    add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, manager: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, configuration: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
     readonly states: StatesWorkspaceEntries<TSchema>;
