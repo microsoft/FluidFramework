@@ -335,7 +335,9 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
-	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
+	public getLocalState(snapshotSequenceNumber?: number): {
+		pending: IPendingLocalState;
+	} {
 		assert(
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
@@ -359,10 +361,12 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 		return {
-			pendingStates: [
-				...newSavedOps,
-				...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
-			],
+			pending: {
+				pendingStates: [
+					...newSavedOps,
+					...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
+				],
+			},
 		};
 	}
 
@@ -438,7 +442,7 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content: serializeOp(runtimeOp),
+				content: serializeOp(runtimeOp).content,
 				runtimeOp,
 				localOpMetadata,
 				opMetadata,

@@ -58,7 +58,7 @@ describe("opSerialization", () => {
 
 			const serialized = serializeOp(op);
 
-			assert.strictEqual(serialized, JSON.stringify(op));
+			assert.strictEqual(serialized.content, JSON.stringify(op));
 		});
 
 		it("should replace Fluid handles with their encoded form", () => {
@@ -76,12 +76,12 @@ describe("opSerialization", () => {
 			const serialized = serializeOp(op);
 
 			assert(
-				!serialized.includes("foo"),
+				!serialized.content.includes("foo"),
 				"Serialized op should not include the handle's properties besides the path",
 			);
 			assert(
-				serialized.includes("__fluid_handle__") &&
-					serialized.includes(mockHandle.absolutePath),
+				serialized.content.includes("__fluid_handle__") &&
+					serialized.content.includes(mockHandle.absolutePath),
 				"Serialized op should include the handle's path and encoded form",
 			);
 		});
@@ -104,7 +104,7 @@ describe("opSerialization", () => {
 			const serializedWithFunction = serializeOp(op);
 			const serializedWithJSONStringify = JSON.stringify(op);
 
-			assert.strictEqual(serializedWithFunction, serializedWithJSONStringify);
+			assert.strictEqual(serializedWithFunction.content, serializedWithJSONStringify);
 		});
 	});
 });
