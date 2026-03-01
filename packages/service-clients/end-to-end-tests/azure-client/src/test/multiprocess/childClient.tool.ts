@@ -19,6 +19,7 @@ import { LogLevel } from "@fluidframework/core-interfaces";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
 	getPresence,
 	type Attendee,
 	type Presence,
@@ -487,6 +488,7 @@ class MessageHandler {
 				onDisconnected: this.onDisconnected,
 			});
 			this.container = container;
+			// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
 			const presence = getPresence(container);
 			this.presence = presence;
 

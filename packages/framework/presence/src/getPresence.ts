@@ -161,6 +161,8 @@ const ContainerPresenceFactory = {
  * @returns the {@link Presence}
  *
  * @beta
+ *
+ * @deprecated Import from `fluid-framework/beta` instead. This export will be removed in the 2.100.0 release.
  */
 export const getPresence: (fluidContainer: IFluidContainer) => Presence = getPresenceAlpha;
 
@@ -170,6 +172,8 @@ export const getPresence: (fluidContainer: IFluidContainer) => Presence = getPre
  * @returns the {@link PresenceWithNotifications}
  *
  * @alpha
+ *
+ * @deprecated Import from `fluid-framework/alpha` instead. This export will be removed in the 2.100.0 release.
  */
 export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithNotifications {
 	assert(
