@@ -655,7 +655,7 @@ export class BuildGraph {
 		traceGraph("package created");
 
 		// Create all the dependent packages
-		// eslint-disable-next-line no-constant-condition
+
 		while (true) {
 			const node = pendingInitDep.pop();
 			if (node === undefined) {

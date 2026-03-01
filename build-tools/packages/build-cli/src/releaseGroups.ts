@@ -35,7 +35,6 @@ export type ReleaseGroup = (typeof knownReleaseGroups)[number];
  * A type guard used to determine if a string is a ReleaseGroup.
  */
 export function isReleaseGroup(str: string | undefined): str is ReleaseGroup {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 	return str === undefined ? false : knownReleaseGroups.includes(str as any);
 }
 

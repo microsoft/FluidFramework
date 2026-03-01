@@ -64,10 +64,9 @@ function mergeResults(
 	} else {
 		into.typeAsString = `${into.typeAsString}${separator}${from.typeAsString}`;
 		for (const v of from.replacedTypes) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			into.replacedTypes!.add(v);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
 		into.requiredGenerics!.merge(from.requiredGenerics);
 	}
 }
@@ -118,7 +117,7 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 	// don't try to decompose aliases because they are handled at their declaration
 	// enums because they are unions that don't need to be decomposed
 	// these still need to be converted to strings because they are defined symbols
-	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+
 	if (node.getAliasSymbol() || node.isEnum()) {
 		result.typeAsString = `"${result.typeAsString}"`;
 	}
@@ -142,10 +141,7 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
 	if (typeArgs.length > 0) {
 		// Array shorthand (type[]) is handled by type arguments
 		const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
-		const symbolName = checker.compilerObject.symbolToString(
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			node.compilerType.getSymbol()!,
-		);
+		const symbolName = checker.compilerObject.symbolToString(node.compilerType.getSymbol()!);
 		typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
 		typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
 		return typeArgsResult;
@@ -169,7 +165,7 @@ export function decomposeTypes(
 ): DecompositionResult {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const result = {} as DecompositionResult;
-	// eslint-disable-next-line array-callback-return
+
 	nodes.map((t) => {
 		const subResult = decomposeType(checker, t);
 		mergeResults(result, subResult, separator);

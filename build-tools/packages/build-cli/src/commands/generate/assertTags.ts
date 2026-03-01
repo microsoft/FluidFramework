@@ -197,9 +197,9 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 		for (const pkg of packages) {
 			// Package configuration:
-			// eslint-disable-next-line no-await-in-loop
+
 			const tsconfigPath = await this.getTsConfigPath(pkg);
-			// eslint-disable-next-line no-await-in-loop
+
 			const packageConfig = await config.search(pkg.directory);
 			let assertionFunctions: AssertionFunctions;
 			if (packageConfig === null) {
@@ -319,7 +319,6 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 								`Duplicate shortcode 0x${numLitValue.toString(
 									16,
 								)} detected\n\t${getCallsiteString(
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 									collected.shortCodes.get(numLitValue)!,
 								)}\n\t${getCallsiteString(numLit)}`,
 							);
@@ -349,9 +348,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 								);
 							};
 
-							// eslint-disable-next-line max-depth
 							if (shouldRemoveSurroundingQuotes(originalErrorText)) {
-								// eslint-disable-next-line unicorn/prefer-string-slice
 								originalErrorText = originalErrorText.substring(
 									1,
 									originalErrorText.length - 1,
@@ -384,10 +381,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		if (templateErrors.length > 0) {
 			errorMessages.push(
 				`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
-					`Use a string literal instead.\n${templateErrors
-						// eslint-disable-next-line unicorn/no-array-callback-reference
-						.map(getCallsiteString)
-						.join("\n")}`,
+					`Use a string literal instead.\n${templateErrors.map(getCallsiteString).join("\n")}`,
 			);
 		}
 		if (otherErrors.length > 0) {

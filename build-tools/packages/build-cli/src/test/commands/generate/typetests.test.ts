@@ -19,7 +19,6 @@ import type { TypeData } from "../../../typeValidator/typeData.js";
 
 describe("generate:typetests", () => {
 	const logger = {
-		/* eslint-disable @typescript-eslint/explicit-function-return-type */
 		log: () => assert.fail(),
 		info: () => assert.fail(),
 		warning: () => assert.fail(),
@@ -28,7 +27,6 @@ describe("generate:typetests", () => {
 		logHr: () => assert.fail(),
 		logIndent: () => assert.fail(),
 	};
-	/* eslint-enable @typescript-eslint/explicit-function-return-type */
 
 	function forCompare(data: Map<string, TypeData>, includeTypeOf?: true): unknown[] {
 		return [...data.entries()].map(([k, v]) => ({

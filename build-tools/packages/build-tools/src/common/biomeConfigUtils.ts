@@ -95,7 +95,7 @@ export interface BiomeConfigReader {
  * @param directoryOrConfigFile - A path to a directory or a Biome config file.
  * @param gitRepo - A GitRepo instance that is used to enumerate files.
  * @param forceVersion - If provided, forces the use of a specific Biome version reader
- *                       instead of auto-detecting.
+ * instead of auto-detecting.
  * @returns A BiomeConfigReader (for 1.x) or Biome2ConfigReader (for 2.x) based on the detected version.
  */
 export async function createBiomeConfigReader(
