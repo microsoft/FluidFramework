@@ -10,8 +10,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-// This import is required for intellisense in @link doc comments on mouseover in VSCode.
-// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
