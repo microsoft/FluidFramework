@@ -22,13 +22,53 @@ Dependency updates only.
 
 ## Unreleased
 
+### ⚠️ BREAKING CHANGE: Flat Config Only
+
+This package now uses ESLint flat config format exclusively. The legacy `.eslintrc` format is no longer supported.
+
+**Requirements:**
+
+- ESLint 9 (recommended), or
+- ESLint 8.21+ with `ESLINT_USE_FLAT_CONFIG=true` environment variable
+
+**Migration:**
+
+Replace your `.eslintrc.cjs`:
+
+```javascript
+// OLD - .eslintrc.cjs (no longer supported)
+module.exports = { extends: ["@fluidframework/eslint-config-fluid/strict"] };
+```
+
+With `eslint.config.mjs`:
+
+```javascript
+// NEW - eslint.config.mjs
+import { strict } from "@fluidframework/eslint-config-fluid";
+export default [...strict];
+```
+
+For ESLint 8.21+ users, set the environment variable:
+
+```bash
+ESLINT_USE_FLAT_CONFIG=true eslint .
+```
+
+**Removed files:**
+
+- `base.js`, `minimal-deprecated.js`, `recommended.js`, `strict.js`, `strict-biome.js`, `index.js`
+
+**Removed dependency:**
+
+- `@eslint/eslintrc` (FlatCompat no longer needed)
+
 ### Native ESLint 9 Flat Config (No FlatCompat)
 
-The flat config implementation has been refactored to use native ESLint 9 flat config format, removing the dependency on `FlatCompat` from `@eslint/eslintrc`. This provides cleaner configuration and better compatibility with ESLint 9.
+The flat config implementation uses native ESLint 9 flat config format, importing plugins directly without `FlatCompat`. This provides cleaner configuration and better compatibility with ESLint 9.
 
 #### Flat Config Exports
 
-The `flat.mts` module now exports four configurations:
+The `flat.mts` module exports four configurations:
 
 - `recommended` - The recommended configuration for most projects
 - `strict` - Stricter rules for production code
@@ -37,7 +77,7 @@ The `flat.mts` module now exports four configurations:
 
 #### Modular Structure
 
-The configuration is now organized into a modular structure under `library/`:
+The configuration is organized into a modular structure under `library/`:
 
 - `library/constants.mts` - Shared constants (ignores, file patterns, import restrictions)
 - `library/settings.mts` - Plugin settings (import-x, jsdoc)
@@ -52,19 +92,6 @@ The following packages have been removed from dependencies:
 - `@rushstack/eslint-plugin-security`
 
 The `@rushstack/eslint-plugin-security` plugin has been removed from all configurations. The `patch/modern-module-resolution.js` file has also been removed as it was only needed to support the `@rushstack/eslint-patch` dependency.
-
-### ESLint 9 Flat Config Support
-
-This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
-
-Key features:
-
-- New `flat.mjs` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
-- Automatic handling of type-aware parsing configuration for JavaScript files and test files
-- Generated `eslint.config.mjs` files for all packages in the repository
-- Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
-
-Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
 
 ### ESLint Rule Changes
 
