@@ -355,9 +355,15 @@ extends:
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
-              # Incremental build cache: restore .tsbuildinfo and .done.build.log files from previous builds.
-              # TypeScript and fluid-build use content hashes (not mtimes) to validate these files,
-              # so stale caches are safe — tasks simply re-run when their inputs change.
+              # Incremental build cache: restore .tsbuildinfo files from previous builds.
+              # TypeScript's TscTask uses content hashes to validate tsbuildinfo files,
+              # so stale caches are safe — tsc simply recompiles when inputs change.
+              #
+              # We only cache .tsbuildinfo files (not .done.build.log files) because:
+              # - TscTask (the main build bottleneck) uses tsbuildinfo directly, not done files
+              # - Done files for non-tsc tasks (typetests:gen, copyfiles) can become stale
+              #   after "Set Package Version" bumps versions, causing build failures
+              # - Non-tsc tasks are fast enough to re-run every build
               #
               # We use DownloadPipelineArtifact/PublishPipelineArtifact instead of Cache@2 because
               # Cache@2 requires an existing cache entry (from a restore key hit) before it will
@@ -370,7 +376,7 @@ extends:
                   project: '$(System.TeamProjectId)'
                   pipeline: '$(System.DefinitionId)'
                   runVersion: 'latestFromBranch'
-                  runBranch: '$(Build.SourceBranch)'
+                  runBranch: 'refs/heads/main'
                   artifact: 'tsc-cache'
                   path: $(Pipeline.Workspace)/.fluid-tsc-cache
                   allowPartiallySucceededBuilds: true
@@ -387,8 +393,8 @@ extends:
                     if [ -f "$CACHE_DIR/incremental-cache.tar.gz" ]; then
                       echo "Restoring incremental build cache..."
                       tar xzf "$CACHE_DIR/incremental-cache.tar.gz" 2>/dev/null || echo "Warning: cache extraction had issues, continuing with clean build"
-                      FILE_COUNT=$(find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) -not -path '*/node_modules/*' | wc -l)
-                      echo "Restored $FILE_COUNT cached build files."
+                      FILE_COUNT=$(find . -name '*.tsbuildinfo' -not -path '*/node_modules/*' | wc -l)
+                      echo "Restored $FILE_COUNT cached tsbuildinfo files."
                     else
                       echo "No incremental build cache archive found."
                     fi
@@ -412,22 +418,20 @@ extends:
                     set -eu -o pipefail
                     CACHE_DIR="$(Build.ArtifactStagingDirectory)/tsc-cache"
                     mkdir -p "$CACHE_DIR"
-                    # Collect .tsbuildinfo and .done.build.log files into a tar archive.
-                    # Exclude api-extractor done files (~115 MB) — they're large and get
-                    # regenerated quickly from their tsbuildinfo dependencies.
-                    find . \( -name '*.tsbuildinfo' -o -name '*.done.build.log' \) \
+                    # Collect only .tsbuildinfo files into a tar archive.
+                    # We intentionally exclude .done.build.log files — see the restore step comment.
+                    find . -name '*.tsbuildinfo' \
                       -not -path '*/node_modules/*' \
-                      -not -name 'api-extractor-*.done.build.log' \
                       > "$CACHE_DIR/file-list.txt"
                     FILE_COUNT=$(wc -l < "$CACHE_DIR/file-list.txt")
                     if [ "$FILE_COUNT" -gt 0 ]; then
-                      echo "Caching $FILE_COUNT incremental build files..."
+                      echo "Caching $FILE_COUNT tsbuildinfo files..."
                       tar czf "$CACHE_DIR/incremental-cache.tar.gz" -T "$CACHE_DIR/file-list.txt"
                       rm "$CACHE_DIR/file-list.txt"
                       ls -lh "$CACHE_DIR/incremental-cache.tar.gz"
                       echo "Incremental build cache saved."
                     else
-                      echo "No incremental build files found to cache."
+                      echo "No tsbuildinfo files found to cache."
                     fi
 
               - task: Npm@1
