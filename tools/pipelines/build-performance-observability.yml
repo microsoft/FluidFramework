@@ -2,16 +2,61 @@
 # Licensed under the MIT License.
 
 # build-performance-observability pipeline
+# This pipeline collects build metrics using ADO REST APIs and generates an HTML dashboard.
+# When run from the "public" project: collects PR build metrics
+# When run from the "internal" project: collects internal build metrics
+
+parameters:
+- name: forceAlertFailure
+  displayName: Force threshold failure (for testing)
+  type: boolean
+  default: false
 
 name: $(Build.BuildId)
+
+schedules:
+- cron: "0 2 * * *"
+  displayName: Daily build metrics collection
+  branches:
+    include:
+    - main
+  always: true
 
 trigger: none
 
 pr: none
 
 variables:
-  - name: foo
-    value: 'bar'
+  # Provides ado-feeds-primary-registry for pnpm install
+  - group: ado-feeds
+  # Number of recent builds to fetch
+  - name: buildCount
+    value: 500
+  # Organization
+  - name: organization
+    value: fluidframework
+  # Mode: public = PR builds, internal = internal builds
+  - name: runMode
+    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+      value: public
+    ${{ else }}:
+      value: internal
+  # Build definition IDs
+  - name: publicPRBuildDefinitionId
+    value: 11
+  - name: internalBuildDefinitionId
+    value: 12
+  # Project to query (same as where pipeline runs)
+  - name: targetProject
+    value: $(System.TeamProject)
+  # Max concurrent API requests when fetching timeline data
+  - name: parallelJobs
+    value: 20
+  # Alert thresholds
+  - name: avgDurationThreshold
+    value: 90  # Maximum acceptable average build duration in minutes
+  - name: changePeriodThreshold
+    value: 15  # Maximum acceptable percentage change (3-day for public, 7-day for internal)
 
 resources:
   repositories:
@@ -38,18 +83,92 @@ extends:
         os: windows
 
     stages:
-    - stage: example_stage
-      displayName: Example Stage
+    - stage: collect_metrics
+      displayName: Collect Build Metrics
       jobs:
-      - job: example_job
-        displayName: Example Job
+      - job: collect
+        displayName: Collect and Process Metrics
         steps:
-        - checkout: none
+        - checkout: self
+          clean: true
 
+        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
+
+        # Collect build data, fetch timelines, and process into aggregated metrics
         - task: Bash@3
-          displayName: Example step
+          displayName: Collect build data and generate metrics
+          env:
+            ADO_API_TOKEN: $(System.AccessToken)
+            ORG: $(organization)
+            PROJECT: $(targetProject)
+            MODE: $(runMode)
+            BUILD_COUNT: $(buildCount)
+            PR_BUILD_DEF_ID: $(publicPRBuildDefinitionId)
+            INTERNAL_BUILD_DEF_ID: $(internalBuildDefinitionId)
+            PARALLEL_JOBS: $(parallelJobs)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)/data
           inputs:
             targetType: 'inline'
             script: |
-              echo "Hello world"
-              echo "Variable value: $(foo)"
+              flub collect build-perf
+
+        - task: Bash@3
+          displayName: Generate HTML dashboard artifact
+          env:
+            MODE: $(runMode)
+            DATA_DIR: $(Build.ArtifactStagingDirectory)/data
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)/dashboard
+          inputs:
+            targetType: 'inline'
+            script: |
+              flub generate build-perf
+
+        templateContext:
+          outputParentDirectory: $(Build.ArtifactStagingDirectory)
+          outputs:
+          - output: pipelineArtifact
+            displayName: Publish data artifact
+            targetPath: $(Build.ArtifactStagingDirectory)/data
+            artifactName: data
+            publishLocation: pipeline
+          - output: pipelineArtifact
+            displayName: Publish HTML dashboard artifact
+            targetPath: $(Build.ArtifactStagingDirectory)/dashboard
+            artifactName: dashboard
+            publishLocation: pipeline
+
+    - stage: alert_on_thresholds
+      displayName: Check Thresholds
+      dependsOn: collect_metrics
+      condition: succeeded('collect_metrics')
+      jobs:
+      - job: check_thresholds
+        displayName: Check Performance Thresholds
+        templateContext:
+          inputs:
+          - input: pipelineArtifact
+            artifactName: data
+            targetPath: $(Build.ArtifactStagingDirectory)/data
+        steps:
+        - checkout: self
+          clean: true
+
+        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
+
+        - task: Bash@3
+          name: checkThresholds
+          displayName: Check performance thresholds
+          env:
+            MODE: $(runMode)
+            DATA_DIR: $(Build.ArtifactStagingDirectory)/data
+            AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
+            CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
+            FORCE_FAILURE: ${{ parameters.forceAlertFailure }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              flub check build-perf

@@ -1,0 +1,96 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+import { Flags } from "@oclif/core";
+
+import {
+	generateStandaloneHtml,
+	TEMPLATES_DIR,
+} from "../../library/buildPerf/htmlGenerator.js";
+import type { BuildPerfMode } from "../../library/buildPerf/types.js";
+import { BaseCommand } from "../../library/commands/base.js";
+
+/**
+ * Generate a standalone HTML dashboard artifact from processed metrics.
+ * The generated file contains data for a single mode (public or internal)
+ * inlined directly into the HTML, so it can be viewed offline.
+ */
+export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHtmlCommand> {
+	static readonly description =
+		"Generate a standalone HTML dashboard artifact from processed metrics.";
+
+	static readonly flags = {
+		mode: Flags.string({
+			description: 'Pipeline mode: "public" or "internal".',
+			env: "MODE",
+			required: true,
+			options: ["public", "internal"],
+		}),
+		format: Flags.string({
+			description: "Output format for the generated report.",
+			options: ["html"],
+			default: "html",
+		}),
+		inputDir: Flags.directory({
+			description:
+				"Directory containing the data JSON files (public-data.json / internal-data.json).",
+			env: "DATA_DIR",
+			required: true,
+		}),
+		outputDir: Flags.directory({
+			description: "Directory where the dashboard.html will be written.",
+			env: "OUTPUT_DIR",
+			required: true,
+		}),
+		...BaseCommand.flags,
+	};
+
+	static readonly examples = [
+		{
+			description: "Generate standalone HTML dashboard for public mode.",
+			command:
+				"<%= config.bin %> <%= command.id %> --mode public --inputDir ./data --outputDir ./output",
+		},
+	];
+
+	public async run(): Promise<void> {
+		const { flags } = this;
+		// oclif validates --mode against the options array, so the cast is safe.
+		const mode = flags.mode as BuildPerfMode;
+
+		mkdirSync(flags.outputDir, { recursive: true });
+		const standaloneFile = path.join(flags.outputDir, "dashboard.html");
+
+		this.logHr();
+		this.log(`Generating standalone HTML dashboard (${mode} mode)`);
+		this.logHr();
+
+		// Determine the data file for this mode
+		const dataFile =
+			mode === "public"
+				? path.join(flags.inputDir, "public-data.json")
+				: path.join(flags.inputDir, "internal-data.json");
+
+		if (!existsSync(dataFile)) {
+			this.error(`Data file not found: ${dataFile}`);
+		}
+
+		const fileSize = statSync(dataFile).size;
+		this.log(`Found data file: ${dataFile} (${fileSize} bytes)`);
+
+		// Read data and generate standalone HTML
+		const templatePath = path.join(TEMPLATES_DIR, "dashboard.ejs");
+		const dataJson = readFileSync(dataFile, "utf8").trim();
+
+		const html = generateStandaloneHtml(templatePath, dataJson, mode);
+		writeFileSync(standaloneFile, html, "utf8");
+
+		this.log(`Generated standalone dashboard: ${standaloneFile}`);
+		this.log(`File size: ${statSync(standaloneFile).size} bytes`);
+	}
+}
