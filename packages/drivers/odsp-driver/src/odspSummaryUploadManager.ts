@@ -89,7 +89,7 @@ export class OdspSummaryUploadManager {
 		referenceSequenceNumber: number,
 		tree: ISummaryTree,
 	): Promise<IWriteSummaryResponse> {
-		const containsProtocolTree = isCombinedAppAndProtocolSummary(tree);
+		const containsProtocolTree = isCombinedAppAndProtocolSummary(tree, ".history");
 		const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
 			parentHandle,
 			tree,

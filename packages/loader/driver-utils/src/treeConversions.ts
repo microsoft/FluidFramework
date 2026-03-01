@@ -18,11 +18,17 @@ import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew.js";
  */
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
-	const adaptSummaryTree = isCombinedAppAndProtocolSummary(summaryTree);
+	const adaptSummaryTree = isCombinedAppAndProtocolSummary(summaryTree, ".history");
 	const allSummaryEntries = adaptSummaryTree
 		? [
 				...Object.entries(summaryTree.tree[".protocol"].tree),
 				...Object.entries(summaryTree.tree[".app"].tree),
+				...(summaryTree.tree[".history"] === undefined
+					? []
+					: ([[".history", summaryTree.tree[".history"]]] as [
+							string,
+							ISummaryTree["tree"][string],
+						][])),
 			]
 		: Object.entries(summaryTree.tree);
 

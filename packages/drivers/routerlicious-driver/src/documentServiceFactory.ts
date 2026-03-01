@@ -131,7 +131,7 @@ export class RouterliciousDocumentServiceFactory
 		}
 		const [, tenantId] = parsedUrl.pathname.split("/");
 
-		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
+		if (!isCombinedAppAndProtocolSummary(createNewSummary, ".history")) {
 			throw new Error("Protocol and App Summary required in the full summary");
 		}
 		const protocolSummary = createNewSummary.tree[".protocol"];
