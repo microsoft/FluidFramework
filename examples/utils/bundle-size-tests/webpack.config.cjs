@@ -134,4 +134,5 @@ module.exports = {
 	// Enabling source maps allows using source-map-explorer to investigate bundle contents,
 	// which provides more fine grained details than BundleAnalyzerPlugin, so its nice for manual investigations.
 	devtool: "source-map",
+	performance: { hints: false },
 };

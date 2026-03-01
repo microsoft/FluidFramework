@@ -46,4 +46,5 @@ module.exports = {
 		path: path.resolve(__dirname, "dist"),
 		library: { name: "FluidLoader", type: "umd" },
 	},
+	performance: { hints: false },
 };
