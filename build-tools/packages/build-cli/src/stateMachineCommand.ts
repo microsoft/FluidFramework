@@ -4,6 +4,7 @@
  */
 
 import { type Command, Flags } from "@oclif/core";
+import { call, run } from "effection";
 import type { Machine } from "jssm";
 import chalk from "picocolors";
 
@@ -98,6 +99,7 @@ export abstract class StateMachineCommand<
 		const { flags, machine, handler, logger, data } = this;
 
 		if (flags.testMode === true) {
+			// Test mode: handle a single state and exit. No effection needed.
 			const machineStates = machine.states();
 			if (flags.state !== undefined) {
 				if (!machineStates.includes(flags.state)) {
@@ -120,28 +122,49 @@ export abstract class StateMachineCommand<
 				}
 			}
 		} else {
-			do {
-				const state = machine.state();
+			// Capture `this` for use inside the generator function.
+			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			const self = this;
+			let wasHalted = false;
 
-				// eslint-disable-next-line no-await-in-loop
-				const handled = await handler?.handleState(
-					state,
-					machine,
-					flags.testMode,
-					logger,
-					data,
-				);
-				if (handled !== true) {
-					this.error(chalk.red(`Unhandled state: ${state}`));
+			const task = run(function* () {
+				while (true) {
+					const state = machine.state();
+
+					const handled = yield* call(async () =>
+						handler?.handleState(state, machine, flags.testMode, logger, data),
+					);
+
+					if (handled !== true) {
+						self.error(chalk.red(`Unhandled state: ${state}`));
+					}
+
+					if (machine.state_is_final(state)) {
+						self.verbose(`Exiting. Final state: ${state}`);
+						return;
+					}
 				}
+			});
 
-				if (machine.state_is_final(state)) {
-					this.verbose(`Exiting. Final state: ${state}`);
-					this.exit(0);
+			// Install signal handlers for graceful shutdown.
+			const onSignal = (): void => {
+				wasHalted = true;
+				task.halt();
+			};
+			process.on("SIGINT", onSignal);
+			process.on("SIGTERM", onSignal);
+
+			try {
+				await task;
+				if (wasHalted) {
+					this.verbose("State machine halted by signal.");
+					this.exit(130);
 				}
-
-				// eslint-disable-next-line no-constant-condition
-			} while (true);
+				this.exit(0);
+			} finally {
+				process.off("SIGINT", onSignal);
+				process.off("SIGTERM", onSignal);
+			}
 		}
 	}
 

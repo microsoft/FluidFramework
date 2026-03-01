@@ -141,9 +141,6 @@ importers:
       '@rushstack/node-core-library':
         specifier: ^5.19.0
         version: 5.19.0(@types/node@22.19.1)
-      async:
-        specifier: ^3.2.6
-        version: 3.2.6
       azure-devops-node-api:
         specifier: ^11.2.0
         version: 11.2.0
@@ -159,6 +156,9 @@ importers:
       debug:
         specifier: ^4.4.3
         version: 4.4.3(supports-color@8.1.1)
+      effection:
+        specifier: ^4.0.0
+        version: 4.0.2
       execa:
         specifier: ^5.1.1
         version: 5.1.1
@@ -286,9 +286,6 @@ importers:
       '@oclif/test':
         specifier: ^4.1.15
         version: 4.1.15(@oclif/core@4.8.0)
-      '@types/async':
-        specifier: ^3.2.25
-        version: 3.2.25
       '@types/chai':
         specifier: ^5.2.3
         version: 5.2.3
@@ -2949,6 +2946,10 @@ packages:
 
   effect@3.19.6:
     resolution: {integrity: sha512-Eh1E/CI+xCAcMSDC5DtyE29yWJINC0zwBbwHappQPorjKyS69rCA8qzpsHpfhKnPDYgxdg8zkknii8mZ+6YMQA==}
+
+  effection@4.0.2:
+    resolution: {integrity: sha512-O8WMGP10nPuJDwbNGILcaCNWS+CvDYjcdsUSD79nWZ+WtUQ8h1MEV7JJwCSZCSeKx8+TdEaZ/8r6qPTR2o/o8w==}
+    engines: {node: '>= 16'}
 
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
@@ -8527,6 +8528,8 @@ snapshots:
     dependencies:
       '@standard-schema/spec': 1.0.0
       fast-check: 3.23.2
+
+  effection@4.0.2: {}
 
   ejs@3.1.10:
     dependencies:
