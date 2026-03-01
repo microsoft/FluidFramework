@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { BuildNode, TraitLabel, TreeView, TreeViewNode } from "@fluid-experimental/tree";
+import type {
+	BuildNode,
+	ISharedTree,
+	TraitLabel,
+	TreeView,
+	TreeViewNode,
+} from "@fluid-experimental/tree";
 import {
 	Change,
 	EagerCheckout,
+	// eslint-disable-next-line import-x/no-deprecated
 	SharedTree as LegacySharedTree,
 	StablePlace,
 	StableRange,
@@ -69,10 +76,10 @@ export class LegacyTreeInventoryItem
 }
 
 export class LegacyTreeInventoryList extends DataObject implements IInventoryList {
-	private _tree: LegacySharedTree | undefined;
+	private _tree: ISharedTree | undefined;
 	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
-	private get tree(): LegacySharedTree {
+	private get tree(): ISharedTree {
 		if (this._tree === undefined) {
 			throw new Error("Not initialized properly");
 		}
@@ -120,8 +127,9 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 	protected async initializingFirstTime(): Promise<void> {
 		const legacySharedTree = this.runtime.createChannel(
 			undefined,
+			// eslint-disable-next-line import-x/no-deprecated
 			LegacySharedTree.getFactory().type,
-		) as LegacySharedTree;
+		) as ISharedTree;
 
 		const inventoryNode: BuildNode = {
 			definition: "inventory",
@@ -185,12 +193,11 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 	 */
 	protected async hasInitialized(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._tree = await this.root
-			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
-			.get();
+		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(legacySharedTreeKey)!.get();
 
 		// We must use a checkout in order to get "viewChange" events - it doesn't change any of the rest of our usage though.
-		const checkout = new EagerCheckout(this._tree);
+		// eslint-disable-next-line import-x/no-deprecated
+		const checkout = new EagerCheckout(this._tree as LegacySharedTree);
 		// This event handler fires for any change to the tree, so it needs to handle all possibilities (change, add, remove).
 		checkout.on("viewChange", (before: TreeView, after: TreeView) => {
 			const { changed, added, removed } = before.delta(after);
@@ -301,6 +308,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 export const LegacyTreeInventoryListFactory = new DataObjectFactory<LegacyTreeInventoryList>(
 	"legacy-tree-inventory-list",
 	LegacyTreeInventoryList,
+	// eslint-disable-next-line import-x/no-deprecated
 	[LegacySharedTree.getFactory()],
 	{},
 );

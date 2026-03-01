@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { ISharedTree } from "@fluid-experimental/tree";
 import {
-	SharedTree as LegacySharedTree,
 	MigrationShim,
 	MigrationShimFactory,
+	SharedTreeFactory as LegacySharedTreeFactory,
 	SharedTreeShim,
 	SharedTreeShimFactory,
+	WriteFormat,
 } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -36,7 +38,7 @@ const DEBUG_migrateSlowly = false;
 
 const newTreeFactory = SharedTree.getFactory();
 
-function migrate(legacyTree: LegacySharedTree, newTree: ITree): void {
+function migrate(legacyTree: ISharedTree, newTree: ITree): void {
 	// Revert local edits - otherwise we will be eventually inconsistent
 	const edits = legacyTree.edits;
 	const localEdits = [...edits.getLocalEdits()].reverse();
@@ -61,7 +63,7 @@ function migrate(legacyTree: LegacySharedTree, newTree: ITree): void {
 	NewTreeInventoryListController.initializeTree(newTree, initialTree);
 }
 
-const legacyTreeFactory = LegacySharedTree.getFactory();
+const legacyTreeFactory = new LegacySharedTreeFactory(WriteFormat.v0_1_1);
 const migrationShimFactory = new MigrationShimFactory(
 	legacyTreeFactory,
 	newTreeFactory,
@@ -116,7 +118,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 			undefined,
 			migrationShimFactory.type,
 		) as MigrationShim;
-		const legacySharedTree = migrationShim.currentTree as LegacySharedTree;
+		const legacySharedTree = migrationShim.currentTree as ISharedTree;
 
 		LegacyTreeInventoryListController.initializeTree(legacySharedTree);
 
@@ -151,7 +153,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 			.get<IFluidHandle<MigrationShim | SharedTreeShim>>(treeKey)!
 			.get();
 		if (this.shim.attributes.type === legacyTreeFactory.type) {
-			const tree = this.shim.currentTree as LegacySharedTree;
+			const tree = this.shim.currentTree as ISharedTree;
 			this._model = new LegacyTreeInventoryListController(tree);
 			const migrationShim = this.shim as MigrationShim;
 			migrationShim.on("migrated", () => {

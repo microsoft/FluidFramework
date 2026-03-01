@@ -351,7 +351,7 @@ export type EditApplicationOutcome =
  */
 export interface ISharedTreeEvents extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler);
-	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler);
+	(event: 'sequencedEditApplied', listener: SequencedEditAppliedHandler);
 }
 
 /**
@@ -384,6 +384,8 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
  * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
+ * @deprecated Direct usage of the SharedTree class is deprecated. Use the {@link ISharedTree} interface
+ * to reference tree instances instead. The class will be removed from the public API surface in a future release.
  * @alpha
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
