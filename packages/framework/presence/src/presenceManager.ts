@@ -71,7 +71,10 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	public readonly attendees: Presence["attendees"];
 
 	public readonly states = {
-		getWorkspace: <TSchema extends StatesWorkspaceSchema>(
+		getWorkspace: <
+			TSchema extends StatesWorkspaceSchema<TSchemaKeys>,
+			TSchemaKeys extends string & keyof TSchema,
+		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
 			settings?: BroadcastControlSettings,
@@ -79,7 +82,10 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent, settings),
 	};
 	public readonly notifications = {
-		getWorkspace: <TSchema extends NotificationsWorkspaceSchema>(
+		getWorkspace: <
+			TSchema extends NotificationsWorkspaceSchema<TSchemaKeys>,
+			TSchemaKeys extends string & keyof TSchema,
+		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
 		): NotificationsWorkspace<TSchema> =>

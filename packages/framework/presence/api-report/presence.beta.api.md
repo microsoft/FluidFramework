@@ -279,7 +279,7 @@ export interface Presence {
     };
     readonly events: Listenable<PresenceEvents>;
     readonly states: {
-        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+        getWorkspace<StatesSchema extends StatesWorkspaceSchema<SchemaKeys>, SchemaKeys extends string & keyof StatesSchema = string & keyof StatesSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
     };
 }
 
@@ -327,7 +327,7 @@ export type StateSchemaValidator<T> = (
 unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
-export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
+export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema<TSchemaKeys>, TManagerConstraints = unknown, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> {
     add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, configuration: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
@@ -335,7 +335,7 @@ export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManager
 }
 
 // @beta @sealed
-export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
+export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema<TSchemaKeys>, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> = {
     /**
     * Registered State objects.
     */
@@ -346,9 +346,9 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
 export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>;
 
 // @beta
-export interface StatesWorkspaceSchema {
-    [key: string]: StatesWorkspaceEntry<typeof key, InternalPresenceTypes.ValueDirectoryOrState<unknown>>;
-}
+export type StatesWorkspaceSchema<Keys extends string = string> = {
+    [Key in Keys]: StatesWorkspaceEntry<Key, InternalPresenceTypes.ValueDirectoryOrState<unknown>>;
+};
 
 // @beta @system
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
