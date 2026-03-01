@@ -679,6 +679,10 @@ export class PerformanceEvent {
 		} catch (error) {
 			perfEvent.cancel(undefined, error);
 			throw error;
+		} finally {
+			// Scope-bound cleanup: ensure performance marks are always cleared,
+			// even if cancel() was called (which doesn't create a measure).
+			perfEvent.clearPerformanceMarks();
 		}
 	}
 
@@ -718,6 +722,10 @@ export class PerformanceEvent {
 		} catch (error) {
 			perfEvent.cancel(undefined, error);
 			throw error;
+		} finally {
+			// Scope-bound cleanup: ensure performance marks are always cleared,
+			// even if cancel() was called (which doesn't create a measure).
+			perfEvent.clearPerformanceMarks();
 		}
 	}
 
@@ -728,6 +736,37 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEventExt;
 	private readonly startTime = performanceNow();
 	private startMark?: string;
+
+	/**
+	 * Marks and measures scheduled for deferred cleanup.
+	 * Entries are collected and cleared in a single batch to allow
+	 * Performance Timeline observers time to capture them.
+	 */
+	private static readonly pendingMarkCleanup = new Set<string>();
+	private static readonly pendingMeasureCleanup = new Set<string>();
+	private static cleanupScheduled = false;
+
+	/**
+	 * Schedules deferred cleanup of performance marks and measures.
+	 * Uses a throttled timer so entries remain observable in the Performance
+	 * Timeline for a short window before being cleared.
+	 */
+	private static scheduleDeferredCleanup(): void {
+		if (!PerformanceEvent.cleanupScheduled) {
+			PerformanceEvent.cleanupScheduled = true;
+			setTimeout(() => {
+				for (const name of PerformanceEvent.pendingMarkCleanup) {
+					globalThis.performance.clearMarks(name);
+				}
+				for (const name of PerformanceEvent.pendingMeasureCleanup) {
+					globalThis.performance.clearMeasures(name);
+				}
+				PerformanceEvent.pendingMarkCleanup.clear();
+				PerformanceEvent.pendingMeasureCleanup.clear();
+				PerformanceEvent.cleanupScheduled = false;
+			}, 10_000);
+		}
+	}
 
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
@@ -741,12 +780,14 @@ export class PerformanceEvent {
 		}
 
 		if (
-			typeof window === "object" &&
-			window?.performance?.mark !== undefined &&
-			window?.performance?.mark !== null
+			typeof globalThis === "object" &&
+			typeof globalThis.performance?.mark === "function" &&
+			typeof globalThis.performance?.measure === "function" &&
+			typeof globalThis.performance?.clearMarks === "function" &&
+			typeof globalThis.performance?.clearMeasures === "function"
 		) {
 			this.startMark = `${event.eventName}-start`;
-			window.performance.mark(this.startMark);
+			globalThis.performance.mark(this.startMark);
 		}
 	}
 
@@ -779,8 +820,39 @@ export class PerformanceEvent {
 	private performanceEndMark(): void {
 		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
-			window.performance.mark(endMark);
-			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
+			globalThis.performance.mark(endMark);
+			try {
+				globalThis.performance.measure(this.event.eventName, this.startMark, endMark);
+			} catch (error: unknown) {
+				// The start mark may have been cleared by deferred cleanup from a
+				// previous event with the same name. This is benign — the measure
+				// is best-effort for Performance Timeline observability.
+				// Node.js throws SyntaxError; browsers may throw DOMException.
+				if (
+					!(error instanceof SyntaxError) &&
+					!(typeof DOMException !== "undefined" && error instanceof DOMException)
+				) {
+					throw error;
+				}
+			}
+			// Schedule deferred cleanup so marks/measures remain observable
+			// in the Performance Timeline for a short window.
+			PerformanceEvent.pendingMarkCleanup.add(this.startMark);
+			PerformanceEvent.pendingMarkCleanup.add(endMark);
+			PerformanceEvent.pendingMeasureCleanup.add(this.event.eventName);
+			PerformanceEvent.scheduleDeferredCleanup();
+			this.startMark = undefined;
+		}
+	}
+
+	/**
+	 * Schedules cleanup of any remaining performance marks.
+	 * Safe to call regardless of event state — ensures no orphaned entries accumulate.
+	 */
+	private clearPerformanceMarks(): void {
+		if (this.startMark !== undefined) {
+			PerformanceEvent.pendingMarkCleanup.add(this.startMark);
+			PerformanceEvent.scheduleDeferredCleanup();
 			this.startMark = undefined;
 		}
 	}
@@ -789,6 +861,9 @@ export class PerformanceEvent {
 		if (this.markers.cancel !== undefined) {
 			this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
 		}
+
+		// Clean up orphaned performance marks to prevent accumulation
+		this.clearPerformanceMarks();
 
 		// To prevent the event from being reported again later
 		this.event = undefined;
