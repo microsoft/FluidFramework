@@ -41,8 +41,10 @@ export class WebpackTask extends LeafWithDoneFileTask {
 
 			return JSON.stringify(content);
 		} catch (e) {
-			this.traceError(`error generating done file content ${e}`);
-			return undefined;
+			this.traceError(`error generating done file content: ${e}`);
+			throw new Error(
+				`failed to generate incremental build cache for ${this.configFileFullPath}: ${e instanceof Error ? e.message : e}`,
+			);
 		}
 	}
 
