@@ -39,6 +39,7 @@ module.exports = {
 				"ci:build:docs",
 				"build:manifest",
 				"build:readme",
+				"webpack",
 			],
 			script: false,
 		},
