@@ -155,6 +155,40 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 }
 
 /**
+ * Type alias for the return type of {@link LatestFactory} when called with
+ * {@link LatestArguments}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @beta
+ * @sealed
+ */
+export type LatestConfiguration<
+	// eslint-disable-next-line @rushstack/no-new-null -- undefined is not a valid replacement for null
+	T extends object | null,
+	Key extends string,
+> = InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
+/**
+ * Type alias for the return type of {@link LatestFactory} when called with
+ * {@link LatestArgumentsRaw}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @beta
+ * @sealed
+ */
+export type LatestRawConfiguration<
+	// eslint-disable-next-line @rushstack/no-new-null -- undefined is not a valid replacement for null
+	T extends object | null,
+	Key extends string,
+> = InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+
+/**
  * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  *
  * @beta
@@ -170,7 +204,7 @@ export interface LatestFactory {
 	 */
 	<T extends object | null, Key extends string = string>(
 		args: LatestArguments<T>,
-	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+	): LatestConfiguration<T, Key>;
 
 	/**
 	 * Factory for creating a {@link LatestRaw} State object.
@@ -181,5 +215,5 @@ export interface LatestFactory {
 	 */
 	<T extends object | null, Key extends string = string>(
 		args: LatestArgumentsRaw<T>,
-	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+	): LatestRawConfiguration<T, Key>;
 }

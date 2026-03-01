@@ -47,15 +47,12 @@ export type StatesWorkspaceEntry<
  *
  * @beta
  */
-export interface StatesWorkspaceSchema {
+export type StatesWorkspaceSchema<Keys extends string = string> = {
 	/**
 	 * Key-value pairs of State objects registered with the {@link StatesWorkspace}.
 	 */
-	[key: string]: StatesWorkspaceEntry<
-		typeof key,
-		InternalTypes.ValueDirectoryOrState<unknown>
-	>;
-}
+	[Key in Keys]: StatesWorkspaceEntry<Key, InternalTypes.ValueDirectoryOrState<unknown>>;
+};
 
 /**
  * Map of State objects registered with {@link StatesWorkspace}.
@@ -63,7 +60,10 @@ export interface StatesWorkspaceSchema {
  * @sealed
  * @beta
  */
-export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
+export type StatesWorkspaceEntries<
+	TSchema extends StatesWorkspaceSchema<TSchemaKeys>,
+	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
+> = {
 	/**
 	 * Registered State objects.
 	 */
@@ -85,13 +85,15 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
  * @beta
  */
 export interface StatesWorkspace<
-	TSchema extends StatesWorkspaceSchema,
+	TSchema extends StatesWorkspaceSchema<TSchemaKeys>,
 	TManagerConstraints = unknown,
+	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
 > {
 	/**
 	 * Registers a new State object with the {@link StatesWorkspace}.
 	 * @param key - new unique key for the State object within the workspace
-	 * @param manager - factory for creating a State object
+	 * @param configuration - factory/settings for creating a State object. Use
+	 * {@link StateFactory} to create.
 	 */
 	add<
 		TKey extends string,
@@ -99,7 +101,7 @@ export interface StatesWorkspace<
 		TManager extends TManagerConstraints,
 	>(
 		key: TKey,
-		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
+		configuration: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
 	): asserts this is StatesWorkspace<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>,
 		TManagerConstraints
@@ -132,13 +134,13 @@ export interface StatesWorkspace<
  *
  * @alpha
  */
-export interface NotificationsWorkspaceSchema {
-	[key: string]: InternalTypes.ManagerFactory<
-		typeof key,
+export type NotificationsWorkspaceSchema<Keys extends string = string> = {
+	[Key in Keys]: InternalTypes.ManagerFactory<
+		Key,
 		InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 		NotificationsManager<InternalUtilityTypes.NotificationListeners<unknown>>
 	>;
-}
+};
 
 /**
  * `NotificationsWorkspace` maintains a registry of {@link NotificationsManager}s
@@ -153,7 +155,10 @@ export interface NotificationsWorkspaceSchema {
  * @sealed
  * @alpha
  */
-export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
+export interface NotificationsWorkspace<
+	TSchema extends NotificationsWorkspaceSchema<TSchemaKeys>,
+	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
+> {
 	/**
 	 * Registers a new `NotificationsManager` with the {@link NotificationsWorkspace}.
 	 * @param key - new unique key for the `NotificationsManager` within the workspace

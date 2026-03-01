@@ -50,11 +50,13 @@ export type {
 	LatestMapArguments,
 	LatestMapArgumentsRaw,
 	LatestMapClientData,
+	LatestMapConfiguration,
 	LatestMapEvents,
 	LatestMapFactory,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
 	LatestMapRaw,
+	LatestMapRawConfiguration,
 	LatestMapRawEvents,
 	StateMap,
 } from "./latestMapTypes.js";
@@ -62,9 +64,11 @@ export type {
 	Latest,
 	LatestArguments,
 	LatestArgumentsRaw,
+	LatestConfiguration,
 	LatestEvents,
 	LatestFactory,
 	LatestRaw,
+	LatestRawConfiguration,
 	LatestRawEvents,
 } from "./latestTypes.js";
 export type {
@@ -82,9 +86,11 @@ export { Notifications } from "./notificationsManager.js";
 export type {
 	NotificationEmitter,
 	NotificationListenable,
+	NotificationsConfiguration,
 	NotificationSubscriberSignatures,
 	NotificationsManager,
 	NotificationsManagerEvents,
+	NotificationsWithSubscriptionsConfiguration,
 } from "./notificationsManagerTypes.js";
 
 export { StateFactory } from "./stateFactory.js";

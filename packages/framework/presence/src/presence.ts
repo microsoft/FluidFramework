@@ -226,7 +226,10 @@ export interface Presence {
 		 * @param controls - Optional settings for default broadcast controls
 		 * @returns A {@link StatesWorkspace}
 		 */
-		getWorkspace<StatesSchema extends StatesWorkspaceSchema>(
+		getWorkspace<
+			StatesSchema extends StatesWorkspaceSchema<SchemaKeys>,
+			SchemaKeys extends string & keyof StatesSchema = string & keyof StatesSchema,
+		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedStates: StatesSchema,
 			controls?: BroadcastControlSettings,
@@ -255,7 +258,11 @@ export interface PresenceWithNotifications extends Presence {
 		 * @param requestedNotifications - Requested notifications for the workspace
 		 * @returns A Notifications workspace
 		 */
-		getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(
+		getWorkspace<
+			NotificationsSchema extends NotificationsWorkspaceSchema<SchemaKeys>,
+			SchemaKeys extends string & keyof NotificationsSchema = string &
+				keyof NotificationsSchema,
+		>(
 			notificationsId: WorkspaceAddress,
 			requestedNotifications: NotificationsSchema,
 		): NotificationsWorkspace<NotificationsSchema>;
