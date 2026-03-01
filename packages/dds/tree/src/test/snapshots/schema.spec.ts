@@ -22,7 +22,6 @@ describe("schema snapshots", () => {
 				const encoded = schemaFormat
 					.codec({
 						jsonValidator: FormatValidatorBasic,
-						minVersionForCollab: schemaFormat.minVersionForCollab,
 					})
 					.encode(schemaData);
 				takeJsonSnapshot(encoded);
