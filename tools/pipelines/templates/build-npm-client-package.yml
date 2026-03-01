@@ -370,7 +370,7 @@ extends:
                   project: '$(System.TeamProjectId)'
                   pipeline: '$(System.DefinitionId)'
                   runVersion: 'latestFromBranch'
-                  runBranch: 'refs/heads/main'
+                  runBranch: '$(Build.SourceBranch)'
                   artifact: 'tsc-cache'
                   path: $(Pipeline.Workspace)/.fluid-tsc-cache
                   allowPartiallySucceededBuilds: true
