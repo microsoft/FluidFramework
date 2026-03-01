@@ -1,5 +1,9 @@
 # @fluidframework/fluid-static
 
+## 2.90.0
+
+Dependency updates only.
+
 ## 2.83.0
 
 Dependency updates only.
