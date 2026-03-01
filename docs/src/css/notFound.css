@@ -1,0 +1,61 @@
+.ffcom-not-found {
+	width: 100%;
+	min-height: 60vh;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	padding: 4rem 1rem;
+	text-align: center;
+}
+
+.ffcom-not-found-code {
+	font-weight: 600;
+	font-size: 120px;
+	letter-spacing: -0.05em;
+	line-height: 1;
+	margin-bottom: 0;
+	color: var(--ifm-color-primary);
+}
+
+.ffcom-not-found-title {
+	font-weight: 600;
+	font-size: 32px;
+	margin-top: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+.ffcom-not-found-description {
+	font-size: 18px;
+	color: var(--docsearch-muted-color);
+	max-width: 480px;
+	margin-bottom: 2rem;
+}
+
+[data-theme="dark"] .ffcom-not-found-description {
+	color: #798a9e;
+}
+
+[data-theme="dark"] .ffcom-not-found-link {
+	background-color: #007a9d;
+}
+
+.ffcom-not-found-link {
+	display: inline-block;
+	padding: 0.75rem 2rem;
+	border-radius: 8px;
+	background-color: var(--ifm-color-primary);
+	color: #fff;
+	font-weight: 600;
+	font-size: 16px;
+	text-decoration: none;
+	transition: opacity var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+}
+
+.ffcom-not-found-link:hover {
+	opacity: 0.85;
+	color: #fff;
+	text-decoration: none;
+}
