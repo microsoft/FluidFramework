@@ -20,6 +20,7 @@ import {
 } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
+import { type Seconds, TaskCacheOutcome } from "../../buildMetrics";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
 	type GitIgnoreSettingValue,
@@ -51,6 +52,8 @@ export abstract class LeafTask extends Task {
 	private directParentLeafTasks: LeafTask[] = [];
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
+
+	public lastQueueWaitTime = 0;
 
 	// For task that needs to override the actual command to execute
 	protected get executionCommand(): string {
@@ -174,6 +177,21 @@ export abstract class LeafTask extends Task {
 	protected get useWorker(): boolean {
 		return false;
 	}
+	private recordMetric(outcome: TaskCacheOutcome, startTime?: number, worker?: boolean): void {
+		this.node.context.buildMetrics.recordTask({
+			taskName: this.taskName ?? this.command,
+			packageName: this.node.pkg.name,
+			command: this.command,
+			executable: this.executable,
+			outcome,
+			isIncremental: this.isIncremental,
+			supportsRecheck: this.recheckLeafIsUpToDate,
+			execTimeSeconds: (startTime !== undefined ? (Date.now() - startTime) / 1000 : 0) as Seconds,
+			queueWaitSeconds: this.lastQueueWaitTime as Seconds,
+			worker: worker ?? false,
+		});
+	}
+
 	public async exec(): Promise<BuildResult> {
 		if (this.isDisabled) {
 			return BuildResult.UpToDate;
@@ -190,6 +208,7 @@ export abstract class LeafTask extends Task {
 		}
 		const startTime = Date.now();
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
+			this.recordMetric(TaskCacheOutcome.CacheHitRecheck, startTime);
 			return this.execDone(startTime, BuildResult.UpToDate);
 		}
 		const ret = await this.execCore();
@@ -200,6 +219,7 @@ export abstract class LeafTask extends Task {
 				`${this.node.pkg.nameColored}: error during command '${this.command}'${codeStr}`,
 			);
 			console.error(this.getExecErrors(ret));
+			this.recordMetric(TaskCacheOutcome.Failed, startTime, ret.worker);
 			return this.execDone(startTime, BuildResult.Failed);
 		}
 		if (ret.stderr) {
@@ -209,6 +229,11 @@ export abstract class LeafTask extends Task {
 		}
 
 		await this.markExecDone();
+		this.recordMetric(
+			this.isIncremental ? TaskCacheOutcome.CacheMiss : TaskCacheOutcome.NonIncremental,
+			startTime,
+			ret.worker,
+		);
 		return this.execDone(startTime, BuildResult.Success, ret.worker);
 	}
 
@@ -328,6 +353,7 @@ export abstract class LeafTask extends Task {
 		// Build all the dependent tasks first
 		const result = await this.buildDependentTask(q);
 		if (result === BuildResult.Failed) {
+			this.recordMetric(TaskCacheOutcome.NotRun);
 			return BuildResult.Failed;
 		}
 
@@ -357,6 +383,7 @@ export abstract class LeafTask extends Task {
 		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.context.taskStats.leafUpToDateCount++;
+			this.recordMetric(TaskCacheOutcome.CacheHitInitial);
 			this.traceExec(`Skipping Leaf Task`);
 		}
 

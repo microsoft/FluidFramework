@@ -129,6 +129,25 @@ async function main(): Promise<void> {
 		}
 		failureSummary = buildGraph.taskFailureSummary;
 
+		// Build cache metrics
+		const extendedMetrics = ["true", "1"].includes(
+			process.env.FLUID_BUILD_EXTENDED_METRICS_DISPLAY?.toLowerCase() ?? "",
+		);
+		if (extendedMetrics) {
+			buildGraph.buildMetrics.printSummary();
+			if (commonOptions.verbose) {
+				buildGraph.buildMetrics.printVerboseDetails();
+			}
+		}
+		if (options.metricsFile) {
+			try {
+				await buildGraph.buildMetrics.writeJsonFile(options.metricsFile);
+				log(`Build metrics written to ${options.metricsFile}`);
+			} catch (e: unknown) {
+				warn(`Failed to write metrics file: ${(e as Error).message}`);
+			}
+		}
+
 		exitCode = buildResult === BuildResult.Failed ? -1 : 0;
 	}
 
