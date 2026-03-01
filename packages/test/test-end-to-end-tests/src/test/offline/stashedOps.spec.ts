@@ -2355,7 +2355,10 @@ describeCompat(
 				);
 
 				// Container1 is not used directly in this test, but is present and observing the session,
-				// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first)
+				// so we can double-check eventual consistency - the container should have closed when processing the duplicate (after applying the first).
+				// Note: this assertion has been observed to flake (AB#TBD) — container1 may close with counter=0,
+				// suggesting the duplicate batch detection fires before the winning batch's ops are applied.
+				// If this flakes again, investigate whether BatchTracker/PSM is closing the container too eagerly.
 				assert(container1.closed, "container1 should be closed");
 				assert.strictEqual(
 					counter1.value,
