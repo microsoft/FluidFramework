@@ -385,22 +385,6 @@ extends:
                   sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build_output_archive
                   targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
 
-              # Pack
-              - ${{ if ne(parameters.taskPack, false) }}:
-                  - task: Bash@3
-                    displayName: npm pack
-                    env:
-                      PACKAGE_MANAGER: '${{ parameters.packageManager }}'
-                      RELEASE_GROUP: '${{ parameters.tagName }}'
-                      STAGING_PATH: $(Build.ArtifactStagingDirectory)
-                    inputs:
-                      targetType: filePath
-                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
-
-                  # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
-
               # Collect/publish/run bundle analysis
               - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                   - task: Npm@1
@@ -554,20 +538,6 @@ extends:
                   artifactName: build_output_archive
                   publishLocation: pipeline
 
-                - ${{ if ne(parameters.taskPack, false) }}:
-                    - output: pipelineArtifact
-                      displayName: Publish Artifact - pack
-                      targetPath: $(Build.ArtifactStagingDirectory)/pack
-                      artifactName: pack
-                      publishLocation: pipeline
-
-                    - output: pipelineArtifact
-                      displayName: Publish Artifact - Test Files
-                      targetPath: $(Build.ArtifactStagingDirectory)/test-files
-                      artifactName: test-files
-                      publishLocation: pipeline
-                      sbomEnabled: false
-
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analysis
@@ -584,6 +554,87 @@ extends:
                       artifactName: _api-extractor-temp
                       sbomEnabled: false
                       publishLocation: pipeline
+
+          - ${{ if ne(parameters.taskPack, false) }}:
+            - job: pack
+              displayName: Pack
+              dependsOn: build
+              variables:
+                - name: COMMIT_SHA
+                  value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
+                - name: ONEES_ENFORCED_CODEQL_ENABLED
+                  value: 'false'
+              steps:
+                # Setup (same pattern as test jobs)
+                - checkout: self
+                  path: $(FluidFrameworkDirectory)
+                  clean: true
+                  lfs: '${{ parameters.checkoutSubmodules }}'
+                  submodules: '${{ parameters.checkoutSubmodules }}'
+
+                - script: |
+                    echo "commit: $(COMMIT_SHA)"
+                    git fetch origin $(COMMIT_SHA)
+                    git checkout $(COMMIT_SHA)
+                  displayName: "Checkout build commit"
+
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+                - template: /tools/pipelines/templates/include-install.yml@self
+                  parameters:
+                    packageManager: '${{ parameters.packageManager }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
+
+                # Re-run Set Package Version so package.json has correct versions for packing
+                - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+                    - template: /tools/pipelines/templates/include-set-package-version.yml@self
+                      parameters:
+                        buildDirectory: '${{ parameters.buildDirectory }}'
+                        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                        buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                        tagName: '${{ parameters.tagName }}'
+                        interdependencyRange: '${{ parameters.interdependencyRange }}'
+                        packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+
+                # Download and extract build outputs (compiled JS, .d.ts, etc.)
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: build_output_archive
+                    targetPath: $(Build.StagingDirectory)
+
+                - script: |
+                    echo "Extracting build output archive contents..."
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+                  displayName: Extract Build Output Contents
+
+                # Pack
+                - task: Bash@3
+                  displayName: npm pack
+                  env:
+                    PACKAGE_MANAGER: '${{ parameters.packageManager }}'
+                    RELEASE_GROUP: '${{ parameters.tagName }}'
+                    STAGING_PATH: $(Build.ArtifactStagingDirectory)
+                  inputs:
+                    targetType: filePath
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                    filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
+
+              templateContext:
+                outputParentDirectory: $(Build.ArtifactStagingDirectory)
+                outputs:
+                  - output: pipelineArtifact
+                    displayName: Publish Artifact - pack
+                    targetPath: $(Build.ArtifactStagingDirectory)/pack
+                    artifactName: pack
+                    publishLocation: pipeline
+
+                  - output: pipelineArtifact
+                    displayName: Publish Artifact - Test Files
+                    targetPath: $(Build.ArtifactStagingDirectory)/test-files
+                    artifactName: test-files
+                    publishLocation: pipeline
+                    sbomEnabled: false
 
           - job: Coverage_tests
             displayName: "Coverage tests"
