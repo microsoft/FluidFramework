@@ -126,6 +126,20 @@ export interface IIdCompressorCore {
 	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
 
 	/**
+	 * Indicates that the compressor is about to process stashed/saved ops where duplicate range
+	 * finalization may occur. This allows the compressor to distinguish between legitimate
+	 * duplicate finalization (e.g., in fork scenarios) and programming errors.
+	 * Must be paired with a call to `endStashedOpProcessing()`.
+	 */
+	beginStashedOpProcessing(): void;
+
+	/**
+	 * Indicates that the compressor has finished processing stashed/saved ops.
+	 * Must be called after a corresponding call to `beginStashedOpProcessing()`.
+	 */
+	endStashedOpProcessing(): void;
+
+	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
 	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */

@@ -2825,8 +2825,15 @@ export class ContainerRuntime
 					const ops = this.pendingIdCompressorOps;
 					this.pendingIdCompressorOps = [];
 					const trace = Trace.start();
-					for (const range of ops) {
-						this._idCompressor.finalizeCreationRange(range);
+					// These ops may have already been finalized from stashed ops,
+					// so mark the context to allow duplicate finalization.
+					this._idCompressor.beginStashedOpProcessing();
+					try {
+						for (const range of ops) {
+							this._idCompressor.finalizeCreationRange(range);
+						}
+					} finally {
+						this._idCompressor.endStashedOpProcessing();
 					}
 					event.end({
 						details: {
