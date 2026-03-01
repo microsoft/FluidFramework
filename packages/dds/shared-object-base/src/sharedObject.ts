@@ -81,9 +81,7 @@ interface ProcessTelemetryProperties {
  * or if the intention is that no other implementations should exist and creating some might break things.
  * As part of this, any existing implementations of ISharedObject (via SharedObjectCore or otherwise) in use by legacy API users will need to be considered.
  *
- * TODO:
- * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
- * @legacy @beta
+ * @internal
  */
 export abstract class SharedObjectCore<
 		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -736,9 +734,9 @@ export abstract class SharedObjectCore<
  * @privateRemarks
  * TODO:
  * This class is badly named.
- * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
+ * "SharedObjectCore" should probably become "SharedObject"
  * and this class should be renamed to something like "SharedObjectSynchronous".
- * @legacy @beta
+ * @internal
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -927,7 +925,7 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
- * @legacy @beta
+ * @internal
  */
 export interface ISharedObjectKind<TSharedObject> {
 	/**
