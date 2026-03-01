@@ -1,5 +1,100 @@
 # @fluidframework/tree
 
+## 2.90.0
+
+### Minor Changes
+
+- Add alpha TextAsTree domain for collaboratively editable text ([#26568](https://github.com/microsoft/FluidFramework/pull/26568)) [06736bd81de](https://github.com/microsoft/FluidFramework/commit/06736bd81dea4c8e44cb13304f471a7b1bca42bd)
+
+  A newly exported `TextAsTree` alpha namespace has been added with an initial version of collaboratively editable text.
+  Users of SharedTree can add `TextAsTree.Tree` nodes to their tree to experiment with it.
+
+- Added new TreeAlpha.context(node) API ([#26432](https://github.com/microsoft/FluidFramework/pull/26432)) [ffa62f45e2c](https://github.com/microsoft/FluidFramework/commit/ffa62f45e2ca6c6106c67ed94f69359336823516)
+
+  This release introduces a node-scoped context that works for both hydrated and [unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class).
+  The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` methods and an `isBranch()` type guard.
+  `TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
+
+  #### Migration
+
+  If you previously used `TreeAlpha.branch(node)` to discover a branch, switch to `TreeAlpha.context(node)` and check `isBranch()`:
+
+  ```ts
+  import { TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const context = TreeAlpha.context(node);
+  if (context.isBranch()) {
+    // Same branch APIs as before
+    context.fork();
+  }
+  ```
+
+  `TreeAlpha.branch(node)` is now deprecated.
+  Prefer the context API above.
+
+  #### New transaction entry point
+
+  You can now run transactions from a node context, regardless of whether the node is hydrated:
+
+  ```ts
+  // A synchronous transaction without a return value
+  const context = TreeAlpha.context(node);
+  context.runTransaction(() => {
+    node.count += 1;
+  });
+  ```
+
+  ```ts
+  // An asynchronous transaction with a return value
+  const context = TreeAlpha.context(node);
+  const result = await context.runTransactionAsync(async () => {
+    await doWork(node);
+    return { value: node.foo };
+  });
+  ```
+
+- Promote checkSchemaCompatibilitySnapshots to beta ([#26288](https://github.com/microsoft/FluidFramework/pull/26288)) [eb4ef62672d](https://github.com/microsoft/FluidFramework/commit/eb4ef62672d33f6a903e3726b58d1f65c24d9150)
+
+  [`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
+  It is recommended that all SharedTree applications use this API to write schema compatibility tests.
+
+  Usage should look something like:
+
+  ```typescript
+  import fs from "node:fs";
+  import path from "node:path";
+
+  import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
+
+  // The TreeViewConfiguration the application uses, which contains the application's schema.
+  import { treeViewConfiguration } from "./schema.js";
+  // The next version of the application which will be released.
+  import { packageVersion } from "./version.js";
+
+  // Provide some way to run the check in "update" mode when updating snapshots is intended.
+  const regenerateSnapshots = process.argv.includes("--snapshot");
+
+  // Setup the actual test. In this case using Mocha syntax.
+  describe("schema", () => {
+    it("schema compatibility", () => {
+      // Select a path to save the snapshots in.
+      // This will depend on how your application organizes its test data.
+      const snapshotDirectory = path.join(
+        import.meta.dirname,
+        "../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
+      );
+      snapshotSchemaCompatibility({
+        snapshotDirectory,
+        fileSystem: { ...fs, ...path },
+        version: packageVersion,
+        minVersionForCollaboration: "2.0.0",
+        schema: treeViewConfiguration,
+        mode: regenerateSnapshots ? "update" : "assert",
+      });
+    });
+  });
+  ```
+
 ## 2.83.0
 
 ### Minor Changes
