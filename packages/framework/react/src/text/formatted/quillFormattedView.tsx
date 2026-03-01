@@ -360,7 +360,10 @@ const FormattedTextEditorView = React.forwardRef<
 						// The docs for retain imply this is always a number, but the type definitions allow a record here.
 						// It is unknown why the type definitions allow a record as they have no doc comments.
 						// For now this assert seems to be passing, so we just assume its always a number.
-						assert(typeof op.retain === "number", "Expected retain count to be a number");
+						assert(
+							typeof op.retain === "number",
+							0xcdf /* Expected retain count to be a number */,
+						);
 						// Convert UTF-16 retain count to codepoint count
 						const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
 						const cpCount = codepointCount(retainedStr);

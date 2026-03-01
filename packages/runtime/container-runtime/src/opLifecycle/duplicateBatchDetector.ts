@@ -66,7 +66,7 @@ export class DuplicateBatchDetector {
 		if (otherSequenceNumber !== undefined) {
 			assert(
 				this.batchIdsBySeqNum.get(otherSequenceNumber) === batchId,
-				"batchIdToSeqNum and seqNumToBatchId should be in sync for duplicate",
+				0xce0 /* batchIdToSeqNum and seqNumToBatchId should be in sync for duplicate */,
 			);
 			return { duplicate: true, otherSequenceNumber };
 		}
@@ -74,7 +74,7 @@ export class DuplicateBatchDetector {
 		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
 		assert(
 			!this.batchIdsBySeqNum.has(sequenceNumber),
-			"seqNumToBatchId and batchIdToSeqNum should be in sync",
+			0xce1 /* seqNumToBatchId and batchIdToSeqNum should be in sync */,
 		);
 
 		// Add new batch

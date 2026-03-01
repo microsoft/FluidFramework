@@ -238,7 +238,7 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 						break;
 					}
 					default: {
-						fail("Unsupported node type in text array", () => `${cursor.type}`);
+						fail(0xcde /* Unsupported node type in text array */, () => `${cursor.type}`);
 					}
 				}
 				cursor.exitNode();
