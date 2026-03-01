@@ -36,7 +36,7 @@ import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
 
-import { Constants } from "../../../utils";
+import { Constants, getSessionFromCache } from "../../../utils";
 
 import {
 	craftClientJoinMessage,
@@ -57,6 +57,7 @@ export function create(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: RedisEmitter,
 	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
+	redisCacheForGetSession?: core.ICache,
 	denyList?: core.IDenyList,
 ): Router {
 	const router: Router = Router();
@@ -199,6 +200,7 @@ export function create(
 				config,
 				storage,
 				collaborationSessionEventEmitter,
+				redisCacheForGetSession,
 			);
 			handleResponse(
 				handleBroadcastSignalP,
@@ -429,6 +431,7 @@ async function handleBroadcastSignal(
 	config: Provider,
 	storage: core.IDocumentStorage,
 	collaborationSessionEventEmitter?: RedisEmitter,
+	redisCacheForGetSession?: core.ICache,
 ): Promise<void> {
 	const tenantId = request.params.tenantId;
 	const documentId = request.params.id;
@@ -452,25 +455,53 @@ async function handleBroadcastSignal(
 	}
 
 	const serverUrl: string = config.get("worker:serverUrl");
-	const document = await storage.getDocument(tenantId, documentId);
+	let sessionOrdererUrl: string | undefined;
+	let isSessionAlive: boolean | undefined;
+	let cacheHit = false;
 
-	if (!document?.session?.isSessionAlive || document?.scheduledDeletionTime) {
-		Lumberjack.error("Document not found", { tenantId, documentId });
+	// Attempt a cache lookup first to avoid a DB round-trip on every call.
+	// The cache is populated by the session discovery endpoint (GET /documents/:tenantId/session/:id)
+	// which clients call before connecting, so it will be warm for any active session.
+	if (redisCacheForGetSession) {
+		const cachedSession = await getSessionFromCache(
+			tenantId,
+			documentId,
+			redisCacheForGetSession,
+		);
+		if (cachedSession) {
+			sessionOrdererUrl = cachedSession.ordererUrl;
+			isSessionAlive = cachedSession.isSessionAlive;
+			cacheHit = true;
+		}
+	}
+
+	// Cache miss: fall back to DB lookup.
+	if (sessionOrdererUrl === undefined) {
+		const document = await storage.getDocument(tenantId, documentId);
+		sessionOrdererUrl = document?.session?.ordererUrl;
+		// A document with a scheduled deletion time should be treated as not found.
+		isSessionAlive = document?.session?.isSessionAlive && !document?.scheduledDeletionTime;
+	}
+
+	if (!isSessionAlive || !sessionOrdererUrl) {
+		Lumberjack.error("Document not found", { tenantId, documentId, cacheHit });
 		throw new NetworkError(404, "Document not found");
 	}
-	if (document.session.ordererUrl !== serverUrl) {
+
+	if (sessionOrdererUrl !== serverUrl) {
 		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
-			documentUrl: document.session.ordererUrl,
+			documentUrl: sessionOrdererUrl,
 			currentUrl: serverUrl,
-			targetUrlAndPath: `${document.session.ordererUrl}${request.originalUrl}`,
+			targetUrlAndPath: `${sessionOrdererUrl}${request.originalUrl}`,
+			cacheHit,
 		});
-		response.redirect(`${document.session.ordererUrl}${request.originalUrl}`);
+		response.redirect(`${sessionOrdererUrl}${request.originalUrl}`);
 		return;
 	}
 
 	const signalMessage = createRuntimeMessage(signalContent);
 	const signalRoom: IRoom = { tenantId, documentId };
-	Lumberjack.info("Broadcasting signal to room", { tenantId, documentId });
+	Lumberjack.info("Broadcasting signal to room", { tenantId, documentId, cacheHit });
 	collaborationSessionEventEmitter.to(getRoomId(signalRoom)).emit("signal", signalMessage);
 }
 
