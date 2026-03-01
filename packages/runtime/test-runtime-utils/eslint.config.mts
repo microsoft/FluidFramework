@@ -13,6 +13,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
+	// The assertion shortcode map file is auto-generated, so disable some rules.
 	{
 		files: ["src/assertionShortCodesMap.ts"],
 		rules: {

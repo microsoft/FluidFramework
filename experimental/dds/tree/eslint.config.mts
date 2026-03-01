@@ -10,6 +10,10 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
+			// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
+			// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
+
+			// This package is effectively deprecated. The below rules are disabled for ease of migration and will not be enabled.
 			'@typescript-eslint/explicit-function-return-type': 'off',
 			'@typescript-eslint/no-shadow': 'off',
 			'no-shadow': 'off',
@@ -21,11 +25,14 @@ const config: Linter.Config[] = [
 	{
 		files: ['src/test/**'],
 		rules: {
+			// Chai assertions trigger the unused expression lint rule.
 			'@typescript-eslint/no-unused-expressions': 'off',
+
+			// Dev dependencies and internal modules may be used in test code
 			'import-x/no-extraneous-dependencies': [
 				'error',
 				{
-					'devDependencies': true,
+					devDependencies: true,
 				},
 			],
 			'import-x/no-internal-modules': 'off',
@@ -34,6 +41,7 @@ const config: Linter.Config[] = [
 	{
 		files: ['**/test/**', 'src/index.ts'],
 		rules: {
+			// Test code and the main package export shouldn't be linted for unused exports
 			'import-x/no-unused-modules': 'off',
 		},
 	},

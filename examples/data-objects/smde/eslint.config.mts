@@ -11,18 +11,19 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	...sharedConfig,
 	{
+		ignores: ["*.spec.ts"],
+	},
+	{
 		rules: {
+			// This is an example/test app; all its dependencies are dev dependencies so as not to pollute the lockfile
+			// with prod dependencies that aren't actually shipped. So don't complain when importing from dev dependencies.
 			"import-x/no-extraneous-dependencies": [
 				"error",
 				{
-					"devDependencies": true,
+					devDependencies: true,
 				},
 			],
 		},
-	},
-	// Migrated from .eslintignore
-	{
-		ignores: ["*.spec.ts"],
 	},
 ];
 

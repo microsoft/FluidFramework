@@ -9,7 +9,11 @@ import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/
 const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
+		ignores: ["src/index.d.ts"],
+	},
+	{
 		rules: {
+			// Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
 			"@typescript-eslint/dot-notation": "off",
 			"@typescript-eslint/explicit-function-return-type": "warn",
 			"@typescript-eslint/no-dynamic-delete": "off",
@@ -57,15 +61,11 @@ const config: Linter.Config[] = [
 			"depend/ban-dependencies": [
 				"error",
 				{
-					"allowed": ["lodash", "underscore"],
+					allowed: ["lodash", "underscore"],
 				},
 			],
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
-	},
-	// Migrated from .eslintignore
-	{
-		ignores: ["src/index.d.ts"],
 	},
 ];
 

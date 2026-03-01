@@ -10,30 +10,36 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 			"@typescript-eslint/strict-boolean-expressions": "off",
+			// This package often uses deprecated APIs because it's used to replay ops from older versions of the runtime
 			"import-x/no-deprecated": "off",
 			"import-x/no-nodejs-modules": "off",
 			"no-case-declarations": "off",
+
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 			"@typescript-eslint/consistent-type-imports": [
 				"error",
 				{
-					"fixStyle": "inline-type-imports",
+					fixStyle: "inline-type-imports",
 				},
 			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
+			// #endregion
 		},
 	},
 	{
 		files: ["**/*.{ts,tsx}"],
 		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
+					fixMixedExportsWithInlineTypeSpecifier: true,
 				},
 			],
+			// #endregion
 		},
 	},
 ];

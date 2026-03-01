@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+			// TODO: remove these overrides and fix violations
 			"@typescript-eslint/no-unsafe-return": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 		},

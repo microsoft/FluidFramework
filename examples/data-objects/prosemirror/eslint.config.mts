@@ -11,6 +11,9 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	...sharedConfig,
 	{
+		ignores: ["*.spec.ts"],
+	},
+	{
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/restrict-plus-operands": "off",
@@ -18,10 +21,6 @@ const config: Linter.Config[] = [
 			"no-case-declarations": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
-	},
-	// Migrated from .eslintignore
-	{
-		ignores: ["*.spec.ts"],
 	},
 ];
 

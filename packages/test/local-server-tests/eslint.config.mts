@@ -10,12 +10,14 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 			"import-x/no-nodejs-modules": "off",
 			"import-x/no-extraneous-dependencies": [
 				"error",
 				{
-					"devDependencies": ["src/utils.ts", "src/test/**"],
+					// This package is only used to run its tests. It's ok for the src/utils.ts to import from devDependencies, in
+					// addition to the test files
+					devDependencies: ["src/utils.ts", "src/test/**"],
 				},
 			],
 		},

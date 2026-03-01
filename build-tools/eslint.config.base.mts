@@ -123,6 +123,7 @@ const buildToolsOverrides = {
 		"@typescript-eslint/unbound-method": "off",
 		"@typescript-eslint/consistent-type-definitions": "off",
 		"@typescript-eslint/prefer-promise-reject-errors": "off",
+		// version-tools: semver classes stringify correctly but trigger this rule.
 		"@typescript-eslint/no-base-to-string": "off",
 		"@typescript-eslint/no-unsafe-unary-minus": "off",
 
