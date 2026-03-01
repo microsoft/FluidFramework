@@ -1,0 +1,18 @@
+{
+	"extends": "../../../../../common/build/build-common/tsconfig.base.json",
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": ".",
+		"outDir": "../../dist/bundle-size-tools",
+		"module": "Node16",
+		"moduleResolution": "Node16",
+		"types": ["node"],
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"target": "es2018",
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
+	},
+	"include": ["./**/*.ts"],
+	"exclude": ["./test/**/*"],
+}

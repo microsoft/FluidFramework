@@ -1,0 +1,35 @@
+{
+	"extends": "../../../../../../common/build/build-common/tsconfig.base.json",
+	"compilerOptions": {
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false,
+		"rootDir": ".",
+		"outDir": "../../../dist/core/test",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"target": "es2022",
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"esModuleInterop": true,
+		"incremental": true,
+		"sourceMap": true,
+		"types": ["node", "mocha"],
+
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
+		"noUnusedLocals": false,
+	},
+	"include": ["./**/*"],
+	"exclude": [],
+	"references": [
+		{
+			"path": "..",
+		},
+	],
+}

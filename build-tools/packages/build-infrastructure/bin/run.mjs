@@ -4,6 +4,9 @@
  * Licensed under the MIT License.
  */
 
-import { execute } from "@oclif/core";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-await execute({ dir: import.meta.url });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const buildToolsBin = path.resolve(__dirname, "../../build-tools/bin/buildProject/run.mjs");
+await import(buildToolsBin);

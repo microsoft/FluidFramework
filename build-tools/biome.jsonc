@@ -14,9 +14,11 @@
 	"files": {
 		"includes": [
 			"**",
-			"!**/packages/build-tools/src/test/data/biome/empty.jsonc",
+			"!**/packages/build-tools/src/core/test/data/biome/empty.jsonc",
 			// Biome 1.x test data - these configs use Biome 1.x syntax that Biome 2.x can't parse
-			"!**/packages/build-tools/src/test/data/biome/**",
+			"!**/packages/build-tools/src/core/test/data/biome/**",
+			// Biome 2.x test data with nested root configs
+			"!**/packages/build-tools/src/core/test/data/biome2/**",
 			// Test fixture that must use space indentation (not tabs) for indentation detection tests
 			"!**/test/data/spaces/**"
 		]

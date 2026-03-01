@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { baseConfig } from "../../eslint.config.base.mts";
+import { baseConfig, chaiFriendlyConfig } from "../../eslint.config.base.mts";
 
 export default [
 	...baseConfig,
-	// Ignore test data files
+	// Ignore test data files and test fixtures across all sub-projects
 	{
-		ignores: ["src/test/data/**"],
+		ignores: ["src/*/test/data/**", "src/*/test/**/fixtures/**"],
 	},
 	{
 		rules: {
@@ -22,8 +22,6 @@ export default [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
-
-			"@typescript-eslint/no-non-null-assertion": "error",
 
 			// Allow empty object types for extending interfaces
 			"@typescript-eslint/no-empty-object-type": "off",
@@ -59,14 +57,42 @@ export default [
 			"no-undef-init": "off",
 			"default-case": "off",
 			"radix": "off",
+
+			// Some CJS modules (fs-extra, json5, yaml) don't have proper default exports
+			// but are imported with `import X from "module"`. This is handled by esModuleInterop.
+			"import-x/default": "off",
 		},
 	},
-	// Enable switch-exhaustiveness-check only for TS files (not .d.ts which lack type info)
+	// Enable switch-exhaustiveness-check only for core TS files (not .d.ts which lack type info)
+	// Scoped to src/core/ since other sub-projects did not previously have this rule.
 	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		files: ["src/core/**/*.ts", "src/core/**/*.tsx", "src/core/**/*.mts", "src/core/**/*.cts"],
 		ignores: ["**/*.d.ts"],
 		rules: {
 			"@typescript-eslint/switch-exhaustiveness-check": "error",
 		},
+	},
+	// Enforce no-non-null-assertion only in core (original build-tools scope)
+	{
+		files: ["src/core/**"],
+		rules: {
+			"@typescript-eslint/no-non-null-assertion": "error",
+		},
+	},
+	// build-cli specific overrides
+	{
+		files: ["src/build-cli/**"],
+		rules: {
+			// This rule is often triggered when using custom Flags, so disabling.
+			"object-shorthand": "off",
+			// The default for this rule is 4, but 5 is better for build-cli.
+			// TODO: AB#58055 Consider lowering this limit and simplifying build-tools code accordingly.
+			"max-params": ["warn", 5],
+		},
+	},
+	// Chai-friendly rules for build-infrastructure test files
+	{
+		files: ["src/build-infrastructure/**/*.spec.ts", "src/build-infrastructure/test/**"],
+		...chaiFriendlyConfig,
 	},
 ];

@@ -1,0 +1,23 @@
+{
+	"extends": "../../../../../../common/build/build-common/tsconfig.base.json",
+	"compilerOptions": {
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false,
+		"rootDir": ".",
+		"outDir": "../../../dist/version-tools/test",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"types": ["node", "mocha", "chai"],
+
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
+		"noUnusedLocals": false,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "..",
+		},
+	],
+}

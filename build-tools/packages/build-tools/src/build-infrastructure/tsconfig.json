@@ -1,0 +1,17 @@
+{
+	"extends": "../../../../../common/build/build-common/tsconfig.base.json",
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": ".",
+		"outDir": "../../dist/build-infrastructure",
+		"module": "Node16",
+		"moduleResolution": "Node16",
+		"types": ["node"],
+		"exactOptionalPropertyTypes": false,
+		"noUnusedLocals": false,
+		"noUncheckedIndexedAccess": false,
+	},
+	"include": ["./**/*.ts"],
+	"exclude": ["./test/**/*"],
+	"references": [{ "path": "../version-tools" }],
+}
