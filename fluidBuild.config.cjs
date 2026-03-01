@@ -19,6 +19,8 @@ const releaseGroupPackageJsonGlobs = [
 	"tools/markdown-magic/package.json",
 ];
 
+const skipCjsChecks = process.env.SKIP_CJS_CHECKS === "true";
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -90,11 +92,17 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test": skipCjsChecks
+			? ["typetests:gen", "tsc", "api-extractor:esnext"]
+			: ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+		"build:test:cjs": skipCjsChecks
+			? ["typetests:gen", "tsc"]
+			: ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: skipCjsChecks
+				? ["api-extractor:esnext"]
+				: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -126,8 +134,45 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"check:exports": ["api"],
+		"check:exports": skipCjsChecks
+			? {
+				dependsOn: [
+					"check:exports:bundle-release-tags",
+					"check:exports:esm:public",
+					"check:exports:esm:legacy",
+					"check:exports:esm:index",
+					"check:exports:esm:beta",
+					"check:exports:esm:alpha",
+					"check:exports:esm:legacyAlpha",
+					"check:exports:esm:legacy.alpha",
+					"check:exports:esm:indexNode",
+					"check:exports:esm:indexBrowser",
+					"check:exports:esm:node:legacy",
+					"check:exports:esm:node:current",
+					"check:exports:esm:browser:legacy",
+					"check:exports:esm:browser:current",
+					"check:exports:esm:testUtils",
+					"check:exports:esm:internal/exposedUtilityTypes",
+				],
+				script: false,
+			}
+			: ["api"],
 		"check:exports:bundle-release-tags": ["build:esnext"],
+		"check:exports:esm:public": ["api-extractor:esnext"],
+		"check:exports:esm:legacy": ["api-extractor:esnext"],
+		"check:exports:esm:index": ["api-extractor:esnext"],
+		"check:exports:esm:beta": ["api-extractor:esnext"],
+		"check:exports:esm:alpha": ["api-extractor:esnext"],
+		"check:exports:esm:legacyAlpha": ["api-extractor:esnext"],
+		"check:exports:esm:legacy.alpha": ["api-extractor:esnext"],
+		"check:exports:esm:indexNode": ["api-extractor:esnext"],
+		"check:exports:esm:indexBrowser": ["api-extractor:esnext"],
+		"check:exports:esm:node:legacy": ["api-extractor:esnext"],
+		"check:exports:esm:node:current": ["api-extractor:esnext"],
+		"check:exports:esm:browser:legacy": ["api-extractor:esnext"],
+		"check:exports:esm:browser:current": ["api-extractor:esnext"],
+		"check:exports:esm:testUtils": ["api-extractor:esnext"],
+		"check:exports:esm:internal/exposedUtilityTypes": ["api-extractor:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],

@@ -31,6 +31,7 @@ steps:
       # a transitive dependency of browserslist. Without this, the warning fires once
       # per package during builds, producing 100+ identical warnings in build logs.
       BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
+      SKIP_CJS_CHECKS: $(skipCjsChecks)
     inputs:
       command: 'custom'
       workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
@@ -42,6 +43,7 @@ steps:
     env:
       # Suppress baseline-browser-mapping staleness warnings during lint as well.
       BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
+      SKIP_CJS_CHECKS: $(skipCjsChecks)
     inputs:
       command: 'custom'
       workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
