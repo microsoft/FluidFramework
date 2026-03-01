@@ -58,7 +58,10 @@ export const baseRules = {
 	"@typescript-eslint/explicit-function-return-type": "off",
 	"@typescript-eslint/no-dynamic-delete": "error",
 	"@typescript-eslint/no-empty-function": "off",
-	"@typescript-eslint/no-empty-object-type": "error",
+	"@typescript-eslint/no-empty-object-type": [
+		"error",
+		{ allowInterfaces: "with-single-extends" },
+	],
 	"@typescript-eslint/no-explicit-any": "off",
 	"@typescript-eslint/no-extraneous-class": "error",
 	"@typescript-eslint/no-floating-promises": "error",

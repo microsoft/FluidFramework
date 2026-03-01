@@ -10,9 +10,14 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+			"@typescript-eslint/no-empty-object-type": [
+				"error",
+				{
+					allowInterfaces: "always",
+					allowObjectTypes: "always",
+				},
+			],
 			"@typescript-eslint/no-namespace": "off",
-			"@typescript-eslint/no-empty-interface": "off",
-			"@typescript-eslint/no-empty-object-type": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/no-unused-vars": [
 				"error",
