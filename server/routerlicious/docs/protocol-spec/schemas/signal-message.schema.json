@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/signal-message.schema.json",
+  "title": "ISignalMessage",
+  "description": "A signal message broadcast to connected clients",
+  "type": "object",
+  "properties": {
+    "clientId": {
+      "type": ["string", "null"],
+      "description": "Sending client ID (null for server-generated signals)"
+    },
+    "content": {
+      "description": "Signal content/payload"
+    },
+    "type": {
+      "type": "string",
+      "description": "Signal type identifier"
+    },
+    "clientConnectionNumber": {
+      "type": "integer",
+      "description": "Client-assigned signal counter"
+    },
+    "referenceSequenceNumber": {
+      "type": "integer",
+      "description": "Sequence number context"
+    },
+    "targetClientId": {
+      "type": "string",
+      "description": "Target client ID for directed signals"
+    }
+  },
+  "required": ["clientId", "content"]
+}

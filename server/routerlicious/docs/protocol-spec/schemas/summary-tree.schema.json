@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/summary-tree.schema.json",
+  "title": "ISummaryTree",
+  "description": "A summary tree node containing document state snapshot",
+  "oneOf": [
+    { "$ref": "#/$defs/ISummaryTreeNode" },
+    { "$ref": "#/$defs/ISummaryBlob" },
+    { "$ref": "#/$defs/ISummaryHandle" },
+    { "$ref": "#/$defs/ISummaryAttachment" }
+  ],
+  "$defs": {
+    "SummaryType": {
+      "description": "Type discriminator for summary nodes",
+      "type": "integer",
+      "enum": [1, 2, 3, 4]
+    },
+    "ISummaryTreeNode": {
+      "type": "object",
+      "description": "A tree node containing child summary objects",
+      "properties": {
+        "type": {
+          "const": 1,
+          "description": "SummaryType.Tree = 1"
+        },
+        "tree": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#"
+          },
+          "description": "Child nodes keyed by path segment"
+        },
+        "unreferenced": {
+          "const": true,
+          "description": "True if this tree is unreferenced (eligible for GC)"
+        },
+        "groupId": {
+          "type": "string",
+          "description": "Loading group identifier"
+        }
+      },
+      "required": ["type", "tree"]
+    },
+    "ISummaryBlob": {
+      "type": "object",
+      "description": "A blob containing raw data",
+      "properties": {
+        "type": {
+          "const": 2,
+          "description": "SummaryType.Blob = 2"
+        },
+        "content": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "object",
+              "description": "Uint8Array serialized form"
+            }
+          ],
+          "description": "Blob content (string or binary)"
+        }
+      },
+      "required": ["type", "content"]
+    },
+    "ISummaryHandle": {
+      "type": "object",
+      "description": "A reference to an object in a previous summary",
+      "properties": {
+        "type": {
+          "const": 3,
+          "description": "SummaryType.Handle = 3"
+        },
+        "handleType": {
+          "type": "integer",
+          "enum": [1, 2, 4],
+          "description": "Type of referenced object (Tree=1, Blob=2, Attachment=4)"
+        },
+        "handle": {
+          "type": "string",
+          "description": "Path to the referenced object in previous summary"
+        }
+      },
+      "required": ["type", "handleType", "handle"]
+    },
+    "ISummaryAttachment": {
+      "type": "object",
+      "description": "Reference to an externally uploaded blob",
+      "properties": {
+        "type": {
+          "const": 4,
+          "description": "SummaryType.Attachment = 4"
+        },
+        "id": {
+          "type": "string",
+          "description": "ID of the externally uploaded blob"
+        }
+      },
+      "required": ["type", "id"]
+    }
+  }
+}

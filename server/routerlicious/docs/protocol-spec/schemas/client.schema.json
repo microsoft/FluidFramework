@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/client.schema.json",
+  "title": "IClient",
+  "description": "Represents a client connected to a Fluid service",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "$ref": "#/$defs/ConnectionMode",
+      "description": "Client's connection mode"
+    },
+    "details": {
+      "$ref": "#/$defs/IClientDetails",
+      "description": "Client metadata"
+    },
+    "permission": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Permissions granted to client"
+    },
+    "user": {
+      "$ref": "#/$defs/IUser",
+      "description": "User identity"
+    },
+    "scopes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Scopes granted to client"
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Connection timestamp"
+    }
+  },
+  "required": ["mode", "details", "permission", "user", "scopes"],
+  "$defs": {
+    "ConnectionMode": {
+      "type": "string",
+      "enum": ["write", "read"],
+      "description": "Client connection mode"
+    },
+    "IUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique user session identifier"
+        }
+      },
+      "required": ["id"],
+      "additionalProperties": true
+    },
+    "IClientDetails": {
+      "type": "object",
+      "properties": {
+        "capabilities": {
+          "$ref": "#/$defs/ICapabilities",
+          "description": "Client capabilities"
+        },
+        "type": {
+          "type": "string",
+          "description": "Client type (e.g., 'browser', 'node')"
+        },
+        "environment": {
+          "type": "string",
+          "description": "Client environment info"
+        },
+        "device": {
+          "type": "string",
+          "description": "Device information"
+        }
+      },
+      "required": ["capabilities"]
+    },
+    "ICapabilities": {
+      "type": "object",
+      "properties": {
+        "interactive": {
+          "type": "boolean",
+          "description": "Whether client represents interactive user session"
+        }
+      },
+      "required": ["interactive"]
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/token-claims.schema.json",
+  "title": "ITokenClaims",
+  "description": "JWT token claims for Fluid Framework authentication",
+  "type": "object",
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "description": "Document identifier this token grants access to"
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["doc:read", "doc:write", "summary:write"]
+      },
+      "description": "Permission scopes granted by this token"
+    },
+    "tenantId": {
+      "type": "string",
+      "description": "Tenant identifier"
+    },
+    "user": {
+      "$ref": "#/$defs/IUser",
+      "description": "User identity associated with this token"
+    },
+    "iat": {
+      "type": "integer",
+      "description": "Issued At - Unix timestamp in seconds"
+    },
+    "exp": {
+      "type": "integer",
+      "description": "Expiration Time - Unix timestamp in seconds"
+    },
+    "ver": {
+      "type": "string",
+      "description": "Token version"
+    },
+    "jti": {
+      "type": "string",
+      "description": "JWT ID - unique token identifier"
+    }
+  },
+  "required": ["documentId", "scopes", "tenantId", "user", "iat", "exp", "ver"],
+  "$defs": {
+    "IUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique user session identifier"
+        }
+      },
+      "required": ["id"],
+      "additionalProperties": true
+    }
+  }
+}

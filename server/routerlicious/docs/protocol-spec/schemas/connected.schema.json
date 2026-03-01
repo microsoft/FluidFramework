@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/connected.schema.json",
+  "title": "IConnected",
+  "description": "Message sent by server to confirm successful document connection",
+  "type": "object",
+  "properties": {
+    "claims": {
+      "$ref": "token-claims.schema.json",
+      "description": "Validated token claims"
+    },
+    "clientId": {
+      "type": "string",
+      "description": "Server-assigned client identifier"
+    },
+    "existing": {
+      "type": "boolean",
+      "description": "Whether document pre-existed"
+    },
+    "maxMessageSize": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Maximum message size in bytes"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["write", "read"],
+      "description": "Granted connection mode"
+    },
+    "serviceConfiguration": {
+      "$ref": "#/$defs/IClientConfiguration",
+      "description": "Service configuration parameters"
+    },
+    "initialClients": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ISignalClient"
+      },
+      "description": "Currently connected clients"
+    },
+    "initialMessages": {
+      "type": "array",
+      "items": {
+        "$ref": "sequenced-document-message.schema.json"
+      },
+      "description": "Initial messages (typically empty)"
+    },
+    "initialSignals": {
+      "type": "array",
+      "items": {
+        "$ref": "signal-message.schema.json"
+      },
+      "description": "Initial signals (typically empty)"
+    },
+    "supportedVersions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Server-supported protocol versions"
+    },
+    "supportedFeatures": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Server-supported feature flags"
+    },
+    "version": {
+      "type": "string",
+      "description": "Negotiated protocol version"
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Connection timestamp (milliseconds since epoch)"
+    },
+    "checkpointSequenceNumber": {
+      "type": "integer",
+      "description": "Last known sequence number"
+    },
+    "epoch": {
+      "type": "string",
+      "description": "Document epoch"
+    },
+    "relayServiceAgent": {
+      "type": "string",
+      "description": "Server environment info"
+    }
+  },
+  "required": [
+    "claims",
+    "clientId",
+    "existing",
+    "maxMessageSize",
+    "mode",
+    "serviceConfiguration",
+    "initialClients",
+    "initialMessages",
+    "initialSignals",
+    "supportedVersions",
+    "version"
+  ],
+  "$defs": {
+    "IClientConfiguration": {
+      "type": "object",
+      "properties": {
+        "maxMessageSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockSize": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "noopTimeFrequency": {
+          "type": "integer"
+        },
+        "noopCountFrequency": {
+          "type": "integer"
+        }
+      },
+      "required": ["maxMessageSize", "blockSize"]
+    },
+    "ISignalClient": {
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "client": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "enum": ["write", "read"] },
+            "details": { "type": "object" },
+            "permission": { "type": "array" },
+            "user": { "type": "object" },
+            "scopes": { "type": "array" }
+          }
+        },
+        "clientConnectionNumber": { "type": "integer" },
+        "referenceSequenceNumber": { "type": "integer" }
+      },
+      "required": ["clientId", "client"]
+    }
+  }
+}

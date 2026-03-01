@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/sequenced-document-message.schema.json",
+  "title": "ISequencedDocumentMessage",
+  "description": "A sequenced document operation broadcast by the server",
+  "type": "object",
+  "properties": {
+    "clientId": {
+      "type": ["string", "null"],
+      "description": "Client ID that submitted this op (null for system messages)"
+    },
+    "sequenceNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Server-assigned sequence number (global total order)"
+    },
+    "minimumSequenceNumber": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Minimum sequence number at time of sequencing"
+    },
+    "clientSequenceNumber": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Client's sequence number for this op"
+    },
+    "referenceSequenceNumber": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Client's reference sequence number"
+    },
+    "type": {
+      "type": "string",
+      "description": "Operation type"
+    },
+    "contents": {
+      "description": "Operation payload"
+    },
+    "metadata": {
+      "description": "Application-provided metadata"
+    },
+    "serverMetadata": {
+      "description": "Server-provided metadata"
+    },
+    "origin": {
+      "$ref": "#/$defs/IBranchOrigin",
+      "description": "Branch origin information (if applicable)"
+    },
+    "traces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service": { "type": "string" },
+          "action": { "type": "string" },
+          "timestamp": { "type": "number" }
+        }
+      },
+      "description": "Latency trace points"
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Server timestamp (milliseconds since epoch)"
+    },
+    "data": {
+      "type": "string",
+      "description": "Server-provided data (system messages only)"
+    },
+    "compression": {
+      "type": "string",
+      "description": "Compression algorithm used"
+    }
+  },
+  "required": [
+    "clientId",
+    "sequenceNumber",
+    "minimumSequenceNumber",
+    "clientSequenceNumber",
+    "referenceSequenceNumber",
+    "type",
+    "contents",
+    "timestamp"
+  ],
+  "$defs": {
+    "IBranchOrigin": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Origin branch ID"
+        },
+        "sequenceNumber": {
+          "type": "integer",
+          "description": "Sequence number in origin branch"
+        },
+        "minimumSequenceNumber": {
+          "type": "integer",
+          "description": "MSN in origin branch"
+        }
+      },
+      "required": ["id", "sequenceNumber", "minimumSequenceNumber"]
+    }
+  }
+}
