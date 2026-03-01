@@ -60,8 +60,6 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 					this.error(`${reportPath} is missing; bundle analysis may not be accurate.`);
 				}
 
-				/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-				// eslint-disable-next-line no-await-in-loop, @typescript-eslint/no-unsafe-assignment
 				const report = await readJson(reportPath);
 				if (report.assets?.length === undefined || report.assets?.length === 0) {
 					this.error(`${reportPath} doesn't have any assets info`);
@@ -78,7 +76,6 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 						hasSmallAssetError = true;
 					}
 				}
-				/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
 				copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name));
 			}

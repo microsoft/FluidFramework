@@ -211,7 +211,7 @@ export class TscTask extends LeafTask {
 				this.traceTrigger("mismatched type script version");
 				return false;
 			}
-		} catch (e) {
+		} catch {
 			this.traceTrigger(
 				`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
 			);

@@ -81,7 +81,7 @@ export function generateBumpVersionBranchName(
 		? releaseGroupOrPackage
 		: PackageName.getUnscopedName(releaseGroupOrPackage);
 	const bumpTypeLog = isVersionBumpTypeExtended(bumpType) ? bumpType : "exact";
-	// eslint-disable-next-line @typescript-eslint/no-base-to-string
+
 	const branchName = `bump_${name.toLowerCase()}_${bumpTypeLog}_${newVersion}`;
 	return branchName;
 }
@@ -208,7 +208,7 @@ export function generateBumpVersionCommitMessage(
 		? releaseGroupOrPackage
 		: PackageName.getUnscopedName(releaseGroupOrPackage);
 	const bumpTypeLog = isVersionBumpTypeExtended(bumpType) ? bumpType : "exact";
-	// eslint-disable-next-line @typescript-eslint/no-base-to-string
+
 	const message = `[bump] ${name}: ${version} => ${newVersion} (${bumpTypeLog})\n\nBumped ${name} from ${version} to ${newVersion}.`;
 	return message;
 }

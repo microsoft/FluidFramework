@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-nested-callbacks */
-
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 
 import { assert } from "chai";

@@ -182,7 +182,6 @@ function findFluidTscScript(
 
 		if (
 			scriptCommands.startsWith("fluid-tsc") &&
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			(project ? scriptCommands.includes(project) : !scriptCommands.includes("--project"))
 		) {
 			return script;
@@ -429,13 +428,12 @@ function hasTaskDependency(
 	]);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 	if (taskDefinitions[taskName]) {
 		pending.push(...taskDefinitions[taskName].dependsOn);
 	}
 
 	while (pending.length > 0) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const dep = pending.pop()!;
 		if (seenDep.has(dep)) {
 			// This could be repeats or circular dependency (which we are not trying to detect)
@@ -723,7 +721,6 @@ function getTscCommandDependencies(
 		},
 	);
 
-	// eslint-disable-next-line unicorn/prefer-spread
 	return deps.concat(
 		[...tscPredecessors].map((group) =>
 			group.map((predecessor) => `${predecessor.packageName}#${predecessor.script}`),
@@ -773,7 +770,7 @@ function buildDepsHandler(
 			}
 			try {
 				const error = check({ packageDir, json, script, command, packageMap, root });
-				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 				if (error) {
 					errors.push(error);
 				}

@@ -28,13 +28,13 @@ export const handlers: Handler[] = [
 			}
 
 			// Ignore any paths in the policy configuration.
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 			if (manifest.policy?.pnpmSinglePackageWorkspace?.includes(json.name)) {
 				return undefined;
 			}
 
 			const script: string | undefined = json.scripts?.preinstall;
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 			if (script) {
 				const matchResult = script.match(/^node ((?:\.\.\/)*)scripts\/only-pnpm.cjs/);
 				if (matchResult) {

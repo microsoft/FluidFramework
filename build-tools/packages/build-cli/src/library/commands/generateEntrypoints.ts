@@ -253,7 +253,6 @@ function getOutPathPrefix(
 function getLocalUnscopedPackageName(packageJson: PackageJson): string {
 	const packageName = packageJson.name;
 	if (typeof packageName !== "string") {
-		// eslint-disable-next-line unicorn/prefer-type-error
 		throw new Error(`unable to read package name`);
 	}
 

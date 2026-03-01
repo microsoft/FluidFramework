@@ -71,9 +71,7 @@ export abstract class StateMachineCommand<
 		for (const state of this.machine.states()) {
 			// Logs the entry into any terminal state, noting the source state and action that caused the transition.
 			if (this.machine.state_is_terminal(state) === true) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				this.machine.hook_entry(state, (o: any) => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const { from, action } = o;
 					this.verbose(`${state}: ${action} from ${from}`);
 				});
@@ -82,9 +80,8 @@ export abstract class StateMachineCommand<
 
 		// Logs all transitions in the state machine, noting the source and target states and the action that caused the
 		// transition.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 		this.machine.hook_any_transition((t: any) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { action, from, to } = t;
 			this.verbose(`STATE MACHINE: ${from} [${action}] ==> ${to}`);
 		});
@@ -123,7 +120,6 @@ export abstract class StateMachineCommand<
 			do {
 				const state = machine.state();
 
-				// eslint-disable-next-line no-await-in-loop
 				const handled = await handler?.handleState(
 					state,
 					machine,

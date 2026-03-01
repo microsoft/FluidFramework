@@ -307,13 +307,13 @@ describe("compatLayerGeneration library", () => {
 
 			// Check package.json was updated
 			const packageJsonContent = await readFile(packageJsonPath, "utf8");
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 			const packageJson = JSON.parse(packageJsonContent);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
 			assert.strictEqual(packageJson.fluidCompatMetadata.generation, 5);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
 			assert.strictEqual(packageJson.fluidCompatMetadata.releasePkgVersion, "1.0.0");
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/strict-boolean-expressions
+
 			assert(packageJson.fluidCompatMetadata.releaseDate); // should have a date
 		});
 	});

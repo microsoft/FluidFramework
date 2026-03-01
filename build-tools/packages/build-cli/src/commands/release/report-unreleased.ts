@@ -49,7 +49,6 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 
 		const reportData = await fs.readFile(flags.fullReportFilePath, "utf8");
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const fullReleaseReport: ReleaseReport = JSON.parse(reportData);
 
 		try {

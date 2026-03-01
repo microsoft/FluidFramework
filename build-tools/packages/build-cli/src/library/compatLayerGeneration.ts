@@ -401,7 +401,6 @@ export async function checkPackagesCompatLayerGeneration(
 		[];
 
 	for (const pkg of packages) {
-		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
 		const result = await checkPackageCompatLayerGeneration(
 			pkg,
 			generationDir,
