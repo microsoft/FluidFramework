@@ -617,9 +617,9 @@ export function checkoutTests(
 
 		it('can dispose and remove listeners', async () => {
 			const { checkout } = await setUpTestCheckout();
-			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
+			expect((checkout.tree as SharedTree).listenerCount(SharedTreeEvent.EditCommitted)).to.equal(1);
 			checkout.dispose();
-			expect(checkout.tree.listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
+			expect((checkout.tree as SharedTree).listenerCount(SharedTreeEvent.EditCommitted)).to.equal(0);
 		});
 
 		additionalTests?.();
