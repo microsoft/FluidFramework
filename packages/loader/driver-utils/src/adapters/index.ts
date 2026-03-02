@@ -5,7 +5,7 @@
 
 export {
 	SummaryCompressionAlgorithm,
-	ICompressionStorageConfig,
+	type ICompressionStorageConfig,
 	DefaultCompressionStorageConfig,
 	blobHeadersBlobName,
 } from "./compression/index.js";

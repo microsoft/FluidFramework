@@ -16,15 +16,6 @@ const config: Linter.Config[] = [
 			"react/no-deprecated": "off",
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;

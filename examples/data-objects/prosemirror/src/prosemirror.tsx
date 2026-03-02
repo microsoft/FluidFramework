@@ -153,7 +153,6 @@ class ProseMirrorView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
 		if (!this.textArea) {
 			this.textArea = document.createElement("div");
 			this.textArea.classList.add("editor");
@@ -170,7 +169,7 @@ class ProseMirrorView {
 			elm.appendChild(this.content!);
 		}
 
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this.editorView) {
 			this.editorView = this.collabManager.setupEditor(this.textArea);
 		}
@@ -186,6 +185,8 @@ export interface IProseMirrorReactViewProps {
 }
 
 /**
+ * React component that renders a ProseMirror editor with collaborative features.
+ *
  * @internal
  */
 export const ProseMirrorReactView: React.FC<IProseMirrorReactViewProps> = (

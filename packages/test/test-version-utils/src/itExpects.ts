@@ -12,7 +12,6 @@ import {
 	getUnexpectedLogErrorException,
 	TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-// eslint-disable-next-line import-x/no-extraneous-dependencies
 import { Context } from "mocha";
 
 /**
@@ -23,6 +22,8 @@ export type ExpectedEvents =
 	| Partial<Record<TestDriverTypes, ITelemetryGenericEventExt[]>>;
 
 /**
+ * Creates a test wrapper that validates expected telemetry events.
+ *
  * @internal
  */
 export function createExpectsTest(

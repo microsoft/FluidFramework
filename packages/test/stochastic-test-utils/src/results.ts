@@ -15,6 +15,8 @@ export interface HasWorkloadName {
 }
 
 /**
+ * Gets the save directory path for the provided workload model.
+ *
  * @internal
  */
 export function getSaveDirectory(directory: string, model: HasWorkloadName): string {
@@ -41,6 +43,8 @@ export interface SaveOptions {
 }
 
 /**
+ * Gets save information for the provided workload model and options.
+ *
  * @internal
  */
 export function getSaveInfo(

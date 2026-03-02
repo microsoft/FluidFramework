@@ -215,7 +215,7 @@ export function configureDebugAsserts(enabled: boolean): boolean {
  * More details on these annotations can be found at {@link  https://github.com/javascript-compiler-hints/compiler-notations-spec/tree/main}.
  * @privateRemarks
  * See {@link skipInProductionInner}.
- * @internal
+ * @alpha
  */
 export function nonProductionConditionalsIncluded(): boolean {
 	let included = false;
@@ -254,7 +254,7 @@ export function nonProductionConditionalsIncluded(): boolean {
  * The approach taken with `configureDebugAsserts` is a bit more flexible, allowing both opt in and opt out, but also more error prone.
  * This API, `emulateProductionBuild` provides a more restrictive but less error prone option targeted at being a final defense for detecting cases where production mode causes issues.
  * It catches some cases `configureDebugAsserts` can't, like dependency on side effects of failing asserts debug message callback.
- * @internal
+ * @alpha
  */
 export function emulateProductionBuild(enable = true): void {
 	emulateProductionBuildCount += enable ? 1 : -1;

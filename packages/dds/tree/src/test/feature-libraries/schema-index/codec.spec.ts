@@ -42,7 +42,7 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const schemaCodecs = makeCodecFamily(
-	schemaCodecBuilder.applyOptions(codecOptions).map(([_version, codec]) => {
+	schemaCodecBuilder.applyOptions(codecOptions).map((codec) => {
 		return [codec.formatVersion, codec.codec] as const;
 	}),
 );

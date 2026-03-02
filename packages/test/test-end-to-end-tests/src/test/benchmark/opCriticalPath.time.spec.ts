@@ -59,6 +59,13 @@ describeCompat(
 
 		let testId = 0;
 
+		beforeEach("check driver compatibility", function () {
+			provider = getTestObjectProvider();
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+				this.skip(); // This test triggers 504 errors on AFR occasionally. The test intentionally ignores server interactions anyway.
+			}
+		});
+
 		const setup = async (): Promise<void> => {
 			testId++;
 			provider = getTestObjectProvider();
@@ -93,7 +100,8 @@ describeCompat(
 			before: async () => {
 				await setup();
 			},
-			benchmarkFnAsync: async () => {
+			// eslint-disable-next-line object-shorthand
+			benchmarkFnAsync: async function () {
 				sendOps("A");
 				// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
 				// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.

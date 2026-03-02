@@ -47,7 +47,9 @@ describe("useTree", () => {
 
 			const InvalidItemParentComponent = ({
 				item,
-			}: { item: PropTreeNode<Item> }): JSX.Element => (
+			}: {
+				item: PropTreeNode<Item>;
+			}): JSX.Element => (
 				// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
 				<span>{item.text}</span>
 			);
@@ -59,7 +61,6 @@ describe("useTree", () => {
 			 *
 			 * When in StrictMode, React may double render, so that case is not checked for an exact match.
 			 */
-			// eslint-disable-next-line no-inner-declarations
 			function checkRenderLog(log: string[], expected: readonly string[]): void {
 				if (reactStrictMode) {
 					assert.deepEqual(new Set(log), new Set(expected));

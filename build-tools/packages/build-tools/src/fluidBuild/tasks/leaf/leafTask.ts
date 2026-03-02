@@ -6,11 +6,10 @@
 import * as assert from "node:assert";
 import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";
-
-import crypto from "crypto";
-import * as path from "path";
 import type { AsyncPriorityQueue } from "async";
+import crypto from "crypto";
 import registerDebug from "debug";
+import * as path from "path";
 import chalk from "picocolors";
 
 import { defaultLogger } from "../../../common/logging";
@@ -23,10 +22,11 @@ import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
-	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
+	replaceRepoRootToken,
 } from "../../fluidBuildConfig";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
 import { options } from "../../options";
 import { Task, type TaskExec } from "../task";
 import { globWithGitignore } from "../taskUtils";
@@ -543,6 +543,23 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 */
 
 	/**
+	 * Get additional config files to track for this task from the task definition.
+	 * @returns absolute paths to additional config files
+	 */
+	protected get additionalConfigFiles(): string[] {
+		if (this.taskName === undefined) {
+			return [];
+		}
+
+		const repoRoot = this.node.context.repoRoot;
+		return this.node
+			.getAdditionalConfigFiles(this.taskName)
+			.map((configPath) =>
+				this.getPackageFileFullPath(replaceRepoRootToken(configPath, repoRoot)),
+			);
+	}
+
+	/**
 	 * The content to be written in the "done file".
 	 * @remarks
 	 * This file must have different content if the work needed to be done by this task changes.
@@ -580,9 +597,14 @@ export class UnknownLeafTask extends LeafTask {
 
 /**
  * A Leaf task base that can be used for tasks that have a list of input and output file paths to include in the
- * donefile. By default, the donefile will contain the filestat information, like last modified time, as the values in
- * the donefile. Despite its name, this class can be used for hash-based donefiles by overriding the `useHashes`
- * property.
+ * donefile.
+ *
+ * @remarks
+ * Despite its name, this class supports both timestamp-based and hash-based donefiles via the `useHashes` property.
+ *
+ * Subclasses can override `useHashes` to return `true` to use content hashes instead of timestamps. Hashing avoids
+ * false positives from timestamp changes that don't reflect actual content changes (e.g., git operations, file
+ * copies), but has a small performance cost.
  */
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
@@ -599,11 +621,26 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	 * If this returns true, then the donefile will use the hash of the file contents instead of the last modified time
 	 * and other file stats.
 	 *
-	 * Hashing is roughly 20% slower than the stats-based approach, but is less susceptible to getting invalidated by
-	 * other processes like git touching files but not ultimately changing their contents.
+	 * @remarks
+	 * Hashing avoids false positives from timestamp changes that don't reflect actual content changes (e.g., git
+	 * operations, file copies), but has a small performance cost.
+	 *
+	 * @returns `true` to use content hashes, `false` to use file timestamps (default).
 	 */
 	protected get useHashes(): boolean {
 		return false;
+	}
+
+	/**
+	 * Get all input files for done file tracking, including additional config files.
+	 */
+	private async getAllInputFiles(): Promise<string[]> {
+		const srcFiles = await this.getInputFiles();
+		const additionalConfigFiles = this.additionalConfigFiles;
+		if (additionalConfigFiles.length === 0) {
+			return srcFiles;
+		}
+		return [...srcFiles, ...additionalConfigFiles];
 	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
@@ -611,12 +648,14 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return this.getHashDoneFileContent();
 		}
 
-		// Gather the file information
+		// Timestamp-based done file content.
+		// Note: timestamps may signal change without meaningful content modification (e.g., git
+		// operations, file copies). Override useHashes to return true to use content hashes instead.
 		try {
-			const srcFiles = await this.getInputFiles();
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
 			const srcTimesP = Promise.all(
-				srcFiles
+				allSrcFiles
 					.map((match) => this.getPackageFileFullPath(match))
 					.map((match) => stat(match)),
 			);
@@ -633,7 +672,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstInfo = dstTimes.map((dstTime) => {
 				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
 			});
-			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
+			return JSON.stringify({ srcFiles: allSrcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
@@ -650,9 +689,9 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		};
 
 		try {
-			const srcFiles = await this.getInputFiles();
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
-			const srcHashesP = Promise.all(srcFiles.map(mapHash));
+			const srcHashesP = Promise.all(allSrcFiles.map(mapHash));
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
@@ -661,11 +700,10 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			srcHashes.sort(sortByName);
 			dstHashes.sort(sortByName);
 
-			const output = JSON.stringify({
+			return JSON.stringify({
 				srcHashes,
 				dstHashes,
 			});
-			return output;
 		} catch (e: any) {
 			this.traceError(`error calculating file hashes: ${e.message}`);
 			this.traceTrigger("failed to get file hash");

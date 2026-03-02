@@ -69,7 +69,7 @@
  * }
  * ```
  *
- * @internal
+ * @beta
  */
 export declare class BrandedType<out Brand> {
 	/**

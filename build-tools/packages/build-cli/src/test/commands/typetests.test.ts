@@ -7,16 +7,16 @@ import { assert, expect } from "chai";
 import { describe, it } from "mocha";
 
 import {
-	VersionOptions,
 	normalizeConfig,
 	previousVersion,
 	resetBrokenTests,
 	updateTypeTestDependency,
+	VersionOptions,
 } from "../../commands/typetests.js";
 import {
+	defaultTypeValidationConfig,
 	type ITypeValidationConfig,
 	type PackageWithTypeTestSettings,
-	defaultTypeValidationConfig,
 } from "../../typeValidator/typeValidatorConfig.js";
 
 /**

@@ -118,6 +118,8 @@ export async function promiseRaceWithWinner<T>(
 }
 
 /**
+ * Validates that sequenced messages are contiguous and in the expected range.
+ *
  * @internal
  */
 export function validateMessages(

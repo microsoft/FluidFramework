@@ -35,7 +35,12 @@
                             "type": "string"
                           }
                         },
-                        "metadata": {}
+                        "metadata": {
+                          "type": "object",
+                          "patternProperties": {
+                            "^(.*)$": {}
+                          }
+                        }
                       },
                       "required": [
                         "kind",
@@ -57,7 +62,12 @@
                         "type": "string"
                       }
                     },
-                    "metadata": {}
+                    "metadata": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^(.*)$": {}
+                      }
+                    }
                   },
                   "required": [
                     "kind",
@@ -90,7 +100,12 @@
                 }
               }
             },
-            "metadata": {}
+            "metadata": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {}
+              }
+            }
           },
           "required": [
             "kind"
@@ -111,7 +126,12 @@
             "type": "string"
           }
         },
-        "metadata": {}
+        "metadata": {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {}
+          }
+        }
       },
       "required": [
         "kind",

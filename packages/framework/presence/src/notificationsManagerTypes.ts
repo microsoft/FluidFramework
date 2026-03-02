@@ -68,15 +68,18 @@ export interface NotificationListenable<
 }
 
 /**
- * Record of notification subscriptions.
+ * Record of notification subscription signatures transformed from listener emit signatures.
+ *
+ * @remarks
+ * Prepends the `sender: Attendee` parameter to each notification listener signature.
  *
  * @sealed
  * @alpha
  */
-export type NotificationSubscriptions<
+export type NotificationSubscriberSignatures<
 	E extends InternalUtilityTypes.NotificationListeners<E>,
 > = {
-	[K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (
+	[K in keyof InternalUtilityTypes.NotificationListeners<E>]: (
 		sender: Attendee,
 		...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
 	) => void;
@@ -116,7 +119,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
  * Provides notifications from this client to others and subscription
  * to their notifications.
  *
- * @remarks Create using {@link Notifications} registered to
+ * @remarks Create using {@link (Notifications:1)} registered to
  * {@link NotificationsWorkspace} or {@link StatesWorkspace}.
  *
  * @sealed

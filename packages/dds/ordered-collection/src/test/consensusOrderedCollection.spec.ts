@@ -16,17 +16,27 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
+import { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 import {
 	ConsensusQueueFactory,
 	type ConsensusQueue,
 } from "../consensusOrderedCollectionFactory.js";
+import { ConsensusQueueClass } from "../consensusQueue.js";
 import { ConsensusResult, type IConsensusOrderedCollection } from "../interfaces.js";
 import {
 	acquireAndComplete,
 	acquireAndRelease,
 	waitAcquireAndComplete,
 } from "../testUtils.js";
+
+/**
+ * Test class that exposes protected applyStashedOp method for testing
+ */
+class TestConsensusQueue extends ConsensusQueueClass {
+	public testApplyStashedOp(content: unknown): void {
+		this.applyStashedOp(content);
+	}
+}
 
 function createConnectedCollection(
 	id: string,
@@ -68,6 +78,26 @@ function createCollectionForReconnection(
 	const collection = factory.create(dataStoreRuntime, id);
 	collection.connect(services);
 	return { collection, containerRuntime };
+}
+
+function createTestCollectionForStashedOps(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): TestConsensusQueue {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	};
+
+	const collection = new TestConsensusQueue(
+		id,
+		dataStoreRuntime,
+		ConsensusQueueFactory.Attributes,
+	);
+	collection.connect(services);
+	return collection;
 }
 
 describe("ConsensusOrderedCollection", () => {
@@ -386,6 +416,160 @@ describe("ConsensusOrderedCollection", () => {
 			// Verify that the remote collection received the added value.
 			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
 			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
+		});
+	});
+
+	describe("applyStashedOp", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+		let testCollection1: TestConsensusQueue;
+		let testCollection2: IConsensusOrderedCollection;
+
+		beforeEach(() => {
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
+			testCollection1 = createTestCollectionForStashedOps(
+				"collection1",
+				containerRuntimeFactory,
+			);
+			testCollection2 = createConnectedCollection("collection2", containerRuntimeFactory);
+		});
+
+		it("can apply stashed add op and have it reach remote client", async () => {
+			const testValue = "testValue";
+
+			// Create a stashed add op
+			const stashedOp = {
+				opName: "add" as const,
+				value: JSON.stringify(testValue),
+			};
+
+			// Apply the stashed op - this should submit it for processing
+			testCollection1.testApplyStashedOp(stashedOp);
+
+			// Process all messages
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the value can be acquired from the remote collection
+			const resP = acquireAndComplete(testCollection2);
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => containerRuntimeFactory.processAllMessages());
+			const result = (await resP) as string | undefined;
+
+			assert.equal(
+				result,
+				testValue,
+				"Remote collection should be able to acquire the added value",
+			);
+		});
+
+		it("can apply stashed acquire op", async () => {
+			// First add a value normally
+			const testValue = "testValue";
+			const addP = testCollection1.add(testValue);
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			// Create a stashed acquire op
+			const stashedOp = {
+				opName: "acquire" as const,
+				acquireId: "test-acquire-id",
+			};
+
+			// Track if acquire event fires
+			let acquireFired = false;
+			testCollection2.on("acquire", () => {
+				acquireFired = true;
+			});
+
+			// Apply the stashed acquire op
+			testCollection1.testApplyStashedOp(stashedOp);
+
+			// Process all messages
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the acquire was processed
+			assert.equal(acquireFired, true, "Acquire event should fire on remote client");
+		});
+
+		it("can apply stashed complete op after acquire", async () => {
+			// First add a value normally
+			const testValue = "testValue";
+			const addP = testCollection1.add(testValue);
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			// Apply a stashed acquire op first
+			const acquireId = "test-acquire-id";
+			const acquireOp = {
+				opName: "acquire" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(acquireOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Track if complete event fires
+			let completeFired = false;
+			testCollection2.on("complete", () => {
+				completeFired = true;
+			});
+
+			// Apply a stashed complete op
+			const completeOp = {
+				opName: "complete" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(completeOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the complete was processed
+			assert.equal(completeFired, true, "Complete event should fire on remote client");
+		});
+
+		it("can apply stashed release op after acquire", async () => {
+			// First add a value normally
+			const testValue = "testValue";
+			const addP = testCollection1.add(testValue);
+			containerRuntimeFactory.processAllMessages();
+			await addP;
+
+			// Apply a stashed acquire op first
+			const acquireId = "test-acquire-id";
+			const acquireOp = {
+				opName: "acquire" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(acquireOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Track if add event fires (release should put value back in queue)
+			let addFired = false;
+			testCollection2.on("add", (value, newlyAdded) => {
+				if (!newlyAdded) {
+					addFired = true;
+				}
+			});
+
+			// Apply a stashed release op
+			const releaseOp = {
+				opName: "release" as const,
+				acquireId,
+			};
+			testCollection1.testApplyStashedOp(releaseOp);
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify the release was processed (value should be back in queue)
+			assert.equal(
+				addFired,
+				true,
+				"Add event should fire on remote client when value is released",
+			);
+
+			// Verify we can acquire the value again
+			const resP = acquireAndComplete(testCollection2);
+			containerRuntimeFactory.processAllMessages();
+			setImmediate(() => containerRuntimeFactory.processAllMessages());
+			const result = (await resP) as string | undefined;
+
+			assert.equal(result, testValue, "Should be able to acquire the released value");
 		});
 	});
 

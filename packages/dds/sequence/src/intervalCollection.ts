@@ -61,6 +61,7 @@ import {
 	createSequenceInterval,
 	getSerializedProperties,
 } from "./intervals/index.js";
+import type { ISharedSegmentSequence } from "./sequence.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
 
@@ -145,6 +146,7 @@ export class LocalIntervalCollection {
 	private readonly indexes: Set<SequenceIntervalIndex>;
 
 	constructor(
+		sequence: ISharedSegmentSequence<any>,
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly options: Partial<SequenceOptions>,
@@ -154,9 +156,9 @@ export class LocalIntervalCollection {
 			previousInterval: SequenceIntervalClass,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(sequence);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(client);
+		this.endIntervalIndex = new EndpointIndex(sequence);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -1030,7 +1032,7 @@ export class IntervalCollection
 		return { start, end };
 	}
 
-	public attachGraph(client: Client, label: string) {
+	public attachGraph(sequence: ISharedSegmentSequence<any>, client: Client, label: string) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
 		}
@@ -1054,6 +1056,7 @@ export class IntervalCollection
 		}
 
 		this.localCollection = new LocalIntervalCollection(
+			sequence,
 			client,
 			label,
 			this.options,
@@ -1712,7 +1715,7 @@ export class IntervalCollection
 	}
 
 	/**
-	 * @returns an iterator over all intervals in this collection.
+	 * Creates an iterator over all intervals in this collection.
 	 */
 	public [Symbol.iterator](): IntervalCollectionIterator {
 		const iterator = new IntervalCollectionIterator(this);

@@ -17,8 +17,9 @@ export function colNameToIndex(colName: string): number {
 	); // 1-indexed -> 0-indexed
 }
 
-// Convert a 0-based column index into an Excel-like column name (e.g., 0 -> 'A')
 /**
+ * Converts a 0-based column index into an Excel-like column name (e.g., 0 -\> 'A').
+ *
  * @internal
  */
 export function colIndexToName(colIndex: number): string {
@@ -35,6 +36,8 @@ export function colIndexToName(colIndex: number): string {
 }
 
 /**
+ * Parses a range string into row and column coordinates.
+ *
  * @internal
  */
 export function parseRange(range: string): {

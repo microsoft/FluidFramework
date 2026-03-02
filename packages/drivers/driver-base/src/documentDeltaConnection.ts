@@ -117,6 +117,8 @@ export class DocumentDeltaConnection
 	private readonly mc: MonitoringContext;
 
 	/**
+	 * Gets the logger from the monitoring context.
+	 *
 	 * @deprecated Implementors should manage their own logger or monitoring context
 	 */
 	protected get logger(): ITelemetryLoggerExt {

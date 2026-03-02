@@ -189,24 +189,25 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-> = RestrictiveStringRecord<ImplicitFieldSchema> extends T
-	? { arbitraryKey: "arbitraryValue" } extends T
-		? // {} case
-			Record<string, never>
-		: // RestrictiveStringRecord<ImplicitFieldSchema> case
-			never
-	: FlattenKeys<
-			{
-				readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
-					T[Property & string]
-				>;
-			} & {
-				// Field does not have a known default, make it required:
-				readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
-					? Property
-					: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
-			}
-		>;
+> =
+	RestrictiveStringRecord<ImplicitFieldSchema> extends T
+		? { arbitraryKey: "arbitraryValue" } extends T
+			? // {} case
+				Record<string, never>
+			: // RestrictiveStringRecord<ImplicitFieldSchema> case
+				never
+		: FlattenKeys<
+				{
+					readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+						T[Property & string]
+					>;
+				} & {
+					// Field does not have a known default, make it required:
+					readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
+						? Property
+						: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
+				}
+			>;
 
 /**
  * Maps from simple field keys ("property" keys) to information about the field.

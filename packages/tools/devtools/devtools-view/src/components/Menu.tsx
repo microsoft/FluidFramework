@@ -47,6 +47,7 @@ import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
 import { Waiting } from "./Waiting.js";
+import { ScreenReaderAnnouncement } from "./utility-components/index.js";
 
 const useMenuStyles = makeStyles({
 	root: {
@@ -177,6 +178,7 @@ const getContainerListMessage = GetContainerList.createMessage();
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
+	const [statusMessage, setStatusMessage] = React.useState("");
 
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
@@ -188,17 +190,23 @@ function RefreshButton(): React.ReactElement {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
 		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
+		setStatusMessage("Containers list refreshed");
+		// Clear the message after a delay so subsequent clicks trigger a new announcement
+		setTimeout(() => setStatusMessage(""), 1000);
 	}
 
 	return (
-		<Tooltip content="Refresh Containers list" relationship="label">
-			<Button
-				icon={<ArrowSync16Regular />}
-				style={transparentButtonStyle}
-				onClick={handleRefreshClick}
-				aria-label="Refresh Containers list"
-			></Button>
-		</Tooltip>
+		<>
+			<Tooltip content="Refresh Containers list" relationship="label">
+				<Button
+					icon={<ArrowSync16Regular />}
+					style={transparentButtonStyle}
+					onClick={handleRefreshClick}
+					aria-label="Refresh Containers list"
+				></Button>
+			</Tooltip>
+			<ScreenReaderAnnouncement message={statusMessage} />
+		</>
 	);
 }
 

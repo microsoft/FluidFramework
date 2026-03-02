@@ -14,15 +14,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;

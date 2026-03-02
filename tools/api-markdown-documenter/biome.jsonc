@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../../biome.jsonc"],
+	"extends": "//",
 	"overrides": [
 		{
 			// JSONC WITHOUT TRAILING COMMAS
@@ -9,7 +9,7 @@
 			// format them conservatively without trailing commas.
 			//
 			// See also: https://github.com/microsoft/vscode/issues/102061
-			"include": [
+			"includes": [
 				// These files contain comments, but are not JSONC files
 				"**/test/test-data/**"
 			],

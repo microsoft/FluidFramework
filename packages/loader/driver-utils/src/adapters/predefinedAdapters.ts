@@ -4,12 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 import {
 	DefaultCompressionStorageConfig,
 	DocumentServiceFactoryCompressionAdapter,
-	ICompressionStorageConfig,
+	type ICompressionStorageConfig,
 } from "./compression/index.js";
 
 /**
@@ -49,9 +49,7 @@ export function applyStorageCompression(
  */
 function applyStorageCompressionInternal(
 	constructor: new (
-		// eslint-disable-next-line @typescript-eslint/no-shadow
 		documentServiceFactory: IDocumentServiceFactory,
-		// eslint-disable-next-line @typescript-eslint/no-shadow
 		config: ICompressionStorageConfig,
 	) => IDocumentServiceFactory,
 	documentServiceFactory: IDocumentServiceFactory,
@@ -67,9 +65,12 @@ function applyStorageCompressionInternal(
  * This method checks whether given objects contains
  * a properties expected for the interface ICompressionStorageConfig.
  */
-export function isCompressionConfig(config: any): config is ICompressionStorageConfig {
+export function isCompressionConfig(config: unknown): config is ICompressionStorageConfig {
 	return (
 		config !== undefined &&
-		(config.algorithm !== undefined || config.minSizeToCompress !== undefined)
+		typeof config === "object" &&
+		config !== null &&
+		((config as Partial<ICompressionStorageConfig>).algorithm !== undefined ||
+			(config as Partial<ICompressionStorageConfig>).minSizeToCompress !== undefined)
 	);
 }

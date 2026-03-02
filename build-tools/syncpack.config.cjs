@@ -170,6 +170,15 @@ module.exports = {
 		},
 
 		{
+			// TODO: This can be removed once biome is fully upgraded to 2.x
+			label: "Ignore @biomejs/biome in pnpm overrides",
+			isIgnored: true,
+			packages: ["build-tools-release-group-root"],
+			dependencies: ["@biomejs/biome"],
+			dependencyTypes: ["pnpmOverrides"],
+		},
+
+		{
 			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
 			dependencies: ["chalk"],
 			packages: ["@fluidframework/build-tools", "@fluid-tools/version-tools"],

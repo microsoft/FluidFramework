@@ -10,11 +10,11 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "mocha";
 
 import {
+	checkPackageCompatLayerGeneration,
+	checkPackagesCompatLayerGeneration,
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackageCompatLayerGeneration,
-	checkPackagesCompatLayerGeneration,
 	deleteCompatLayerGenerationFile,
 	formatCompatLayerGenerationError,
 	generateLayerFileContent,

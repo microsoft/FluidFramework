@@ -5,20 +5,19 @@
 
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
+import { getVersionsFromStrings } from "@fluid-tools/version-tools";
 import type { Package } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
+import { parseISO } from "date-fns";
 import readPkgUp from "read-pkg-up";
 import * as semver from "semver";
 import { type SimpleGit, type SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
-
-import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
-import { getVersionsFromStrings } from "@fluid-tools/version-tools";
-import { parseISO } from "date-fns";
 import type { CommandLogger } from "../logging.js";
 import type { ReleaseGroup } from "../releaseGroups.js";
 // eslint-disable-next-line import-x/no-deprecated
-import { type Context, type VersionDetails, isMonoRepoKind } from "./context.js";
+import { type Context, isMonoRepoKind, type VersionDetails } from "./context.js";
 
 const newlineCrossPlatform = /\r?\n/;
 /**

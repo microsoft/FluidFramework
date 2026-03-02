@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { queue } from "async";
+import registerDebug from "debug";
 import detectIndent from "detect-indent";
 import { readJsonSync, writeJsonSync } from "fs-extra";
 import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
-
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
-
 import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
 import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata";
 import { options } from "../fluidBuild/options";
@@ -26,7 +25,6 @@ import {
 	rimrafWithErrorAsync,
 } from "./utils";
 
-import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 const { log, errorLog: error } = defaultLogger;

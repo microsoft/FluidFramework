@@ -55,14 +55,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: preCG
-  type: stepList
-  default: []
-
-- name: cgSubDirectory
-  type: string
-  default:
-
 - name: checkoutSubmodules
   type: boolean
   default: false
@@ -84,10 +76,6 @@ parameters:
   type: boolean
   default: false
 
-- name: includeInternalVersions
-  type: boolean
-  default: false
-
 - name: buildToolsVersionToInstall
   type: string
   default: repo
@@ -105,10 +93,6 @@ parameters:
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
-
-- name: additionalBuildSteps
-  type: stepList
-  default: []
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
@@ -237,6 +221,7 @@ extends:
             steps:
               # Setup
               - checkout: self
+                path: $(FluidFrameworkDirectory)
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -245,7 +230,7 @@ extends:
                 displayName: Parameters
                 inputs:
                   targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
                     # even in an error case
@@ -272,6 +257,9 @@ extends:
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
+                      consistentSourcesDirectory=$(consistentSourcesDirectory)
+                      FluidFrameworkDirectory=$(FluidFrameworkDirectory)
+                      FFPipelineHostDirectory=$(FFPipelineHostDirectory)
                       pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
@@ -388,7 +376,7 @@ extends:
                         targetType: inline
                         script: |
                           set -eu -o pipefail
-                          PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
+                          PATH_TO_TINYLICIOUS_LOG=$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
                           if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
                             echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
                             echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
@@ -409,7 +397,7 @@ extends:
                         condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                         inputs:
                           targetType: 'inline'
-                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                           script: |
                             set -eu -o pipefail
                             test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
@@ -418,7 +406,7 @@ extends:
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
                           targetType: 'inline'
-                          workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report'
                           script: |
                             set -eu -o pipefail
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
@@ -426,13 +414,13 @@ extends:
                         displayName: Publish Code Coverage
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
-                          summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                          summaryFileLocation: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                           failIfCoverageEmpty: true
                       - task: CopyFiles@2
                         displayName: Copy code coverage report to artifact staging directory
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                         inputs:
-                          sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                          sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report'
                           targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
                       - task: Bash@3
                         displayName: Report Code Coverage Comparison
@@ -449,7 +437,7 @@ extends:
                           ADO_CI_BUILD_DEFINITION_ID_PR: 11
                         inputs:
                           targetType: inline
-                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                           script: |
                             set -eu -o pipefail
                             echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
@@ -478,8 +466,8 @@ extends:
                       STAGING_PATH: $(Build.ArtifactStagingDirectory)
                     inputs:
                       targetType: filePath
-                      workingDirectory: '${{ parameters.buildDirectory }}'
-                      filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
+                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                      filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -490,7 +478,7 @@ extends:
                     displayName: 'Calculate bundle sizes'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:collect'
 
                   # Copy files so all artifacts we publish end up under the same parent folder.
@@ -498,7 +486,7 @@ extends:
                   - task: CopyFiles@2
                     displayName: Copy bundle size files to artifact staging directory
                     inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
                   # At this point we want to publish the artifact with the bundle size analysis,
@@ -514,7 +502,7 @@ extends:
                       TARGET_BRANCH_NAME: '$(targetBranchName)'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run bundle-analysis:run'
 
                   - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
@@ -522,7 +510,7 @@ extends:
                         displayName: List report.json
                         inputs:
                           targetType: inline
-                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                           script: |
                             set -eu -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
@@ -543,7 +531,7 @@ extends:
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                             npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
@@ -552,7 +540,7 @@ extends:
                     displayName: 'npm run ci:build:docs'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       customCommand: 'run ci:build:docs'
 
                   # Copy files so all artifacts we publish end up under the same parent folder.
@@ -560,7 +548,7 @@ extends:
                   - task: CopyFiles@2
                     displayName: Copy _api-extractor-temp files to artifact staging directory
                     inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/_api-extractor-temp'
                       targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
 
                   # At this point we want to publish the artifact with the _api-extractor-temp folder,
@@ -575,7 +563,7 @@ extends:
                   displayName: Reset lockfile
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     script: |
                       set -eu -o pipefail
                       git checkout HEAD -- pnpm-lock.yaml
@@ -585,7 +573,7 @@ extends:
                   displayName: Prune pnpm store
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     script: |
                       set -eu -o pipefail
                       pnpm store prune
@@ -594,6 +582,7 @@ extends:
                 displayName: Check for extraneous modified files
                 inputs:
                   targetType: inline
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
                     # even in an error case
@@ -603,10 +592,6 @@ extends:
                       echo "##vso[task.logissue type=error]Build should not create extraneous files"
                       exit -1;
                     fi
-
-              # This additional build step is used to run step not part of the main build. In build client pipeline,
-              # this is used to inject telemetry key file and upload built devtools extension.
-              - ${{ parameters.additionalBuildSteps }}
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -659,7 +644,6 @@ extends:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
             buildDirectory: ${{ parameters.buildDirectory }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:

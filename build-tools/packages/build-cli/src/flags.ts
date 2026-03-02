@@ -7,7 +7,7 @@ import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
 // eslint-disable-next-line import-x/no-deprecated
-import { MonoRepoKind } from "./library/index.js";
+import { MonoRepoKind } from "./library/context.js";
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
@@ -21,17 +21,16 @@ function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 	}
 }
 
+import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import {
-	type VersionBumpType,
-	type VersionScheme,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
+	type VersionBumpType,
+	type VersionScheme,
 } from "@fluid-tools/version-tools";
-
-import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
-import type { DependencyUpdateType } from "./library/index.js";
-import { type ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
+import type { DependencyUpdateType } from "./library/bump.js";
+import { isReleaseGroup, type ReleaseGroup } from "./releaseGroups.js";
 
 /**
  * A re-usable CLI flag to parse release groups.

@@ -58,7 +58,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
+    // @deprecated
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -112,7 +112,6 @@ export class MockContainerRuntimeFactory {
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
     protected getFirstMessageToProcess(): ISequencedDocumentMessage;
-    // (undocumented)
     getMinSeq(): number;
     // (undocumented)
     protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -460,7 +459,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
+    // @deprecated
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)

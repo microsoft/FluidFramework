@@ -3,32 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { PackageName } from "@rushstack/node-core-library";
-import * as semver from "semver";
-
-import type { Context } from "./context.js";
-
 import {
-	DEFAULT_PRERELEASE_IDENTIFIER,
-	type ReleaseVersion,
-	type VersionBumpType,
-	type VersionChangeTypeExtended,
-	type VersionScheme,
 	bumpVersionScheme,
+	DEFAULT_PRERELEASE_IDENTIFIER,
 	detectVersionScheme,
 	fromInternalScheme,
 	fromVirtualPatchScheme,
 	isVersionBumpTypeExtended,
+	type ReleaseVersion,
 	toVirtualPatchScheme,
+	type VersionBumpType,
+	type VersionChangeTypeExtended,
+	type VersionScheme,
 } from "@fluid-tools/version-tools";
-
+import { PackageName } from "@rushstack/node-core-library";
+import * as semver from "semver";
 import {
+	isReleaseGroup,
 	type ReleaseGroup,
 	type ReleasePackage,
 	type ReleaseSource,
-	isReleaseGroup,
 } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
+import type { Context } from "./context.js";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!

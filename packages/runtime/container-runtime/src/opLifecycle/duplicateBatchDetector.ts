@@ -10,13 +10,18 @@ import { getEffectiveBatchId } from "./batchManager.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 /**
- * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
+ * Detects duplicate batches that can arise from the "parallel fork" scenario:
+ * Container 1 is serialized, and Containers 2 and 3 are rehydrated from that state.
+ * They both catch up and (re)connect in parallel (at the same time), submitting the same local state,
+ * sharing the same batchId and sequence number.
+ *
+ * For "serial fork" detection scenarios see PendingStateManager.
  */
 export class DuplicateBatchDetector {
 	/**
-	 * All batchIds we've seen recently enough (based on MSN) that we need to watch for duplicates
+	 * Map from batchId to sequenceNumber
 	 */
-	private readonly batchIdsAll = new Set<string>();
+	private readonly seqNumByBatchId = new Map<string, number>();
 
 	/**
 	 * We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances
@@ -28,9 +33,9 @@ export class DuplicateBatchDetector {
 	 */
 	constructor(batchIdsFromSnapshot: [number, string][] | undefined) {
 		if (batchIdsFromSnapshot) {
-			this.batchIdsBySeqNum = new Map(batchIdsFromSnapshot);
-			for (const batchId of this.batchIdsBySeqNum.values()) {
-				this.batchIdsAll.add(batchId);
+			for (const [seqNum, batchId] of batchIdsFromSnapshot) {
+				this.batchIdsBySeqNum.set(seqNum, batchId);
+				this.seqNumByBatchId.set(batchId, seqNum);
 			}
 		}
 	}
@@ -56,26 +61,25 @@ export class DuplicateBatchDetector {
 		// (the original batch should roundtrip WAY before another container could rehydrate, connect, and resubmit)
 		const batchId = getEffectiveBatchId(batchStart);
 
-		// Check this batch against the tracked batchIds to see if it's a duplicate
-		if (this.batchIdsAll.has(batchId)) {
-			for (const [otherSequenceNumber, otherBatchId] of this.batchIdsBySeqNum.entries()) {
-				if (otherBatchId === batchId) {
-					return {
-						duplicate: true,
-						otherSequenceNumber,
-					};
-				}
-			}
-			assert(false, 0xa34 /* Should have found the batchId in batchIdBySeqNum map */);
+		// O(1) duplicate check + get otherSequenceNumber in one lookup
+		const otherSequenceNumber = this.seqNumByBatchId.get(batchId);
+		if (otherSequenceNumber !== undefined) {
+			assert(
+				this.batchIdsBySeqNum.get(otherSequenceNumber) === batchId,
+				"batchIdToSeqNum and seqNumToBatchId should be in sync for duplicate",
+			);
+			return { duplicate: true, otherSequenceNumber };
 		}
 
 		// Now we know it's not a duplicate, so add it to the tracked batchIds and return.
 		assert(
 			!this.batchIdsBySeqNum.has(sequenceNumber),
-			0xa35 /* batchIdsAll and batchIdsBySeqNum should be in sync */,
+			"seqNumToBatchId and batchIdToSeqNum should be in sync",
 		);
+
+		// Add new batch
 		this.batchIdsBySeqNum.set(sequenceNumber, batchId);
-		this.batchIdsAll.add(batchId);
+		this.seqNumByBatchId.set(batchId, sequenceNumber);
 
 		return { duplicate: false };
 	}
@@ -88,7 +92,9 @@ export class DuplicateBatchDetector {
 		for (const [sequenceNumber, batchId] of this.batchIdsBySeqNum) {
 			if (sequenceNumber < msn) {
 				this.batchIdsBySeqNum.delete(sequenceNumber);
-				this.batchIdsAll.delete(batchId);
+				this.seqNumByBatchId.delete(batchId);
+			} else {
+				break;
 			}
 		}
 	}

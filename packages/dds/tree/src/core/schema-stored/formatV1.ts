@@ -52,6 +52,7 @@ const FieldSchemaFormatBase = Type.Object({
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
+export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
 export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
 
 /**
@@ -70,6 +71,7 @@ export enum PersistedValueSchema {
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
+export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
 export const TreeNodeSchemaDataFormat = Type.Object(
 	{
 		/**
@@ -87,7 +89,3 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 	},
 	unionOptions,
 );
-
-export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
-
-export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;

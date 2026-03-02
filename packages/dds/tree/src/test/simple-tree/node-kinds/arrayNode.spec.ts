@@ -234,6 +234,16 @@ describe("ArrayNode", () => {
 				});
 			});
 
+			it("insertAtStart, insertAtEnd, and push insert at expected positions", () => {
+				const array = init(schemaType, [2]);
+				array.insertAtStart(1);
+				assert.deepEqual([...array], [1, 2]);
+				array.insertAtEnd(3);
+				assert.deepEqual([...array], [1, 2, 3]);
+				array.push(4);
+				assert.deepEqual([...array], [1, 2, 3, 4]);
+			});
+
 			describe("removeRange", () => {
 				it("no arguments", () => {
 					const jsArray = [0, 1, 2];

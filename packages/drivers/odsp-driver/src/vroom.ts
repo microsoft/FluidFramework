@@ -74,6 +74,7 @@ export const fetchJoinSession = mockify(
 			requestSocketToken,
 			...tokenRefreshProps,
 			refreshingSession: isRefreshingJoinSession,
+			setSensitivityLabelHeader: setSensitivityLabelHeader ?? false,
 		};
 
 		return PerformanceEvent.timedExecAsync(
@@ -136,6 +137,7 @@ export const fetchJoinSession = mockify(
 					pushv2: socketUrl.includes("pushf"),
 					webSocketHostName,
 					refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
+					hasSensitivityLabelsInfo: response.content.sensitivityLabelsInfo !== undefined,
 				});
 
 				if (response.content.runtimeTenantId && !response.content.tenantId) {

@@ -46,7 +46,10 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 }) => {
 	useTree(table);
 
-	const row = table.getRow(rowIndex) ?? fail("Row not found");
+	const row = table.getRow(rowIndex);
+	if (row === undefined) {
+		throw new Error("Row not found");
+	}
 
 	return (
 		<TableRow

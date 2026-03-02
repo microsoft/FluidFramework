@@ -5,8 +5,8 @@
 
 import type { Package } from "@fluidframework/build-tools";
 import { runCommand } from "@oclif/test";
-import { assert, expect } from "chai";
 import * as chai from "chai";
+import { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 

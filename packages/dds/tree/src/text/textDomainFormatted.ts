@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey } from "../core/index.js";
+import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import { currentObserver } from "../feature-libraries/index.js";
+import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
 	eraseSchemaDetails,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -21,7 +24,7 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	WithType,
 } from "../simple-tree/index.js";
-import { mapIterable } from "../util/index.js";
+import { mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
 import { charactersFromString, type TextAsTree } from "./textDomain.js";
 
@@ -42,14 +45,49 @@ class TextNode
 			TreeArrayNode.spread(textAtomsFromString(additionalCharacters, this.defaultFormat)),
 		);
 	}
-	public removeRange(index: number, length: number): void {
-		this.content.removeRange(index, length);
+
+	public removeRange(index: number | undefined, end: number | undefined): void {
+		this.content.removeRange(index, end);
 	}
+
 	public characters(): Iterable<string> {
 		return mapIterable(this.content, (atom) => atom.content.content);
 	}
+
+	public charactersCopy(): string[] {
+		const result = this.content.charactersCopy();
+		debugAssert(
+			() =>
+				compareArrays(result, this.charactersCopy_reference()) ||
+				"invalid charactersCopy optimizations",
+		);
+		return result;
+	}
+
+	public characterCount(): number {
+		return this.content.length;
+	}
+
 	public fullString(): string {
+		const result = this.content.fullString();
+		debugAssert(
+			() => result === this.fullString_reference() || "invalid fullString optimizations",
+		);
+		return result;
+	}
+
+	/**
+	 * A non-optimized reference implementation of fullString.
+	 */
+	public fullString_reference(): string {
 		return [...this.characters()].join("");
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of charactersCopy.
+	 */
+	public charactersCopy_reference(): string[] {
+		return [...this.characters()];
 	}
 
 	public static fromString(
@@ -69,7 +107,7 @@ class TextNode
 		});
 	}
 
-	public charactersWithFormatting(): Iterable<FormattedTextAsTree.StringAtom> {
+	public charactersWithFormatting(): readonly FormattedTextAsTree.StringAtom[] {
 		return this.content;
 	}
 	public insertWithFormattingAt(
@@ -79,29 +117,59 @@ class TextNode
 		this.content.insertAt(index, TreeArrayNode.spread(additionalCharacters));
 	}
 	public formatRange(
-		startIndex: number,
-		length: number,
+		start: number | undefined,
+		end: number | undefined,
 		format: Partial<FormattedTextAsTree.CharacterFormat>,
 	): void {
-		for (let i = startIndex; i < startIndex + length; i++) {
-			const atom = this.content[i];
-			if (atom === undefined) {
-				throw new UsageError("Index out of bounds while formatting text range.");
-			}
-			for (const [key, value] of Object.entries(format) as [
-				keyof FormattedTextAsTree.CharacterFormat,
-				unknown,
-			][]) {
-				// Object.entries should only return string keyed enumerable own properties.
-				// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-				assert(typeof key === "string", "Object.entries returned a non-string key.");
-				const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
-				if (f === undefined) {
-					throw new UsageError(`Unknown format key: ${key}`);
+		const formatStart = start ?? 0;
+		validateIndex(formatStart, this.content, "FormattedTextAsTree.formatRange", true);
+
+		const formatEnd = Math.min(this.content.length, end ?? this.content.length);
+		validateIndexRange(
+			formatStart,
+			formatEnd,
+			this.content,
+			"FormattedTextAsTree.formatRange",
+		);
+
+		const branch = TreeAlpha.branch(this);
+
+		const applyFormatting = (): void => {
+			for (let i = formatStart; i < formatEnd; i++) {
+				const atom = this.content[i];
+				if (atom === undefined) {
+					throw new UsageError("Index out of bounds while formatting text range.");
 				}
-				// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-				atom.format[key] = TreeBeta.clone(TreeBeta.create(f, value as never)) as never;
+				for (const [key, value] of Object.entries(format) as [
+					keyof FormattedTextAsTree.CharacterFormat,
+					unknown,
+				][]) {
+					// Object.entries should only return string keyed enumerable own properties.
+					// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
+					assert(
+						typeof key === "string",
+						0xcc8 /* Object.entries returned a non-string key. */,
+					);
+					const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
+					if (f === undefined) {
+						throw new UsageError(`Unknown format key: ${key}`);
+					}
+					// Ensures that if the input is a node, it is cloned before being inserted into the tree.
+					atom.format[key] = TreeBeta.clone(TreeBeta.create(f, value as never)) as never;
+				}
 			}
+		};
+
+		if (branch === undefined) {
+			// If this node does not have a corresponding branch, then it is unhydrated.
+			// I.e., it is not part of a collaborative session yet.
+			// Therefore, we don't need to run the edits as a transaction.
+			applyFormatting();
+		} else {
+			// Wrap all formatting operations in a single transaction for atomicity.
+			branch.runTransaction(() => {
+				applyFormatting();
+			});
 		}
 	}
 }
@@ -129,7 +197,61 @@ function textAtomsFromString(
 	return result;
 }
 
-class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.StringAtom]) {}
+class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.StringAtom]) {
+	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
+		const innerNode = getInnerNode(this);
+		// Since the cursor will be used to read content from the tree and won't track observations,
+		// treat it as if it observed the whole subtree.
+		currentObserver?.observeNodeDeep(innerNode);
+		const cursor = innerNode.borrowCursor();
+		cursor.enterField(EmptyKey);
+		const result = f(cursor);
+		cursor.exitField();
+		return result;
+	}
+
+	public charactersCopy(): string[] {
+		return this.withBorrowedSequenceCursor((cursor) =>
+			mapCursorField(cursor, () => {
+				debugAssert(
+					() =>
+						cursor.type === FormattedTextAsTree.StringAtom.identifier ||
+						"invalid fullString type optimizations",
+				);
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				let content: string;
+				switch (cursor.type) {
+					case FormattedTextAsTree.StringTextAtom.identifier: {
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+						content = cursor.value as string;
+						debugAssert(
+							() => typeof content === "string" || "invalid fullString type optimizations",
+						);
+						cursor.exitNode();
+						cursor.exitField();
+						break;
+					}
+					case FormattedTextAsTree.StringLineAtom.identifier: {
+						content = "\n";
+						break;
+					}
+					default: {
+						fail("Unsupported node type in text array", () => `${cursor.type}`);
+					}
+				}
+				cursor.exitNode();
+				cursor.exitField();
+				return content;
+			}),
+		);
+	}
+
+	public fullString(): string {
+		return this.charactersCopy().join("");
+	}
+}
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
@@ -264,11 +386,15 @@ export namespace FormattedTextAsTree {
 		defaultFormat: CharacterFormat;
 
 		/**
-		 * Gets an iterable over the characters currently in the text.
+		 * Gets an array type view of the characters currently in the text.
 		 * @remarks
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
+		 * @privateRemarks
+		 * Currently this is implemented by a node and changes with the text over time.
+		 * We might not want to leak a node like this in the API.
+		 * Providing a way to index and iterate separately might be better.
 		 */
-		charactersWithFormatting(): Iterable<StringAtom>;
+		charactersWithFormatting(): readonly StringAtom[];
 
 		/**
 		 * Insert a range of characters into the string based on character index.
@@ -290,11 +416,17 @@ export namespace FormattedTextAsTree {
 
 		/**
 		 * Apply formatting to a range of characters based on character index.
-		 * @param startIndex - The starting index of the range to format.
-		 * @param length - The number of characters to format.
+		 * @param startIndex - The starting index (inclusive) of the range to format.
+		 * @param endIndex - The ending index (exclusive) of the range to format.
 		 * @param format - The formatting to apply to the specified range.
+		 * @remarks
+		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
 		 */
-		formatRange(startIndex: number, length: number, format: Partial<CharacterFormat>): void;
+		formatRange(
+			startIndex: number | undefined,
+			endIndex: number | undefined,
+			format: Partial<CharacterFormat>,
+		): void;
 	}
 
 	/**

@@ -46,6 +46,8 @@ export function validateCommandLineArgs(
 }
 
 /**
+ * Verifies that the specified input file exists, the output file does not exist.
+ *
  * @internal
  */
 export function getArgsValidationError(
@@ -75,6 +77,8 @@ export function getArgsValidationError(
 }
 
 /**
+ * Creates a promise that rejects if not resolved within the specified timeout.
+ *
  * @internal
  */
 export async function timeoutPromise<T = void>(

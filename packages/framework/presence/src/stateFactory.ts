@@ -3,7 +3,18 @@
  * Licensed under the MIT License.
  */
 
+// These "unused" imports are specified to workaround an api-extractor limitation.
+// @ts-expect-error -- Unused import is for type only
+import type {
+	// eslint-disable-next-line unused-imports/no-unused-imports
+	LatestMap,
+} from "./latestMapTypes.js";
 import { latestMap } from "./latestMapValueManager.js";
+// @ts-expect-error -- Unused import is for type only
+import type {
+	// eslint-disable-next-line unused-imports/no-unused-imports
+	Latest,
+} from "./latestTypes.js";
 import { latest } from "./latestValueManager.js";
 
 /**

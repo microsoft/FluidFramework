@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -13,7 +13,7 @@ import {
 
 import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy.js";
 
-import { ICompressionStorageConfig } from "./compressionTypes.js";
+import type { ICompressionStorageConfig } from "./compressionTypes.js";
 import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter.js";
 import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
 

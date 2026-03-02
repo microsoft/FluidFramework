@@ -336,7 +336,7 @@ const makeAfterMiddlewares = (
 };
 
 /**
- * @returns A portion of a webpack config needed to add support for the
+ * Creates the portion of a webpack config needed to add support for the
  * webpack-dev-server to use the webpack-fluid-loader.
  * @internal
  */
@@ -380,7 +380,7 @@ const fluid = (
 	options: RouteOptions,
 ): void => {
 	const documentId = req.params.id;
-	// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
 
 	const umd = packageJson.fluid.browser?.umd;

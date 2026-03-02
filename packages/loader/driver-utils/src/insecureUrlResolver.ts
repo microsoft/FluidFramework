@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
-	IResolvedUrl,
-	IUrlResolver,
+	type IResolvedUrl,
+	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -51,11 +51,11 @@ export class InsecureUrlResolver implements IUrlResolver {
 		// If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
 		// service using our bearer token.
 		if (this.isForNodeTest) {
-			const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
+			const [, documentId, tmpRelativePath] = parsedUrl.pathname.slice(1).split("/");
 			const relativePath = tmpRelativePath ?? "";
 			return this.resolveHelper(documentId, relativePath, parsedUrl.search);
 		} else if (parsedUrl.host === window.location.host) {
-			const fullPath = parsedUrl.pathname.substr(1);
+			const fullPath = parsedUrl.pathname.slice(1);
 			const documentId = fullPath.split("/")[0];
 			const documentRelativePath = fullPath.slice(documentId.length);
 			return this.resolveHelper(documentId, documentRelativePath);
@@ -142,13 +142,13 @@ export class InsecureUrlResolver implements IUrlResolver {
 		relativeUrl: string,
 	): Promise<string> {
 		const parsedUrl = new URL(resolvedUrl.url);
-		const [, , documentId] = parsedUrl.pathname?.split("/") ?? [];
+		const documentId = (parsedUrl.pathname?.split("/") ?? [])[2];
 
 		assert(!!documentId, 0x273 /* "Invalid document id from parsed URL" */);
 
 		let url = relativeUrl;
 		if (url.startsWith("/")) {
-			url = url.substr(1);
+			url = url.slice(1);
 		}
 
 		return `${this.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(

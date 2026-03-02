@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { type FC, useEffect, useRef, useState } from "react";
 
-import { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
+import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
 export interface IInventoryItemViewProps {
 	inventoryItem: IInventoryItem;
@@ -31,7 +31,7 @@ export const InventoryItemView: FC<IInventoryItemViewProps> = ({
 	}, [inventoryItem]);
 
 	const inputHandler = (e: React.FormEvent<HTMLInputElement>): void => {
-		const newValue = parseInt(e.currentTarget.value, 10);
+		const newValue = Number.parseInt(e.currentTarget.value, 10);
 		inventoryItem.quantity = newValue;
 	};
 
@@ -77,7 +77,7 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 		// Extract the values from the inputs and add the new item
 		const name = nameRef.current.value;
 		const quantityString = quantityRef.current.value;
-		const quantity = quantityString !== "" ? parseInt(quantityString, 10) : 0;
+		const quantity = quantityString === "" ? 0 : Number.parseInt(quantityString, 10);
 		addItem(name, quantity);
 
 		// Clear the input form

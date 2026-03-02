@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Read a blob from {@link @fluidframework/driver-definitions#IDocumentStorageService} and
