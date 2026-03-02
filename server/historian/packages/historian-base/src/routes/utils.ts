@@ -288,7 +288,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 				ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60, // default: 24 hours
 				isEphemeralContainerOverride: isEphemeralContainer,
 				cache,
-			});
+		  });
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
@@ -306,7 +306,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
-			: ((await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName);
+			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
 	const service = new RestGitService(
 		details.storage,
 		writeToExternalStorage,

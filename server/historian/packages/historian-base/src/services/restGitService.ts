@@ -76,11 +76,11 @@ export class RestGitService {
 						"User-Agent": userAgent,
 						"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
 						"Storage-Name": this.storageName,
-					}
+				  }
 				: {
 						"User-Agent": userAgent,
 						"Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-					};
+				  };
 		if (storage.credentials) {
 			const token = Buffer.from(
 				`${storage.credentials.user}:${storage.credentials.password}`,

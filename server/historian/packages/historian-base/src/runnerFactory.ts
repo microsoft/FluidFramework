@@ -68,7 +68,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 					redisConfig.slotsRefreshTimeout,
 					undefined /* retryDelays */,
 					redisConfig.enableVerboseErrorLogging,
-				);
+			  );
 		redisClientConnectionManagers.push(redisClientConnectionManager);
 
 		const redisParams = {
@@ -109,7 +109,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfig.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig.enableVerboseErrorLogging,
-					);
+				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
 		const redisCacheForInvalidToken = new services.RedisCache(
 			redisClientConnectionManagerForInvalidTokenCache,
@@ -138,7 +138,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfig.slotsRefreshTimeout,
 						undefined /* retryDelays */,
 						redisConfig.enableVerboseErrorLogging,
-					);
+				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
 		const redisParamsForThrottling = {
@@ -231,7 +231,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storageNameRetriever = storagePerDocEnabled
-			? (customizations?.storageNameRetriever ?? new services.StorageNameRetriever())
+			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
 			: undefined;
 
 		const port = normalizePort(process.env.PORT || "3000");
