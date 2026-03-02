@@ -1,8 +1,10 @@
 # @fluid-example/app-integration-container-views
 
-**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory.
+The **container-views** example has a dice and a button. Clicking the button re-rolls the dice and persists the value in a SharedMap.
 
-This implementation demonstrates plugging the container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use. This implementation relies on [Tinylicious](/server/routerlicious/packages/tinylicious), so there are a few extra steps to get started. We expect the container to respond with a mountable view that we can use for rendering.
+This example demonstrates the container-views pattern.  In this pattern, the container code (runtimeFactory.ts) establishes not only the model and controller logic (the DiceRoller, diceRoller.ts) but also the view code (view.tsx) and its binding to the model/controller.  The container's entry point provides an `IContainerView` with `mount`/`unmount` methods, so the consumer of the container (app.ts) simply mounts it into a DOM element without needing to know about the view implementation.
+
+This is distinct from the external-views pattern, where the container only provides the data model and the consumer is responsible for creating and binding the view.  The container-views pattern can be convenient when the container wants to control its own rendering, but may result in less view flexibility and larger-than-necessary bundle size (especially for headless usage).  The external-views pattern is therefore recommended over the container-views pattern for general use.
 
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
@@ -43,9 +45,9 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 ## Data model
 
-Dice Roller uses the following distributed data structures:
+DiceRoller uses the following distributed data structures:
 
--   SharedDirectory - root
+-   SharedMap
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

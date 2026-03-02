@@ -2,15 +2,8 @@
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
 		"outDir": "./lib",
-		"types": [
-			"react",
-			"react-dom",
-			"jest",
-			"puppeteer",
-			"jest-environment-puppeteer",
-			"expect-puppeteer",
-		],
-		"exactOptionalPropertyTypes": false,
+		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+		"exactOptionalPropertyTypes": false
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "tests/**/*"]
 }
