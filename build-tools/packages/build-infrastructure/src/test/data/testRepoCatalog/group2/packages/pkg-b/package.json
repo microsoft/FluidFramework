@@ -1,0 +1,7 @@
+{
+	"name": "pkg-b",
+	"version": "2.0.0",
+	"description": "Test package in group2 release group",
+	"license": "MIT",
+	"author": "Microsoft and contributors"
+}

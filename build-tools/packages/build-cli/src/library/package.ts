@@ -36,6 +36,7 @@ import {
 } from "../filter.js";
 import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
+import { readPnpmCatalogs, resolveCatalogVersion } from "./catalog.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";
 import { indentString } from "./text.js";
@@ -284,17 +285,30 @@ export async function getPreReleaseDependencies(
 		);
 	}
 
+	// Cache catalogs per workspace root to avoid re-reading the file for each package.
+	const catalogCache = new Map<string, Awaited<ReturnType<typeof readPnpmCatalogs>>>();
+
 	for (const pkg of packagesToCheck) {
+		const workspaceRoot = pkg.monoRepo?.repoPath ?? context.root;
+		let catalogs = catalogCache.get(workspaceRoot);
+		if (catalogs === undefined) {
+			catalogs = await readPnpmCatalogs(workspaceRoot);
+			catalogCache.set(workspaceRoot, catalogs);
+		}
+
 		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
 			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
 			}
 
+			// Resolve catalog: references before passing to semver
+			const resolvedVersion = resolveCatalogVersion(depName, depVersion, catalogs);
+
 			// Convert the range into the minimum version
-			const minVer = semver.minVersion(depVersion);
+			const minVer = semver.minVersion(resolvedVersion);
 			if (minVer === null) {
-				throw new Error(`semver.minVersion was null: ${depVersion} (${depName})`);
+				throw new Error(`semver.minVersion was null: ${resolvedVersion} (${depName})`);
 			}
 
 			// If the min version has a pre-release section, then it needs to be released.
@@ -434,10 +448,10 @@ export function filterVersionsOlderThan(
  * @returns A tuple of {@link PackageVersionMap} objects, one of which contains release groups on which the package
  * depends, and the other contains independent packages on which the package depends.
  */
-export function getFluidDependencies(
+export async function getFluidDependencies(
 	context: Context,
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-): [releaseGroups: PackageVersionMap, packages: PackageVersionMap] {
+): Promise<[releaseGroups: PackageVersionMap, packages: PackageVersionMap]> {
 	const releaseGroups: PackageVersionMap = {};
 	const packages: PackageVersionMap = {};
 	let packagesToCheck: Package[];
@@ -453,18 +467,31 @@ export function getFluidDependencies(
 		packagesToCheck = [independentPackage];
 	}
 
+	// Cache catalogs per workspace root to avoid re-reading the file for each package.
+	const catalogCache = new Map<string, Awaited<ReturnType<typeof readPnpmCatalogs>>>();
+
 	for (const p of packagesToCheck) {
+		const workspaceRoot = p.monoRepo?.repoPath ?? context.root;
+		let catalogs = catalogCache.get(workspaceRoot);
+		if (catalogs === undefined) {
+			catalogs = await readPnpmCatalogs(workspaceRoot);
+			catalogCache.set(workspaceRoot, catalogs);
+		}
+
 		for (const dep of p.combinedDependencies) {
 			const pkg = context.fullPackageMap.get(dep.name);
 			if (pkg === undefined) {
 				continue;
 			}
 
+			// Resolve catalog: references before passing to semver
+			const resolvedVersion = resolveCatalogVersion(dep.name, dep.version, catalogs);
+
 			// If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
 			// range. Otherwise pick the minimum version the range represents.
-			const newVersion = dep.version.startsWith("workspace:")
+			const newVersion = resolvedVersion.startsWith("workspace:")
 				? semver.parse(pkg.version)
-				: semver.minVersion(dep.version);
+				: semver.minVersion(resolvedVersion);
 			if (newVersion === null) {
 				throw new Error(`Failed to parse depVersion: ${dep.version}`);
 			}

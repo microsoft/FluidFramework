@@ -1,0 +1,11 @@
+{
+	"name": "pkg-a",
+	"version": "1.0.0",
+	"description": "Test package — uses pnpm catalog: references",
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"dependencies": {
+		"pkg-b": "catalog:",
+		"pkg-c": "catalog:"
+	}
+}

@@ -10,11 +10,18 @@ import { parseJSON } from "date-fns";
 import { describe, it } from "mocha";
 
 import type { VersionDetails } from "../../library/context.js";
+import { Context } from "../../library/context.js";
+import {
+	resolveCatalogVersion,
+	type PnpmCatalogMap,
+} from "../../library/catalog.js";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
+	getFluidDependencies,
 	sortVersions,
 } from "../../library/package.js";
+import { testRepoCatalogRoot } from "../init.js";
 
 describe("VersionDetails sorting", () => {
 	const versions: VersionDetails[] = [
@@ -126,5 +133,61 @@ describe("typeTestUtils", () => {
 				/Did not find devDependency '.*' in package.json/,
 			);
 		});
+	});
+});
+
+describe("resolveCatalogVersion", () => {
+	it("returns version unchanged for non-catalog strings", () => {
+		const catalogs: PnpmCatalogMap = new Map([["default", { "pkg-a": "^1.0.0" }]]);
+		assert.equal(resolveCatalogVersion("pkg-a", "^1.0.0", catalogs), "^1.0.0");
+	});
+
+	it("resolves catalog: (default) correctly", () => {
+		const catalogs: PnpmCatalogMap = new Map([["default", { "pkg-a": "^1.0.0" }]]);
+		assert.equal(resolveCatalogVersion("pkg-a", "catalog:", catalogs), "^1.0.0");
+	});
+
+	it("resolves catalog:default correctly", () => {
+		const catalogs: PnpmCatalogMap = new Map([["default", { "pkg-a": "^1.0.0" }]]);
+		assert.equal(resolveCatalogVersion("pkg-a", "catalog:default", catalogs), "^1.0.0");
+	});
+
+	it("resolves named catalog:mycat correctly", () => {
+		const catalogs: PnpmCatalogMap = new Map([["mycat", { "pkg-a": "^2.0.0" }]]);
+		assert.equal(resolveCatalogVersion("pkg-a", "catalog:mycat", catalogs), "^2.0.0");
+	});
+
+	it("throws on unknown catalog", () => {
+		const catalogs: PnpmCatalogMap = new Map();
+		assert.throws(
+			() => resolveCatalogVersion("pkg-a", "catalog:nonexistent", catalogs),
+			/nonexistent/,
+		);
+	});
+});
+
+describe("getFluidDependencies with pnpm catalogs", () => {
+	it("resolves catalog: references correctly", async () => {
+		const context = new Context(testRepoCatalogRoot);
+		// "build-tools" is used as the release group name in the fixture so that isReleaseGroup() recognizes it.
+		const [rgVerMap, pkgVerMap] = await getFluidDependencies(context, "build-tools");
+		assert.equal(
+			rgVerMap["group2"],
+			"2.0.0",
+			"Expected group2 version resolved from catalog: to be 2.0.0",
+		);
+		assert.equal(
+			pkgVerMap["pkg-c"],
+			"3.0.0",
+			"Expected pkg-c version resolved from catalog: to be 3.0.0",
+		);
+	});
+
+	it("throws for unknown catalog", () => {
+		const catalogs: PnpmCatalogMap = new Map();
+		assert.throws(
+			() => resolveCatalogVersion("pkg-a", "catalog:buildTools", catalogs),
+			/buildTools/,
+		);
 	});
 });

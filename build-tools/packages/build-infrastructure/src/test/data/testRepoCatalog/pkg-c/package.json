@@ -1,0 +1,7 @@
+{
+	"name": "pkg-c",
+	"version": "3.0.0",
+	"description": "Test independent package (no release group)",
+	"license": "MIT",
+	"author": "Microsoft and contributors"
+}
