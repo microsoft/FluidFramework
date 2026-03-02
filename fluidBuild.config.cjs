@@ -158,21 +158,27 @@ module.exports = {
 				}
 			: ["api"],
 		"check:exports:bundle-release-tags": ["build:esnext"],
-		"check:exports:esm:public": ["api-extractor:esnext"],
-		"check:exports:esm:legacy": ["api-extractor:esnext"],
-		"check:exports:esm:index": ["api-extractor:esnext"],
-		"check:exports:esm:beta": ["api-extractor:esnext"],
-		"check:exports:esm:alpha": ["api-extractor:esnext"],
-		"check:exports:esm:legacyAlpha": ["api-extractor:esnext"],
-		"check:exports:esm:legacy.alpha": ["api-extractor:esnext"],
-		"check:exports:esm:indexNode": ["api-extractor:esnext"],
-		"check:exports:esm:indexBrowser": ["api-extractor:esnext"],
-		"check:exports:esm:node:legacy": ["api-extractor:esnext"],
-		"check:exports:esm:node:current": ["api-extractor:esnext"],
-		"check:exports:esm:browser:legacy": ["api-extractor:esnext"],
-		"check:exports:esm:browser:current": ["api-extractor:esnext"],
-		"check:exports:esm:testUtils": ["api-extractor:esnext"],
-		"check:exports:esm:internal/exposedUtilityTypes": ["api-extractor:esnext"],
+		// When skipping CJS checks, fluid-build needs explicit task definitions for
+		// individual ESM check variants (normally run via the package's concurrently script).
+		...(skipCjsChecks
+			? {
+					"check:exports:esm:public": ["api-extractor:esnext"],
+					"check:exports:esm:legacy": ["api-extractor:esnext"],
+					"check:exports:esm:index": ["api-extractor:esnext"],
+					"check:exports:esm:beta": ["api-extractor:esnext"],
+					"check:exports:esm:alpha": ["api-extractor:esnext"],
+					"check:exports:esm:legacyAlpha": ["api-extractor:esnext"],
+					"check:exports:esm:legacy.alpha": ["api-extractor:esnext"],
+					"check:exports:esm:indexNode": ["api-extractor:esnext"],
+					"check:exports:esm:indexBrowser": ["api-extractor:esnext"],
+					"check:exports:esm:node:legacy": ["api-extractor:esnext"],
+					"check:exports:esm:node:current": ["api-extractor:esnext"],
+					"check:exports:esm:browser:legacy": ["api-extractor:esnext"],
+					"check:exports:esm:browser:current": ["api-extractor:esnext"],
+					"check:exports:esm:testUtils": ["api-extractor:esnext"],
+					"check:exports:esm:internal/exposedUtilityTypes": ["api-extractor:esnext"],
+				}
+			: {}),
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
