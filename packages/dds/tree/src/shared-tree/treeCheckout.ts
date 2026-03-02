@@ -505,7 +505,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.labelTreeNode = node;
 		} else {
 			const current = this.currentLabelNode();
-			assert(current !== undefined, "Expected current label node to exist");
+			assert(current !== undefined, 0xcdb /* Expected current label node to exist */);
 			current.sublabels.push(node);
 		}
 	}
@@ -525,7 +525,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		let node: LabelTree = this.labelTreeNode;
 		while (node.sublabels.length > 0) {
 			const lastChild = node.sublabels[node.sublabels.length - 1];
-			assert(lastChild !== undefined, "Expected label tree node to have children");
+			assert(lastChild !== undefined, 0xcdc /* Expected label tree node to have children */);
 			if (lastChild === this.mostRecentlyClosedLabelNode) {
 				break;
 			}
@@ -553,7 +553,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				// Temporarily mark node as closed so currentLabelNode() returns its parent.
 				this.mostRecentlyClosedLabelNode = node;
 				const parent = this.currentLabelNode();
-				assert(parent !== undefined, "Expected parent label node to exist");
+				assert(parent !== undefined, 0xcdd /* Expected parent label node to exist */);
 				parent.sublabels.pop();
 				// Point to the parent's new last child (guaranteed closed if it exists),
 				// or undefined if the parent has no more children.
