@@ -343,7 +343,7 @@ const makeAfterMiddlewares = (
 export function devServerConfig(
 	baseDir: string,
 	env: RouteOptions,
-): { devServer: Configuration } {
+): { devServer: Configuration; performance: { hints: false } } {
 	return {
 		devServer: {
 			static: {
@@ -370,6 +370,7 @@ export function devServerConfig(
 				return middlewares;
 			},
 		},
+		performance: { hints: false },
 	};
 }
 
