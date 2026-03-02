@@ -1546,11 +1546,36 @@ function verboseFromCursor(
 	};
 }
 
+/**
+ * An in memory serialized "change" format for the SharedTree.
+ * @remarks
+ *
+ * This is not intended for persistence and reuse with a different version of the code.
+ *
+ * TODO: confirm this is not used for ops.
+ *
+ * It should probably directly reference the types from the relevant format rather than relying on all users to
+ * use changeFamily.codecs.resolve(4) for the `change` content.
+ */
 interface SerializedChange {
-	version: 1;
-	revision: RevisionTag;
-	change: JsonCompatibleReadOnly;
-	originatorId: SessionId;
+	readonly version: 1;
+	readonly revision: RevisionTag;
+	/**
+	 * Uses the changeFamily.codecs.resolve(4) codec.
+	 * @remarks
+	 * Since the data inside this is not versioned (relies on the SerializedChange.version),
+	 * the details of how this are encoded cannot evolve without creating as new version at this level (which would require some refactoring to support more than just version 1).
+	 *
+	 * TODO: because the content of this is not versioned, this should probably not be type erased to JsonCompatibleReadOnly:
+	 * a more specific type should be used.
+	 *
+	 * TODO: magic number 4 should be replaced with a reference to the relevant version of the change codec if kept doing lookup via number.
+	 * Maybe it should use the latest version instead to prevent this from getting out of date and not supporting new features.
+	 *
+	 * TODO: versioning of this object should probably use this magic number, and/or the package version, to reject more incompatible cases.
+	 */
+	readonly change: JsonCompatibleReadOnly;
+	readonly originatorId: SessionId;
 }
 
 function isSerializedChange(value: unknown): value is SerializedChange {

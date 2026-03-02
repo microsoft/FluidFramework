@@ -30,10 +30,11 @@ import {
 	type ITreeCheckoutFork,
 	type BranchableTree,
 	createTreeCheckout,
-	type SharedTreeChange,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
 	getInnerNode,
 	SchemaFactory,
