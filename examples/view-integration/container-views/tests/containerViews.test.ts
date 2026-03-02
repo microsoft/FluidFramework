@@ -31,7 +31,7 @@ describe("app-integration-container-views", () => {
 		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
 	});
 
-	it("loads and there's a button with Roll", async () => {
+	it("The page loads and there's a button with Roll", async () => {
 		// Validate there is a button that can be clicked
 		await expect(page).toClick("button", { text: "Roll" });
 	});

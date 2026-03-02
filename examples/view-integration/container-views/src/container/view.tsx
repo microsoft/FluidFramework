@@ -21,7 +21,7 @@ export const DiceRollerView: FC<IDiceRollerViewProps> = ({
 			setDiceValue(diceRoller.value);
 		};
 		diceRoller.events.on("diceRolled", onDiceRolled);
-		return () => {
+		return (): void => {
 			diceRoller.events.off("diceRolled", onDiceRolled);
 		};
 	}, [diceRoller]);

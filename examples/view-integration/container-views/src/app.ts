@@ -77,6 +77,8 @@ if (location.hash.length === 0) {
 const { getMountableDefaultView } =
 	(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
 const mountableView = await getMountableDefaultView();
+
+// Render view
 const appDiv = document.createElement("div");
 document.body.append(appDiv);
 mountableView.mount(appDiv);

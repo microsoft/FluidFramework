@@ -908,9 +908,6 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
