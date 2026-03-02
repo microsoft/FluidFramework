@@ -6254,9 +6254,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
