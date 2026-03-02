@@ -5,10 +5,7 @@
 
 // For the time being, if exports are changed, additional files under entrypoints
 // directory probably need updated. They can be manually adjusted or run
-// generate:entrypoint-sources script. A bug in "flub generate entrypoint"
-// requires "./index.js" to be replaced with "../index.js" hence use of sed.
-// Be sure to run build after that script to restore output .d.ts entrypoint
-// files to validity.
+// generate:entrypoint-sources script.
 
 export {
 	ValueSchema,

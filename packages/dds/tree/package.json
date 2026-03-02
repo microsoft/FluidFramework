@@ -118,7 +118,7 @@
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"generate:entrypoint-sources": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib/entrypoints && sed \"s|\\./|../|\" ./lib/entrypoints/public.d.ts > ./src/entrypoints/public.ts && sed \"s|\\./|../|\" ./lib/entrypoints/beta.d.ts > ./src/entrypoints/beta.ts && sed \"s|\\./|../|\" ./lib/entrypoints/alpha.d.ts > ./src/entrypoints/alpha.ts && sed \"s|\\./|../|\" ./lib/entrypoints/legacy.d.ts > ./src/entrypoints/legacy.ts",
+		"generate:entrypoint-sources": "scripts/generate-entrypoint-sources.sh",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"pack:tests": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
