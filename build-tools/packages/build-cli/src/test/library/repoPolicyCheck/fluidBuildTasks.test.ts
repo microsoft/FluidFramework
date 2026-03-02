@@ -27,11 +27,11 @@ describe("shouldIgnoreBuildDependency", () => {
 		);
 	});
 
-	it("does not ignore catalog: deps in the same group", () => {
-		// Without a catalog: guard, semver.satisfies("2.0.0", "catalog:default") throws
-		// "Invalid comparator: catalog:default". The fix treats catalog: deps the same as
-		// workspace: deps — a real local dependency that should never be ignored.
-		assert.isFalse(
+	it("ignores catalog: deps in the same group", () => {
+		// catalog: is used for external/cross-workspace version pins; same-group packages
+		// always use workspace:. Without this guard, semver.satisfies("2.0.0", "catalog:default")
+		// would throw "Invalid comparator: catalog:default".
+		assert.isTrue(
 			shouldIgnoreBuildDependency(
 				{ name: "pkg-b", version: "catalog:default" },
 				packageMap,
@@ -40,8 +40,8 @@ describe("shouldIgnoreBuildDependency", () => {
 		);
 	});
 
-	it("does not ignore catalog: (bare) deps in the same group", () => {
-		assert.isFalse(
+	it("ignores catalog: (bare) deps in the same group", () => {
+		assert.isTrue(
 			shouldIgnoreBuildDependency(
 				{ name: "pkg-a", version: "catalog:" },
 				packageMap,
