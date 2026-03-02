@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { withMemoizedTreeObservations } from "@fluidframework/react/alpha";
+import type { TextAsTree } from "@fluidframework/tree/internal";
 import * as React from "react";
+
+import { withMemoizedTreeObservations } from "../../useTree.js";
 
 import { syncTextToTree } from "./plainUtils.js";
 import type { MainViewProps } from "./quillView.js";
-import type { TextAsTree } from "./schema.js";
 
+/**
+ * A React component for plain text editing.
+ * @remarks
+ * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
+ * @internal
+ */
 export const MainView: React.FC<MainViewProps> = ({ root }) => {
 	return <PlainTextEditorView root={root} />;
 };
