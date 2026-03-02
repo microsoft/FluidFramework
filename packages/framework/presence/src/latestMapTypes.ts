@@ -374,9 +374,6 @@ export interface LatestMapArguments<T, Keys extends string = string>
 	keyValidator?: KeySchemaValidator<Keys>;
 }
 
-// #region factory function overloads
-// Overloads should be ordered from most specific to least specific when combined.
-
 /**
  * Type alias for the return type of {@link LatestMapFactory} when called with
  * {@link LatestMapArguments}.
@@ -385,15 +382,20 @@ export interface LatestMapArguments<T, Keys extends string = string>
  * Use this type instead of any InternalPresenceTypes that may be revealed from
  * examining factory return type.
  *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this State object within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
  * @beta
  * @sealed
  */
 export type LatestMapConfiguration<
 	T,
 	Keys extends string,
-	RegistrationKey extends string,
+	RegistrationKeyRestrictions extends string = string,
 > = InternalTypes.ManagerFactory<
-	RegistrationKey,
+	RegistrationKeyRestrictions,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMap<T, Keys>
 >;
@@ -406,15 +408,20 @@ export type LatestMapConfiguration<
  * Use this type instead of any InternalPresenceTypes that may be revealed from
  * examining factory return type.
  *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this State object within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
  * @beta
  * @sealed
  */
 export type LatestMapRawConfiguration<
 	T,
 	Keys extends string,
-	RegistrationKey extends string,
+	RegistrationKeyRestrictions extends string = string,
 > = InternalTypes.ManagerFactory<
-	RegistrationKey,
+	RegistrationKeyRestrictions,
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapRaw<T, Keys>
 >;
@@ -433,9 +440,9 @@ export interface LatestMapFactory {
 	 * This overload is used when called with {@link LatestMapArguments}.
 	 * That is, if a validator function is provided.
 	 */
-	<T, Keys extends string = string, RegistrationKey extends string = string>(
+	<T, Keys extends string = string, RegistrationKeyRestrictions extends string = string>(
 		args: LatestMapArguments<T, Keys>,
-	): LatestMapConfiguration<T, Keys, RegistrationKey>;
+	): LatestMapConfiguration<T, Keys, RegistrationKeyRestrictions>;
 
 	/**
 	 * Factory for creating a {@link LatestMapRaw} State object.
@@ -444,9 +451,7 @@ export interface LatestMapFactory {
 	 * This overload is used when called with {@link LatestMapArgumentsRaw}.
 	 * That is, if a validator function is _not_ provided.
 	 */
-	<T, Keys extends string = string, RegistrationKey extends string = string>(
+	<T, Keys extends string = string, RegistrationKeyRestrictions extends string = string>(
 		args?: LatestMapArgumentsRaw<T, Keys>,
-	): LatestMapRawConfiguration<T, Keys, RegistrationKey>;
+	): LatestMapRawConfiguration<T, Keys, RegistrationKeyRestrictions>;
 }
-
-// #endregion

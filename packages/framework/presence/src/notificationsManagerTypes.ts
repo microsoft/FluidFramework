@@ -157,14 +157,19 @@ export interface NotificationsManager<
  * Use this type instead of any InternalPresenceTypes that may be revealed from
  * examining factory return type.
  *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this Notification within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
  * @alpha
  * @sealed
  */
 export type NotificationsConfiguration<
 	T extends InternalUtilityTypes.NotificationListeners<T>,
-	Key extends string,
+	RegistrationKeyRestrictions extends string = string,
 > = InternalTypes.ManagerFactory<
-	Key,
+	RegistrationKeyRestrictions,
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	NotificationsManager<T>
 >;
@@ -176,15 +181,20 @@ export type NotificationsConfiguration<
  * Use this type instead of any InternalPresenceTypes that may be revealed from
  * examining factory return type.
  *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this Notification within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
  * @alpha
  * @sealed
  */
 export type NotificationsWithSubscriptionsConfiguration<
 	TSubscriptions extends
 		InternalUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>,
-	Key extends string,
+	RegistrationKeyRestrictions extends string = string,
 > = InternalTypes.ManagerFactory<
-	Key,
+	RegistrationKeyRestrictions,
 	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	NotificationsManager<
 		InternalUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>

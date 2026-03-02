@@ -178,8 +178,6 @@ export function checkCompiles(): void {
 		count0: latestCountAnyKeyConfiguration,
 		count1: latestCountAnyKeyConfiguration,
 		myCount: latestCountSpecificKeyConfiguration,
-		// // @ts-expect-error - df
-		// otherCount: latestCountSpecificKeyConfiguration,
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
