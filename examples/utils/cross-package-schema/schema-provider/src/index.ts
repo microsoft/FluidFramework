@@ -3,7 +3,4 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-restricted-syntax */
-
-export * as Failing from "./schema.noWrapper.js";
-export * as Okay from "./schema.viaWrapper.js";
+export { AppState } from "./schema.js";

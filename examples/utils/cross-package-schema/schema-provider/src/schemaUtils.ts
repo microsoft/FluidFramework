@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactoryAlpha } from "@fluid-example/tree-alpha";
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
 /**
  * Common schema factory

@@ -24,10 +24,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "npm run build:esnext:noWrapper && npm run build:esnext:viaWrapper && npm run build:esnext:entry",
-		"build:esnext:entry": "tsc --project ./tsconfig.json",
-		"build:esnext:noWrapper": "tsc --project ./tsconfig.noWrapper.json",
-		"build:esnext:viaWrapper": "tsc --project ./tsconfig.viaWrapper.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -39,7 +36,6 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
-		"@fluid-example/tree-alpha": "workspace:~",
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
@@ -51,26 +47,7 @@
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.9.3"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:esnext:entry": [
-				"build:esnext:noWrapper",
-				"build:esnext:viaWrapper"
-			],
-			"build:esnext:noWrapper": [
-				"^api",
-				"^build:esnext"
-			],
-			"build:esnext:viaWrapper": [
-				"^api",
-				"^build:esnext"
-			],
-			"eslint": [
-				"^build:esnext"
-			]
-		}
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true

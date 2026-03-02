@@ -5,7 +5,7 @@
 
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { sf } from "./schemaUtils.viaWrapper.js";
+import { sf } from "./schemaUtils.js";
 
 export class Position extends sf.objectAlpha("Position", {
 	x: sf.number,
