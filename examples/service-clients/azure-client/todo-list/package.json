@@ -66,7 +66,7 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/test-tools": "^1.0.195075",
+		"@fluidframework/test-tools": "^2.0.0",
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",

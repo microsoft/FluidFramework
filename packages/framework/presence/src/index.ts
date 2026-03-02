@@ -89,5 +89,5 @@ export type {
 
 export { StateFactory } from "./stateFactory.js";
 
-export type { InternalTypes } from "./exposedInternalTypes.js";
-export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+export type { InternalTypes as InternalPresenceTypes } from "./exposedInternalTypes.js";
+export type { InternalUtilityTypes as InternalPresenceUtilityTypes } from "./exposedUtilityTypes.js";

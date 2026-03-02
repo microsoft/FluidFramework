@@ -332,8 +332,13 @@ export class SchematizingSimpleTreeView<
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.ensureUndisposed();
 		const { checkout } = this;
-
-		checkout.transaction.start(isAsync);
+		if (isAsync && checkout.transaction.size > 0) {
+			throw new UsageError(
+				"An asynchronous transaction cannot be started while another transaction is already in progress.",
+			);
+		}
+		checkout.pushLabelFrame(params?.label);
+		checkout.transaction.start();
 
 		// Validate preconditions before running the transaction callback.
 		addConstraintsToTransaction(
@@ -348,7 +353,7 @@ export class SchematizingSimpleTreeView<
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params?: RunTransactionParams,
+		params: RunTransactionParams | undefined,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.ensureUndisposed();
 		const { checkout } = this;
@@ -358,6 +363,7 @@ export class SchematizingSimpleTreeView<
 		)?.value;
 
 		if (rollback === true) {
+			checkout.popLabelFrame(true);
 			checkout.transaction.abort();
 			return value === undefined
 				? { success: false }
@@ -371,6 +377,7 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
+		checkout.popLabelFrame(false);
 		checkout.runWithTransactionLabel(() => {
 			checkout.transaction.commit();
 		}, params?.label);
@@ -615,17 +622,11 @@ export function addConstraintsToTransaction(
 	constraints: readonly TransactionConstraintAlpha[] = [],
 ): void {
 	for (const constraint of constraints) {
+		assertValidConstraint(constraint, constraintsOnRevert);
 		const constraintType = constraint.type;
 		switch (constraintType) {
 			case "nodeInDocument": {
 				const node = getInnerNode(constraint.node);
-				const nodeStatus = getKernel(constraint.node).getStatus();
-				if (nodeStatus !== TreeStatus.InDocument) {
-					const revertText = constraintsOnRevert ? " on revert" : "";
-					throw new UsageError(
-						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-					);
-				}
 				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
 				if (constraintsOnRevert) {
 					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
@@ -645,6 +646,34 @@ export function addConstraintsToTransaction(
 			default: {
 				unreachableCase(constraintType);
 			}
+		}
+	}
+}
+
+/**
+ * Throws if the given {@link TransactionConstraintAlpha | transaction constraint} is not currently satisfied.
+ */
+export function assertValidConstraint(
+	constraint: TransactionConstraintAlpha,
+	onRevert: boolean,
+): void {
+	switch (constraint.type) {
+		case "nodeInDocument": {
+			const nodeStatus = getKernel(constraint.node).getStatus();
+			if (nodeStatus !== TreeStatus.InDocument) {
+				const revertText = onRevert ? " on revert" : "";
+				throw new UsageError(
+					`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+				);
+			}
+			break;
+		}
+		case "noChange": {
+			// This constraint is always satisfied at the time of checking, since it just requires that no changes have been made since the transaction callback returned.
+			break;
+		}
+		default: {
+			unreachableCase(constraint);
 		}
 	}
 }

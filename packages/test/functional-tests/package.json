@@ -93,7 +93,7 @@
 		"eslint": "~9.39.1",
 		"events_pkg": "npm:events@^3.1.0",
 		"jiti": "^2.6.1",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
