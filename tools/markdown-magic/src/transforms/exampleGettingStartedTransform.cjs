@@ -44,7 +44,7 @@ const generateExampleGettingStartedSection = (
 		);
 
 		sectionBody.push(
-			`1. If using codespaces in a browser, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. Check your IDE's terminal or ports panel to find available ports.`,
+			`1. If using codespaces in a browser, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. See [sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port) for how to do this.`,
 		);
 	}
 
