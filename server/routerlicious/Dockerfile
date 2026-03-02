@@ -62,6 +62,10 @@ COPY scripts/*.* ./scripts/
 COPY patches/*.* ./patches/
 
 COPY packages/gitresources/package*.json packages/gitresources/
+COPY packages/gitrest/package*.json packages/gitrest/
+COPY packages/gitrest-base/package*.json packages/gitrest-base/
+COPY packages/historian/package*.json packages/historian/
+COPY packages/historian-base/package*.json packages/historian-base/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
 COPY packages/lambdas-driver/package*.json packages/lambdas-driver/
 COPY packages/lambdas/package*.json packages/lambdas/

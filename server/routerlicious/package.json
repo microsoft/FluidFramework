@@ -14,6 +14,8 @@
 		"build": "fluid-build -g server --task build",
 		"build:compile": "fluid-build -g server --task compile",
 		"build:docker": "docker build . --build-context root=../..",
+		"build:docker:gitrest": "docker build -f Dockerfile.gitrest . --build-context root=../..",
+		"build:docker:historian": "docker build -f Dockerfile.historian . --build-context root=../..",
 		"build:docs": "fluid-build -g server --task build:docs",
 		"build:fast": "fluid-build -g server --task build --worker",
 		"build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
@@ -142,6 +144,7 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
+			"isomorphic-git is pinned to 1.25.10 to maintain storage access baseline performance in gitrest-base tests.",
 			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
@@ -150,6 +153,7 @@
 			"zookeeper: pinned to 7.x since earlier versions fail to compile and may be brought in transitively."
 		],
 		"overrides": {
+			"@types/node": "^18.17.1",
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
 			"@typescript-eslint/project-service": "8.52.0",
 			"@babel/core": "7.27.7",
@@ -167,9 +171,12 @@
 			"@babel/types": "7.27.7",
 			"@babel/runtime": "7.27.6",
 			"eslint": "^9.39.2",
+			"isomorphic-git": "1.25.10",
+			"nanoid": "^3.3.9",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
+			"sharp": "^0.33.2",
 			"socket.io-parser": "^4.2.4",
 			"zookeeper": "^7.2.0"
 		},

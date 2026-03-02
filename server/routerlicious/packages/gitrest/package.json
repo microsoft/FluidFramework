@@ -1,12 +1,12 @@
 {
 	"name": "@fluidframework/gitrest",
-	"version": "1.0.0",
+	"version": "8.0.0",
 	"description": "Entry point of the GitRest core services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "server/gitrest/packages/gitrest"
+		"directory": "server/routerlicious/packages/gitrest"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -28,8 +28,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/gitrest-base": "workspace:~",
-		"@fluidframework/server-services-shared": "8.0.0-366087",
-		"@fluidframework/server-services-utils": "8.0.0-366087",
+		"@fluidframework/server-services-shared": "workspace:~",
+		"@fluidframework/server-services-utils": "workspace:~",
 		"body-parser": "^1.20.3",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
@@ -54,7 +54,7 @@
 		"@types/winston": "^2.4.4",
 		"async": "^3.2.2",
 		"concurrently": "^9.2.1",
-		"eslint": "~8.57.0",
+		"eslint": "~9.39.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^6.1.3",
 		"sillyname": "^0.1.0",

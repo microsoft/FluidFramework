@@ -141,7 +141,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/server-kafka-orderer](/server/routerlicious/packages/kafka-orderer)</br>- [@fluidframework/server-lambdas](/server/routerlicious/packages/lambdas)</br>- [@fluidframework/server-lambdas-driver](/server/routerlicious/packages/lambdas-driver)</br>- [@fluidframework/server-local-server](/server/routerlicious/packages/local-server)</br>- [@fluidframework/server-memory-orderer](/server/routerlicious/packages/memory-orderer)</br>- [@fluidframework/server-routerlicious-base](/server/routerlicious/packages/routerlicious-base)</br>- [@fluidframework/server-services](/server/routerlicious/packages/services)</br>- [@fluidframework/server-services-core](/server/routerlicious/packages/services-core)</br>- [@fluidframework/server-services-ordering-kafkanode](/server/routerlicious/packages/services-ordering-kafkanode)</br>- [@fluidframework/server-services-ordering-rdkafka](/server/routerlicious/packages/services-ordering-rdkafka)</br>- [@fluidframework/server-services-ordering-zookeeper](/server/routerlicious/packages/services-ordering-zookeeper)</br>- [@fluidframework/server-services-shared](/server/routerlicious/packages/services-shared)</br>- [@fluidframework/server-services-telemetry](/server/routerlicious/packages/services-telemetry)</br>- [@fluidframework/server-services-utils](/server/routerlicious/packages/services-utils)</br>- [@fluidframework/server-test-utils](/server/routerlicious/packages/test-utils) | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; |
+| - [@fluidframework/gitrest](/server/routerlicious/packages/gitrest)</br>- [@fluidframework/gitrest-base](/server/routerlicious/packages/gitrest-base)</br>- [@fluidframework/historian](/server/routerlicious/packages/historian)</br>- [@fluidframework/historian-base](/server/routerlicious/packages/historian-base)</br>- [@fluidframework/server-kafka-orderer](/server/routerlicious/packages/kafka-orderer)</br>- [@fluidframework/server-lambdas](/server/routerlicious/packages/lambdas)</br>- [@fluidframework/server-lambdas-driver](/server/routerlicious/packages/lambdas-driver)</br>- [@fluidframework/server-local-server](/server/routerlicious/packages/local-server)</br>- [@fluidframework/server-memory-orderer](/server/routerlicious/packages/memory-orderer)</br>- [@fluidframework/server-routerlicious-base](/server/routerlicious/packages/routerlicious-base)</br>- [@fluidframework/server-services](/server/routerlicious/packages/services)</br>- [@fluidframework/server-services-core](/server/routerlicious/packages/services-core)</br>- [@fluidframework/server-services-ordering-kafkanode](/server/routerlicious/packages/services-ordering-kafkanode)</br>- [@fluidframework/server-services-ordering-rdkafka](/server/routerlicious/packages/services-ordering-rdkafka)</br>- [@fluidframework/server-services-ordering-zookeeper](/server/routerlicious/packages/services-ordering-zookeeper)</br>- [@fluidframework/server-services-shared](/server/routerlicious/packages/services-shared)</br>- [@fluidframework/server-services-telemetry](/server/routerlicious/packages/services-telemetry)</br>- [@fluidframework/server-services-utils](/server/routerlicious/packages/services-utils)</br>- [@fluidframework/server-test-utils](/server/routerlicious/packages/test-utils) | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; |
 
 ### Server-Tools
 
@@ -154,18 +154,6 @@ The dependencies between layers are enforced by the layer-check command._
 | Packages | Layer Dependencies |
 | --- | --- |
 | - [@fluidframework/azure-local-service](/azure/packages/azure-local-service) | - [Server-Tools](#Server-Tools) |
-
-### GitRest
-
-| Packages | Layer Dependencies |
-| --- | --- |
-| - [@fluidframework/gitrest](/server/gitrest/packages/gitrest)</br>- [@fluidframework/gitrest-base](/server/gitrest/packages/gitrest-base)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
-
-### Historian
-
-| Packages | Layer Dependencies |
-| --- | --- |
-| - [@fluidframework/historian](/server/historian/packages/historian)</br>- [@fluidframework/historian-base](/server/historian/packages/historian-base)</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
 
 ### Routerlicious-Driver
 

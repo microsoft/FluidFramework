@@ -1,12 +1,12 @@
 {
 	"name": "@fluidframework/historian",
-	"version": "0.0.1",
+	"version": "8.0.0",
 	"description": "Git REST API",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "server/historian/packages/historian"
+		"directory": "server/routerlicious/packages/historian"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -28,8 +28,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/historian-base": "workspace:~",
-		"@fluidframework/server-services-shared": "8.0.0-347501",
-		"@fluidframework/server-services-utils": "8.0.0-347501",
+		"@fluidframework/server-services-shared": "workspace:~",
+		"@fluidframework/server-services-utils": "workspace:~",
 		"body-parser": "^1.20.3",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
