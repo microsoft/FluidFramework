@@ -220,7 +220,9 @@ extends:
     - { name: "ci:test:jest", jobName: "JestTest" }
     - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
     - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
-    - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
+    # attw checks CJS+ESM type resolution; skip on PRs where CJS api-extractor is skipped
+    - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+      - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
     coverageTests:
     - { name: "ci:test:mocha", jobName: "MochaTest" }
     - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }

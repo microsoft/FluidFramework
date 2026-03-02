@@ -19,6 +19,8 @@ const releaseGroupPackageJsonGlobs = [
 	"tools/markdown-magic/package.json",
 ];
 
+const skipCjsChecks = process.env.SKIP_CJS_CHECKS === "true";
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -90,11 +92,17 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test": skipCjsChecks
+			? ["typetests:gen", "tsc", "api-extractor:esnext"]
+			: ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+		"build:test:cjs": skipCjsChecks
+			? ["typetests:gen", "tsc"]
+			: ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: skipCjsChecks
+				? ["api-extractor:esnext"]
+				: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -126,12 +134,29 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"check:exports": ["api"],
+		// When skipping CJS checks, skip check:exports entirely. The package's concurrently
+		// script would fail because CJS entry points aren't generated, and forcing
+		// check:exports:bundle-release-tags to run individually surfaces pre-existing
+		// api-extractor lint errors in packages that have disabled check:exports via
+		// "echo skip". All export checks are deferred to main CI.
+		"check:exports": skipCjsChecks
+			? {
+					dependsOn: [],
+					script: false,
+				}
+			: ["api"],
 		"check:exports:bundle-release-tags": ["build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
-		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
+		// attw packs the package and checks CJS+ESM type resolution. With CJS entry
+		// points missing, it fails. Defer to main CI where api generates both.
+		"check:are-the-types-wrong": skipCjsChecks
+			? {
+					dependsOn: [],
+					script: false,
+				}
+			: ["tsc", "build:esnext", "api"],
 		"check:format": {
 			dependencies: [],
 			script: true,
