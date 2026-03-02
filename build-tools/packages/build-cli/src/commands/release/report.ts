@@ -147,7 +147,7 @@ export abstract class ReleaseReportBaseCommand<
 			// Get the release group versions and dependency versions from the repo
 			if (isReleaseGroup(releaseGroupOrPackage)) {
 				if (includeDependencies) {
-					[rgVerMap, pkgVerMap] = await getFluidDependencies(context, releaseGroupOrPackage);
+					[rgVerMap, pkgVerMap] = getFluidDependencies(context, releaseGroupOrPackage);
 					rgs.push(...(Object.keys(rgVerMap) as ReleaseGroup[]));
 					pkgs.push(...Object.keys(pkgVerMap));
 				} else {

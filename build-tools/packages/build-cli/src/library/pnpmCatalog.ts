@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import YAML from "yaml";
@@ -18,13 +18,13 @@ export type PnpmCatalogMap = Map<string, Record<string, string>>;
  * Reads the pnpm-workspace.yaml at `workspaceRoot` and returns the catalog entries.
  * Returns an empty map if the file doesn't exist or has no catalogs.
  */
-export async function readPnpmCatalogs(workspaceRoot: string): Promise<PnpmCatalogMap> {
+export function readPnpmCatalogs(workspaceRoot: string): PnpmCatalogMap {
 	const catalogMap: PnpmCatalogMap = new Map();
 	const yamlPath = path.join(workspaceRoot, "pnpm-workspace.yaml");
 
 	let content: string;
 	try {
-		content = await readFile(yamlPath, "utf-8");
+		content = readFileSync(yamlPath, "utf-8");
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 			return catalogMap;
@@ -32,10 +32,14 @@ export async function readPnpmCatalogs(workspaceRoot: string): Promise<PnpmCatal
 		throw error;
 	}
 
-	const workspace = YAML.parse(content) as {
+	const workspace: {
 		catalog?: Record<string, string>;
 		catalogs?: Record<string, Record<string, string>>;
-	};
+	} | null = YAML.parse(content);
+
+	if (workspace === null) {
+		return catalogMap;
+	}
 
 	if (workspace.catalog !== undefined) {
 		catalogMap.set("default", workspace.catalog);
@@ -81,9 +85,7 @@ export function resolveCatalogVersion(
 
 	const resolved = catalog[packageName];
 	if (resolved === undefined) {
-		throw new Error(
-			`Package "${packageName}" not found in pnpm catalog "${catalogName}"`,
-		);
+		throw new Error(`Package "${packageName}" not found in pnpm catalog "${catalogName}"`);
 	}
 
 	return resolved;

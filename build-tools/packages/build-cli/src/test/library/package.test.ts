@@ -12,15 +12,12 @@ import { describe, it } from "mocha";
 import type { VersionDetails } from "../../library/context.js";
 import { Context } from "../../library/context.js";
 import {
-	resolveCatalogVersion,
-	type PnpmCatalogMap,
-} from "../../library/pnpmCatalog.js";
-import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
 	getFluidDependencies,
 	sortVersions,
 } from "../../library/package.js";
+import { type PnpmCatalogMap, resolveCatalogVersion } from "../../library/pnpmCatalog.js";
 import { testRepoCatalogRoot } from "../init.js";
 
 describe("VersionDetails sorting", () => {
@@ -166,15 +163,23 @@ describe("resolveCatalogVersion", () => {
 			/pnpm catalog "nonexistent" not found/,
 		);
 	});
+
+	it("throws when package is not found in catalog", () => {
+		const catalogs: PnpmCatalogMap = new Map([["default", { "pkg-b": "^1.0.0" }]]);
+		assert.throws(
+			() => resolveCatalogVersion("pkg-a", "catalog:", catalogs),
+			/Package "pkg-a" not found in pnpm catalog "default"/,
+		);
+	});
 });
 
 describe("getFluidDependencies with pnpm catalogs", () => {
-	it("resolves catalog: references correctly", async () => {
+	it("resolves catalog: references correctly", () => {
 		const context = new Context(testRepoCatalogRoot);
 		// "build-tools" is used as the release group name in the fixture so that isReleaseGroup() recognizes it.
-		const [rgVerMap, pkgVerMap] = await getFluidDependencies(context, "build-tools");
+		const [rgVerMap, pkgVerMap] = getFluidDependencies(context, "build-tools");
 		assert.equal(
-			rgVerMap["group2"],
+			rgVerMap.group2,
 			"2.0.0",
 			"Expected group2 version resolved from catalog: to be 2.0.0",
 		);
@@ -182,14 +187,6 @@ describe("getFluidDependencies with pnpm catalogs", () => {
 			pkgVerMap["pkg-c"],
 			"3.0.0",
 			"Expected pkg-c version resolved from catalog: to be 3.0.0",
-		);
-	});
-
-	it("throws for unknown catalog", () => {
-		const catalogs: PnpmCatalogMap = new Map();
-		assert.throws(
-			() => resolveCatalogVersion("pkg-a", "catalog:buildTools", catalogs),
-			/pnpm catalog "buildTools" not found/,
 		);
 	});
 });

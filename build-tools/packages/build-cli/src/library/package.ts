@@ -36,9 +36,13 @@ import {
 } from "../filter.js";
 import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
-import { readPnpmCatalogs, resolveCatalogVersion } from "./pnpmCatalog.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";
+import {
+	type PnpmCatalogMap,
+	readPnpmCatalogs,
+	resolveCatalogVersion,
+} from "./pnpmCatalog.js";
 import { indentString } from "./text.js";
 
 /**
@@ -286,13 +290,13 @@ export async function getPreReleaseDependencies(
 	}
 
 	// Cache catalogs per workspace root to avoid re-reading the file for each package.
-	const catalogCache = new Map<string, Awaited<ReturnType<typeof readPnpmCatalogs>>>();
+	const catalogCache = new Map<string, PnpmCatalogMap>();
 
 	for (const pkg of packagesToCheck) {
 		const workspaceRoot = pkg.monoRepo?.repoPath ?? context.root;
 		let catalogs = catalogCache.get(workspaceRoot);
 		if (catalogs === undefined) {
-			catalogs = await readPnpmCatalogs(workspaceRoot);
+			catalogs = readPnpmCatalogs(workspaceRoot);
 			catalogCache.set(workspaceRoot, catalogs);
 		}
 
@@ -448,10 +452,10 @@ export function filterVersionsOlderThan(
  * @returns A tuple of {@link PackageVersionMap} objects, one of which contains release groups on which the package
  * depends, and the other contains independent packages on which the package depends.
  */
-export async function getFluidDependencies(
+export function getFluidDependencies(
 	context: Context,
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-): Promise<[releaseGroups: PackageVersionMap, packages: PackageVersionMap]> {
+): [releaseGroups: PackageVersionMap, packages: PackageVersionMap] {
 	const releaseGroups: PackageVersionMap = {};
 	const packages: PackageVersionMap = {};
 	let packagesToCheck: Package[];
@@ -468,13 +472,13 @@ export async function getFluidDependencies(
 	}
 
 	// Cache catalogs per workspace root to avoid re-reading the file for each package.
-	const catalogCache = new Map<string, Awaited<ReturnType<typeof readPnpmCatalogs>>>();
+	const catalogCache = new Map<string, PnpmCatalogMap>();
 
 	for (const p of packagesToCheck) {
 		const workspaceRoot = p.monoRepo?.repoPath ?? context.root;
 		let catalogs = catalogCache.get(workspaceRoot);
 		if (catalogs === undefined) {
-			catalogs = await readPnpmCatalogs(workspaceRoot);
+			catalogs = readPnpmCatalogs(workspaceRoot);
 			catalogCache.set(workspaceRoot, catalogs);
 		}
 
@@ -493,7 +497,7 @@ export async function getFluidDependencies(
 				? semver.parse(pkg.version)
 				: semver.minVersion(resolvedVersion);
 			if (newVersion === null) {
-				throw new Error(`Failed to parse depVersion: ${dep.version}`);
+				throw new Error(`Failed to parse depVersion: ${resolvedVersion}`);
 			}
 
 			if (pkg.monoRepo !== undefined) {
