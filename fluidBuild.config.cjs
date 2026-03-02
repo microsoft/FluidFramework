@@ -332,9 +332,6 @@ module.exports = {
 			"fluid-build-tasks-tsc": [
 				// Server packages need to be cleaned up; excluding as a workaround
 				"^server/routerlicious/packages/.*/package.json",
-				// Tree's generate:entrypoint-sources script produces files that overlap
-				// with tsc output; excluding until build pipeline is updated.
-				"^packages/dds/tree/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
