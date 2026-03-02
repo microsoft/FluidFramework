@@ -962,5 +962,102 @@ describe("textEditor", () => {
 				});
 			}
 		});
+
+		// Line-level formatting tests (headers and lists via StringLineAtom)
+		describe("line formatting tests", () => {
+			for (const reactStrictMode of [false, true]) {
+				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("inserts h1 line atom and renders with header formatting", () => {
+						const { tree: text } = createFormattedTreeView();
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const rendered = render(content, { reactStrictMode });
+
+						// Insert "Hello" followed by a StringLineAtom with h1 tag
+						text.insertAt(0, "Hello");
+						text.insertWithFormattingAt(5, [
+							new FormattedTextAsTree.StringAtom({
+								content: new FormattedTextAsTree.StringLineAtom({
+									tag: FormattedTextAsTree.LineTag("h1"),
+								}),
+								format: createPlainFormat(),
+							}),
+						]);
+
+						rendered.rerender(content);
+						const el = rendered.container.querySelector("h1");
+						assert.ok(el, "Expected <h1> tag");
+						assert.match(el.textContent ?? "", /Hello/);
+					});
+
+					it("inserts h3 line atom and renders with header formatting", () => {
+						const { tree: text } = createFormattedTreeView();
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const rendered = render(content, { reactStrictMode });
+
+						text.insertAt(0, "Subheading");
+						text.insertWithFormattingAt(10, [
+							new FormattedTextAsTree.StringAtom({
+								content: new FormattedTextAsTree.StringLineAtom({
+									tag: FormattedTextAsTree.LineTag("h3"),
+								}),
+								format: createPlainFormat(),
+							}),
+						]);
+
+						rendered.rerender(content);
+						const el = rendered.container.querySelector("h3");
+						assert.ok(el, "Expected <h3> tag");
+						assert.match(el.textContent ?? "", /Subheading/);
+					});
+
+					it("inserts list line atom and renders with list formatting", () => {
+						const { tree: text } = createFormattedTreeView();
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const rendered = render(content, { reactStrictMode });
+
+						text.insertAt(0, "Item");
+						text.insertWithFormattingAt(4, [
+							new FormattedTextAsTree.StringAtom({
+								content: new FormattedTextAsTree.StringLineAtom({
+									tag: FormattedTextAsTree.LineTag("li"),
+								}),
+								format: createPlainFormat(),
+							}),
+						]);
+
+						rendered.rerender(content);
+						const el = rendered.container.querySelector("li");
+						assert.ok(el, "Expected <li> tag");
+						assert.match(el.textContent ?? "", /Item/);
+					});
+
+					it("removes line atom and line formatting is removed", () => {
+						const { tree: text } = createFormattedTreeView();
+						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+
+						// Insert "Hello" with h1 line atom
+						text.insertAt(0, "Hello");
+						text.insertWithFormattingAt(5, [
+							new FormattedTextAsTree.StringAtom({
+								content: new FormattedTextAsTree.StringLineAtom({
+									tag: FormattedTextAsTree.LineTag("h1"),
+								}),
+								format: createPlainFormat(),
+							}),
+						]);
+
+						const rendered = render(content, { reactStrictMode });
+						assert.ok(rendered.container.querySelector("h1"), "Initially: has <h1>");
+
+						// Remove the line atom (index 5)
+						text.removeRange(5, 6);
+						rendered.rerender(content);
+
+						assert.ok(!rendered.container.querySelector("h1"), "After delete: no <h1>");
+						assert.match(rendered.baseElement.textContent ?? "", /Hello/);
+					});
+				});
+			}
+		});
 	});
 });

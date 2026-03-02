@@ -59,6 +59,9 @@ const fontSet = new Set<string>(["monospace", "serif", "sans-serif", "Arial"]);
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
+/** Valid LineTag string values accepted by FormattedTextAsTree.LineTag(). */
+type LineTagValue = "h1" | "h2" | "h3" | "h4" | "h5" | "li";
+
 /**
  * Parse CSS font-size from a pasted HTML element's inline style.
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
@@ -190,6 +193,25 @@ function quillAttrsToPartial(
 	return format;
 }
 
+/** Extract a LineTagValue from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time */
+function getLineTag(attrs?: Record<string, unknown>): LineTagValue | undefined {
+	if (!attrs) return undefined;
+	if (typeof attrs.header === "number") return `h${attrs.header}` as LineTagValue;
+	if (typeof attrs.list === "string") return "li";
+	// no formatting on "/n", or line tag on "/n" that doesn't affect formatting
+	return undefined;
+}
+
+/** Create a StringAtom containing a StringLineAtom with the given line tag. */
+function createLineAtom(lineTag: LineTagValue): FormattedTextAsTree.StringAtom {
+	return new FormattedTextAsTree.StringAtom({
+		content: new FormattedTextAsTree.StringLineAtom({
+			tag: FormattedTextAsTree.LineTag(lineTag),
+		}),
+		format: new FormattedTextAsTree.CharacterFormat(quillAttrsToFormat()),
+	});
+}
+
 /**
  * Convert a CharacterFormat from the tree to Quill attributes.
  * Used when building Quill deltas from tree content to sync external changes.
@@ -244,19 +266,34 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 	// TODO:Performance: Optimize this loop by adding an API to get runs to FormattedTextAsTree.Tree, and implementing that using cursors.
 	// Something like `getUniformRun(startIndex, maxLength): number` and `substring(startIndex, length): string`.
 	for (const atom of root.charactersWithFormatting()) {
-		const a = formatToQuillAttrs(atom.format);
-		const k = JSON.stringify(a);
-		if (k === key) {
-			// Same formatting as previous character - extend current run
-			text += atom.content.content;
+		const lineTag =
+			atom.content instanceof FormattedTextAsTree.StringLineAtom
+				? atom.content.tag.value
+				: undefined;
+		if (lineTag === undefined) {
+			const a = formatToQuillAttrs(atom.format);
+			const k = JSON.stringify(a);
+			if (k === key) {
+				// Same formatting as previous character - extend current run
+				text += atom.content.content;
+			} else {
+				// Different formatting - push current run and start new one
+				pushRun();
+				text = atom.content.content;
+				attrs = a;
+				key = k;
+			}
 		} else {
-			// Different formatting - push current run and start new one
 			pushRun();
-			text = atom.content.content;
-			attrs = a;
-			key = k;
+			text = "";
+			key = "";
+			ops.push({
+				insert: "\n",
+				attributes: lineTag === "li" ? { list: "bullet" } : { header: Number(lineTag[1]) },
+			});
 		}
 	}
+
 	// Push any remaining accumulated text
 	pushRun();
 
@@ -320,6 +357,8 @@ const FormattedTextEditorView = React.forwardRef<
 					["bold", "italic", "underline"],
 					[{ size: ["small", false, "large", "huge"] }],
 					[{ font: [] }],
+					[{ header: [1, 2, 3, 4, 5, false] }],
+					[{ list: "bullet" }],
 					["clean"],
 				],
 				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
@@ -366,7 +405,18 @@ const FormattedTextEditorView = React.forwardRef<
 						const cpCount = codepointCount(retainedStr);
 
 						if (op.attributes) {
-							root.formatRange(cpPos, cpPos + cpCount, quillAttrsToPartial(op.attributes));
+							const lineTag = getLineTag(op.attributes);
+							if (lineTag !== undefined && content[utf16Pos] === "\n") {
+								// Swap existing newline atom to StringLineAtom
+								root.removeRange(cpPos, cpPos + 1);
+								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+							} else if (lineTag !== undefined && utf16Pos >= content.length) {
+								// Quill's implicit trailing newline — insert a new line atom
+								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+								content += "\n";
+							} else {
+								root.formatRange(cpPos, cpPos + cpCount, quillAttrsToPartial(op.attributes));
+							}
 						}
 						utf16Pos += op.retain;
 						cpPos += cpCount;
@@ -380,11 +430,16 @@ const FormattedTextEditorView = React.forwardRef<
 						content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
 						// Don't advance positions - next op starts at same position
 					} else if (typeof op.insert === "string") {
-						// Insert: add new text with formatting at current position
-						root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
-							quillAttrsToFormat(op.attributes),
-						);
-						root.insertAt(cpPos, op.insert);
+						const lineTag = getLineTag(op.attributes);
+						if (lineTag !== undefined && op.insert === "\n") {
+							root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+						} else {
+							// Insert: add new text with formatting at current position
+							root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
+								quillAttrsToFormat(op.attributes),
+							);
+							root.insertAt(cpPos, op.insert);
+						}
 						// Update content to reflect insertion
 						content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
 						// Advance by inserted content length
@@ -488,6 +543,10 @@ const FormattedTextEditorView = React.forwardRef<
 				.ql-undo::after { content: "↶"; font-size: 18px; }
 				.ql-redo::after { content: "↷"; font-size: 18px; }
 				.ql-undo:disabled, .ql-redo:disabled { opacity: 0.3; cursor: not-allowed; }
+				/* Custom CSS Altering Quills default bullet point alignment. Vertically center */
+				/* bullets in list items, since Quill's bullet has no inherent height */
+				li[data-list="bullet"] { display: flex; align-items: center; }
+				li[data-list="bullet"] .ql-ui { align-self: center; }
 			`}</style>
 			<h2 style={{ margin: "10px 0" }}>Collaborative Formatted Text Editor</h2>
 			<div
