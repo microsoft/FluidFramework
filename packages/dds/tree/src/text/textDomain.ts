@@ -13,7 +13,12 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 } from "../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-duplicates
 import type { TreeNode, WithType } from "../simple-tree/index.js";
+// Add some unused imports which show up in the generated d.ts file.
+// This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
+import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
@@ -174,12 +179,12 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
  *
  * Part of that work will be establishing and documenting those patterns so other components with complex encodings can follow them,
  * in addition to implementing them for text.
- * @internal
+ * @alpha
  */
 export namespace TextAsTree {
 	/**
 	 * Statics for text nodes.
-	 * @internal
+	 * @alpha
 	 */
 	export interface Statics {
 		/**
@@ -204,7 +209,7 @@ export namespace TextAsTree {
 	 *
 	 * @see {@link TextAsTree.Statics.fromString} for construction.
 	 * @see {@link TextAsTree.(Tree:type)} for schema.
-	 * @internal
+	 * @alpha
 	 */
 	export interface Members {
 		/**
@@ -256,12 +261,18 @@ export namespace TextAsTree {
 	}
 
 	/**
-	 * Schema for a text node.
+	 * Schema for a {@link TextAsTree.(Tree:variable)} node.
 	 * @remarks
-	 * See {@link TextAsTree.Members} for the API.
-	 * See {@link TextAsTree.Statics} for static APIs on this Schema, including construction.
-	 * @internal
+	 * See {@link TextAsTree.Statics} for static APIs on this schema, including construction.
+	 * @alpha
 	 */
 	export const Tree = eraseSchemaDetails<Members, Statics>()(TextNode);
+
+	/**
+	 * Node for the {@link TextAsTree.(Tree:type)} schema exposing the {@link TextAsTree.Members} API.
+	 * @remarks
+	 * Create using {@link TextAsTree.Statics.fromString}.
+	 * @alpha
+	 */
 	export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }
