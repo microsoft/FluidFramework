@@ -179,6 +179,9 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = P
 }
 
 // @beta @sealed
+export type LatestConfiguration<T extends object | null, RegistrationKeyRestrictions extends string = string> = InternalPresenceTypes.ManagerFactory<RegistrationKeyRestrictions, InternalPresenceTypes.ValueRequiredState<T>, Latest<T>>;
+
+// @beta @sealed
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     metadata: LatestMetadata;
     value: Accessor<T, TValueAccessor>;
@@ -196,8 +199,8 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T> =
 
 // @beta @sealed
 export interface LatestFactory {
-    <T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, Latest<T>>;
-    <T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<T>, LatestRaw<T>>;
+    <T extends object | null, RegistrationKeyRestrictions extends string = string>(args: LatestArguments<T>): LatestConfiguration<T, RegistrationKeyRestrictions>;
+    <T extends object | null, RegistrationKeyRestrictions extends string = string>(args: LatestArgumentsRaw<T>): LatestRawConfiguration<T, RegistrationKeyRestrictions>;
 }
 
 // @beta @sealed
@@ -232,6 +235,9 @@ export interface LatestMapClientData<T, Keys extends string, TValueAccessor exte
 }
 
 // @beta @sealed
+export type LatestMapConfiguration<T, Keys extends string, RegistrationKeyRestrictions extends string = string> = InternalPresenceTypes.ManagerFactory<RegistrationKeyRestrictions, InternalPresenceTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+
+// @beta @sealed
 export interface LatestMapEvents<T, K extends string, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
     localItemRemoved: (removedItem: {
@@ -252,8 +258,8 @@ export interface LatestMapEvents<T, K extends string, TRemoteValueAccessor exten
 
 // @beta @sealed
 export interface LatestMapFactory {
-    <T, Keys extends string = string, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
-    <T, Keys extends string = string, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalPresenceTypes.ManagerFactory<RegistrationKey, InternalPresenceTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+    <T, Keys extends string = string, RegistrationKeyRestrictions extends string = string>(args: LatestMapArguments<T, Keys>): LatestMapConfiguration<T, Keys, RegistrationKeyRestrictions>;
+    <T, Keys extends string = string, RegistrationKeyRestrictions extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): LatestMapRawConfiguration<T, Keys, RegistrationKeyRestrictions>;
 }
 
 // @beta @sealed
@@ -272,6 +278,9 @@ export interface LatestMapItemUpdatedClientData<T, K extends string, TValueAcces
 export type LatestMapRaw<T, Keys extends string = string> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
 // @beta @sealed
+export type LatestMapRawConfiguration<T, Keys extends string, RegistrationKeyRestrictions extends string = string> = InternalPresenceTypes.ManagerFactory<RegistrationKeyRestrictions, InternalPresenceTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+
+// @beta @sealed
 export type LatestMapRawEvents<T, K extends string> = LatestMapEvents<T, K, RawValueAccessor<T>>;
 
 // @beta @sealed
@@ -282,6 +291,9 @@ export interface LatestMetadata {
 
 // @beta @sealed
 export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
+
+// @beta @sealed
+export type LatestRawConfiguration<T extends object | null, RegistrationKeyRestrictions extends string = string> = InternalPresenceTypes.ManagerFactory<RegistrationKeyRestrictions, InternalPresenceTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 // @beta @sealed
 export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
@@ -299,10 +311,13 @@ export interface NotificationListenable<TListeners extends InternalPresenceUtili
 }
 
 // @alpha
-export function Notifications<T extends InternalPresenceUtilityTypes.NotificationListeners<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<T>>;
+export function Notifications<T extends InternalPresenceUtilityTypes.NotificationListeners<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>): NotificationsConfiguration<T, Key>;
 
 // @alpha
-export function Notifications<TSubscriptions extends InternalPresenceUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, Key extends string = string>(initialSubscriptions: Partial<TSubscriptions>): InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<InternalPresenceUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>>>;
+export function Notifications<TSubscriptions extends InternalPresenceUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, Key extends string = string>(initialSubscriptions: Partial<TSubscriptions>): NotificationsWithSubscriptionsConfiguration<TSubscriptions, Key>;
+
+// @alpha @sealed
+export type NotificationsConfiguration<T extends InternalPresenceUtilityTypes.NotificationListeners<T>, RegistrationKeyRestrictions extends string = string> = InternalPresenceTypes.ManagerFactory<RegistrationKeyRestrictions, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<T>>;
 
 // @alpha @sealed
 export interface NotificationsManager<T extends InternalPresenceUtilityTypes.NotificationListeners<T>> {
@@ -324,17 +339,19 @@ export type NotificationSubscriberSignatures<E extends InternalPresenceUtilityTy
 };
 
 // @alpha @sealed
-export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
+export type NotificationsWithSubscriptionsConfiguration<TSubscriptions extends InternalPresenceUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, RegistrationKeyRestrictions extends string = string> = InternalPresenceTypes.ManagerFactory<RegistrationKeyRestrictions, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<InternalPresenceUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>>>;
+
+// @alpha @sealed
+export interface NotificationsWorkspace<TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> {
     add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends NotificationsManager<InternalPresenceUtilityTypes.NotificationListeners<unknown>>>(key: TKey, manager: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>>;
-    readonly notifications: StatesWorkspaceEntries<TSchema>;
+    readonly notifications: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
     readonly presence: PresenceWithNotifications;
 }
 
 // @alpha
-export interface NotificationsWorkspaceSchema {
-    // (undocumented)
-    [key: string]: InternalPresenceTypes.ManagerFactory<typeof key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<InternalPresenceUtilityTypes.NotificationListeners<unknown>>>;
-}
+export type NotificationsWorkspaceSchema<Keys extends string = string> = {
+    [Key in Keys]: InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<InternalPresenceUtilityTypes.NotificationListeners<unknown>>>;
+};
 
 // @beta @sealed
 export interface Presence {
@@ -346,7 +363,7 @@ export interface Presence {
     };
     readonly events: Listenable<PresenceEvents>;
     readonly states: {
-        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+        getWorkspace<StatesSchema extends Partial<StatesWorkspaceSchema<SchemaKeys>>, SchemaKeys extends string & keyof StatesSchema = string & keyof StatesSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema, unknown, SchemaKeys>;
     };
 }
 
@@ -359,7 +376,7 @@ export interface PresenceEvents {
 export interface PresenceWithNotifications extends Presence {
     // (undocumented)
     readonly notifications: {
-        getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: WorkspaceAddress, requestedNotifications: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+        getWorkspace<NotificationsSchema extends Partial<NotificationsWorkspaceSchema<SchemaKeys>>, SchemaKeys extends string & keyof NotificationsSchema = string & keyof NotificationsSchema>(notificationsId: WorkspaceAddress, requestedNotifications: NotificationsSchema): NotificationsWorkspace<NotificationsSchema, SchemaKeys>;
     };
 }
 
@@ -381,8 +398,8 @@ export interface RawValueAccessor<T> {
 
 // @beta
 export const StateFactory: {
-    latest: LatestFactory_2;
-    latestMap: LatestMapFactory_2;
+    readonly latest: LatestFactory_2;
+    readonly latestMap: LatestMapFactory_2;
 };
 
 // @beta @sealed
@@ -402,28 +419,28 @@ export type StateSchemaValidator<T> = (
 unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
-export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
-    add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, manager: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+export interface StatesWorkspace<TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>, TManagerConstraints = unknown, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> {
+    add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, configuration: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
-    readonly states: StatesWorkspaceEntries<TSchema>;
+    readonly states: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
 }
 
 // @beta @sealed
-export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
+export type StatesWorkspaceEntries<TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> = {
     /**
     * Registered State objects.
     */
-    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalPresenceTypes.StateValue<infer TManager> ? TManager : never;
+    readonly [Key in keyof TSchema]: ReturnType<Exclude<TSchema[Key], undefined>>["manager"] extends InternalPresenceTypes.StateValue<infer TManager> ? TManager : never;
 };
 
 // @beta
 export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>;
 
 // @beta
-export interface StatesWorkspaceSchema {
-    [key: string]: StatesWorkspaceEntry<typeof key, InternalPresenceTypes.ValueDirectoryOrState<unknown>>;
-}
+export type StatesWorkspaceSchema<Keys extends string = string> = {
+    [Key in Keys]: StatesWorkspaceEntry<Key, InternalPresenceTypes.ValueDirectoryOrState<unknown>>;
+};
 
 // @beta @system
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
