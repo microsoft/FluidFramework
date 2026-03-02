@@ -23,7 +23,7 @@ import {
 	type IThrottleMiddlewareOptions,
 	throttle,
 } from "@fluidframework/server-services-utils";
-import { Router } from "express";
+import type { Router } from "express";
 import type { Query } from "express-serve-static-core";
 import type * as nconf from "nconf";
 import winston from "winston";
@@ -52,17 +52,13 @@ export function create(
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
 ): Router {
-	const router: Router = Router();
+	const {
+		router,
+		maxTokenLifetimeSec,
+		tenantThrottleOptions: tenantGeneralThrottleOptions,
+		restTenantGeneralThrottler,
+	} = utils.createRouteContext(config, restTenantThrottlers);
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
-	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
-
-	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => req.params.tenantId,
-		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
-	};
-	const restTenantGeneralThrottler = restTenantThrottlers.get(
-		Constants.generalRestCallThrottleIdPrefix,
-	);
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -225,8 +221,8 @@ export function create(
 				typeof request.query.initial === "undefined"
 					? undefined
 					: typeof request.query.initial === "boolean"
-					? request.query.initial
-					: request.query.initial === "true";
+						? request.query.initial
+						: request.query.initial === "true";
 
 			const isEphemeralFromRequest = request.get(Constants.IsEphemeralContainer);
 
