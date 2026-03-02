@@ -35,7 +35,7 @@ export interface Timer<T = unknown> {
 }
 
 /**
- * A place to collect all supported implementation for the platform.
+ * A place to collect all supported timer implementations for the current platform.
  */
 const timers: Timer[] = [];
 {

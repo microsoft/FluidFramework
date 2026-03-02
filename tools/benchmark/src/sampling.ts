@@ -114,7 +114,7 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 		// spread-copy the array because sort() works in place and we don't want to mutate the original array.
 		finalSamples = [...array].sort((a, b) => a - b);
 		const n = finalSamples.length;
-		const samplesToDrop = Math.round(n * (1 - fractionOfSamplesToUse));
+		const samplesToDrop = Math.min(Math.round(n * (1 - fractionOfSamplesToUse)), n - 1);
 		finalSamples = finalSamples.splice(Math.floor(samplesToDrop / 2), n - samplesToDrop);
 	}
 
