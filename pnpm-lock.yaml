@@ -5,7 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@biomejs/biome': ~2.3.11
   '@types/node': ~20.19.30
   good-fences>nodegit: npm:empty-npm-package@1.0.0
   qs: ^6.11.0
