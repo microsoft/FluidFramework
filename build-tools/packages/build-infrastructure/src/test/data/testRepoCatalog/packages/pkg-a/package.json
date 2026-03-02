@@ -1,7 +1,14 @@
 {
 	"name": "pkg-a",
 	"version": "1.0.0",
+	"private": true,
 	"description": "Test package — uses pnpm catalog: references",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepoCatalog/packages/pkg-a"
+	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"dependencies": {

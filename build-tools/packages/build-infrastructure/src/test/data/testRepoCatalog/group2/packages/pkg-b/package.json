@@ -1,7 +1,14 @@
 {
 	"name": "pkg-b",
 	"version": "2.0.0",
+	"private": true,
 	"description": "Test package in group2 release group",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepoCatalog/group2/packages/pkg-b"
+	},
 	"license": "MIT",
 	"author": "Microsoft and contributors"
 }
