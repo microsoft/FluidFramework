@@ -227,13 +227,13 @@ export interface Presence {
 		 * @returns A {@link StatesWorkspace}
 		 */
 		getWorkspace<
-			StatesSchema extends StatesWorkspaceSchema<SchemaKeys>,
+			StatesSchema extends Partial<StatesWorkspaceSchema<SchemaKeys>>,
 			SchemaKeys extends string & keyof StatesSchema = string & keyof StatesSchema,
 		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedStates: StatesSchema,
 			controls?: BroadcastControlSettings,
-		): StatesWorkspace<StatesSchema>;
+		): StatesWorkspace<StatesSchema, unknown, SchemaKeys>;
 	};
 }
 
@@ -259,12 +259,12 @@ export interface PresenceWithNotifications extends Presence {
 		 * @returns A Notifications workspace
 		 */
 		getWorkspace<
-			NotificationsSchema extends NotificationsWorkspaceSchema<SchemaKeys>,
+			NotificationsSchema extends Partial<NotificationsWorkspaceSchema<SchemaKeys>>,
 			SchemaKeys extends string & keyof NotificationsSchema = string &
 				keyof NotificationsSchema,
 		>(
 			notificationsId: WorkspaceAddress,
 			requestedNotifications: NotificationsSchema,
-		): NotificationsWorkspace<NotificationsSchema>;
+		): NotificationsWorkspace<NotificationsSchema, SchemaKeys>;
 	};
 }

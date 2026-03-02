@@ -61,14 +61,14 @@ export type StatesWorkspaceSchema<Keys extends string = string> = {
  * @beta
  */
 export type StatesWorkspaceEntries<
-	TSchema extends StatesWorkspaceSchema<TSchemaKeys>,
+	TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
 	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
 > = {
 	/**
 	 * Registered State objects.
 	 */
 	readonly [Key in keyof TSchema]: ReturnType<
-		TSchema[Key]
+		Exclude<TSchema[Key], undefined>
 	>["manager"] extends InternalTypes.StateValue<infer TManager>
 		? TManager
 		: never;
@@ -85,7 +85,7 @@ export type StatesWorkspaceEntries<
  * @beta
  */
 export interface StatesWorkspace<
-	TSchema extends StatesWorkspaceSchema<TSchemaKeys>,
+	TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
 	TManagerConstraints = unknown,
 	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
 > {
@@ -110,7 +110,7 @@ export interface StatesWorkspace<
 	/**
 	 * Registry of State objects.
 	 */
-	readonly states: StatesWorkspaceEntries<TSchema>;
+	readonly states: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
 
 	/**
 	 * Default controls for management of broadcast updates.
@@ -156,7 +156,7 @@ export type NotificationsWorkspaceSchema<Keys extends string = string> = {
  * @alpha
  */
 export interface NotificationsWorkspace<
-	TSchema extends NotificationsWorkspaceSchema<TSchemaKeys>,
+	TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>,
 	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
 > {
 	/**
@@ -178,7 +178,7 @@ export interface NotificationsWorkspace<
 	/**
 	 * Registry of `NotificationsManager`s.
 	 */
-	readonly notifications: StatesWorkspaceEntries<TSchema>;
+	readonly notifications: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
 
 	/**
 	 * Containing {@link PresenceWithNotifications}

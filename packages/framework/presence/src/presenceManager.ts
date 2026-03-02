@@ -72,23 +72,23 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 
 	public readonly states = {
 		getWorkspace: <
-			TSchema extends StatesWorkspaceSchema<TSchemaKeys>,
+			TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
 			TSchemaKeys extends string & keyof TSchema,
 		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
 			settings?: BroadcastControlSettings,
-		): StatesWorkspace<TSchema> =>
+		): StatesWorkspace<TSchema, unknown, TSchemaKeys> =>
 			this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent, settings),
 	};
 	public readonly notifications = {
 		getWorkspace: <
-			TSchema extends NotificationsWorkspaceSchema<TSchemaKeys>,
+			TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>,
 			TSchemaKeys extends string & keyof TSchema,
 		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
-		): NotificationsWorkspace<TSchema> =>
+		): NotificationsWorkspace<TSchema, TSchemaKeys> =>
 			this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
 	};
 

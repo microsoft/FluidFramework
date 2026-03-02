@@ -345,9 +345,9 @@ export type NotificationSubscriberSignatures<E extends InternalPresenceUtilityTy
 export type NotificationsWithSubscriptionsConfiguration<TSubscriptions extends InternalPresenceUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, Key extends string> = InternalPresenceTypes.ManagerFactory<Key, InternalPresenceTypes.ValueRequiredState<InternalPresenceTypes.NotificationType>, NotificationsManager<InternalPresenceUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>>>;
 
 // @alpha @sealed
-export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema<TSchemaKeys>, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> {
+export interface NotificationsWorkspace<TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> {
     add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends NotificationsManager<InternalPresenceUtilityTypes.NotificationListeners<unknown>>>(key: TKey, manager: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>>;
-    readonly notifications: StatesWorkspaceEntries<TSchema>;
+    readonly notifications: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
     readonly presence: PresenceWithNotifications;
 }
 
@@ -366,7 +366,7 @@ export interface Presence {
     };
     readonly events: Listenable<PresenceEvents>;
     readonly states: {
-        getWorkspace<StatesSchema extends StatesWorkspaceSchema<SchemaKeys>, SchemaKeys extends string & keyof StatesSchema = string & keyof StatesSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+        getWorkspace<StatesSchema extends Partial<StatesWorkspaceSchema<SchemaKeys>>, SchemaKeys extends string & keyof StatesSchema = string & keyof StatesSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema, unknown, SchemaKeys>;
     };
 }
 
@@ -379,7 +379,7 @@ export interface PresenceEvents {
 export interface PresenceWithNotifications extends Presence {
     // (undocumented)
     readonly notifications: {
-        getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema<SchemaKeys>, SchemaKeys extends string & keyof NotificationsSchema = string & keyof NotificationsSchema>(notificationsId: WorkspaceAddress, requestedNotifications: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+        getWorkspace<NotificationsSchema extends Partial<NotificationsWorkspaceSchema<SchemaKeys>>, SchemaKeys extends string & keyof NotificationsSchema = string & keyof NotificationsSchema>(notificationsId: WorkspaceAddress, requestedNotifications: NotificationsSchema): NotificationsWorkspace<NotificationsSchema, SchemaKeys>;
     };
 }
 
@@ -422,19 +422,19 @@ export type StateSchemaValidator<T> = (
 unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
-export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema<TSchemaKeys>, TManagerConstraints = unknown, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> {
+export interface StatesWorkspace<TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>, TManagerConstraints = unknown, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> {
     add<TKey extends string, TValue extends InternalPresenceTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, configuration: InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalPresenceTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
-    readonly states: StatesWorkspaceEntries<TSchema>;
+    readonly states: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
 }
 
 // @beta @sealed
-export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema<TSchemaKeys>, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> = {
+export type StatesWorkspaceEntries<TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>, TSchemaKeys extends string & keyof TSchema = string & keyof TSchema> = {
     /**
     * Registered State objects.
     */
-    readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalPresenceTypes.StateValue<infer TManager> ? TManager : never;
+    readonly [Key in keyof TSchema]: ReturnType<Exclude<TSchema[Key], undefined>>["manager"] extends InternalPresenceTypes.StateValue<infer TManager> ? TManager : never;
 };
 
 // @beta
