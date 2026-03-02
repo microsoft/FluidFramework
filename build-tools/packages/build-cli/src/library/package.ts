@@ -312,7 +312,9 @@ export async function getPreReleaseDependencies(
 			// Convert the range into the minimum version
 			const minVer = semver.minVersion(resolvedVersion);
 			if (minVer === null) {
-				throw new Error(`semver.minVersion was null: ${resolvedVersion} (${depName})`);
+				throw new Error(
+					`semver.minVersion was null: ${resolvedVersion}${resolvedVersion !== depVersion ? ` (resolved from ${depVersion})` : ""} for ${depName}`,
+				);
 			}
 
 			// If the min version has a pre-release section, then it needs to be released.
@@ -323,9 +325,9 @@ export async function getPreReleaseDependencies(
 				}
 
 				if (depPkg.monoRepo === undefined) {
-					prereleasePackages.set(depPkg.name, depVersion);
+					prereleasePackages.set(depPkg.name, resolvedVersion);
 				} else {
-					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, depVersion);
+					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, resolvedVersion);
 				}
 			}
 		}
@@ -497,7 +499,9 @@ export function getFluidDependencies(
 				? semver.parse(pkg.version)
 				: semver.minVersion(resolvedVersion);
 			if (newVersion === null) {
-				throw new Error(`Failed to parse depVersion: ${resolvedVersion}`);
+				throw new Error(
+					`Failed to parse depVersion: ${resolvedVersion}${resolvedVersion !== dep.version ? ` (resolved from ${dep.version})` : ""}`,
+				);
 			}
 
 			if (pkg.monoRepo !== undefined) {
