@@ -476,7 +476,7 @@ async function handleBroadcastSignal(
 	}
 
 	// Cache miss: fall back to DB lookup.
-	if (sessionOrdererUrl === undefined) {
+	if (!cacheHit) {
 		const document = await storage.getDocument(tenantId, documentId);
 		sessionOrdererUrl = document?.session?.ordererUrl;
 		// A document with a scheduled deletion time should be treated as not found.
