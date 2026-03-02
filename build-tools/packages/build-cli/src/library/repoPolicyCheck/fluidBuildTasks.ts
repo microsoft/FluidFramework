@@ -651,14 +651,6 @@ export function shouldIgnoreBuildDependency(
 	if (depSpec.version.includes("workspace:")) {
 		return false;
 	}
-	const depPackage = packageMap.get(depSpec.name);
-	if (depPackage === undefined) {
-		// Not known to repo, can be ignored.
-		return true;
-	}
-	if (depPackage.group !== curPkgGroup) {
-		return true;
-	}
 	// Historically, a semantic version check was also considered sufficient
 	// to indicate a possible dependency. This was probably the case for lerna
 	// managed repo. The check is preserved here, but only allowed when the
@@ -668,10 +660,18 @@ export function shouldIgnoreBuildDependency(
 	// a full repo ordering, support would be needed to recognize tooling
 	// dependencies used to run scripts apart from compile time dependencies,
 	// especially since the module type is irrelevant for execution dependencies.
-	//
+	const depPackage = packageMap.get(depSpec.name);
+	if (depPackage === undefined) {
+		// Not known to repo, can be ignored.
+		return true;
+	}
+	if (depPackage.group !== curPkgGroup) {
+		return true;
+	}
 	// catalog: references are version pins for external or cross-workspace packages.
 	// Same-group packages always use the workspace: protocol, so a catalog: reference
-	// here is unexpected. Ignore it rather than passing an invalid comparator to semver.
+	// is almost certainly not a build dependency.
+	// Ignore it rather than passing an invalid comparator to semver.
 	if (depSpec.version.startsWith("catalog:")) {
 		return true;
 	}
