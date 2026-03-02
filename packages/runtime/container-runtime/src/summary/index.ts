@@ -112,6 +112,7 @@ export {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaChangeMessageOutgoing,
 	type IDocumentSchemaFeatures,
+	type ISchemaPreflightResult,
 } from "./documentSchema.js";
 export {
 	getFailMessage,

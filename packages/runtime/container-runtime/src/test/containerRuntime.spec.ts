@@ -1778,6 +1778,7 @@ describe("Runtime", () => {
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
 				createBlobPayloadPending: undefined,
+				onBeforeSchemaChange: undefined,
 			} as const satisfies ContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 

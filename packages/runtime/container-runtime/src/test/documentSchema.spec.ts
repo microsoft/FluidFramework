@@ -22,6 +22,7 @@ import {
 	type IDocumentSchema,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
+	type ISchemaPreflightResult,
 } from "../summary/index.js";
 
 function boolToProp(b: boolean | undefined) {
@@ -824,4 +825,137 @@ describe("Runtime", () => {
 		);
 		return resultingSchema;
 	}
+
+	describe("preflightSchemaCheck", () => {
+		it("isCompatible is true for a compatible schema change", () => {
+			const controller = createController({
+				...validConfig,
+				runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+			});
+
+			const proposedSchema: IDocumentSchema = {
+				...validConfig,
+				refSeq: 0,
+				runtime: {
+					...validConfig.runtime,
+					explicitSchemaControl: true,
+					opGroupingEnabled: true,
+				},
+			};
+
+			const result: ISchemaPreflightResult = controller.preflightSchemaCheck([proposedSchema]);
+			assert.strictEqual(result.isCompatible, true, "should be compatible");
+			assert.strictEqual(
+				result.incompatibleProperty,
+				undefined,
+				"should not identify incompatible property",
+			);
+			assert.strictEqual(
+				result.incompatibleValue,
+				undefined,
+				"should not identify incompatible value",
+			);
+		});
+
+		it("isCompatible is false for an unknown runtime property", () => {
+			const controller = createController({
+				...validConfig,
+				runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+			});
+
+			const proposedSchema: IDocumentSchema = {
+				...validConfig,
+				refSeq: 0,
+				runtime: { ...validConfig.runtime, unknownFeature: true },
+			};
+
+			const result = controller.preflightSchemaCheck([proposedSchema]);
+			assert.strictEqual(result.isCompatible, false, "should not be compatible");
+			assert.strictEqual(
+				result.incompatibleProperty,
+				"runtime/unknownFeature",
+				"should identify the incompatible property",
+			);
+		});
+
+		it("isCompatible is false for a different version", () => {
+			const controller = createController(validConfig);
+
+			const proposedSchema: IDocumentSchema = {
+				...validConfig,
+				version: 999,
+			};
+
+			const result = controller.preflightSchemaCheck([proposedSchema]);
+			assert.strictEqual(result.isCompatible, false, "should not be compatible");
+			assert.strictEqual(
+				result.incompatibleProperty,
+				"version",
+				"should identify version as incompatible",
+			);
+		});
+
+		it("isCompatible is false for disallowed version matching current client", () => {
+			const controller = createController(validConfig);
+
+			const proposedSchema: IDocumentSchema = {
+				...validConfig,
+				runtime: { ...validConfig.runtime, disallowedVersions: [pkgVersion] },
+			};
+
+			const result = controller.preflightSchemaCheck([proposedSchema]);
+			assert.strictEqual(result.isCompatible, false, "should not be compatible");
+			assert.strictEqual(
+				result.incompatibleProperty,
+				"runtime/disallowedVersions",
+				"should identify disallowedVersions as incompatible",
+			);
+		});
+
+		it("isCompatible is false for an existing option with an unknown value", () => {
+			const controller = createController(validConfig);
+
+			const proposedSchema: IDocumentSchema = {
+				...validConfig,
+				runtime: { ...validConfig.runtime, idCompressorMode: "unknownMode" },
+			};
+
+			const result = controller.preflightSchemaCheck([proposedSchema]);
+			assert.strictEqual(result.isCompatible, false, "should not be compatible");
+			assert.strictEqual(
+				result.incompatibleProperty,
+				"runtime/idCompressorMode",
+				"should identify idCompressorMode as incompatible",
+			);
+			assert.strictEqual(
+				result.incompatibleValue,
+				"unknownMode",
+				"should identify the unknown value",
+			);
+		});
+
+		it("does not modify controller state", () => {
+			const controller = createController({
+				...validConfig,
+				runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+			});
+
+			const sessionSchemaBefore = { ...controller.sessionSchema };
+
+			const proposedSchema: IDocumentSchema = {
+				...validConfig,
+				refSeq: 0,
+				runtime: { unknownFeature: true },
+			};
+
+			controller.preflightSchemaCheck([proposedSchema]);
+
+			// Session schema should be unchanged
+			assert.deepStrictEqual(
+				controller.sessionSchema,
+				sessionSchemaBefore,
+				"preflightSchemaCheck should not modify state",
+			);
+		});
+	});
 });

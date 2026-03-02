@@ -45,6 +45,7 @@ export interface ContainerRuntimeOptions {
     readonly gcOptions: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes: number;
+    readonly onBeforeSchemaChange?: (result: ISchemaPreflightResult) => boolean;
     // (undocumented)
     readonly summaryOptions: ISummaryRuntimeOptions;
 }
@@ -202,6 +203,18 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 export interface IRetriableFailureError extends Error {
     // (undocumented)
     readonly retryAfterSeconds?: number;
+}
+
+// @beta @legacy
+export interface ISchemaPreflightResult {
+    readonly incompatibleProperty?: string;
+    readonly incompatibleValue?: string | string[] | true | number | undefined;
+    readonly isCompatible: boolean;
+    readonly proposedSchema: {
+        readonly version: number;
+        readonly refSeq: number;
+        readonly runtime: Record<string, unknown>;
+    };
 }
 
 // @beta @legacy

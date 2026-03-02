@@ -304,6 +304,67 @@ const documentSchemaSupportedConfigs = {
 };
 
 /**
+ * Result of a preflight schema compatibility check.
+ * Indicates whether a proposed schema is compatible with the current runtime without modifying any state.
+ * @legacy @beta
+ */
+export interface ISchemaPreflightResult {
+	/**
+	 * Whether the proposed schema is compatible with this client's runtime.
+	 */
+	readonly isCompatible: boolean;
+	/**
+	 * If not compatible, which property caused the incompatibility.
+	 */
+	readonly incompatibleProperty?: string;
+	/**
+	 * If not compatible, the value of the incompatible property.
+	 */
+	readonly incompatibleValue?: string | string[] | true | number | undefined;
+	/**
+	 * The proposed schema from the incoming op.
+	 */
+	readonly proposedSchema: {
+		readonly version: number;
+		readonly refSeq: number;
+		readonly runtime: Record<string, unknown>;
+	};
+}
+
+/**
+ * Non-throwing schema compatibility check.
+ * Returns a result object indicating whether the schema is compatible with the current runtime.
+ * Does not modify any state.
+ */
+function checkCompatibilityPure(
+	proposedSchema: IDocumentSchema,
+): ISchemaPreflightResult {
+	if (proposedSchema.version !== currentDocumentVersionSchema) {
+		return { isCompatible: false, incompatibleProperty: "version", proposedSchema };
+	}
+
+	const refSeq = proposedSchema.refSeq;
+	if (typeof refSeq !== "number" || refSeq < 0 || !Number.isInteger(refSeq)) {
+		return { isCompatible: false, incompatibleProperty: "refSeq", proposedSchema };
+	}
+	if (proposedSchema.runtime === null || typeof proposedSchema.runtime !== "object") {
+		return { isCompatible: false, incompatibleProperty: "runtime", proposedSchema };
+	}
+	for (const [name, value] of Object.entries(proposedSchema.runtime)) {
+		const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
+		if (!(validator?.validate(value) ?? false)) {
+			return {
+				isCompatible: false,
+				incompatibleProperty: `runtime/${name}`,
+				incompatibleValue: value,
+				proposedSchema,
+			};
+		}
+	}
+	return { isCompatible: true, proposedSchema};
+}
+
+/**
  * Checks if a given schema is compatible with current code, i.e. if current code can understand all the features of that schema.
  * If schema is not compatible with current code, it throws an exception.
  * @param documentSchema - current schema
@@ -319,49 +380,21 @@ function checkRuntimeCompatibility(
 		return;
 	}
 
-	const msg = "Document can't be opened with current version of the code";
-	if (documentSchema.version !== currentDocumentVersionSchema) {
+	const result = checkCompatibilityPure(documentSchema);
+	if (!result.isCompatible) {
+		const msg = "Document can't be opened with current version of the code";
+		const codePath =
+			result.incompatibleProperty === "version"
+				? "checkRuntimeCompat1"
+				: "checkRuntimeCompat2";
 		throw DataProcessingError.create(
 			msg,
-			"checkRuntimeCompat1",
-			undefined, // message
-			{
-				runtimeSchemaVersion: documentSchema.version,
-				currentRuntimeSchemaVersion: currentDocumentVersionSchema,
-				schemaName,
-			},
-		);
-	}
-
-	let unknownProperty: string | undefined;
-
-	const regSeq = documentSchema.refSeq;
-	// defence in depth - it should not be possible to get here anything other than integer, but worth validating it.
-	if (typeof regSeq !== "number" || regSeq < 0 || !Number.isInteger(regSeq)) {
-		unknownProperty = "refSeq";
-	} else if (documentSchema.runtime === null || typeof documentSchema.runtime !== "object") {
-		unknownProperty = "runtime";
-	} else {
-		for (const [name, value] of Object.entries(documentSchema.runtime)) {
-			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
-			if (!(validator?.validate(value) ?? false)) {
-				unknownProperty = `runtime/${name}`;
-			}
-		}
-	}
-
-	if (unknownProperty !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const value = documentSchema[unknownProperty];
-		throw DataProcessingError.create(
-			msg,
-			"checkRuntimeCompat2",
+			codePath,
 			undefined, // message
 			{
 				codeVersion: currentDocumentVersionSchema,
-				property: unknownProperty,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				value,
+				property: result.incompatibleProperty,
+				value: result.incompatibleValue,
 				schemaName,
 			},
 		);
@@ -803,6 +836,38 @@ export class DocumentsSchemaController {
 	 */
 	public pendingOpNotAcked(): void {
 		this.opPending = false;
+	}
+
+	/**
+	 * Preflight check for incoming schema change messages.
+	 * Evaluates whether the proposed schema changes are compatible with this client's runtime
+	 * without modifying any state.
+	 *
+	 * @param contents - The incoming schema change message contents to check.
+	 * @returns The preflight result indicating compatibility.
+	 */
+	public preflightSchemaCheck(
+		contents: IDocumentSchemaChangeMessageIncoming[],
+	): ISchemaPreflightResult {
+		assert(contents.length > 0, "preflightSchemaCheck expects at least one op to check");
+		for (const content of contents) {
+			const compatResult = checkCompatibilityPure(content);
+
+			if (!compatResult.isCompatible) {
+				return {
+					isCompatible: false,
+					incompatibleProperty: compatResult.incompatibleProperty,
+					incompatibleValue: compatResult.incompatibleValue,
+					proposedSchema: compatResult.proposedSchema,
+				};
+			}
+		}
+
+		const lastIndex = contents.length - 1;
+		return {
+			isCompatible: true,
+			proposedSchema: contents[lastIndex],
+		};
 	}
 }
 

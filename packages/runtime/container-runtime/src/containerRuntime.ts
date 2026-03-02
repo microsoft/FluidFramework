@@ -287,6 +287,7 @@ import {
 	type IDocumentSchemaChangeMessageIncoming,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
+	type ISchemaPreflightResult,
 	type IEnqueueSummarizeOptions,
 	type IGeneratedSummaryStats,
 	type IGenerateSummaryTreeResult,
@@ -476,6 +477,15 @@ export interface ContainerRuntimeOptions {
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
 	readonly createBlobPayloadPending: true | undefined;
+
+	/**
+	 * Optional callback invoked before processing a batch that contains a DocumentSchemaChange op.
+	 * The callback receives an {@link ISchemaPreflightResult} indicating whether the proposed schema
+	 * change is compatible with this client's runtime.
+	 *
+	 * @returns `true` to continue processing normally, `false` to abort processing and close the container.
+	 */
+	readonly onBeforeSchemaChange?: (result: ISchemaPreflightResult) => boolean;
 }
 
 /**
@@ -962,6 +972,7 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
+			onBeforeSchemaChange: undefined,
 		};
 
 		const defaultConfigs = {
@@ -987,6 +998,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			onBeforeSchemaChange = defaultConfigs.onBeforeSchemaChange,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1215,6 +1227,7 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			onBeforeSchemaChange,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -3145,6 +3158,30 @@ export class ContainerRuntime
 				runtimeBatch = false;
 			}
 
+			// Scan the batch for DocumentSchemaChange ops and run the preflight check before processing.
+			// This allows the host to detect incompatible schema changes and switch to a different
+			// co-authoring stack before the runtime throws an error.
+			if (runtimeBatch) {
+				const schemaChangeContents: IDocumentSchemaChangeMessageIncoming[] = [];
+				for (const { message } of messagesWithPendingState) {
+					if (
+						(message as InboundSequencedContainerRuntimeMessage).type ===
+						ContainerMessageType.DocumentSchemaChange
+					) {
+						schemaChangeContents.push(
+							message.contents as IDocumentSchemaChangeMessageIncoming,
+						);
+					}
+				}
+				const shouldContinue = this.preflightSchemaChangeCheck(schemaChangeContents);
+				// If the callback returned false, the host wants to abort processing and close
+				// the container.
+				if (!shouldContinue) {
+					this.closeFn();
+					return;
+				}
+			}
+
 			const locationInBatch: { batchStart: boolean; batchEnd: boolean } =
 				inboundResult.type === "fullBatch"
 					? { batchStart: true, batchEnd: true }
@@ -3163,6 +3200,18 @@ export class ContainerRuntime
 					: false /* groupedBatch */,
 			);
 		} else {
+			// Preflight check for non-modern path
+			if (runtimeBatch && messageCopy.type === ContainerMessageType.DocumentSchemaChange) {
+				const shouldContinue = this.preflightSchemaChangeCheck([
+					messageCopy.contents as IDocumentSchemaChangeMessageIncoming,
+				]);
+				// If the callback returned false, the host wants to abort processing and close
+				// the container.
+				if (!shouldContinue) {
+					this.closeFn();
+					return;
+				}
+			}
 			this.processInboundMessages(
 				[{ message: messageCopy, localOpMetadata: undefined }],
 				{ batchStart: true, batchEnd: true }, // Single message
@@ -3179,6 +3228,26 @@ export class ContainerRuntime
 			// we have consecutively replayed the pending states
 			this.resetReconnectCount();
 		}
+	}
+
+	/**
+	 * Runs the preflight schema check for the given schema change contents and invokes the
+	 * host's onBeforeSchemaChange callback.
+	 * @param contents - The incoming schema change message contents to check.
+	 * @returns `true` to continue processing, `false` to abort (based on callback return value).
+	 */
+	private preflightSchemaChangeCheck(
+		contents: IDocumentSchemaChangeMessageIncoming[],
+	): boolean {
+		if (contents.length === 0) {
+			return true;
+		}
+		if (this.runtimeOptions.onBeforeSchemaChange === undefined) {
+			return true;
+		}
+		const preflightResult = this.documentsSchemaController.preflightSchemaCheck(contents);
+		const shouldContinue = this.runtimeOptions.onBeforeSchemaChange(preflightResult);
+		return shouldContinue;
 	}
 
 	private _processedClientSequenceNumber: number | undefined;

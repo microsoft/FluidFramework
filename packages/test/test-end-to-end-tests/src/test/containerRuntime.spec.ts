@@ -6,8 +6,14 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
+import {
+	IContainer,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions/internal";
+import {
+	CompressionAlgorithms,
+	type ISchemaPreflightResult,
+} from "@fluidframework/container-runtime/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -460,5 +466,143 @@ describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvi
 				minVersionForCollab: "2.35.0",
 			},
 		]);
+	});
+});
+
+describeCompat.only("onBeforeSchemaChange callback", "NoCompat", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+
+	async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
+		return provider.loadTestContainer(options);
+	}
+
+	async function getEntryPoint(container: IContainer): Promise<ITestDataObject> {
+		return getContainerEntryPointBackCompat<ITestDataObject>(container);
+	}
+
+	beforeEach("getTestObjectProvider", async () => {
+		provider = getTestObjectProvider();
+	});
+
+	it("returning true continues processing", async function () {
+		const container1 = await provider.makeTestContainer({
+			runtimeOptions: {
+				explicitSchemaControl: true,
+				enableRuntimeIdCompressor: undefined,
+			},
+		});
+		const entry1 = await getEntryPoint(container1);
+		entry1._root.set("initialKey", "initialValue");
+		await provider.ensureSynchronized();
+
+		let callbackInvoked = false;
+		const container2 = await loadContainer({
+			runtimeOptions: {
+				explicitSchemaControl: true,
+				enableRuntimeIdCompressor: undefined,
+				onBeforeSchemaChange: (result: ISchemaPreflightResult) => {
+					callbackInvoked = true;
+					// Schema should not be applied yet when callback fires
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+					const mode = (entry2._context.containerRuntime as any).sessionSchema
+						.idCompressorMode;
+					assert.equal(
+						mode,
+						undefined,
+						"idCompressorMode should still be undefined before processing",
+					);
+					assert.strictEqual(result.isCompatible, true, "Schema change should be compatible");
+					return true;
+				},
+			},
+		});
+		const entry2 = await getEntryPoint(container2);
+
+		// Container 3 triggers a schema change by enabling ID compressor
+		const container3 = await loadContainer({
+			runtimeOptions: {
+				explicitSchemaControl: true,
+				enableRuntimeIdCompressor: "delayed",
+			},
+		});
+		const entry3 = await getEntryPoint(container3);
+		entry3._root.set("triggerSchemaChange", "value");
+		await provider.ensureSynchronized();
+
+		assert(callbackInvoked, "onBeforeSchemaChange callback should have been invoked");
+		// Schema should now be applied on all containers
+		for (const entry of [entry1, entry2, entry3]) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+			const mode = (entry._context.containerRuntime as any).sessionSchema.idCompressorMode;
+			assert.equal(
+				mode,
+				"delayed",
+				"idCompressorMode should be 'delayed' after schema change",
+			);
+		}
+	});
+
+	it("returning false closes container without processing", async function () {
+		const container1 = await provider.makeTestContainer({
+			runtimeOptions: {
+				explicitSchemaControl: true,
+			},
+		});
+		const entry1 = await getEntryPoint(container1);
+		entry1._root.set("key", "value");
+		await provider.ensureSynchronized();
+
+		let callbackInvoked = false;
+		const container2 = await loadContainer({
+			runtimeOptions: {
+				explicitSchemaControl: true,
+				onBeforeSchemaChange: (_result: ISchemaPreflightResult) => {
+					callbackInvoked = true;
+					// Verify schema was not applied before we return false
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+					const mode = (entry2._context.containerRuntime as any).sessionSchema
+						.idCompressorMode;
+					assert.equal(
+						mode,
+						undefined,
+						"idCompressorMode should still be undefined when callback fires",
+					);
+					return false;
+				},
+			},
+		});
+		const entry2 = await getEntryPoint(container2);
+		assert(!container2.closed, "Container 2 should be open initially");
+
+		const closedP = new Promise<ICriticalContainerError | undefined>((resolve) => {
+			container2.once("closed", (error) => resolve(error));
+		});
+
+		// Container 3 triggers a schema change
+		const container3 = await loadContainer({
+			runtimeOptions: {
+				explicitSchemaControl: true,
+				enableRuntimeIdCompressor: "delayed",
+			},
+		});
+		const entry3 = await getEntryPoint(container3);
+		entry3._root.set("trigger", "value");
+
+		// Wait for container2 to close (driven by the callback returning false)
+		const closeError = await closedP;
+
+		assert(callbackInvoked, "Callback should have been invoked");
+		assert(container2.closed, "Container 2 should be closed after returning false");
+		assert.equal(closeError, undefined, "Container 2 should have closed without error");
+
+		// Verify schema was never applied on container2
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+		const modeAfterClose = (entry2._context.containerRuntime as any).sessionSchema
+			.idCompressorMode;
+		assert.equal(
+			modeAfterClose,
+			undefined,
+			"idCompressorMode should remain undefined - schema change should never have been processed",
+		);
 	});
 });
