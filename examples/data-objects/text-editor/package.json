@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/text-editor",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Minimal sample of SharedTree/React text editor integration.",
 	"homepage": "https://fluidframework.com",
@@ -42,8 +42,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
-		"quill": "^2.0.2",
-		"quill-delta": "^4.2.2",
+		"quill": "^2.0.3",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},
@@ -53,6 +52,7 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/devtools": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@testing-library/react": "^16.3.0",
 		"@types/mocha": "^10.0.10",

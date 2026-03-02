@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TextAsTree } from "./schema.js";
+import type { TextAsTree } from "@fluidframework/tree/internal";
 
 /**
  * Sync `newText` into the provided `root` tree.

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-container-views",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Minimal Fluid Container & data store sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -51,7 +51,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/test-tools": "^1.0.195075",
+		"@fluidframework/test-tools": "^2.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "~20.19.30",
