@@ -2070,6 +2070,61 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(composed, expected);
 		});
+
+		it("cross-field return1 and [move1, move2]", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(
+				family,
+				mintRevisionTag,
+				changeReceiver,
+				codecOptions,
+			);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			const fieldBPath = { parent: undefined, field: fieldB };
+			editor.move(fieldAPath, 0, 1, fieldBPath, 0);
+			editor.move(fieldBPath, 0, 1, fieldBPath, 1);
+
+			const [moveUntagged1, moveUntagged2] = getChanges();
+			const move1 = tagChangeInline(moveUntagged1, tag1);
+			const move2 = tagChangeInline(moveUntagged2, tag2);
+			const rollback = tagRollbackInverse(family.invert(move1, true, tag3), tag3, tag1);
+
+			const forwardComposition = makeAnonChange(family.compose([move1, move2]));
+			const composed = family.compose([rollback, forwardComposition]);
+
+			const moveId1: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const moveId2: ChangeAtomId = { revision: tag2, localId: brand(2) };
+			const expected = Change.build(
+				{
+					family,
+					maxId: 3,
+					renames: [
+						{
+							oldId: moveId1,
+							newId: moveId2,
+							count: 1,
+							detachLocation: undefined,
+						},
+					],
+					revisions: [
+						{ revision: tag3, rollbackOf: tag1 },
+						{ revision: tag1 },
+						{ revision: tag2 },
+					],
+					rebaseVersion: 1,
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.tomb(moveId1.revision, moveId1.localId),
+				]),
+				Change.field(fieldB, sequenceIdentifier, [
+					MarkMaker.detach(1, moveId1, { cellRename: moveId2 }),
+					MarkMaker.attach(1, moveId2, { cellId: { revision: tag2, localId: brand(3) } }),
+				]),
+			);
+
+			assertEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {

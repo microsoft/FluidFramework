@@ -4425,6 +4425,7 @@ function composeRevInfos(
 		revisions2?.length === 1 &&
 		revisions1[0]?.revision === revisions2[0]?.revision
 	) {
+		// XXX: Shouldn't this branch handle the case where there are multiple revisions in each array?
 		// This is a special case where we are composing two changesets from the same transaction.
 		// We return one of the input arrays to avoid duplicating revision entries.
 		return revisions1;
@@ -4439,7 +4440,15 @@ function composeCrossFieldKeyTables(
 	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
 	addedCrossFieldKeys: CrossFieldRangeTable<FieldId>,
 ): CrossFieldKeyTable {
-	const composedTable = RangeMap.union(table1, table2);
+	// If change1 contains a rollback inverse of a move from change2,
+	// may both have the same cross-field keys.
+	// The colliding keys represent moves of the same nodes.
+	// Composition typically preserves the first detach (from change1) and last attach (from change2).
+	// Note that it is also common for colliding keys to be removed in `composeDetachAttach`.
+	const mergeEntries = (key: CrossFieldKey, value1: FieldId, value2: FieldId): FieldId =>
+		key.target === NodeMoveType.Detach ? value1 : value2;
+
+	const composedTable = RangeMap.union(table1, table2, mergeEntries);
 
 	for (const entry of removedCrossFieldKeys.entries()) {
 		composedTable.delete(entry.start, entry.length);

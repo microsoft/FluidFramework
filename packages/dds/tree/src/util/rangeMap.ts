@@ -250,7 +250,11 @@ export class RangeMap<K, V> {
 	 * Returns a new map which contains the entries from both input maps.
 	 * Whenever both maps contain entires for the same keys, the value from map `b` is used in the returned map.
 	 */
-	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
+	public static union<K, V>(
+		a: RangeMap<K, V>,
+		b: RangeMap<K, V>,
+		mergeFunc: (key: K, valueA: V, valueB: V) => V = (_k, _a, valB) => valB,
+	): RangeMap<K, V> {
 		assert(
 			a.offsetKey === b.offsetKey &&
 				a.subtractKeys === b.subtractKeys &&
@@ -259,8 +263,15 @@ export class RangeMap<K, V> {
 		);
 
 		const merged = a.clone();
-		for (const entry of b.entries()) {
-			merged.set(entry.start, entry.length, entry.value);
+		for (const entryB of b.entries()) {
+			for (const entryA of a.getAll2(entryB.start, entryB.length)) {
+				const key = b.offsetKey(entryB.start, entryA.offset);
+				const valueB = b.offsetValue(entryB.value, entryA.offset);
+				const mergedValue =
+					entryA.value === undefined ? valueB : mergeFunc(key, entryA.value, valueB);
+
+				merged.set(key, entryA.length, mergedValue);
+			}
 		}
 
 		return merged;
