@@ -7,7 +7,7 @@
 
 import { expect } from "chai";
 
-import { getArrayStatistics } from "../RunnerUtilities";
+import { getArrayStatistics } from "../sampling.js";
 
 describe("getArrayStatistics() function", () => {
 	it("Throws if percentageOfSamplesToUse is out of range", () => {

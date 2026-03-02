@@ -6,8 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { benchmark } from "..";
-import { type BenchmarkTimer, BenchmarkType, isParentProcess } from "../Configuration";
-import { Phase, runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
+import { BenchmarkType, isParentProcess } from "../Configuration";
+import { type BenchmarkTimer, Phase, runBenchmark } from "../durationBenchmarking/index.js";
+import { runBenchmarkAsync, runBenchmarkSync } from "../durationBenchmarking/getDuration.js";
 
 function doLoop(upperLimit: number): void {
 	let i = 0;
