@@ -336,9 +336,7 @@ export interface ISchemaPreflightResult {
  * Returns a result object indicating whether the schema is compatible with the current runtime.
  * Does not modify any state.
  */
-function checkCompatibilityPure(
-	proposedSchema: IDocumentSchema,
-): ISchemaPreflightResult {
+function checkCompatibilityPure(proposedSchema: IDocumentSchema): ISchemaPreflightResult {
 	if (proposedSchema.version !== currentDocumentVersionSchema) {
 		return { isCompatible: false, incompatibleProperty: "version", proposedSchema };
 	}
@@ -361,7 +359,7 @@ function checkCompatibilityPure(
 			};
 		}
 	}
-	return { isCompatible: true, proposedSchema};
+	return { isCompatible: true, proposedSchema };
 }
 
 /**
