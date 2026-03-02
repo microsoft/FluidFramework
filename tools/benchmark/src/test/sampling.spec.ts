@@ -10,17 +10,17 @@ import { expect } from "chai";
 import { getArrayStatistics } from "../sampling.js";
 
 describe("getArrayStatistics() function", () => {
-	it("Throws if percentageOfSamplesToUse is out of range", () => {
+	it("Throws if fractionOfSamplesToUse is out of range", () => {
 		const array = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 		expect(() => getArrayStatistics(array, 0.05)).to.throw(
 			Error,
-			"percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)",
-			"Did not reject percentageOfSamplesToUse < 0.1",
+			"fractionOfSamplesToUse must be between 0.1 and 1 (inclusive)",
+			"Did not reject fractionOfSamplesToUse < 0.1",
 		);
 		expect(() => getArrayStatistics(array, 1.01)).to.throw(
 			Error,
-			"percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)",
-			"Did not reject percentageOfSamplesToUse > 1.0",
+			"fractionOfSamplesToUse must be between 0.1 and 1 (inclusive)",
+			"Did not reject fractionOfSamplesToUse > 1.0",
 		);
 	});
 

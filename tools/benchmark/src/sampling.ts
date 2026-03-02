@@ -104,7 +104,7 @@ const tTable = {
  */
 export function getArrayStatistics(array: number[], fractionOfSamplesToUse: number = 1): Stats {
 	if (fractionOfSamplesToUse < 0.1 || fractionOfSamplesToUse > 1) {
-		throw new Error("percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)");
+		throw new Error("fractionOfSamplesToUse must be between 0.1 and 1 (inclusive)");
 	}
 	let finalSamples = array;
 
