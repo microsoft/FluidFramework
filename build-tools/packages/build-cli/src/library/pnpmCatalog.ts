@@ -25,8 +25,11 @@ export async function readPnpmCatalogs(workspaceRoot: string): Promise<PnpmCatal
 	let content: string;
 	try {
 		content = await readFile(yamlPath, "utf-8");
-	} catch {
-		return catalogMap;
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+			return catalogMap;
+		}
+		throw error;
 	}
 
 	const workspace = YAML.parse(content) as {
@@ -67,7 +70,7 @@ export function resolveCatalogVersion(
 	}
 
 	const catalogRef = version.slice("catalog:".length);
-	const catalogName = catalogRef === "" || catalogRef === "default" ? "default" : catalogRef;
+	const catalogName = catalogRef === "" ? "default" : catalogRef;
 
 	const catalog = catalogs.get(catalogName);
 	if (catalog === undefined) {

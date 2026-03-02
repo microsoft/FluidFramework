@@ -36,7 +36,7 @@ import {
 } from "../filter.js";
 import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
-import { readPnpmCatalogs, resolveCatalogVersion } from "./catalog.js";
+import { readPnpmCatalogs, resolveCatalogVersion } from "./pnpmCatalog.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";
 import { indentString } from "./text.js";

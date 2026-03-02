@@ -14,7 +14,7 @@ import { Context } from "../../library/context.js";
 import {
 	resolveCatalogVersion,
 	type PnpmCatalogMap,
-} from "../../library/catalog.js";
+} from "../../library/pnpmCatalog.js";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
@@ -138,7 +138,9 @@ describe("typeTestUtils", () => {
 
 describe("resolveCatalogVersion", () => {
 	it("returns version unchanged for non-catalog strings", () => {
-		const catalogs: PnpmCatalogMap = new Map([["default", { "pkg-a": "^1.0.0" }]]);
+		// catalog has "^2.0.0" but the version string "^1.0.0" is not a catalog reference,
+		// so the catalog should not be consulted and "^1.0.0" is returned as-is.
+		const catalogs: PnpmCatalogMap = new Map([["default", { "pkg-a": "^2.0.0" }]]);
 		assert.equal(resolveCatalogVersion("pkg-a", "^1.0.0", catalogs), "^1.0.0");
 	});
 
@@ -161,7 +163,7 @@ describe("resolveCatalogVersion", () => {
 		const catalogs: PnpmCatalogMap = new Map();
 		assert.throws(
 			() => resolveCatalogVersion("pkg-a", "catalog:nonexistent", catalogs),
-			/nonexistent/,
+			/pnpm catalog "nonexistent" not found/,
 		);
 	});
 });
@@ -187,7 +189,7 @@ describe("getFluidDependencies with pnpm catalogs", () => {
 		const catalogs: PnpmCatalogMap = new Map();
 		assert.throws(
 			() => resolveCatalogVersion("pkg-a", "catalog:buildTools", catalogs),
-			/buildTools/,
+			/pnpm catalog "buildTools" not found/,
 		);
 	});
 });
