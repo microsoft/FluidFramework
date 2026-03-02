@@ -60,7 +60,7 @@ const diceRollerSharedObjectRegistry = new Map<string, IChannelFactory>([
 
 export class DiceRollerFactory implements IFluidDataStoreFactory {
 	public get type(): string {
-		throw new Error("Do not use the type on the data store factory");
+		return "dice-roller";
 	}
 
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {

@@ -7,6 +7,7 @@ import {
 	createExampleDriver,
 	getSpecifiedServiceFromWebpack,
 } from "@fluid-example/example-driver";
+import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
@@ -18,7 +19,7 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
 
-import { DiceRollerContainerRuntimeFactory, type IContainerView } from "./container/index.js";
+import { fluidExport } from "./container/index.js";
 
 const service = getSpecifiedServiceFromWebpack();
 const {
@@ -31,7 +32,7 @@ const {
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
-			module: { fluidExport: new DiceRollerContainerRuntimeFactory() },
+			module: { fluidExport },
 			details,
 		};
 	},
@@ -73,10 +74,12 @@ if (location.hash.length === 0) {
 }
 
 // The key difference from external-views: the container entry point provides a mountable view
-const containerView = (await container.getEntryPoint()) as IContainerView;
+const { getMountableDefaultView } =
+	(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
+const mountableView = await getMountableDefaultView();
 const appDiv = document.createElement("div");
 document.body.append(appDiv);
-containerView.mount(appDiv);
+mountableView.mount(appDiv);
 
 // Update url and tab title
 location.hash = id;

@@ -3,5 +3,22 @@
  * Licensed under the MIT License.
  */
 
-export type { IContainerView } from "./runtimeFactory.js";
-export { DiceRollerContainerRuntimeFactory } from "./runtimeFactory.js";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+import { createElement } from "react";
+
+import { DiceRollerFactory, type IDiceRoller } from "./diceRoller/index.js";
+import { DiceRollerView } from "./view.js";
+
+const diceRollerViewCallback = (diceRoller: IDiceRoller): JSX.Element =>
+	createElement(DiceRollerView, { diceRoller });
+
+/**
+ * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
+ * as our model (using the factory we provide), and the view callback we provide will pair that model with an
+ * appropriate view.
+ * @internal
+ */
+export const fluidExport = new ContainerViewRuntimeFactory(
+	new DiceRollerFactory(),
+	diceRollerViewCallback,
+);

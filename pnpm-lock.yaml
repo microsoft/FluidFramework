@@ -6248,21 +6248,21 @@ importers:
       '@fluid-example/example-driver':
         specifier: workspace:~
         version: link:../../utils/example-driver
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
@@ -6281,15 +6281,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       react:
         specifier: ^18.3.1
         version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
@@ -6324,9 +6318,6 @@ importers:
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
-      '@types/react-dom':
-        specifier: ^18.3.0
-        version: 18.3.3(@types/react@18.3.15)
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -6354,9 +6345,6 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
-      process:
-        specifier: ^0.11.10
-        version: 0.11.10
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
