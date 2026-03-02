@@ -152,6 +152,33 @@ function parseSize(size: unknown): number {
 	return defaultSize;
 }
 
+/** Extract a LineTagValue from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time */
+function parseLineTag(attrs?: Record<string, unknown>): LineTagValue | undefined {
+	// default no formatting on "/n", or line tag on "/n" that doesn't affect formatting
+	let tag = undefined as LineTagValue;
+
+	if (!attrs) return tag;
+	// Header formatting. Quill passes header formatting as a number
+	if (typeof attrs.header === "number") {
+		tag = `h${attrs.header}`;
+	}
+	// List formatting. Quill passes list formatting as a string
+	else if (typeof attrs.list === "string") {
+		tag = "li";
+	}
+	return tag;
+}
+
+/** Create a StringAtom containing a StringLineAtom with the given line tag. */
+function createLineAtom(lineTag: LineTagValue): FormattedTextAsTree.StringAtom {
+	return new FormattedTextAsTree.StringAtom({
+		content: new FormattedTextAsTree.StringLineAtom({
+			tag: FormattedTextAsTree.LineTag(lineTag),
+		}),
+		format: new FormattedTextAsTree.CharacterFormat(quillAttrsToFormat()),
+	});
+}
+
 /**
  * Convert Quill attributes to a complete CharacterFormat object.
  * Used when inserting new characters - all format properties must have values.
@@ -191,25 +218,6 @@ function quillAttrsToPartial(
 	if ("size" in attrs) format.size = parseSize(attrs.size);
 	if ("font" in attrs) format.font = typeof attrs.font === "string" ? attrs.font : defaultFont;
 	return format;
-}
-
-/** Extract a LineTagValue from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time */
-function getLineTag(attrs?: Record<string, unknown>): LineTagValue | undefined {
-	if (!attrs) return undefined;
-	if (typeof attrs.header === "number") return `h${attrs.header}` as LineTagValue;
-	if (typeof attrs.list === "string") return "li";
-	// no formatting on "/n", or line tag on "/n" that doesn't affect formatting
-	return undefined;
-}
-
-/** Create a StringAtom containing a StringLineAtom with the given line tag. */
-function createLineAtom(lineTag: LineTagValue): FormattedTextAsTree.StringAtom {
-	return new FormattedTextAsTree.StringAtom({
-		content: new FormattedTextAsTree.StringLineAtom({
-			tag: FormattedTextAsTree.LineTag(lineTag),
-		}),
-		format: new FormattedTextAsTree.CharacterFormat(quillAttrsToFormat()),
-	});
 }
 
 /**
@@ -405,7 +413,7 @@ const FormattedTextEditorView = React.forwardRef<
 						const cpCount = codepointCount(retainedStr);
 
 						if (op.attributes) {
-							const lineTag = getLineTag(op.attributes);
+							const lineTag = parseLineTag(op.attributes);
 							if (lineTag !== undefined && content[utf16Pos] === "\n") {
 								// Swap existing newline atom to StringLineAtom
 								root.removeRange(cpPos, cpPos + 1);
@@ -430,7 +438,7 @@ const FormattedTextEditorView = React.forwardRef<
 						content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
 						// Don't advance positions - next op starts at same position
 					} else if (typeof op.insert === "string") {
-						const lineTag = getLineTag(op.attributes);
+						const lineTag = parseLineTag(op.attributes);
 						if (lineTag !== undefined && op.insert === "\n") {
 							root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
 						} else {
