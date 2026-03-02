@@ -28,12 +28,8 @@ describe("`benchmark` function", () => {
 					beforeHasBeenCalled = true;
 				}),
 			benchmarkFn: () => {
-				assert.equal(beforeHasBeenCalled, true, "before should be called before test body");
-				assert.equal(
-					afterHasBeenCalled,
-					false,
-					"after should not be called during test execution",
-				);
+				assert(beforeHasBeenCalled, "before should be called before test body");
+				assert(!afterHasBeenCalled, "after should not be called during test execution");
 			},
 			after: async () =>
 				delay(1).then(() => {
@@ -46,11 +42,7 @@ describe("`benchmark` function", () => {
 			if (!isParentProcess) {
 				// If running with separate processes,
 				// this check must only be done in the child process (it will fail in the parent process)
-				assert.equal(
-					afterHasBeenCalled,
-					true,
-					"after should be called after test execution",
-				);
+				assert(afterHasBeenCalled, "after should be called after test execution");
 			}
 		});
 	});
