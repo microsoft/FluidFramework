@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Position, Dimensions, Container, AppState } from "./schema.js";
+export { AppState } from "./schema.js";

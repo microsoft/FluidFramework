@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-internal-modules
-import { AppState } from "@fluid-example/cross-package-schema-provider/schema";
+import { AppState } from "@fluid-example/cross-package-schema-provider";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 
 /**
- * This file demonstrates the WORKING import path. It imports from the
- * "/schema" subpath, which resolves types from the provider's .ts source
- * instead of the broken .d.ts files.
- *
- * Run `npm run check:schema-import` to verify this passes.
+ * This file demonstrates the WORKING import path. It imports from Okay
+ * module that has a viable .d.ts file.
  */
 export const appConfig = new TreeViewConfiguration({ schema: AppState });

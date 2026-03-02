@@ -15,6 +15,7 @@ import {
 import { FluidClientVersion } from "../../../codec/index.js";
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
+	currentObserver,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
@@ -56,6 +57,7 @@ import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	toStoredSchema,
+	type TransactionResult,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -286,6 +288,11 @@ describe("treeNodeApi", () => {
 					() => Tree.parent(y),
 				);
 
+				TreeAlpha.trackObservations(
+					() => log.push("deep"),
+					() => currentObserver?.observeNodeDeep(getInnerNode(node)),
+				);
+
 				log.push("change: x.value");
 				node.x.value = 3;
 
@@ -296,10 +303,12 @@ describe("treeNodeApi", () => {
 					"change: x.value",
 					"node.x.value",
 					"x.value",
+					"deep",
 					"change: y",
 					"node.y",
 					"node.y.value",
 					"y.parent",
+					"deep",
 				]);
 			});
 
@@ -3836,6 +3845,63 @@ describe("treeNodeApi", () => {
 				assert.ok(value.success);
 				assert.equal(obj.n, value.value);
 			}
+		});
+
+		it("can successfully run transactions with constraints", () => {
+			const node = hydrate(Obj, { n: 3 });
+			const context = TreeAlpha.context(node);
+			context.runTransaction(() => (node.n = 4), {
+				preconditions: [{ type: "nodeInDocument", node }],
+			});
+			assert.equal(node.n, 4);
+		});
+
+		it("throws if you start a transaction with violated constraints", () => {
+			const node = new Obj({ n: 3 });
+			const context = TreeAlpha.context(node);
+			assert.throws(
+				() =>
+					context.runTransaction(() => {}, {
+						// `obj` belongs to the context, but it is not "in the document"
+						preconditions: [{ type: "nodeInDocument", node }],
+					}),
+				validateAssertionError(/Attempted to add a.*constraint/),
+			);
+		});
+
+		it("rejects async transactions within existing transactions", async () => {
+			const node = new Obj({ n: 3 });
+			const context = TreeAlpha.context(node);
+
+			let transactionPromise: Promise<TransactionResult> | undefined;
+			const expectedError = validateUsageError(
+				/An asynchronous transaction cannot be started while another transaction is already in progress/,
+			);
+
+			// Synchronous -> Asynchronous
+			context.runTransaction(() => {
+				transactionPromise = context.runTransactionAsync(async () => {});
+			});
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
+
+			// Asynchronous -> Asynchronous
+			await assert.rejects(
+				async () =>
+					context.runTransactionAsync(async () => {
+						transactionPromise = context.runTransactionAsync(async () => {});
+						await transactionPromise;
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
 		});
 	});
 });

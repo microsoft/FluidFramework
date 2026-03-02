@@ -9,6 +9,9 @@ import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts"
 const config: Linter.Config[] = [
 	...recommended,
 	{
+		ignores: ["./src/entrypoints/**"],
+	},
+	{
 		rules: {
 			"@typescript-eslint/no-namespace": "off",
 			"@typescript-eslint/no-empty-interface": "off",

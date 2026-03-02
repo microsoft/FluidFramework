@@ -5,28 +5,25 @@
 
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { SchemaFactory } from "@fluidframework/tree";
-import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { sf } from "./schemaUtils.js";
 
-const factory = new SchemaFactoryAlpha("cross-package-example");
-
-export class Position extends factory.objectAlpha("Position", {
-	x: SchemaFactory.number,
-	y: SchemaFactory.number,
+export class Position extends sf.objectAlpha("Position", {
+	x: sf.number,
+	y: sf.number,
 }) {}
 
-export class Dimensions extends factory.objectAlpha("Dimensions", {
-	width: SchemaFactory.number,
-	height: SchemaFactory.number,
+export class Dimensions extends sf.objectAlpha("Dimensions", {
+	width: sf.number,
+	height: sf.number,
 }) {}
 
-export class Container extends factory.objectAlpha("Container", {
-	id: SchemaFactory.string,
+export class Container extends sf.objectAlpha("Container", {
+	id: sf.string,
 	position: Position,
-	dimensions: SchemaFactory.optional(Dimensions),
+	dimensions: sf.optional(Dimensions),
 }) {}
 
-export class AppState extends factory.objectAlpha("AppState", {
-	containers: factory.mapAlpha("ContainerMap", Container),
-	labels: factory.mapAlpha("LabelMap", SchemaFactory.string),
+export class AppState extends sf.objectAlpha("AppState", {
+	containers: sf.mapAlpha("ContainerMap", Container),
+	labels: sf.mapAlpha("LabelMap", sf.string),
 }) {}

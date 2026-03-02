@@ -16,7 +16,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type {
 	JsonTypeWith,
-	InternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes as InternalUtilityTypes,
 	ReadonlyJsonTypeWith,
 	NonNullJsonObjectWith,
 	OpaqueJsonSerializable,

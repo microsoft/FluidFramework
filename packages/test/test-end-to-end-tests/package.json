@@ -125,7 +125,7 @@
 		"@fluidframework/undo-redo": "workspace:~",
 		"@types/sinon": "^17.0.3",
 		"cross-env": "^10.1.0",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"semver": "^7.7.1",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
