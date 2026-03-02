@@ -154,21 +154,48 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			);
 
 		const configureThrottler = (
-			throttleConfig: Partial<utils.IThrottleConfig>,
+			throttleConfig: Partial<utils.IThrottleConfig | utils.IHybridThrottleConfig>,
 		): core.IThrottler => {
+			if (throttleConfig.type === "DistributedTokenBucket") {
+				const hybridThrottleConfig = throttleConfig as Partial<utils.IHybridThrottleConfig>;
+				return new services.DistributedTokenBucketThrottler(
+					redisThrottleAndUsageStorageManager,
+					winston,
+					{
+						localTokenBucket: {
+							capacity: hybridThrottleConfig.local?.maxBurst,
+							refillRatePerMs: hybridThrottleConfig.local?.maxPerMs,
+							minCooldownIntervalMs:
+								hybridThrottleConfig.local?.minCooldownIntervalInMs,
+						},
+						distributedTokenBucket: {
+							capacity: hybridThrottleConfig.distributed?.maxBurst,
+							refillRatePerMs: hybridThrottleConfig.distributed?.maxPerMs,
+							minCooldownIntervalMs:
+								hybridThrottleConfig.distributed?.minCooldownIntervalInMs,
+							distributedSyncIntervalInMs:
+								hybridThrottleConfig.distributed?.minThrottleIntervalInMs,
+						},
+						maxLocalCacheSize: hybridThrottleConfig.maxInMemoryCacheSize,
+						maxLocalCacheAgeInMs: hybridThrottleConfig.maxInMemoryCacheAgeInMs,
+						enableEnhancedTelemetry: hybridThrottleConfig.enableEnhancedTelemetry,
+					},
+				) as core.IThrottler;
+			}
+			const legacyThrottleConfig = throttleConfig as Partial<utils.IThrottleConfig>;
 			const throttlerHelper = new services.ThrottlerHelper(
 				redisThrottleAndUsageStorageManager,
-				throttleConfig.maxPerMs,
-				throttleConfig.maxBurst,
-				throttleConfig.minCooldownIntervalInMs,
+				legacyThrottleConfig.maxPerMs,
+				legacyThrottleConfig.maxBurst,
+				legacyThrottleConfig.minCooldownIntervalInMs,
 			);
 			return new services.Throttler(
 				throttlerHelper,
-				throttleConfig.minThrottleIntervalInMs,
+				legacyThrottleConfig.minThrottleIntervalInMs,
 				winston,
-				throttleConfig.maxInMemoryCacheSize,
-				throttleConfig.maxInMemoryCacheAgeInMs,
-				throttleConfig.enableEnhancedTelemetry,
+				legacyThrottleConfig.maxInMemoryCacheSize,
+				legacyThrottleConfig.maxInMemoryCacheAgeInMs,
+				legacyThrottleConfig.enableEnhancedTelemetry,
 			);
 		};
 

@@ -271,12 +271,6 @@ module.exports = {
 		"server": {
 			directory: "server/routerlicious",
 		},
-		"gitrest": {
-			directory: "server/gitrest",
-		},
-		"historian": {
-			directory: "server/historian",
-		},
 
 		// Independent packages
 		"build-common": "common/build/build-common",
@@ -603,8 +597,6 @@ module.exports = {
 			"client": "workspace:~",
 			"build-tools": "workspace:~",
 			"server": "workspace:~",
-			"gitrest": "^",
-			"historian": "^",
 		},
 	},
 

@@ -46,7 +46,7 @@ testCache.forEach((fileSystem) => {
 			await assert.doesNotReject(async () => {
 				await redis.set("foo", "bar");
 			});
-			assert.strictEqual(await redis.get<string>("foo"), "bar");
+			assert.strictEqual(await redis.get("foo"), "bar");
 			if (redis instanceof RedisTenantCache) {
 				assert.strictEqual(await redis.exists("foo"), true);
 				assert.strictEqual(await redis.exists("foo1"), false);
@@ -59,7 +59,7 @@ testCache.forEach((fileSystem) => {
 				await redis.set("foo", "bar");
 			});
 			redisClientConnectionManager.invalidateRedisClient();
-			assert.strictEqual(await redis.get<string>("foo"), "bar");
+			assert.strictEqual(await redis.get("foo"), "bar");
 			redisClientConnectionManager.invalidateRedisClient();
 			if (redis instanceof RedisTenantCache) {
 				assert.strictEqual(await redis.exists("foo"), true);
@@ -74,7 +74,7 @@ testCache.forEach((fileSystem) => {
 				await redis.set("foo", "bar");
 			});
 			assert.rejects(async () => {
-				await redis.get<string>("foo");
+				await redis.get("foo");
 			});
 			if (redis instanceof RedisTenantCache) {
 				assert.rejects(async () => {
