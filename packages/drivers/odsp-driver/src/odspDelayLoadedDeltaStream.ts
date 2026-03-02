@@ -416,8 +416,9 @@ export class OdspDelayLoadedDeltaStream {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
+		// Previous gate "Fluid.Driver.Odsp.setSensitivityLabelHeader" was removed as it was sensitive to a timestamp bug that was fixed in with commit eb4f45c.
 		const setSensitivityLabelHeader = this.mc.config.getBoolean(
-			"Fluid.Driver.Odsp.setSensitivityLabelHeader",
+			"Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix",
 		);
 		const executeFetch = async (): Promise<{
 			entryTime: number;
