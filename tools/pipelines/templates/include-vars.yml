@@ -122,6 +122,10 @@ variables:
   value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   readonly: true
 
+- name: skipCjsChecks
+  value: ${{ lower(eq(variables['Build.Reason'], 'PullRequest')) }}
+  readonly: true
+
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 
 # The way 1ES pipeline templates determine the default branch of a repository only works for repos hosted in ADO.
