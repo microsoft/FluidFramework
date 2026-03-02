@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+// For the time being, if exports are changed, additional files under entrypoints
+// directory probably need updated. They can be manually adjusted or run
+// generate:entrypoint-sources script. A bug in "flub generate entrypoint"
+// requires "./index.js" to be replaced with "../index.js" hence use of sed.
+// Be sure to run build after that script to restore output .d.ts entrypoint
+// files to validity.
+
 export {
 	ValueSchema,
 	type Revertible,
@@ -359,6 +366,12 @@ import * as InternalTypes from "./internalTypes.js";
 /**
  * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
  * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ *
+ * @public
+ * @system
+ *
+ * @privateRemarks These TS-Docs are not recognized by API-Extractor, but the
+ * support level tag is recognized by flub entrypoint generation.
  */
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
 export { InternalTypes };
