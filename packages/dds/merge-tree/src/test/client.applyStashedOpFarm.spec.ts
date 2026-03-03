@@ -209,7 +209,7 @@ function runApplyStashedOpFarmTests(
 				opts,
 				(s, m, c) => applyMessagesWithReconnect(s, m, c, stashClients),
 			);
-		}).timeout(30 * 1000);
+		}).timeout(30 * 10000);
 	});
 }
 

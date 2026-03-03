@@ -8,4 +8,6 @@
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const config = getFluidTestMochaConfig(__dirname);
+config.parallel = true;
+config.jobs = 4;
 module.exports = config;
