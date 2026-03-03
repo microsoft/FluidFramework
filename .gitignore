@@ -56,4 +56,6 @@ UPCOMING.md
 build_output_archive
 
 # Claude Code
-.claude/
+# This is a local file that likely contains author specific information and
+# should not be shared generally.
+.claude/settings.local.json
