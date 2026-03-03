@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import "@site/src/css/home/sectionHeader.css";
 
 /**
