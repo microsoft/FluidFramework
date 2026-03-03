@@ -17,28 +17,32 @@
 
 export {
 	BenchmarkType,
-	type BenchmarkArguments,
-	type BenchmarkSyncArguments,
-	type BenchmarkAsyncArguments,
-	type BenchmarkOptions,
 	type MochaExclusiveOptions,
 	type HookFunction,
 	type HookArguments,
 	isInPerformanceTestingMode,
-	validateBenchmarkArguments,
 	qualifiedTitle,
 	type Titled,
+	type BenchmarkDescription,
+	TestType,
+} from "./Configuration";
+export {
+	type BenchmarkArguments,
+	type BenchmarkSyncArguments,
+	type BenchmarkAsyncArguments,
+	type BenchmarkOptions,
+	validateBenchmarkArguments,
 	type BenchmarkTimingOptions,
 	type BenchmarkRunningOptions,
 	type BenchmarkSyncFunction,
 	type BenchmarkAsyncFunction,
 	type OnBatch,
-	type BenchmarkDescription,
 	type CustomBenchmark,
 	type BenchmarkTimer,
 	type CustomBenchmarkArguments,
-	TestType,
-} from "./Configuration";
+	Phase,
+	runBenchmark,
+} from "./durationBenchmarking/index";
 export {
 	benchmark,
 	benchmarkMemory,
@@ -50,13 +54,12 @@ export {
 } from "./mocha";
 export { prettyNumber, geometricMean } from "./RunnerUtilities";
 export { BenchmarkReporter } from "./Reporter";
-export { Phase, runBenchmark } from "./runBenchmark";
 export {
 	type BenchmarkData,
 	type BenchmarkError,
 	type BenchmarkResult,
-	type Stats,
 	type CustomData,
 	isResultError,
 } from "./ResultTypes";
+export type { Stats } from "./sampling";
 export type { Timer } from "./timer";

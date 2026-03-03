@@ -144,7 +144,8 @@
 		"table": "^6.9.0",
 		"ts-morph": "^22.0.0",
 		"unist-util-visit": "^5.0.0",
-		"xml2js": "^0.6.2"
+		"xml2js": "^0.6.2",
+		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.3.11",

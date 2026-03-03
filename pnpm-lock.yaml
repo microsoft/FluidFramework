@@ -907,9 +907,6 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
@@ -6244,40 +6241,49 @@ importers:
 
   examples/view-integration/container-views:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluidframework/aqueduct':
+      '@fluid-internal/client-utils':
         specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
+        version: link:../../../packages/common/client-utils
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/runtime-utils':
+      '@fluidframework/runtime-definitions':
         specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
+        version: link:../../../packages/runtime/runtime-definitions
       react:
         specifier: ^18.3.1
         version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -6305,9 +6311,6 @@ importers:
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
-      '@types/react-dom':
-        specifier: ^18.3.0
-        version: 18.3.3(@types/react@18.3.15)
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -6407,9 +6410,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
@@ -6474,9 +6474,6 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
-      process:
-        specifier: ^0.11.10
-        version: 0.11.10
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
