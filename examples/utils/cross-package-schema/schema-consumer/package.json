@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/cross-package-schema-consumer",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Example schema consumer demonstrating cross-package SharedTree schema consumption via /schema subpath export.",
 	"homepage": "https://fluidframework.com",
