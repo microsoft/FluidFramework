@@ -4,5 +4,9 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// Tree's .d.ts files have internal type incompatibilities (e.g. UnhydratedFlexTreeField.parent
+		// is UnhydratedFlexTreeNode | undefined but FlexTreeField interface requires FlexTreeNode).
+		// These surface as errors in any downstream consumer without skipLibCheck.
+		"skipLibCheck": true,
 	},
 }
