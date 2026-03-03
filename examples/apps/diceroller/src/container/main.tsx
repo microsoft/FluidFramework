@@ -6,7 +6,7 @@
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IValueChanged } from "@fluidframework/map/legacy";
-import React from "react";
+import React, { type FC, useEffect, useState } from "react";
 
 const diceValueKey = "diceValue";
 
@@ -25,37 +25,40 @@ export interface IDiceRoller extends EventEmitter {
 	roll: () => void;
 
 	/**
-	 * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+	 * The diceRolled event will fire whenever someone rolls the dice, either locally or remotely.
 	 */
 	on(event: "diceRolled", listener: () => void): this;
 }
 
 export interface IDiceRollerViewProps {
-	model: IDiceRoller;
+	diceRoller: IDiceRoller;
 }
 
-export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
-	props: IDiceRollerViewProps,
-) => {
-	const [diceValue, setDiceValue] = React.useState(props.model.value);
+export const DiceRollerView: FC<IDiceRollerViewProps> = ({
+	diceRoller,
+}: IDiceRollerViewProps) => {
+	const [diceValue, setDiceValue] = useState(diceRoller.value);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		const onDiceRolled = (): void => {
-			setDiceValue(props.model.value);
+			setDiceValue(diceRoller.value);
 		};
-		props.model.on("diceRolled", onDiceRolled);
-		return () => {
-			props.model.off("diceRolled", onDiceRolled);
+		diceRoller.on("diceRolled", onDiceRolled);
+		return (): void => {
+			diceRoller.off("diceRolled", onDiceRolled);
 		};
-	}, [props.model]);
+	}, [diceRoller]);
 
 	// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
 	const diceChar = String.fromCodePoint(0x267f + diceValue);
+	const color = `hsl(${diceValue * 60}, 70%, 50%)`;
 
 	return (
-		<div>
-			<span style={{ fontSize: 50 }}>{diceChar}</span>
-			<button onClick={props.model.roll}>Roll</button>
+		<div style={{ textAlign: "center" }}>
+			<div style={{ fontSize: "200px", color }}>{diceChar}</div>
+			<button style={{ fontSize: "50px" }} onClick={diceRoller.roll}>
+				Roll
+			</button>
 		</div>
 	);
 };
@@ -64,7 +67,7 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
  * The DiceRoller is our implementation of the IDiceRoller interface.
  * @internal
  */
-export class DiceRoller extends DataObject implements IDiceRoller {
+class DiceRoller extends DataObject implements IDiceRoller {
 	public static readonly Name = "@fluid-example/dice-roller";
 
 	public static readonly factory = new DataObjectFactory({

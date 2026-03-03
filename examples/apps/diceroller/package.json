@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/diceroller",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Minimal Fluid Container & Object sample to implement a collaborative dice roller.",
 	"homepage": "https://fluidframework.com",
@@ -44,8 +44,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"react": "^18.3.1",
-		"uuid": "^11.1.0"
+		"react": "^18.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
