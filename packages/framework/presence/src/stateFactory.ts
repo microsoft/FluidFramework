@@ -29,4 +29,4 @@ import { latest } from "./latestValueManager.js";
 export const StateFactory = {
 	latest,
 	latestMap,
-};
+} as const;
