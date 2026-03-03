@@ -4,7 +4,7 @@
  */
 
 import Layout from "@theme/Layout";
-import React from "react";
+import { ReactElement } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import appInsights from "@site/src/appInsights";
@@ -53,7 +53,7 @@ if (appInsights !== undefined) {
 /**
  * The website homepage root (including the header and footer injected by Docusaurus).
  */
-export default function Home(): React.ReactElement {
+export default function Home(): ReactElement {
 	return (
 		<Layout>
 			<main>

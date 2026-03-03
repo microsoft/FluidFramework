@@ -7,7 +7,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+import { CSSProperties, ReactElement } from "react";
 
 import { PageSection } from "./pageSection";
 
@@ -28,7 +28,7 @@ const speCardDescription =
  * Homepage "Services" section component.
  */
 export function ServiceSection(): JSX.Element {
-	const backgroundStyle: React.CSSProperties = {
+	const backgroundStyle: CSSProperties = {
 		background: `linear-gradient(to bottom, rgba(255, 253, 251, 1) 10%, rgba(255, 253, 251, 0.2)), url(${servicesSectionBackgroundImageSource})`,
 		backgroundPosition: "center",
 		backgroundRepeat: "no-repeat",
@@ -81,7 +81,7 @@ function ServiceSectionCard({
 	description,
 	learnMoreHref,
 	learnMoreLinkAltText,
-}: ServiceSectionCardProps): React.ReactElement {
+}: ServiceSectionCardProps): ReactElement {
 	return (
 		<div className="ffcom-service">
 			<div className="ffcom-service-content">

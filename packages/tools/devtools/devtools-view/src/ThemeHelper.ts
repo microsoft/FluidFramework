@@ -9,7 +9,7 @@ import {
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
-import React from "react";
+import { createContext, Dispatch, SetStateAction, useContext } from "react";
 
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";
@@ -96,7 +96,7 @@ export interface ThemeContextValue {
 	/**
 	 * Sets the context theme to the one provided.
 	 */
-	setTheme: React.Dispatch<React.SetStateAction<ThemeInfo>>;
+	setTheme: Dispatch<SetStateAction<ThemeInfo>>;
 }
 
 /**
@@ -105,7 +105,7 @@ export interface ThemeContextValue {
  * because we don't currently have a setter. The placeholder fills ThemeContext
  * until The React setter is truly defined in DevToolsView.
  */
-export const ThemeContext = React.createContext<ThemeContextValue>({
+export const ThemeContext = createContext<ThemeContextValue>({
 	themeInfo: getFluentUIThemeToUse(),
 	setTheme: () => {
 		console.warn("Attempting to set context theme before context has been initialized.");
@@ -117,7 +117,7 @@ export const ThemeContext = React.createContext<ThemeContextValue>({
  * @throws If the context is not set.
  */
 export function useThemeContext(): ThemeContextValue {
-	const context = React.useContext(ThemeContext);
+	const context = useContext(ThemeContext);
 	if (context === undefined) {
 		throw new Error("ThemeContext was not set.");
 	}

@@ -6,7 +6,7 @@
 /* eslint-disable prefer-template */
 
 import { Tree, type TreeView } from "fluid-framework";
-import React, { type ReactNode, useEffect, useState } from "react";
+import { CSSProperties, MouseEvent, type ReactNode, useEffect, useState } from "react";
 
 import type { App, Letter } from "./schema.js";
 
@@ -32,7 +32,7 @@ function CanvasLetter(props: {
 	letter: Letter;
 	cellSize: { x: number; y: number };
 }): JSX.Element {
-	const style: React.CSSProperties = {
+	const style: CSSProperties = {
 		left: `${props.letter.position.x}px`,
 		top: `${props.letter.position.y}px`,
 		width: `${props.cellSize.x}px`,
@@ -91,7 +91,7 @@ function Canvas(props: {
 	cellSize: { x: number; y: number };
 	canvasSize: { x: number; y: number };
 }): JSX.Element {
-	const style: React.CSSProperties = {
+	const style: CSSProperties = {
 		width: (props.cellSize.x * props.canvasSize.x).toString() + `px`,
 		height: (props.cellSize.y * props.canvasSize.y).toString() + `px`,
 	};
@@ -100,7 +100,7 @@ function Canvas(props: {
 		<div
 			className="relative w-full h-full self-center bg-transparent"
 			style={style}
-			onClick={(e: React.MouseEvent): void => {
+			onClick={(e: MouseEvent): void => {
 				e.preventDefault();
 			}}
 		>

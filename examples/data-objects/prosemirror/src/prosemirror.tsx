@@ -18,7 +18,7 @@ import {
 import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 import { EditorView } from "prosemirror-view";
-import React, { useEffect, useRef } from "react";
+import { FC, useEffect, useRef } from "react";
 
 import { nodeTypeKey, stackTypeBegin, stackTypeEnd, stackTypeKey } from "./fluidBridge.js";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
@@ -189,7 +189,7 @@ export interface IProseMirrorReactViewProps {
  *
  * @internal
  */
-export const ProseMirrorReactView: React.FC<IProseMirrorReactViewProps> = (
+export const ProseMirrorReactView: FC<IProseMirrorReactViewProps> = (
 	props: IProseMirrorReactViewProps,
 ) => {
 	const { collabManager } = props;

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { PropsWithChildren, ReactElement } from "react";
 
-export type RootProps = React.PropsWithChildren;
+export type RootProps = PropsWithChildren;
 
 /**
  * Root component of Docusaurus's React tree.
@@ -13,6 +13,6 @@ export type RootProps = React.PropsWithChildren;
  *
  * @see {@link https://docusaurus.io/docs/swizzling#wrapper-your-site-with-root}
  */
-export default function Root({ children }: RootProps): React.ReactElement {
+export default function Root({ children }: RootProps): ReactElement {
 	return <>{children}</>;
 }

@@ -10,7 +10,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { ReactElement, useEffect, useState } from "react";
 
 import type { BackgroundConnection } from "../BackgroundConnection.js";
 
@@ -36,14 +36,14 @@ export interface PopupViewProps {
  * Component that renders when the user clicks the extension icon *in the browser toolbar*
  * @returns popup component
  */
-export function PopupView(props: PopupViewProps): React.ReactElement {
+export function PopupView(props: PopupViewProps): ReactElement {
 	const { backgroundServiceConnection } = props;
 
 	// Indicates if Fluid Devtools is running in the current page (i.e. the application is using it and initialized it correctly).
 	// Undefined means still looking or that the message which is sent to discover this has not been sent yet.
-	const [foundDevtools, setFoundDevtools] = React.useState<boolean | undefined>(undefined);
+	const [foundDevtools, setFoundDevtools] = useState<boolean | undefined>(undefined);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
 		 */

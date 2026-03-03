@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { FC, useEffect, useRef, useState } from "react";
+import { FC, FormEvent, useEffect, useRef, useState } from "react";
 
 import { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
 
@@ -30,7 +30,7 @@ export const InventoryItemView: FC<IInventoryItemViewProps> = ({
 		};
 	}, [inventoryItem]);
 
-	const inputHandler = (e: React.FormEvent<HTMLInputElement>): void => {
+	const inputHandler = (e: FormEvent<HTMLInputElement>): void => {
 		const newValue = parseInt(e.currentTarget.value, 10);
 		inventoryItem.quantity = newValue;
 	};

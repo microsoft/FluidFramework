@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import React, { useEffect, useRef, useState } from "react";
+import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
@@ -14,7 +14,7 @@ export interface IInventoryItemViewProps {
 	disabled?: boolean;
 }
 
-export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
+export const InventoryItemView: FC<IInventoryItemViewProps> = (
 	props: IInventoryItemViewProps,
 ) => {
 	const { inventoryItem, deleteItem, disabled } = props;
@@ -32,7 +32,7 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
 		};
 	}, [inventoryItem]);
 
-	const inputHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const inputHandler = (e: ChangeEvent<HTMLInputElement>): void => {
 		const newValue = Number.parseInt(e.target.value, 10);
 		inventoryItem.quantity = newValue;
 	};
@@ -68,7 +68,7 @@ interface IAddItemViewProps {
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
-const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
+const AddItemView: FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 	const { addItem } = props;
 	const nameRef = useRef<HTMLInputElement>(null);
 	const quantityRef = useRef<HTMLInputElement>(null);
@@ -115,7 +115,7 @@ export interface IInventoryListViewProps {
 	disabled?: boolean;
 }
 
-export const InventoryListView: React.FC<IInventoryListViewProps> = (
+export const InventoryListView: FC<IInventoryListViewProps> = (
 	props: IInventoryListViewProps,
 ) => {
 	const { inventoryList, disabled } = props;

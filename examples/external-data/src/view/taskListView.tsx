@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { FC, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface/index.js";
 
@@ -27,7 +27,7 @@ interface ITaskRowProps {
 /**
  * The view for a single task in the TaskListView, as a table row.
  */
-const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
+const TaskRow: FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	const { task, deleteDraftTask, clientID, leader } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
@@ -53,7 +53,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 		};
 	}, [task, priorityRef]);
 
-	const inputHandler = (e: React.FormEvent): void => {
+	const inputHandler = (e: FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
 		task.draftPriority = newValue;
 	};
@@ -153,7 +153,7 @@ export interface ITaskListViewProps {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
+export const TaskListView: FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
 	const { taskList, claimLeadership, clientID, leaderID } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());

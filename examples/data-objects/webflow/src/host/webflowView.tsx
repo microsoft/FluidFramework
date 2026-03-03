@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { KeyboardEventHandler, useEffect, useRef, useState } from "react";
+import { FC, KeyboardEvent, KeyboardEventHandler, useEffect, useRef, useState } from "react";
 
 import { FlowDocument } from "../document/index.js";
 import { Editor } from "../editor/index.js";
@@ -24,7 +24,7 @@ interface IWebflowViewProps {
 	docP: Promise<FlowDocument>;
 }
 
-export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProps) => {
+export const WebflowView: FC<IWebflowViewProps> = (props: IWebflowViewProps) => {
 	const { docP } = props;
 
 	const [flowDocument, setFlowDocument] = useState<FlowDocument | undefined>(undefined);
@@ -177,7 +177,7 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 		};
 	}, [flowDocument]);
 
-	const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e: React.KeyboardEvent): void => {
+	const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e: KeyboardEvent): void => {
 		if (e.ctrlKey && e.key === "m") {
 			if (searchMenuRef.current === undefined) {
 				throw new Error("Undefined search menu view");

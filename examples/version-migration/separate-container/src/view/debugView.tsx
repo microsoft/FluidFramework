@@ -4,7 +4,7 @@
  */
 
 import type { IMigrator, MigrationState } from "@fluid-example/migration-tools/alpha";
-import React, { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 import type { IMigratableModel } from "../migratableModel.js";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
@@ -15,7 +15,7 @@ export interface IDebugViewProps {
 	getUrlForContainerId?: (containerId: string) => string;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+export const DebugView: FC<IDebugViewProps> = (props: IDebugViewProps) => {
 	const { model, migrator, getUrlForContainerId } = props;
 
 	const [disableControls, setDisableControls] = useState<boolean>(
@@ -60,7 +60,7 @@ interface IMigrationStatusViewProps {
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
-const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
+const MigrationStatusView: FC<IMigrationStatusViewProps> = (
 	props: IMigrationStatusViewProps,
 ) => {
 	const { model, migrator, getUrlForContainerId } = props;
@@ -144,7 +144,7 @@ interface IControlsViewProps {
 	readonly disabled: boolean;
 }
 
-const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
+const ControlsView: FC<IControlsViewProps> = (props: IControlsViewProps) => {
 	const { proposeVersion, addItem, disabled } = props;
 
 	const addSampleItems = (): void => {

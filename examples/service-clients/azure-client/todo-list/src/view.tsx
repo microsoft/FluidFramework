@@ -11,7 +11,7 @@ import {
 import { useTree } from "@fluidframework/react/alpha";
 import type { IFluidContainer, IFluidHandle } from "fluid-framework";
 import type { ISharedString } from "fluid-framework/legacy";
-import React, { useEffect, useRef, useState } from "react";
+import { ChangeEvent, FC, FormEvent, useEffect, useRef, useState } from "react";
 
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
 import type { TodoList, TodoItem } from "./schema.js";
@@ -30,9 +30,7 @@ export interface TodoListAppViewProps {
 /**
  * To-do list application view component.
  */
-export const TodoListAppView: React.FC<TodoListAppViewProps> = (
-	props: TodoListAppViewProps,
-) => {
+export const TodoListAppView: FC<TodoListAppViewProps> = (props: TodoListAppViewProps) => {
 	const { todoList, container } = props;
 
 	const [titleString, setTitleString] = useState<ISharedString | undefined>();
@@ -57,7 +55,7 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 	if (titleString === undefined) {
 		return <div>Loading...</div>;
 	}
-	const handleCreateClick = (ev: React.FormEvent<HTMLFormElement>): void => {
+	const handleCreateClick = (ev: FormEvent<HTMLFormElement>): void => {
 		ev.preventDefault();
 
 		const input = newItemTextInputRef.current;
@@ -129,7 +127,7 @@ interface TodoItemViewProps {
 /**
  * To-do list item view component.
  */
-const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
+const TodoItemView: FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItem } = props;
 
 	const [itemTitle, setItemTitle] = useState<ISharedString | undefined>(undefined);
@@ -164,7 +162,7 @@ const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => 
 			});
 	}, [todoItemDescriptionHandle]);
 
-	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const checkChangedHandler = (e: ChangeEvent<HTMLInputElement>): void => {
 		todoItem.completed = e.target.checked;
 	};
 

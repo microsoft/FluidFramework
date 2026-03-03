@@ -27,7 +27,7 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
-import * as React from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
@@ -241,17 +241,17 @@ const viewLabels = {
 	},
 } as const;
 
-const UserPanel: React.FC<{
+const UserPanel: FC<{
 	label: string;
 	color: string;
 	viewType: ViewType;
 	treeView: TreeView<typeof TextEditorRoot>;
 }> = ({ label, color, viewType, treeView }) => {
 	// Create undo/redo stack for this user's tree view
-	const undoRedo = React.useMemo(() => new UndoRedoStacks(treeView.events), [treeView.events]);
+	const undoRedo = useMemo(() => new UndoRedoStacks(treeView.events), [treeView.events]);
 
 	// Cleanup on unmount
-	React.useEffect(() => {
+	useEffect(() => {
 		return () => undoRedo.dispose();
 	}, [undoRedo]);
 
@@ -287,8 +287,8 @@ const UserPanel: React.FC<{
 	);
 };
 
-export const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
-	const [viewType, setViewType] = React.useState<ViewType>("formatted");
+export const App: FC<{ views: DualUserViews }> = ({ views }) => {
+	const [viewType, setViewType] = useState<ViewType>("formatted");
 
 	return (
 		<div

@@ -8,7 +8,14 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import React from "react";
+import {
+	createContext,
+	Dispatch,
+	SetStateAction,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.
@@ -18,7 +25,7 @@ import React from "react";
  * receives; it should only pass them to the logger provided via {@link DevtoolsPanelProps.usageTelemetryLogger | the
  * usageTelemetryLogger prop for DevtoolsPanel} instead (if any).
  */
-export const LoggerContext = React.createContext<ITelemetryLoggerExt | undefined>(undefined);
+export const LoggerContext = createContext<ITelemetryLoggerExt | undefined>(undefined);
 
 /**
  * Gets the {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} provided through an {@link LoggerContext}.
@@ -27,7 +34,7 @@ export const LoggerContext = React.createContext<ITelemetryLoggerExt | undefined
  * The logger from the context, or undefined is no logger was provided.
  */
 export function useLogger(): ITelemetryLoggerExt | undefined {
-	return React.useContext(LoggerContext);
+	return useContext(LoggerContext);
 }
 
 /**
@@ -68,15 +75,12 @@ export const isTelemetryOptInEnabled = (): boolean => getStorageValue(telemetryO
  * Hook for getting and setting the usage telemetry opt-in setting, backed by brower's local storage.
  * @returns A tuple (React state) with the current value and a setter for the value.
  */
-export const useTelemetryOptIn = (): [
-	boolean,
-	React.Dispatch<React.SetStateAction<boolean>>,
-] => {
-	const [value, setValue] = React.useState(() => {
+export const useTelemetryOptIn = (): [boolean, Dispatch<SetStateAction<boolean>>] => {
+	const [value, setValue] = useState(() => {
 		return getStorageValue(telemetryOptInKey);
 	});
 
-	React.useEffect(() => {
+	useEffect(() => {
 		localStorage.setItem(telemetryOptInKey, value.toString());
 	}, [value]);
 
@@ -85,7 +89,7 @@ export const useTelemetryOptIn = (): [
 			setValue(event.newValue === "true");
 		}
 	};
-	React.useEffect(() => {
+	useEffect(() => {
 		window.addEventListener("storage", localStorageChangeHandler);
 		return (): void => {
 			window.removeEventListener("storage", localStorageChangeHandler);

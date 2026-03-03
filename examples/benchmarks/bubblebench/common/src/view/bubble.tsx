@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { FC } from "react";
 
 import type { IBubble } from "../types.js";
 
 export type IBubbleProps = Pick<IBubble, "x" | "y" | "r">;
 
-export const BubbleView: React.FC<IBubbleProps> = ({ x, y, r }: IBubbleProps) => {
+export const BubbleView: FC<IBubbleProps> = ({ x, y, r }: IBubbleProps) => {
 	return (
 		<g transform={`translate(${x},${y}) scale(${r})`}>
 			<circle r="1" fillOpacity="0.3" strokeWidth="0.1" strokeOpacity="0.5"></circle>

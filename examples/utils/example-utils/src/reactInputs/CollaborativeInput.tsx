@@ -4,7 +4,7 @@
  */
 
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
-import React from "react";
+import { Component, createRef, CSSProperties, FormEvent, RefObject } from "react";
 
 /**
  * {@link CollaborativeInput} input props.
@@ -28,7 +28,7 @@ export interface ICollaborativeInputProps {
 	 */
 	spellCheck?: boolean;
 	className?: string;
-	style?: React.CSSProperties;
+	style?: CSSProperties;
 	disabled?: boolean;
 	onInput?: (sharedString: SharedString) => void;
 }
@@ -46,16 +46,16 @@ export interface ICollaborativeInputState {
  * Given a {@link @fluidframework/sequence#SharedString}, will produce a collaborative input element.
  * @internal
  */
-export class CollaborativeInput extends React.Component<
+export class CollaborativeInput extends Component<
 	ICollaborativeInputProps,
 	ICollaborativeInputState
 > {
-	private readonly inputElementRef: React.RefObject<HTMLInputElement>;
+	private readonly inputElementRef: RefObject<HTMLInputElement>;
 
 	constructor(props: ICollaborativeInputProps) {
 		super(props);
 
-		this.inputElementRef = React.createRef<HTMLInputElement>();
+		this.inputElementRef = createRef<HTMLInputElement>();
 
 		this.state = {
 			selectionEnd: 0,
@@ -112,7 +112,7 @@ export class CollaborativeInput extends React.Component<
 		}
 	}
 
-	private readonly handleInput = (ev: React.FormEvent<HTMLInputElement>): void => {
+	private readonly handleInput = (ev: FormEvent<HTMLInputElement>): void => {
 		// We need to set the value here to keep the input responsive to the user
 		const newText = ev.currentTarget.value;
 

@@ -6,7 +6,7 @@
 import { Table, TableBody, Button } from "@fluentui/react-components";
 import { Add24Regular } from "@fluentui/react-icons";
 import { useTree } from "@fluidframework/react/alpha";
-import React, { useState, type DragEvent } from "react";
+import { type DragEvent, FC, useState } from "react";
 
 import type { TableDataObject } from "../dataObject.js";
 import { Row } from "../schema.js";
@@ -35,7 +35,7 @@ import "./tableView.css";
  * - Column properties such as `label` and `hint` (e.g., `"checkbox"`, `"text"`, `"date"`) from the columns
  * are used to determine how each cell is rendered.
  */
-export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
+export const TableView: FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
 	const [draggedRowIndex, setDraggedRowIndex] = useState<number | undefined>(undefined);
 	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 

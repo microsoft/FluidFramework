@@ -8,7 +8,7 @@ import { CollaborativeInput } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/internal";
 import type { SharedString, ISharedString } from "@fluidframework/sequence/internal";
 import { Tree } from "@fluidframework/tree/internal";
-import React from "react";
+import { FC, FormEvent, useEffect, useRef, useState } from "react";
 
 import type { AppDataTree } from "../FluidObject.js";
 
@@ -79,16 +79,16 @@ export interface TodoListProps {
 /**
  * Contains the list of {@link TodoItemView}, an editable title input and an input/button for submitting new items.
  */
-export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
+export const TodoListView: FC<TodoListProps> = (props: TodoListProps) => {
 	const { todoModel } = props;
 	const styles = useStyles();
-	const [titleString, setTitleString] = React.useState<SharedString | undefined>();
+	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
-	const newItemTextInputRef = React.useRef<HTMLInputElement>(null);
+	const newItemTextInputRef = useRef<HTMLInputElement>(null);
 
 	useTree(todoModel.treeView.root);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		Promise.resolve(todoModel.treeView.root.title.get())
 			.then((title) => {
 				setTitleString(title as ISharedString);
@@ -102,7 +102,7 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	if (titleString === undefined) {
 		return <div>Loading...</div>;
 	}
-	const handleCreateClick = (ev: React.FormEvent<HTMLFormElement>): void => {
+	const handleCreateClick = (ev: FormEvent<HTMLFormElement>): void => {
 		ev.preventDefault();
 
 		const input = newItemTextInputRef.current;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { FC } from "react";
 
 import type { IAppState } from "../types.js";
 
@@ -18,7 +18,7 @@ export interface IStageProps {
 	app: IAppState;
 }
 
-export const StageView: React.FC<IStageProps> = ({ app }: IStageProps) => {
+export const StageView: FC<IStageProps> = ({ app }: IStageProps) => {
 	const groups: JSX.Element[] = [];
 
 	for (const client of app.clients) {

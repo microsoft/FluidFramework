@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { ReactElement } from "react";
 
 import { YoutubeVideo } from "@site/src/components/youtubeVideo";
 
@@ -14,7 +14,7 @@ const videoEmbedId = "fjRfTdIYzWg";
 /**
  * Homepage banner component.
  */
-export function Banner(): React.ReactElement {
+export function Banner(): ReactElement {
 	return (
 		<div className="ffcom-banner">
 			<div className="ffcom-banner-inner">
@@ -28,7 +28,7 @@ export function Banner(): React.ReactElement {
 const titleBoxDescriptionText =
 	"Empower collaborative innovation with Fluid Framework's seamless, high-performance tech stack for real-time applications.";
 
-function TitleBox(): React.ReactElement {
+function TitleBox(): ReactElement {
 	return (
 		<div className="ffcom-title-box">
 			<h1 className="ffcom-title">Fluid Framework</h1>

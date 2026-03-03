@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { useState } from "react";
+import { FC, useState } from "react";
 
 import type { IAppModel } from "../model-interface/index.js";
 
@@ -22,7 +22,7 @@ export interface IAppViewProps {
 /**
  * The AppView is made to pair with an AppModel and render its contents appropriately.
  */
-export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
+export const AppView: FC<IAppViewProps> = (props: IAppViewProps) => {
 	const { model } = props;
 	const taskList = model.baseDocument.getTaskList("task-list-1");
 

@@ -23,7 +23,7 @@ import {
 	Warning20Regular,
 } from "@fluentui/react-icons";
 import type { ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { ReactElement, useContext } from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
 
@@ -72,9 +72,9 @@ export interface ContainerHistoryLogProps {
 /**
  * Renders current state of the connected container.
  */
-export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.ReactElement {
+export function ContainerHistoryLog(props: ContainerHistoryLogProps): ReactElement {
 	const { containerHistory } = props;
-	const { themeInfo } = React.useContext(ThemeContext);
+	const { themeInfo } = useContext(ThemeContext);
 
 	// Columns for rendering container state history.
 	const containerHistoryColumns = [
@@ -139,7 +139,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 						? changeTimeStamp.toTimeString()
 						: changeTimeStamp.toDateString();
 
-					const getStateIcon = (state: string): React.ReactElement => {
+					const getStateIcon = (state: string): ReactElement => {
 						switch (state) {
 							case "attached": {
 								return <Attach20Regular />;

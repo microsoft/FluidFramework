@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { ReactElement } from "react";
 
 /**
  * Landing page for the devtools.
  */
-export function LandingView(): React.ReactElement {
+export function LandingView(): ReactElement {
 	return (
 		<div>
 			<h3>Welcome to the Fluid Framework Developer Tools!</h3>

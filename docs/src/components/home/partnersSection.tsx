@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { Component, ReactElement } from "react";
 
 import { PageSection } from "./pageSection";
 
@@ -106,7 +106,7 @@ export function PartnersSection(): JSX.Element {
 }
 
 interface PartnerEntryProps {
-	icon: React.Component;
+	icon: Component;
 	title: string;
 	// bodyText: string;
 	learnMoreHref: string;
@@ -137,10 +137,10 @@ function PartnerEntry({
 }
 
 interface PartnerEntryIconProps {
-	icon: React.Component;
+	icon: Component;
 }
 
-function PartnerEntryIcon({ icon }: PartnerEntryIconProps): React.ReactElement {
+function PartnerEntryIcon({ icon }: PartnerEntryIconProps): ReactElement {
 	return <div className="ffcom-partner-entry-icon">{icon}</div>;
 }
 
@@ -148,7 +148,7 @@ interface PartnerEntryLabelProps {
 	title: string;
 }
 
-function PartnerEntryLabel({ title }: PartnerEntryLabelProps): React.ReactElement {
+function PartnerEntryLabel({ title }: PartnerEntryLabelProps): ReactElement {
 	return (
 		<div className="ffcom-partner-entry-label-container ">
 			<div className="ffcom-partner-entry-label-container-inner">
@@ -165,7 +165,7 @@ function PartnerEntryLabel({ title }: PartnerEntryLabelProps): React.ReactElemen
 // 	bodyText: string;
 // }
 
-// function PartnerEntryBody({ bodyText }: PartnerEntryBodyProps): React.ReactElement {
+// function PartnerEntryBody({ bodyText }: PartnerEntryBodyProps): ReactElement {
 // 	return <p className="ffcom-partner-entry-description-text ">{bodyText}</p>;
 // }
 
@@ -177,7 +177,7 @@ interface PartnerEntryFooterProps {
 function PartnerEntryFooter({
 	learnMoreHref,
 	learnMoreLinkAltText,
-}: PartnerEntryFooterProps): React.ReactElement {
+}: PartnerEntryFooterProps): ReactElement {
 	return (
 		<div className="ffcom-partner-entry-learn-more-container ">
 			<div className="ffcom-partner-entry-learn-more-container-inner">

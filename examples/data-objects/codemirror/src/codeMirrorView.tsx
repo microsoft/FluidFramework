@@ -14,7 +14,7 @@ import {
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import CodeMirror from "codemirror";
-import React, { useEffect, useRef } from "react";
+import { FC, useEffect, useRef } from "react";
 
 /* eslint-disable import-x/no-unassigned-import, import-x/no-internal-modules */
 import "codemirror/lib/codemirror.css";
@@ -190,7 +190,7 @@ export interface ICodeMirrorReactViewProps {
  *
  * @internal
  */
-export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
+export const CodeMirrorReactView: FC<ICodeMirrorReactViewProps> = (
 	props: ICodeMirrorReactViewProps,
 ) => {
 	const { text, presenceManager } = props;

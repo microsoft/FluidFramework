@@ -19,7 +19,7 @@ import {
 	DoorArrowLeftRegular,
 	Person12Regular,
 } from "@fluentui/react-icons";
-import React from "react";
+import { ReactElement } from "react";
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
@@ -61,7 +61,7 @@ export interface AudienceHistoryTableProps {
  *
  * @remarks {@link ThemeContext} must be set in order to use this component.
  */
-export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
+export function AudienceHistoryTable(props: AudienceHistoryTableProps): ReactElement {
 	const { audienceHistoryItems } = props;
 	const { themeInfo } = useThemeContext();
 

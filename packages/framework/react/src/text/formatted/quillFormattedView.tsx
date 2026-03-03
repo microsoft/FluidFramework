@@ -8,7 +8,14 @@ import { Tree, TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/inter
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
-import * as React from "react";
+import {
+	forwardRef,
+	useEffect,
+	useImperativeHandle,
+	useReducer,
+	useRef,
+	useState,
+} from "react";
 import * as ReactDOM from "react-dom";
 
 import { type PropTreeNode, unwrapPropTreeNode } from "../../propNode.js";
@@ -41,12 +48,11 @@ export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
  * Uses {@link @fluidframework/tree#FormattedTextAsTree.Tree} for the data-model and Quill for the rich text editor UI.
  * @internal
  */
-export const FormattedMainView = React.forwardRef<
-	FormattedEditorHandle,
-	FormattedMainViewProps
->(({ root, undoRedo }, ref) => {
-	return <FormattedTextEditorView root={root} undoRedo={undoRedo} ref={ref} />;
-});
+export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMainViewProps>(
+	({ root, undoRedo }, ref) => {
+		return <FormattedTextEditorView root={root} undoRedo={undoRedo} ref={ref} />;
+	},
+);
 FormattedMainView.displayName = "FormattedMainView";
 
 /** Quill size names mapped to pixel values for tree storage. */
@@ -280,7 +286,7 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
  * to make targeted edits (insert at index, delete range, format range) rather
  * than replacing all content on each change.
  */
-const FormattedTextEditorView = React.forwardRef<
+const FormattedTextEditorView = forwardRef<
 	FormattedEditorHandle,
 	{
 		root: PropTreeNode<FormattedTextAsTree.Tree>;
@@ -290,26 +296,26 @@ const FormattedTextEditorView = React.forwardRef<
 	// Unwrap the PropTreeNode to get the actual tree node
 	const root = unwrapPropTreeNode(propRoot);
 	// DOM element where Quill will mount its editor
-	const editorRef = React.useRef<HTMLDivElement>(null);
+	const editorRef = useRef<HTMLDivElement>(null);
 	// Quill instance, persisted across renders to avoid re-initialization
-	const quillRef = React.useRef<Quill | null>(null);
+	const quillRef = useRef<Quill | null>(null);
 	// Guards against update loops between Quill and the tree
-	const isUpdating = React.useRef(false);
+	const isUpdating = useRef(false);
 	// Container element for undo/redo button portal
-	const [undoRedoContainer, setUndoRedoContainer] = React.useState<HTMLElement | undefined>(
+	const [undoRedoContainer, setUndoRedoContainer] = useState<HTMLElement | undefined>(
 		undefined,
 	);
 	// Force re-render when undo/redo state changes
-	const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
+	const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
 	// Expose undo/redo methods via ref
-	React.useImperativeHandle(ref, () => ({
+	useImperativeHandle(ref, () => ({
 		undo: () => undoRedo?.undo(),
 		redo: () => undoRedo?.redo(),
 	}));
 
 	// Initialize Quill editor with formatting toolbar using Quill provided CSS
-	React.useEffect(() => {
+	useEffect(() => {
 		if (!editorRef.current || quillRef.current) return;
 		const quill = new Quill(editorRef.current, {
 			theme: "snow",
@@ -420,7 +426,7 @@ const FormattedTextEditorView = React.forwardRef<
 
 	// Sync Quill when tree changes externally (e.g., from remote collaborators).
 	// Uses event subscription instead of render-time observation for efficiency.
-	React.useEffect(() => {
+	useEffect(() => {
 		return Tree.on(root, "treeChanged", () => {
 			// Skip if we caused the tree change ourselves via the text-change handler
 			if (!quillRef.current || isUpdating.current) return;
@@ -451,7 +457,7 @@ const FormattedTextEditorView = React.forwardRef<
 	}, [root]);
 
 	// Subscribe to undo/redo state changes to update button disabled state
-	React.useEffect(() => {
+	useEffect(() => {
 		if (!undoRedo) return;
 		return undoRedo.onStateChange(() => {
 			forceUpdate();

@@ -13,7 +13,7 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
-import React from "react";
+import { ReactElement, useEffect, useState } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 
@@ -34,16 +34,14 @@ export type AudienceViewProps = HasContainerKey;
 /**
  * Displays information about a container's audience.
  */
-export function AudienceView(props: AudienceViewProps): React.ReactElement {
+export function AudienceView(props: AudienceViewProps): ReactElement {
 	const { containerKey } = props;
 
 	const messageRelay = useMessageRelay();
 
-	const [audienceData, setAudienceData] = React.useState<
-		AudienceSummary.MessageData | undefined
-	>();
+	const [audienceData, setAudienceData] = useState<AudienceSummary.MessageData | undefined>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to Audience
 		 */

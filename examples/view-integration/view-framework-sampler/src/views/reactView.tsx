@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { FC, JSX, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
 import { IDiceRoller } from "../dataObject.js";
@@ -21,12 +21,12 @@ interface IDiceRollerViewProps {
 	model: IDiceRoller;
 }
 
-export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
+export const DiceRollerView: FC<IDiceRollerViewProps> = (
 	props: IDiceRollerViewProps,
-): React.JSX.Element => {
-	const [diceValue, setDiceValue] = React.useState(props.model.value);
+): JSX.Element => {
+	const [diceValue, setDiceValue] = useState(props.model.value);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		// useEffect runs async after render, so it's possible for the dice value to update after render but
 		// before we get our event listener registered.  We refresh our dice value in case that happened.
 		setDiceValue(props.model.value);

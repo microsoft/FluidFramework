@@ -4,7 +4,7 @@
  */
 
 import { type IColor, InkCanvas } from "@fluid-experimental/ink";
-import React, { useEffect, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 
 import type { Canvas } from "./canvas.js";
 // eslint-disable-next-line import-x/no-unassigned-import
@@ -30,7 +30,7 @@ interface IToolbarProps {
 	clearInk: () => void;
 }
 
-const Toolbar: React.FC<IToolbarProps> = (props: IToolbarProps) => {
+const Toolbar: FC<IToolbarProps> = (props: IToolbarProps) => {
 	const { toggleColorPicker, replayInk, clearInk } = props;
 	return (
 		<div className="ink-toolbar">
@@ -58,7 +58,7 @@ interface IColorOptionProps {
 	choose: () => void;
 }
 
-const ColorOption: React.FC<IColorOptionProps> = (props: IColorOptionProps) => {
+const ColorOption: FC<IColorOptionProps> = (props: IColorOptionProps) => {
 	const { color, choose } = props;
 	return (
 		<button
@@ -74,7 +74,7 @@ interface IColorPickerProps {
 	choose: (color: IColor) => void;
 }
 
-const ColorPicker: React.FC<IColorPickerProps> = (props: IColorPickerProps) => {
+const ColorPicker: FC<IColorPickerProps> = (props: IColorPickerProps) => {
 	const { show, choose } = props;
 	return (
 		<div className={`ink-color-picker${show ? " show" : ""}`}>
@@ -92,7 +92,7 @@ interface ICanvasViewProps {
 	canvas: Canvas;
 }
 
-export const CanvasView: React.FC<ICanvasViewProps> = (props: ICanvasViewProps) => {
+export const CanvasView: FC<ICanvasViewProps> = (props: ICanvasViewProps) => {
 	const { canvas } = props;
 	const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>();
 	const [showColorPicker, setShowColorPicker] = useState<boolean>(false);

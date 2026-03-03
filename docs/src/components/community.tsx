@@ -7,7 +7,7 @@ import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import clsx from "clsx";
-import React from "react";
+import { ComponentProps, ComponentType, ReactElement } from "react";
 
 import DiscussionIcon from "@site/static/assets/community/discussion.svg";
 import ReportIssuesIcon from "@site/static/assets/community/report-issues.svg";
@@ -18,7 +18,7 @@ import "@site/src/css/community.css";
 
 interface CommunityLinkItem {
 	title: string;
-	Icon: React.ComponentType<React.ComponentProps<"svg">>;
+	Icon: ComponentType<ComponentProps<"svg">>;
 	description: JSX.Element;
 	linkUrl: string;
 }
@@ -73,7 +73,7 @@ function CommunityLink({
 	Icon,
 	description,
 	linkUrl: href,
-}: CommunityLinkItem): React.ReactElement {
+}: CommunityLinkItem): ReactElement {
 	return (
 		<div className={clsx("col col--4")}>
 			<div className="text--center">

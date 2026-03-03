@@ -7,7 +7,7 @@ import type {
 	FluidObjectValueNode,
 	HasContainerKey,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { ReactElement } from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
@@ -25,7 +25,7 @@ export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNod
  *
  * @remarks {@link ContainerFeaturesContext} must be set in order to use this component.
  */
-export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
+export function FluidValueView(props: FluidValueViewProps): ReactElement {
 	const { label, node } = props;
 	const header = (
 		<TreeHeader

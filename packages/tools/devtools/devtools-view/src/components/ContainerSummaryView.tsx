@@ -40,7 +40,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { ReactElement, useEffect, useState } from "react";
 
 import { useContainerFeaturesContext } from "../ContainerFeatureFlagHelper.js";
 import { useMessageRelay } from "../MessageRelayContext.js";
@@ -89,18 +89,18 @@ interface DataRowProps {
 	/**
 	 * Row label content (first column).
 	 */
-	label: React.ReactElement | string;
+	label: ReactElement | string;
 
 	/**
 	 * Tooltip content to display via an info badge.
 	 * If not provided, no info badge will be displayed.
 	 */
-	infoTooltipContent: React.ReactElement | string | undefined;
+	infoTooltipContent: ReactElement | string | undefined;
 
 	/**
 	 * The value text associated with the label (second column).
 	 */
-	value: React.ReactElement | string | undefined;
+	value: ReactElement | string | undefined;
 
 	/**
 	 * Column props consumed by FluentUI.
@@ -115,7 +115,7 @@ interface DataRowProps {
  *
  * @remarks {@link DataRowProps.value} will be wrapped in a <TableCell /> so it shouldn't have one itself.
  */
-function DataRow(props: DataRowProps): React.ReactElement {
+function DataRow(props: DataRowProps): ReactElement {
 	const { label, infoTooltipContent, value, columnProps } = props;
 
 	return (
@@ -185,7 +185,7 @@ function getStatusBadgeColor(status: string): "success" | "warning" | "danger" |
  * - Multiple status badges are displayed side by side with flexbox layout
  * - Each badge color is determined by getStatusBadgeColor function
  */
-function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
+function containerStatusValueCell(statusComponents: string[]): ReactElement {
 	// Show all states simultaneously in a single container
 	if (statusComponents.length === 0) {
 		return (
@@ -235,7 +235,7 @@ const useContainerSummaryViewStyles = makeStyles({
 /**
  * View displaying a simple summary of the Container state.
  */
-export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
+export function ContainerSummaryView(props: ContainerSummaryViewProps): ReactElement {
 	const { containerKey } = props;
 	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
@@ -243,12 +243,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 	const styles = useContainerSummaryViewStyles();
 
-	const [containerState, setContainerState] = React.useState<
-		ContainerStateMetadata | undefined
-	>();
+	const [containerState, setContainerState] = useState<ContainerStateMetadata | undefined>();
 
-	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
-	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
+	const [columns] = useState<TableColumnDefinition<Item>[]>(columnsDef);
+	const [columnSizingOptions] = useState<TableColumnSizingOptions>({
 		containerProperty: {
 			idealWidth: 70,
 			minWidth: 70,
@@ -261,7 +259,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		useTableColumnSizing_unstable({ columnSizingOptions }),
 	]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
 		 */
@@ -440,7 +438,7 @@ interface ActionsBarProps extends IContainerActions {
 	containerState: ContainerStateMetadata;
 }
 
-function ActionsBar(props: ActionsBarProps): React.ReactElement {
+function ActionsBar(props: ActionsBarProps): ReactElement {
 	const { isContainerConnected, containerState, tryConnect, forceDisconnect, closeContainer } =
 		props;
 	const styles = useActionBarStyles();

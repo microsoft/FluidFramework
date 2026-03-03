@@ -6,7 +6,7 @@
 import type { TreeLeafValue, TreeNode } from "@fluidframework/tree";
 import { Tree } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/internal";
-import * as React from "react";
+import { FC, memo, MemoExoticComponent, ReactNode, useEffect, useState } from "react";
 
 import {
 	unwrapPropTreeNode,
@@ -29,10 +29,10 @@ import { useObservation, type ObservationOptions } from "./useObservation.js";
 export function useTree(subtreeRoot: TreeNode): number {
 	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
 	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
-	const [invalidations, setInvalidations] = React.useState(0);
+	const [invalidations, setInvalidations] = useState(0);
 
 	// React effect hook that increments the 'invalidation' counter whenever subtreeRoot or any of its children change.
-	React.useEffect(() => {
+	useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
 		return Tree.on(subtreeRoot, "treeChanged", () => {
 			setInvalidations((i) => i + 1);
@@ -52,31 +52,31 @@ export function useTree(subtreeRoot: TreeNode): number {
  * It is recommended that sub-components which take in TreeNodes, if not defined using this higher order components, take the nodes in as {@link PropTreeNode}s.
  * Components defined using this higher order component can take in either raw TreeNodes or {@link PropTreeNode}s: the latter will be automatically unwrapped.
  * @privateRemarks
- * `React.FC` does not seem to be covariant over its input type, so to make use of this more ergonomic,
+ * `FC` does not seem to be covariant over its input type, so to make use of this more ergonomic,
  * the return type intersects the various ways this could be used (with or without PropTreeNode wrapping).
  * @alpha
  */
 export function withTreeObservations<TIn>(
-	component: React.FC<TIn>,
+	component: FC<TIn>,
 	options?: ObservationOptions,
-): React.FC<TIn> & React.FC<WrapNodes<TIn>> & React.FC<TIn | WrapNodes<TIn>> {
-	return (props: TIn | WrapNodes<TIn>): React.ReactNode =>
+): FC<TIn> & FC<WrapNodes<TIn>> & FC<TIn | WrapNodes<TIn>> {
+	return (props: TIn | WrapNodes<TIn>): ReactNode =>
 		useTreeObservations(() => component(props as TIn), options);
 }
 
 /**
- * {@link withTreeObservations} wrapped with React.memo.
+ * {@link withTreeObservations} wrapped with memo.
  * @remarks
  * There is no special logic here, just a convenience wrapper.
  * @alpha
  */
 export function withMemoizedTreeObservations<TIn>(
-	component: React.FC<TIn>,
+	component: FC<TIn>,
 	options?: ObservationOptions & {
-		readonly propsAreEqual?: Parameters<typeof React.memo>[1];
+		readonly propsAreEqual?: Parameters<typeof memo>[1];
 	},
-): React.MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>> {
-	return React.memo(withTreeObservations(component, options), options?.propsAreEqual);
+): MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>> {
+	return memo(withTreeObservations(component, options), options?.propsAreEqual);
 }
 
 /**

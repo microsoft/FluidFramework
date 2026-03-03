@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 
 import { KeyFeatureCard } from "./keyFeatureCard";
 import { PageSection } from "./pageSection";

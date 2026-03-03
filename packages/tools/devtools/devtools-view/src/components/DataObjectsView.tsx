@@ -13,7 +13,7 @@ import {
 	type RootHandleNode,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { ReactElement, useEffect, useState } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 
@@ -34,16 +34,16 @@ export type DataObjectsViewProps = HasContainerKey;
  *
  * Dispatches data object rendering based on those provided view {@link TreeDataView}.
  */
-export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
+export function DataObjectsView(props: DataObjectsViewProps): ReactElement {
 	const { containerKey } = props;
 
 	const messageRelay = useMessageRelay();
 
-	const [rootDataHandles, setRootDataHandles] = React.useState<
+	const [rootDataHandles, setRootDataHandles] = useState<
 		Record<string, RootHandleNode> | undefined
 	>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		const inboundMessageHandlers: InboundHandlers = {
 			[RootDataVisualizations.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as RootDataVisualizations.Message;
