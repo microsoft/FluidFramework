@@ -3,17 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { benchmarkCustom } from "..";
+import { benchmarkCustom, ValueType, type CollectedData } from "..";
 import { BenchmarkType } from "../Configuration";
 
 describe("`benchmarkCustom` function", () => {
-	it("run BenchmarkCustom", async () => {
-		benchmarkCustom({
-			title: `test`,
-			run: async (reporter) => {
-				reporter.addMeasurement("test", 0);
-			},
-			type: BenchmarkType.OwnCorrectness,
-		});
+	benchmarkCustom({
+		title: `test`,
+		run: () => {
+			return {
+				primary: {
+					value: 0,
+					units: "custom units",
+					name: "test",
+					type: ValueType.SmallerIsBetter,
+				},
+				additional: [],
+			} satisfies CollectedData;
+		},
+		type: BenchmarkType.OwnCorrectness,
 	});
 });

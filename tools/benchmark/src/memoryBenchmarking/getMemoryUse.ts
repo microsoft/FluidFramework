@@ -125,7 +125,10 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	);
 	assertStats(freedStats.arithmeticMean > -noiseThreshold, "Expected positive deallocation size");
 
-	const meanMean = (allocatedStats.arithmeticMean + freedStats.arithmeticMean) / 2;
+	const meanStats = getArrayStatistics(
+		processed.map((x) => (x.allocatedBytes + x.freedBytes) / 2),
+	);
+	const meanMean = meanStats.arithmeticMean;
 
 	assertStats(
 		Math.abs(sizeEnd.arithmeticMean - sizeStart.arithmeticMean) <
@@ -137,7 +140,7 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 		const difference = Math.abs(allocatedStats.arithmeticMean - freedStats.arithmeticMean);
 		const threshold = meanMean * 0.2 + noiseThreshold;
 		assertStats(
-			difference >= threshold,
+			difference <= threshold,
 			`Allocated size (${allocatedStats.arithmeticMean} bytes) and freed size (${freedStats.arithmeticMean} bytes) should be similar: difference of ${difference} bytes exceeds threshold of ${threshold} bytes.`,
 		);
 	}
@@ -145,11 +148,28 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	return {
 		primary: {
 			name: brandMeasurementNameForMode("Mean Additional Memory Usage"),
-			value: meanMean,
+			value: meanStats.arithmeticMean,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
 		},
-		additional: [],
+		additional: [
+			{
+				name: "Samples",
+				value: meanStats.samples.length,
+			},
+			{
+				name: "Margin of Error",
+				value: meanStats.marginOfError,
+				units: "bytes",
+				type: ValueType.SmallerIsBetter,
+			},
+			{
+				name: "Relative Margin of Error",
+				value: meanStats.marginOfErrorPercent,
+				units: "%",
+				type: ValueType.SmallerIsBetter,
+			},
+		],
 	};
 }
 
@@ -184,9 +204,8 @@ async function runGarbageCollection(): Promise<void> {
 }
 
 /**
- * Configures a benchmark that measures memory usage and returns the results in a format suitable for reporting via {@link benchmarkIt}.
- * @remarks
- * This infers an appropriate batch size to try to get accurate measurements, then sample many batches to estimate the mean memory usage.
+ * Configures a benchmark that uses {@link collectMemoryUseData}
+ * to measure memory usage and returns the results in a format suitable for reporting via {@link benchmarkIt}.
  * @public
  */
 export function benchmarkMemoryUse(

@@ -4,33 +4,19 @@
  */
 
 import { assert } from "../assert.js";
-import type {
-	BenchmarkDescription,
-	HookArguments,
-	MochaExclusiveOptions,
-	Titled,
-} from "../Configuration.js";
+import type { BenchmarkDescription, HookArguments } from "../Configuration.js";
 import type { Timer } from "../timer";
 import type { Phase } from "./getDuration.js";
 
 /**
- * Arguments to `benchmark`
  * @public
  */
-export type BenchmarkArguments = Titled &
-	(BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
+export type CustomBenchmarkArguments = CustomBenchmark & BenchmarkDescription;
 
 /**
  * @public
  */
-export type CustomBenchmarkArguments = MochaExclusiveOptions &
-	CustomBenchmark &
-	BenchmarkDescription;
-
-/**
- * @public
- */
-export type BenchmarkRunningOptions =
+export type DurationBenchmark =
 	| BenchmarkSyncArguments
 	| BenchmarkAsyncArguments
 	| CustomBenchmarkArguments;
@@ -45,13 +31,13 @@ export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments &
  * Arguments to benchmark a synchronous function
  * @public
  */
-export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions {}
+export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, DurationBenchmarkOptions {}
 
 /**
  * Arguments to benchmark a synchronous function
  * @public
  */
-export interface BenchmarkSyncFunction extends BenchmarkOptions {
+export interface BenchmarkSyncFunction extends DurationBenchmarkOptions {
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
@@ -62,13 +48,13 @@ export interface BenchmarkSyncFunction extends BenchmarkOptions {
  * Configuration for benchmarking an asynchronous function.
  * @public
  */
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {}
+export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, DurationBenchmarkOptions {}
 
 /**
  * An asynchronous function to benchmark.
  * @public
  */
-export interface BenchmarkAsyncFunction extends BenchmarkOptions {
+export interface BenchmarkAsyncFunction extends DurationBenchmarkOptions {
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
 	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -178,12 +164,7 @@ export interface OnBatch {
  * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
  * @public
  */
-export interface BenchmarkOptions
-	extends MochaExclusiveOptions,
-		HookArguments,
-		BenchmarkTimingOptions,
-		OnBatch,
-		BenchmarkDescription {}
+export interface DurationBenchmarkOptions extends HookArguments, BenchmarkTimingOptions, OnBatch {}
 
 /**
  * Validates arguments to `benchmark`.
@@ -213,7 +194,7 @@ export function validateBenchmarkArguments(
  * @public
  */
 export function benchmarkArgumentsIsCustom(
-	args: BenchmarkRunningOptions,
+	args: DurationBenchmark,
 ): args is CustomBenchmarkArguments {
 	const intersection = args as Partial<BenchmarkSyncArguments> &
 		Partial<BenchmarkAsyncArguments> &

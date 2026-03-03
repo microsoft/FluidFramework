@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { BenchmarkResult, BenchmarkError, BenchmarkData } from "./ResultTypes";
+import type { BenchmarkResult, BenchmarkError, BenchmarkData, CollectedData } from "./ResultTypes";
 import { timer } from "./timer";
 
 /**
@@ -12,15 +12,15 @@ import { timer } from "./timer";
  * Returns a callback suitable for passing to emitResultsMocha.
  * This is a generic utility that is neither mocha-specific nor time benchmark-specific.
  */
-export function captureResults<T>(
-	f: () => T | Promise<T>,
-): () => Promise<{ result: BenchmarkResult<T>; exception?: Error }> {
+export function captureResults(
+	f: () => CollectedData | Promise<CollectedData>,
+): () => Promise<{ result: BenchmarkResult; exception?: Error }> {
 	return async () => {
 		const startTime = timer.now();
 
-		let customData: T;
+		let data: CollectedData;
 		try {
-			customData = await f();
+			data = await f();
 		} catch (error) {
 			const benchmarkError: BenchmarkError = { error: (error as Error).message };
 			return { result: benchmarkError, exception: error as Error };
@@ -28,9 +28,9 @@ export function captureResults<T>(
 
 		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
 
-		const result: BenchmarkData<T> = {
+		const result: BenchmarkData = {
 			elapsedSeconds,
-			customData,
+			data,
 		};
 
 		return { result };

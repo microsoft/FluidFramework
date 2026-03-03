@@ -4,16 +4,12 @@
  */
 
 /**
- * Custom data type for a benchmark.
- * @public
- */
-export type CustomData = Record<string, { rawValue: unknown; formattedValue: string }>;
-
-/**
  * Result of successfully running a benchmark.
+ *
+ * TODO: flatten this into a CollectedData, and validate in the process.
  * @public
  */
-export interface BenchmarkData<T = CustomData> {
+export interface BenchmarkData {
 	/**
 	 * Time it took to run the benchmark in seconds.
 	 * @remarks
@@ -25,7 +21,7 @@ export interface BenchmarkData<T = CustomData> {
 	/**
 	 * Custom data.
 	 */
-	customData: T;
+	data: CollectedData;
 }
 
 /**
@@ -43,7 +39,7 @@ export interface BenchmarkError {
  * Result of trying to run a benchmark.
  * @public
  */
-export type BenchmarkResult<T = CustomData> = BenchmarkError | BenchmarkData<T>;
+export type BenchmarkResult = BenchmarkError | BenchmarkData;
 
 /**
  * Provides type narrowing when the provided result is a {@link BenchmarkError}.
@@ -53,6 +49,10 @@ export function isResultError(result: BenchmarkResult): result is BenchmarkError
 	return (result as Partial<BenchmarkError>).error !== undefined;
 }
 
+/**
+ * A single measurement for a benchmark result.
+ * @public
+ */
 export interface Measurement {
 	readonly name: string;
 	readonly value: number;
@@ -60,13 +60,19 @@ export interface Measurement {
 	readonly type?: ValueType;
 }
 
+/**
+ * Indicates whether a benchmark result is better if the value is smaller or larger.
+ * @remarks
+ * This impacts how regressions and improvements are measured and how results are aggregated into a geometric mean.
+ * @public
+ */
 export enum ValueType {
 	SmallerIsBetter,
 	LargerIsBetter,
 }
 
 /**
- * Custom data type for a benchmark.
+ * Data for a benchmark.
  * @public
  */
 export interface CollectedData {

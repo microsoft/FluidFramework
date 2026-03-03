@@ -4,13 +4,7 @@
  */
 
 import type { Test } from "mocha";
-import {
-	qualifiedTitle,
-	type Titled,
-	type BenchmarkDescription,
-	type MochaExclusiveOptions,
-	type BenchmarkFunction,
-} from "../Configuration";
+import { qualifiedTitle, type BenchmarkOptions } from "../Configuration";
 import { captureResults } from "../ResultUtilities";
 import { timer } from "../timer";
 import { supportParentProcessInner } from "./runner";
@@ -22,7 +16,7 @@ import { supportParentProcessInner } from "./runner";
  * options can be used to only run this type of tests by filtering on that value.
  * @public
  */
-export function benchmarkIt(options: BenchmarkOptions2): Test {
+export function benchmarkIt(options: BenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
 	const title = qualifiedTitle(options);
 	const test = itFunction(title, async () => {
@@ -34,15 +28,3 @@ export function benchmarkIt(options: BenchmarkOptions2): Test {
 	});
 	return test;
 }
-
-/**
- * Options to configure a mocha test benchmark.
- * @remarks
- * See {@link benchmarkIt}.
- * @public
- */
-export interface BenchmarkOptions2
-	extends Titled,
-		BenchmarkDescription,
-		MochaExclusiveOptions,
-		BenchmarkFunction {}

@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "../assert";
-import { type BenchmarkDescription, type BenchmarkFunction } from "../Configuration";
-import { ValueType, type BenchmarkData, type CollectedData } from "../ResultTypes";
-import { prettyNumber } from "../RunnerUtilities";
+import {
+	isInPerformanceTestingMode,
+	type BenchmarkDescription,
+	type BenchmarkFunction,
+} from "../Configuration";
+import { ValueType, type CollectedData } from "../ResultTypes";
 import { getArrayStatistics } from "../sampling";
 import { type Timer, timer, timerWithResolution } from "../timer";
 import {
 	benchmarkArgumentsIsCustom,
 	validateBenchmarkArguments,
-	type BenchmarkRunningOptions,
+	type DurationBenchmark,
 	type BenchmarkRunningOptionsAsync,
 	type BenchmarkRunningOptionsSync,
 	type BenchmarkTimer,
@@ -49,13 +51,24 @@ export const defaultTimingOptions: Required<BenchmarkTimingOptions> = {
 	startPhase: Phase.WarmUp,
 };
 
+export const nonPerfTestingArgs: Required<BenchmarkTimingOptions> = {
+	maxBenchmarkDurationSeconds: 0,
+	minBatchCount: 1,
+	minBatchDurationSeconds: 0,
+	startPhase: Phase.CollectData,
+};
+
 /**
  * Runs the benchmark.
  * @public
  */
-export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
+export async function collectDurationData(args: DurationBenchmark): Promise<CollectedData> {
+	const timingArgs: BenchmarkTimingOptions = isInPerformanceTestingMode
+		? args
+		: nonPerfTestingArgs;
+
 	if (benchmarkArgumentsIsCustom(args)) {
-		const state = new BenchmarkState(timer, args);
+		const state = new BenchmarkState(timer, timingArgs);
 		await args.benchmarkFnCustom(state);
 		return state.computeData();
 	}
@@ -63,12 +76,13 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 	const options = {
 		...defaultTimingOptions,
 		...args,
+		...timingArgs,
 	};
 	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
 
 	await options.before?.();
 
-	let data: BenchmarkData;
+	let data: CollectedData;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (isAsync) {
 		data = await runBenchmarkAsync({
@@ -104,7 +118,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		this.phase = this.options.startPhase;
 
 		if (this.options.minBatchCount < 1) {
-			throw new Error("Invalid minSampleCount");
+			throw new Error("Invalid minBatchCount: must be at least 1");
 		}
 		this.iterationsPerBatch = 1;
 		tryRunGarbageCollection();
@@ -174,33 +188,37 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		return true;
 	}
 
-	public computeData(): BenchmarkData {
-		const now = this.timer.now();
+	public computeData(): CollectedData {
 		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
-		const data: BenchmarkData = {
-			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
-			customData: {
-				"Batch Count": {
-					rawValue: this.samples.length,
-					formattedValue: prettyNumber(this.samples.length, 0),
-				},
-				"Iterations per Batch": {
-					rawValue: this.iterationsPerBatch,
-					formattedValue: prettyNumber(this.iterationsPerBatch, 0),
-				},
-				"Period (ns/op)": {
-					rawValue: 1e9 * stats.arithmeticMean,
-					formattedValue: prettyNumber(1e9 * stats.arithmeticMean, 2),
-				},
-				"Margin of Error (ns)": {
-					rawValue: stats.marginOfError,
-					formattedValue: `±${prettyNumber(1e9 * stats.marginOfError, 2)}`,
-				},
-				"Relative Margin of Error": {
-					rawValue: stats.marginOfErrorPercent,
-					formattedValue: `±${prettyNumber(stats.marginOfErrorPercent, 2)}%`,
-				},
+		const data: CollectedData = {
+			primary: {
+				name: "Period",
+				value: 1e9 * stats.arithmeticMean,
+				units: "ns/op",
+				type: ValueType.SmallerIsBetter,
 			},
+			additional: [
+				{
+					name: "Batch Count",
+					value: this.samples.length,
+				},
+				{
+					name: "Iterations Per Batch",
+					value: this.iterationsPerBatch,
+				},
+				{
+					name: "Margin of Error",
+					value: stats.marginOfError * 1e9,
+					units: "ns",
+					type: ValueType.SmallerIsBetter,
+				},
+				{
+					name: "Relative Margin of Error",
+					value: stats.marginOfErrorPercent,
+					units: "%",
+					type: ValueType.SmallerIsBetter,
+				},
+			],
 		};
 		return data;
 	}
@@ -221,7 +239,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
  * Run a performance benchmark and return its results.
  * @public
  */
-export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
+export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): CollectedData {
 	const state = new BenchmarkState(timer, args);
 	while (
 		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
@@ -233,11 +251,10 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
 
 /**
  * Run a performance benchmark and return its results.
- * @public
  */
 export async function runBenchmarkAsync(
 	args: BenchmarkRunningOptionsAsync,
-): Promise<BenchmarkData> {
+): Promise<CollectedData> {
 	const state = new BenchmarkState(timer, args);
 	while (
 		state.recordBatch(
@@ -301,33 +318,15 @@ function tryRunGarbageCollection(): void {
 }
 
 /**
- * Configures a benchmark that measures duration and returns the results in a format suitable for reporting via {@link benchmarkIt}.
- * @remarks
- * This infers an appropriate batch size to try to get accurate measurements, then sample many batches to estimate the mean duration.
+ * Configures a benchmark that uses {@link collectDurationData}
+ * to measure duration and returns the results in a format suitable for reporting via {@link benchmarkIt}.
  * @public
  */
 export function benchmarkDuration(
-	args: BenchmarkRunningOptions,
+	args: DurationBenchmark,
 ): BenchmarkDescription & BenchmarkFunction {
 	return {
 		category: "Duration",
-		run: async (): Promise<CollectedData> => {
-			const data = await runBenchmark(args);
-			const period = data.customData["Period (ns/op)"].rawValue;
-			assert(
-				typeof period === "number",
-				"Expected 'Period (ns/op)' custom data to be a number",
-			);
-			return {
-				primary: {
-					name: "Period",
-					value: period,
-					units: "ns/op",
-					type: ValueType.SmallerIsBetter,
-				},
-				// TODO: add other properties from data.customData as additional measurements.
-				additional: [],
-			};
-		},
+		run: async (): Promise<CollectedData> => await collectDurationData(args),
 	};
 }

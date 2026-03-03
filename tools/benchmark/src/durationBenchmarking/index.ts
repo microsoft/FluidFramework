@@ -4,18 +4,17 @@
  */
 
 export {
-	type BenchmarkArguments,
 	type BenchmarkSyncArguments,
 	type BenchmarkAsyncArguments,
-	type BenchmarkOptions,
 	validateBenchmarkArguments,
 	type BenchmarkTimingOptions,
-	type BenchmarkRunningOptions,
+	type DurationBenchmark,
 	type BenchmarkSyncFunction,
 	type BenchmarkAsyncFunction,
 	type OnBatch,
 	type CustomBenchmark,
 	type BenchmarkTimer,
 	type CustomBenchmarkArguments,
+	type DurationBenchmarkOptions,
 } from "./configuration.js";
-export { Phase, runBenchmark } from "./getDuration.js";
+export { Phase, benchmarkDuration, collectDurationData } from "./getDuration.js";

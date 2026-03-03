@@ -19,7 +19,7 @@ export interface MemoryUseCallbacks {
 /**
  * A operation which uses memory in a way that can be measured.
  * @remarks
- * Use with {@link benchmarkMemory} to measure the memory usage of the operation.
+ * Use with {@link benchmarkMemoryUse} to measure the memory usage of the operation.
  * @public
  */
 export interface MemoryUseBenchmark {

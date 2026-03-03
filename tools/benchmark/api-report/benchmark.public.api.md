@@ -4,31 +4,26 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import type { Test } from 'mocha';
 
-// @public
-export function benchmark(args: BenchmarkArguments): Test;
+// @public @deprecated
+export function benchmark(args: Titled & DurationBenchmark & BenchmarkDescription & MochaExclusiveOptions): Test;
 
 // @public
-export type BenchmarkArguments = Titled & (BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
-
-// @public
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {
+export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, DurationBenchmarkOptions {
 }
 
 // @public
-export interface BenchmarkAsyncFunction extends BenchmarkOptions {
+export interface BenchmarkAsyncFunction extends DurationBenchmarkOptions {
     benchmarkFnAsync: () => Promise<unknown>;
 }
 
-// @public
-export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
+// @public @deprecated
+export const benchmarkCustom: typeof benchmarkIt;
 
 // @public
 export interface BenchmarkData {
-    customData: CustomData;
+    data: CollectedData;
     elapsedSeconds: number;
 }
 
@@ -39,15 +34,26 @@ export interface BenchmarkDescription {
 }
 
 // @public
+export function benchmarkDuration(args: DurationBenchmark): BenchmarkDescription & BenchmarkFunction;
+
+// @public
 export interface BenchmarkError {
     error: string;
 }
 
 // @public
-export function benchmarkMemory(testObject: IMemoryTestObject): Test;
+export interface BenchmarkFunction {
+    readonly run: <TimeStamp>(timer: Timer<TimeStamp>) => CollectedData | Promise<CollectedData>;
+}
 
 // @public
-export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments, BenchmarkTimingOptions, OnBatch, BenchmarkDescription {
+export function benchmarkIt(options: BenchmarkOptions): Test;
+
+// @public
+export function benchmarkMemoryUse(args: MemoryUseBenchmark): BenchmarkDescription & BenchmarkFunction;
+
+// @public
+export interface BenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions, BenchmarkFunction {
 }
 
 // @public
@@ -61,15 +67,12 @@ export class BenchmarkReporter {
 // @public
 export type BenchmarkResult = BenchmarkError | BenchmarkData;
 
-// @public (undocumented)
-export type BenchmarkRunningOptions = BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments;
-
 // @public
-export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions {
+export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, DurationBenchmarkOptions {
 }
 
 // @public
-export interface BenchmarkSyncFunction extends BenchmarkOptions {
+export interface BenchmarkSyncFunction extends DurationBenchmarkOptions {
     benchmarkFn: () => void;
 }
 
@@ -101,24 +104,32 @@ export enum BenchmarkType {
     Perspective = 0
 }
 
+// @public
+export function collectDurationData(args: DurationBenchmark): Promise<CollectedData>;
+
+// @public
+export interface CollectedData {
+    readonly additional: readonly Measurement[];
+    readonly primary: Required<Measurement>;
+}
+
+// @public
+export function collectMemoryUseData(args: MemoryUseBenchmark): Promise<CollectedData>;
+
 // @public (undocumented)
 export interface CustomBenchmark extends BenchmarkTimingOptions {
     benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
 }
 
 // @public (undocumented)
-export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark & BenchmarkDescription;
+export type CustomBenchmarkArguments = CustomBenchmark & BenchmarkDescription;
+
+// @public (undocumented)
+export type DurationBenchmark = BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments;
 
 // @public
-export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions {
-    run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
+export interface DurationBenchmarkOptions extends HookArguments, BenchmarkTimingOptions, OnBatch {
 }
-
-// @public
-export type CustomData = Record<string, {
-    rawValue: unknown;
-    formattedValue: string;
-}>;
 
 // @public
 export function geometricMean(values: number[]): number;
@@ -133,33 +144,38 @@ export interface HookArguments {
 export type HookFunction = () => void | Promise<unknown>;
 
 // @public
-export interface IMeasurementReporter {
-    addMeasurement(key: string, value: number): void;
-}
-
-// @public (undocumented)
-export interface IMemoryTestObject extends MemoryTestObjectProps {
-    after?: HookFunction;
-    afterIteration?: HookFunction;
-    before?: HookFunction;
-    beforeIteration?: HookFunction;
-    run(): Promise<unknown>;
-}
-
-// @public
 export const isInPerformanceTestingMode: boolean;
 
 // @public
 export function isResultError(result: BenchmarkResult): result is BenchmarkError;
 
-// @public (undocumented)
-export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, BenchmarkDescription {
-    readonly allowedDeviationBytes?: number;
-    readonly baselineMemoryUsage?: number;
-    readonly maxBenchmarkDurationSeconds?: number;
-    readonly maxRelativeMarginOfError?: number;
-    readonly minSampleCount?: number;
-    readonly samplePercentageToUse?: number;
+// @public
+export interface Measurement {
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly type?: ValueType;
+    // (undocumented)
+    readonly units?: string;
+    // (undocumented)
+    readonly value: number;
+}
+
+// @public
+export interface MemoryUseBenchmark {
+    benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
+}
+
+// @public
+export interface MemoryUseCallbacks {
+    // (undocumented)
+    afterDeallocation(): Promise<void>;
+    // (undocumented)
+    beforeAllocation(): Promise<void>;
+    // (undocumented)
+    continue(): boolean;
+    // (undocumented)
+    whileAllocated(): Promise<void>;
 }
 
 // @public
@@ -189,9 +205,6 @@ export function prettyNumber(num: number, numDecimals?: number): string;
 export function qualifiedTitle(args: BenchmarkDescription & Titled & {
     testType?: TestType | undefined;
 }): string;
-
-// @public
-export function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData>;
 
 // @public
 export interface Stats {
@@ -229,5 +242,13 @@ export function validateBenchmarkArguments(args: BenchmarkSyncArguments | Benchm
     isAsync: false;
     benchmarkFn: () => void;
 };
+
+// @public
+export enum ValueType {
+    // (undocumented)
+    LargerIsBetter = 1,
+    // (undocumented)
+    SmallerIsBetter = 0
+}
 
 ```

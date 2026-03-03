@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { benchmark } from "..";
 import { BenchmarkType, isParentProcess } from "../Configuration";
-import { type BenchmarkTimer, Phase, runBenchmark } from "../durationBenchmarking/index.js";
+import { type BenchmarkTimer, Phase, collectDurationData } from "../durationBenchmarking/index.js";
 import {
 	benchmarkDuration,
 	runBenchmarkAsync,
@@ -54,7 +54,7 @@ describe("`benchmark` function", () => {
 	});
 
 	it("runBenchmark sync", async () => {
-		await runBenchmark({
+		await collectDurationData({
 			maxBenchmarkDurationSeconds: 0.1,
 			minBatchCount: 1,
 			minBatchDurationSeconds: 0,
@@ -76,7 +76,7 @@ describe("`benchmark` function", () => {
 	});
 
 	it("runBenchmark async", async () => {
-		await runBenchmark({
+		await collectDurationData({
 			maxBenchmarkDurationSeconds: 0.1,
 			minBatchCount: 1,
 			minBatchDurationSeconds: 0,

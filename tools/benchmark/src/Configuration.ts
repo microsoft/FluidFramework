@@ -247,6 +247,11 @@ export type HookFunction = () => void | Promise<unknown>;
  * // cycles 40
  * // teardown goes here
  * ```
+ *
+ * @privateRemarks
+ * Replace these with a patter pattern.
+ * Either remove them (and rely on benchmark to do its setup and teardown calling the collect function in the middle),
+ * or provide a parameter from before to the measured function and after.
  * @public
  */
 export interface HookArguments {
@@ -339,3 +344,15 @@ export const userCategoriesSplitter = ":ff-cat:";
 export interface ReporterOptions {
 	reportDir?: string;
 }
+
+/**
+ * Options to configure a benchmark test.
+ * @remarks
+ * See {@link benchmarkIt}.
+ * @public
+ */
+export interface BenchmarkOptions
+	extends Titled,
+		BenchmarkDescription,
+		MochaExclusiveOptions,
+		BenchmarkFunction {}

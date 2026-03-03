@@ -39,8 +39,14 @@ import * as path from "node:path";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import { isResultError, type BenchmarkData, type BenchmarkResult } from "./ResultTypes";
-import { pad, prettyNumber } from "./RunnerUtilities";
+import {
+	isResultError,
+	ValueType,
+	type BenchmarkData,
+	type BenchmarkResult,
+	type Measurement,
+} from "./ResultTypes";
+import { geometricMean, pad, prettyNumber } from "./RunnerUtilities";
 
 interface BenchmarkResults {
 	table: Table;
@@ -75,6 +81,7 @@ export class BenchmarkReporter {
 	private totalSumRuntimeSeconds = 0;
 	private totalBenchmarkCount = 0;
 	private totalSuccessfulBenchmarkCount = 0;
+	private totalGeometricMeanProductValues: number[] = [];
 
 	private readonly outputDirectory: string;
 
@@ -124,10 +131,17 @@ export class BenchmarkReporter {
 		} else {
 			table.cell("total time (s)", prettyNumber(result.elapsedSeconds, 2));
 
-			const customData = result.customData;
-			for (const [key, val] of Object.entries(customData)) {
-				const displayValue = val.formattedValue;
-				table.cell(key, displayValue, Table.padLeft);
+			function measurementCell(measurement: Measurement, primary: boolean): void {
+				const text = measurement.units
+					? `${prettyNumber(measurement.value)} ${measurement.units}`
+					: prettyNumber(measurement.value);
+				const final = primary ? chalk.bold(text) : text;
+				table.cell(measurement.name, final, Table.padLeft);
+			}
+
+			measurementCell(result.data.primary, true);
+			for (const measurement of result.data.additional) {
+				measurementCell(measurement, false);
 			}
 		}
 
@@ -178,6 +192,7 @@ export class BenchmarkReporter {
 		let sumRuntime = 0;
 		let countSuccessful = 0;
 		let countFailure = 0;
+		const geometricMeanProductValues: number[] = [];
 
 		for (const [, value] of benchmarksMap) {
 			if (isResultError(value)) {
@@ -185,6 +200,10 @@ export class BenchmarkReporter {
 			} else {
 				sumRuntime += value.elapsedSeconds;
 				countSuccessful++;
+				const primary = value.data.primary;
+				geometricMeanProductValues.push(
+					primary.type === ValueType.SmallerIsBetter ? primary.value : 1 / primary.value,
+				);
 			}
 		}
 
@@ -215,12 +234,18 @@ export class BenchmarkReporter {
 			`${prettyNumber(sumRuntime, 1)}`,
 			Table.padLeft,
 		);
+		this.overallSummaryTable.cell(
+			"geometric mean of primary measurement (smaller is better)",
+			`${prettyNumber(geometricMean(geometricMeanProductValues))}`,
+			Table.padLeft,
+		);
 		this.overallSummaryTable.newRow();
 
 		// Update accumulators for overall totals
 		this.totalBenchmarkCount += benchmarksMap.size;
 		this.totalSuccessfulBenchmarkCount += countSuccessful;
 		this.totalSumRuntimeSeconds += sumRuntime;
+		this.totalGeometricMeanProductValues.push(...geometricMeanProductValues);
 	}
 
 	/**
@@ -242,6 +267,11 @@ export class BenchmarkReporter {
 		this.overallSummaryTable.cell(
 			"total time (s)",
 			`${prettyNumber(this.totalSumRuntimeSeconds, 1)}`,
+			Table.padLeft,
+		);
+		this.overallSummaryTable.cell(
+			"geometric mean of primary measurement (smaller is better)",
+			`${prettyNumber(geometricMean(this.totalGeometricMeanProductValues))}`,
 			Table.padLeft,
 		);
 		this.overallSummaryTable.newRow();
@@ -295,7 +325,7 @@ export class BenchmarkReporter {
 
 		// As the name suggests, `customData` should only contain custom data that are specific to the benchmark test.
 		// If there are any other properties that are global to the benchmark test (e.g., `elapsedSeconds`), they should be added in the `benchMarkOutput` object.
-		for (const [key, value] of Object.entries(benchmark.customData)) {
+		for (const [key, value] of Object.entries(benchmark.data)) {
 			customData[key] = value.rawValue;
 		}
 

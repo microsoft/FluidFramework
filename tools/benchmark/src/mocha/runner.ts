@@ -5,35 +5,18 @@
 
 import type { Test } from "mocha";
 
-import type { Titled, MochaExclusiveOptions } from "../Configuration";
 import { isParentProcess } from "../Configuration";
 import type { BenchmarkResult } from "../ResultTypes";
 import { fail } from "../assert.js";
 
 import { emitResultsMocha } from "./runnerUtilities";
-import { captureResults } from "../ResultUtilities";
-
-/**
- * This is a wrapper for Mocha's it function that can run the body in a child process,
- * and write status from the run to the reporter.
- * @deprecated Use {@link benchmarkIt}.
- */
-export function supportParentProcess(
-	args: MochaExclusiveOptions & Titled & { run: () => Promise<BenchmarkResult> },
-): Test {
-	const itFunction = args.only === true ? it.only : it;
-	const test = itFunction(args.title, async () => {
-		await supportParentProcessInner(test, captureResults(args.run));
-	});
-	return test;
-}
 
 /**
  * Wrapper for the contents of a mocha test that supports running in a child process and emitting results to the mocha reporter.
  */
 export async function supportParentProcessInner(
 	test: Test,
-	run: () => Promise<{ result: BenchmarkResult<unknown>; exception?: Error }>,
+	run: () => Promise<{ result: BenchmarkResult; exception?: Error }>,
 ): Promise<void> {
 	await emitResultsMocha(async () => {
 		if (isParentProcess) {

@@ -25,15 +25,16 @@ export {
 	type Titled,
 	type BenchmarkDescription,
 	TestType,
+	type BenchmarkFunction,
+	type BenchmarkOptions,
 } from "./Configuration";
 export {
-	type BenchmarkArguments,
 	type BenchmarkSyncArguments,
 	type BenchmarkAsyncArguments,
-	type BenchmarkOptions,
+	type DurationBenchmark,
+	type DurationBenchmarkOptions,
 	validateBenchmarkArguments,
 	type BenchmarkTimingOptions,
-	type BenchmarkRunningOptions,
 	type BenchmarkSyncFunction,
 	type BenchmarkAsyncFunction,
 	type OnBatch,
@@ -41,27 +42,20 @@ export {
 	type BenchmarkTimer,
 	type CustomBenchmarkArguments,
 	Phase,
-	runBenchmark,
+	collectDurationData,
+	benchmarkDuration,
 } from "./durationBenchmarking/index";
-export {
-	benchmark,
-	benchmarkMemory,
-	benchmarkCustom,
-	benchmarkIt,
-	type IMemoryTestObject,
-	type MemoryTestObjectProps,
-	type CustomBenchmarkOptions,
-	type IMeasurementReporter,
-} from "./mocha";
+export { benchmarkIt } from "./mocha";
 export { prettyNumber, geometricMean } from "./RunnerUtilities";
 export { BenchmarkReporter } from "./Reporter";
 export {
 	type BenchmarkData,
 	type BenchmarkError,
 	type BenchmarkResult,
-	type CustomData,
 	isResultError,
 	CollectedData,
+	Measurement,
+	ValueType,
 } from "./ResultTypes";
 export type { Stats } from "./sampling";
 export type { Timer } from "./timer";
@@ -72,3 +66,5 @@ export {
 	benchmarkMemoryUse,
 	collectMemoryUseData,
 } from "./memoryBenchmarking/index.js";
+
+export { benchmark, benchmarkCustom } from "./legacy.js";

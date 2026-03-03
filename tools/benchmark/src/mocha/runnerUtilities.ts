@@ -13,7 +13,7 @@ import { isInPerformanceTestingMode } from "../Configuration";
  * This handles mocha-specific result emission.
  */
 export async function emitResultsMocha(
-	f: () => Promise<{ result: BenchmarkResult<unknown>; exception?: Error }>,
+	f: () => Promise<{ result: BenchmarkResult; exception?: Error }>,
 	test: Test,
 ): Promise<void> {
 	const { exception, result } = await f();
