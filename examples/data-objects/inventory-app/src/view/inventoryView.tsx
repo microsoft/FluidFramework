@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/react/alpha";
 import { Tree } from "fluid-framework";
 import { type FC, type JSX, useCallback } from "react";
+
 import type { Inventory } from "../schema.js";
 import { Part } from "../schema.js";
 

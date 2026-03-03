@@ -6,6 +6,7 @@
 import { Button } from "@fluentui/react-components";
 import { ChevronDownFilled, ChevronUpFilled, TargetEditFilled } from "@fluentui/react-icons";
 import { type FC, type PropsWithChildren, type ReactElement, useState } from "react";
+
 import { Collapsible } from "./collapsible.cjs";
 import type { IDataObjectGridItemEntry, ISingleHandleItem } from "./dataObjectRegistry.js";
 import { iconMap } from "./icons.js";

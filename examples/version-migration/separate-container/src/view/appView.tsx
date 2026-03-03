@@ -5,6 +5,7 @@
 
 import type { IMigrator } from "@fluid-example/migration-tools/alpha";
 import { type FC, useEffect, useState } from "react";
+
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 import { InventoryListView } from "./inventoryView.js";

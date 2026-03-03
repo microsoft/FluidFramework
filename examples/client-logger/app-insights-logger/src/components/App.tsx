@@ -10,6 +10,7 @@ import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-sta
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import { type ReactElement, useEffect, useState } from "react";
+
 import {
 	type ContainerInfo,
 	createFluidContainer,

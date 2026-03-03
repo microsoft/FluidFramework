@@ -5,6 +5,7 @@
 
 import { type IColor, InkCanvas } from "@fluid-experimental/ink";
 import { type FC, useEffect, useRef, useState } from "react";
+
 import type { Canvas } from "./canvas.js";
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.less";

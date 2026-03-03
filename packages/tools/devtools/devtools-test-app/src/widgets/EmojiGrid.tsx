@@ -8,6 +8,7 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { type ReactElement, useEffect, useState } from "react";
+
 import { EmojiButton } from "./EmojiButton.js";
 
 /**

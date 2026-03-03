@@ -12,6 +12,7 @@ import {
 import { useTree } from "@fluidframework/react/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { type ChangeEvent, type FC, useEffect, useState } from "react";
+
 import type { TodoItem } from "../Schema.js";
 
 const useStyles = makeStyles({

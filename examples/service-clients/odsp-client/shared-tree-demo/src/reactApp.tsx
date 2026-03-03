@@ -13,6 +13,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+
 import type { App, Letter } from "./schema.js";
 
 export function Explanation(): JSX.Element {

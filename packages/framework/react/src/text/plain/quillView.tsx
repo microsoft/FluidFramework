@@ -6,6 +6,7 @@
 import type { TextAsTree } from "@fluidframework/tree/internal";
 import Quill from "quill";
 import { type FC, useEffect, useRef } from "react";
+
 import type { PropTreeNode } from "../../propNode.js";
 import { withMemoizedTreeObservations } from "../../useTree.js";
 

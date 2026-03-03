@@ -21,6 +21,7 @@ import type {
 } from "@fluidframework/tree";
 import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
 import { type FC, type JSX, useCallback, useEffect, useState } from "react";
+
 import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
 
 /**

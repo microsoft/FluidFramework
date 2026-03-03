@@ -4,6 +4,7 @@
  */
 
 import { type FC, useEffect, useState } from "react";
+
 import { Stats } from "../stats.js";
 import type { IAppState, IBubble } from "../types.js";
 

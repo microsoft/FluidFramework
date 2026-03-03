@@ -23,6 +23,7 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useEffect, useState } from "react";
+
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";

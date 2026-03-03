@@ -41,6 +41,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";

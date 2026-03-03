@@ -48,6 +48,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
