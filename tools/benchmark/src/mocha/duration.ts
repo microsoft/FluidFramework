@@ -25,6 +25,7 @@ import { supportParentProcess } from "./runner";
  * Tests created with this function get tagged with '\@ExecutionTime', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by filtering on that value.
  *
+ * @deprecated Use {@link benchmarkIt}.
  * @public
  */
 export function benchmark(args: BenchmarkArguments): Test {

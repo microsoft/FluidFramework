@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { BenchmarkData } from "../ResultTypes";
+import { assert } from "../assert";
+import { type BenchmarkDescription, type BenchmarkFunction } from "../Configuration";
+import { ValueType, type BenchmarkData, type CollectedData } from "../ResultTypes";
 import { prettyNumber } from "../RunnerUtilities";
 import { getArrayStatistics } from "../sampling";
 import { type Timer, timer, timerWithResolution } from "../timer";
@@ -296,4 +298,36 @@ async function doBatchAsync(
  */
 function tryRunGarbageCollection(): void {
 	global?.gc?.();
+}
+
+/**
+ * Configures a benchmark that measures duration and returns the results in a format suitable for reporting via {@link benchmarkIt}.
+ * @remarks
+ * This infers an appropriate batch size to try to get accurate measurements, then sample many batches to estimate the mean duration.
+ * @public
+ */
+export function benchmarkDuration(
+	args: BenchmarkRunningOptions,
+): BenchmarkDescription & BenchmarkFunction {
+	return {
+		category: "Duration",
+		run: async (): Promise<CollectedData> => {
+			const data = await runBenchmark(args);
+			const period = data.customData["Period (ns/op)"].rawValue;
+			assert(
+				typeof period === "number",
+				"Expected 'Period (ns/op)' custom data to be a number",
+			);
+			return {
+				primary: {
+					name: "Period",
+					value: period,
+					units: "ns/op",
+					type: ValueType.SmallerIsBetter,
+				},
+				// TODO: add other properties from data.customData as additional measurements.
+				additional: [],
+			};
+		},
+	};
 }

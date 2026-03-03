@@ -26,3 +26,19 @@ export function assert(condition: boolean, message: string): asserts condition {
 export function fail(message: string): never {
 	throw new Error(`Failed assertion in @fluid-tools/benchmark: ${message}`);
 }
+
+/**
+ * Throws error about invalid use of the benchmark package if the condition is false.
+ */
+export function assertProperUse(condition: boolean, message: string): asserts condition {
+	if (!condition) {
+		failProperUse(message);
+	}
+}
+
+/**
+ * Throws error about invalid use of the benchmark package.
+ */
+export function failProperUse(message: string): never {
+	throw new Error(`Invalid use of @fluid-tools/benchmark: ${message}`);
+}

@@ -8,7 +8,13 @@ import { strict as assert } from "node:assert";
 import { benchmark } from "..";
 import { BenchmarkType, isParentProcess } from "../Configuration";
 import { type BenchmarkTimer, Phase, runBenchmark } from "../durationBenchmarking/index.js";
-import { runBenchmarkAsync, runBenchmarkSync } from "../durationBenchmarking/getDuration.js";
+import {
+	benchmarkDuration,
+	runBenchmarkAsync,
+	runBenchmarkSync,
+} from "../durationBenchmarking/getDuration.js";
+import { benchmarkIt } from "../mocha";
+import { ValueType, type CollectedData } from "../ResultTypes";
 
 function doLoop(upperLimit: number): void {
 	let i = 0;
@@ -203,6 +209,35 @@ describe("`benchmark` function", () => {
 		minBatchCount: 1,
 		maxBenchmarkDurationSeconds: 0,
 		startPhase: Phase.CollectData,
+	});
+
+	describe("benchmarkIt", () => {
+		benchmarkIt({
+			title: "benchmarkIt test",
+			run: (): CollectedData => {
+				return {
+					primary: {
+						name: "the data",
+						value: 1,
+						units: "numbers",
+						type: ValueType.SmallerIsBetter,
+					},
+					additional: [],
+				};
+			},
+		});
+
+		benchmarkIt({
+			title: "benchmarkDuration test",
+			...benchmarkDuration({
+				minBatchDurationSeconds: 0,
+				minBatchCount: 1,
+				maxBenchmarkDurationSeconds: 0,
+				benchmarkFn: () => {
+					// no-op
+				},
+			}),
+		});
 	});
 });
 

@@ -4,6 +4,8 @@
  */
 
 import { fail } from "./assert.js";
+import type { CollectedData } from "./ResultTypes.js";
+import type { Timer } from "./timer.js";
 
 /**
  * Kinds of benchmarks.
@@ -118,6 +120,18 @@ export interface BenchmarkDescription {
 	 * only execute specific tests.
 	 */
 	category?: string;
+}
+
+/**
+ * Options to configure a benchmark that reports custom measurements.
+ *
+ * @public
+ */
+export interface BenchmarkFunction {
+	/**
+	 * Runs the benchmark.
+	 */
+	readonly run: <TimeStamp>(timer: Timer<TimeStamp>) => CollectedData | Promise<CollectedData>;
 }
 
 /**
@@ -280,9 +294,11 @@ export function qualifiedTitle(
 
 /**
  * Determines if we are in a mode where we actually want to run benchmarks and output data.
- *
+ * @remarks
  * When not in performanceTestingMode, performance tests should be run as correctness tests, and should be
  * adjusted to run quickly (ex: smaller iteration counts or data sizes).
+ *
+ * Use the `--perfMode` flag to enable.
  * @public
  */
 export const isInPerformanceTestingMode = process.argv.includes("--perfMode");

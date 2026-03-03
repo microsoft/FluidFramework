@@ -6,17 +6,21 @@
 import type { Test } from "mocha";
 
 import type { BenchmarkResult } from "../ResultTypes";
+import { isInPerformanceTestingMode } from "../Configuration";
 
 /**
  * Executes a function, emits the results to a mocha test, and throws any exception.
  * This handles mocha-specific result emission.
  */
 export async function emitResultsMocha(
-	f: () => Promise<{ result: BenchmarkResult; exception?: Error }>,
+	f: () => Promise<{ result: BenchmarkResult<unknown>; exception?: Error }>,
 	test: Test,
 ): Promise<void> {
 	const { exception, result } = await f();
-	test.emit("benchmark end", result);
+	// Only emit results in perfMode
+	if (isInPerformanceTestingMode) {
+		test.emit("benchmark end", result);
+	}
 	if (exception !== undefined) {
 		throw exception;
 	}

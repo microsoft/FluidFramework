@@ -13,7 +13,7 @@ export type CustomData = Record<string, { rawValue: unknown; formattedValue: str
  * Result of successfully running a benchmark.
  * @public
  */
-export interface BenchmarkData {
+export interface BenchmarkData<T = CustomData> {
 	/**
 	 * Time it took to run the benchmark in seconds.
 	 * @remarks
@@ -25,7 +25,7 @@ export interface BenchmarkData {
 	/**
 	 * Custom data.
 	 */
-	customData: CustomData;
+	customData: T;
 }
 
 /**
@@ -43,7 +43,7 @@ export interface BenchmarkError {
  * Result of trying to run a benchmark.
  * @public
  */
-export type BenchmarkResult = BenchmarkError | BenchmarkData;
+export type BenchmarkResult<T = CustomData> = BenchmarkError | BenchmarkData<T>;
 
 /**
  * Provides type narrowing when the provided result is a {@link BenchmarkError}.
@@ -51,4 +51,31 @@ export type BenchmarkResult = BenchmarkError | BenchmarkData;
  */
 export function isResultError(result: BenchmarkResult): result is BenchmarkError {
 	return (result as Partial<BenchmarkError>).error !== undefined;
+}
+
+export interface Measurement {
+	readonly name: string;
+	readonly value: number;
+	readonly units?: string;
+	readonly type?: ValueType;
+}
+
+export enum ValueType {
+	SmallerIsBetter,
+	LargerIsBetter,
+}
+
+/**
+ * Custom data type for a benchmark.
+ * @public
+ */
+export interface CollectedData {
+	/**
+	 * Will be used for evaluating improvements and regressions.
+	 */
+	readonly primary: Required<Measurement>;
+	/**
+	 * Additional stats to be included in the output, but won't be used for evaluating improvements/regressions.
+	 */
+	readonly additional: readonly Measurement[];
 }

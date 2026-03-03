@@ -47,6 +47,7 @@ export {
 	benchmark,
 	benchmarkMemory,
 	benchmarkCustom,
+	benchmarkIt,
 	type IMemoryTestObject,
 	type MemoryTestObjectProps,
 	type CustomBenchmarkOptions,
@@ -60,6 +61,14 @@ export {
 	type BenchmarkResult,
 	type CustomData,
 	isResultError,
+	CollectedData,
 } from "./ResultTypes";
 export type { Stats } from "./sampling";
 export type { Timer } from "./timer";
+
+export {
+	MemoryUseBenchmark,
+	MemoryUseCallbacks,
+	benchmarkMemoryUse,
+	collectMemoryUseData,
+} from "./memoryBenchmarking/index.js";

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { isInPerformanceTestingMode } from "./Configuration";
+
 /*
  * Common code for benchmarks which collect samples to approximate a value.
  * Typically this involves running the benchmark multiple times, and collecting many approximate values,
@@ -154,4 +156,11 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 		samples: finalSamples,
 		marginOfErrorPercent: rme,
 	};
+}
+
+export function brandMeasurementNameForMode(name: string): string {
+	if (isInPerformanceTestingMode) {
+		return name;
+	}
+	return `${name} (Inaccurate: not in Performance Testing Mode. Set --perfMode flag to enable accurate measurements.)`;
 }

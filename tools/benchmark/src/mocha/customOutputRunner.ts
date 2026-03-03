@@ -5,8 +5,12 @@
 
 import type { Test } from "mocha";
 
-import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
-import type { CustomData } from "../ResultTypes";
+import {
+	type BenchmarkDescription,
+	type MochaExclusiveOptions,
+	type Titled,
+} from "../Configuration";
+import { type CustomData } from "../ResultTypes";
 import { captureResults } from "../ResultUtilities";
 import { prettyNumber } from "../RunnerUtilities";
 
@@ -14,7 +18,7 @@ import { emitResultsMocha } from "./runnerUtilities";
 
 /**
  * Options to configure a benchmark that reports custom measurements.
- *
+ * @deprecated Use {@link benchmarkIt}.
  * @public
  */
 export interface CustomBenchmarkOptions
@@ -34,7 +38,7 @@ export interface CustomBenchmarkOptions
  * @remarks
  * Tests created with this function get tagged with '\@CustomBenchmark', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by filtering on that value.
- *
+ * @deprecated Use {@link benchmarkIt}.
  * @public
  */
 export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
@@ -68,6 +72,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
  * @see {@link benchmarkCustom}
  * @see {@link CustomBenchmarkOptions.run}
  *
+ * @deprecated Use {@link benchmarkIt}.
  * @public
  */
 export interface IMeasurementReporter {

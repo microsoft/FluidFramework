@@ -14,3 +14,4 @@ export {
 	type CustomBenchmarkOptions,
 	type IMeasurementReporter,
 } from "./customOutputRunner";
+export { benchmarkIt } from "./benchmarkIt.js";
