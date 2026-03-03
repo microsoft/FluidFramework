@@ -47,7 +47,7 @@ export function toTypeString(
 			Node.isClassDeclaration(node))
 	) {
 		// does the type take generics that don't have defaults?
-		// eslint-disable-next-line unicorn/no-lonely-if -- logic is clearer when grouped this way.
+
 		if (
 			node
 				.getTypeParameters()

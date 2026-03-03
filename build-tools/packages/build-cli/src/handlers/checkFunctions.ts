@@ -84,10 +84,12 @@ export const checkBranchName: StateHandlerFunction = async (
 					BaseStateHandler.signalFailure(machine, state);
 					return true;
 				}
+				break;
 			}
 
 			default: {
 				log.errorLog(`Unexpected bump type: ${bumpType}`);
+				break;
 			}
 		}
 	} else {
@@ -125,7 +127,7 @@ export const checkBranchUpToDate: StateHandlerFunction = async (
 	const remote = await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl);
 	const isBranchUpToDate = await gitRepo.isBranchUpToDate(
 		gitRepo.originalBranchName,
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
 		remote!,
 	);
 	if (shouldCheckBranchUpdate === true) {
@@ -245,8 +247,7 @@ export const checkDependenciesInstalled: StateHandlerFunction = async (
 
 	const packagesToCheck = isReleaseGroup(releaseGroup)
 		? context.packagesInReleaseGroup(releaseGroup)
-		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			[context.fullPackageMap.get(releaseGroup)!];
+		: [context.fullPackageMap.get(releaseGroup)!];
 
 	const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
@@ -897,7 +898,6 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 
 	if (isReleaseGroup(releaseGroup)) {
 		BaseStateHandler.signalSuccess(machine, state);
-		// eslint-disable-next-line unicorn/no-negated-condition
 	} else if (context.fullPackageMap.get(releaseGroup) !== undefined) {
 		BaseStateHandler.signalSuccess(machine, state);
 	} else {
@@ -937,8 +937,7 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 	// Get packages to check based on release group or individual package
 	const packagesToCheck = isReleaseGroup(releaseGroup)
 		? context.packagesInReleaseGroup(releaseGroup)
-		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			[context.fullPackageMap.get(releaseGroup)!];
+		: [context.fullPackageMap.get(releaseGroup)!];
 
 	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
 		packagesToCheck,

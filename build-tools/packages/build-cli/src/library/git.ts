@@ -403,7 +403,6 @@ export class Repository implements GitContext {
 		for (const tag of tags) {
 			const ver = getVersionFromTag(tag);
 			if (ver !== undefined && ver !== "" && ver !== null) {
-				// eslint-disable-next-line no-await-in-loop
 				const rawDate = await this.gitClient.show([
 					// Suppress the diff output
 					"-s",

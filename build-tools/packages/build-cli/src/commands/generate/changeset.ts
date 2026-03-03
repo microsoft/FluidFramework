@@ -126,7 +126,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				monorepo.directory ?? context.root,
 				new Map(),
 			);
-			// eslint-disable-next-line @typescript-eslint/no-shadow
+
 			const changesetPath = path.relative(context.root, emptyFile);
 			this.logHr();
 			this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);

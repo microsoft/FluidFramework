@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/no-array-callback-reference */
-
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
@@ -135,7 +133,7 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 				queue.push(updateImports(sources, apiMap, this.logger));
 				if (queue.length >= maxConcurrency) {
 					// naively wait for the first scheduled to finish
-					// eslint-disable-next-line no-await-in-loop
+
 					await queue.shift();
 				}
 			}
@@ -768,7 +766,7 @@ function addUniqueNamedExportsToMap(
 
 async function loadData(dataFile: string, onlyInternal: boolean): Promise<MapData> {
 	// Load the raw data file
-	// eslint-disable-next-line unicorn/no-await-expression-member
+
 	const rawData: string = (await readFile(dataFile)).toString();
 	const apiLevelDataRaw: Record<string, MemberDataRaw[]> = JSON5.parse(rawData);
 

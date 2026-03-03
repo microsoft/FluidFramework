@@ -73,7 +73,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				this.traceError(`error generating done file content, unable to find ${ignoreFile}`);
 				return undefined;
 			}
-		} catch (e) {
+		} catch {
 			this.traceError(`error generating done file content, unable to read ${ignoreFile} file`);
 			return undefined;
 		}

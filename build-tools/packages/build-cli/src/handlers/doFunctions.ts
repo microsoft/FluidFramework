@@ -118,8 +118,7 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 		await FluidRepo.ensureInstalled(
 			isReleaseGroup(releaseGroup)
 				? context.packagesInReleaseGroup(releaseGroup)
-				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[context.fullPackageMap.get(releaseGroup)!],
+				: [context.fullPackageMap.get(releaseGroup)!],
 		);
 		// There were updates, which is considered a failure.
 		BaseStateHandler.signalFailure(machine, state);
@@ -153,10 +152,8 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 	const { bumpType, context, releaseGroup, releaseVersion, shouldInstall } = data;
 
 	const rgRepo = isReleaseGroup(releaseGroup)
-		? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			context.repo.releaseGroups.get(releaseGroup)!
-		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			context.fullPackageMap.get(releaseGroup)!;
+		? context.repo.releaseGroups.get(releaseGroup)!
+		: context.fullPackageMap.get(releaseGroup)!;
 
 	const scheme = detectVersionScheme(releaseVersion);
 	const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);
