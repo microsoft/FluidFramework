@@ -92,17 +92,11 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": skipCjsChecks
-			? ["typetests:gen", "tsc", "api-extractor:esnext"]
-			: ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": skipCjsChecks
-			? ["typetests:gen", "tsc"]
-			: ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test": ["typetests:gen", "tsc", "api-extractor:esnext", ...(skipCjsChecks ? [] : ["api-extractor:commonjs"])],
+		"build:test:cjs": ["typetests:gen", "tsc", ...(skipCjsChecks ? [] : ["api-extractor:commonjs"])],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: skipCjsChecks
-				? ["api-extractor:esnext"]
-				: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: ["api-extractor:esnext", ...(skipCjsChecks ? [] : ["api-extractor:commonjs"])],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
