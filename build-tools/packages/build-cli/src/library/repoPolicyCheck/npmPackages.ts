@@ -1372,7 +1372,12 @@ export const handlers: Handler[] = [
 			}
 			const testScript = scripts.test;
 
-			const splitTestScriptNames = ["test:mocha", "test:jest", "test:realsvc"];
+			const splitTestScriptNames = [
+				"test:mocha",
+				"test:jest",
+				"test:realsvc",
+				"test:playwright",
+			];
 
 			if (testScript === undefined) {
 				if (splitTestScriptNames.some((name) => scripts[name] !== undefined)) {

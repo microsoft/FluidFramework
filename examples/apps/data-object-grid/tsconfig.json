@@ -6,15 +6,8 @@
 		// After the upgrade to React 18 we're getting compilation issues from the .d.ts files of some fluentUi components.
 		// Skipping lib check seems acceptable since this is just an example app.
 		"skipLibCheck": true,
-		"types": [
-			"jest",
-			"puppeteer",
-			"jest-environment-puppeteer",
-			"expect-puppeteer",
-			"react",
-			"react-dom",
-		],
+		"types": ["react", "react-dom"],
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "playwright.config.ts"],
 }
