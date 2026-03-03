@@ -5,9 +5,10 @@
 
 import puppeteer, { Browser, Page } from "puppeteer";
 import { globals } from "../jest.config.cjs";
-import type { IDiceRoller } from "../src/container/index.js";
+import type { IDiceRoller } from "../src/container/diceRoller/index.js";
+import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
 
-describe("app-integration-external-views", () => {
+describe("app-integration-container-views", () => {
 	let browser: Browser;
 	let page: Page;
 
@@ -39,7 +40,9 @@ describe("app-integration-external-views", () => {
 		const diceValueP = page.evaluate(async () => {
 			// Load an additional container, and use it to watch for an expected roll
 			const container = await globalThis.loadAdditionalContainer();
-			const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+			const { getDefaultDataObject } =
+				(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
+			const diceRoller = (await getDefaultDataObject()) as IDiceRoller;
 			return new Promise<number>((resolve) => {
 				diceRoller.events.on("diceRolled", () => resolve(diceRoller.value));
 			});
