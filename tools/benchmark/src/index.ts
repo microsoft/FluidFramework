@@ -46,7 +46,6 @@ export {
 	benchmarkDuration,
 } from "./durationBenchmarking/index";
 export { benchmarkIt } from "./mocha";
-export { prettyNumber, geometricMean } from "./RunnerUtilities";
 export { BenchmarkReporter } from "./Reporter";
 export {
 	type BenchmarkData,

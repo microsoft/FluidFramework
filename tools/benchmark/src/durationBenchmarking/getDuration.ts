@@ -201,10 +201,12 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 				{
 					name: "Batch Count",
 					value: this.samples.length,
+					units: "count",
 				},
 				{
 					name: "Iterations Per Batch",
 					value: this.iterationsPerBatch,
+					units: "count",
 				},
 				{
 					name: "Margin of Error",

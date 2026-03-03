@@ -132,9 +132,6 @@ export interface DurationBenchmarkOptions extends HookArguments, BenchmarkTiming
 }
 
 // @public
-export function geometricMean(values: number[]): number;
-
-// @public
 export interface HookArguments {
     after?: HookFunction | undefined;
     before?: HookFunction | undefined;
@@ -197,9 +194,6 @@ export enum Phase {
     // (undocumented)
     WarmUp = 0
 }
-
-// @public
-export function prettyNumber(num: number, numDecimals?: number): string;
 
 // @public
 export function qualifiedTitle(args: BenchmarkDescription & Titled & {

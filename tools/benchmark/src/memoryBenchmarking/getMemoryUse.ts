@@ -156,6 +156,7 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 			{
 				name: "Samples",
 				value: meanStats.samples.length,
+				units: "count",
 			},
 			{
 				name: "Margin of Error",

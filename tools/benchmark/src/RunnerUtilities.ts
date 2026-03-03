@@ -4,6 +4,7 @@
  */
 
 import { assert } from "./assert.js";
+import type { Measurement } from "./ResultTypes.js";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
@@ -21,7 +22,6 @@ export const pad = (num: number, chr = " "): string => Array.from({ length: num 
  * Nicely format a decimal number to make it human-readable.
  * @param num - Number to format
  * @param numDecimals - Number of digits after the decimal point to retain
- * @public
  */
 export function prettyNumber(num: number, numDecimals = 3): string {
 	// Split the string to determine parts before and after the decimal
@@ -39,7 +39,6 @@ export function prettyNumber(num: number, numDecimals = 3): string {
 /**
  * Computes the mean of a number of geometric values. All values must be greater than 0.
  * @param values - Set of values whose geometric mean should be computed.
- * @public
  */
 export function geometricMean(values: number[]): number {
 	// Compute the geometric mean of values, but do it using log and exp to reduce overflow/underflow.
@@ -49,4 +48,33 @@ export function geometricMean(values: number[]): number {
 		sum += Math.log(value);
 	}
 	return Math.exp(sum / values.length);
+}
+
+/**
+ * Formats a measurement for display, including appropriate units and number formatting.
+ * @param measurement - The measurement to format.
+ * @remarks
+ * This special cases several well known units.
+ */
+export function formatMeasurementValue(measurement: Measurement): string {
+	if (measurement.units === "count") {
+		assert(Number.isInteger(measurement.value), "expected integer value for count measurement");
+		return `${prettyNumber(measurement.value, 0)}`;
+	}
+	if (measurement.units === "bytes") {
+		// For bytes, use binary prefixes
+		const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+		let value = measurement.value;
+		let unitIndex = 0;
+		while (value >= 1024 && unitIndex < units.length - 1) {
+			value /= 1024;
+			unitIndex++;
+		}
+		return `${prettyNumber(value, 2)} ${units[unitIndex]}`;
+	}
+	if (measurement.units === "%") {
+		return `${prettyNumber(measurement.value, 2)}%`;
+	}
+
+	return `${prettyNumber(measurement.value)}${measurement.units ? ` ${measurement.units}` : ""}`;
 }

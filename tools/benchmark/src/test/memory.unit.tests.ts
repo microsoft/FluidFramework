@@ -6,9 +6,9 @@
 import { benchmarkMemoryUse } from "../memoryBenchmarking";
 import { benchmarkIt } from "../mocha";
 
-describe("`benchmarkMemory` function 2", () => {
+describe("memory use", () => {
 	benchmarkIt({
-		title: "benchmarkMemory test",
+		title: "small array",
 		...benchmarkMemoryUse({
 			benchmarkFn: async (callbacks) => {
 				const a: number[] = [];
@@ -16,6 +16,25 @@ describe("`benchmarkMemory` function 2", () => {
 					await callbacks.beforeAllocation();
 
 					a.length = 100;
+					a.fill(0);
+					await callbacks.whileAllocated();
+					a.length = 0;
+
+					await callbacks.afterDeallocation();
+				}
+			},
+		}),
+	});
+
+	benchmarkIt({
+		title: "large array",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (callbacks) => {
+				const a: number[] = [];
+				while (callbacks.continue()) {
+					await callbacks.beforeAllocation();
+
+					a.length = 10000;
 					a.fill(0);
 					await callbacks.whileAllocated();
 					a.length = 0;

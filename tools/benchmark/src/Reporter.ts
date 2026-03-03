@@ -46,7 +46,7 @@ import {
 	type BenchmarkResult,
 	type Measurement,
 } from "./ResultTypes";
-import { geometricMean, pad, prettyNumber } from "./RunnerUtilities";
+import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./RunnerUtilities";
 
 interface BenchmarkResults {
 	table: Table;
@@ -129,12 +129,18 @@ export class BenchmarkReporter {
 		if (isResultError(result)) {
 			table.cell("error", result.error);
 		} else {
-			table.cell("total time (s)", prettyNumber(result.elapsedSeconds, 2));
+			table.cell(
+				"Test Duration",
+				formatMeasurementValue({
+					value: result.elapsedSeconds,
+					units: "seconds",
+					type: ValueType.SmallerIsBetter,
+					name: "Test Duration",
+				}),
+			);
 
 			function measurementCell(measurement: Measurement, primary: boolean): void {
-				const text = measurement.units
-					? `${prettyNumber(measurement.value)} ${measurement.units}`
-					: prettyNumber(measurement.value);
+				const text = formatMeasurementValue(measurement);
 				const final = primary ? chalk.bold(text) : text;
 				table.cell(measurement.name, final, Table.padLeft);
 			}
