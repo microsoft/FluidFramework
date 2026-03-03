@@ -9,6 +9,7 @@ import {
 	TreeItemLayout as FluentTreeItemLayout,
 } from "@fluentui/react-components";
 import { Children, type PropsWithChildren, type ReactElement } from "react";
+
 /**
  * Input to {@link TreeItem}
  */

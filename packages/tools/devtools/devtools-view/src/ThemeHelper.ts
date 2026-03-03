@@ -10,6 +10,7 @@ import {
 	webLightTheme,
 } from "@fluentui/react-components";
 import { createContext, type Dispatch, type SetStateAction, useContext } from "react";
+
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";
 teamsHighContrastTheme.colorCompoundBrandForeground1 = "#000";
