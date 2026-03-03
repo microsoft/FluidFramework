@@ -13,10 +13,6 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"files": [
-		"lib/**/*",
-		"!**/test/**"
-	],
 	"exports": {
 		".": {
 			"import": {
@@ -25,6 +21,10 @@
 			}
 		}
 	},
+	"files": [
+		"lib/**/*",
+		"!**/test/**"
+	],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
