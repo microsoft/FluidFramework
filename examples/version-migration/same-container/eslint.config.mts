@@ -7,6 +7,14 @@ import type { Linter } from "eslint";
 import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
 import sharedConfig from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [...minimalDeprecated, ...sharedConfig];
+const config: Linter.Config[] = [
+	...minimalDeprecated, ...sharedConfig,
+	{
+		// TODO: remove this override once eslint-config-fluid has been updated to disable this rule.
+		rules: {
+			"react/react-in-jsx-scope": "off",
+		},
+	},
+];
 
 export default config;
