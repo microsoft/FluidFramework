@@ -469,7 +469,7 @@ describeCompat("minVersionForCollab (NoCompat)", "NoCompat", (getTestObjectProvi
 	});
 });
 
-describeCompat.only("onBeforeSchemaChange callback", "NoCompat", (getTestObjectProvider) => {
+describeCompat("onBeforeSchemaChange callback", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
