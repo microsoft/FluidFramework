@@ -26,6 +26,19 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// pnpm catalog: specifiers are not supported by syncpack v13 (they appear as
+		// "UnsupportedMismatch"). Upgrading to syncpack v14, which supports catalogs, is
+		// blocked by https://github.com/JamieMason/syncpack/issues/319 (negative globs in
+		// pnpm-workspace.yaml are ignored, causing syncpack to hang on large monorepos).
+		// Remove this ignore rule once that issue is fixed and we upgrade to v14.
+		{
+			label: "Ignore pnpm catalog: specifiers (unsupported in syncpack v13)",
+			specifierTypes: ["unsupported"],
+			dependencies: ["**"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		// Workaround for compatibility issues.
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
@@ -188,6 +201,19 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// pnpm catalog: specifiers are not supported by syncpack v13 (they appear as
+		// "UnsupportedMismatch"). Upgrading to syncpack v14, which supports catalogs, is
+		// blocked by https://github.com/JamieMason/syncpack/issues/319 (negative globs in
+		// pnpm-workspace.yaml are ignored, causing syncpack to hang on large monorepos).
+		// Remove this ignore rule once that issue is fixed and we upgrade to v14.
+		{
+			label: "Ignore pnpm catalog: specifiers (unsupported in syncpack v13)",
+			specifierTypes: ["unsupported"],
+			dependencies: ["**"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		// Workaround for compatibility issues.
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
