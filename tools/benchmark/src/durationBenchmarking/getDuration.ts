@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import type { BenchmarkData } from "../ResultTypes";
+import { prettyNumber } from "../RunnerUtilities";
+import { getArrayStatistics } from "../sampling";
+import { type Timer, timer, timerWithResolution } from "../timer";
 import {
 	benchmarkArgumentsIsCustom,
-	type BenchmarkRunningOptions,
-	type BenchmarkRunningOptionsSync,
-	type BenchmarkRunningOptionsAsync,
-	type BenchmarkTimingOptions,
-	type BenchmarkTimer,
 	validateBenchmarkArguments,
-} from "./Configuration";
-import type { BenchmarkData } from "./ResultTypes";
-import { getArrayStatistics, prettyNumber } from "./RunnerUtilities";
-import { defaultMinimumTime, type Timer, timer } from "./timer";
+	type BenchmarkRunningOptions,
+	type BenchmarkRunningOptionsAsync,
+	type BenchmarkRunningOptionsSync,
+	type BenchmarkTimer,
+	type BenchmarkTimingOptions,
+} from "./configuration";
 
 /**
  * @public
@@ -25,29 +26,26 @@ export enum Phase {
 	CollectData,
 }
 
+/**
+ * The minimum recommended benchmark duration in seconds.
+ *
+ * Benchmarks should run for at least this long to keep the percent uncertainty
+ * of the measurement below 1%. The value is derived from the selected {@link timer}'s
+ * resolution: it is half the timer resolution divided by the desired uncertainty
+ * (1%), but never less than 50 ms to guard against abnormally fast timers.
+ *
+ * @remarks
+ * This approach is based on the method used by Benchmark.js.
+ * See http://spiff.rit.edu/classes/phys273/uncert/uncert.html for the underlying theory.
+ */
+const defaultMinimumTime = Math.max(timerWithResolution.resolution / 2 / 0.01, 0.05);
+
 export const defaultTimingOptions: Required<BenchmarkTimingOptions> = {
 	maxBenchmarkDurationSeconds: 5,
 	minBatchCount: 5,
 	minBatchDurationSeconds: defaultMinimumTime,
 	startPhase: Phase.WarmUp,
 };
-
-/**
- * Use for readonly view of Json compatible data.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
- * but instead mostly restricts access to it.
- *
- * @public
- */
-export type JsonCompatible =
-	| string
-	| number
-	| boolean
-	| readonly JsonCompatible[]
-	| { readonly [P in string]: JsonCompatible | undefined };
-
-export type Results = { readonly [P in string]: JsonCompatible | undefined };
 
 /**
  * Runs the benchmark.
@@ -80,17 +78,6 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 	}
 	await options.after?.();
 	return data;
-}
-
-/**
- * Run a garbage collection, if possible.
- *
- * @remarks
- * Used before the test to help reduce noise from previous allocations
- * (ex: from previous tests or startup).
- */
-function tryRunGarbageCollection(): void {
-	global?.gc?.();
 }
 
 class BenchmarkState<T> implements BenchmarkTimer<T> {
@@ -298,4 +285,15 @@ async function doBatchAsync(
 	}
 	const after = timer.now();
 	return timer.toSeconds(before, after);
+}
+
+/**
+ * Run a garbage collection, if possible.
+ *
+ * @remarks
+ * Used before the test to help reduce noise from previous allocations
+ * (ex: from previous tests or startup).
+ */
+function tryRunGarbageCollection(): void {
+	global?.gc?.();
 }
