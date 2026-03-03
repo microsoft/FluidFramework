@@ -6,6 +6,7 @@
 const {
 	createExampleDriverServiceWebpackPlugin,
 	createOdspMiddlewares,
+	exampleWebpackDefaults,
 } = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -15,6 +16,7 @@ module.exports = (env) => {
 	const { production, service } = env;
 
 	return {
+		...exampleWebpackDefaults,
 		entry: {
 			app: "./src/app.ts",
 		},
@@ -60,6 +62,5 @@ module.exports = (env) => {
 		},
 		mode: production ? "production" : "development",
 		devtool: production ? "source-map" : "inline-source-map",
-		performance: { hints: false },
 	};
 };

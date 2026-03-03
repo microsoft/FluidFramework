@@ -5,3 +5,7 @@
 
 export { createOdspMiddlewares } from "./odspMiddlewares.js";
 export { createExampleDriverServiceWebpackPlugin } from "./webpackSpecifiedService.js";
+
+export const exampleWebpackDefaults = {
+	performance: { hints: false as const },
+};

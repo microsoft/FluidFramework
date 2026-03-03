@@ -492,6 +492,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -619,6 +622,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -779,6 +785,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -1057,6 +1066,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -1205,6 +1217,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -1338,6 +1353,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -1541,6 +1559,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -2177,6 +2198,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -2283,6 +2307,9 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -2392,6 +2419,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4419,6 +4449,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../utils/example-webpack-integration
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4567,6 +4600,9 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../../utils/example-webpack-integration
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4721,6 +4757,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../../utils/example-webpack-integration
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4981,6 +5020,9 @@ importers:
       '@cerner/duplicate-package-checker-webpack-plugin':
         specifier: ~2.3.0
         version: 2.3.0(webpack@5.103.0)
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../example-webpack-integration
       '@fluid-tools/version-tools':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)
@@ -5545,6 +5587,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../example-webpack-integration
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -5660,6 +5705,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -5811,6 +5859,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -5989,6 +6040,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -6149,6 +6203,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -6279,6 +6336,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -6539,6 +6599,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const { exampleWebpackDefaults } = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const { BundleComparisonPlugin } = require("@mixer/webpack-bundle-compare/dist/plugin");
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
@@ -66,6 +67,7 @@ webpackModuleRules.push(
 );
 
 module.exports = {
+	...exampleWebpackDefaults,
 	entry: {
 		aqueduct: "./src/aqueduct",
 		azureClient: "./src/azureClient",
@@ -134,5 +136,4 @@ module.exports = {
 	// Enabling source maps allows using source-map-explorer to investigate bundle contents,
 	// which provides more fine grained details than BundleAnalyzerPlugin, so its nice for manual investigations.
 	devtool: "source-map",
-	performance: { hints: false },
 };

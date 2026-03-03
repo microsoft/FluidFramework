@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+const { exampleWebpackDefaults } = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const webpack = require("webpack");
 
 const mode = "development";
 
 module.exports = {
+	...exampleWebpackDefaults,
 	entry: {
 		"fluid-loader": path.resolve(__dirname, "./src/fetchApp.ts"),
 	},
@@ -60,5 +62,4 @@ module.exports = {
 		library: "FluidLoader",
 		publicPath: "/",
 	},
-	performance: { hints: false },
 };

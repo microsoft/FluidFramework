@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const { exampleWebpackDefaults } = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
@@ -12,6 +13,7 @@ module.exports = (env) => {
 	const fluidClient = env?.FLUID_CLIENT || "";
 
 	return {
+		...exampleWebpackDefaults,
 		entry: {
 			app: "./src/app.ts",
 		},
@@ -58,6 +60,5 @@ module.exports = (env) => {
 		],
 		mode: production ? "production" : "development",
 		devtool: production ? "source-map" : "inline-source-map",
-		performance: { hints: false },
 	};
 };
