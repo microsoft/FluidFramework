@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { FC, KeyboardEvent, KeyboardEventHandler, useEffect, useRef, useState } from "react";
+import {
+	type FC,
+	type KeyboardEvent,
+	type KeyboardEventHandler,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { FlowDocument } from "../document/index.js";
 import { Editor } from "../editor/index.js";

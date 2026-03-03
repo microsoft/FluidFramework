@@ -11,7 +11,7 @@ import {
 	ReferenceType,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
-import { FC, useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 
 import { SmdeDataObject } from "./smde.js";

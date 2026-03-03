@@ -4,7 +4,7 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { createElement, ReactElement } from "react";
+import { createElement, type ReactElement } from "react";
 
 export { FlowDocument } from "./document/index.js";
 export { Editor } from "./editor/index.js";

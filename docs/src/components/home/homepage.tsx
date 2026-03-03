@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import { Banner } from "./banner";
 import { HowItWorksSection } from "./howItWorksSection";

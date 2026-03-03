@@ -4,7 +4,7 @@
  */
 
 import CodeBlock from "@theme/CodeBlock";
-import { CSSProperties, ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 import { CardWithBlur } from "../card";
 import { MockDiceRollerSample } from "../mockDiceRoller";

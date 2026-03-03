@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Component, ReactElement } from "react";
+import type { Component, ReactElement } from "react";
 
 import { PageSection } from "./pageSection";
 

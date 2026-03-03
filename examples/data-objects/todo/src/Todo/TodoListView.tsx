@@ -6,7 +6,7 @@
 import { CollaborativeInput } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/alpha";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
-import { FC, FormEvent, useEffect, useRef, useState } from "react";
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";

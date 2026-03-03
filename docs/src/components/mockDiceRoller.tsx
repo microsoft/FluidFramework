@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CSSProperties, ReactElement, useState } from "react";
+import { type CSSProperties, type ReactElement, useState } from "react";
 
 import { CardWithBlur } from "@site/src/components/card";
 

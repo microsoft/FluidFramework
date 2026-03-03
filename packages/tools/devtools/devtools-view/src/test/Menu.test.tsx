@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { FC, useState } from "react";
+import { type FC, useState } from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { Menu, type MenuSelection } from "../components/index.js";

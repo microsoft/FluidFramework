@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Element } from "react";
+import type { Element } from "react";
 
 /**
  * {@link YoutubeVideo} component props.

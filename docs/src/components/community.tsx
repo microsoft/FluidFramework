@@ -7,7 +7,7 @@ import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import clsx from "clsx";
-import { ComponentProps, ComponentType, ReactElement } from "react";
+import type { ComponentProps, ComponentType, ReactElement } from "react";
 
 import DiscussionIcon from "@site/static/assets/community/discussion.svg";
 import ReportIssuesIcon from "@site/static/assets/community/report-issues.svg";

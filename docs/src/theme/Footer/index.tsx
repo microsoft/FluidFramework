@@ -8,7 +8,7 @@ import { useColorMode } from "@docusaurus/theme-common";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import XIcon from "@theme/Icon/Socials/X";
 import clsx from "clsx";
-import { memo, ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 
 import FooterLogo from "./Logo";
 

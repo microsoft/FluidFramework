@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CSSProperties, PropsWithChildren } from "react";
+import type { CSSProperties, PropsWithChildren } from "react";
 
 import { SectionHeader, type SectionHeaderProps } from "./sectionHeader";
 

@@ -5,7 +5,7 @@
 
 import { useDoc } from "@docusaurus/plugin-content-docs/client";
 import type { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 // TODO: how will versioning interact with these?
 

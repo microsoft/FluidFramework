@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import { FC, FormEvent, useEffect, useRef, useState } from "react";
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 

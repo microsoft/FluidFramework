@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { InventoryList } from "../model/inventoryList.js";

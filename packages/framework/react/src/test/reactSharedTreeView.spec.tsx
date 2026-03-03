@@ -11,7 +11,7 @@ import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import { JSX } from "react";
+import type { JSX } from "react";
 
 import type { PropTreeNode } from "../propNode.js";
 import { treeDataObject, TreeViewComponent } from "../reactSharedTreeView.js";

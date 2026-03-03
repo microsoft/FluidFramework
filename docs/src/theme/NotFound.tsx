@@ -5,7 +5,7 @@
 
 import Link from "@docusaurus/Link";
 import Layout from "@theme/Layout";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import "@site/src/css/notFound.css";
 

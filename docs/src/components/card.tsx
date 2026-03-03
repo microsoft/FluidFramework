@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PropsWithChildren, ReactElement } from "react";
+import type { PropsWithChildren, ReactElement } from "react";
 
 import "@site/src/css/card.css";
 

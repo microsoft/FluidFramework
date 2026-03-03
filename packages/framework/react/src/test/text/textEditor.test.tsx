@@ -11,7 +11,7 @@ import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
-import { createRef, FC } from "react";
+import { createRef, type FC } from "react";
 
 import { toPropTreeNode } from "../../propNode.js";
 import {

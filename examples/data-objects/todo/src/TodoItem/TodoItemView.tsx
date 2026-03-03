@@ -10,7 +10,7 @@ import {
 } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/alpha";
 import type { SharedString } from "@fluidframework/sequence/legacy";
-import { ChangeEvent, FC, useEffect, useState } from "react";
+import { type ChangeEvent, type FC, useEffect, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";

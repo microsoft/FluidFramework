@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FC, JSX, useEffect, useState } from "react";
+import { type FC, type JSX, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
 import { IDiceRoller } from "../dataObject.js";

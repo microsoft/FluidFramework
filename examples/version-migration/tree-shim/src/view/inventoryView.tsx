@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FC, FormEvent, useEffect, useRef, useState } from "react";
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 import { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
 

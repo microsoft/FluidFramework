@@ -8,7 +8,7 @@ import { useBaseUrlUtils } from "@docusaurus/useBaseUrl";
 import type { Props } from "@theme/Footer/Logo";
 import ThemedImage from "@theme/ThemedImage";
 import clsx from "clsx";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import styles from "./styles.module.css";
 
