@@ -4,40 +4,25 @@
  */
 
 import { assert } from "../assert.js";
-import type { BenchmarkDescription, HookArguments } from "../Configuration.js";
+import type { HookArguments } from "../Configuration.js";
 import type { Timer } from "../timer";
 import type { Phase } from "./getDuration.js";
 
 /**
  * @public
- */
-export type CustomBenchmarkArguments = CustomBenchmark & BenchmarkDescription;
-
-/**
- * @public
+ * @input
  */
 export type DurationBenchmark =
-	| BenchmarkSyncArguments
-	| BenchmarkAsyncArguments
-	| CustomBenchmarkArguments;
-
-export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnBatch;
-
-export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments &
-	BenchmarkTimingOptions &
-	OnBatch;
+	| DurationBenchmarkSync
+	| DurationBenchmarkAsync
+	| DurationBenchmarkCustom;
 
 /**
  * Arguments to benchmark a synchronous function
  * @public
+ * @input
  */
-export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, DurationBenchmarkOptions {}
-
-/**
- * Arguments to benchmark a synchronous function
- * @public
- */
-export interface BenchmarkSyncFunction extends DurationBenchmarkOptions {
+export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOptions, OnBatch {
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
@@ -47,14 +32,9 @@ export interface BenchmarkSyncFunction extends DurationBenchmarkOptions {
 /**
  * Configuration for benchmarking an asynchronous function.
  * @public
+ * @input
  */
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, DurationBenchmarkOptions {}
-
-/**
- * An asynchronous function to benchmark.
- * @public
- */
-export interface BenchmarkAsyncFunction extends DurationBenchmarkOptions {
+export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOptions, OnBatch {
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
 	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -83,8 +63,9 @@ export interface BenchmarkTimer<T> {
 
 /**
  * @public
+ * @input
  */
-export interface CustomBenchmark extends BenchmarkTimingOptions {
+export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
 	/**
 	 * Use `state` to measure and report the performance of batches.
 	 * @example
@@ -160,22 +141,15 @@ export interface OnBatch {
 }
 
 /**
- * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
- * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
- * @public
- */
-export interface DurationBenchmarkOptions extends HookArguments, BenchmarkTimingOptions, OnBatch {}
-
-/**
  * Validates arguments to `benchmark`.
  * @public
  */
 export function validateBenchmarkArguments(
-	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
+	args: DurationBenchmarkSync | DurationBenchmarkAsync,
 ):
 	| { isAsync: true; benchmarkFn: () => Promise<unknown> }
 	| { isAsync: false; benchmarkFn: () => void } {
-	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
+	const intersection = args as DurationBenchmarkSync & DurationBenchmarkAsync;
 	const isSync = intersection.benchmarkFn !== undefined;
 	const isAsync = intersection.benchmarkFnAsync !== undefined;
 	assert(
@@ -195,10 +169,10 @@ export function validateBenchmarkArguments(
  */
 export function benchmarkArgumentsIsCustom(
 	args: DurationBenchmark,
-): args is CustomBenchmarkArguments {
-	const intersection = args as Partial<BenchmarkSyncArguments> &
-		Partial<BenchmarkAsyncArguments> &
-		Partial<CustomBenchmarkArguments>;
+): args is DurationBenchmarkCustom {
+	const intersection = args as Partial<DurationBenchmarkSync> &
+		Partial<DurationBenchmarkAsync> &
+		Partial<DurationBenchmarkCustom>;
 
 	const isSync = intersection.benchmarkFn !== undefined;
 	const isAsync = intersection.benchmarkFnAsync !== undefined;

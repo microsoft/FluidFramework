@@ -43,14 +43,13 @@
 		"moment": "^2.30.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/mocha-test-setup": "~2.51.0",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluid-internal/mocha-test-setup": "~2.83.0",
 		"@microsoft/api-extractor": "^7.52.11",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.120",
+		"@types/node": "~20.19.30",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"eslint-import-resolver-typescript": "~4.4.4",

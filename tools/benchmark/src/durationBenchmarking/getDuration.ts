@@ -15,10 +15,10 @@ import {
 	benchmarkArgumentsIsCustom,
 	validateBenchmarkArguments,
 	type DurationBenchmark,
-	type BenchmarkRunningOptionsAsync,
-	type BenchmarkRunningOptionsSync,
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
+	type DurationBenchmarkSync,
+	type DurationBenchmarkAsync,
 } from "./configuration";
 
 /**
@@ -241,7 +241,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
  * Run a performance benchmark and return its results.
  * @public
  */
-export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): CollectedData {
+export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
 	const state = new BenchmarkState(timer, args);
 	while (
 		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
@@ -254,9 +254,7 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): CollectedDa
 /**
  * Run a performance benchmark and return its results.
  */
-export async function runBenchmarkAsync(
-	args: BenchmarkRunningOptionsAsync,
-): Promise<CollectedData> {
+export async function runBenchmarkAsync(args: DurationBenchmarkAsync): Promise<CollectedData> {
 	const state = new BenchmarkState(timer, args);
 	while (
 		state.recordBatch(

@@ -4,5 +4,5 @@
  */
 
 module.exports = {
-	...require("@fluidframework/build-common/prettier.config.cjs"),
+	...require("../../common/build/build-common/prettier.config.cjs"),
 };

@@ -9,15 +9,6 @@ import type { Test } from 'mocha';
 // @public @deprecated
 export function benchmark(args: Titled & DurationBenchmark & BenchmarkDescription & MochaExclusiveOptions): Test;
 
-// @public
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, DurationBenchmarkOptions {
-}
-
-// @public
-export interface BenchmarkAsyncFunction extends DurationBenchmarkOptions {
-    benchmarkFnAsync: () => Promise<unknown>;
-}
-
 // @public @deprecated
 export const benchmarkCustom: typeof benchmarkIt;
 
@@ -67,15 +58,6 @@ export class BenchmarkReporter {
 // @public
 export type BenchmarkResult = BenchmarkError | BenchmarkData;
 
-// @public
-export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, DurationBenchmarkOptions {
-}
-
-// @public
-export interface BenchmarkSyncFunction extends DurationBenchmarkOptions {
-    benchmarkFn: () => void;
-}
-
 // @public @sealed (undocumented)
 export interface BenchmarkTimer<T> {
     // (undocumented)
@@ -116,19 +98,22 @@ export interface CollectedData {
 // @public
 export function collectMemoryUseData(args: MemoryUseBenchmark): Promise<CollectedData>;
 
-// @public (undocumented)
-export interface CustomBenchmark extends BenchmarkTimingOptions {
+// @public @input (undocumented)
+export type DurationBenchmark = DurationBenchmarkSync | DurationBenchmarkAsync | DurationBenchmarkCustom;
+
+// @public @input
+export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+    benchmarkFnAsync: () => Promise<unknown>;
+}
+
+// @public @input (undocumented)
+export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
     benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
 }
 
-// @public (undocumented)
-export type CustomBenchmarkArguments = CustomBenchmark & BenchmarkDescription;
-
-// @public (undocumented)
-export type DurationBenchmark = BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments;
-
-// @public
-export interface DurationBenchmarkOptions extends HookArguments, BenchmarkTimingOptions, OnBatch {
+// @public @input
+export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOptions, OnBatch {
+    benchmarkFn: () => void;
 }
 
 // @public
@@ -227,15 +212,6 @@ export interface Timer<T = unknown> {
 export interface Titled {
     title: string;
 }
-
-// @public
-export function validateBenchmarkArguments(args: BenchmarkSyncArguments | BenchmarkAsyncArguments): {
-    isAsync: true;
-    benchmarkFn: () => Promise<unknown>;
-} | {
-    isAsync: false;
-    benchmarkFn: () => void;
-};
 
 // @public
 export enum ValueType {
