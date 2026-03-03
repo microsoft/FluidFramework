@@ -24,8 +24,9 @@ export class WebpackTask extends LeafWithDoneFileTask {
 		// so we will always execute if any of the dependencies not up-to-date at the beginning of the build
 		// where their output might change the webpack's input.
 		assert.strictEqual(this.recheckLeafIsUpToDate, false);
+		const configPath = this.configFileFullPath;
 		try {
-			const config = await loadModule(this.configFileFullPath, this.package.packageJson.type);
+			const config = await loadModule(configPath, this.package.packageJson.type);
 			const content: DoneFileContent = {
 				version: await this.getVersion(),
 				config: typeof config === "function" ? config(this.getEnvArguments()) : config,
@@ -41,10 +42,10 @@ export class WebpackTask extends LeafWithDoneFileTask {
 
 			return JSON.stringify(content);
 		} catch (e) {
-			this.traceError(`error generating done file content: ${e}`);
-			throw new Error(
-				`failed to generate incremental build cache for ${this.configFileFullPath}: ${e instanceof Error ? e.message : e}`,
-			);
+			const errorDetail = e instanceof Error ? e.message : String(e);
+			this.traceError(`error generating done file content: ${errorDetail}`);
+			const message = `failed to generate incremental build cache for ${configPath}: ${errorDetail}`;
+			throw e instanceof Error ? new Error(message, { cause: e }) : new Error(message);
 		}
 	}
 
