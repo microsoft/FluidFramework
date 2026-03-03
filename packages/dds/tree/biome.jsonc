@@ -1,8 +1,0 @@
-{
-	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../../../biome.jsonc"],
-	"files": {
-		// entrypoint files are generated and may not confirm to formatting rules
-		"includes": ["!src/entrypoints/*.ts"]
-	}
-}
