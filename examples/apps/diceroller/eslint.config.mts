@@ -8,7 +8,8 @@ import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts"
 import sharedConfig from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
-	...recommended, ...sharedConfig,
+	...recommended,
+	...sharedConfig,
 	{
 		// TODO: remove this override once eslint-config-fluid has been updated to disable this rule.
 		rules: {

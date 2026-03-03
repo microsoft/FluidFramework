@@ -8,7 +8,8 @@ import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/fla
 import sharedConfig from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated, ...sharedConfig,
+	...minimalDeprecated,
+	...sharedConfig,
 	{
 		// TODO: remove this override once eslint-config-fluid has been updated to disable this rule.
 		rules: {
