@@ -20,12 +20,6 @@ const config: Linter.Config[] = [
 	{
 		ignores: ["*.spec.ts"],
 	},
-	{
-		// TODO: remove this override once eslint-config-fluid has been updated to disable this rule.
-		rules: {
-			"react/react-in-jsx-scope": "off",
-		},
-	},
 ];
 
 export default config;
