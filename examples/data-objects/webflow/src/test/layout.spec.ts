@@ -4,9 +4,9 @@
  */
 
 // eslint-disable-next-line import-x/no-unassigned-import
-import "jsdom-global/register.js";
+import "global-jsdom/register";
 
-// 'jsdom-global' does not polyfill mark() and measure().  We stub them ourselves.
+// 'global-jsdom' does not polyfill mark() and measure().  We stub them ourselves.
 window.performance.mark ??= () => undefined as unknown as PerformanceMark;
 window.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
 
