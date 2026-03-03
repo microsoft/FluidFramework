@@ -4,7 +4,5 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		// Need to skip lib check since some .d.ts from provider are invalid.
-		"skipLibCheck": true,
 	},
 }

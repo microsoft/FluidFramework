@@ -34,7 +34,8 @@
 			"!**/src/**/test/types/**/*.generated.ts",
 			"!**/src/packageVersion.ts",
 			"!**/src/layerGenerationState.ts",
-			"!**/src/entrypoints/*.ts",
+			// Tree entrypoint sources are generated; exclude temporarily until build pipeline is updated
+			"!packages/dds/tree/src/entrypoints/*.ts",
 
 			// Dependencies
 			"!**/node_modules/**/*",

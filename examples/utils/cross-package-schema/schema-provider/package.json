@@ -2,7 +2,7 @@
 	"name": "@fluid-example/cross-package-schema-provider",
 	"version": "2.91.0",
 	"private": true,
-	"description": "Example schema provider demonstrating cross-package SharedTree schema consumption with a /schema subpath export.",
+	"description": "Example schema provider demonstrating cross-package SharedTree schema sharing.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
