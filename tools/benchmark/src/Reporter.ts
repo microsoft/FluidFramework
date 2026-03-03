@@ -116,7 +116,7 @@ export class BenchmarkReporter {
 
 		const { table, benchmarksMap } = results;
 
-		// Make sure to add properties that are not part of the `customData` object here.
+		// Make sure to add properties that are not part of the `data` object here.
 		benchmarksMap.set(testName, result);
 		if (isResultError(result)) {
 			table.cell("status", `${pad(4)}${chalk.red("×")}`);
@@ -294,15 +294,14 @@ export class BenchmarkReporter {
 
 	private writeCompletedBenchmarks(
 		suiteName: string,
-		benchmarks: Map<string, Readonly<BenchmarkResult>>,
+		benchmarks: ReadonlyMap<string, BenchmarkResult>,
 	): string {
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
 		const benchmarkArray: unknown[] = [];
 		for (const [key, bench] of benchmarks.entries()) {
 			if (!isResultError(bench)) {
-				const benchData = bench as BenchmarkData; // the if statement above guarantees the `bench` to be of type `BenchmarkData`.
-				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(key, benchData));
+				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(key, bench));
 			}
 		}
 		const outputContentString: string = JSON.stringify(
@@ -326,19 +325,11 @@ export class BenchmarkReporter {
 	private outputFriendlyObjectFromBenchmark(
 		benchmarkName: string,
 		benchmark: BenchmarkData,
-	): Record<string, unknown> {
-		const customData: Record<string, unknown> = {};
-
-		// As the name suggests, `customData` should only contain custom data that are specific to the benchmark test.
-		// If there are any other properties that are global to the benchmark test (e.g., `elapsedSeconds`), they should be added in the `benchMarkOutput` object.
-		for (const [key, value] of Object.entries(benchmark.data)) {
-			customData[key] = value.rawValue;
-		}
-
+	): BenchmarkData & { benchmarkName: string } {
 		const benchMarkOutput = {
 			benchmarkName,
 			elapsedSeconds: benchmark.elapsedSeconds,
-			customData,
+			data: benchmark.data,
 		};
 
 		return benchMarkOutput;

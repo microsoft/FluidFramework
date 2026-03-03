@@ -1,5 +1,19 @@
 # @fluid-tools/benchmark
 
+## 0.53.0
+
+-   Memory benchmarks now have much more aggressive GC to collect more stable results.
+-   Geometric mean has been restored to the results summary (was removed in the past) and correctly handles both larger is better and smaller is better values. This should make evaluating overall impact of changes easier.
+-   All benchmarks now have a primary result (included in the geometric mean), and optional additional results.
+-   Formatting of console output from reporter has changed.
+
+### ⚠ BREAKING CHANGES
+
+-   Mocha specific API surface reduced to `benchmarkIt` which can be used to wrap any kind of benchmark for use in mocha. All tests will need to be edited to accommodate this.
+-   Naming of types and functions are now clear about duration vs memory: most type imports will need to be updated to accommodate this.
+-   Memory benchmarks now require sampling memory before during and after the allocation being measured is retained in memory to allow for the test to know what it's supposed to measure and sanity check that the test is freeing it properly. As this is an entirely different API, all memory tests will need significant changes.
+-   Formatting of the output json results files has changed: code consuming them will have to be updated.
+
 ## 0.52.0
 
 -   Removed the production dependency on `chai`. The package now uses a minimal internal assertion utility instead.

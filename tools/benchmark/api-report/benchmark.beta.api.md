@@ -14,8 +14,8 @@ export const benchmarkCustom: typeof benchmarkIt;
 
 // @public
 export interface BenchmarkData {
-    data: CollectedData;
-    elapsedSeconds: number;
+    readonly data: CollectedData;
+    readonly elapsedSeconds: number;
 }
 
 // @public
@@ -29,7 +29,7 @@ export function benchmarkDuration(args: DurationBenchmark): BenchmarkDescription
 
 // @public
 export interface BenchmarkError {
-    error: string;
+    readonly error: string;
 }
 
 // @public
@@ -216,9 +216,9 @@ export interface Titled {
 // @public
 export enum ValueType {
     // (undocumented)
-    LargerIsBetter = 1,
+    LargerIsBetter = "LargerIsBetter",
     // (undocumented)
-    SmallerIsBetter = 0
+    SmallerIsBetter = "SmallerIsBetter"
 }
 
 ```

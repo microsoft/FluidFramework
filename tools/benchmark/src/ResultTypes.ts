@@ -16,12 +16,12 @@ export interface BenchmarkData {
 	 * This is metadata about the benchmark run (how long it took to collect the data),
 	 * not a measured result.
 	 */
-	elapsedSeconds: number;
+	readonly elapsedSeconds: number;
 
 	/**
 	 * Custom data.
 	 */
-	data: CollectedData;
+	readonly data: CollectedData;
 }
 
 /**
@@ -32,7 +32,7 @@ export interface BenchmarkError {
 	/**
 	 * Error message.
 	 */
-	error: string;
+	readonly error: string;
 }
 
 /**
@@ -67,8 +67,8 @@ export interface Measurement {
  * @public
  */
 export enum ValueType {
-	SmallerIsBetter,
-	LargerIsBetter,
+	SmallerIsBetter = "SmallerIsBetter",
+	LargerIsBetter = "LargerIsBetter",
 }
 
 /**
