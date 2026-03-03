@@ -874,7 +874,7 @@ importers:
         version: 5.4.5
       url-loader:
         specifier: ^4.1.1
-        version: 4.1.1(file-loader@3.0.1(webpack@5.103.0))(webpack@5.103.0)
+        version: 4.1.1(file-loader@6.2.0(webpack@5.103.0))(webpack@5.103.0)
       webpack:
         specifier: ^5.94.0
         version: 5.103.0(webpack-cli@5.1.4)
@@ -908,9 +908,6 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
@@ -2568,8 +2565,8 @@ importers:
         specifier: ~3.12.0
         version: 3.12.2
       less-loader:
-        specifier: ^4.1.0
-        version: 4.1.0(less@3.12.2)(webpack@5.103.0)
+        specifier: ^12.3.1
+        version: 12.3.1(less@3.12.2)(webpack@5.103.0)
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -2587,7 +2584,7 @@ importers:
         version: 5.4.5
       url-loader:
         specifier: ^4.1.1
-        version: 4.1.1(file-loader@3.0.1(webpack@5.103.0))(webpack@5.103.0)
+        version: 4.1.1(file-loader@6.2.0(webpack@5.103.0))(webpack@5.103.0)
       webpack:
         specifier: ^5.94.0
         version: 5.103.0(webpack-cli@5.1.4)
@@ -2879,6 +2876,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
@@ -2993,7 +2993,7 @@ importers:
         version: 5.4.5
       url-loader:
         specifier: ^4.1.1
-        version: 4.1.1(file-loader@3.0.1(webpack@5.103.0))(webpack@5.103.0)
+        version: 4.1.1(file-loader@6.2.0(webpack@5.103.0))(webpack@5.103.0)
       webpack:
         specifier: ^5.94.0
         version: 5.103.0(webpack-cli@5.1.4)
@@ -4008,6 +4008,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
@@ -4275,8 +4278,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.6
       file-loader:
-        specifier: ^3.0.1
-        version: 3.0.1(webpack@5.103.0)
+        specifier: ^6.2.0
+        version: 6.2.0(webpack@5.103.0)
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@26.1.0)
@@ -4287,7 +4290,7 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       jsdom:
-        specifier: ^26.0.0
+        specifier: ^26.1.0
         version: 26.1.0
       mocha:
         specifier: ^11.7.5
@@ -4312,7 +4315,7 @@ importers:
         version: 5.4.5
       url-loader:
         specifier: ^4.1.1
-        version: 4.1.1(file-loader@3.0.1(webpack@5.103.0))(webpack@5.103.0)
+        version: 4.1.1(file-loader@6.2.0(webpack@5.103.0))(webpack@5.103.0)
       webpack:
         specifier: ^5.94.0
         version: 5.103.0(webpack-cli@5.1.4)
@@ -6245,40 +6248,49 @@ importers:
 
   examples/view-integration/container-views:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluidframework/aqueduct':
+      '@fluid-internal/client-utils':
         specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
+        version: link:../../../packages/common/client-utils
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/runtime-utils':
+      '@fluidframework/runtime-definitions':
         specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
+        version: link:../../../packages/runtime/runtime-definitions
       react:
         specifier: ^18.3.1
         version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -6306,9 +6318,6 @@ importers:
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
-      '@types/react-dom':
-        specifier: ^18.3.0
-        version: 18.3.3(@types/react@18.3.15)
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -6408,9 +6417,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
@@ -6475,9 +6481,6 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
-      process:
-        specifier: ^0.11.10
-        version: 0.11.10
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -11953,6 +11956,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
@@ -12183,16 +12189,16 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@langchain/anthropic':
         specifier: ^0.3.24
-        version: 0.3.26(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+        version: 0.3.26(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))
       '@langchain/core':
         specifier: ^0.3.80
-        version: 0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+        version: 0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))
       '@langchain/google-genai':
         specifier: ^0.2.16
-        version: 0.2.16(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+        version: 0.2.16(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))
       '@langchain/openai':
         specifier: ^0.6.12
-        version: 0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
+        version: 0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))(ws@8.19.0)
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
@@ -12255,7 +12261,7 @@ importers:
         version: link:../tree-agent
       '@langchain/core':
         specifier: ^0.3.80
-        version: 0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+        version: 0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -12289,13 +12295,13 @@ importers:
         version: link:../../dds/tree
       '@langchain/anthropic':
         specifier: ^0.3.24
-        version: 0.3.26(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+        version: 0.3.26(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))
       '@langchain/google-genai':
         specifier: ^0.2.16
-        version: 0.2.16(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
+        version: 0.2.16(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))
       '@langchain/openai':
         specifier: ^0.6.12
-        version: 0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
+        version: 0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))(ws@8.19.0)
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
@@ -15980,7 +15986,7 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       jsdom:
-        specifier: ^26.0.0
+        specifier: ^26.1.0
         version: 26.1.0
       mocha:
         specifier: ^11.7.5
@@ -20775,11 +20781,6 @@ packages:
       ajv:
         optional: true
 
-  ajv-errors@1.0.1:
-    resolution: {integrity: sha512-DCRfO/4nQ+89p/RK43i8Ezd41EqdGIU4ld7nGF8OQ14oc/we5rEntLCUa7+jrn3nn83BosfwZA0wb4pon2o8iQ==}
-    peerDependencies:
-      ajv: '>=5.0.0'
-
   ajv-formats@2.1.1:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
     peerDependencies:
@@ -21550,10 +21551,6 @@ packages:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==}
     engines: {node: '>=0.8'}
 
-  clone@2.1.2:
-    resolution: {integrity: sha512-3Pe/CF1Nn94hyhIYpjtiLhdCoEoz0DqQ+988E9gmeEdQZlojxnOb74wctFyuwWQHzqyf9X7C7MG8juUpqBJT8w==}
-    engines: {node: '>=0.8'}
-
   clsx@1.2.1:
     resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
     engines: {node: '>=6'}
@@ -22032,9 +22029,6 @@ packages:
 
   decimal.js-light@2.5.1:
     resolution: {integrity: sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg==}
-
-  decimal.js@10.4.3:
-    resolution: {integrity: sha512-VBBaLc1MgL5XpzgIP7ny5Z6Nx3UrRkIViUkPUdtl9aya5amy3De1gsUUSB1g3+3sExYNjCAsAznmukyxCb1GRA==}
 
   decimal.js@10.6.0:
     resolution: {integrity: sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==}
@@ -22897,11 +22891,11 @@ packages:
     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
     engines: {node: '>=16.0.0'}
 
-  file-loader@3.0.1:
-    resolution: {integrity: sha512-4sNIOXgtH/9WZq4NvlfU3Opn5ynUsqBwSLyM+I7UOwdGigTBYfVVQEwe/msZNX/j4pCJTIM14Fsw66Svo1oVrw==}
-    engines: {node: '>= 6.9.0'}
+  file-loader@6.2.0:
+    resolution: {integrity: sha512-qo3glqyTa61Ytg4u73GultjHGjdRyig3tG6lPtyX/jOEJvHif9uB0/OCI2Kif6ctF3caQTW2G5gym21oAsI4pw==}
+    engines: {node: '>= 10.13.0'}
     peerDependencies:
-      webpack: ^4.0.0
+      webpack: ^4.0.0 || ^5.0.0
 
   filelist@1.0.4:
     resolution: {integrity: sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==}
@@ -24416,12 +24410,18 @@ packages:
     resolution: {integrity: sha512-Y+CjUfLmIpoUCCRl0ub4smrYtGGr5AOa2AKOaWelGHOGz33X/Y/KizefGqbkwfz44+cnq/+9habclf8vOmu2LA==}
     engines: {node: '>=0.2.0'}
 
-  less-loader@4.1.0:
-    resolution: {integrity: sha512-KNTsgCE9tMOM70+ddxp9yyt9iHqgmSs0yTZc5XH5Wo+g80RWRIYNqE58QJKm/yMud5wZEvz50ugRDuzVIkyahg==}
-    engines: {node: '>= 4.8 < 5.0.0 || >= 5.10'}
+  less-loader@12.3.1:
+    resolution: {integrity: sha512-JZZmG7gMzoDP3VGeEG8Sh6FW5wygB5jYL7Wp29FFihuRTsIBacqO3LbRPr2yStYD11riVf13selLm/CPFRDBRQ==}
+    engines: {node: '>= 18.12.0'}
     peerDependencies:
-      less: ^2.3.1 || ^3.0.0
-      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0
+      '@rspack/core': 0.x || ^1.0.0 || ^2.0.0-0
+      less: ^3.5.0 || ^4.0.0
+      webpack: ^5.0.0
+    peerDependenciesMeta:
+      '@rspack/core':
+        optional: true
+      webpack:
+        optional: true
 
   less@3.12.2:
     resolution: {integrity: sha512-+1V2PCMFkL+OIj2/HrtrvZw0BC0sYLMICJfbQjuj/K8CEnlrFX6R5cKKgzzttsZDHyxQNL1jqMREjKN3ja/E3Q==}
@@ -26655,10 +26655,6 @@ packages:
   scheduler@0.23.2:
     resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
 
-  schema-utils@1.0.0:
-    resolution: {integrity: sha512-i27Mic4KovM/lnGsy8whRCHhc7VicJajAjTrYg11K9zfZXnYIt4k5F+kZkwjnrhKzLic/HLU4j11mjsz2G/75g==}
-    engines: {node: '>= 4'}
-
   schema-utils@3.3.0:
     resolution: {integrity: sha512-pN/yOAvcC+5rQ5nERGuwrjLlYvLTbCibnZ1I7B1LaiAz9BRBlE9GMgE/eqV30P7aJQUf7Ddimy/RsbYO/GrVGg==}
     engines: {node: '>= 10.13.0'}
@@ -28276,6 +28272,18 @@ packages:
 
   ws@8.18.0:
     resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.19.0:
+    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -32573,20 +32581,20 @@ snapshots:
 
   '@kwsites/promise-deferred@1.1.1': {}
 
-  '@langchain/anthropic@0.3.26(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))':
+  '@langchain/anthropic@0.3.26(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))':
     dependencies:
       '@anthropic-ai/sdk': 0.56.0
-      '@langchain/core': 0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      '@langchain/core': 0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))
       fast-xml-parser: 4.5.3
 
-  '@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76))':
+  '@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.20
-      langsmith: 0.3.73(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      langsmith: 0.3.73(openai@5.12.2(ws@8.19.0)(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -32599,17 +32607,17 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
-  '@langchain/google-genai@0.2.16(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))':
+  '@langchain/google-genai@0.2.16(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))':
     dependencies:
       '@google/generative-ai': 0.24.1
-      '@langchain/core': 0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      '@langchain/core': 0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))
       uuid: 11.1.0
 
-  '@langchain/openai@0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)':
+  '@langchain/openai@0.6.12(@langchain/core@0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76)))(ws@8.19.0)':
     dependencies:
-      '@langchain/core': 0.3.80(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
+      '@langchain/core': 0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))
       js-tiktoken: 1.0.20
-      openai: 5.12.2(ws@8.18.0)(zod@3.25.76)
+      openai: 5.12.2(ws@8.19.0)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - ws
@@ -34465,10 +34473,6 @@ snapshots:
     optionalDependencies:
       ajv: 8.13.0
 
-  ajv-errors@1.0.1(ajv@6.12.6):
-    dependencies:
-      ajv: 6.12.6
-
   ajv-formats@2.1.1(ajv@8.17.1):
     optionalDependencies:
       ajv: 8.17.1
@@ -35350,8 +35354,6 @@ snapshots:
   clone@1.0.4:
     optional: true
 
-  clone@2.1.2: {}
-
   clsx@1.2.1: {}
 
   clsx@2.1.1: {}
@@ -35848,8 +35850,6 @@ snapshots:
   decamelize@4.0.0: {}
 
   decimal.js-light@2.5.1: {}
-
-  decimal.js@10.4.3: {}
 
   decimal.js@10.6.0: {}
 
@@ -36868,10 +36868,10 @@ snapshots:
     dependencies:
       flat-cache: 4.0.1
 
-  file-loader@3.0.1(webpack@5.103.0):
+  file-loader@6.2.0(webpack@5.103.0):
     dependencies:
-      loader-utils: 1.4.2
-      schema-utils: 1.0.0
+      loader-utils: 2.0.4
+      schema-utils: 3.3.0
       webpack: 5.103.0(webpack-cli@5.1.4)
 
   filelist@1.0.4:
@@ -37711,7 +37711,7 @@ snapshots:
       type-fest: 4.30.0
       widest-line: 5.0.0
       wrap-ansi: 9.0.2
-      ws: 8.18.0
+      ws: 8.19.0
       yoga-wasm-web: 0.3.3
     optionalDependencies:
       '@types/react': 18.3.15
@@ -38527,7 +38527,7 @@ snapshots:
       cssom: 0.5.0
       cssstyle: 2.3.0
       data-urls: 3.0.2
-      decimal.js: 10.4.3
+      decimal.js: 10.6.0
       domexception: 4.0.0
       escodegen: 2.1.0
       form-data: 4.0.5
@@ -38545,7 +38545,7 @@ snapshots:
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
       whatwg-url: 11.0.0
-      ws: 8.18.0
+      ws: 8.19.0
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -38572,7 +38572,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.18.0
+      ws: 8.19.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -38732,7 +38732,7 @@ snapshots:
 
   ky@1.7.3: {}
 
-  langsmith@0.3.73(openai@5.12.2(ws@8.18.0)(zod@3.25.76)):
+  langsmith@0.3.73(openai@5.12.2(ws@8.19.0)(zod@3.25.76)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -38742,7 +38742,7 @@ snapshots:
       semver: 7.7.3
       uuid: 10.0.0
     optionalDependencies:
-      openai: 5.12.2(ws@8.18.0)(zod@3.25.76)
+      openai: 5.12.2(ws@8.19.0)(zod@3.25.76)
 
   latest-version@7.0.0:
     dependencies:
@@ -38761,12 +38761,10 @@ snapshots:
 
   lazy@1.0.11: {}
 
-  less-loader@4.1.0(less@3.12.2)(webpack@5.103.0):
+  less-loader@12.3.1(less@3.12.2)(webpack@5.103.0):
     dependencies:
-      clone: 2.1.2
       less: 3.12.2
-      loader-utils: 1.4.2
-      pify: 3.0.0
+    optionalDependencies:
       webpack: 5.103.0(webpack-cli@5.1.4)
 
   less@3.12.2:
@@ -40235,9 +40233,9 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@5.12.2(ws@8.18.0)(zod@3.25.76):
+  openai@5.12.2(ws@8.19.0)(zod@3.25.76):
     optionalDependencies:
-      ws: 8.18.0
+      ws: 8.19.0
       zod: 3.25.76
 
   opener@1.5.2: {}
@@ -40992,7 +40990,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       devtools-protocol: 0.0.1367902
       typed-query-selector: 2.12.0
-      ws: 8.18.0
+      ws: 8.19.0
     transitivePeerDependencies:
       - bare-buffer
       - bufferutil
@@ -41610,12 +41608,6 @@ snapshots:
   scheduler@0.23.2:
     dependencies:
       loose-envify: 1.4.0
-
-  schema-utils@1.0.0:
-    dependencies:
-      ajv: 6.12.6
-      ajv-errors: 1.0.1(ajv@6.12.6)
-      ajv-keywords: 3.5.2(ajv@6.12.6)
 
   schema-utils@3.3.0:
     dependencies:
@@ -43137,14 +43129,14 @@ snapshots:
 
   urijs@1.19.11: {}
 
-  url-loader@4.1.1(file-loader@3.0.1(webpack@5.103.0))(webpack@5.103.0):
+  url-loader@4.1.1(file-loader@6.2.0(webpack@5.103.0))(webpack@5.103.0):
     dependencies:
       loader-utils: 2.0.4
       mime-types: 2.1.35
       schema-utils: 3.3.0
       webpack: 5.103.0(webpack-cli@5.1.4)
     optionalDependencies:
-      file-loader: 3.0.1(webpack@5.103.0)
+      file-loader: 6.2.0(webpack@5.103.0)
 
   url-parse@1.5.10:
     dependencies:
@@ -43751,6 +43743,8 @@ snapshots:
   ws@8.17.1: {}
 
   ws@8.18.0: {}
+
+  ws@8.19.0: {}
 
   xcase@2.0.1: {}
 
