@@ -9,5 +9,5 @@
 		"types": ["react", "react-dom"],
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*", "playwright.config.ts"],
+	"include": ["src/**/*"],
 }
