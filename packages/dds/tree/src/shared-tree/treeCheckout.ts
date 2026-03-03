@@ -786,7 +786,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revision,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-		this.applyChange(decodedChange, revision);
+		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
+		this.#transaction.branch.apply(tagChange(decodedChange, revision));
 	}
 
 	// Revision is the revision of the commit, if any, which caused this change.
