@@ -4286,6 +4286,9 @@ importers:
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@20.0.3)
+      jsdom:
+        specifier: ^20.0.0
+        version: 20.0.3
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
