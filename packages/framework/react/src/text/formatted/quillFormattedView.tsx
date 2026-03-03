@@ -59,9 +59,6 @@ const fontSet = new Set<string>(["monospace", "serif", "sans-serif", "Arial"]);
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
-/** Valid LineTag string values accepted by FormattedTextAsTree.LineTag(). */
-type LineTagValue = "h1" | "h2" | "h3" | "h4" | "h5" | "li";
-
 /**
  * Parse CSS font-size from a pasted HTML element's inline style.
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
@@ -152,28 +149,32 @@ function parseSize(size: unknown): number {
 	return defaultSize;
 }
 
-/** Extract a LineTagValue from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time */
-function parseLineTag(attrs?: Record<string, unknown>): LineTagValue | undefined {
-	// default no formatting on "/n", or line tag on "/n" that doesn't affect formatting
-	let tag = undefined as LineTagValue;
+/** Quill header numbers mapped to their LineTag string values. */
+const headerTags = { 1: "h1", 2: "h2", 3: "h3", 4: "h4", 5: "h5" } as const;
 
-	if (!attrs) return tag;
-	// Header formatting. Quill passes header formatting as a number
-	if (typeof attrs.header === "number") {
-		tag = `h${attrs.header}`;
+/** Extract a LineTag from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time. */
+function parseLineTag(
+	attrs?: Record<string, unknown>,
+): FormattedTextAsTree.LineTag | undefined {
+	// default no formatting on "\n", or line tag on "\n" that doesn't affect formatting
+	if (!attrs) return undefined;
+	// Header formatting. Quill passes header formatting as a number (1-5)
+	const header = attrs.header;
+	if (typeof header === "number" && header in headerTags) {
+		return FormattedTextAsTree.LineTag(headerTags[header as keyof typeof headerTags]);
 	}
-	// List formatting. Quill passes list formatting as a string
-	else if (typeof attrs.list === "string") {
-		tag = "li";
+	// List formatting. Only treat "bullet" as an unordered list item.
+	if (attrs.list === "bullet") {
+		return FormattedTextAsTree.LineTag("li");
 	}
-	return tag;
+	return undefined;
 }
 
 /** Create a StringAtom containing a StringLineAtom with the given line tag. */
-function createLineAtom(lineTag: LineTagValue): FormattedTextAsTree.StringAtom {
+function createLineAtom(lineTag: FormattedTextAsTree.LineTag): FormattedTextAsTree.StringAtom {
 	return new FormattedTextAsTree.StringAtom({
 		content: new FormattedTextAsTree.StringLineAtom({
-			tag: FormattedTextAsTree.LineTag(lineTag),
+			tag: lineTag,
 		}),
 		format: new FormattedTextAsTree.CharacterFormat(quillAttrsToFormat()),
 	});
@@ -551,8 +552,8 @@ const FormattedTextEditorView = React.forwardRef<
 				.ql-undo::after { content: "↶"; font-size: 18px; }
 				.ql-redo::after { content: "↷"; font-size: 18px; }
 				.ql-undo:disabled, .ql-redo:disabled { opacity: 0.3; cursor: not-allowed; }
-				/* Custom CSS Altering Quills default bullet point alignment. Vertically center */
-				/* bullets in list items, since Quill's bullet has no inherent height */
+				/* custom css altering Quill's default bullet point alignment */
+				/* vertically center bullets in list items, since Quill's bullet has no inherent height */
 				li[data-list="bullet"] { display: flex; align-items: center; }
 				li[data-list="bullet"] .ql-ui { align-self: center; }
 			`}</style>
