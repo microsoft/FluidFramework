@@ -2,7 +2,7 @@
 
 The **container-views** example has a dice and a button. Clicking the button re-rolls the dice and persists the value in a SharedMap.
 
-This example demonstrates the container-views pattern.  In this pattern, the container code (runtimeFactory.ts) establishes not only the model and controller logic (the DiceRoller, diceRoller.ts) but also the view code (view.tsx) and its binding to the model/controller.  The container's entry point provides an `IContainerView` with `mount`/`unmount` methods, so the consumer of the container (app.ts) simply mounts it into a DOM element without needing to know about the view implementation.
+This example demonstrates the container-views pattern.  In this pattern, the container code (`src/container/index.ts`) establishes not only the model and controller logic (the DiceRoller, `diceRoller.ts`) but also the view code (`view.tsx`) and its binding to the model/controller.  The container's entry point uses `ContainerViewRuntimeFactory` to provide an `IFluidMountableViewEntryPoint` (a mountable view with `mount`/`unmount` methods), so the consumer of the container (`app.ts`) simply mounts it into a DOM element without needing to know about the view implementation.
 
 This is distinct from the external-views pattern, where the container only provides the data model and the consumer is responsible for creating and binding the view.  The container-views pattern can be convenient when the container wants to control its own rendering, but may result in less view flexibility and larger-than-necessary bundle size (especially for headless usage).  The external-views pattern is therefore recommended over the container-views pattern for general use.
 

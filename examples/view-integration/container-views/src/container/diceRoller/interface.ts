@@ -13,7 +13,7 @@ export interface IDiceRollerEvents extends IEvent {
 }
 
 /**
- * IDiceRoller describes the public API surface for our dice roller data object.
+ * IDiceRoller describes the public API surface for our dice roller data store.
  */
 export interface IDiceRoller {
 	/**
