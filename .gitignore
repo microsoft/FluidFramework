@@ -57,7 +57,7 @@ build_output_archive
 
 # Claude Code
 # Local settings contain author-specific information and should not be shared.
-**/.claude/settings.local.json
+**/.claude/**/*.local.*
 # Session-specific task tracking
 **/.claude/todos/
 # Git worktrees created by Claude Code
