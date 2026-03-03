@@ -6,8 +6,7 @@
 import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-components";
 import { Delete24Regular } from "@fluentui/react-icons";
 import { useTree } from "@fluidframework/react/alpha";
-import type { FC } from "react";
-import type { DragEvent } from "react";
+import type { DragEvent, FC } from "react";
 
 import type { Table } from "../schema.js";
 
