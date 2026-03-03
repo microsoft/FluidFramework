@@ -4280,6 +4280,9 @@ importers:
       file-loader:
         specifier: ^6.2.0
         version: 6.2.0(webpack@5.103.0)
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@26.1.0)
       html-loader:
         specifier: ^5.1.0
         version: 5.1.0(webpack@5.103.0)
@@ -4289,9 +4292,6 @@ importers:
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
-      jsdom-global:
-        specifier: ^3.0.2
-        version: 3.0.2(jsdom@26.1.0)
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
@@ -15907,9 +15907,6 @@ importers:
       '@types/jsdom':
         specifier: ^21.1.1
         version: 21.1.7
-      '@types/jsdom-global':
-        specifier: ^3.0.4
-        version: 3.0.7
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -15964,6 +15961,9 @@ importers:
       expect-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@26.1.0)
       good-fences:
         specifier: ^1.1.1
         version: 1.2.0
@@ -15988,9 +15988,6 @@ importers:
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
-      jsdom-global:
-        specifier: ^3.0.2
-        version: 3.0.2(jsdom@26.1.0)
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
@@ -20168,9 +20165,6 @@ packages:
   '@types/jest@29.5.3':
     resolution: {integrity: sha512-1Nq7YrO/vJE/FYnqYyw0FS8LdrjExSgIiHyKg7xPpn+yi8Q4huZryKnkJatN1ZRH89Kw2v33/8ZMB7DuZeSLlA==}
 
-  '@types/jsdom-global@3.0.7':
-    resolution: {integrity: sha512-WgKCapVD0zcH6rbKTZ4wpIl1CKP2YGksNtZH5Oc37kTNRh83kPheaq6ChbpuywCCDjVGdBO+Us8C14Z2jRfXwQ==}
-
   '@types/jsdom@20.0.1':
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
 
@@ -24208,11 +24202,6 @@ packages:
   jsdoc-type-pratt-parser@6.10.0:
     resolution: {integrity: sha512-+LexoTRyYui5iOhJGn13N9ZazL23nAHGkXsa1p/C8yeq79WRfLBag6ZZ0FQG2aRoc9yfo59JT9EYCQonOkHKkQ==}
     engines: {node: '>=20.0.0'}
-
-  jsdom-global@3.0.2:
-    resolution: {integrity: sha512-t1KMcBkz/pT5JrvcJbpUR2u/w1kO9jXctaaGJ0vZDzwFnIvGWw9IDSRciT83kIs8Bnw4qpOl8bQK08V01YgMPg==}
-    peerDependencies:
-      jsdom: '>=10.0.0'
 
   jsdom@20.0.3:
     resolution: {integrity: sha512-SYhBvTh89tTfCD/CRdSOm13mOBa42iTaTyfyEWBdKcGdPxPtLFBXuHR8XHb33YNYaP+lLbmSvBTsnoesCNJEsQ==}
@@ -33804,10 +33793,6 @@ snapshots:
       expect: 29.7.0
       pretty-format: 29.7.0
 
-  '@types/jsdom-global@3.0.7':
-    dependencies:
-      '@types/jsdom': 21.1.7
-
   '@types/jsdom@20.0.1':
     dependencies:
       '@types/node': 20.19.30
@@ -38533,10 +38518,6 @@ snapshots:
   jsbn@1.1.0: {}
 
   jsdoc-type-pratt-parser@6.10.0: {}
-
-  jsdom-global@3.0.2(jsdom@26.1.0):
-    dependencies:
-      jsdom: 26.1.0
 
   jsdom@20.0.3:
     dependencies:
