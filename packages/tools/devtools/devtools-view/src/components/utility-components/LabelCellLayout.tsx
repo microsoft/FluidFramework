@@ -4,7 +4,7 @@
  */
 
 import { InfoLabel, Label, TableCellLayout } from "@fluentui/react-components";
-import { PropsWithChildren, ReactElement } from "react";
+import type { PropsWithChildren, ReactElement } from "react";
 
 /**
  * {@link LabelCellLayout} input props.

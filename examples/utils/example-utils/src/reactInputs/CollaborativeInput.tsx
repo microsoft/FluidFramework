@@ -4,8 +4,13 @@
  */
 
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
-import { Component, createRef, CSSProperties, FormEvent, RefObject } from "react";
-
+import {
+	Component,
+	createRef,
+	type CSSProperties,
+	type FormEvent,
+	type RefObject,
+} from "react";
 /**
  * {@link CollaborativeInput} input props.
  * @internal

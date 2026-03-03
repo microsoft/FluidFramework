@@ -11,8 +11,7 @@ import {
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import * as monaco from "monaco-editor";
-import { FC, useEffect, useRef } from "react";
-
+import { type FC, useEffect, useRef } from "react";
 /**
  * Compilation options for Monaco to use on TypeScript
  */

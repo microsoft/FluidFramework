@@ -10,13 +10,12 @@ import type {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	createContext,
-	Dispatch,
-	SetStateAction,
+	type Dispatch,
+	type SetStateAction,
 	useContext,
 	useEffect,
 	useState,
 } from "react";
-
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.
  *

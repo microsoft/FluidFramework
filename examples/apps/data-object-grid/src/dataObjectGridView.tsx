@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FC, PropsWithChildren, ReactElement, useEffect, useState } from "react";
+import {
+	type FC,
+	type PropsWithChildren,
+	type ReactElement,
+	useEffect,
+	useState,
+} from "react";
 import RGL, { WidthProvider, type Layout } from "react-grid-layout";
 
 import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";

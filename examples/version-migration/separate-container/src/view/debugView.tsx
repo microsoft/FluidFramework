@@ -4,8 +4,7 @@
  */
 
 import type { IMigrator, MigrationState } from "@fluid-example/migration-tools/alpha";
-import { FC, useEffect, useState } from "react";
-
+import { type FC, useEffect, useState } from "react";
 import type { IMigratableModel } from "../migratableModel.js";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 

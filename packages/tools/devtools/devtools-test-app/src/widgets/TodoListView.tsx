@@ -8,8 +8,7 @@ import { CollaborativeInput } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/internal";
 import type { SharedString, ISharedString } from "@fluidframework/sequence/internal";
 import { Tree } from "@fluidframework/tree/internal";
-import { FC, FormEvent, useEffect, useRef, useState } from "react";
-
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 import type { AppDataTree } from "../FluidObject.js";
 
 import { TodoItemView } from "./TodoItemView.js";

@@ -27,7 +27,7 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
-import { FC, useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 

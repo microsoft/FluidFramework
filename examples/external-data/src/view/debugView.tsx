@@ -4,8 +4,14 @@
  */
 
 import isEqual from "lodash.isequal";
-import { Dispatch, FC, SetStateAction, SyntheticEvent, useEffect, useState } from "react";
-
+import {
+	type Dispatch,
+	type FC,
+	type SetStateAction,
+	type SyntheticEvent,
+	useEffect,
+	useState,
+} from "react";
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import type { ITaskData } from "../model-interface/index.js";
 

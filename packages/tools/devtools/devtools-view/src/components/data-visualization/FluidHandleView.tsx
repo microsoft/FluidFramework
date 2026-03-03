@@ -14,8 +14,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import { ReactElement, useEffect, useState } from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";

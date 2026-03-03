@@ -6,8 +6,14 @@
 import type { TreeLeafValue, TreeNode } from "@fluidframework/tree";
 import { Tree } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/internal";
-import { FC, memo, MemoExoticComponent, ReactNode, useEffect, useState } from "react";
-
+import {
+	type FC,
+	memo,
+	type MemoExoticComponent,
+	type ReactNode,
+	useEffect,
+	useState,
+} from "react";
 import {
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,

@@ -4,8 +4,7 @@
  */
 
 import type { TextAsTree } from "@fluidframework/tree/internal";
-import { ChangeEvent, FC, useCallback, useRef } from "react";
-
+import { type ChangeEvent, type FC, useCallback, useRef } from "react";
 import { withMemoizedTreeObservations } from "../../useTree.js";
 
 import { syncTextToTree } from "./plainUtils.js";

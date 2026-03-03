@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { CSSProperties, FC, FormEvent, useEffect, useRef, useState } from "react";
-
+import {
+	type CSSProperties,
+	type FC,
+	type FormEvent,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import type {
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,

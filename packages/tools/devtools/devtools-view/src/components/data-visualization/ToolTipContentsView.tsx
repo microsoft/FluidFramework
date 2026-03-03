@@ -4,7 +4,7 @@
  */
 
 import { type VisualChildNode, VisualNodeKind } from "@fluidframework/devtools-core/internal";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 /**
  * Interface for the props of {@link ToolTipContentsView}.

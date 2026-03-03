@@ -19,7 +19,7 @@ import {
 	DoorArrowLeftRegular,
 	Person12Regular,
 } from "@fluentui/react-icons";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 

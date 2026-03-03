@@ -4,8 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import { FC, FormEvent, useCallback, useEffect, useRef, useState } from "react";
-
+import { type FC, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface/index.js";
 
 /**

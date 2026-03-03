@@ -6,8 +6,7 @@
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { Ink } from "@fluid-experimental/ink";
 import { DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { createElement, ReactElement } from "react";
-
+import { createElement, type ReactElement } from "react";
 import { Canvas } from "./canvas.js";
 import { CanvasView } from "./view.js";
 

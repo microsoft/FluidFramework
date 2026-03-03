@@ -13,7 +13,7 @@ import {
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";

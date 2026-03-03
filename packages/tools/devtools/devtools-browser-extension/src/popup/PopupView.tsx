@@ -10,8 +10,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import { ReactElement, useEffect, useState } from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 import type { BackgroundConnection } from "../BackgroundConnection.js";
 
 // The recipient of the sent message is running on the same machine, just in a different process.

@@ -9,7 +9,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
 import { Button, Link, Tooltip, makeStyles } from "@fluentui/react-components";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 // NoDevtoolsErrorBar uses legacy @fluentui/react, which requires explicit icon initialization.
 initializeIcons();

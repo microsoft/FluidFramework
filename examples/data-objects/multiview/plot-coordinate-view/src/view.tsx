@@ -4,8 +4,7 @@
  */
 
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
-import { FC, useEffect, useState } from "react";
-
+import { type FC, useEffect, useState } from "react";
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 

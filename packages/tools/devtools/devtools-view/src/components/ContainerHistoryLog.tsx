@@ -23,8 +23,7 @@ import {
 	Warning20Regular,
 } from "@fluentui/react-icons";
 import type { ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
-import { ReactElement, useContext } from "react";
-
+import { type ReactElement, useContext } from "react";
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
 
 import { LabelCellLayout } from "./utility-components/index.js";

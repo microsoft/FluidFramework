@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FC } from "react";
+import type { FC } from "react";
 
 import type { IBubble } from "../types.js";
 

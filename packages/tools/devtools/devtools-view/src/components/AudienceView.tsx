@@ -13,8 +13,7 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
-import { ReactElement, useEffect, useState } from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 
 import { AudienceHistoryTable } from "./AudienceHistoryTable.js";

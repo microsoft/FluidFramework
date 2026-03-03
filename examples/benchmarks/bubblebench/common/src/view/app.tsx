@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FC, useEffect, useState } from "react";
-
+import { type FC, useEffect, useState } from "react";
 import { Stats } from "../stats.js";
 import type { IAppState, IBubble } from "../types.js";
 

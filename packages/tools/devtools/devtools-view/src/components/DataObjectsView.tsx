@@ -13,8 +13,7 @@ import {
 	type RootHandleNode,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import { ReactElement, useEffect, useState } from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 
 import { Waiting } from "./Waiting.js";

@@ -4,7 +4,7 @@
  */
 
 import type { UnknownObjectNode } from "@fluidframework/devtools-core/internal";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";

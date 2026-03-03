@@ -6,8 +6,7 @@
 import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
 import { Info20Regular } from "@fluentui/react-icons";
 import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
-import { ReactElement, useContext } from "react";
-
+import { type ReactElement, useContext } from "react";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";

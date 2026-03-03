@@ -4,7 +4,7 @@
  */
 
 import { Button, Checkbox, makeStyles, shorthands, tokens } from "@fluentui/react-components";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
 

@@ -5,7 +5,7 @@
 
 import { DevtoolsPanel, WindowMessageRelay } from "@fluid-internal/devtools-view";
 import { Resizable } from "re-resizable";
-import { ReactElement, StrictMode } from "react";
+import { type ReactElement, StrictMode } from "react";
 import ReactDOM from "react-dom";
 
 import { App } from "./App.js";

@@ -31,8 +31,7 @@ import type {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/legacy";
-import { createElement, ReactElement } from "react";
-
+import { createElement, type ReactElement } from "react";
 const codeMirrorFactory = new SmdeFactory();
 const proseMirrorFactory = new ProseMirrorFactory();
 

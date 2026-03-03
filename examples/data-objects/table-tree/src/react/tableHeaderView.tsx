@@ -14,8 +14,7 @@ import {
 } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
 import { useTree } from "@fluidframework/react/alpha";
-import { type DragEvent, FC, useState } from "react";
-
+import { type DragEvent, type FC, useState } from "react";
 import { Column, type Table } from "../schema.js";
 
 /**

@@ -20,8 +20,7 @@ import type {
 	InsertableTreeFieldFromImplicitField,
 } from "@fluidframework/tree";
 import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
-import { FC, JSX, useCallback, useEffect, useState } from "react";
-
+import { type FC, type JSX, useCallback, useEffect, useState } from "react";
 import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
 
 /**

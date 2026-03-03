@@ -9,8 +9,7 @@ import { SharedCounter } from "@fluidframework/counter/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
-import { ReactElement, useEffect, useState } from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 import {
 	type ContainerInfo,
 	createFluidContainer,

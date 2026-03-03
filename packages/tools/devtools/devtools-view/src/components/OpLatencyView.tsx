@@ -20,8 +20,7 @@ import {
 	TelemetryEvent,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import { ReactElement, useEffect, useState } from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 
 import { DynamicComposedChart, type GraphDataSet } from "./graphs/index.js";

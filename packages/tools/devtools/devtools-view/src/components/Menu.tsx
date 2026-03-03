@@ -41,8 +41,13 @@ import {
 	GetContainerState,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import { KeyboardEvent, PropsWithChildren, ReactElement, useEffect, useState } from "react";
-
+import {
+	type KeyboardEvent,
+	type PropsWithChildren,
+	type ReactElement,
+	useEffect,
+	useState,
+} from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 

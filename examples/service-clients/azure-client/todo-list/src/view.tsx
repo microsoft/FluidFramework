@@ -11,8 +11,7 @@ import {
 import { useTree } from "@fluidframework/react/alpha";
 import type { IFluidContainer, IFluidHandle } from "fluid-framework";
 import type { ISharedString } from "fluid-framework/legacy";
-import { ChangeEvent, FC, FormEvent, useEffect, useRef, useState } from "react";
-
+import { type ChangeEvent, type FC, type FormEvent, useEffect, useRef, useState } from "react";
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
 import type { TodoList, TodoItem } from "./schema.js";
 

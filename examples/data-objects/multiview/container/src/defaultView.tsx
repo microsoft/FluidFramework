@@ -11,7 +11,7 @@ import type {
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
-import { FC } from "react";
+import type { FC } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";

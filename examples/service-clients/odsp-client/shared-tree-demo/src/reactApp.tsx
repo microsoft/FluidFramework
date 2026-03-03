@@ -6,8 +6,13 @@
 /* eslint-disable prefer-template */
 
 import { Tree, type TreeView } from "fluid-framework";
-import { CSSProperties, MouseEvent, type ReactNode, useEffect, useState } from "react";
-
+import {
+	type CSSProperties,
+	type MouseEvent,
+	type ReactNode,
+	useEffect,
+	useState,
+} from "react";
 import type { App, Letter } from "./schema.js";
 
 export function Explanation(): JSX.Element {

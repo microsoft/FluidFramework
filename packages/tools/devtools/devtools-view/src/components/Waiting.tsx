@@ -4,7 +4,7 @@
  */
 
 import { Spinner } from "@fluentui/react-components";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 /**
  * Default label displayed by {@link Waiting} when no {@link WaitingProps.label} is specified.

@@ -5,7 +5,7 @@
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import type { SharedString } from "@fluidframework/sequence/legacy";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 interface CollaborativeTextProps {
 	text: SharedString;

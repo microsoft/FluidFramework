@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CSSProperties, ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 /**
  * {@link ScreenReaderAnnouncement} input props.

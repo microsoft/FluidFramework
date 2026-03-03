@@ -6,8 +6,7 @@
 import { Table, TableBody, Button } from "@fluentui/react-components";
 import { Add24Regular } from "@fluentui/react-icons";
 import { useTree } from "@fluidframework/react/alpha";
-import { type DragEvent, FC, useState } from "react";
-
+import { type DragEvent, type FC, useState } from "react";
 import type { TableDataObject } from "../dataObject.js";
 import { Row } from "../schema.js";
 

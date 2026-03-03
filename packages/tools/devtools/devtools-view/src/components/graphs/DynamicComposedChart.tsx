@@ -10,7 +10,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { Theme } from "@fluentui/react-components";
-import { CSSProperties, ReactElement, useState } from "react";
+import { type CSSProperties, type ReactElement, useState } from "react";
 import {
 	Area,
 	Bar,
