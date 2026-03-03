@@ -59,9 +59,7 @@ const diceRollerSharedObjectRegistry = new Map<string, IChannelFactory>([
 ]);
 
 export class DiceRollerFactory implements IFluidDataStoreFactory {
-	public get type(): string {
-		return "dice-roller";
-	}
+	public readonly type = "dice-roller";
 
 	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
