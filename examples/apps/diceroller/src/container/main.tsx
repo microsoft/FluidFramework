@@ -44,18 +44,21 @@ export const DiceRollerView: FC<IDiceRollerViewProps> = ({
 			setDiceValue(diceRoller.value);
 		};
 		diceRoller.on("diceRolled", onDiceRolled);
-		return () => {
+		return (): void => {
 			diceRoller.off("diceRolled", onDiceRolled);
 		};
 	}, [diceRoller]);
 
 	// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
 	const diceChar = String.fromCodePoint(0x267f + diceValue);
+	const color = `hsl(${diceValue * 60}, 70%, 50%)`;
 
 	return (
-		<div>
-			<span style={{ fontSize: 50 }}>{diceChar}</span>
-			<button onClick={diceRoller.roll}>Roll</button>
+		<div style={{ textAlign: "center" }}>
+			<div style={{ fontSize: "200px", color }}>{diceChar}</div>
+			<button style={{ fontSize: "50px" }} onClick={diceRoller.roll}>
+				Roll
+			</button>
 		</div>
 	);
 };
