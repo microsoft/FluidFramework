@@ -108,10 +108,11 @@ module.exports = {
 		// generate reports from legacy entrypoint as well as the "current" one.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports:current": ["api-extractor:esnext"],
-		"build:api-reports:legacy": ["api-extractor:esnext"],
-		"ci:build:api-reports:current": ["api-extractor:esnext"],
-		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
+		// Depend on "build:esnext" in case there is no "api-extractor:esnext".
+		"build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.

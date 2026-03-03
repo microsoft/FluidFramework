@@ -13,6 +13,10 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
+	"files": [
+		"lib/**/*",
+		"!**/test/**"
+	],
 	"exports": {
 		".": {
 			"import": {
