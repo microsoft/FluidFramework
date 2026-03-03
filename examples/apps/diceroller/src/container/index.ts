@@ -6,9 +6,9 @@
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { createElement } from "react";
 
-import { type DiceRoller, DiceRollerInstantiationFactory, DiceRollerView } from "./main.js";
+import { DiceRollerInstantiationFactory, DiceRollerView, type IDiceRoller } from "./main.js";
 
-const diceRollerViewCallback = (diceRoller: DiceRoller): JSX.Element =>
+const diceRollerViewCallback = (diceRoller: IDiceRoller): JSX.Element =>
 	createElement(DiceRollerView, { diceRoller });
 
 /**

@@ -67,7 +67,7 @@ export const DiceRollerView: FC<IDiceRollerViewProps> = ({
  * The DiceRoller is our implementation of the IDiceRoller interface.
  * @internal
  */
-export class DiceRoller extends DataObject implements IDiceRoller {
+class DiceRoller extends DataObject implements IDiceRoller {
 	public static readonly Name = "@fluid-example/dice-roller";
 
 	public static readonly factory = new DataObjectFactory({
