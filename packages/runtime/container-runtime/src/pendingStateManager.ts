@@ -85,9 +85,11 @@ export interface IPendingMessage {
 		 */
 		length: number;
 		/**
-		 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
+		 * If true, this batch type is not directly resubmitted during replay.
+		 * Instead, the runtime handles resubmission separately
+		 * (e.g. ID Allocation ops are regenerated fresh via submitIdAllocationOpIfNeeded).
 		 */
-		ignoreBatchId?: boolean;
+		skipResubmit?: boolean;
 		/**
 		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
 		 */
@@ -103,11 +105,24 @@ type Patch<T, U> = U & Omit<T, keyof U>;
 type IPendingMessageV0 = Patch<IPendingMessage, { batchInfo?: undefined }>;
 
 /**
+ * Second version of the type (used ignoreBatchId instead of skipResubmit)
+ */
+type IPendingMessageV1 = Patch<
+	IPendingMessage,
+	{
+		batchInfo: Patch<
+			IPendingMessage["batchInfo"],
+			{ ignoreBatchId?: boolean; skipResubmit?: undefined }
+		>;
+	}
+>;
+
+/**
  * Union of all supported schemas for when applying stashed ops
  *
  * @remarks When the format changes, this type should update to reflect all possible schemas.
  */
-type IPendingMessageFromStash = IPendingMessageV0 | IPendingMessage;
+type IPendingMessageFromStash = IPendingMessageV0 | IPendingMessageV1 | IPendingMessage;
 
 export interface IPendingLocalState {
 	/**
@@ -403,13 +418,13 @@ export class PendingStateManager implements IDisposable {
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
-	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
+	 * @param skipResubmit - Whether this batch type is not directly resubmitted during replay
 	 */
 	public onFlushBatch(
 		batch: LocalBatchMessage[] | [LocalEmptyBatchPlaceholder],
 		clientSequenceNumber: number | undefined,
 		staged: boolean,
-		ignoreBatchId?: boolean,
+		skipResubmit?: boolean,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
@@ -443,7 +458,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId, staged },
+				batchInfo: { clientId, batchStartCsn, length: batch.length, skipResubmit, staged },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -513,7 +528,7 @@ export class PendingStateManager implements IDisposable {
 		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
 		const firstIndexUsingBatchId = Array.from({
 			length: this.pendingMessages.length,
-		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.ignoreBatchId !== true);
+		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.skipResubmit !== true);
 		const pendingMessageUsingBatchId =
 			firstIndexUsingBatchId === -1
 				? undefined
@@ -803,7 +818,7 @@ export class PendingStateManager implements IDisposable {
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
 			const batchId =
-				pendingMessage.batchInfo.ignoreBatchId === true
+				pendingMessage.batchInfo.skipResubmit === true
 					? undefined
 					: getEffectiveBatchId(pendingMessage);
 
@@ -925,7 +940,8 @@ export class PendingStateManager implements IDisposable {
 }
 
 /**
- * For back-compat if trying to apply stashed ops that pre-date batchInfo
+ * For back-compat if trying to apply stashed ops that pre-date batchInfo,
+ * or that used the old `ignoreBatchId` field name (now `skipResubmit`).
  */
 function patchbatchInfo(
 	message: IPendingMessageFromStash,
@@ -934,6 +950,11 @@ function patchbatchInfo(
 	if (batchInfo === undefined) {
 		// Using uuid guarantees uniqueness, retaining existing behavior
 		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: -1, staged: false };
+	} else if ("ignoreBatchId" in batchInfo && batchInfo.ignoreBatchId !== undefined) {
+		// Migrate old field name to new
+		const info = message.batchInfo as IPendingMessage["batchInfo"];
+		info.skipResubmit = batchInfo.ignoreBatchId;
+		delete (batchInfo as Record<string, unknown>).ignoreBatchId;
 	}
 }
 

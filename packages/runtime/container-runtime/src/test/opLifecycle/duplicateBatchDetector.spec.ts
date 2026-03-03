@@ -193,6 +193,76 @@ describe("DuplicateBatchDetector", () => {
 		);
 	});
 
+	describe("ID Allocation batch fork detection", () => {
+		it("ID Allocation batches with same content-derived batchId are detected as duplicates", () => {
+			// Simulate two forked containers submitting the same ID allocation range.
+			// Both produce the same content-derived batchId.
+			const idAllocBatchId =
+				'idalloc_{"sessionId":"test-session","ids":{"firstGenCount":0,"count":5,"requestedClusterSize":128,"localIdRanges":[[0,5]]}}';
+
+			const fork1Batch = makeBatch({
+				sequenceNumber: seqNum++, // 1
+				minimumSequenceNumber: 0,
+				batchId: idAllocBatchId,
+			});
+			const fork2Batch = makeBatch({
+				sequenceNumber: seqNum++, // 2
+				minimumSequenceNumber: 0,
+				batchId: idAllocBatchId,
+			});
+
+			const result1 = detector.processInboundBatch(fork1Batch);
+			assert.deepEqual(result1, { duplicate: false });
+
+			const result2 = detector.processInboundBatch(fork2Batch);
+			assert.deepEqual(result2, { duplicate: true, otherSequenceNumber: 1 });
+		});
+
+		it("ID Allocation batches with different content-derived batchIds are not duplicates", () => {
+			// Different ID ranges produce different batchIds
+			const idAllocBatchId1 =
+				'idalloc_{"sessionId":"test-session","ids":{"firstGenCount":0,"count":5,"requestedClusterSize":128,"localIdRanges":[[0,5]]}}';
+			const idAllocBatchId2 =
+				'idalloc_{"sessionId":"test-session","ids":{"firstGenCount":5,"count":3,"requestedClusterSize":128,"localIdRanges":[[5,3]]}}';
+
+			const batch1 = makeBatch({
+				sequenceNumber: seqNum++,
+				minimumSequenceNumber: 0,
+				batchId: idAllocBatchId1,
+			});
+			const batch2 = makeBatch({
+				sequenceNumber: seqNum++,
+				minimumSequenceNumber: 0,
+				batchId: idAllocBatchId2,
+			});
+
+			detector.processInboundBatch(batch1);
+			const result = detector.processInboundBatch(batch2);
+			assert.deepEqual(result, { duplicate: false });
+		});
+
+		it("ID Allocation and data batches with different batchIds are not duplicates", () => {
+			const idAllocBatchId =
+				'idalloc_{"sessionId":"test-session","ids":{"firstGenCount":0,"count":5,"requestedClusterSize":128,"localIdRanges":[[0,5]]}}';
+			const dataBatchId = "clientId_[1]";
+
+			const idAllocBatch = makeBatch({
+				sequenceNumber: seqNum++,
+				minimumSequenceNumber: 0,
+				batchId: idAllocBatchId,
+			});
+			const dataBatch = makeBatch({
+				sequenceNumber: seqNum++,
+				minimumSequenceNumber: 0,
+				batchId: dataBatchId,
+			});
+
+			detector.processInboundBatch(idAllocBatch);
+			const result = detector.processInboundBatch(dataBatch);
+			assert.deepEqual(result, { duplicate: false });
+		});
+	});
+
 	describe("getStateForSummary", () => {
 		it("If empty, return undefined", () => {
 			assert.equal(

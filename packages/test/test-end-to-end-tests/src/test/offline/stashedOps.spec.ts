@@ -2251,7 +2251,7 @@ describeCompat(
 				},
 			],
 			async function () {
-				if (provider.driver.type !== "local") {
+				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 					this.skip();
 				}
 				const incrementValue = 3;
@@ -2261,9 +2261,7 @@ describeCompat(
 					false, // Don't send ops from first container instance before closing
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
-						// Include an ID Allocation op to get coverage of the special logic around these ops as well
-						// AB#26984: Actually don't, because the ID Compressor is hitting "Ranges finalized out of order" for this test
-						// getIdCompressor(counter)?.generateCompressedId();
+						getIdCompressor(counter)?.generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
