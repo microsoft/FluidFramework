@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import, import-x/no-internal-modules
 import "global-jsdom/register";
 
 // 'global-jsdom' does not polyfill mark() and measure().  We stub them ourselves.
