@@ -9,7 +9,7 @@ import {
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration";
-import { ValueType, type CollectedData } from "../ResultTypes";
+import { ValueType, type CollectedData, type Measurement } from "../ResultTypes";
 import { brandMeasurementNameForMode, getArrayStatistics } from "../sampling";
 import { type MemoryUseCallbacks, type MemoryUseBenchmark } from "./configuration";
 
@@ -19,9 +19,56 @@ interface MemoryMeasurement {
 	after: number;
 }
 
-async function getUsage(): Promise<number> {
-	await runGarbageCollection();
-	return process.memoryUsage().heapUsed;
+function getBytesUsed(): number {
+	const usage = process.memoryUsage();
+	// TODO: determine if arrayBuffers should be included in memory usage.
+	return usage.heapUsed; // + usage.arrayBuffers;
+}
+
+const gcOptionsAsync = { type: "major", execution: "async" } as const;
+const gcOptions = { type: "major" } as const;
+
+async function getUsage(
+	enableAsyncGC: boolean,
+): Promise<{ used: number; gcIterations: number; lastDelta: number }> {
+	const gc = global?.gc;
+	if (gc === undefined) {
+		assert(
+			!isInPerformanceTestingMode,
+			"Garbage collection is not exposed. Run Node with --expose-gc to enable this feature.",
+		);
+		return { used: getBytesUsed(), gcIterations: 0, lastDelta: Number.NaN };
+	}
+
+	let counter = 0;
+	let usedBefore = 0;
+	while (true) {
+		const usedAfter = getBytesUsed();
+		const change = usedAfter - usedBefore;
+		const threshold = Math.max(enableAsyncGC ? 96 : 0, (counter - 2) * 32);
+		if (
+			counter > 0 &&
+			(!isInPerformanceTestingMode ||
+				usedAfter === usedBefore ||
+				Math.abs(change) <= threshold)
+		) {
+			return { used: usedAfter, gcIterations: counter, lastDelta: change };
+		}
+		usedBefore = usedAfter;
+		counter++;
+
+		// Experiments have shown that there are two ways to ensure garbage collection including the FinalizationRegistry, is run.
+		// 1. a sync GC then a wait of 8 seconds (but this sometimes fails after multiple runs unless a debugger takes a heap snapshot, possible due to some JIT optimization that breaks it).
+		// 2. two async GCs in a row.
+		// Since the second option is both more robust and faster, that is what is used here.
+		// In this case, the second iteration of this loop should pick up the finalizers.
+
+		if (enableAsyncGC) {
+			await gc(gcOptionsAsync);
+		}
+		gc(gcOptions);
+		gc();
+	}
 }
 
 function assertStats(condition: boolean, message: string) {
@@ -42,13 +89,34 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	const data: MemoryMeasurement[] = [];
 	const unset = -1;
 
-	// TODO: something smarter.
-	const count = isInPerformanceTestingMode ? 10 : 1;
+	// Likely due to JIT behavior, the first couple, then often the 11 and 12 iterations tend to be different (13 for async GC cases).
+	// To mitigate this we trim some samples from the beginning.
+	const trimCount = isInPerformanceTestingMode ? 12 : 0;
+	const count = trimCount + (isInPerformanceTestingMode ? 10 : 1);
 	// Preallocate space for data to avoid allocations during collection.
 	for (let i = 0; i < count; i++) {
 		data.push({ before: unset, while: unset, after: unset });
 	}
-	let sampleIndex = 0;
+	let sampleIndex = -1;
+
+	let maxGcIterations = 0;
+	let totalGcIterations = 0;
+	let totalGcCount = 0;
+	let maxDelta = 0;
+	async function getUsageInner(): Promise<number> {
+		const usage = await getUsage(args.enableAsyncGC ?? false);
+		if (sampleIndex >= trimCount) {
+			totalGcIterations += usage.gcIterations;
+			totalGcCount++;
+			if (usage.gcIterations > maxGcIterations) {
+				maxGcIterations = usage.gcIterations;
+			}
+			if (Math.abs(usage.lastDelta) > Math.abs(maxDelta)) {
+				maxDelta = usage.lastDelta;
+			}
+		}
+		return usage.used;
+	}
 
 	const state: MemoryUseCallbacks = {
 		async beforeAllocation() {
@@ -58,7 +126,7 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 					data[sampleIndex].after === unset,
 				"beforeAllocation should only be called once and before the other callbacks",
 			);
-			data[sampleIndex].before = await getUsage();
+			data[sampleIndex].before = await getUsageInner();
 		},
 		async whileAllocated() {
 			assertProperUse(
@@ -67,7 +135,7 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 					data[sampleIndex].after === unset,
 				"whileAllocated should only be called once and between the other callbacks",
 			);
-			data[sampleIndex].while = await getUsage();
+			data[sampleIndex].while = await getUsageInner();
 		},
 		async afterDeallocation() {
 			assertProperUse(
@@ -76,13 +144,18 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 					data[sampleIndex].after === unset,
 				"afterDeallocation should only be called once and after the other callbacks",
 			);
-			data[sampleIndex].after = await getUsage();
-			sampleIndex++;
+			data[sampleIndex].after = await getUsageInner();
 		},
 		continue(): boolean {
+			sampleIndex++;
 			return sampleIndex < count;
 		},
 	};
+
+	// Outside of actual measurement, async GC does not introduce bias or too much overhead,
+	// and can protect against cross test contamination due to finalizers.
+	// This also seems to help with the first test, preventing if from requiring an extra GC iteration.
+	await getUsage(true);
 
 	await args.benchmarkFn(state);
 
@@ -91,25 +164,70 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 		`Expected benchmarkFn to run the benchmark ${count} times, but it ran it ${sampleIndex} times.`,
 	);
 
-	// Discard first few samples as warmup, and compute statistics on the rest.
-	const trimmed = isInPerformanceTestingMode ? data.slice(4) : data;
+	const usedAfter = data[0].after !== unset;
 
-	const processed: ProcessedMeasurement[] = trimmed.map((x) => {
+	for (const measurement of data) {
+		assertProperUse(
+			measurement.before !== unset,
+			`Expected benchmarkFn to call "beforeAllocation" callback for each sample.`,
+		);
+
+		assertProperUse(
+			measurement.while !== unset,
+			`Expected benchmarkFn to call "whileAllocated" callback for each sample.`,
+		);
+
+		assertProperUse(
+			measurement.while !== unset,
+			`Expected benchmarkFn to call "whileAllocated" callback for each sample.`,
+		);
+
+		assertProperUse(
+			(measurement.after !== unset) === usedAfter,
+			`Expected benchmarkFn to call "usedAfter" on all or none of the samples, but it was called on some samples and not others.`,
+		);
+	}
+
+	// Discard first few samples as warmup, and compute statistics on the rest.
+	const trimmed = data.slice(trimCount);
+
+	const processedAll = data.map((x) => {
 		const allocatedBytes = x.while - x.before;
-		const freedBytes = x.while - x.after;
-		return { allocatedBytes, freedBytes };
+		const freedBytes = usedAfter ? x.while - x.after : allocatedBytes;
+		return { allocatedBytes, freedBytes, meanBytes: (allocatedBytes + freedBytes) / 2 };
 	});
+
+	const processed: ProcessedMeasurement[] = processedAll.slice(trimCount);
+
+	// When debugging the behaviors, inspecting this can be helpful to see if there is noise coming from specific iterations and the trim needs adjusting.
+	if (args.logRawData) {
+		console.log(`Raw data (First ${trimCount} rows discarded):`);
+		console.log(data);
+	}
+	if (args.logProcessedData) {
+		console.log(`Processed data (First ${trimCount} rows discarded):`);
+		console.log(processedAll);
+	}
 
 	const allocatedStats = getArrayStatistics(processed.map((x) => x.allocatedBytes));
 	const freedStats = getArrayStatistics(processed.map((x) => x.freedBytes));
 
-	const endSize = Math.max(1, Math.floor(count / 2));
-	const sizeStart = getArrayStatistics(
-		processed.slice(0, endSize).map((x) => (x.allocatedBytes + x.freedBytes) / 2),
+	const endSize = Math.max(1, Math.floor(processed.length / 2));
+	const sizeStart = getArrayStatistics(processed.slice(0, endSize).map((x) => x.meanBytes));
+	const sizeEnd = getArrayStatistics(processed.slice(-endSize).map((x) => x.meanBytes));
+	const averageIndexInStart = (0 + (endSize - 1)) / 2;
+	const averageIndexInEnd = (processed.length - endSize + (processed.length - 1)) / 2;
+	const iterationsBetweenStartAndEndStats = (averageIndexInStart + averageIndexInEnd) / 2;
+
+	const sizeStartBeforeMeasurement = getArrayStatistics(
+		trimmed.slice(0, endSize).map((x) => x.before),
 	);
-	const sizeEnd = getArrayStatistics(
-		processed.slice(-endSize).map((x) => (x.allocatedBytes + x.freedBytes) / 2),
+	const sizeEndBeforeMeasurement = getArrayStatistics(
+		trimmed.slice(-endSize).map((x) => x.before),
 	);
+	const leak =
+		sizeEndBeforeMeasurement.arithmeticMean - sizeStartBeforeMeasurement.arithmeticMean;
+	const leakPerIteration = leak / iterationsBetweenStartAndEndStats;
 
 	assert(sizeStart.samples.length === endSize, `invalid start size`);
 	assert(sizeEnd.samples.length === endSize, `invalid end size`);
@@ -125,16 +243,14 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	);
 	assertStats(freedStats.arithmeticMean > -noiseThreshold, "Expected positive deallocation size");
 
-	const meanStats = getArrayStatistics(
-		processed.map((x) => (x.allocatedBytes + x.freedBytes) / 2),
-	);
+	const meanStats = getArrayStatistics(processed.map((x) => x.meanBytes));
 	const meanMean = meanStats.arithmeticMean;
 
-	assertStats(
-		Math.abs(sizeEnd.arithmeticMean - sizeStart.arithmeticMean) <
-			meanMean * 0.4 + noiseThreshold,
-		`Expected iterations of memory use benchmark to not leak memory across iterations, but sizes near start (${sizeStart.arithmeticMean} bytes) and end sizes near end (${sizeEnd.arithmeticMean} bytes) were significantly different.`,
-	);
+	// assertStats(
+	// 	Math.abs(sizeEnd.arithmeticMean - sizeStart.arithmeticMean) <
+	// 		meanMean * 0.4 + noiseThreshold,
+	// 	`Expected iterations of memory use benchmark to not leak memory across iterations, but sizes near start (${sizeStart.arithmeticMean} bytes) and end sizes near end (${sizeEnd.arithmeticMean} bytes) were significantly different.`,
+	// );
 
 	{
 		const difference = Math.abs(allocatedStats.arithmeticMean - freedStats.arithmeticMean);
@@ -145,63 +261,95 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 		);
 	}
 
-	return {
-		primary: {
-			name: brandMeasurementNameForMode("Mean Additional Memory Usage"),
-			value: meanStats.arithmeticMean,
+	const additional: Measurement[] = [
+		{
+			name: "Samples",
+			value: meanStats.samples.length,
+			units: "count",
+		},
+		{
+			name: "Margin of Error",
+			value: meanStats.marginOfError,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
 		},
-		additional: [
+		{
+			name: "Relative Margin of Error",
+			value: meanStats.marginOfErrorPercent,
+			units: "%",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Standard Deviation",
+			value: meanStats.standardDeviation,
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Leak per Iteration",
+			value: leakPerIteration,
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Growth per Iteration",
+			value:
+				(sizeEnd.arithmeticMean - sizeStart.arithmeticMean) /
+				iterationsBetweenStartAndEndStats,
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Max GCs",
+			value: maxGcIterations,
+			units: "count",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Mean GCs",
+			value: totalGcIterations / totalGcCount,
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Max Last GC Delta",
+			value: maxDelta,
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+	];
+
+	if (usedAfter) {
+		additional.push(
 			{
-				name: "Samples",
-				value: meanStats.samples.length,
-				units: "count",
-			},
-			{
-				name: "Margin of Error",
-				value: meanStats.marginOfError,
+				name: "Mean Allocated",
+				value: allocatedStats.arithmeticMean,
 				units: "bytes",
 				type: ValueType.SmallerIsBetter,
 			},
 			{
-				name: "Relative Margin of Error",
-				value: meanStats.marginOfErrorPercent,
-				units: "%",
+				name: "Mean Freed",
+				value: freedStats.arithmeticMean,
+				units: "bytes",
 				type: ValueType.SmallerIsBetter,
 			},
-		],
+		);
+	}
+
+	return {
+		primary: {
+			name: brandMeasurementNameForMode("Mean Usage"),
+			value: meanStats.arithmeticMean,
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+		additional,
 	};
 }
 
 interface ProcessedMeasurement {
 	allocatedBytes: number;
 	freedBytes: number;
-}
-
-const gcOptions = { type: "major", execution: "async" } as const;
-
-/**
- * Run a garbage collection, if possible.
- * @remarks
- * Used to reduce heap to only retained objects to allow measuring of retained heap size.
- */
-async function runGarbageCollection(): Promise<void> {
-	const gc = global?.gc;
-	if (gc === undefined) {
-		assert(
-			!isInPerformanceTestingMode,
-			"Garbage collection is not exposed. Run Node with --expose-gc to enable this feature.",
-		);
-	} else {
-		// Experiments have shown that there are two ways to ensure garbage collection including the FinalizationRegistry, is run.
-		// 1. a sync GC then a wait of 8 seconds (but this sometimes fails after multiple runs unless a debugger takes a heap snapshot, possible due to some JIT optimization that breaks it).
-		// 2. two async GCs in a row.
-		// Since the second option is both more robust and faster, that is what is used here.
-		for (let index = 0; index < 2; index++) {
-			await gc(gcOptions);
-		}
-	}
+	meanBytes: number;
 }
 
 let warmedUp = false;

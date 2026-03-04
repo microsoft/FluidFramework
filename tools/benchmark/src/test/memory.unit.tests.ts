@@ -86,6 +86,99 @@ describe("memory use", () => {
 		}),
 	});
 
+	benchmarkIt({
+		title: "no after",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (callbacks) => {
+				while (callbacks.continue()) {
+					const a: number[] = [];
+					await callbacks.beforeAllocation();
+					a.length = 1024;
+					a.fill(0);
+					await callbacks.whileAllocated();
+					// Use "a" to ensure that memory is not freed until whileAllocated.
+					assert(a.length === 1024);
+				}
+			},
+		}),
+	});
+
+	benchmarkIt({
+		title: "linked list",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (callbacks) => {
+				while (callbacks.continue()) {
+					await callbacks.beforeAllocation();
+					type Node = undefined | { next: Node };
+					let head: Node = undefined;
+					for (let i = 0; i < 1000; i++) {
+						head = { next: head };
+					}
+					await callbacks.whileAllocated();
+					// Use head to ensure that memory is not freed until whileAllocated.
+					assert(head !== undefined);
+					head = undefined;
+					await callbacks.afterDeallocation();
+				}
+			},
+		}),
+	});
+
+	benchmarkIt({
+		title: "weak linked list",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (callbacks) => {
+				const weakMap = new WeakMap<object, object>();
+				while (callbacks.continue()) {
+					type Node = undefined | { next: Node };
+					const tail: Node = { next: undefined };
+					await callbacks.beforeAllocation();
+					let head: Node = { next: tail };
+					for (let i = 0; i < 1000; i++) {
+						const next: Node = { next: head };
+						// Store link in opposite direction in weak map.
+						weakMap.set(head, next);
+						head = next;
+					}
+					await callbacks.whileAllocated();
+					// Use head to ensure that memory is not freed until whileAllocated.
+					assert(head !== undefined);
+					head = undefined;
+					await callbacks.afterDeallocation();
+					assert(tail !== undefined);
+				}
+			},
+		}),
+	});
+
+	benchmarkIt({
+		title: "empty",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (callbacks) => {
+				while (callbacks.continue()) {
+					await callbacks.beforeAllocation();
+					await callbacks.whileAllocated();
+					await callbacks.afterDeallocation();
+				}
+			},
+		}),
+	});
+
+	benchmarkIt({
+		title: "empty async GC",
+		...benchmarkMemoryUse({
+			enableAsyncGC: true,
+			logProcessedData: true,
+			benchmarkFn: async (callbacks) => {
+				while (callbacks.continue()) {
+					await callbacks.beforeAllocation();
+					await callbacks.whileAllocated();
+					await callbacks.afterDeallocation();
+				}
+			},
+		}),
+	});
+
 	// Example from readme
 	function createSomething(): Map<string, number> {
 		const map: Map<string, number> = new Map();

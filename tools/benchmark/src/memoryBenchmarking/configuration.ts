@@ -20,6 +20,7 @@ export interface MemoryUseCallbacks {
  * A operation which uses memory in a way that can be measured.
  * @remarks
  * Use with {@link benchmarkMemoryUse} to measure the memory usage of the operation.
+ * Only supported in Node.js environments with --expose-gc.
  * @public
  */
 export interface MemoryUseBenchmark {
@@ -29,7 +30,8 @@ export interface MemoryUseBenchmark {
 	 * 2. Allocate memory in some way.
 	 * 3. `callbacks.whileAllocated()`
 	 * 4. Deallocate the memory allocated in step 2.
-	 * 5. `callbacks.afterDeallocation()`
+	 * 5. Optionally call `callbacks.afterDeallocation()` to measure deallocation separately from allocation
+	 * (the amounts will both be reported, but the mean of them is the primary result).
 	 * @remarks
 	 * The benchmark will measure memory use inn step 2 and freed in step 4.
 	 * A valid use of this function (to avoid errors anc collect accurate data) these amounts should be the same
@@ -38,4 +40,32 @@ export interface MemoryUseBenchmark {
 	 * Other schemes (like allowing leaking memory across iterations) could be added as different measurement API / benchmark types if needed.
 	 */
 	benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
+
+	/**
+	 * When set, async garbage collection will be used.
+	 * @remarks
+	 * Defaults to false.
+	 * Enable this to handle cases where a FinalizationRegistry is used and pending finalizers need to be run.
+	 * When enabling this, the `await` will leak some memory,
+	 * which can be mitigated by using {@link MemoryUseCallbacks.afterDeallocation} as the error to that will cancel out the error for the allocation amount.
+	 */
+	enableAsyncGC?: boolean;
+
+	/**
+	 * Console log the allocated and freed amounts for each test iteration.
+	 * @remarks
+	 * Defaults to false.
+	 * When testing/debugging memory tests, it can be helpful to inspect the actual measured memory use numbers to see if specific iterations are causing issues,
+	 * or if there is some exact amount being leaked.
+	 */
+	logProcessedData?: boolean;
+
+	/**
+	 * Console log the raw memory use data for each test iteration.
+	 * @remarks
+	 * Defaults to false.
+	 * When testing/debugging memory tests, it can be helpful to inspect the actual measured memory use numbers to see if specific iterations are causing issues,
+	 * or if there is some exact amount being leaked.
+	 */
+	logRawData?: boolean;
 }

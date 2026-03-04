@@ -44,10 +44,9 @@ export function geometricMean(values: number[]): number {
 	// Compute the geometric mean of values, but do it using log and exp to reduce overflow/underflow.
 	let sum = 0;
 	for (const value of values) {
-		if (value === 0) {
+		if (value <= 0) {
 			return Number.POSITIVE_INFINITY;
 		}
-		assert(value > 0, "invalid value in geometricMean");
 		sum += Math.log(value);
 	}
 	return Math.exp(sum / values.length);
@@ -59,7 +58,10 @@ export function geometricMean(values: number[]): number {
  * @remarks
  * This special cases several well known units.
  */
-export function formatMeasurementValue(measurement: Measurement): string {
+export function formatMeasurementValue(
+	measurement: Measurement,
+	scaleUnits: boolean = true,
+): string {
 	if (measurement.units === "count") {
 		assert(Number.isInteger(measurement.value), "expected integer value for count measurement");
 		return `${prettyNumber(measurement.value, 0)}`;
@@ -69,7 +71,7 @@ export function formatMeasurementValue(measurement: Measurement): string {
 		const units = ["B", "KiB", "MiB", "GiB", "TiB"];
 		let value = measurement.value;
 		let unitIndex = 0;
-		while (value >= 1024 && unitIndex < units.length - 1) {
+		while (scaleUnits && value >= 1024 && unitIndex < units.length - 1) {
 			value /= 1024;
 			unitIndex++;
 		}
@@ -77,6 +79,19 @@ export function formatMeasurementValue(measurement: Measurement): string {
 	}
 	if (measurement.units === "%") {
 		return `${prettyNumber(measurement.value, 3)}%`;
+	}
+	if (measurement.units === "ns/op") {
+		const units = ["ns", "ms", "s"];
+		const scale = [1e6, 1e3];
+		let value = measurement.value;
+		let unitIndex = 0;
+		while (scaleUnits && value >= scale[unitIndex] && unitIndex < units.length - 1) {
+			value /= scale[unitIndex];
+			unitIndex++;
+		}
+		return `${prettyNumber(value, scaleUnits ? (value > 1000 ? 0 : 2) : 1)} ${
+			units[unitIndex]
+		}/op`;
 	}
 
 	return `${prettyNumber(measurement.value)}${measurement.units ? ` ${measurement.units}` : ""}`;

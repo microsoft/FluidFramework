@@ -146,6 +146,9 @@ export interface Measurement {
 // @public
 export interface MemoryUseBenchmark {
     benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
+    enableAsyncGC?: boolean;
+    logProcessedData?: boolean;
+    logRawData?: boolean;
 }
 
 // @public
