@@ -7,9 +7,9 @@ mocha).
 
 ## General use
 
-This package exports `benchmarkIt` which can be used instead of mocha's `it()` to define benchmark tests:
+This package exports `benchmarkIt` which is used instead of mocha's `it()` to define benchmark tests.
 
-The tests you write using these `benchmarkIt` will also act as correctness tests.
+The tests you write using `benchmarkIt` will also act as correctness tests.
 When you run mocha on a package that contains benchmark tests, they'll behave like any other mocha test defined with `it()`.
 
 To run them as benchmark tests, invoke `mocha` as you normally would for your package but pass some additional arguments,
@@ -36,12 +36,12 @@ All tests created with the tools in this package get tagged with `@Benchmark` in
 time you'll want to use `--fgrep @Benchmark` to only run tests that were defined with the tools provided here.
 You can change the `@Benchmark` tag to a few other values (like `@Measurement`, `@Perspective`, or `@Diagnostic`) with
 one of the arguments to the functions exposed in this package, and if you do, you can be more specific about which tests
-want to run by passing a different filter, e.g. `--fgrep @Measurement`.
+you want to run by passing a different filter, e.g. `--fgrep @Measurement`.
 
 ### `--reporter <path>`
 
 Lets you specify the path to a custom reporter to output the tests' results.
-This package includes `dist/MochaReporter.js` for runtime tests, and `dist/MochaMemoryTestReporter.ts` for memory usage tests.
+This package includes `dist/MochaReporter.js`.
 If you don't specify one, the default mocha reporter will take over and you won't see benchmark information.
 
 ### `--reporterOptions reportDir=<output-path>`
@@ -59,91 +59,110 @@ If you want to use this, you'll want to test it thoroughly in your scenario to m
 
 ## Profiling durations
 
-To profile runtime durations, define tests using the `benchmark()` function.
-The `BenchmarkArguments` object you pass as argument lets you configure several things about the test, the most important
-ones being a title and the code that the test should run. It's important that you use the correct property to define your
-test code, depending on if it's fully synchronous (use `benchmarkFn`) or asynchronous (use `benchmarkFnAsync`).
+To profile runtime durations, use `benchmarkIt` together with `benchmarkDuration`:
 
-Look at the documentation for `BenchmarkArguments` for more details on what the rest of its properties do.
+```typescript
+benchmarkIt({
+	title: "My sync test",
+	...benchmarkDuration({
+		benchmarkFn: () => {
+			// synchronous code to benchmark
+		},
+	}),
+});
 
-When run, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
-when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
+benchmarkIt({
+	title: "My async test",
+	...benchmarkDuration({
+		benchmarkFnAsync: async () => {
+			// asynchronous code to benchmark
+		},
+	}),
+});
+```
+
+`benchmarkDuration` accepts a `DurationBenchmark`, which must have exactly one of:
+
+-   `benchmarkFn` — a synchronous function to benchmark.
+-   `benchmarkFnAsync` — an asynchronous function to benchmark.
+-   `benchmarkFnCustom` — an async function that controls the timing loop directly via a `BenchmarkTimer` argument,
+    for cases where you need full control over how batches are measured.
+
+It also accepts optional `BenchmarkTimingOptions` to tune `maxBenchmarkDurationSeconds`, `minBatchCount`, and `minBatchDurationSeconds`,
+and `HookArguments` (`before`/`after`) for one-time setup and teardown.
+
+Look at the documentation for `DurationBenchmark` and `BenchmarkTimingOptions` for more details.
 
 > **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
 > The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
-> The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
-> See documentation on `HookArguments` for more detail.
+> The problem can be alleviated but not fully fixed using the `beforeEachBatch` option.
+> See documentation on `OnBatch` for more detail.
 
-## Profiling custom usage
+## Profiling custom measurements
 
-To customize profiling, define tests using the `benchmarkCustom()` function. The run argument of this function
-includes a reporter that uses `addMeasurement()` to record custom data for reporting. Look at the documentation
-on `Titled`, `BenchmarkDescription`, `MochaExclusiveOptions` for more details on what the rest of its properties do.
+To report fully custom measurements, call `benchmarkIt` directly and provide a `run` function that returns a `CollectedData` object:
+
+```typescript
+benchmarkIt({
+	title: "My custom measurement",
+	run: async (timer) => {
+		// collect data using timer or any other means
+		return {
+			primary: {
+				name: "My metric",
+				value: 42,
+				units: "things/op",
+				type: ValueType.SmallerIsBetter,
+			},
+			additional: [],
+		};
+	},
+});
+```
+
+Look at the documentation on `CollectedData`, `Measurement`, and `ValueType` for details on what the returned object should contain.
 
 ## Profiling memory usage
 
-To profile memory usage, define tests using the `benchmarkMemory()` function.
-The single argument to the function must be an **instance of a class** that implement `IMemoryTestObject`.
-This leads to some uncommon ways of writing tests and might feel strange, but it was done this way to try to ensure
-that these tests are written in a way in which they can obtain accurate measurements and not run into problems because
-of cross-test contamination, which are very easy to run into when trying to profile memory usage.
-
-A high-level explanation of how memory profiling tests execute might help make this clearer:
-
-For each test:
-
-1.  The `before()` method in the class instance is called.
-2.  The `beforeIteration()` method in the class instance is called.
-3.  Garbage Collection is triggered.
-4.  We collect a baseline "before" memory measurement.
-5.  The `run()` method in the class instance is called.
-6.  The `afterIteration()` method in the class instance is called.
-7.  Garbage Collection is triggered.
-8.  We collect an "after" memory measurement.
-9.  Repeat steps 2-9 until some conditions are met.
-10. The `after()` method in the class instance is called.
-
-In general terms, this means you should:
-
--   Put code that sets up the test but should _not_ be included in the baseline "before" memory measurement, in the
-    `beforeIteration()` method.
--   Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
-    are assigned to local variables declared _outside_ of the `run()` method, so they won't go out of scope as soon as
-    the method returns, and thus are not collected when GC runs in step 7 above.
-
-    Technically, those variables could be declared outside the class, but that is prone to cross-test contamination.
-    Private variables declared inside the class (which in a way "represents" the test), should make it clear that they are
-    only relevant for that test, and help avoid cross-contamination because the class instance will be out of scope (and
-    thus garbage-collectable) by the time the next test executes.
-
-The pattern most memory tests will want to follow is something like this (note the `()` after the test declaration
-to immediately instantiate it):
+To profile memory usage, use `benchmarkIt` together with `benchmarkMemoryUse`:
 
 ```typescript
-benchmarkMemory(
-	new (class implements IMemoryTestObject {
-		title = `My test title`;
-		private someLocalVariable: MyType | undefined;
-
-		beforeIteration() {
-			// Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
-			// For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
-		}
-
-		async run() {
-			// The actual code that you want to measure.
-			// For example, creating a new object and assigning it to someLocalVariable.
-			// Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
-			// the memory allocated into the variable will be "seen" by the "after" memory measurement.
-		}
-	})(),
-);
+benchmarkIt({
+	title: "My memory test",
+	...benchmarkMemoryUse({
+		benchmarkFn: async (state) => {
+			let myObject: MyObject | undefined;
+			while (state.continue()) {
+				await state.beforeAllocation();
+				// Allocate memory here.
+				myObject = createSomething();
+				await state.whileAllocated();
+				// Release references to the memory here so it can be reclaimed by GC.
+				myObject = undefined;
+				await state.afterDeallocation();
+			}
+			// Use value to make clear to linter and optimizer that assignment to undefined matters.
+			assert(myObject === undefined);
+		},
+	}),
+});
 ```
 
-When ran, tests for memory profiling will be tagged with `@Benchmark` (or whatever you pass in `IMemoryTestObject.type`
-when you define the test) and `@MemoryUsage` (as opposed to `@ExecutionTime` for runtime profiling tests).
+The argument to `benchmarkMemoryUse` must implement `MemoryUseBenchmark`, which has a single `benchmarkFn` property.
+That function receives a `MemoryUseCallbacks` object and must loop until `state.continue()` returns false, calling the
+callbacks in order for each iteration:
 
-For more details, look at the documentation for `IMemoryTestObject`.
+1.  `state.beforeAllocation()` — GC runs and a baseline "before" heap measurement is taken.
+2.  Allocate the memory you want to measure.
+3.  `state.whileAllocated()` — GC runs and an "after allocation" heap measurement is taken.
+4.  Release references to the memory allocated in step 2 (so it can be reclaimed by GC).
+5.  `state.afterDeallocation()` — GC runs and a "after deallocation" heap measurement is taken.
+
+The benchmark measures the difference between the "while allocated" and "before" readings as well as
+the difference between "while allocated" and "after deallocation" readings, and reports the mean across iterations.
+Memory should not accumulate across iterations (i.e. what you allocate in step 2 should be fully releasable in step 4).
+
+For more details, look at the documentation for `MemoryUseBenchmark` and `MemoryUseCallbacks`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 

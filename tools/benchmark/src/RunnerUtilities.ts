@@ -44,6 +44,9 @@ export function geometricMean(values: number[]): number {
 	// Compute the geometric mean of values, but do it using log and exp to reduce overflow/underflow.
 	let sum = 0;
 	for (const value of values) {
+		if (value === 0) {
+			return Number.POSITIVE_INFINITY;
+		}
 		assert(value > 0, "invalid value in geometricMean");
 		sum += Math.log(value);
 	}
