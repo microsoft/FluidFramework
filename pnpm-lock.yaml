@@ -92,7 +92,7 @@ importers:
         specifier: ^11.7.5
         version: 11.7.5
       playwright:
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       puppeteer:
         specifier: ^23.6.0
