@@ -73,7 +73,7 @@ export function formatMeasurementValue(measurement: Measurement): string {
 		return `${prettyNumber(value, 2)} ${units[unitIndex]}`;
 	}
 	if (measurement.units === "%") {
-		return `${prettyNumber(measurement.value, 2)}%`;
+		return `${prettyNumber(measurement.value, 3)}%`;
 	}
 
 	return `${prettyNumber(measurement.value)}${measurement.units ? ` ${measurement.units}` : ""}`;

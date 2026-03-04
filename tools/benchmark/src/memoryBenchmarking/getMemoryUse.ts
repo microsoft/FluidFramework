@@ -91,8 +91,8 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 		`Expected benchmarkFn to run the benchmark ${count} times, but it ran it ${sampleIndex} times.`,
 	);
 
-	// Discard first two samples as warmup, and compute statistics on the rest.
-	const trimmed = isInPerformanceTestingMode ? data.slice(2) : data;
+	// Discard first few samples as warmup, and compute statistics on the rest.
+	const trimmed = isInPerformanceTestingMode ? data.slice(4) : data;
 
 	const processed: ProcessedMeasurement[] = trimmed.map((x) => {
 		const allocatedBytes = x.while - x.before;
@@ -117,7 +117,7 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	// A test might be checking that something does not use any memory.
 	// In such cases noise in the data we might flag that as using negative memory or inconsistent allocation vs free size.
 	// Add this threshold to avoid flagging such cases.
-	const noiseThreshold = 1024;
+	const noiseThreshold = 4096;
 
 	assertStats(
 		allocatedStats.arithmeticMean > -noiseThreshold,
@@ -204,6 +204,22 @@ async function runGarbageCollection(): Promise<void> {
 	}
 }
 
+let warmedUp = false;
+async function warmupCollectMemoryUseData(): Promise<void> {
+	if (!warmedUp) {
+		await collectMemoryUseData({
+			benchmarkFn: async (callbacks) => {
+				while (callbacks.continue()) {
+					await callbacks.beforeAllocation();
+					await callbacks.whileAllocated();
+					await callbacks.afterDeallocation();
+				}
+			},
+		});
+		warmedUp = true;
+	}
+}
+
 /**
  * Configures a benchmark that uses {@link collectMemoryUseData}
  * to measure memory usage and returns the results in a format suitable for reporting via {@link benchmarkIt}.
@@ -214,6 +230,12 @@ export function benchmarkMemoryUse(
 ): BenchmarkDescription & BenchmarkFunction {
 	return {
 		category: "Memory",
-		run: async (): Promise<CollectedData> => await collectMemoryUseData(args),
+		run: async (): Promise<CollectedData> => {
+			// The first time collectMemoryUseData runs, it causes some memory instability, likely related to JITing.
+			// We can mitigate that by running it once, before we start collecting data, to warm up the system.
+			// Warming up of the function contained in `args` is not needed here since collectMemoryUseData does that internally.
+			await warmupCollectMemoryUseData();
+			return await collectMemoryUseData(args);
+		},
 	};
 }

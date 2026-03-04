@@ -79,7 +79,19 @@ export async function supportParentProcessInner(
 					result.stdout.split("\n").find((s) => s.startsWith("{")) ??
 					fail(`child process must output a json blob. Got:\n${result.stdout}`);
 
-				return { result: JSON.parse(output) as BenchmarkResult };
+				return {
+					result: JSON.parse(output, (_key, value: unknown): unknown => {
+						if (value === null) {
+							// Assumes all nulls in the data were NaN values which failed to survive JSON.stringify
+							// since JSON doesn't support NaN.
+							// If there are actually null values in the data, or infinities, this will cause them to be misreported as NaN.
+							// Generally this should be fine, as we don't expect to hit those other cases,
+							// and if we do the NaN indicates some numeric issue that should be investigated anyway.
+							return Number.NaN;
+						}
+						return value;
+					}) as BenchmarkResult,
+				};
 			} catch (error) {
 				return {
 					result: { error: (error as Error).message },

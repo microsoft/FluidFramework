@@ -344,7 +344,6 @@ export interface ReportEntry extends BenchmarkData {
 	readonly benchmarkName: string;
 }
 
-
 /**
  * The type which is Json serialized and written to disk for each benchmark result.
  * @remarks
@@ -352,6 +351,6 @@ export interface ReportEntry extends BenchmarkData {
  * @public
  */
 export interface ReportFormat {
-	 readonly suiteName: string;
-	 readonly benchmarks: readonly ReportEntry[];
-};
+	readonly suiteName: string;
+	readonly benchmarks: readonly ReportEntry[];
+}

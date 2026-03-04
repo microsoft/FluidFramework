@@ -186,6 +186,20 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled & {
 }): string;
 
 // @public
+export interface ReportEntry extends BenchmarkData {
+    // (undocumented)
+    readonly benchmarkName: string;
+}
+
+// @public
+export interface ReportFormat {
+    // (undocumented)
+    readonly benchmarks: readonly ReportEntry[];
+    // (undocumented)
+    readonly suiteName: string;
+}
+
+// @public
 export interface Stats {
     readonly arithmeticMean: number;
     readonly marginOfError: number;
