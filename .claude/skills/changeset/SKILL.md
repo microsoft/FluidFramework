@@ -105,7 +105,9 @@ modified file's package. Ask: "Would a user of this package care about this chan
 - `@fluid-experimental/*` - Experimental packages
 - `fluid-framework` - The umbrella package
 
-Exclude from changesets: `@fluid-example/*`, `@fluid-internal/*`, `@fluid-test/*`, `@fluid-private/*`
+Exclude from changesets:
+- Any package marked `"private": true` in its `package.json` (any scope, including `@fluid-private/*`)
+- Packages in the `@fluid-example/*`, `@fluid-internal/*`, and `@fluid-test/*` scopes
 
 ### Changeset Without Packages
 
@@ -113,7 +115,7 @@ For changes not tied to specific packages (e.g. repo-wide tooling):
 
 ```markdown
 ---
-__section: other
+"__section": other
 ---
 
 Description of the change
@@ -130,7 +132,7 @@ Key rules:
 - Mentally prefix with "In this release" to verify readability
 - No package names in the summary (they appear in metadata)
 - No code formatting in headings
-- Minimum: summary line + blank line + body paragraph
+- Minimum: summary line (body paragraph optional but recommended)
 
 ## Workflow
 
