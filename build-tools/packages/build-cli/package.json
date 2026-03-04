@@ -148,7 +148,7 @@
 		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~2.3.11",
+		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-common": "^2.0.3",
 		"@oclif/test": "^4.1.15",
 		"@types/async": "^3.2.25",
