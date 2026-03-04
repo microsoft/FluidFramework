@@ -42,7 +42,7 @@ export interface ISingleHandleItem {
 function createSingleHandleItem(
 	subFactory: IFluidDataStoreFactory,
 ): (context: IFluidDataStoreContext) => Promise<ISingleHandleItem> {
-	return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
+	return async (context) => {
 		const packagePath = [...context.packagePath, subFactory.type];
 		const dataStore = await context.containerRuntime.createDataStore(packagePath);
 		return {
@@ -51,50 +51,48 @@ function createSingleHandleItem(
 	};
 }
 
-const getClickerView = async (
-	serializableObject: ISingleHandleItem,
-): Promise<ReactElement> => {
+async function getClickerView(serializableObject: ISingleHandleItem): Promise<ReactElement> {
 	const handle = serializableObject.handle as IFluidHandle<Clicker>;
 	const clicker = await handle.get();
 	return createElement(ClickerReactView, { clicker });
-};
+}
 
-const getCodeMirrorView = async (
+async function getCodeMirrorView(
 	serializableObject: ISingleHandleItem,
-): Promise<ReactElement> => {
+): Promise<ReactElement> {
 	const handle = serializableObject.handle as IFluidHandle<CodeMirrorComponent>;
 	const codeMirror = await handle.get();
 	return createElement(CodeMirrorReactView, {
 		text: codeMirror.text,
 		presenceManager: codeMirror.presenceManager,
 	});
-};
+}
 
-const getCollaborativeTextView = async (
+async function getCollaborativeTextView(
 	serializableObject: ISingleHandleItem,
-): Promise<ReactElement> => {
+): Promise<ReactElement> {
 	const handle = serializableObject.handle as IFluidHandle<CollaborativeText>;
 	const collaborativeText = await handle.get();
 	return createElement(CollaborativeTextView, { text: collaborativeText.text });
-};
+}
 
-const getProseMirrorView = async (
+async function getProseMirrorView(
 	serializableObject: ISingleHandleItem,
-): Promise<ReactElement> => {
+): Promise<ReactElement> {
 	const handle = serializableObject.handle as IFluidHandle<ProseMirror>;
 	const proseMirror = await handle.get();
 	return createElement(ProseMirrorReactView, {
 		collabManager: proseMirror.collabManager,
 	});
-};
+}
 
-const getSliderCoordinateView = async (
+async function getSliderCoordinateView(
 	serializableObject: ISingleHandleItem,
-): Promise<ReactElement> => {
+): Promise<ReactElement> {
 	const handle = serializableObject.handle as IFluidHandle<Coordinate>;
 	const model = await handle.get();
 	return createElement(SliderCoordinateView, { label: "Coordinate", model });
-};
+}
 
 /**
  * A registry entry, with extra metadata.

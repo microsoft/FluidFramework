@@ -29,9 +29,10 @@ async function start(): Promise<void> {
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
-		const createResponse = await tinyliciousModelLoader.createDetached("1.0");
-		model = createResponse.model;
-		id = await createResponse.attach();
+		const { model: detachedModel, attach } =
+			await tinyliciousModelLoader.createDetached("1.0");
+		model = detachedModel;
+		id = await attach();
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
@@ -44,12 +45,14 @@ async function start(): Promise<void> {
 
 	// Render it
 	const contentDiv = document.querySelector("#content");
-	if (contentDiv !== null) {
-		ReactDOM.render(
-			createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
-			contentDiv,
-		);
+	if (contentDiv === null) {
+		return;
 	}
+
+	ReactDOM.render(
+		createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
+		contentDiv,
+	);
 }
 
 try {
