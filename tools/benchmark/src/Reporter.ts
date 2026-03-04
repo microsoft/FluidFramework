@@ -51,7 +51,18 @@ import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./Runn
 interface BenchmarkResults {
 	table: Table;
 	disambiguationCounter: number | undefined;
-	benchmarksMap: Map<string, Readonly<BenchmarkResult>>;
+	/**
+	 * Results by name, in order.
+	 * @remarks
+	 * It is possible (but not recommended) to have multiple benchmarks with the same name in a suite.
+	 * To preserve such cases, an array is used here instead of a map.
+	 */
+	benchmarksArray: NamedResult[];
+}
+
+interface NamedResult {
+	readonly name: string;
+	readonly result: BenchmarkResult;
 }
 
 /**
@@ -128,16 +139,16 @@ export class BenchmarkReporter {
 
 			results = {
 				table: new Table(),
-				benchmarksMap: new Map<string, Readonly<BenchmarkResult>>(),
+				benchmarksArray: [],
 				disambiguationCounter: newCount === 1 ? undefined : newCount,
 			};
 			this.inProgressSuites.set(suiteName, results);
 		}
 
-		const { table, benchmarksMap } = results;
+		const { table, benchmarksArray } = results;
 
 		// Make sure to add properties that are not part of the `data` object here.
-		benchmarksMap.set(testName, result);
+		benchmarksArray.push({ name: testName, result });
 		if (isResultError(result)) {
 			table.cell("status", `${pad(4)}${chalk.red("×")}`);
 		} else {
@@ -195,7 +206,7 @@ export class BenchmarkReporter {
 		// Remove suite from map so that other (non-concurrent) suites with the same name won't collide.
 		this.inProgressSuites.delete(suiteName);
 
-		const { benchmarksMap, table } = results;
+		const { benchmarksArray, table } = results;
 
 		const disambiguatedSuiteName = results.disambiguationCounter
 			? `${suiteName} (${results.disambiguationCounter})`
@@ -205,13 +216,13 @@ export class BenchmarkReporter {
 		console.log(`\n${chalk.bold(disambiguatedSuiteName)}`);
 		const filenameFull: string = this.writeCompletedBenchmarks(
 			disambiguatedSuiteName,
-			benchmarksMap,
+			benchmarksArray,
 		);
 		console.log(`Results file: ${filenameFull}`);
 		console.log(`${table.toString()}`);
 
 		// Accumulate data for overall summary
-		this.accumulateBenchmarkData(disambiguatedSuiteName, benchmarksMap);
+		this.accumulateBenchmarkData(disambiguatedSuiteName, benchmarksArray);
 	}
 
 	/**
@@ -219,7 +230,7 @@ export class BenchmarkReporter {
 	 */
 	private accumulateBenchmarkData(
 		suiteName: string,
-		benchmarksMap: Map<string, BenchmarkResult>,
+		benchmarksArray: readonly NamedResult[],
 	): void {
 		// Accumulate totals for suite
 		let sumRuntime = 0;
@@ -227,14 +238,16 @@ export class BenchmarkReporter {
 		let countFailure = 0;
 		const geometricMeanProductValues: number[] = [];
 
-		for (const [, value] of benchmarksMap) {
-			if (isResultError(value)) {
+		for (const { result } of benchmarksArray) {
+			if (isResultError(result)) {
 				countFailure++;
 			} else {
-				sumRuntime += value.elapsedSeconds;
+				sumRuntime += result.elapsedSeconds;
 				countSuccessful++;
-				const primary = value.data.primary;
+				const primary = result.data.primary;
 				geometricMeanProductValues.push(
+					// Geometric mean may end up as NaN or infinity depending on questionable values passing through here (like when this divides by 0).
+					// Such results do about as good of job at conveying the situation as is practical: for once the floating point edge cases do something we like.
 					primary.type === ValueType.SmallerIsBetter ? primary.value : 1 / primary.value,
 				);
 			}
@@ -242,7 +255,7 @@ export class BenchmarkReporter {
 
 		// Add row to overallSummaryTable
 		let statusSymbol: string;
-		switch (benchmarksMap.size) {
+		switch (benchmarksArray.length) {
 			case countSuccessful: {
 				statusSymbol = chalk.green("✔");
 				break;
@@ -259,7 +272,7 @@ export class BenchmarkReporter {
 		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));
 		this.overallSummaryTable.cell(
 			"# of passed tests",
-			`${countSuccessful} out of ${benchmarksMap.size}`,
+			`${countSuccessful} out of ${benchmarksArray.length}`,
 			Table.padLeft,
 		);
 		this.overallSummaryTable.cell(
@@ -275,7 +288,7 @@ export class BenchmarkReporter {
 		this.overallSummaryTable.newRow();
 
 		// Update accumulators for overall totals
-		this.totalBenchmarkCount += benchmarksMap.size;
+		this.totalBenchmarkCount += benchmarksArray.length;
 		this.totalSuccessfulBenchmarkCount += countSuccessful;
 		this.totalSumRuntimeSeconds += sumRuntime;
 		this.totalGeometricMeanProductValues.push(...geometricMeanProductValues);
@@ -321,14 +334,26 @@ export class BenchmarkReporter {
 
 	private writeCompletedBenchmarks(
 		suiteName: string,
-		benchmarks: ReadonlyMap<string, BenchmarkResult>,
+		benchmarks: readonly NamedResult[],
 	): string {
-		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
+		// Use the suite name as a filename, but first replace non-alphanumerics with underscores.
+		// TODO: this could collide if suites different only by non-alphanumeric characters.
+		// Detection and.or mitigation for this case would ideally be done here.
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
 		const benchmarkArray: ReportEntry[] = [];
-		for (const [key, bench] of benchmarks.entries()) {
-			if (!isResultError(bench)) {
-				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(key, bench));
+		const names = new Set<string>();
+		for (const { name, result } of benchmarks) {
+			if (names.has(name)) {
+				// eslint-disable-next-line no-console
+				console.warn(
+					chalk.yellow(
+						`Warning: multiple benchmarks with the name "${name}" is in suite "${suiteName}". This may cause confusion when analyzing results.`,
+					),
+				);
+			}
+			names.add(name);
+			if (!isResultError(result)) {
+				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(name, result));
 			}
 		}
 		const outputContentString: string = JSON.stringify(
