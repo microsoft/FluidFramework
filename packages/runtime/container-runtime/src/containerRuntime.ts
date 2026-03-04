@@ -3245,9 +3245,16 @@ export class ContainerRuntime
 		if (this.runtimeOptions.onBeforeSchemaChange === undefined) {
 			return true;
 		}
-		const preflightResult = this.documentsSchemaController.preflightSchemaCheck(contents);
-		const shouldContinue = this.runtimeOptions.onBeforeSchemaChange(preflightResult);
-		return shouldContinue;
+		for (const content of contents) {
+			const preflightResult = this.documentsSchemaController.preflightSchemaCheck(content);
+			const shouldContinue = this.runtimeOptions.onBeforeSchemaChange(preflightResult);
+			if (!shouldContinue) {
+				// Return false if any of the schema changes should not be processed
+				return false;
+			}
+		}
+		// Return true if all schema changes are safe to process
+		return true;
 	}
 
 	private _processedClientSequenceNumber: number | undefined;

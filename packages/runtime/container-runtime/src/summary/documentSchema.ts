@@ -845,27 +845,9 @@ export class DocumentsSchemaController {
 	 * @returns The preflight result indicating compatibility.
 	 */
 	public preflightSchemaCheck(
-		contents: IDocumentSchemaChangeMessageIncoming[],
+		content: IDocumentSchemaChangeMessageIncoming,
 	): ISchemaPreflightResult {
-		assert(contents.length > 0, "preflightSchemaCheck expects at least one op to check");
-		for (const content of contents) {
-			const compatResult = checkCompatibilityPure(content);
-
-			if (!compatResult.isCompatible) {
-				return {
-					isCompatible: false,
-					incompatibleProperty: compatResult.incompatibleProperty,
-					incompatibleValue: compatResult.incompatibleValue,
-					proposedSchema: compatResult.proposedSchema,
-				};
-			}
-		}
-
-		const lastIndex = contents.length - 1;
-		return {
-			isCompatible: true,
-			proposedSchema: contents[lastIndex],
-		};
+		return checkCompatibilityPure(content);
 	}
 }
 

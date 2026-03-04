@@ -843,7 +843,7 @@ describe("Runtime", () => {
 				},
 			};
 
-			const result: ISchemaPreflightResult = controller.preflightSchemaCheck([proposedSchema]);
+			const result: ISchemaPreflightResult = controller.preflightSchemaCheck(proposedSchema);
 			assert.strictEqual(result.isCompatible, true, "should be compatible");
 			assert.strictEqual(
 				result.incompatibleProperty,
@@ -869,7 +869,7 @@ describe("Runtime", () => {
 				runtime: { ...validConfig.runtime, unknownFeature: true },
 			};
 
-			const result = controller.preflightSchemaCheck([proposedSchema]);
+			const result = controller.preflightSchemaCheck(proposedSchema);
 			assert.strictEqual(result.isCompatible, false, "should not be compatible");
 			assert.strictEqual(
 				result.incompatibleProperty,
@@ -886,7 +886,7 @@ describe("Runtime", () => {
 				version: 999,
 			};
 
-			const result = controller.preflightSchemaCheck([proposedSchema]);
+			const result = controller.preflightSchemaCheck(proposedSchema);
 			assert.strictEqual(result.isCompatible, false, "should not be compatible");
 			assert.strictEqual(
 				result.incompatibleProperty,
@@ -903,7 +903,7 @@ describe("Runtime", () => {
 				runtime: { ...validConfig.runtime, disallowedVersions: [pkgVersion] },
 			};
 
-			const result = controller.preflightSchemaCheck([proposedSchema]);
+			const result = controller.preflightSchemaCheck(proposedSchema);
 			assert.strictEqual(result.isCompatible, false, "should not be compatible");
 			assert.strictEqual(
 				result.incompatibleProperty,
@@ -920,7 +920,7 @@ describe("Runtime", () => {
 				runtime: { ...validConfig.runtime, idCompressorMode: "unknownMode" },
 			};
 
-			const result = controller.preflightSchemaCheck([proposedSchema]);
+			const result = controller.preflightSchemaCheck(proposedSchema);
 			assert.strictEqual(result.isCompatible, false, "should not be compatible");
 			assert.strictEqual(
 				result.incompatibleProperty,
@@ -948,7 +948,7 @@ describe("Runtime", () => {
 				runtime: { unknownFeature: true },
 			};
 
-			controller.preflightSchemaCheck([proposedSchema]);
+			controller.preflightSchemaCheck(proposedSchema);
 
 			// Session schema should be unchanged
 			assert.deepStrictEqual(
