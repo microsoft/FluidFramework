@@ -92,7 +92,7 @@ importers:
         specifier: ^11.7.5
         version: 11.7.5
       playwright:
-        specifier: ^1.55.1
+        specifier: ^1.49.0
         version: 1.58.2
       puppeteer:
         specifier: ^23.6.0
@@ -16277,7 +16277,7 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)
       playwright:
-        specifier: ^1.55.1
+        specifier: ^1.49.0
         version: 1.58.2
       prop-types:
         specifier: ^15.8.1
