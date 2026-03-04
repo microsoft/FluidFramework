@@ -4,7 +4,7 @@
 
 This is the **build-tools** release group for the Fluid Framework monorepo. It contains CLI tools and libraries for building, testing, releasing, and managing Fluid Framework repositories.
 
-**Runtime**: Node.js >=20.15.1, pnpm 10.18.3
+**Runtime**: Node.js >=20.19.0, pnpm 10.29.2
 **Language**: TypeScript ~5.4.5
 **Module system**: Mix of CommonJS and ESM (see DEV.md for constraints)
 
