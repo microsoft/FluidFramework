@@ -30,6 +30,7 @@ parameters:
 
 steps:
 - checkout: ff_pipeline_host
+  path: $(FFPipelineHostDirectory)
 
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting
@@ -56,7 +57,7 @@ steps:
 - template: /tools/pipelines/templates/include-install.yml@self
   parameters:
     packageManager: pnpm
-    buildDirectory: $(Build.SourcesDirectory)
+    buildDirectory: $(FFPipelineHostDirectory)
     packageManagerInstallCommand: pnpm install
     primaryRegistry: $(ado-feeds-ff-download-only)
     userNpmrcPath: ${{ parameters.userNpmrcDirectory }}/.npmrc

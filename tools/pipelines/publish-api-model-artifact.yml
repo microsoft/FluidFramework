@@ -100,12 +100,13 @@ stages:
       displayName: 'Check Version Deployment Condition'
       steps:
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           submodules: false
           clean: true
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
         - task: Bash@3
           name: SetVersion
           displayName: 'Set Build Version'
@@ -113,7 +114,7 @@ stages:
             VERSION_BUILDNUMBER: $(Build.BuildNumber)
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
               flub generate buildVersion
@@ -122,7 +123,7 @@ stages:
           displayName: 'Check Version Deployment Condition'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               # Extract version without build number suffix
               VERSION_TRIMMED=$(echo $(SetVersion.version) | sed 's/-[0-9]*//')
@@ -174,7 +175,7 @@ stages:
                 inputs:
                   SourceFolder: $(Pipeline.Workspace)
                   Contents: '**/*.api.json'
-                  TargetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  TargetFolder: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/_api-extractor-temp'
                   OverWrite: false
                   flattenFolders: true
                   CleanTargetFolder: true
@@ -182,13 +183,13 @@ stages:
               - task: PublishPipelineArtifact@1
                 displayName: 'Publish api-extractor JSON'
                 inputs:
-                  targetPath: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/_api-extractor-temp'
                   artifactName: 'api-extractor-combined'
                   publishLocation: 'pipeline'
 
               - task: ArchiveFiles@2
                 inputs:
-                  rootFolderOrFile: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  rootFolderOrFile: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/_api-extractor-temp'
                   includeRootFolder: false
                   archiveType: 'tar' # Options: zip, 7z, tar, wim
                   tarCompression: 'gz'  # Optional. Options: gz, bz2, xz, none

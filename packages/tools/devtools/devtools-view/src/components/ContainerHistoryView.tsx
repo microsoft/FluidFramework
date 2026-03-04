@@ -13,7 +13,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 
@@ -30,15 +30,15 @@ export type ContainerHistoryProps = HasContainerKey;
  *
  * @param props - See {@link ContainerHistoryViewProps}.
  */
-export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactElement {
+export function ContainerHistoryView(props: ContainerHistoryProps): ReactElement {
 	const { containerKey } = props;
 	const messageRelay = useMessageRelay();
 
-	const [containerHistory, setContainerHistory] = React.useState<
+	const [containerHistory, setContainerHistory] = useState<
 		readonly ConnectionStateChangeLogEntry[] | undefined
 	>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
 		 */

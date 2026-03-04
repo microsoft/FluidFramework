@@ -853,7 +853,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
 export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, MergeTreeRevertibleDriver {
     annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
     annotateRange(start: number, end: number, props: PropertySet): void;
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    createLocalReferencePosition(segment: T | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     getContainingSegment(pos: number): {
         segment: T | undefined;
         offset: number | undefined;
@@ -1323,6 +1323,36 @@ export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCusto
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
+
+// @beta @input
+export interface SnapshotFileSystem {
+    join(parentPath: string, childPath: string): string;
+    mkdirSync(dir: string, options: {
+        recursive: true;
+    }): void;
+    readdirSync(dir: string): readonly string[];
+    readFileSync(file: string, encoding: "utf8"): string;
+    writeFileSync(file: string, data: string, options: {
+        encoding: "utf8";
+    }): void;
+}
+
+// @beta
+export function snapshotSchemaCompatibility(options: SnapshotSchemaCompatibilityOptions): void;
+
+// @beta @input
+export interface SnapshotSchemaCompatibilityOptions {
+    readonly fileSystem: SnapshotFileSystem;
+    readonly minVersionForCollaboration: string;
+    readonly mode: "assert" | "update";
+    readonly rejectSchemaChangesWithNoVersionChange?: true;
+    readonly rejectVersionsWithNoSchemaChange?: true;
+    readonly schema: TreeViewConfiguration;
+    readonly snapshotDirectory: string;
+    readonly snapshotUnchangedVersions?: true;
+    readonly version: string;
+    readonly versionComparer?: (a: string, b: string) => number;
+}
 
 // @beta @system
 export namespace System_TableSchema {

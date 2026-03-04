@@ -8,7 +8,8 @@
 			"projectService": true,
 			"ecmaFeatures": {
 				"jsx": true
-			}
+			},
+			"jsxPragma": null
 		},
 		"sourceType": "module"
 	},
@@ -1970,7 +1971,7 @@
 			"off"
 		],
 		"react/jsx-uses-react": [
-			"error"
+			"off"
 		],
 		"react/jsx-uses-vars": [
 			"error"
@@ -2015,7 +2016,7 @@
 			"error"
 		],
 		"react/react-in-jsx-scope": [
-			"error"
+			"off"
 		],
 		"react/require-render-return": [
 			"error"

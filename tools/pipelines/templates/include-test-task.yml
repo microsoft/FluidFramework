@@ -21,7 +21,7 @@ steps:
     displayName: npm run ${{ parameters.taskTestStep }}:coverage
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskTestStep }}:coverage'
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:
@@ -37,7 +37,7 @@ steps:
     displayName: npm run ${{ parameters.taskTestStep }}
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskTestStep }}'
     condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
     env:

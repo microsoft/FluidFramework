@@ -21,6 +21,7 @@
 				"biomejs.biome",
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
+				"MAI-EngineeringSystems.mai-ai-telemetry",
 				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-docker",
 				"mutantdino.resourcemonitor"

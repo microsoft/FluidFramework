@@ -20,7 +20,12 @@ import type { Provider } from "nconf";
 import * as winston from "winston";
 
 import * as app from "./app";
-import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+import type {
+	ICache,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+	IPostEphemeralContainerChecker,
+} from "./services";
 
 export class HistorianRunner implements IRunner {
 	private server: IWebServer | undefined;
@@ -42,6 +47,7 @@ export class HistorianRunner implements IRunner {
 		private readonly ephemeralDocumentTTLSec?: number,
 		private readonly readinessCheck?: IReadinessCheck,
 		private readonly simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
+		private readonly PostEphemeralContainerChecker?: IPostEphemeralContainerChecker,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -62,6 +68,7 @@ export class HistorianRunner implements IRunner {
 			this.ephemeralDocumentTTLSec,
 			this.readinessCheck,
 			this.simplifiedCustomDataRetriever,
+			this.PostEphemeralContainerChecker,
 		);
 		historian.set("port", this.port);
 
