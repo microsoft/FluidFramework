@@ -1,14 +1,10 @@
 ---
 name: changeset
 description: >
-  Create and edit changesets (changelog entries) for the Fluid Framework monorepo.
-  Changesets are markdown files with YAML frontmatter that track package changes for
-  changelogs and release notes. Use when the user asks to create a changeset, add a
-  changelog entry, document a code change for release, or edit an existing changeset.
-  Also use when the user mentions "changeset", "changelog entry", or asks what changed
-  in a PR that needs documentation. Triggers on: "add changeset", "create changeset",
-  "write changeset", "changelog", "changeset", after completing a code change that
-  should be documented, or when editing any file matching `.changeset/*.md`.
+  Use when the user asks to create, edit, or document a changeset or changelog entry.
+  Triggers on: "changeset", "changelog", or editing `.changeset/*.md` files. Also trigger
+  after completing code changes that should be documented, and before committing changes
+  to `*.api.md` files (API report changes typically need an accompanying changeset).
 ---
 
 # Changeset Skill
