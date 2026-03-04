@@ -56,6 +56,10 @@ UPCOMING.md
 build_output_archive
 
 # Claude Code
-# This is a local file that likely contains author specific information and
-# should not be shared generally.
-.claude/settings.local.json
+# Exclude the root .claude folder to minimize automatically loaded context,
+# but allow reusable skills to be checked in and shared.
+.claude/
+!.claude/skills/
+# Nested packages control their own .claude folders, but exclude local files
+# (e.g. settings.local.json) which contain author-specific configuration.
+**/.claude/*.local.*
