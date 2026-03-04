@@ -57,8 +57,6 @@ identifies the operation that failed.
 ```markdown
 ---
 "@fluidframework/tree": minor
----
----
 "__section": feature
 "__highlight": true
 ---
@@ -82,8 +80,6 @@ When schema changes are detected:
 ```markdown
 ---
 "@fluidframework/tree": major
----
----
 "__section": breaking
 ---
 
@@ -109,8 +105,6 @@ const value = treeView.root;
 ```markdown
 ---
 "@fluidframework/tree": minor
----
----
 "__section": deprecation
 ---
 
@@ -127,8 +121,6 @@ fields in object schemas.
 ---
 "@fluidframework/container-runtime": minor
 "@fluidframework/container-definitions": minor
----
----
 "__section": feature
 ---
 
