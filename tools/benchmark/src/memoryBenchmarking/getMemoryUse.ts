@@ -17,6 +17,10 @@ interface MemoryMeasurement {
 	before: number;
 	while: number;
 	after: number;
+	gcCalls: number;
+	gcIterations: number;
+	gcMaxIterations: number;
+	gcMaxLastDelta: number;
 }
 
 function getBytesUsed(): number {
@@ -95,26 +99,29 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	const count = trimCount + (isInPerformanceTestingMode ? 10 : 1);
 	// Preallocate space for data to avoid allocations during collection.
 	for (let i = 0; i < count; i++) {
-		data.push({ before: unset, while: unset, after: unset });
+		data.push({
+			before: unset,
+			while: unset,
+			after: unset,
+			gcIterations: 0,
+			gcMaxIterations: 0,
+			gcMaxLastDelta: 0,
+			gcCalls: 0,
+		});
 	}
 	let sampleIndex = -1;
 
-	let maxGcIterations = 0;
-	let totalGcIterations = 0;
-	let totalGcCount = 0;
-	let maxDelta = 0;
 	async function getUsageInner(): Promise<number> {
 		const usage = await getUsage(args.enableAsyncGC ?? false);
-		if (sampleIndex >= trimCount) {
-			totalGcIterations += usage.gcIterations;
-			totalGcCount++;
-			if (usage.gcIterations > maxGcIterations) {
-				maxGcIterations = usage.gcIterations;
-			}
-			if (Math.abs(usage.lastDelta) > Math.abs(maxDelta)) {
-				maxDelta = usage.lastDelta;
-			}
+		data[sampleIndex].gcIterations += usage.gcIterations;
+		data[sampleIndex].gcMaxIterations = Math.max(
+			data[sampleIndex].gcMaxIterations,
+			usage.gcIterations,
+		);
+		if (Math.abs(usage.lastDelta) > Math.abs(data[sampleIndex].gcMaxLastDelta)) {
+			data[sampleIndex].gcMaxLastDelta = Math.abs(usage.lastDelta);
 		}
+		data[sampleIndex].gcCalls++;
 		return usage.used;
 	}
 
@@ -301,18 +308,19 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 		},
 		{
 			name: "Max GCs",
-			value: maxGcIterations,
+			value: Math.max(...data.map((x) => x.gcMaxIterations)),
 			units: "count",
 			type: ValueType.SmallerIsBetter,
 		},
 		{
 			name: "Mean GCs",
-			value: totalGcIterations / totalGcCount,
+			value: getArrayStatistics(trimmed.map((x) => x.gcIterations / x.gcCalls))
+				.arithmeticMean,
 			type: ValueType.SmallerIsBetter,
 		},
 		{
 			name: "Max Last GC Delta",
-			value: maxDelta,
+			value: Math.max(...trimmed.map((x) => x.gcMaxLastDelta)),
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
 		},

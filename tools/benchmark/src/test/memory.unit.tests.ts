@@ -168,7 +168,6 @@ describe("memory use", () => {
 		title: "empty async GC",
 		...benchmarkMemoryUse({
 			enableAsyncGC: true,
-			logProcessedData: true,
 			benchmarkFn: async (callbacks) => {
 				while (callbacks.continue()) {
 					await callbacks.beforeAllocation();
