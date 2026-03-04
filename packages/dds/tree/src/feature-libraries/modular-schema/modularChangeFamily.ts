@@ -4745,7 +4745,7 @@ export function getFirstDetachField(
 	id: ChangeAtomId,
 	count: number,
 ): RangeQueryResult<FieldId | undefined> {
-	return table.getFirst({ target: NodeMoveType.Detach, ...id }, count);
+	return table.getFirst({ ...id, target: NodeMoveType.Detach }, count);
 }
 
 function getDetachFieldForAttach(
