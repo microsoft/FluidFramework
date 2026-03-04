@@ -19,14 +19,14 @@ construction. The default value must be of an allowed type of the field. You can
 
 Defaults are evaluated eagerly during node construction.
 
-### Required Fields with Defaults
+### Required fields with defaults
 
 ```typescript
 import { SchemaFactoryAlpha, TreeAlpha } from "@fluidframework/tree/alpha";
 
 const sf = new SchemaFactoryAlpha("example");
 
-class Person extends sf.object("Person", {
+class Person extends sf.objectAlpha("Person", {
 	name: sf.required(sf.string),
 	age: sf.withDefault(sf.required(sf.number), 0),
 	role: sf.withDefault(sf.required(sf.string), "guest"),
@@ -44,7 +44,7 @@ const person = new Person({ name: "Alice" });
 const admin = new Person({ name: "Bob", age: 30, role: "admin" });
 ```
 
-### Optional Fields with Custom Defaults
+### Optional fields with custom defaults
 
 Optional fields (`sf.optional`) already default to `undefined`, but `withDefault` allows you to specify a different
 default value:
@@ -65,7 +65,7 @@ const customConfig = new Config({ timeout: 10000 });
 // customConfig.retries === 3
 ```
 
-### Value Defaults vs Function Defaults
+### Value defaults vs function defaults
 
 When you provide a value directly, the data is copied for each use, ensuring each instance is independent:
 
@@ -106,24 +106,22 @@ class Article extends sf.object("Article", {
 }) {}
 ```
 
-### Dynamic Defaults
+### Dynamic defaults
 
 Generator functions are called each time a new node is created, enabling dynamic defaults:
 
 ```typescript
 class Document extends sf.object("Document", {
-	id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),
-	createdAt: sf.withDefault(sf.required(sf.number), () => Date.now()),
+	id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),=
 	title: sf.required(sf.string),
 }) {}
 
 const doc1 = new Document({ title: "First Document" });
 const doc2 = new Document({ title: "Second Document" });
 // doc1.id !== doc2.id (each gets a unique UUID)
-// doc1.createdAt !== doc2.createdAt (each gets a different timestamp)
 ```
 
-Generator functions work with all primitive types:
+Generator functions also work with primitive types:
 
 ```typescript
 let counter = 0;
