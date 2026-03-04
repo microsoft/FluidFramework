@@ -94,7 +94,14 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: [
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"build:entrypoints:node10",
+				// Depend on "tsc" and "build:esnext" in case there is no matching "api-extractor:*".
+				"tsc",
+				"build:esnext",
+			],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -196,6 +203,10 @@ module.exports = {
 			],
 			outputGlobs: ["package.json"],
 			gitignore: ["input", "output"],
+		},
+		"flub generate node10Entrypoints": {
+			inputGlobs: ["package.json"],
+			outputGlobs: ["(alpha|beta|internal|legacy).d.ts", "legacy/alpha.d.ts"],
 		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
