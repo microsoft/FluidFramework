@@ -131,6 +131,7 @@
 		"eslint-config-prettier": "~10.1.8",
 		"global-jsdom": "^26.0.0",
 		"jiti": "^2.6.1",
+		"jsdom": "^26.1.0",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
