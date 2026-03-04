@@ -2,6 +2,7 @@
 name: Fluid Release Skill Dispatcher
 description: Dispatches Fluid release workflows via safe outputs.
 on:
+  schedule: daily on weekdays
   workflow_dispatch:
     inputs:
       workflow:
@@ -15,6 +16,9 @@ on:
         required: false
 permissions:
   actions: read
+engine:
+  id: copilot
+  model: claude-opus-4.6
 safe-outputs:
   dispatch-workflow:
     workflows:
@@ -26,7 +30,7 @@ safe-outputs:
 
 # Fluid Release Skill Dispatcher
 
-Use the user inputs to dispatch release workflows in this repository.
+Use the trigger context and user inputs to dispatch release workflows in this repository.
 
 ## Inputs
 
@@ -37,16 +41,17 @@ Use the user inputs to dispatch release workflows in this repository.
 ## Behavior
 
 1. Read `${{ github.event.inputs.workflow }}`, `${{ github.event.inputs.tag }}`, and `${{ github.event.inputs.pr }}`.
-2. If `workflow` is `all`, dispatch:
+2. If `${{ github.event_name }}` is `schedule`, dispatch `release-notes-issue` with no inputs, then stop.
+3. If `workflow` is `all`, dispatch:
    - `release-notes-issue` (no inputs)
    - `release-approval` with `{ "pr": "<pr>" }` only when `pr` is provided
    - `push-tag-create-release` with `{ "tag": "<tag>" }` only when `tag` is provided
-3. If `workflow` is a single value:
+4. If `workflow` is a single value:
    - `release-notes-issue`: dispatch with no inputs
    - `release-approval`: require `pr` and dispatch with `{ "pr": "<pr>" }`
    - `push-tag-create-release`: require `tag` and dispatch with `{ "tag": "<tag>" }`
-4. If required inputs are missing for the selected workflow, do not dispatch that workflow and explain what is missing.
-5. Use safe outputs only for dispatching workflows.
+5. If required inputs are missing for the selected workflow, do not dispatch that workflow and explain what is missing.
+6. Use safe outputs only for dispatching workflows.
 
 ## Output format
 

@@ -23,10 +23,13 @@
 #
 # Dispatches Fluid release workflows via safe outputs.
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"a07bbb53017e764f99ec9bc66e2509a346b927f588386238c56b4f232d47b12a","compiler_version":"v0.53.2"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"5893ca5100b5dcd9fbaed304a2860bbb437ca39d0ca5931fb93f70f65a300c21","compiler_version":"v0.53.2"}
 
 name: "Fluid Release Skill Dispatcher"
 "on":
+  schedule:
+  - cron: "57 16 * * 1-5"
+    # Friendly format: daily on weekdays (scattered)
   workflow_dispatch:
     inputs:
       pr:
@@ -66,7 +69,7 @@ jobs:
         env:
           GH_AW_INFO_ENGINE_ID: "copilot"
           GH_AW_INFO_ENGINE_NAME: "GitHub Copilot CLI"
-          GH_AW_INFO_MODEL: ${{ vars.GH_AW_MODEL_AGENT_COPILOT || '' }}
+          GH_AW_INFO_MODEL: "claude-opus-4.6"
           GH_AW_INFO_VERSION: ""
           GH_AW_INFO_AGENT_VERSION: "0.0.421"
           GH_AW_INFO_CLI_VERSION: "v0.53.2"
@@ -119,6 +122,7 @@ jobs:
           GH_AW_GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
           GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: ${{ github.event.inputs.workflow }}
           GH_AW_GITHUB_EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_AW_GITHUB_EVENT_NAME: ${{ github.event_name }}
           GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
@@ -180,6 +184,7 @@ jobs:
           GH_AW_GITHUB_EVENT_INPUTS_PR: ${{ github.event.inputs.pr }}
           GH_AW_GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
           GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: ${{ github.event.inputs.workflow }}
+          GH_AW_GITHUB_EVENT_NAME: ${{ github.event_name }}
         with:
           script: |
             const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
@@ -197,6 +202,7 @@ jobs:
           GH_AW_GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
           GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: ${{ github.event.inputs.workflow }}
           GH_AW_GITHUB_EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_AW_GITHUB_EVENT_NAME: ${{ github.event_name }}
           GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
@@ -219,6 +225,7 @@ jobs:
                 GH_AW_GITHUB_EVENT_INPUTS_TAG: process.env.GH_AW_GITHUB_EVENT_INPUTS_TAG,
                 GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: process.env.GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW,
                 GH_AW_GITHUB_EVENT_ISSUE_NUMBER: process.env.GH_AW_GITHUB_EVENT_ISSUE_NUMBER,
+                GH_AW_GITHUB_EVENT_NAME: process.env.GH_AW_GITHUB_EVENT_NAME,
                 GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: process.env.GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER,
                 GH_AW_GITHUB_REPOSITORY: process.env.GH_AW_GITHUB_REPOSITORY,
                 GH_AW_GITHUB_RUN_ID: process.env.GH_AW_GITHUB_RUN_ID,
@@ -630,7 +637,7 @@ jobs:
         env:
           COPILOT_AGENT_RUNNER_TYPE: STANDALONE
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-          COPILOT_MODEL: ${{ vars.GH_AW_MODEL_AGENT_COPILOT || '' }}
+          COPILOT_MODEL: claude-opus-4.6
           GH_AW_MCP_CONFIG: /home/runner/.copilot/mcp-config.json
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
@@ -855,7 +862,7 @@ jobs:
         env:
           COPILOT_AGENT_RUNNER_TYPE: STANDALONE
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-          COPILOT_MODEL: ${{ vars.GH_AW_MODEL_DETECTION_COPILOT || '' }}
+          COPILOT_MODEL: claude-opus-4.6
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GITHUB_API_URL: ${{ github.api_url }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
@@ -1008,6 +1015,7 @@ jobs:
     env:
       GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/fluid-release-skill-dispatcher"
       GH_AW_ENGINE_ID: "copilot"
+      GH_AW_ENGINE_MODEL: "claude-opus-4.6"
       GH_AW_WORKFLOW_ID: "fluid-release-skill-dispatcher"
       GH_AW_WORKFLOW_NAME: "Fluid Release Skill Dispatcher"
     outputs:
