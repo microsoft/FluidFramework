@@ -77,7 +77,7 @@ When schema changes are detected:
 
 ### Breaking change
 
-```markdown
+````markdown
 ---
 "@fluidframework/tree": major
 "__section": breaking
@@ -99,6 +99,7 @@ const value = treeView.root2;
 // After
 const value = treeView.root;
 ```
+````
 
 ### Deprecation
 
