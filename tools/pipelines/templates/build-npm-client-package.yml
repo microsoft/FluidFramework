@@ -168,6 +168,8 @@ extends:
           serviceConnection: ff-internal-arrow-sc
           # This will make sure that the artifacts are published to the Arrow Service Connection if they are release or pre-release
           isShipped: ${{ parameters.shouldShip }}
+      componentGovernance:
+        alertWarningLevel: Critical
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022

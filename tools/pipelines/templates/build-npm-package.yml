@@ -160,6 +160,8 @@ extends:
         arrow:
           # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
           serviceConnection: ff-internal-arrow-sc
+      componentGovernance:
+        alertWarningLevel: Critical
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
