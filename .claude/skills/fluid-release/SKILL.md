@@ -1,6 +1,6 @@
 ---
 name: fluid-release
-description: Guide the Fluid Framework client release group through minor releases, patch releases, and post-release type test updates. Use when performing a release, preparing for a release, creating release branches, bumping versions, generating changelogs/release notes, or updating type test baselines after a release. Also use when the user says generic things like "do the release", "finish the release", "what's the next release", or "release status" — in autonomous mode the agent auto-detects what needs to be done from the schedule and repo state, attempts to execute, and falls back to opening a GitHub issue if it encounters errors. Triggers on mentions of release, releasing, release branch, version bump, release notes, changelog generation, patch release, minor release, or release engineering.
+description: Fluid Framework client release group — minor releases, patch releases, and post-release type test updates. Covers release prep, branching, version bumps, changelogs, release notes, and type test baselines. In autonomous mode, auto-detects state from the schedule and repo, attempts to execute, and falls back to a GitHub issue on failure. Triggers on "release", "do the release", "release status", version bump, release notes, changelog, release branch, or release engineering.
 ---
 
 # Fluid Framework Client Release
