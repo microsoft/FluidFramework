@@ -58,8 +58,8 @@ build_output_archive
 # Claude Code
 # Exclude the root .claude folder to minimize automatically loaded context,
 # but allow reusable skills to be checked in and shared.
-.claude/
-!.claude/skills/
-# Nested packages control their own .claude folders, but exclude local files
-# (e.g. settings.local.json) which contain author-specific configuration.
+/.claude/
+!/.claude/skills/
+# Exclude author-specific local files in any .claude folder across the repo.
+# Nested packages can check in their own .claude folders freely.
 **/.claude/*.local.*
