@@ -50,6 +50,7 @@ import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./Runn
 
 interface BenchmarkResults {
 	table: Table;
+	disambiguationCounter: number | undefined;
 	benchmarksMap: Map<string, Readonly<BenchmarkResult>>;
 }
 
@@ -77,6 +78,12 @@ export class BenchmarkReporter {
 		string,
 		BenchmarkResults
 	>();
+
+	/**
+	 * All suites which have been seen. Used to detect duplicates.
+	 * Value is number of duplicates so far.
+	 */
+	private readonly allSuites: Map<string, number> = new Map<string, number>();
 
 	private totalSumRuntimeSeconds = 0;
 	private totalBenchmarkCount = 0;
@@ -107,9 +114,22 @@ export class BenchmarkReporter {
 	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
 		let results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
+			const count = this.allSuites.get(suiteName) ?? 0;
+			const newCount = count + 1;
+			this.allSuites.set(suiteName, newCount);
+			if (newCount > 1) {
+				// eslint-disable-next-line no-console
+				console.warn(
+					chalk.yellow(
+						`Warning: suite name "${suiteName}" now been used ${newCount} times. Reports will be disambiguated with a trailing number`,
+					),
+				);
+			}
+
 			results = {
 				table: new Table(),
 				benchmarksMap: new Map<string, Readonly<BenchmarkResult>>(),
+				disambiguationCounter: newCount === 1 ? undefined : newCount,
 			};
 			this.inProgressSuites.set(suiteName, results);
 		}
@@ -177,14 +197,21 @@ export class BenchmarkReporter {
 
 		const { benchmarksMap, table } = results;
 
+		const disambiguatedSuiteName = results.disambiguationCounter
+			? `${suiteName} (${results.disambiguationCounter})`
+			: suiteName;
+
 		// Output results from suite
-		console.log(`\n${chalk.bold(suiteName)}`);
-		const filenameFull: string = this.writeCompletedBenchmarks(suiteName, benchmarksMap);
+		console.log(`\n${chalk.bold(disambiguatedSuiteName)}`);
+		const filenameFull: string = this.writeCompletedBenchmarks(
+			disambiguatedSuiteName,
+			benchmarksMap,
+		);
 		console.log(`Results file: ${filenameFull}`);
 		console.log(`${table.toString()}`);
 
 		// Accumulate data for overall summary
-		this.accumulateBenchmarkData(suiteName, benchmarksMap);
+		this.accumulateBenchmarkData(disambiguatedSuiteName, benchmarksMap);
 	}
 
 	/**

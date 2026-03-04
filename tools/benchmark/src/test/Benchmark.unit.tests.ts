@@ -239,6 +239,50 @@ describe("`benchmark` function", () => {
 			}),
 		});
 	});
+
+	describe("duplicate suite name", () => {
+		benchmarkIt({
+			title: "test",
+			run: (): CollectedData => ({
+				primary: {
+					name: "the data",
+					value: 1,
+					units: "numbers",
+					type: ValueType.SmallerIsBetter,
+				},
+				additional: [],
+			}),
+		});
+	});
+
+	describe("duplicate suite name", () => {
+		benchmarkIt({
+			title: "test",
+			run: (): CollectedData => ({
+				primary: {
+					name: "the data",
+					value: 1,
+					units: "numbers",
+					type: ValueType.SmallerIsBetter,
+				},
+				additional: [],
+			}),
+		});
+
+		// With duplicate test
+		benchmarkIt({
+			title: "test",
+			run: (): CollectedData => ({
+				primary: {
+					name: "the data",
+					value: 1,
+					units: "numbers",
+					type: ValueType.SmallerIsBetter,
+				},
+				additional: [],
+			}),
+		});
+	});
 });
 
 const dummyPromise = Promise.resolve();
