@@ -3,7 +3,7 @@
 ## 0.53.0
 
 -   Memory benchmarks now have much more aggressive GC to collect more stable results.
--   Geometric mean has been restored to the results summary (was removed in the past) and correctly handles both larger is better and smaller is better values. This should make evaluating overall impact of changes easier.
+-   Geometric mean has been restored to the results summary (was removed in the past) and correctly handles both larger-is-better and smaller-is-better values. This should make evaluating overall impact of changes easier.
 -   All benchmarks now have a primary result (included in the geometric mean), and optional additional results.
 -   Formatting of console output from reporter has changed.
 
