@@ -7,7 +7,8 @@
 -   All benchmarks now have a primary result (included in the geometric mean), and optional additional results.
 -   Formatting of console output from reporter has changed.
 -   Suites with colliding names now emit a warning and a disambiguation number is added as a suffix.
--	Multiple benchmarks with the same name in the same suite no longer overwrite results, and emit a warning.
+-   Multiple benchmarks with the same name in the same suite no longer overwrite results, and emit a warning.
+-   Include ArrayBuffer memory usage.
 
 ### ⚠ BREAKING CHANGES
 

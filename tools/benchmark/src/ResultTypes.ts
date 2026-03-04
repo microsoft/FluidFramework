@@ -73,6 +73,8 @@ export enum ValueType {
 
 /**
  * Data for a benchmark.
+ * @privateRemarks
+ * TODO: add verbosity levels to Measurement, then replace this with an array of measurements where the first has "primary" verbosity and the rest have lesser verbosity levels.
  * @public
  */
 export interface CollectedData {

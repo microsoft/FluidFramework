@@ -96,7 +96,7 @@ export interface CollectedData {
 }
 
 // @public
-export function collectMemoryUseData(args: MemoryUseBenchmark): Promise<CollectedData>;
+export function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<CollectedData>;
 
 // @public @input (undocumented)
 export type DurationBenchmark = DurationBenchmarkSync | DurationBenchmarkAsync | DurationBenchmarkCustom;
@@ -147,8 +147,10 @@ export interface Measurement {
 export interface MemoryUseBenchmark {
     benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
     enableAsyncGC?: boolean;
+    keepIterations?: number;
     logProcessedData?: boolean;
     logRawData?: boolean;
+    warmUpIterations?: number;
 }
 
 // @public

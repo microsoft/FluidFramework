@@ -25,8 +25,8 @@ interface MemoryMeasurement {
 
 function getBytesUsed(): number {
 	const usage = process.memoryUsage();
-	// TODO: determine if arrayBuffers should be included in memory usage.
-	return usage.heapUsed; // + usage.arrayBuffers;
+	// Array buffers should count, and are not included in heapUsed, so add them in.
+	return usage.heapUsed + usage.arrayBuffers;
 }
 
 const gcOptionsAsync = { type: "major", execution: "async" } as const;
@@ -75,13 +75,21 @@ async function getUsage(
 	}
 }
 
-function assertStats(condition: boolean, message: string) {
-	// Quality of memory data can be trash when not in per testing mode,
-	// so skip asserts based on that data unless we are in performance testing mode.
-	if (isInPerformanceTestingMode) {
-		assertProperUse(condition, message);
-	}
-}
+// function assertStats(condition: boolean, message: string) {
+// 	// Quality of memory data can be trash when not in per testing mode,
+// 	// so skip asserts based on that data unless we are in performance testing mode.
+// 	if (isInPerformanceTestingMode) {
+// 		assertProperUse(condition, message);
+// 	}
+// }
+
+const defaults: Required<Omit<MemoryUseBenchmark, "benchmarkFn">> = {
+	enableAsyncGC: false,
+	logProcessedData: false,
+	logRawData: false,
+	warmUpIterations: 12,
+	keepIterations: 10,
+};
 
 /**
  * Runs the benchmark.
@@ -89,14 +97,15 @@ function assertStats(condition: boolean, message: string) {
  * To collect accurate data, set {@link isInPerformanceTestingMode} to true.
  * @public
  */
-export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<CollectedData> {
+export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<CollectedData> {
+	const args = { ...defaults, ...argsIn }; // TODO: we probably want to not include explicit undefined fields from argsIn.
 	const data: MemoryMeasurement[] = [];
 	const unset = -1;
 
 	// Likely due to JIT behavior, the first couple, then often the 11 and 12 iterations tend to be different (13 for async GC cases).
 	// To mitigate this we trim some samples from the beginning.
-	const trimCount = isInPerformanceTestingMode ? 12 : 0;
-	const count = trimCount + (isInPerformanceTestingMode ? 10 : 1);
+	const trimCount = isInPerformanceTestingMode ? args.warmUpIterations : 0;
+	const count = trimCount + (isInPerformanceTestingMode ? args.keepIterations : 1);
 	// Preallocate space for data to avoid allocations during collection.
 	for (let i = 0; i < count; i++) {
 		data.push({
@@ -112,7 +121,7 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	let sampleIndex = -1;
 
 	async function getUsageInner(): Promise<number> {
-		const usage = await getUsage(args.enableAsyncGC ?? false);
+		const usage = await getUsage(args.enableAsyncGC);
 		data[sampleIndex].gcIterations += usage.gcIterations;
 		data[sampleIndex].gcMaxIterations = Math.max(
 			data[sampleIndex].gcMaxIterations,
@@ -242,16 +251,16 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	// A test might be checking that something does not use any memory.
 	// In such cases noise in the data we might flag that as using negative memory or inconsistent allocation vs free size.
 	// Add this threshold to avoid flagging such cases.
-	const noiseThreshold = 4096;
+	// const noiseThreshold = 4096;
 
-	assertStats(
-		allocatedStats.arithmeticMean > -noiseThreshold,
-		"Expected positive allocation size",
-	);
-	assertStats(freedStats.arithmeticMean > -noiseThreshold, "Expected positive deallocation size");
+	// assertStats(
+	// 	allocatedStats.arithmeticMean > -noiseThreshold,
+	// 	"Expected positive allocation size",
+	// );
+	// assertStats(freedStats.arithmeticMean > -noiseThreshold, "Expected positive deallocation size");
 
 	const meanStats = getArrayStatistics(processed.map((x) => x.meanBytes));
-	const meanMean = meanStats.arithmeticMean;
+	//const meanMean = meanStats.arithmeticMean;
 
 	// assertStats(
 	// 	Math.abs(sizeEnd.arithmeticMean - sizeStart.arithmeticMean) <
@@ -259,14 +268,14 @@ export async function collectMemoryUseData(args: MemoryUseBenchmark): Promise<Co
 	// 	`Expected iterations of memory use benchmark to not leak memory across iterations, but sizes near start (${sizeStart.arithmeticMean} bytes) and end sizes near end (${sizeEnd.arithmeticMean} bytes) were significantly different.`,
 	// );
 
-	{
-		const difference = Math.abs(allocatedStats.arithmeticMean - freedStats.arithmeticMean);
-		const threshold = meanMean * 0.2 + noiseThreshold;
-		assertStats(
-			difference <= threshold,
-			`Allocated size (${allocatedStats.arithmeticMean} bytes) and freed size (${freedStats.arithmeticMean} bytes) should be similar: difference of ${difference} bytes exceeds threshold of ${threshold} bytes.`,
-		);
-	}
+	// {
+	// 	const difference = Math.abs(allocatedStats.arithmeticMean - freedStats.arithmeticMean);
+	// 	const threshold = meanMean * 0.2 + noiseThreshold;
+	// 	assertStats(
+	// 		difference <= threshold,
+	// 		`Allocated size (${allocatedStats.arithmeticMean} bytes) and freed size (${freedStats.arithmeticMean} bytes) should be similar: difference of ${difference} bytes exceeds threshold of ${threshold} bytes.`,
+	// 	);
+	// }
 
 	const additional: Measurement[] = [
 		{

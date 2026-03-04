@@ -68,4 +68,18 @@ export interface MemoryUseBenchmark {
 	 * or if there is some exact amount being leaked.
 	 */
 	logRawData?: boolean;
+
+	/**
+	 * Override the default number of iterations to run for warmup (which are not included in the results).
+	 * @remarks
+	 * Only used when {@link isInPerformanceTestingMode} is true.
+	 */
+	warmUpIterations?: number;
+
+	/**
+	 * Override the default number of iterations to run for data collection.
+	 * @remarks
+	 * Only used when {@link isInPerformanceTestingMode} is true.
+	 */
+	keepIterations?: number;
 }

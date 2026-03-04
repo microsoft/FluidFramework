@@ -178,6 +178,26 @@ describe("memory use", () => {
 		}),
 	});
 
+	benchmarkIt({
+		title: "1 MiB array buffer",
+		...benchmarkMemoryUse({
+			enableAsyncGC: true,
+			benchmarkFn: async (callbacks) => {
+				while (callbacks.continue()) {
+					await callbacks.beforeAllocation();
+					const buffer = new ArrayBuffer(1024 * 1024);
+					const view = new Uint32Array(buffer);
+					for (let i = 0; i < view.length; i++) {
+						view[i] = i;
+					}
+					await callbacks.whileAllocated();
+					assert.equal(buffer.byteLength, 1024 * 1024);
+					assert.equal(view[100], 100);
+				}
+			},
+		}),
+	});
+
 	// Example from readme
 	function createSomething(): Map<string, number> {
 		const map: Map<string, number> = new Map();

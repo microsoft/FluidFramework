@@ -129,8 +129,7 @@ export class BenchmarkReporter {
 			const newCount = count + 1;
 			this.allSuites.set(suiteName, newCount);
 			if (newCount > 1) {
-				// eslint-disable-next-line no-console
-				console.warn(
+				console.log(
 					chalk.yellow(
 						`Warning: suite name "${suiteName}" now been used ${newCount} times. Reports will be disambiguated with a trailing number`,
 					),
@@ -344,8 +343,7 @@ export class BenchmarkReporter {
 		const names = new Set<string>();
 		for (const { name, result } of benchmarks) {
 			if (names.has(name)) {
-				// eslint-disable-next-line no-console
-				console.warn(
+				console.log(
 					chalk.yellow(
 						`Warning: multiple benchmarks with the name "${name}" is in suite "${suiteName}". This may cause confusion when analyzing results.`,
 					),
