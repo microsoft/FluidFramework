@@ -1,4 +1,22 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-	"extends": ["../../common/build/build-common/tsdoc-base.json"]
+
+	// This config is a subset of ../../common/build/build-common/tsdoc-base.json
+	// Extending that does not work from outside client packages, so we need to duplicate the relevant parts here.
+	// We could use a package dependency instead, but the published version is out of date and not getting updated.
+
+	// Include the definitions that are required for API Extractor
+	"extends": ["@microsoft/api-extractor/extends/tsdoc-base.json"],
+
+	"tagDefinitions": [
+		{
+			// This tag indicates API is an input type, and thus can be made more general as a non-breaking change.
+			"tagName": "@input",
+			"syntaxKind": "modifier"
+		}
+	],
+
+	"supportForTags": {
+		"@input": true
+	}
 }
