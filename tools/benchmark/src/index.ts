@@ -41,7 +41,7 @@ export {
 	benchmarkDuration,
 } from "./durationBenchmarking/index";
 export { benchmarkIt } from "./mocha";
-export { BenchmarkReporter } from "./Reporter";
+export { BenchmarkReporter, ReportEntry, ReportFormat } from "./Reporter";
 export {
 	type BenchmarkData,
 	type BenchmarkError,

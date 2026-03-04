@@ -19,7 +19,7 @@ export interface BenchmarkData {
 	readonly elapsedSeconds: number;
 
 	/**
-	 * Custom data.
+	 * Data reported by the benchmark.
 	 */
 	readonly data: CollectedData;
 }

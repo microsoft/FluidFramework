@@ -298,14 +298,14 @@ export class BenchmarkReporter {
 	): string {
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
-		const benchmarkArray: unknown[] = [];
+		const benchmarkArray: ReportEntry[] = [];
 		for (const [key, bench] of benchmarks.entries()) {
 			if (!isResultError(bench)) {
 				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(key, bench));
 			}
 		}
 		const outputContentString: string = JSON.stringify(
-			{ suiteName, benchmarks: benchmarkArray },
+			{ suiteName, benchmarks: benchmarkArray } satisfies ReportFormat,
 			undefined,
 			4,
 		);
@@ -325,7 +325,7 @@ export class BenchmarkReporter {
 	private outputFriendlyObjectFromBenchmark(
 		benchmarkName: string,
 		benchmark: BenchmarkData,
-	): BenchmarkData & { benchmarkName: string } {
+	): ReportEntry {
 		const benchMarkOutput = {
 			benchmarkName,
 			elapsedSeconds: benchmark.elapsedSeconds,
@@ -335,3 +335,23 @@ export class BenchmarkReporter {
 		return benchMarkOutput;
 	}
 }
+
+/**
+ * A single benchmark result entry in the report.
+ * @public
+ */
+export interface ReportEntry extends BenchmarkData {
+	readonly benchmarkName: string;
+}
+
+
+/**
+ * The type which is Json serialized and written to disk for each benchmark result.
+ * @remarks
+ * This only includes passing tests.
+ * @public
+ */
+export interface ReportFormat {
+	 readonly suiteName: string;
+	 readonly benchmarks: readonly ReportEntry[];
+};
