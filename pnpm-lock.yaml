@@ -91,6 +91,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      playwright:
+        specifier: ^1.49.0
+        version: 1.58.2
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
