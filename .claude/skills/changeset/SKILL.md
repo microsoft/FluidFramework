@@ -41,13 +41,11 @@ Subheadings start at level 4 (####).
 Summary affecting multiple packages
 ```
 
-### With release notes metadata (optional second frontmatter block)
+### With release notes metadata
 
 ```markdown
 ---
 "@fluidframework/tree": minor
----
----
 "__section": feature
 "__highlight": true
 ---
@@ -76,7 +74,7 @@ Most changesets use `minor`. The bump type is generally determined by the branch
 
 ## Release Notes Metadata
 
-Optional second frontmatter block with `__`-prefixed keys:
+Optional `__`-prefixed keys in the same frontmatter block:
 
 | Key                        | Type    | Default  | Description                                    |
 |----------------------------|---------|----------|------------------------------------------------|
