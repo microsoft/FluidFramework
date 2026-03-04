@@ -7,8 +7,8 @@ description: >
   changelog entry, document a code change for release, or edit an existing changeset.
   Also use when the user mentions "changeset", "changelog entry", or asks what changed
   in a PR that needs documentation. Triggers on: "add changeset", "create changeset",
-  "write changeset", "changelog", "changeset", or after completing a code change that
-  should be documented.
+  "write changeset", "changelog", "changeset", after completing a code change that
+  should be documented, or when editing any file matching `.changeset/*.md`.
 ---
 
 # Changeset Skill
