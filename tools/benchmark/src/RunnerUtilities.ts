@@ -71,7 +71,7 @@ export function formatMeasurementValue(
 		const units = ["B", "KiB", "MiB", "GiB", "TiB"];
 		let value = measurement.value;
 		let unitIndex = 0;
-		while (scaleUnits && value >= 1024 && unitIndex < units.length - 1) {
+		while (scaleUnits && Math.abs(value) >= 1024 && unitIndex < units.length - 1) {
 			value /= 1024;
 			unitIndex++;
 		}
@@ -85,11 +85,11 @@ export function formatMeasurementValue(
 		const scale = [1e6, 1e3];
 		let value = measurement.value;
 		let unitIndex = 0;
-		while (scaleUnits && value >= scale[unitIndex] && unitIndex < units.length - 1) {
+		while (scaleUnits && Math.abs(value) >= scale[unitIndex] && unitIndex < units.length - 1) {
 			value /= scale[unitIndex];
 			unitIndex++;
 		}
-		return `${prettyNumber(value, scaleUnits ? (value > 1000 ? 0 : 2) : 1)} ${
+		return `${prettyNumber(value, scaleUnits ? (Math.abs(value) > 1000 ? 0 : 2) : 1)} ${
 			units[unitIndex]
 		}/op`;
 	}
