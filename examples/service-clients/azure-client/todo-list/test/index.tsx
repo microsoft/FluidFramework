@@ -21,7 +21,6 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import React from "react";
 // eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
 import { createRoot } from "react-dom/client";
 

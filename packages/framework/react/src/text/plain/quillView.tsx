@@ -5,7 +5,7 @@
 
 import type { TextAsTree } from "@fluidframework/tree/internal";
 import Quill from "quill";
-import * as React from "react";
+import { type FC, useEffect, useRef } from "react";
 
 import type { PropTreeNode } from "../../propNode.js";
 import { withMemoizedTreeObservations } from "../../useTree.js";
@@ -26,7 +26,7 @@ export interface MainViewProps {
  * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and Quill for the UI.
  * @internal
  */
-export const MainView: React.FC<MainViewProps> = ({ root }) => {
+export const MainView: FC<MainViewProps> = ({ root }) => {
 	return <TextEditorView root={root} />;
 };
 
@@ -40,18 +40,18 @@ export const MainView: React.FC<MainViewProps> = ({ root }) => {
  */
 const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTree.Tree }) => {
 	// DOM element where Quill will mount its editor
-	const editorRef = React.useRef<HTMLDivElement>(null);
+	const editorRef = useRef<HTMLDivElement>(null);
 	// Quill instance, persisted across renders to avoid re-initialization
-	const quillRef = React.useRef<Quill | null>(null);
+	const quillRef = useRef<Quill | null>(null);
 	// Guards against update loops between Quill and the tree
-	const isUpdatingRef = React.useRef<boolean>(false);
+	const isUpdatingRef = useRef<boolean>(false);
 
 	// Access tree content during render to establish observation.
 	// The HOC will automatically re-render when this content changes.
 	const currentText = root.fullString();
 
 	// Initialize Quill editor
-	React.useEffect(() => {
+	useEffect(() => {
 		if (editorRef.current && !quillRef.current) {
 			const quill = new Quill(editorRef.current, {
 				placeholder: "Start typing...",
