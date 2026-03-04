@@ -1,6 +1,6 @@
 ---
 name: fluid-release
-description: Guide the Fluid Framework client release group through minor releases, patch releases, and post-release type test updates. Use when performing a release, preparing for a release, creating release branches, bumping versions, generating changelogs/release notes, or updating type test baselines after a release. Also use when the user says generic things like "do the release", "finish the release", "what's the next release", or "release status" — in autonomous mode the agent auto-detects what needs to be done from the schedule and repo state. Triggers on mentions of release, releasing, release branch, version bump, release notes, changelog generation, patch release, minor release, or release engineering.
+description: Guide the Fluid Framework client release group through minor releases, patch releases, and post-release type test updates. Use when performing a release, preparing for a release, creating release branches, bumping versions, generating changelogs/release notes, or updating type test baselines after a release. Also use when the user says generic things like "do the release", "finish the release", "what's the next release", or "release status" — in autonomous mode the agent auto-detects what needs to be done from the schedule and repo state, attempts to execute, and falls back to opening a GitHub issue if it encounters errors. Triggers on mentions of release, releasing, release branch, version bump, release notes, changelog generation, patch release, minor release, or release engineering.
 ---
 
 # Fluid Framework Client Release
@@ -28,17 +28,18 @@ Run commands autonomously but pause before creating PRs, pushing branches, or tr
 
 ### Autonomous Mode
 
-Run the entire selected phase end-to-end without pausing. Requirements:
+Run the entire selected phase end-to-end without pausing. Auto-detect the release state from the schedule and repo (see below). If the user provides version info upfront, skip the version questions entirely.
+
+Requirements:
 
 - **Version info upfront:** The user must provide all version numbers before starting (current release version and/or next version, depending on phase). Do not prompt for versions mid-flow. If the user doesn't provide versions, detect them from the schedule and repo state (see below).
 - **No confirmation pauses:** Create PRs, push branches, and run `flub release` without asking. Include clear commit messages and PR descriptions.
 - **Phase-scoped execution:** Each phase runs to completion, then reports what the user needs to do next (e.g., "queue the ADO build" or "wait for npm feeds, then re-invoke for type test updates").
+- **Fallback to issues:** If any step fails (permission errors, CI-safe command failures, git push rejected, or any other error that prevents progress), **stop and open a GitHub issue** in `microsoft/FluidFramework` describing what was completed, what failed, and what remains. Use the title format `Release <VERSION>: <brief description>` and label it with `release-blocking`. Include the exact commands remaining so a human can finish using the skill in interactive mode.
 
-If the user provides version info in their initial message (e.g., "release 2.90.0 autonomously"), skip the version questions entirely.
+#### Auto-detecting release state (autonomous mode and CI)
 
-#### Auto-detecting release state (autonomous mode)
-
-When the user gives a generic request like "do the release" or "finish the release" without specifying a version or phase, auto-detect from the release schedule and repo state. Read the [release schedule](references/release-schedule.md) and run the detection steps below.
+Auto-detect the release state from the schedule and repo. Read the [release schedule](references/release-schedule.md) and run the detection steps below. In interactive mode, this detection also runs when the user gives a generic request like "do the release" without specifying a version or phase.
 
 **Step 1: Identify the most recent release.**
 
@@ -70,15 +71,15 @@ gh pr list --repo microsoft/FluidFramework --search "release-prep/<NEXT_VERSION>
 |-------|--------|
 | No release-prep branches, no release branch | Start **minor release prep** (Steps 1-5) |
 | Release-prep branches/PRs exist, some not merged | Resume **minor release prep** from where it left off |
-| Release branch exists, no release tag | In CI: open issue requesting human queue the ADO build. Locally: start **release execution** (Steps 6-7) |
+| Release branch exists, no release tag | Start **release execution** (Steps 6-7). In CI: the human must queue the ADO build. |
 | Release tag exists, no patch bump PR | Resume **release execution** — do the patch bump (Step 7) |
 | Release tag exists, patch bump done, no type test PRs | Start **type test updates** (Steps 8-9) |
 | All phases complete | Report that the release is fully done and show the next scheduled release |
 
-Present the detected state and chosen action to the user before proceeding. Example:
+Present the detected state and chosen action to the user (or in the issue body). Example:
 
 > **Detected state:** 2.91.0 is scheduled for 03/16/26. No release-prep branches found. The most recent release is 2.90.0.
-> **Action:** Starting minor release prep for 2.91.0 (next version on main: 2.92.0).
+> **Action:** Minor release prep needed for 2.91.0 (next version on main: 2.92.0).
 
 ## Release Schedule
 
@@ -168,7 +169,7 @@ gh pr list --repo microsoft/FluidFramework --label release-blocking --state open
 
 If either command returns results, **stop and report the blockers to the user**. In autonomous mode, do not proceed past this check if blockers exist. Also remind the user to check ADO for release-blocking issues (cannot be queried via CLI).
 
-**CI behavior when blocked:** In CI, if the agent is blocked at any point (release blockers, missing release tag, npm packages not available, permission errors, or any other issue that prevents progress), open a GitHub issue in `microsoft/FluidFramework` describing the blocker and what human action is needed. Use the title format `Release <VERSION>: <brief description of blocker>` and label it with `release-blocking`. Then exit gracefully.
+**Blocker handling (autonomous and CI):** If the agent is blocked at any point (release blockers, missing release tag, npm packages not available, permission errors, or any other issue that prevents progress), open a GitHub issue in `microsoft/FluidFramework` describing what was completed, what failed, and what human action is needed. Use the title format `Release <VERSION>: <brief description>` and label it with `release-blocking`. Include the exact commands remaining so a human can finish using the skill in interactive mode. Then exit gracefully.
 
 ## Behavior by Mode
 
@@ -189,7 +190,7 @@ Use the `build:` conventional commit prefix for all release PR titles (e.g., `bu
 | Creating PRs | Pause and confirm | Create automatically with descriptive titles/bodies |
 | Pushing branches | Pause and confirm | Push automatically |
 | Running `flub release` | Pause and confirm | Run automatically |
-| Version determination | Ask user to confirm | Use version provided upfront |
+| Version determination | Ask user to confirm | Use version provided upfront or auto-detect |
 | Announcing releases | Remind user | Remind user (never auto-announce) |
 | ADO build queuing | Instruct user | Instruct user (cannot be automated) |
 
@@ -200,5 +201,16 @@ At the end of each autonomous phase, provide a summary:
 1. **What was done** — list all PRs created, branches pushed, commands run
 2. **What to do next** — specific manual steps needed (e.g., queue ADO build, merge PRs in order)
 3. **When to continue** — timing guidance for the next phase (e.g., "after PRs merge" or "tomorrow, after npm feeds update")
+
+### Autonomous Mode: Fallback to Issues
+
+If any step in autonomous mode fails (permission errors, command failures, git push rejected, etc.), **stop and open a GitHub issue** in `microsoft/FluidFramework` with:
+
+1. **What was completed** — PRs created, branches pushed, commands run successfully
+2. **What failed** — the specific error and which step it occurred at
+3. **What remains** — the exact commands for remaining steps, ready to copy-paste
+4. **How to finish** — remind the human to use the fluid-release skill in interactive mode (`claude "do the release"`)
+
+Use the title format `Release <VERSION>: <brief description of failure>` and label it with `release-blocking`.
 
 Read the appropriate reference file for the phase the user selects, then guide them through it step by step.

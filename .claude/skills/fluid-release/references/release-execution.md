@@ -6,6 +6,8 @@ Run the release build and bump the release branch to the next patch version. Thi
 
 In autonomous mode, run all commands without pausing. The user must still manually queue the ADO build — report this clearly at the end. Create the patch bump PR automatically.
 
+If any step fails, fall back to opening a GitHub issue describing what was completed, what failed, and the remaining steps with exact commands. Label with `release-blocking`.
+
 ## CI Note
 
 In CI, this phase is split into two parts separated by a human action:

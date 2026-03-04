@@ -10,6 +10,8 @@ In autonomous mode, the user provides two versions upfront:
 
 Run all steps sequentially. Create PRs automatically. At the end, report all PRs created and remind the user to merge them in order (version bump PR last).
 
+If any step fails (permission error, git push rejected, etc.), fall back to opening a GitHub issue describing what was completed, what failed, and the remaining steps with exact commands. Label with `release-blocking`.
+
 **Branch naming:** Use the standard `release-prep/<VERSION>/<step>` convention (see SKILL.md). NOT `release/`, which is protected on upstream.
 **Push target:** Push working branches to `upstream` if configured, otherwise `origin`.
 
