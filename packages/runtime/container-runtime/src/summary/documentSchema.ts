@@ -381,13 +381,21 @@ function checkRuntimeCompatibility(
 	const result = checkCompatibilityPure(documentSchema);
 	if (!result.isCompatible) {
 		const msg = "Document can't be opened with current version of the code";
-		const codePath =
-			result.incompatibleProperty === "version"
-				? "checkRuntimeCompat1"
-				: "checkRuntimeCompat2";
+		if (result.incompatibleProperty === "version") {
+			throw DataProcessingError.create(
+				msg,
+				"checkRuntimeCompat1",
+				undefined, // message
+				{
+					runtimeSchemaVersion: documentSchema.version,
+					currentRuntimeSchemaVersion: currentDocumentVersionSchema,
+					schemaName,
+				},
+			);
+		}
 		throw DataProcessingError.create(
 			msg,
-			codePath,
+			"checkRuntimeCompat2",
 			undefined, // message
 			{
 				codeVersion: currentDocumentVersionSchema,
