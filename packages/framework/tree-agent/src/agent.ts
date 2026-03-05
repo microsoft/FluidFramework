@@ -20,11 +20,9 @@ import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 
 import type {
 	SharedTreeChatModel,
-	SharedTreeChatMessage,
-	SharedTreeAnalysisAgent,
-	SharedTreeEditAgent,
-	SharedTreeAnalysisAgentOptions,
-	SharedTreeEditAgentOptions,
+	TreeAgentChatMessage,
+	TreeAgent,
+	TreeAgentOptions,
 	EditResult,
 	SemanticAgentOptions,
 	Logger,
@@ -170,10 +168,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	public async query(userPrompt: string): Promise<string> {
 		this.options?.logger?.log(`## User Query\n\n${userPrompt}\n\n`);
 
-		this.refreshIfDirty(
-			(text) => this.client.appendContext?.(text),
-			this.options?.logger,
-		);
+		this.refreshIfDirty((text) => this.client.appendContext?.(text), this.options?.logger);
 
 		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
 		// The branch will be merged back into the outer branch if and only if the query succeeds.
@@ -375,16 +370,16 @@ export function createContext<TSchema extends ImplicitFieldSchema>(
 // #region Factory functions
 
 /**
- * Shared state for agents created via {@link createAnalysisAgent} and {@link createEditAgent}.
+ * Shared state for agents created via {@link createTreeAgent}.
  */
 function createAgentState<TSchema extends ImplicitFieldSchema>(
 	model: SharedTreeChatModel,
 	tree: ViewOrTree<TSchema>,
 	editToolName: string | undefined,
-	options?: SharedTreeAnalysisAgentOptions,
+	options?: TreeAgentOptions<TSchema>,
 ): {
 	outerTree: Subtree<TSchema>;
-	history: SharedTreeChatMessage[];
+	history: TreeAgentChatMessage[];
 	tracker: ReturnType<typeof createTreeTracker<TSchema>>;
 } {
 	if (model.invoke === undefined) {
@@ -405,7 +400,7 @@ function createAgentState<TSchema extends ImplicitFieldSchema>(
 	logAgentHeader(options?.logger, model.name);
 	options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
 
-	const history: SharedTreeChatMessage[] = [{ role: "system", content: prompt }];
+	const history: TreeAgentChatMessage[] = [{ role: "system", content: prompt }];
 
 	return { outerTree, history, tracker };
 }
@@ -415,80 +410,28 @@ function createAgentState<TSchema extends ImplicitFieldSchema>(
  */
 function beginQuery(
 	prompt: string,
-	history: SharedTreeChatMessage[],
+	history: TreeAgentChatMessage[],
 	tracker: Pick<ReturnType<typeof createTreeTracker>, "refreshIfDirty">,
 	logger: Logger | undefined,
 ): void {
 	logger?.log(`## User Query\n\n${prompt}\n\n`);
-	tracker.refreshIfDirty(
-		(text) => history.push({ role: "system", content: text }),
-		logger,
-	);
+	tracker.refreshIfDirty((text) => history.push({ role: "system", content: text }), logger);
 	history.push({ role: "user", content: prompt });
 }
 
 /**
- * Invokes the model once and returns the text response.
- * @throws UsageError if the model returns an edit response instead of a done response.
- */
-async function invokeOnce(
-	model: SharedTreeChatModel,
-	history: SharedTreeChatMessage[],
-	logger: Logger | undefined,
-): Promise<string> {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const response = await model.invoke!(history);
-	if (response.type === "done") {
-		history.push({ role: "assistant", content: response.text });
-		logger?.log(`## Response\n\n${response.text}\n\n`);
-		return response.text;
-	}
-	throw new UsageError(
-		"The model returned an edit response during an analyze() call. Use edit() for operations that modify the tree.",
-	);
-}
-
-/**
- * Creates a read-only agent that can analyze but not edit a SharedTree.
- * @param model - The chat model. Must implement {@link SharedTreeChatModel.invoke}.
- * @param tree - The tree or subtree to analyze.
- * @param options - Optional configuration.
- * @returns A {@link SharedTreeAnalysisAgent}.
- * @alpha
- */
-export function createAnalysisAgent<TSchema extends ImplicitFieldSchema>(
-	model: SharedTreeChatModel,
-	tree: ViewOrTree<TSchema>,
-	options?: SharedTreeAnalysisAgentOptions,
-): SharedTreeAnalysisAgent {
-	const { history, tracker } = createAgentState(
-		model,
-		tree,
-		undefined, // no editing
-		options,
-	);
-
-	return {
-		async analyze(prompt: string): Promise<string> {
-			beginQuery(prompt, history, tracker, options?.logger);
-			return invokeOnce(model, history, options?.logger);
-		},
-	};
-}
-
-/**
- * Creates an agent that can both analyze and edit a SharedTree.
+ * Creates an agent that can analyze and edit a SharedTree.
  * @param model - The chat model. Must implement {@link SharedTreeChatModel.invoke} and have {@link SharedTreeChatModel.editToolName} set.
  * @param tree - The tree or subtree to edit.
  * @param options - Optional configuration.
- * @returns A {@link SharedTreeEditAgent}.
+ * @returns A {@link TreeAgent}.
  * @alpha
  */
-export function createEditAgent<TSchema extends ImplicitFieldSchema>(
+export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
 	model: SharedTreeChatModel,
 	tree: ViewOrTree<TSchema>,
-	options?: SharedTreeEditAgentOptions<TSchema>,
-): SharedTreeEditAgent {
+	options?: TreeAgentOptions<TSchema>,
+): TreeAgent {
 	const editToolName = model.editToolName;
 	if (editToolName === undefined) {
 		throw new UsageError(
@@ -496,23 +439,14 @@ export function createEditAgent<TSchema extends ImplicitFieldSchema>(
 		);
 	}
 
-	const { outerTree, history, tracker } = createAgentState(
-		model,
-		tree,
-		editToolName,
-		options,
-	);
+	const { outerTree, history, tracker } = createAgentState(model, tree, editToolName, options);
 
 	const editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema> =
 		options?.editor ?? createDefaultEditor();
 	const maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 
 	return {
-		async analyze(prompt: string): Promise<string> {
-			beginQuery(prompt, history, tracker, options?.logger);
-			return invokeOnce(model, history, options?.logger);
-		},
-		async edit(prompt: string): Promise<string> {
+		async invokeAgent(prompt: string): Promise<string> {
 			beginQuery(prompt, history, tracker, options?.logger);
 
 			// Fork a branch for this edit session

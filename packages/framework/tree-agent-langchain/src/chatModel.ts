@@ -7,8 +7,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	EditResult,
 	SharedTreeChatModel,
-	SharedTreeChatMessage,
-	SharedTreeChatResponse,
+	TreeAgentChatMessage,
+	TreeAgentChatResponse,
 	SharedTreeChatQuery, // eslint-disable-line import-x/no-deprecated
 } from "@fluidframework/tree-agent/alpha";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
@@ -21,8 +21,7 @@ import { v4 as uuid } from "uuid";
 
 /**
  * Creates a stateless {@link @fluidframework/tree-agent#SharedTreeChatModel} backed by LangChain.
- * @remarks Use with {@link @fluidframework/tree-agent#createAnalysisAgent | createAnalysisAgent}
- * or {@link @fluidframework/tree-agent#createEditAgent | createEditAgent}.
+ * @remarks Use with {@link @fluidframework/tree-agent#createTreeAgent | createTreeAgent}.
  * @param langchainModel - The LangChain chat model to use.
  * @alpha
  */
@@ -46,9 +45,9 @@ class LangchainChatModel implements SharedTreeChatModel {
 	}
 
 	public async invoke(
-		history: readonly SharedTreeChatMessage[],
-	): Promise<SharedTreeChatResponse> {
-		// Convert SharedTreeChatMessage[] to LangChain BaseMessage[]
+		history: readonly TreeAgentChatMessage[],
+	): Promise<TreeAgentChatResponse> {
+		// Convert TreeAgentChatMessage[] to LangChain BaseMessage[]
 		const messages: BaseMessage[] = convertToLangchainMessages(history);
 
 		// Create a placeholder tool definition so the LLM knows the tool exists.
@@ -68,7 +67,7 @@ class LangchainChatModel implements SharedTreeChatModel {
 
 		const responseMessage = await runnable.invoke(messages);
 
-		// Parse the response into SharedTreeChatResponse.
+		// Parse the response into TreeAgentChatResponse.
 		// Return the first tool call as an edit response regardless of tool name.
 		// If the name doesn't match the expected edit tool, the code will likely fail
 		// in applyTreeFunction, and the error will be fed back to the LLM for self-correction.
@@ -117,9 +116,9 @@ function extractCodeFromArgs(args: unknown): string {
 }
 
 /**
- * Converts an array of {@link SharedTreeChatMessage} to LangChain {@link BaseMessage} format.
+ * Converts an array of {@link TreeAgentChatMessage} to LangChain {@link BaseMessage} format.
  */
-function convertToLangchainMessages(history: readonly SharedTreeChatMessage[]): BaseMessage[] {
+function convertToLangchainMessages(history: readonly TreeAgentChatMessage[]): BaseMessage[] {
 	const messages: BaseMessage[] = [];
 	for (const msg of history) {
 		switch (msg.role) {
@@ -176,8 +175,7 @@ function convertToLangchainMessages(history: readonly SharedTreeChatMessage[]): 
  * Use with {@link @fluidframework/tree-agent#SharedTreeSemanticAgent}.
  * @param langchainModel - The LangChain chat model to use.
  * @deprecated Use {@link createLangchainChatModel} with
- * {@link @fluidframework/tree-agent#createAnalysisAgent | createAnalysisAgent} or
- * {@link @fluidframework/tree-agent#createEditAgent | createEditAgent} instead.
+ * {@link @fluidframework/tree-agent#createTreeAgent | createTreeAgent} instead.
  * @alpha
  */
 export function createLegacyLangchainChatModel(

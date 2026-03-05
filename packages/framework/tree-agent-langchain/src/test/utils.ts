@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/tree/internal";
 import {
 	SharedTreeSemanticAgent,
-	createEditAgent,
+	createTreeAgent,
 	type TreeView,
 } from "@fluidframework/tree-agent/alpha";
 import { ChatAnthropic } from "@langchain/anthropic";
@@ -152,15 +152,15 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 		const client = createLangchainChatModel(createLlmClient(provider));
 		const agent =
 			subtree === undefined
-				? createEditAgent(client, view, {
+				? createTreeAgent(client, view, {
 						logger,
 						domainHints: options?.domainHints,
 					})
-				: createEditAgent(client, subtree, {
+				: createTreeAgent(client, subtree, {
 						logger,
 						domainHints: options?.domainHints,
 					});
-		await agent.edit(prompt);
+		await agent.invokeAgent(prompt);
 	}
 
 	return view;
