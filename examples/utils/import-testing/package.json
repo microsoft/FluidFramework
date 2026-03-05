@@ -12,19 +12,25 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"type": "module",
+	"exports": {
+		"./crossPackageSchema": {
+			"import": {
+				"types": "./lib/crossPackageSchemaExports.d.ts",
+				"default": "./lib/crossPackageSchemaExports.js"
+			}
+		}
+	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:esnext:crosspackage": "tsc --project ./tsconfig.crossPackage.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:crosspackage",
+		"build:esnext": "tsc --project ./tsconfig.json && tsc --project ./tsconfig.crossPackage.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:crosspackage": "tsc --project ./src/test/tsconfig.crossPackage.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib lib-crosspackage \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -69,16 +75,8 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:esnext:crosspackage": [
-				"^build:esnext"
-			],
-			"build:test:crosspackage": [
-				"build:esnext:crosspackage",
-				"^build:esnext"
-			],
 			"build:test:esm": [
-				"build:esnext",
-				"build:esnext:crosspackage"
+				"build:esnext"
 			]
 		}
 	},
