@@ -51,6 +51,9 @@ export const defaultTimingOptions: Required<BenchmarkTimingOptions> = {
 	startPhase: Phase.WarmUp,
 };
 
+/**
+ * Default values for when performance testing mode is not enabled.
+ */
 export const nonPerfTestingArgs: Required<BenchmarkTimingOptions> = {
 	maxBenchmarkDurationSeconds: 0,
 	minBatchCount: 1,

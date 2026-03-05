@@ -4,7 +4,7 @@
  */
 
 /**
- * Callbacks for allocation and deallocation benchmarks/
+ * Callbacks for allocation and deallocation benchmarks.
  * @remarks
  * These are the callbacks that are passed to the benchmark function of a {@link MemoryUseBenchmark}.
  * @public
@@ -27,17 +27,16 @@ export interface MemoryUseCallbacks {
  */
 export interface MemoryUseBenchmark {
 	/**
-	 * A function that should loop until `callbacks.continue()` returns false, and in each loop call the callbacks in order:
-	 * 1. `callbacks.beforeAllocation()`
+	 * A function that should loop until `state.continue()` returns false, and in each loop call the callbacks in order:
+	 * 1. `state.beforeAllocation()`
 	 * 2. Allocate memory in some way.
-	 * 3. `callbacks.whileAllocated()`
+	 * 3. `state.whileAllocated()`
 	 * 4. Deallocate the memory allocated in step 2.
-	 * 5. Optionally call `callbacks.afterDeallocation()` to measure deallocation separately from allocation
+	 * 5. Optionally call `state.afterDeallocation()` to measure deallocation separately from allocation
 	 * (the amounts will both be reported, but the mean of them is the primary result).
 	 * @remarks
-	 * The benchmark will measure memory use inn step 2 and freed in step 4.
-	 * A valid use of this function (to avoid errors anc collect accurate data) these amounts should be the same
-	 * (memory should not accumulate across iterations).
+	 * The benchmark will measure memory allocated in step 2 and freed in step 4.
+	 * In a valid use of this function (to collect accurate data) these amounts should be the same.
 	 * @privateRemarks
 	 * Other schemes (like allowing leaking memory across iterations) could be added as different measurement API / benchmark types if needed.
 	 */
