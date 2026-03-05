@@ -92,7 +92,7 @@ importers:
         specifier: ^11.7.5
         version: 11.7.5
       playwright:
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       puppeteer:
         specifier: ^23.6.0
@@ -384,7 +384,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -487,7 +487,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -584,7 +584,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -717,7 +717,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -829,7 +829,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -941,7 +941,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -1062,7 +1062,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -1168,7 +1168,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -1344,7 +1344,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.1
       '@playwright/test':
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
@@ -16277,7 +16277,7 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)
       playwright:
-        specifier: ^1.49.0
+        specifier: ^1.55.1
         version: 1.58.2
       prop-types:
         specifier: ^15.8.1
