@@ -17,6 +17,10 @@
 			"import": {
 				"types": "./lib/crossPackageSchemaExports.d.ts",
 				"default": "./lib/crossPackageSchemaExports.js"
+			},
+			"require": {
+				"types": "./dist/crossPackageSchemaExports.d.ts",
+				"default": "./dist/crossPackageSchemaExports.js"
 			}
 		}
 	},
