@@ -35,11 +35,12 @@ describe("Hardware Stats", () => {
 		updateDirtyContainerState: (dirty: boolean) => {},
 		getLoadedFromVersion: () => undefined,
 	};
+	let containerRuntime: ContainerRuntime | undefined;
 
 	const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
 		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
 
-	const loadContainer = async () =>
+	const loadContainer = async (): Promise<ContainerRuntime> =>
 		ContainerRuntime.loadRuntime2({
 			context: mockContext as IContainerContext,
 			registry: new FluidDataStoreRegistry([]),
@@ -55,6 +56,7 @@ describe("Hardware Stats", () => {
 		});
 
 	beforeEach(async () => {
+		containerRuntime = undefined;
 		mockLogger = new MockLogger();
 		mockContext = {
 			deltaManager: new MockDeltaManager(),
@@ -65,6 +67,11 @@ describe("Hardware Stats", () => {
 			updateDirtyContainerState: (dirty: boolean) => {},
 			getLoadedFromVersion: () => undefined,
 		};
+	});
+
+	afterEach(() => {
+		containerRuntime?.dispose();
+		containerRuntime = undefined;
 	});
 
 	it("should generate correct hardware stats with regular navigator", async () => {
@@ -78,7 +85,7 @@ describe("Hardware Stats", () => {
 		assert.strictEqual(deviceMemory, 10, "incorrect deviceMemory value");
 		assert.strictEqual(hardwareConcurrency, 8, "incorrect hardwareConcurrency value");
 
-		await loadContainer();
+		containerRuntime = await loadContainer();
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
@@ -100,7 +107,7 @@ describe("Hardware Stats", () => {
 		assert.strictEqual(deviceMemory, undefined, "incorrect deviceMemory value");
 		assert.strictEqual(hardwareConcurrency, undefined, "incorrect hardwareConcurrency value");
 
-		await loadContainer();
+		containerRuntime = await loadContainer();
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
@@ -121,7 +128,7 @@ describe("Hardware Stats", () => {
 		assert.strictEqual(deviceMemory, undefined, "incorrect deviceMemory value");
 		assert.strictEqual(hardwareConcurrency, undefined, "incorrect hardwareConcurrency value");
 
-		await loadContainer();
+		containerRuntime = await loadContainer();
 
 		// checking telemetry
 		const events = getDeviceSpecEvents();
