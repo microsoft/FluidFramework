@@ -283,6 +283,39 @@ describe("`benchmark` function", () => {
 			}),
 		});
 	});
+
+	describe("nested", () => {
+		describe("nested", () => {
+			// Test empty suite name
+			describe("", () => {
+				benchmarkIt({
+					title: "in empty named suite",
+					run: (): CollectedData => ({
+						primary: {
+							name: "the data",
+							value: 1,
+							units: "numbers",
+							type: ValueType.SmallerIsBetter,
+						},
+						additional: [],
+					}),
+				});
+			});
+
+			benchmarkIt({
+				title: "outside empty named suite",
+				run: (): CollectedData => ({
+					primary: {
+						name: "the data",
+						value: 1,
+						units: "numbers",
+						type: ValueType.SmallerIsBetter,
+					},
+					additional: [],
+				}),
+			});
+		});
+	});
 });
 
 const dummyPromise = Promise.resolve();

@@ -50,9 +50,10 @@ export interface BenchmarkOptions extends Titled, BenchmarkDescription, MochaExc
 // @public
 export class BenchmarkReporter {
     constructor(outputFilePath?: string);
+    beginSuite(localName: string): void;
     recordResultsSummary(): void;
-    recordSuiteResults(suiteName: string): void;
-    recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
+    recordSuiteResults(): void;
+    recordTestResult(testName: string, result: BenchmarkResult): void;
 }
 
 // @public

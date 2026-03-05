@@ -47,22 +47,33 @@ import {
 	type Measurement,
 } from "./ResultTypes";
 import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./RunnerUtilities";
+import { assert } from "./assert";
 
-interface BenchmarkResults {
-	table: Table;
-	disambiguationCounter: number | undefined;
+/**
+ * A node in the suite tree maintained by {@link BenchmarkReporter}.
+ * Each node corresponds to one mocha `describe` block.
+ */
+interface SuiteNode {
 	/**
-	 * Results by name, in order.
-	 * @remarks
-	 * It is possible (but not recommended) to have multiple benchmarks with the same name in a suite.
-	 * To preserve such cases, an array is used here instead of a map.
+	 * The local (non-prefixed) title of this suite — the string passed to `describe()`.
+	 * Used as the `suiteName` in JSON output.
 	 */
-	benchmarksArray: NamedResult[];
+	readonly localName: string;
+	readonly table: Table;
+	/**
+	 * Direct test results and child suite nodes in event-arrival order.
+	 * This is the authoritative ordered contents of the suite for both console and JSON output.
+	 */
+	readonly children: (SuiteNode | NamedResult)[];
 }
 
 interface NamedResult {
 	readonly name: string;
 	readonly result: BenchmarkResult;
+}
+
+function isSuiteNode(item: SuiteNode | NamedResult): item is SuiteNode {
+	return "table" in item;
 }
 
 /**
@@ -80,21 +91,11 @@ export class BenchmarkReporter {
 	private readonly overallSummaryTable: Table = new Table();
 
 	/**
-	 * Results for each inprogress suite keyed by suite name.
-	 * Includes results for each tests in the suite that has run.
-	 *
-	 * Tracking multiple suites at once is required due to nesting of suites.
+	 * Stack of currently open suite nodes (most-recently-opened at the end).
+	 * Index 0 is always a virtual root node that holds top-level content.
+	 * Pushed by {@link BenchmarkReporter.beginSuite} and popped by {@link BenchmarkReporter.recordSuiteResults}.
 	 */
-	private readonly inProgressSuites: Map<string, BenchmarkResults> = new Map<
-		string,
-		BenchmarkResults
-	>();
-
-	/**
-	 * All suites which have been seen. Used to detect duplicates.
-	 * Value is number of duplicates so far.
-	 */
-	private readonly allSuites: Map<string, number> = new Map<string, number>();
+	private readonly suiteStack: SuiteNode[];
 
 	private totalSumRuntimeSeconds = 0;
 	private totalBenchmarkCount = 0;
@@ -104,48 +105,47 @@ export class BenchmarkReporter {
 	private readonly outputFilePath: string | undefined;
 
 	/**
-	 * Completed suites accumulated for writing to a single output file.
-	 */
-	private readonly completedSuites: ReportSuite[] = [];
-
-	/**
 	 * @param outputFilePath - path to write the combined results JSON file to.
 	 * If not provided, no file is written.
 	 */
 	public constructor(outputFilePath?: string) {
 		this.outputFilePath = outputFilePath ? path.resolve(outputFilePath) : undefined;
+		// The virtual root node holds top-level content and is never popped.
+		this.suiteStack = [{ localName: "root", table: new Table(), children: [] }];
 	}
 
 	/**
-	 * Appends a prettified version of the results of a benchmark instance provided to the provided
-	 * BenchmarkResults object.
+	 * Registers the start of a suite and pushes it onto the stack.
+	 * Must be called before any {@link BenchmarkReporter.recordTestResult} calls for tests in the suite,
+	 * and must be paired with a matching {@link BenchmarkReporter.recordSuiteResults} call.
+	 * When using mocha, call this from `EVENT_SUITE_BEGIN`.
+	 *
+	 * @param localName - the local `suite.title` string (tags stripped), used in JSON output.
 	 */
-	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
-		let results = this.inProgressSuites.get(suiteName);
-		if (results === undefined) {
-			const count = this.allSuites.get(suiteName) ?? 0;
-			const newCount = count + 1;
-			this.allSuites.set(suiteName, newCount);
-			if (newCount > 1) {
-				console.log(
-					chalk.yellow(
-						`Warning: suite name "${suiteName}" now been used ${newCount} times. Reports will be disambiguated with a trailing number`,
-					),
-				);
-			}
+	public beginSuite(localName: string): void {
+		const node: SuiteNode = {
+			localName,
+			table: new Table(),
+			children: [],
+		};
 
-			results = {
-				table: new Table(),
-				benchmarksArray: [],
-				disambiguationCounter: newCount === 1 ? undefined : newCount,
-			};
-			this.inProgressSuites.set(suiteName, results);
-		}
+		// Always attach to the current stack top (virtual root is always present).
+		this.suiteStack.at(-1)!.children.push(node);
+		this.suiteStack.push(node);
+	}
 
-		const { table, benchmarksArray } = results;
+	/**
+	 * Appends a benchmark result to the currently open suite (the stack top).
+	 */
+	public recordTestResult(testName: string, result: BenchmarkResult): void {
+		// Non-null assertion is safe: suiteStack always has at least the virtual root.
+		const node = this.suiteStack.at(-1)!;
 
-		// Make sure to add properties that are not part of the `data` object here.
-		benchmarksArray.push({ name: testName, result });
+		const { table, children } = node;
+
+		const namedResult: NamedResult = { name: testName, result };
+		children.push(namedResult);
+
 		if (isResultError(result)) {
 			table.cell("status", `${pad(4)}${chalk.red("×")}`);
 		} else {
@@ -183,43 +183,36 @@ export class BenchmarkReporter {
 	}
 
 	/**
-	 * Logs the benchmark results of a test suite and adds the information to the overall summary.
-	 * Calling this is optional since recordResultsSummary will call it automatically,
-	 * however if there are multiple suites with the same name, calling this explicitly can avoid
-	 * getting them merged together.
-	 * @param suiteName - the name of the suite. Used to group together related tests.
+	 * Marks the current suite (stack top) as complete, prints its console table, and accumulates summary stats.
+	 * Calling this is optional since {@link BenchmarkReporter.recordResultsSummary} will call it automatically
+	 * for any remaining open suites.
 	 */
-	public recordSuiteResults(suiteName: string): void {
-		const results = this.inProgressSuites.get(suiteName);
-		if (results === undefined) {
-			// Omit tables for empty suites.
-			// Empty Suites are common due to nesting of suites (a suite that contains only suites
-			// is considered empty here),
-			// so omitting them cleans up the output a lot.
-			// Additionally some statistics (ex: geometricMean) can not be computed for empty suites.
-			return;
+	public recordSuiteResults(): void {
+		// Never pop the root suite.
+		assert(
+			this.suiteStack.length > 1,
+			"recordSuiteResults called without a matching beginSuite",
+		);
+
+		const path = this.suiteStack
+			.slice(1)
+			.map((s) => s.localName)
+			.join(" / ");
+
+		// Non-null assertion is safe: we just checked length > 1.
+		const node = this.suiteStack.pop()!;
+
+		// Only output and accumulate stats for suites with direct benchmarks.
+		const directBenchmarks = node.children.filter((c): c is NamedResult => !isSuiteNode(c));
+		if (directBenchmarks.length > 0) {
+			console.log(`${chalk.bold(path)}`);
+			console.log(`${node.table.toString()}`);
+			this.accumulateBenchmarkData(path, directBenchmarks);
 		}
-
-		// Remove suite from map so that other (non-concurrent) suites with the same name won't collide.
-		this.inProgressSuites.delete(suiteName);
-
-		const { benchmarksArray, table } = results;
-
-		const disambiguatedSuiteName = results.disambiguationCounter
-			? `${suiteName} (${results.disambiguationCounter})`
-			: suiteName;
-
-		// Output results from suite
-		console.log(`\n${chalk.bold(disambiguatedSuiteName)}`);
-		console.log(`${table.toString()}`);
-		this.completedSuites.push(this.buildReportSuite(disambiguatedSuiteName, benchmarksArray));
-
-		// Accumulate data for overall summary
-		this.accumulateBenchmarkData(disambiguatedSuiteName, benchmarksArray);
 	}
 
 	/**
-	 * Accumulates benchmark data for a suite and logs it to the console.
+	 * Accumulates benchmark data for a suite and logs it to the overall summary table.
 	 */
 	private accumulateBenchmarkData(
 		suiteName: string,
@@ -288,13 +281,14 @@ export class BenchmarkReporter {
 	}
 
 	/**
-	 * Logs the overall summary (aggregating all suites) and saves it to disk.
-	 * This will also record any pending suites.
+	 * Logs the overall summary (aggregating all suites) and saves the results to disk.
+	 * This will also close any suites that were not explicitly closed.
 	 */
 	public recordResultsSummary(): void {
-		for (const [key] of this.inProgressSuites) {
-			this.recordSuiteResults(key);
-		}
+		assert(
+			this.suiteStack.length === 1,
+			"all suites should be closed except root when calling recordResultsSummary",
+		);
 
 		const countFailure: number = this.totalBenchmarkCount - this.totalSuccessfulBenchmarkCount;
 		this.overallSummaryTable.cell("suite name", "total");
@@ -314,8 +308,8 @@ export class BenchmarkReporter {
 			Table.padLeft,
 		);
 		this.overallSummaryTable.newRow();
-		console.log(`\n\n${chalk.bold("Overall summary")}`);
-		console.log(`\n${this.overallSummaryTable.toString()}`);
+		console.log(`\n${chalk.bold("Overall summary")}`);
+		console.log(`${this.overallSummaryTable.toString()}`);
 		if (countFailure > 0) {
 			console.log(
 				`* ${countFailure} benchmark${
@@ -325,7 +319,20 @@ export class BenchmarkReporter {
 		}
 
 		if (this.outputFilePath !== undefined) {
-			const root: ReportSuite = { suiteName: "root", contents: this.completedSuites };
+			// Build the report from the virtual root's children.
+			const virtualRoot = this.suiteStack[0];
+			const rootContents: (ReportSuite | ReportEntry)[] = [];
+			for (const child of virtualRoot.children) {
+				if (isSuiteNode(child)) {
+					const reportSuite = this.suiteNodeToReportSuite(child);
+					if (reportSuite !== undefined) rootContents.push(reportSuite);
+				} else if (!isResultError(child.result)) {
+					rootContents.push(
+						this.outputFriendlyObjectFromBenchmark(child.name, child.result),
+					);
+				}
+			}
+			const root: ReportSuite = { suiteName: "root", contents: rootContents };
 			const outputDir = path.dirname(this.outputFilePath);
 			fs.mkdirSync(outputDir, { recursive: true });
 			fs.writeFileSync(this.outputFilePath, JSON.stringify(root, undefined, 4));
@@ -333,23 +340,29 @@ export class BenchmarkReporter {
 		}
 	}
 
-	private buildReportSuite(suiteName: string, benchmarks: readonly NamedResult[]): ReportSuite {
-		const contents: ReportEntry[] = [];
-		const names = new Set<string>();
-		for (const { name, result } of benchmarks) {
-			if (names.has(name)) {
-				console.log(
-					chalk.yellow(
-						`Warning: multiple benchmarks with the name "${name}" is in suite "${suiteName}". This may cause confusion when analyzing results.`,
-					),
-				);
-			}
-			names.add(name);
-			if (!isResultError(result)) {
-				contents.push(this.outputFriendlyObjectFromBenchmark(name, result));
+	/**
+	 * Recursively converts a suite node into a {@link ReportSuite} for JSON output.
+	 * Returns undefined if the node (and all its descendants) contain no reportable content.
+	 */
+	private suiteNodeToReportSuite(node: SuiteNode): ReportSuite | undefined {
+		const contents: (ReportSuite | ReportEntry)[] = [];
+
+		for (const child of node.children) {
+			if (isSuiteNode(child)) {
+				const childSuite = this.suiteNodeToReportSuite(child);
+				if (childSuite !== undefined) {
+					contents.push(childSuite);
+				}
+			} else {
+				if (!isResultError(child.result)) {
+					contents.push(this.outputFriendlyObjectFromBenchmark(child.name, child.result));
+				}
 			}
 		}
-		return { suiteName, contents };
+
+		if (contents.length === 0) return undefined;
+
+		return { suiteName: node.localName, contents };
 	}
 
 	/**

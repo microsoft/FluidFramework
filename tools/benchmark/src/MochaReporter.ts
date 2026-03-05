@@ -31,6 +31,11 @@ module.exports = class {
 	public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
 		const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportFile);
 		runner
+			.on(Runner.constants.EVENT_SUITE_BEGIN, (suite: Suite) => {
+				if (!isChildProcess && !suite.root) {
+					benchmarkReporter.beginSuite(getName(suite.title));
+				}
+			})
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.
 				test.on("benchmark end", (benchmark: Readonly<BenchmarkResult>) => {
@@ -60,7 +65,7 @@ module.exports = class {
 					// This is an error, so report it as such.
 					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`;
 					console.error(chalk.red(error));
-					benchmarkReporter.recordTestResult(suite, getName(test.title), { error });
+					benchmarkReporter.recordTestResult(getName(test.title), { error });
 					return;
 				}
 				if (test.state !== "passed") {
@@ -77,12 +82,12 @@ module.exports = class {
 					// Write the data to stdout so the parent process can collect it.
 					console.info(JSON.stringify(benchmark));
 				} else {
-					benchmarkReporter.recordTestResult(suite, getName(test.title), benchmark);
+					benchmarkReporter.recordTestResult(getName(test.title), benchmark);
 				}
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
-				if (!isChildProcess) {
-					benchmarkReporter.recordSuiteResults(getSuiteName(suite));
+				if (!isChildProcess && !suite.root) {
+					benchmarkReporter.recordSuiteResults();
 				}
 			})
 			.on(Runner.constants.EVENT_HOOK_END, (hook: Hook) => {
