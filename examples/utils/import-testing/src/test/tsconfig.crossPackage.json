@@ -10,7 +10,7 @@
 		"exactOptionalPropertyTypes": false,
 		"incremental": false,
 	},
-	"include": ["./crossPackageImporter.spec.ts"],
+	"include": ["./crossPackageImporter.ts"],
 	"references": [
 		{
 			"path": "../../tsconfig.crossPackage.json",
