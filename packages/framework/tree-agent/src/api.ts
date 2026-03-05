@@ -220,7 +220,7 @@ export function isEditResult(value: unknown): value is EditResult {
 /**
  * A query from a user to a {@link SharedTreeSemanticAgent}.
  * @remarks Processing a query may involve editing the SharedTree via the provided {@link SharedTreeChatQuery.edit} function.
- * @deprecated Use {@link SharedTreeChatModel.invoke} with {@link SharedTreeChatMessage} instead.
+ * @deprecated Use {@link SharedTreeChatModel.invoke} with {@link TreeAgentChatMessage} instead.
  * @alpha
  */
 export interface SharedTreeChatQuery {
@@ -412,7 +412,7 @@ export interface SharedTreeChatModel {
 	/**
 	 * Queries the chat model with a request from the user.
 	 * @remarks This model may simply return a text response to the query, or it may first call the {@link SharedTreeChatQuery.edit} function (potentially multiple times) to modify the tree in response to the query.
-	 * @deprecated Use {@link SharedTreeChatModel.invoke} instead. The edit loop is now managed by the agent via {@link createEditAgent}.
+	 * @deprecated Use {@link SharedTreeChatModel.invoke} instead. The edit loop is now managed by the agent via {@link createTreeAgent}.
 	 */
 	query?(message: SharedTreeChatQuery): Promise<string>;
 	/**

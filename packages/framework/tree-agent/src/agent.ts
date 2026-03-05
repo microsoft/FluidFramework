@@ -222,11 +222,11 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		});
 		active = false;
 
-		if (!rollbackEdits) {
+		if (rollbackEdits) {
+			queryTree.branch.dispose();
+		} else {
 			this.outerTree.branch.merge(queryTree.branch);
 			this.resetDirty();
-		} else {
-			queryTree.branch.dispose();
 		}
 		this.options?.logger?.log(`## Response\n\n`);
 		this.options?.logger?.log(`${responseMessage}\n\n`);
@@ -461,11 +461,11 @@ export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
 
 				if (response.type === "done") {
 					history.push({ role: "assistant", content: response.text });
-					if (!rollbackEdits) {
+					if (rollbackEdits) {
+						queryTree.branch.dispose();
+					} else {
 						outerTree.branch.merge(queryTree.branch);
 						tracker.resetDirty();
-					} else {
-						queryTree.branch.dispose();
 					}
 					options?.logger?.log(`## Response\n\n${response.text}\n\n`);
 					return response.text;
