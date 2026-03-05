@@ -61,10 +61,10 @@ import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
- * A provider for default values in tree nodes.
+ * A provider for values in tree nodes.
  *
  * @remarks
- * This type represents two ways to provide default values:
+ * This type represents two ways to provide node values:
  *
  * 1. **A value**: Provide any value directly (number, string, object, array, etc.). When a value is provided,
  * the data is copied for each use to ensure independence between instances. The value must be of an allowed type for the field.
@@ -94,23 +94,11 @@ export type NodeProvider<T> = T | (() => T);
  */
 export interface SchemaStaticsAlpha {
 	/**
-	 * Creates a field schema with a default value.
-	 *
-	 * @param fieldSchema - The field schema to add a default to (e.g., `factory.required(factory.string)` or `factory.optional(factory.number)`)
-	 * @param defaultValue - A {@link NodeProvider} specifying the default value. Can be a value directly (which will be copied for each use) or a generator function.
-	 *
-	 * @remarks
-	 * This function wraps an existing field schema and adds a default value provider to it.
-	 * The default value will be used when constructing nodes if the field is not explicitly provided or set to `undefined`.
-	 *
-	 * Fields with defaults (whether required or optional) are recognized by the type system as optional in constructors,
+	 * Creates a field schema with a default value. Fields with defaults (whether required or optional) are recognized by the type system as optional in constructors,
 	 * allowing them to be omitted when creating new nodes.
 	 *
-	 * **Default value handling:**
-	 * - **Values**: When a value is provided directly, the data is copied for each use to ensure independence
-	 * - **Generator functions**: Called each time to produce a fresh value (useful for dynamic defaults)
-	 *
-	 * Defaults are evaluated eagerly during node construction, unlike identifier defaults which require context.
+	 * @param fieldSchema - The field schema to add a default to (e.g., `factory.required(factory.string)` or `factory.optional(factory.number)`)
+	 * @param defaultValue - A {@link NodeProvider} specifying the default value.
 	 *
 	 * @example
 	 * ```typescript
@@ -128,6 +116,12 @@ export interface SchemaStaticsAlpha {
 	 * const obj1 = new MySchema({}); // All defaults applied
 	 * const obj2 = new MySchema({ name: "custom" }); // name="custom", other defaults applied
 	 * ```
+	 *
+	 * @privateRemarks
+	 * This function wraps an existing field schema and adds a default value provider to it.
+	 * The default value will be used when constructing nodes if the field is not explicitly provided or set to `undefined`.
+	 *
+	 * Defaults are evaluated eagerly during node construction, unlike identifier defaults which require context.
 	 */
 	readonly withDefault: <
 		Kind extends FieldKind,
