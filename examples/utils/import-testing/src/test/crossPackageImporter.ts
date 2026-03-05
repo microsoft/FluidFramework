@@ -7,13 +7,14 @@
 Compile-time only test — if this file compiles, the test passes. Not a .spec.ts, not run by mocha.
 The schemas in crossPackageSchemaExports.ts are compiled by a separate tsconfig (tsconfig.crossPackage.json).
 */
+import { TreeViewConfiguration } from "@fluidframework/tree";
+
 import {
 	AppState,
 	Container,
 	Dimensions,
 	Position,
 } from "@fluid-example/import-testing/crossPackageSchema";
-import { TreeViewConfiguration } from "@fluidframework/tree";
 
 const _config = new TreeViewConfiguration({ schema: AppState });
 const _container = new Container({

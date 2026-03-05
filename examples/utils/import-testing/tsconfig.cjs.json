@@ -4,6 +4,4 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 	},
-	// Include crossPackageSchemaExports.ts which is excluded from the ESM build for isolation.
-	"exclude": ["src/test/**/*"],
 }
