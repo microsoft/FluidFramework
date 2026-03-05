@@ -5,18 +5,19 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { TreeNode, Tree, NodeKind } from "@fluidframework/tree";
+import { TreeNode, Tree, NodeKind, TreeViewConfiguration } from "@fluidframework/tree";
 import type {
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeMapNode,
 	TreeArrayNode,
 } from "@fluidframework/tree";
-import { TreeAlpha } from "@fluidframework/tree/alpha";
+import { independentView, TreeAlpha } from "@fluidframework/tree/alpha";
 import type {
 	ReadableField,
 	TreeRecordNode,
 	TreeBranchAlpha,
+	InsertableField,
 } from "@fluidframework/tree/alpha";
 
 import type { TreeView, ViewOrTree } from "./api.js";
@@ -119,4 +120,21 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 			return new Subtree<TRoot>(this.viewOrTree.fork());
 		}
 	}
+}
+
+/**
+ * Initializes a {@link Subtree} backed by an independent view.
+ */
+export function copyIndependentSubtree<TSchema extends ImplicitFieldSchema>(
+	view: ViewOrTree<TSchema>,
+): Subtree<TSchema> {
+	const subtree = new Subtree(view);
+	const config = new TreeViewConfiguration({ schema: subtree.schema });
+	const sandboxView = independentView(config);
+	const exported =
+		subtree.field === undefined ? undefined : TreeAlpha.exportVerbose(subtree.field);
+
+	const imported = TreeAlpha.importVerbose(sandboxView.schema, exported);
+	sandboxView.initialize(imported as InsertableField<TSchema>);
+	return new Subtree(sandboxView);
 }
