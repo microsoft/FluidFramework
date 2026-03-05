@@ -3,21 +3,26 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import-x/no-internal-modules */
-
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	EditResult,
 	SharedTreeChatModel,
-	SharedTreeChatQuery,
+	SharedTreeChatMessage,
+	SharedTreeChatResponse,
+	SharedTreeChatQuery, // eslint-disable-line import-x/no-deprecated
 } from "@fluidframework/tree-agent/alpha";
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import type { BaseMessage } from "@langchain/core/messages";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { tool } from "@langchain/core/tools";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
+import type { BaseMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
+import { tool } from "@langchain/core/tools"; // eslint-disable-line import-x/no-internal-modules
+import { v4 as uuid } from "uuid";
+
+// #region New stateless implementation
 
 /**
- * Creates a `SharedTreeChatModel` that uses the LangChain library to connect to the underlying LLM.
+ * Creates a stateless {@link @fluidframework/tree-agent#SharedTreeChatModel} backed by LangChain.
+ * @remarks Use with {@link @fluidframework/tree-agent#createAnalysisAgent | createAnalysisAgent}
+ * or {@link @fluidframework/tree-agent#createEditAgent | createEditAgent}.
  * @param langchainModel - The LangChain chat model to use.
  * @alpha
  */
@@ -25,7 +30,163 @@ export function createLangchainChatModel(langchainModel: BaseChatModel): SharedT
 	return new LangchainChatModel(langchainModel);
 }
 
+/**
+ * Stateless LangChain adapter for {@link @fluidframework/tree-agent#SharedTreeChatModel}.
+ * @remarks This class does not maintain internal message history. All context is provided
+ * via the `history` parameter to {@link LangchainChatModel.invoke}.
+ */
 class LangchainChatModel implements SharedTreeChatModel {
+	public readonly editToolName = "GenerateTreeEditingCode";
+
+	public constructor(private readonly model: BaseChatModel) {}
+
+	public get name(): string | undefined {
+		const name = this.model.metadata?.modelName;
+		return typeof name === "string" ? name : undefined;
+	}
+
+	public async invoke(
+		history: readonly SharedTreeChatMessage[],
+	): Promise<SharedTreeChatResponse> {
+		// Convert SharedTreeChatMessage[] to LangChain BaseMessage[]
+		const messages: BaseMessage[] = convertToLangchainMessages(history);
+
+		// Create a placeholder tool definition so the LLM knows the tool exists.
+		// The actual execution is handled by the agent's edit loop — this tool
+		// is never directly invoked, it only tells the LLM the tool signature.
+		const editingTool = tool(async (js: string) => js, {
+			name: this.editToolName,
+			description: "Invokes a JavaScript code snippet to edit a tree of application data.",
+		});
+
+		const runnable = this.model.bindTools?.([editingTool], {
+			tool_choice: "auto",
+		});
+		if (runnable === undefined) {
+			throw new UsageError("LLM client must support function calling or tool use.");
+		}
+
+		const responseMessage = await runnable.invoke(messages);
+
+		// Parse the response into SharedTreeChatResponse.
+		// Return the first tool call as an edit response regardless of tool name.
+		// If the name doesn't match the expected edit tool, the code will likely fail
+		// in applyTreeFunction, and the error will be fed back to the LLM for self-correction.
+		const firstToolCall =
+			responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0
+				? responseMessage.tool_calls[0]
+				: undefined;
+		if (firstToolCall !== undefined) {
+			const code = extractCodeFromArgs(firstToolCall.args);
+			return {
+				type: "edit",
+				toolCallId: firstToolCall.id ?? uuid(),
+				code,
+			};
+		}
+
+		const text =
+			typeof responseMessage.text === "string"
+				? responseMessage.text
+				: typeof responseMessage.content === "string"
+					? responseMessage.content
+					: JSON.stringify(responseMessage.content);
+		return { type: "done", text };
+	}
+}
+
+/**
+ * Extracts the JavaScript code string from a tool call's args.
+ * @remarks Different LLM providers may return the code under different key names
+ * (e.g. `js`, `code`, `input`), so this function handles multiple formats:
+ * 1. If args is a raw string, use it directly.
+ * 2. If args is an object with a single string-valued property, use that value.
+ * 3. Otherwise, stringify the entire args object as a fallback.
+ */
+function extractCodeFromArgs(args: unknown): string {
+	if (typeof args === "string") {
+		return args;
+	}
+	if (typeof args === "object" && args !== null) {
+		const values = Object.values(args).filter((v): v is string => typeof v === "string");
+		if (values.length === 1 && values[0] !== undefined) {
+			return values[0];
+		}
+	}
+	return JSON.stringify(args);
+}
+
+/**
+ * Converts an array of {@link SharedTreeChatMessage} to LangChain {@link BaseMessage} format.
+ */
+function convertToLangchainMessages(history: readonly SharedTreeChatMessage[]): BaseMessage[] {
+	const messages: BaseMessage[] = [];
+	for (const msg of history) {
+		switch (msg.role) {
+			case "system": {
+				messages.push(new SystemMessage(msg.content));
+				break;
+			}
+			case "user": {
+				messages.push(new HumanMessage(msg.content));
+				break;
+			}
+			case "assistant": {
+				messages.push(new AIMessage(msg.content));
+				break;
+			}
+			case "tool_call": {
+				messages.push(
+					new AIMessage({
+						content: "",
+						tool_calls: [
+							{
+								id: msg.toolCallId,
+								name: msg.toolName,
+								args: { js: msg.code },
+							},
+						],
+					}),
+				);
+				break;
+			}
+			case "tool_result": {
+				messages.push(
+					new ToolMessage({
+						content: msg.content,
+						tool_call_id: msg.toolCallId,
+					}),
+				);
+				break;
+			}
+			// No default
+		}
+	}
+	return messages;
+}
+
+// #endregion
+
+// #region Legacy stateful implementation
+
+/**
+ * Creates a legacy stateful {@link @fluidframework/tree-agent#SharedTreeChatModel} backed by LangChain.
+ * @remarks This implementation maintains internal message history and manages the edit loop via the
+ * {@link @fluidframework/tree-agent#SharedTreeChatQuery.edit | edit} callback pattern.
+ * Use with {@link @fluidframework/tree-agent#SharedTreeSemanticAgent}.
+ * @param langchainModel - The LangChain chat model to use.
+ * @deprecated Use {@link createLangchainChatModel} with
+ * {@link @fluidframework/tree-agent#createAnalysisAgent | createAnalysisAgent} or
+ * {@link @fluidframework/tree-agent#createEditAgent | createEditAgent} instead.
+ * @alpha
+ */
+export function createLegacyLangchainChatModel(
+	langchainModel: BaseChatModel,
+): SharedTreeChatModel {
+	return new LegacyLangchainChatModel(langchainModel);
+}
+
+class LegacyLangchainChatModel implements SharedTreeChatModel {
 	private readonly messages: BaseMessage[] = [];
 
 	public constructor(private readonly model: BaseChatModel) {}
@@ -41,17 +202,22 @@ class LangchainChatModel implements SharedTreeChatModel {
 		this.messages.push(new SystemMessage(text));
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated
 	public async query(query: SharedTreeChatQuery): Promise<string> {
 		this.messages.push(new HumanMessage(query.text));
 		return this.queryEdit(async (js: string) => query.edit(js));
 	}
 
-	private async queryEdit(edit: SharedTreeChatQuery["edit"]): Promise<string> {
+	private async queryEdit(
+		edit: SharedTreeChatQuery["edit"], // eslint-disable-line import-x/no-deprecated
+	): Promise<string> {
 		const editingTool = tool(edit, {
 			name: this.editToolName,
 			description: "Invokes a JavaScript code snippet to edit a tree of application data.",
 		});
-		const runnable = this.model.bindTools?.([editingTool], { tool_choice: "auto" });
+		const runnable = this.model.bindTools?.([editingTool], {
+			tool_choice: "auto",
+		});
 		if (runnable === undefined) {
 			throw new UsageError("LLM client must support function calling or tool use.");
 		}
@@ -94,3 +260,5 @@ function isEditResult(value: unknown): value is EditResult {
 		typeof (value as EditResult).message === "string"
 	);
 }
+
+// #endregion

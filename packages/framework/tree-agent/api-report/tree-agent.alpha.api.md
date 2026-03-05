@@ -38,7 +38,16 @@ export interface Context<TSchema extends ImplicitFieldSchema> {
 }
 
 // @alpha
+export function createAnalysisAgent<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: SharedTreeAnalysisAgentOptions): SharedTreeAnalysisAgent;
+
+// @alpha
 export function createContext<TSchema extends ImplicitFieldSchema>(tree: ViewOrTree<TSchema>): Context<TSchema>;
+
+// @alpha
+export function createEditAgent<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: SharedTreeEditAgentOptions<TSchema>): SharedTreeEditAgent;
+
+// @alpha @deprecated
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: SemanticAgentOptions<TSchema>): SharedTreeSemanticAgent<TSchema>;
 
 // @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
@@ -126,23 +135,110 @@ export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
 }
 
 // @alpha
-export interface SharedTreeChatModel {
-    appendContext?(text: string): void;
-    editToolName?: string;
-    name?: string;
-    query(message: SharedTreeChatQuery): Promise<string>;
+export interface SharedTreeAnalysisAgent {
+    analyze(prompt: string): Promise<string>;
 }
 
 // @alpha
+export interface SharedTreeAnalysisAgentOptions {
+    domainHints?: string;
+    logger?: Logger;
+}
+
+// @alpha
+export interface SharedTreeAssistantMessage {
+    // (undocumented)
+    readonly content: string;
+    // (undocumented)
+    readonly role: "assistant";
+}
+
+// @alpha
+export type SharedTreeChatMessage = SharedTreeSystemMessage | SharedTreeUserMessage | SharedTreeAssistantMessage | SharedTreeToolCallMessage | SharedTreeToolResultMessage;
+
+// @alpha
+export interface SharedTreeChatModel {
+    // @deprecated
+    appendContext?(text: string): void;
+    editToolName?: string;
+    invoke?(history: readonly SharedTreeChatMessage[]): Promise<SharedTreeChatResponse>;
+    name?: string;
+    // @deprecated
+    query?(message: SharedTreeChatQuery): Promise<string>;
+}
+
+// @alpha @deprecated
 export interface SharedTreeChatQuery {
     edit(js: string): Promise<EditResult>;
     text: string;
+}
+
+// @alpha
+export type SharedTreeChatResponse = SharedTreeEditResponse | SharedTreeDoneResponse;
+
+// @alpha
+export interface SharedTreeDoneResponse {
+    readonly text: string;
+    // (undocumented)
+    readonly type: "done";
+}
+
+// @alpha
+export interface SharedTreeEditAgent extends SharedTreeAnalysisAgent {
+    edit(prompt: string): Promise<string>;
+}
+
+// @alpha
+export interface SharedTreeEditAgentOptions<TSchema extends ImplicitFieldSchema> extends SharedTreeAnalysisAgentOptions {
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+    maximumSequentialEdits?: number;
+}
+
+// @alpha
+export interface SharedTreeEditResponse {
+    readonly code: string;
+    readonly toolCallId: string;
+    // (undocumented)
+    readonly type: "edit";
 }
 
 // @alpha @sealed
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
     constructor(client: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: Readonly<SemanticAgentOptions<TSchema>> | undefined);
     query(userPrompt: string): Promise<string>;
+}
+
+// @alpha
+export interface SharedTreeSystemMessage {
+    // (undocumented)
+    readonly content: string;
+    // (undocumented)
+    readonly role: "system";
+}
+
+// @alpha
+export interface SharedTreeToolCallMessage {
+    readonly args: string;
+    // (undocumented)
+    readonly role: "tool_call";
+    readonly toolCallId: string;
+    readonly toolName: string;
+}
+
+// @alpha
+export interface SharedTreeToolResultMessage {
+    readonly content: string;
+    // (undocumented)
+    readonly role: "tool_result";
+    readonly toolCallId: string;
+}
+
+// @alpha
+export interface SharedTreeUserMessage {
+    // (undocumented)
+    readonly content: string;
+    // (undocumented)
+    readonly role: "user";
 }
 
 // @alpha

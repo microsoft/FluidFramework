@@ -12,8 +12,25 @@
 export {
 	SharedTreeSemanticAgent,
 	createContext,
+	createAnalysisAgent,
+	createEditAgent,
 } from "./agent.js";
 export type {
+	// New API
+	SharedTreeAnalysisAgent,
+	SharedTreeEditAgent,
+	SharedTreeChatMessage,
+	SharedTreeSystemMessage,
+	SharedTreeUserMessage,
+	SharedTreeAssistantMessage,
+	SharedTreeToolCallMessage,
+	SharedTreeToolResultMessage,
+	SharedTreeChatResponse,
+	SharedTreeEditResponse,
+	SharedTreeDoneResponse,
+	SharedTreeAnalysisAgentOptions,
+	SharedTreeEditAgentOptions,
+	// Existing API
 	EditResult,
 	SharedTreeChatModel,
 	SharedTreeChatQuery,

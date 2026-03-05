@@ -16,8 +16,18 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { createContext, SharedTreeSemanticAgent } from "../agent.js";
-import type { EditResult, SharedTreeChatModel } from "../api.js";
+import {
+	createContext,
+	SharedTreeSemanticAgent,
+	createAnalysisAgent,
+	createEditAgent,
+} from "../agent.js";
+import type {
+	EditResult,
+	SharedTreeChatModel,
+	SharedTreeChatMessage,
+	SharedTreeChatResponse,
+} from "../api.js";
 
 const sf = new SchemaFactory(undefined);
 const editToolName = "EditTreeTool";
@@ -581,3 +591,270 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 		assert.equal(key, "child");
 	});
 });
+
+// #region Factory function tests (new API)
+
+/**
+ * Helper to create a mock model that implements invoke() with a sequence of canned responses.
+ */
+function createMockInvokeModel(
+	responses: SharedTreeChatResponse[],
+	editToolNameValue: string = editToolName,
+): SharedTreeChatModel & { invokeHistory: (readonly SharedTreeChatMessage[])[] } {
+	let callIndex = 0;
+	const invokeHistory: (readonly SharedTreeChatMessage[])[] = [];
+	return {
+		editToolName: editToolNameValue,
+		invokeHistory,
+		async invoke(
+			history: readonly SharedTreeChatMessage[],
+		): Promise<SharedTreeChatResponse> {
+			invokeHistory.push([...history]);
+			const response = responses[callIndex++];
+			if (response === undefined) {
+				throw new Error(`Mock model ran out of responses at call ${callIndex}`);
+			}
+			return response;
+		},
+	};
+}
+
+describe("createAnalysisAgent", () => {
+	it("returns text responses via analyze()", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([{ type: "done", text: "Analysis result" }]);
+		const agent = createAnalysisAgent(model, view);
+		const result = await agent.analyze("What is in the tree?");
+		assert.equal(result, "Analysis result");
+	});
+
+	it("rejects models without invoke()", () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			async query() {
+				return "nope";
+			},
+		};
+		assert.throws(() => createAnalysisAgent(model, view), /invoke/);
+	});
+
+	it("throws if model returns an edit response", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `context.root = "bad"` },
+		]);
+		const agent = createAnalysisAgent(model, view);
+		await assert.rejects(async () => agent.analyze("Analyze please"), /edit response/);
+		assert.equal(view.root, "Content", "Tree should not have been edited");
+	});
+});
+
+describe("createEditAgent", () => {
+	it("can apply a single edit", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `context.root = "Edited";` },
+			{ type: "done", text: "Done editing" },
+		]);
+		const agent = createEditAgent(model, view);
+		const result = await agent.edit("Edit it");
+		assert.equal(result, "Done editing");
+		assert.equal(view.root, "Edited");
+	});
+
+	it("can apply multiple sequential edits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `context.root = "First";` },
+			{ type: "edit", toolCallId: "c2", code: `context.root = "Second";` },
+			{ type: "done", text: "All done" },
+		]);
+		const agent = createEditAgent(model, view);
+		const result = await agent.edit("Edit twice");
+		assert.equal(result, "All done");
+		assert.equal(view.root, "Second");
+	});
+
+	it("handles edit errors and allows retry", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `throw new Error("boom");` },
+			{ type: "edit", toolCallId: "c2", code: `context.root = "Recovered";` },
+			{ type: "done", text: "Fixed it" },
+		]);
+		const agent = createEditAgent(model, view);
+		const result = await agent.edit("Try editing");
+		assert.equal(result, "Fixed it");
+		assert.equal(view.root, "Recovered");
+	});
+
+	it("limits the number of sequential edits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `context.root = "One";` },
+			{ type: "edit", toolCallId: "c2", code: `context.root = "Two";` },
+			{ type: "edit", toolCallId: "c3", code: `context.root = "Three";` },
+			{ type: "done", text: "Gave up" },
+		]);
+		const agent = createEditAgent(model, view, { maximumSequentialEdits: 2 });
+		const result = await agent.edit("Edit a lot");
+		assert.equal(result, "Gave up");
+		// Tree should NOT have merged because too many edits triggered rollback behavior
+		assert.equal(view.root, "Initial");
+	});
+
+	it("merges on success, rolls back on failure", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		// First edit succeeds, second fails → rollback
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `context.root = "Good";` },
+			{ type: "edit", toolCallId: "c2", code: `throw new Error("boom");` },
+			{ type: "done", text: "Oops" },
+		]);
+		const agent = createEditAgent(model, view);
+		const result = await agent.edit("Edit");
+		assert.equal(result, "Oops");
+		assert.equal(view.root, "Initial", "Tree should have been rolled back");
+	});
+
+	it("does not roll back if failed edit is followed by successful edit", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `throw new Error("boom");` },
+			{ type: "edit", toolCallId: "c2", code: `context.root = "Recovered";` },
+			{ type: "done", text: "Fixed" },
+		]);
+		const agent = createEditAgent(model, view);
+		const result = await agent.edit("Edit");
+		assert.equal(result, "Fixed");
+		assert.equal(view.root, "Recovered");
+	});
+
+	it("rejects models without invoke()", () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query() {
+				return "nope";
+			},
+		};
+		assert.throws(() => createEditAgent(model, view), /invoke/);
+	});
+
+	it("rejects models without editToolName", () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			async invoke() {
+				return { type: "done", text: "nope" };
+			},
+		};
+		assert.throws(() => createEditAgent(model, view), /editToolName/);
+	});
+
+	it("analyze() returns text without editing", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "done", text: "Just analyzing" },
+		]);
+		const agent = createEditAgent(model, view);
+		const result = await agent.analyze("What is here?");
+		assert.equal(result, "Just analyzing");
+		assert.equal(view.root, "Content", "Tree should not have changed");
+	});
+
+	it("analyze() throws if model returns an edit response", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `context.root = "bad"` },
+		]);
+		const agent = createEditAgent(model, view);
+		await assert.rejects(async () => agent.analyze("Analyze please"), /edit response/);
+		assert.equal(view.root, "Content", "Tree should not have been edited");
+	});
+
+	it("runs custom editors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: "Code" },
+			{ type: "done", text: "Done" },
+		]);
+		const agent = createEditAgent(model, view, {
+			editor: async (tree, js) => {
+				const ctx = createContext(tree);
+				assert.equal(ctx.root, "Content");
+				assert.equal(js, "Code");
+				ctx.root = "Edited";
+			},
+		});
+		const result = await agent.edit("Edit");
+		assert.equal(result, "Done");
+		assert.equal(view.root, "Edited");
+	});
+
+	it("sends tree-changed notification between calls", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{ type: "done", text: "First" },
+			{ type: "done", text: "Second" },
+		]);
+		const agent = createEditAgent(model, view);
+		await agent.edit("First query");
+		// Mutate tree externally
+		view.root = "ExternallyChanged";
+		await agent.edit("Second query");
+		// The second invoke call should have the tree-changed system message in its history
+		assert.ok(model.invokeHistory.length >= 2, "Expected at least 2 invoke calls");
+		const secondHistory = model.invokeHistory[1];
+		assert.notEqual(secondHistory, undefined);
+		const treeChangedMsg = secondHistory?.find(
+			(m) =>
+				m.role === "system" &&
+				m.content.includes("The tree has changed since the last query"),
+		);
+		assert.ok(treeChangedMsg !== undefined, "Expected tree-changed system message");
+	});
+
+	it("does not send tree-changed notification after agent's own edit", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{ type: "edit", toolCallId: "c1", code: `context.root = "AgentEdited";` },
+			{ type: "done", text: "Edited" },
+			{ type: "done", text: "Second response" },
+		]);
+		const agent = createEditAgent(model, view);
+		await agent.edit("Edit it");
+		assert.equal(view.root, "AgentEdited");
+		// Second call — no external change, only agent's own edit from the previous call
+		await agent.edit("Follow up");
+		const secondHistory = model.invokeHistory[2];
+		assert.notEqual(secondHistory, undefined);
+		const treeChangedMsg = secondHistory?.find(
+			(m) =>
+				m.role === "system" &&
+				m.content.includes("The tree has changed since the last query"),
+		);
+		assert.equal(
+			treeChangedMsg,
+			undefined,
+			"Should NOT have tree-changed notification after agent's own edit",
+		);
+	});
+});
+
+// #endregion
