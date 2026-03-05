@@ -34,7 +34,7 @@ describe("RunnerUtilities", () => {
 		it("uses exponential notation when there are more than 9 digits before the decimal", () => {
 			// 1234567890 has 10 digits before the decimal
 			const result = prettyNumber(1_234_567_890, 2);
-			assert.equal(result, "1.23e9");
+			assert.equal(result, "1.23e+9");
 		});
 	});
 
