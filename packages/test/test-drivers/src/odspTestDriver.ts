@@ -38,6 +38,29 @@ const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 	password,
 });
 
+/**
+ * Creates a token config for bearer token authentication (FIC flow).
+ * @param username - The user principal name
+ * @param token - The bearer token (JWT)
+ * @param getNewToken - Callback to fetch a new token when the current one expires
+ */
+const createBearerTokenConfig = (
+	username: string,
+	token: string,
+	getNewToken: (
+		bearerToken: string,
+		scopeEndpoint: string,
+		numAccounts?: number,
+	) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>,
+): OdspTokenConfig => {
+	return {
+		type: "token",
+		username,
+		token,
+		getNewToken,
+	};
+};
+
 interface IOdspTestLoginInfo {
 	siteUrl: string;
 	username: string;
@@ -45,7 +68,14 @@ interface IOdspTestLoginInfo {
 	supportsBrowserAuth?: boolean;
 }
 
-type TokenConfig = IOdspTestLoginInfo & IPublicClientConfig;
+type TokenConfig = IOdspTestLoginInfo &
+	IPublicClientConfig & {
+		getNewToken?: (
+			bearerToken: string,
+			scopeEndpoint: string,
+			numAccounts?: number,
+		) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
+	};
 
 interface IOdspTestDriverConfig extends TokenConfig {
 	directory: string;
@@ -112,7 +142,22 @@ export function getOdspCredentials(
 		 * Parse login credentials using the new tenant format for e2e tests.
 		 * For the expected format of loginTenants, see {@link UserPassCredentials}
 		 */
-		if (loginTenants.includes("UserPrincipalName")) {
+		if (loginTenants.includes("GUID")) {
+			const output: { GUID: string; UserPrincipalName: string; Token: string }[] =
+				JSON.parse(loginTenants);
+			if (output?.[tenantIndex] === undefined) {
+				throw new Error("No resources found in the login tenants");
+			}
+
+			// Return the set of accounts to choose from a single tenant
+			for (const account of output) {
+				const username = account.UserPrincipalName;
+				const password = account.Token;
+				if (requestedUserName === undefined || requestedUserName === username) {
+					creds.push({ username, password });
+				}
+			}
+		} else if (loginTenants.includes("UserPrincipalName")) {
 			const output: UserPassCredentials[] = JSON.parse(loginTenants);
 			if (output?.[tenantIndex] === undefined) {
 				throw new Error("No resources found in the login tenants");
@@ -198,14 +243,17 @@ export class OdspTestDriver implements ITestDriver {
 	private static readonly legacyDriverUserRandomIndex = Math.random();
 	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
 		const siteUrl = tokenConfig.siteUrl;
+		const { getNewToken } = tokenConfig;
 		try {
 			return await getDriveId(siteUrl, "", undefined, {
 				accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
-				refreshTokenFn: async () =>
-					this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+				refreshTokenFn: getNewToken
+					? async () => getNewToken(process.env.bearer__token as string, "storage")
+					: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
 			});
 		} catch (ex) {
 			if (tokenConfig.supportsBrowserAuth !== true) {
+				console.log("Drive endpoint error statusCode:", (ex as any).statusCode, ex);
 				throw ex;
 			}
 		}
@@ -227,6 +275,15 @@ export class OdspTestDriver implements ITestDriver {
 			supportsBrowserAuth?: boolean;
 			tenantIndex?: number;
 			odspEndpointName?: string;
+			/**
+			 * Optional callback to fetch new bearer tokens when they expire.
+			 * Used for FIC authentication that doesn't support OAuth refresh tokens.
+			 */
+			getNewToken?: (
+				bearerToken: string,
+				scopeEndpoint: string,
+				numAccounts?: number,
+			) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
 		},
 		api: OdspDriverApiType = OdspDriverApi,
 	): Promise<OdspTestDriver> {
@@ -302,10 +359,16 @@ export class OdspTestDriver implements ITestDriver {
 		tenantName?: string,
 		userIndex?: number,
 		endpointName?: string,
+		getNewToken?: (
+			bearerToken: string,
+			scopeEndpoint: string,
+			numAccounts?: number,
+		) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>,
 	): Promise<OdspTestDriver> {
 		const tokenConfig: TokenConfig = {
 			...loginConfig,
 			...getMicrosoftConfiguration(),
+			getNewToken,
 		};
 
 		const driveId = await this.getDriveId(loginConfig.siteUrl, tokenConfig);
@@ -330,7 +393,13 @@ export class OdspTestDriver implements ITestDriver {
 
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
-		config: IOdspTestLoginInfo & IPublicClientConfig,
+		config: TokenConfig & {
+			getNewToken?: (
+				bearerToken: string,
+				scopeEndpoint: string,
+				numAccounts?: number,
+			) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
+		},
 	): Promise<string> {
 		const host = new URL(options.siteUrl).host;
 

@@ -58,7 +58,7 @@ async function initializeODSPCore(
 	const getStorageTokenStub = async (
 		options: OdspResourceTokenFetchOptions,
 	): Promise<string> => {
-		return resolveWrapper(
+		const result = await resolveWrapper(
 			async (authRequestInfo: IOdspAuthRequestInfo) => {
 				if (
 					(options.refresh || !authRequestInfo.accessToken) &&
@@ -71,6 +71,7 @@ async function initializeODSPCore(
 			server,
 			clientConfig,
 		);
+		return typeof result === "string" ? result : result.Token;
 	};
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	const getWebsocketTokenStub = (_options: OdspResourceTokenFetchOptions): Promise<string> =>
