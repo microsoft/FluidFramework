@@ -196,32 +196,29 @@ describe("ModularChangeFamily integration", () => {
 		});
 
 		it("remove over move and remove", () => {
+			const detachId1: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const detachId2: ChangeAtomId = { revision: tag1, localId: brand(4) };
+
 			// This change moves two nodes and removes the second one.
 			const targetChange = Change.build(
 				{
 					family,
 					maxId: 4,
+					renames: [
+						{ oldId: detachId1, newId: detachId2, count: 1, detachLocation: undefined },
+					],
 					detachedMoves: [
 						{
-							detachId: { revision: tag1, localId: brand(4) },
+							detachId: detachId2,
 							count: 1,
 							newLocation: { nodeId: undefined, field: fieldA },
 						},
 					],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.detach(1, { revision: tag1, localId: brand(0) }),
-					MarkMaker.detach(
-						1,
-						{ revision: tag1, localId: brand(4) },
-						{ cellRename: { revision: tag1, localId: brand(1) } },
-					),
+					MarkMaker.detach(2, { revision: tag1, localId: brand(0) }),
 					MarkMaker.attach(1, { revision: tag1, localId: brand(2) }, { id: brand(0) }),
-					MarkMaker.rename(
-						1,
-						{ revision: tag1, localId: brand(3) },
-						{ revision: tag1, localId: brand(4) },
-					),
+					MarkMaker.rename(1, { revision: tag1, localId: brand(3) }, detachId2),
 				]),
 			);
 
@@ -1229,6 +1226,73 @@ describe("ModularChangeFamily integration", () => {
 					),
 					MarkMaker.skip(2),
 					MarkMaker.attach(1, { revision: tag2, localId: brand(4) }, { id: brand(3) }),
+				]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
+		it("composite move over move and remove", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(
+				family,
+				mintRevisionTag,
+				changeReceiver,
+				codecOptions,
+			);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.move(fieldAPath, 0, 1, fieldAPath, 1);
+			editor.sequenceField(fieldAPath).remove(0, 1);
+
+			editor.move(fieldAPath, 0, 1, fieldAPath, 2);
+			editor.move(fieldAPath, 1, 1, fieldAPath, 4);
+
+			const [moveAndRemoveA, moveAndRemoveB, moveA, moveB] = getChanges();
+			const moveAndRemove = tagChangeInline(
+				family.compose([makeAnonChange(moveAndRemoveA), makeAnonChange(moveAndRemoveB)]),
+				tag1,
+			);
+
+			const move = tagChangeInline(
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB)]),
+				tag2,
+			);
+
+			const rebased = family.rebase(
+				move,
+				moveAndRemove,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const moveId1: ChangeAtomId = { revision: tag2, localId: brand(3) };
+			const moveId2: ChangeAtomId = { revision: tag2, localId: brand(5) };
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 6,
+					renames: [
+						{
+							oldId: moveId1,
+							newId: moveId2,
+							count: 1,
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+					revisions: [{ revision: tag2 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.tomb(tag1, brand(0)),
+					MarkMaker.rename(1, { revision: tag1, localId: brand(4) }, moveId1),
+					MarkMaker.skip(1),
+					MarkMaker.rename(
+						1,
+						{ revision: tag2, localId: brand(2) },
+						{ revision: tag2, localId: brand(3) },
+					),
+					MarkMaker.skip(2),
+					MarkMaker.attach(1, { revision: tag2, localId: brand(6) }, { id: brand(5) }),
 				]),
 			);
 
@@ -2840,13 +2904,13 @@ describe("ModularChangeFamily integration", () => {
 			Change.field(fieldB, sequenceIdentifier, [MarkMaker.rename(1, moveInId, removeId)]),
 		);
 
-		// const moveDetachedWithCellDetachId = family.rebase(
-		// 	tagChange(compositeMoveWithCellRename, tag1),
-		// 	buildTransaction((editor) => {
-		// 		editor.sequenceField(fieldAPath).remove(0, 1);
-		// 	}, tag0),
-		// 	revisionMetadataSourceFromInfo([{ revision: tag0 }, { revision: tag1 }]),
-		// );
+		const moveDetachedWithCellDetachId = family.rebase(
+			tagChange(compositeMoveWithCellRename, tag1),
+			buildTransaction((editor) => {
+				editor.sequenceField(fieldAPath).remove(0, 1);
+			}, tag0),
+			revisionMetadataSourceFromInfo([{ revision: tag0 }, { revision: tag1 }]),
+		);
 
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
@@ -2859,7 +2923,7 @@ describe("ModularChangeFamily integration", () => {
 				["composite move", compositeMove, context],
 				["composite move with cell rename", compositeMoveWithCellRename, context],
 				["move detached", moveDetached, context],
-				// ["move detached with cell rename", moveDetachedWithCellDetachId, context], XXX
+				["move detached with cell rename", moveDetachedWithCellDetachId, context],
 				["move and remove", moveAndRemove, context],
 				["revive and move (separate IDs)", reviveAndMoveWithSeparateIds, context],
 				["revive and move (same ID)", reviveAndMoveWithSameId, context],

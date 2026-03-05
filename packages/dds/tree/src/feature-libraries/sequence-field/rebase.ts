@@ -386,9 +386,17 @@ function separateEffectsForMove(
 
 			const baseDetachId = getDetachedRootId(baseMark);
 			const outputCellId = getDetachOutputCellId(baseMark);
+
+			// XXX: Handle mark splitting.
+			const baseRootOutputId =
+				nodeManager.getBaseRename(baseDetachId, baseMark.count).value ?? baseDetachId;
+
+			// The ID of the last cell a root was detached from will have the same ID as the root.
+			// So if the output cell ID is not the same as the output root ID,
+			// then the base changeset must represent a move and detach of the node.
 			const doesBaseMoveNodes =
-				!areEqualChangeAtomIds(outputCellId, baseDetachId) ||
-				nodeManager.doesBaseAttachNodes(baseDetachId, baseMark.count).value;
+				nodeManager.doesBaseAttachNodes(baseRootOutputId, baseMark.count).value ||
+				!areEqualChangeAtomIds(outputCellId, baseRootOutputId);
 
 			// We should rename these cells unless the nodes are reattached elsewhere,
 			// in which case we will rename those cells instead.

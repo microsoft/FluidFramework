@@ -3003,7 +3003,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		countToProcess = attachFieldEntry.length;
 
 		const detachedMoveEntry = this.table.baseChange.rootNodes.outputDetachLocations.getFirst(
-			baseDetachId,
+			baseAttachId,
 			countToProcess,
 		);
 		countToProcess = detachedMoveEntry.length;
@@ -3124,7 +3124,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		countToProcess = inputEntry.length;
 		const inputId = inputEntry.value;
 
-		const moveEntry = this.table.entries.getFirst(inputId, countToProcess);
+		const moveEntry = this.table.entries.getFirst(baseRenameTo, countToProcess);
 
 		countToProcess = moveEntry.length;
 		if (moveEntry.value !== undefined) {
