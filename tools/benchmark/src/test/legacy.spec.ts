@@ -56,6 +56,7 @@ describe("legacy", () => {
 
 		benchmark({
 			title: `async`,
+			maxBenchmarkDurationSeconds: 0.1,
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			benchmarkFn: async () => nextTick(() => 0),
 			type: BenchmarkType.OwnCorrectness,
@@ -64,6 +65,7 @@ describe("legacy", () => {
 		for (const loopSize of [1e6]) {
 			benchmark({
 				title: `while loop with ${loopSize} iterations`,
+				maxBenchmarkDurationSeconds: 0.1,
 				benchmarkFn: () => doLoop(loopSize),
 				type: BenchmarkType.OwnCorrectness,
 			});
@@ -81,6 +83,7 @@ describe("legacy", () => {
 		// Since measurement overhead and clock precision are not the same on all systems, this approach is necessary to be robustly portable.
 		benchmark({
 			title: "Custom Benchmark",
+			maxBenchmarkDurationSeconds: 0.1,
 			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 				let duration: number;
 				do {
@@ -100,6 +103,7 @@ describe("legacy", () => {
 		// Use benchmarkFnCustom and timeBatch
 		benchmark({
 			title: "Custom Benchmark timeBatch",
+			maxBenchmarkDurationSeconds: 0.1,
 			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 				let running: boolean;
 				do {
@@ -119,6 +123,7 @@ describe("legacy", () => {
 		// For NodeJS on linux, times over a microsecond should be mostly ok on modern CPUs.
 		benchmark({
 			title: "Custom Batch Size 1 Benchmark",
+			maxBenchmarkDurationSeconds: 0.1,
 			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 				let duration: number;
 				do {

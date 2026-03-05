@@ -48,19 +48,19 @@ describe("integration tests", () => {
 		title: "misc data formatting",
 		run: (): CollectedData => [
 			{
-				name: "Bytes Demo",
+				name: "demo",
 				value: 1000000000,
 				units: "bytes",
 				type: ValueType.SmallerIsBetter,
 			},
 			{
-				name: "Extra data",
+				name: "Samples",
 				value: 1000,
 				units: "count",
 				type: ValueType.SmallerIsBetter,
 			},
 			{
-				name: "Aux2",
+				name: "Period",
 				value: 12345678.9,
 				units: "ns/op",
 				type: ValueType.SmallerIsBetter,
@@ -161,33 +161,13 @@ describe("integration tests", () => {
 		},
 	});
 
-	benchmarkIt({
-		title: "collectMemoryUseData test",
-		...benchmarkMemoryUse({
-			benchmarkFn: async (state) => {
-				const foo: { value: unknown } = { value: undefined };
-				while (state.continue()) {
-					foo.value = undefined;
-					await state.beforeAllocation();
-					foo.value = new Array(1000000).fill("leak");
-					await state.whileAllocated();
-				}
-				// After test custom cleanup
-				foo.value = -1;
-			},
-		}),
-	});
-
-	// This pattern isn't very useful since does not allow much what beyond benchmarkMemoryUse does.
-	// It does allow adding extra data to the result though, which might be useful in some cases.
-	benchmarkIt({
-		title: "collectMemoryUseData test",
-		category: "Memory",
-		run: async () => {
-			// Before test custom setup
-			const foo: { value: unknown } = { value: undefined };
-			const data: CollectedData = await collectMemoryUseData({
+	// Putting these in their own suite helps keep the reporter output from having way too many columns in any given table.
+	describe("memory use", () => {
+		benchmarkIt({
+			title: "collectMemoryUseData test",
+			...benchmarkMemoryUse({
 				benchmarkFn: async (state) => {
+					const foo: { value: unknown } = { value: undefined };
 					while (state.continue()) {
 						foo.value = undefined;
 						await state.beforeAllocation();
@@ -197,15 +177,38 @@ describe("integration tests", () => {
 					// After test custom cleanup
 					foo.value = -1;
 				},
-			});
-			return [
-				...data,
-				{
-					name: "extra data",
-					value: 1,
-				},
-			];
-		},
+			}),
+		});
+
+		// This pattern isn't very useful since does not allow much what beyond benchmarkMemoryUse does.
+		// It does allow adding extra data to the result though, which might be useful in some cases.
+		benchmarkIt({
+			title: "collectMemoryUseData test",
+			category: "Memory",
+			run: async () => {
+				// Before test custom setup
+				const foo: { value: unknown } = { value: undefined };
+				const data: CollectedData = await collectMemoryUseData({
+					benchmarkFn: async (state) => {
+						while (state.continue()) {
+							foo.value = undefined;
+							await state.beforeAllocation();
+							foo.value = new Array(1000000).fill("leak");
+							await state.whileAllocated();
+						}
+						// After test custom cleanup
+						foo.value = -1;
+					},
+				});
+				return [
+					...data,
+					{
+						name: "extra data",
+						value: 1,
+					},
+				];
+			},
+		});
 	});
 
 	describe("duplicate suite name", () => {
