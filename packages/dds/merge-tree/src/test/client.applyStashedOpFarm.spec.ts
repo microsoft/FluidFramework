@@ -209,9 +209,7 @@ function runApplyStashedOpFarmTests(
 				opts,
 				(s, m, c) => applyMessagesWithReconnect(s, m, c, stashClients),
 			);
-			// Matches the timeout convention used by other farm tests (conflictFarm, obliterateFarm,
-			// rollbackFarm). Tests complete in ~15-20s normally, but need headroom under parallel execution.
-		}).timeout(30 * 10000);
+		}).timeout(30 * 1000);
 	});
 }
 
