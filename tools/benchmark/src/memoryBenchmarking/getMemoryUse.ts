@@ -228,25 +228,29 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 	const allocatedStats = getArrayStatistics(processed.map((x) => x.allocatedBytes));
 	const freedStats = getArrayStatistics(processed.map((x) => x.freedBytes));
 
-	const endSize = Math.max(1, Math.floor(processed.length / 2));
-	const sizeStart = getArrayStatistics(processed.slice(0, endSize).map((x) => x.meanBytes));
-	const sizeEnd = getArrayStatistics(processed.slice(-endSize).map((x) => x.meanBytes));
-	const averageIndexInStart = (0 + (endSize - 1)) / 2;
-	const averageIndexInEnd = (processed.length - endSize + (processed.length - 1)) / 2;
-	const iterationsBetweenStartAndEndStats = (averageIndexInStart + averageIndexInEnd) / 2;
+	// Split up data into "first" and "last" halves and compute stats on those
+	// to see if there is a trend in the data that might indicate leaking memory across iterations.
+	const sizeOfHalf = Math.max(1, Math.floor(processed.length / 2));
+	const firstHalfSize = getArrayStatistics(
+		processed.slice(0, sizeOfHalf).map((x) => x.meanBytes),
+	);
+	const lastHalfSize = getArrayStatistics(processed.slice(-sizeOfHalf).map((x) => x.meanBytes));
+	assert(firstHalfSize.samples.length === sizeOfHalf, `invalid first half size`);
+	assert(lastHalfSize.samples.length === sizeOfHalf, `invalid last half size`);
+
+	const averageIndexInStart = (0 + (sizeOfHalf - 1)) / 2;
+	const averageIndexInEnd = (processed.length - sizeOfHalf + (processed.length - 1)) / 2;
+	const iterationsBetweenStartAndEndStats = averageIndexInEnd - averageIndexInStart;
 
 	const sizeStartBeforeMeasurement = getArrayStatistics(
-		trimmed.slice(0, endSize).map((x) => x.before),
+		trimmed.slice(0, sizeOfHalf).map((x) => x.before),
 	);
 	const sizeEndBeforeMeasurement = getArrayStatistics(
-		trimmed.slice(-endSize).map((x) => x.before),
+		trimmed.slice(-sizeOfHalf).map((x) => x.before),
 	);
 	const leak =
 		sizeEndBeforeMeasurement.arithmeticMean - sizeStartBeforeMeasurement.arithmeticMean;
 	const leakPerIteration = leak / iterationsBetweenStartAndEndStats;
-
-	assert(sizeStart.samples.length === endSize, `invalid start size`);
-	assert(sizeEnd.samples.length === endSize, `invalid end size`);
 
 	// A test might be checking that something does not use any memory.
 	// In such cases noise in the data we might flag that as using negative memory or inconsistent allocation vs free size.
@@ -310,7 +314,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 		{
 			name: "Growth per Iteration",
 			value:
-				(sizeEnd.arithmeticMean - sizeStart.arithmeticMean) /
+				(lastHalfSize.arithmeticMean - firstHalfSize.arithmeticMean) /
 				iterationsBetweenStartAndEndStats,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
