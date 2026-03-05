@@ -18,8 +18,6 @@
 export {
 	BenchmarkType,
 	type MochaExclusiveOptions,
-	type HookFunction,
-	type HookArguments,
 	isInPerformanceTestingMode,
 	qualifiedTitle,
 	type Titled,
@@ -34,6 +32,8 @@ export {
 	type DurationBenchmark,
 	type BenchmarkTimingOptions,
 	type OnBatch,
+	type HookFunction,
+	type HookArguments,
 	type BenchmarkTimer,
 	type DurationBenchmarkCustom,
 	Phase,
@@ -51,7 +51,6 @@ export {
 	Measurement,
 	ValueType,
 } from "./ResultTypes";
-export type { Stats } from "./sampling";
 export type { Timer } from "./timer";
 
 export {

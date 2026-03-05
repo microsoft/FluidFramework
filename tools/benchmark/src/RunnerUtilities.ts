@@ -16,7 +16,7 @@ import type { Measurement } from "./ResultTypes.js";
  * @param num - Number of characters to pad
  * @param chr - Character to use for padding (space by default)
  */
-export const pad = (num: number, chr = " "): string => Array.from({ length: num + 1 }).join(chr);
+export const pad = (num: number, chr = " "): string => chr.repeat(num);
 
 /**
  * Nicely format a decimal number to make it human-readable.
@@ -31,7 +31,7 @@ export function prettyNumber(num: number, numDecimals = 3): string {
 		return num.toExponential(numDecimals);
 	}
 	// Add commas to the numbers before the decimal.
-	// Since this only ever runs on strings <= 9 characters, its not a performance problem problem.
+	// Since this only ever runs on strings less than about 12 characters, it's not a performance problem.
 	split[0] = split[0].replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 	return split.join(".");
 }
@@ -82,6 +82,7 @@ export function formatMeasurementValue(
 	}
 	if (measurement.units === "ns/op") {
 		const units = ["ns", "ms", "s"];
+		// Scaling factors between the above units
 		const scale = [1e6, 1e3];
 		let value = measurement.value;
 		let unitIndex = 0;
@@ -89,9 +90,11 @@ export function formatMeasurementValue(
 			value /= scale[unitIndex];
 			unitIndex++;
 		}
-		return `${prettyNumber(value, scaleUnits ? (Math.abs(value) > 1000 ? 0 : 2) : 1)} ${
-			units[unitIndex]
-		}/op`;
+		let decimals = 1;
+		if (scaleUnits) {
+			decimals = Math.abs(value) > 1000 ? 0 : 2;
+		}
+		return `${prettyNumber(value, decimals)} ${units[unitIndex]}/op`;
 	}
 
 	return `${prettyNumber(measurement.value)}${measurement.units ? ` ${measurement.units}` : ""}`;

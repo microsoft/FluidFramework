@@ -74,58 +74,53 @@ export enum TestType {
 /**
  * Names of all BenchmarkTypes.
  */
-export const benchmarkTypes: string[] = [];
-
-for (const type of Object.values(BenchmarkType)) {
-	if (typeof type === "string") {
-		benchmarkTypes.push(type);
-	}
-}
+export const benchmarkTypes: readonly string[] = Object.values(BenchmarkType).filter(
+	(v): v is string => typeof v === "string",
+);
 
 /**
  * Names of all TestTypes.
  */
-export const testTypes: string[] = [];
-
-for (const type of Object.values(TestType)) {
-	if (typeof type === "string") {
-		testTypes.push(type);
-	}
-}
+export const testTypes: readonly string[] = Object.values(TestType).filter(
+	(v): v is string => typeof v === "string",
+);
 
 /**
  * Object with a "title".
  * @public
+ * @input
  */
 export interface Titled {
 	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+	 * The title of the benchmark. This will show up in the output file, as well as the mocha reporter.
 	 */
-	title: string;
+	readonly title: string;
 }
 
 /**
  * Set of options to describe a benchmark.
  * @public
+ * @input
  */
 export interface BenchmarkDescription {
 	/**
 	 * The kind of benchmark.
 	 */
-	type?: BenchmarkType;
+	readonly type?: BenchmarkType;
 
 	/**
 	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
 	 * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
 	 * only execute specific tests.
 	 */
-	category?: string;
+	readonly category?: string;
 }
 
 /**
  * Options to configure a benchmark that reports custom measurements.
  *
  * @public
+ * @input
  */
 export interface BenchmarkFunction {
 	/**
@@ -138,135 +133,13 @@ export interface BenchmarkFunction {
  * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take in
  * an options object extending this interface should use the corresponding `it.only` or `describe.only` variants
  * @public
+ * @input
  */
 export interface MochaExclusiveOptions {
 	/**
 	 * When true, `mocha`-provided functions should use their `.only` counterparts (so as to aid individual test runs)
 	 */
-	only?: boolean;
-}
-
-/**
- * Convenience type for a hook function supported by `HookArguments`. Supports synchronous and asynchronous functions.
- * @public
- */
-export type HookFunction = () => void | Promise<unknown>;
-
-/**
- * Arguments that can be passed to `benchmark` for optional test setup/teardown.
- * Hooks--along with the benchmarked function--are run without additional error validation.
- * This means any exception thrown from either a hook or the benchmarked function will cause test failure,
- * and subsequent operations won't be run.
- * @remarks
- *
- * Be careful when writing non-pure benchmark functions!
- * This library is written with the assumption that each cycle it runs is an independent sample.
- * This can typically be achieved by using the `onCycle` hook to reset state, with some caveats.
- * For more details, read below.
- *
- * This library runs the benchmark function in two hierarchical groups: cycles and iterations.
- * One iteration consists of a single execution of `benchmarkFn`.
- * Since the time taken by a single iteration might be significantly smaller than the clock resolution, benchmark
- * dynamically decides to run a number of iterations per cycle.
- * After a warmup period, this number is fixed across cycles (i.e. if this library decides to run 10,000 iterations
- * per cycle, all statistical analysis will be performed on cycles which consist of 10,000 iterations)
- * This strategy also helps minimize noise from JITting code.
- *
- * Statistical analysis is performed at the cycle level: this library treats each cycle's timing information as a data
- * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshold or its max
- * time has been reached.
- * The statistical analysis it uses is invalid if cycles aren't independent trials: consider the test
- * ```typescript
- * const myList = [];
- * benchmark({
- *     title: "insert at start of a list",
- *     benchmarkFn: () => {
- *         myList.unshift(0);
- *     }
- * });
- * ```
- *
- * If each cycle has 10k iterations, the first cycle will time how long it takes to repeatedly insert elements 0 through 10k
- * into the start of `myList`.
- * The second cycle will time how long it takes to repeatedly insert elements 10k through 20k at the start, and so on.
- * As inserting an element at the start of the list is O(list size), it's clear that cycles will take longer and longer.
- * We can use the `onCycle` hook to alleviate this problem:
- * ```typescript
- * let myList = [];
- * benchmark({
- *     title: "insert at start of a list",
- *     onCycle: () => {
- *         myList = [];
- *     }
- *     benchmarkFn: () => {
- *         myList.unshift(0);
- *     }
- * });
- * ```
- *
- * With this change, it's more reasonable to model each cycle as an independent event.
- *
- * Note that this approach is slightly misleading in the data it measures: if this library chooses a cycle size of 10k,
- * the time reported per iteration is really an average of the time taken to insert 10k elements at the start, and not
- * the average time to insert an element to the start of the empty list as the test body might suggest at a glance.
- *
- * @example
- *
- * ```typescript
- * let iterations = 0;
- * let cycles = 0;
- * benchmark({
- *     title: "my sample performance test"
- *     before: () => {
- *         console.log("setup goes here")
- *     },
- *     onCycle: () => {
- *         cycles++;
- *     },
- *     after: () => {
- *         console.log("iterations", iterations);
- *         console.log("cycles", cycles);
- *         console.log("teardown goes here")
- *     }
- *     benchmarkFn: () => {
- *         iterations++;
- *     }
- * });
- *
- * // Sample console output in correctness mode:
- * //
- * // setup goes here
- * // iterations 1
- * // cycles 1
- * // teardown goes here
- * //
- * // Sample console output in perf mode, if benchmark dynamically chose to run 40 cycles of 14k iterations each:
- * //
- * // setup goes here
- * // iterations 560,000
- * // cycles 40
- * // teardown goes here
- * ```
- *
- * @privateRemarks
- * Replace these with a patter pattern.
- * Either remove them (and rely on benchmark to do its setup and teardown calling the collect function in the middle),
- * or provide a parameter from before to the measured function and after.
- * @public
- */
-export interface HookArguments {
-	/**
-	 * Executes once, before the test body it's declared for.
-	 *
-	 * @remarks This does *not* execute on each iteration or cycle.
-	 */
-	before?: HookFunction | undefined;
-	/**
-	 * Executes once, after the test body it's declared for.
-	 *
-	 * @remarks This does *not* execute on each iteration or cycle.
-	 */
-	after?: HookFunction | undefined;
+	readonly only?: boolean;
 }
 
 /**
@@ -289,12 +162,12 @@ export function qualifiedTitle(
 		tags.push(`@${testTypeTag}`);
 	}
 
-	let qualifiedTitle = `${tags.join(" ")} ${args.title}`;
+	let title = `${tags.join(" ")} ${args.title}`;
 
 	if (args.category !== "" && args.category !== undefined) {
-		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
+		title = `${title} ${userCategoriesSplitter} @${args.category}`;
 	}
-	return qualifiedTitle;
+	return title;
 }
 
 /**
@@ -342,7 +215,7 @@ export const userCategoriesSplitter = ":ff-cat:";
  * Reporter output location
  */
 export interface ReporterOptions {
-	reportFile?: string;
+	readonly reportFile?: string;
 }
 
 /**
@@ -350,6 +223,7 @@ export interface ReporterOptions {
  * @remarks
  * See {@link benchmarkIt}.
  * @public
+ * @input
  */
 export interface BenchmarkOptions
 	extends Titled,

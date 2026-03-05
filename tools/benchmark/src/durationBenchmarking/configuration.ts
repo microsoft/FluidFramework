@@ -4,7 +4,6 @@
  */
 
 import { assert } from "../assert.js";
-import type { HookArguments } from "../Configuration.js";
 import type { Timer } from "../timer";
 import type { Phase } from "./getDuration.js";
 
@@ -49,8 +48,15 @@ export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOp
  * @sealed
  */
 export interface BenchmarkTimer<T> {
+	/** The number of times the operation should be run per batch. */
 	readonly iterationsPerBatch: number;
+	/** The timer to use for measuring elapsed time of a batch. */
 	readonly timer: Timer<T>;
+	/**
+	 * Records the duration of a completed batch and advances internal state.
+	 * @param duration - The elapsed time for the batch in seconds. Compute this using {@link Timer.toSeconds}.
+	 * @returns `true` if another batch should be run, `false` if data collection is complete.
+	 */
 	recordBatch(duration: number): boolean;
 
 	/**
@@ -62,6 +68,8 @@ export interface BenchmarkTimer<T> {
 }
 
 /**
+ * The most flexible option from {@link DurationBenchmark}.
+ * Allows manual control over the benchmarking process, including timing and batch management.
  * @public
  * @input
  */
@@ -102,6 +110,7 @@ export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
  * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
  * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
  * @public
+ * @input
  */
 export interface BenchmarkTimingOptions {
 	/**
@@ -120,13 +129,21 @@ export interface BenchmarkTimingOptions {
 	 */
 	minBatchDurationSeconds?: number;
 
+	/**
+	 * The {@link Phase} to start the benchmark in.
+	 * Defaults to {@link Phase.WarmUp}.
+	 * @remarks
+	 * Setting this to {@link Phase.CollectData} skips warmup and batch-size adjustment.
+	 * This is mainly useful for the timing of very slow operations (which don't need batching to get accurate timing)
+	 * to save time by skipping warmup and using all iterations for data collection.
+	 */
 	startPhase?: Phase;
 }
 
 /**
- * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
- * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * Optional hook to run before each batch of iterations.
  * @public
+ * @input
  */
 export interface OnBatch {
 	/**
@@ -136,13 +153,137 @@ export interface OnBatch {
 	 * @remarks
 	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
 	 * iterations per batch.
+	 *
+	 * If you need this, consider using {@link DurationBenchmarkCustom} instead of {@link DurationBenchmarkSync} or {@link DurationBenchmarkAsync}.
+	 * It offers much more control, and avoids the challenges of passing data between this callback and other parts of the benchmark.
 	 */
 	beforeEachBatch?: () => void;
 }
 
 /**
- * Validates arguments to `benchmark`.
+ * Convenience type for a hook function supported by `HookArguments`. Supports synchronous and asynchronous functions.
  * @public
+ */
+export type HookFunction = () => void | Promise<unknown>;
+
+/**
+ * Arguments that can be passed to `benchmark` for optional test setup/teardown.
+ * Hooks--along with the benchmarked function--are run without additional error validation.
+ * This means any exception thrown from either a hook or the benchmarked function will cause test failure,
+ * and subsequent operations won't be run.
+ * @remarks
+ *
+ * Be careful when writing non-pure benchmark functions!
+ * This library is written with the assumption that each cycle it runs is an independent sample.
+ * This can typically be achieved by using the `onCycle` hook to reset state, with some caveats.
+ * For more details, read below.
+ *
+ * This library runs the benchmark function in two hierarchical groups: cycles and iterations.
+ * One iteration consists of a single execution of `benchmarkFn`.
+ * Since the time taken by a single iteration might be significantly smaller than the clock resolution, benchmark
+ * dynamically decides to run a number of iterations per cycle.
+ * After a warmup period, this number is fixed across cycles (i.e. if this library decides to run 10,000 iterations
+ * per cycle, all statistical analysis will be performed on cycles which consist of 10,000 iterations)
+ * This strategy also helps minimize noise from JITting code.
+ *
+ * Statistical analysis is performed at the cycle level: this library treats each cycle's timing information as a data
+ * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshold or its max
+ * time has been reached.
+ * The statistical analysis it uses is invalid if cycles aren't independent trials: consider the test
+ * ```typescript
+ * const myList = [];
+ * benchmark({
+ *     title: "insert at start of a list",
+ *     benchmarkFn: () => {
+ *         myList.unshift(0);
+ *     }
+ * });
+ * ```
+ *
+ * If each cycle has 10k iterations, the first cycle will time how long it takes to repeatedly insert elements 0 through 10k
+ * into the start of `myList`.
+ * The second cycle will time how long it takes to repeatedly insert elements 10k through 20k at the start, and so on.
+ * As inserting an element at the start of the list is O(list size), it's clear that cycles will take longer and longer.
+ * We can use the `onCycle` hook to alleviate this problem:
+ * ```typescript
+ * let myList = [];
+ * benchmark({
+ *     title: "insert at start of a list",
+ *     onCycle: () => {
+ *         myList = [];
+ *     }
+ *     benchmarkFn: () => {
+ *         myList.unshift(0);
+ *     }
+ * });
+ * ```
+ *
+ * With this change, it's more reasonable to model each cycle as an independent event.
+ *
+ * Note that this approach is slightly misleading in the data it measures: if this library chooses a cycle size of 10k,
+ * the time reported per iteration is really an average of the time taken to insert 10k elements at the start, and not
+ * the average time to insert an element to the start of the empty list as the test body might suggest at a glance.
+ *
+ * @example
+ *
+ * ```typescript
+ * let iterations = 0;
+ * let cycles = 0;
+ * benchmark({
+ *     title: "my sample performance test"
+ *     before: () => {
+ *         console.log("setup goes here")
+ *     },
+ *     onCycle: () => {
+ *         cycles++;
+ *     },
+ *     after: () => {
+ *         console.log("iterations", iterations);
+ *         console.log("cycles", cycles);
+ *         console.log("teardown goes here")
+ *     }
+ *     benchmarkFn: () => {
+ *         iterations++;
+ *     }
+ * });
+ *
+ * // Sample console output in correctness mode:
+ * //
+ * // setup goes here
+ * // iterations 1
+ * // cycles 1
+ * // teardown goes here
+ * //
+ * // Sample console output in perf mode, if benchmark dynamically chose to run 40 cycles of 14k iterations each:
+ * //
+ * // setup goes here
+ * // iterations 560,000
+ * // cycles 40
+ * // teardown goes here
+ * ```
+ *
+ * @public
+ * @input
+ */
+export interface HookArguments {
+	/**
+	 * Executes once, before the test body it's declared for.
+	 *
+	 * @remarks
+	 * This does *not* execute on each iteration or cycle.
+	 */
+	before?: HookFunction | undefined;
+	/**
+	 * Executes once, after the test body it's declared for.
+	 *
+	 * @remarks
+	 * This does *not* execute on each iteration or cycle.
+	 */
+	after?: HookFunction | undefined;
+}
+
+/**
+ * Validates arguments to `benchmark`.
  */
 export function validateBenchmarkArguments(
 	args: DurationBenchmarkSync | DurationBenchmarkAsync,
@@ -165,7 +306,6 @@ export function validateBenchmarkArguments(
 
 /**
  * Validates arguments to `benchmark`.
- * @public
  */
 export function benchmarkArgumentsIsCustom(
 	args: DurationBenchmark,

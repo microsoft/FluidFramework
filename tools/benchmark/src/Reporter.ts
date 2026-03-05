@@ -367,13 +367,11 @@ function outputFriendlyObjectFromBenchmark(
 	benchmarkName: string,
 	benchmark: BenchmarkData,
 ): ReportEntry {
-	const benchMarkOutput = {
+	return {
 		benchmarkName,
 		elapsedSeconds: benchmark.elapsedSeconds,
 		data: benchmark.data,
 	};
-
-	return benchMarkOutput;
 }
 
 /**

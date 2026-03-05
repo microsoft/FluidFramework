@@ -327,6 +327,6 @@ export function benchmarkDuration(
 ): BenchmarkDescription & BenchmarkFunction {
 	return {
 		category: "Duration",
-		run: async (): Promise<CollectedData> => await collectDurationData(args),
+		run: () => collectDurationData(args),
 	};
 }

@@ -8,6 +8,7 @@
  * @remarks
  * These are the callbacks that are passed to the benchmark function of a {@link MemoryUseBenchmark}.
  * @public
+ * @sealed
  */
 export interface MemoryUseCallbacks {
 	beforeAllocation(): Promise<void>;
@@ -22,6 +23,7 @@ export interface MemoryUseCallbacks {
  * Use with {@link benchmarkMemoryUse} to measure the memory usage of the operation.
  * Only supported in Node.js environments with --expose-gc.
  * @public
+ * @input
  */
 export interface MemoryUseBenchmark {
 	/**

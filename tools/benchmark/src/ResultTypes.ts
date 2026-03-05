@@ -54,9 +54,13 @@ export function isResultError(result: BenchmarkResult): result is BenchmarkError
  * @public
  */
 export interface Measurement {
+	/** Display name for this measurement. */
 	readonly name: string;
+	/** The measured value. */
 	readonly value: number;
+	/** Units for the value (e.g. `"ns/op"`, `"bytes"`, `"count"`). */
 	readonly units?: string;
+	/** Whether a smaller or larger value is better. */
 	readonly type?: ValueType;
 }
 

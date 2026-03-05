@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export {
-	type DurationBenchmarkSync,
-	type DurationBenchmarkAsync,
-	type BenchmarkTimingOptions,
-	type DurationBenchmark,
-	type OnBatch,
-	type BenchmarkTimer,
-	type DurationBenchmarkCustom,
+export type {
+	DurationBenchmarkSync,
+	DurationBenchmarkAsync,
+	BenchmarkTimingOptions,
+	DurationBenchmark,
+	OnBatch,
+	BenchmarkTimer,
+	DurationBenchmarkCustom,
+	HookFunction,
+	HookArguments,
 } from "./configuration.js";
 export { Phase, benchmarkDuration, collectDurationData } from "./getDuration.js";

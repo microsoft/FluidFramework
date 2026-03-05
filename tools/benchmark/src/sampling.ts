@@ -15,7 +15,6 @@ import { isInPerformanceTestingMode } from "./Configuration";
  * Contains the samples of all measurements we track for a given benchmark (a test which was potentially iterated
  * several times). Each property is an array and all should be the same length, which is the number of iterations
  * done during the benchmark.
- * @public
  */
 export interface Stats {
 	/**
@@ -52,6 +51,16 @@ export interface Stats {
 	 * Variance.
 	 */
 	readonly variance: number;
+
+	/**
+	 * Maximum value in the sample.
+	 */
+	readonly max: number;
+
+	/**
+	 * Minimum value in the sample.
+	 */
+	readonly min: number;
 }
 
 /**
@@ -145,7 +154,7 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 	const propName = df === 0 ? "1" : df.toString();
 	const critical = (tTable[propName] as number) ?? tTable.infinity;
 	const moe = sem * critical; // Margin of Error
-	const rme = (moe / Math.abs(mean)) * 100; // Relative Margin of Error
+	const marginOfErrorPercent = (moe / Math.abs(mean)) * 100; // Relative Margin of Error
 
 	return {
 		arithmeticMean: mean,
@@ -154,7 +163,9 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 		marginOfError: moe,
 		standardErrorOfMean: sem,
 		samples: finalSamples,
-		marginOfErrorPercent: rme,
+		marginOfErrorPercent,
+		max,
+		min,
 	};
 }
 
