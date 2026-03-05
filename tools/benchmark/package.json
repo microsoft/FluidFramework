@@ -11,15 +11,8 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "module",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			}
-		}
-	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "npm run build:docs",
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
@@ -34,7 +27,7 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --reporter ./lib/MochaReporter.js",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
