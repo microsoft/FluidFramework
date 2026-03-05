@@ -215,15 +215,14 @@ describe("`benchmark` function", () => {
 		benchmarkIt({
 			title: "benchmarkIt test",
 			run: (): CollectedData => {
-				return {
-					primary: {
+				return [
+					{
 						name: "the data",
 						value: 1,
 						units: "numbers",
 						type: ValueType.SmallerIsBetter,
 					},
-					additional: [],
-				};
+				];
 			},
 		});
 
@@ -243,44 +242,41 @@ describe("`benchmark` function", () => {
 	describe("duplicate suite name", () => {
 		benchmarkIt({
 			title: "test",
-			run: (): CollectedData => ({
-				primary: {
+			run: (): CollectedData => [
+				{
 					name: "the data",
 					value: 1,
 					units: "numbers",
 					type: ValueType.SmallerIsBetter,
 				},
-				additional: [],
-			}),
+			],
 		});
 	});
 
 	describe("duplicate suite name", () => {
 		benchmarkIt({
 			title: "test",
-			run: (): CollectedData => ({
-				primary: {
+			run: (): CollectedData => [
+				{
 					name: "the data",
 					value: 1,
 					units: "numbers",
 					type: ValueType.SmallerIsBetter,
 				},
-				additional: [],
-			}),
+			],
 		});
 
 		// With duplicate test
 		benchmarkIt({
 			title: "test",
-			run: (): CollectedData => ({
-				primary: {
+			run: (): CollectedData => [
+				{
 					name: "the data",
 					value: 1,
 					units: "numbers",
 					type: ValueType.SmallerIsBetter,
 				},
-				additional: [],
-			}),
+			],
 		});
 	});
 
@@ -290,29 +286,27 @@ describe("`benchmark` function", () => {
 			describe("", () => {
 				benchmarkIt({
 					title: "in empty named suite",
-					run: (): CollectedData => ({
-						primary: {
+					run: (): CollectedData => [
+						{
 							name: "the data",
 							value: 1,
 							units: "numbers",
 							type: ValueType.SmallerIsBetter,
 						},
-						additional: [],
-					}),
+					],
 				});
 			});
 
 			benchmarkIt({
 				title: "outside empty named suite",
-				run: (): CollectedData => ({
-					primary: {
+				run: (): CollectedData => [
+					{
 						name: "the data",
 						value: 1,
 						units: "numbers",
 						type: ValueType.SmallerIsBetter,
 					},
-					additional: [],
-				}),
+				],
 			});
 		});
 	});
@@ -322,15 +316,14 @@ describe("`benchmarkCustom` function", () => {
 	benchmarkCustom({
 		title: `test`,
 		run: () => {
-			return {
-				primary: {
+			return [
+				{
 					value: 0,
 					units: "custom units",
 					name: "test",
 					type: ValueType.SmallerIsBetter,
 				},
-				additional: [],
-			} satisfies CollectedData;
+			] satisfies CollectedData;
 		},
 		type: BenchmarkType.OwnCorrectness,
 	});

@@ -48,6 +48,7 @@ export {
 	type BenchmarkResult,
 	isResultError,
 	CollectedData,
+	PrimaryMeasurement,
 	Measurement,
 	ValueType,
 } from "./ResultTypes.js";

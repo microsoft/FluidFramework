@@ -173,8 +173,8 @@ export class BenchmarkReporter {
 				table.cell(measurement.name, final, Table.padLeft);
 			}
 
-			measurementCell(result.data.primary, true);
-			for (const measurement of result.data.additional) {
+			measurementCell(result.data[0], true);
+			for (const measurement of result.data.slice(1)) {
 				measurementCell(measurement, false);
 			}
 		}
@@ -230,7 +230,7 @@ export class BenchmarkReporter {
 			} else {
 				sumRuntime += result.elapsedSeconds;
 				countSuccessful++;
-				const primary = result.data.primary;
+				const primary = result.data[0];
 				geometricMeanProductValues.push(
 					// Geometric mean may end up as NaN or infinity depending on questionable values passing through here (like when this divides by 0).
 					// Such results do about as good of job at conveying the situation as is practical: for once the floating point edge cases do something we like.

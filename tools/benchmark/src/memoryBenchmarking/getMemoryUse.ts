@@ -316,15 +316,15 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 		);
 	}
 
-	return {
-		primary: {
+	return [
+		{
 			name: brandMeasurementNameForMode("Mean Usage"),
 			value: meanStats.arithmeticMean,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
 		},
-		additional,
-	};
+		...additional,
+	];
 }
 
 interface ProcessedMeasurement {

@@ -13,15 +13,14 @@ describe("ResultTypes", () => {
 		assert(
 			!isResultError({
 				elapsedSeconds: 1.5,
-				data: {
-					primary: {
+				data: [
+					{
 						name: "test",
 						value: 42,
 						units: "ns/op",
 						type: ValueType.SmallerIsBetter,
 					},
-					additional: [],
-				},
+				],
 			}),
 		);
 	});

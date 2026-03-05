@@ -190,38 +190,36 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 
 	public computeData(): CollectedData {
 		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
-		const data: CollectedData = {
-			primary: {
+		const data: CollectedData = [
+			{
 				name: "Period",
 				value: 1e9 * stats.arithmeticMean,
 				units: "ns/op",
 				type: ValueType.SmallerIsBetter,
 			},
-			additional: [
-				{
-					name: "Batch Count",
-					value: this.samples.length,
-					units: "count",
-				},
-				{
-					name: "Iterations Per Batch",
-					value: this.iterationsPerBatch,
-					units: "count",
-				},
-				{
-					name: "Margin of Error",
-					value: stats.marginOfError * 1e9,
-					units: "ns",
-					type: ValueType.SmallerIsBetter,
-				},
-				{
-					name: "Relative Margin of Error",
-					value: stats.marginOfErrorPercent,
-					units: "%",
-					type: ValueType.SmallerIsBetter,
-				},
-			],
-		};
+			{
+				name: "Batch Count",
+				value: this.samples.length,
+				units: "count",
+			},
+			{
+				name: "Iterations Per Batch",
+				value: this.iterationsPerBatch,
+				units: "count",
+			},
+			{
+				name: "Margin of Error",
+				value: stats.marginOfError * 1e9,
+				units: "ns",
+				type: ValueType.SmallerIsBetter,
+			},
+			{
+				name: "Relative Margin of Error",
+				value: stats.marginOfErrorPercent,
+				units: "%",
+				type: ValueType.SmallerIsBetter,
+			},
+		];
 		return data;
 	}
 

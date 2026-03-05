@@ -87,10 +87,7 @@ export enum BenchmarkType {
 export function collectDurationData(args: DurationBenchmark): Promise<CollectedData>;
 
 // @public
-export interface CollectedData {
-    readonly additional: readonly Measurement[];
-    readonly primary: Required<Measurement>;
-}
+export type CollectedData = readonly [PrimaryMeasurement, ...Measurement[]];
 
 // @public
 export function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<CollectedData>;
@@ -177,6 +174,9 @@ export enum Phase {
     // (undocumented)
     WarmUp = 0
 }
+
+// @public
+export type PrimaryMeasurement = Required<Measurement>;
 
 // @public
 export function qualifiedTitle(args: BenchmarkDescription & Titled & {
