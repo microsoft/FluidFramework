@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import { benchmarkMemoryUse } from "../memoryBenchmarking";
-import { benchmarkIt } from "../mocha";
+import { benchmarkMemoryUse } from "../../memoryBenchmarking/getMemoryUse.js";
+import { benchmarkIt } from "../../mocha/index.js";
 
 describe("memory use", () => {
 	benchmarkIt({

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { benchmark } from "..";
+import { benchmark, benchmarkCustom } from "../legacy.js";
 import { BenchmarkType, isParentProcess } from "../Configuration";
 import { type BenchmarkTimer, Phase, collectDurationData } from "../durationBenchmarking/index.js";
 import {
@@ -14,7 +14,7 @@ import {
 	runBenchmarkSync,
 } from "../durationBenchmarking/getDuration.js";
 import { benchmarkIt } from "../mocha";
-import { ValueType, type CollectedData } from "../ResultTypes";
+import { ValueType, type CollectedData } from "../ResultTypes.js";
 
 function doLoop(upperLimit: number): void {
 	let i = 0;
@@ -315,6 +315,24 @@ describe("`benchmark` function", () => {
 				}),
 			});
 		});
+	});
+});
+
+describe("`benchmarkCustom` function", () => {
+	benchmarkCustom({
+		title: `test`,
+		run: () => {
+			return {
+				primary: {
+					value: 0,
+					units: "custom units",
+					name: "test",
+					type: ValueType.SmallerIsBetter,
+				},
+				additional: [],
+			} satisfies CollectedData;
+		},
+		type: BenchmarkType.OwnCorrectness,
 	});
 });
 
