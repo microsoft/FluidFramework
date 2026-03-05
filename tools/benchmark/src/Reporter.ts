@@ -91,11 +91,13 @@ export class BenchmarkReporter {
 	private readonly overallSummaryTable: Table = new Table();
 
 	/**
-	 * Stack of currently open suite nodes (most-recently-opened at the end).
-	 * Index 0 is always a virtual root node that holds top-level content.
+	 * Stack of the currently open suites nodes (most-recently-opened at the end).
+	 * Index 0 holds a special root that holds top-level content.
 	 * Pushed by {@link BenchmarkReporter.beginSuite} and popped by {@link BenchmarkReporter.recordSuiteResults}.
 	 */
-	private readonly suiteStack: SuiteNode[];
+	private readonly suiteStack: SuiteNode[] = [
+		{ localName: "root", table: new Table(), children: [] },
+	];
 
 	private totalSumRuntimeSeconds = 0;
 	private totalBenchmarkCount = 0;
@@ -110,8 +112,6 @@ export class BenchmarkReporter {
 	 */
 	public constructor(outputFilePath?: string) {
 		this.outputFilePath = outputFilePath ? path.resolve(outputFilePath) : undefined;
-		// The virtual root node holds top-level content and is never popped.
-		this.suiteStack = [{ localName: "root", table: new Table(), children: [] }];
 	}
 
 	/**
@@ -319,68 +319,61 @@ export class BenchmarkReporter {
 		}
 
 		if (this.outputFilePath !== undefined) {
-			// Build the report from the virtual root's children.
-			const virtualRoot = this.suiteStack[0];
-			const rootContents: (ReportSuite | ReportEntry)[] = [];
-			for (const child of virtualRoot.children) {
-				if (isSuiteNode(child)) {
-					const reportSuite = this.suiteNodeToReportSuite(child);
-					if (reportSuite !== undefined) rootContents.push(reportSuite);
-				} else if (!isResultError(child.result)) {
-					rootContents.push(
-						this.outputFriendlyObjectFromBenchmark(child.name, child.result),
-					);
-				}
-			}
-			const root: ReportSuite = { suiteName: "root", contents: rootContents };
+			// Build the report from the root's children.
+			const root = suiteChildrenToReportSuite(this.suiteStack[0].children);
 			const outputDir = path.dirname(this.outputFilePath);
 			fs.mkdirSync(outputDir, { recursive: true });
 			fs.writeFileSync(this.outputFilePath, JSON.stringify(root, undefined, 4));
 			console.log(`Results file: ${this.outputFilePath}`);
 		}
 	}
+}
 
-	/**
-	 * Recursively converts a suite node into a {@link ReportSuite} for JSON output.
-	 * Returns undefined if the node (and all its descendants) contain no reportable content.
-	 */
-	private suiteNodeToReportSuite(node: SuiteNode): ReportSuite | undefined {
-		const contents: (ReportSuite | ReportEntry)[] = [];
+/**
+ * Recursively converts a suite node into a {@link ReportSuite} for JSON output.
+ * Returns undefined if the node (and all its descendants) contain no reportable content.
+ */
+function suiteNodeToReportSuite(node: SuiteNode): ReportSuite | undefined {
+	const contents = suiteChildrenToReportSuite(node.children);
+	if (contents.length === 0) return undefined;
+	return { suiteName: node.localName, contents };
+}
 
-		for (const child of node.children) {
-			if (isSuiteNode(child)) {
-				const childSuite = this.suiteNodeToReportSuite(child);
-				if (childSuite !== undefined) {
-					contents.push(childSuite);
-				}
-			} else {
-				if (!isResultError(child.result)) {
-					contents.push(this.outputFriendlyObjectFromBenchmark(child.name, child.result));
-				}
+/**
+ * Recursively converts a array of suite children into a {@link ReportArray} for JSON output.
+ */
+function suiteChildrenToReportSuite(children: readonly (SuiteNode | NamedResult)[]): ReportArray {
+	const contents: (ReportSuite | ReportEntry)[] = [];
+	for (const child of children) {
+		if (isSuiteNode(child)) {
+			const childSuite = suiteNodeToReportSuite(child);
+			if (childSuite !== undefined) {
+				contents.push(childSuite);
+			}
+		} else {
+			if (!isResultError(child.result)) {
+				contents.push(outputFriendlyObjectFromBenchmark(child.name, child.result));
 			}
 		}
-
-		if (contents.length === 0) return undefined;
-
-		return { suiteName: node.localName, contents };
 	}
+	return contents;
+}
 
-	/**
-	 * The Benchmark object contains a lot of data we don't need and also has vague names, so
-	 * this method extracts the necessary data and provides friendlier names.
-	 */
-	private outputFriendlyObjectFromBenchmark(
-		benchmarkName: string,
-		benchmark: BenchmarkData,
-	): ReportEntry {
-		const benchMarkOutput = {
-			benchmarkName,
-			elapsedSeconds: benchmark.elapsedSeconds,
-			data: benchmark.data,
-		};
+/**
+ * The Benchmark object contains a lot of data we don't need and also has vague names, so
+ * this method extracts the necessary data and provides friendlier names.
+ */
+function outputFriendlyObjectFromBenchmark(
+	benchmarkName: string,
+	benchmark: BenchmarkData,
+): ReportEntry {
+	const benchMarkOutput = {
+		benchmarkName,
+		elapsedSeconds: benchmark.elapsedSeconds,
+		data: benchmark.data,
+	};
 
-		return benchMarkOutput;
-	}
+	return benchMarkOutput;
 }
 
 /**
@@ -392,7 +385,7 @@ export interface ReportEntry extends BenchmarkData {
 }
 
 /**
- * The type which is Json serialized and written to disk for a test suite.
+ * A suite containing benchmark results and/or child suites.
  * @remarks
  * This only includes passing tests.
  * When using mocha, this corresponds to the contents of a describe block,
@@ -401,5 +394,15 @@ export interface ReportEntry extends BenchmarkData {
  */
 export interface ReportSuite {
 	readonly suiteName: string;
-	readonly contents: readonly (ReportSuite | ReportEntry)[];
+	readonly contents: ReportArray;
 }
+
+/**
+ * The type which is Json serialized and written to disk for a test suite.
+ * @remarks
+ * This only includes passing tests, and suites which were non-empty.
+ * When using mocha, this corresponds to the contents of a describe block,
+ * which may include both it blocks and nested describe blocks.
+ * @public
+ */
+export type ReportArray = readonly (ReportSuite | ReportEntry)[];

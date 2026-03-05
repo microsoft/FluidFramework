@@ -192,6 +192,9 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled & {
 }): string;
 
 // @public
+export type ReportArray = readonly (ReportSuite | ReportEntry)[];
+
+// @public
 export interface ReportEntry extends BenchmarkData {
     // (undocumented)
     readonly benchmarkName: string;
@@ -200,7 +203,7 @@ export interface ReportEntry extends BenchmarkData {
 // @public
 export interface ReportSuite {
     // (undocumented)
-    readonly contents: readonly (ReportSuite | ReportEntry)[];
+    readonly contents: ReportArray;
     // (undocumented)
     readonly suiteName: string;
 }
