@@ -3,8 +3,8 @@ import "package://github.com/jdx/hk/releases/download/v1.36.0/hk@1.36.0#/Builtin
 
 local linters = new Mapping<String, Step> {
     ["biome-format"] = (Builtins.biome) {
-        check = "biome format --no-errors-on-unmatched {{ files }}"
-        fix = "biome format --write --no-errors-on-unmatched {{ files }}"
+        check = "biome check --no-errors-on-unmatched {{ files }}"
+        fix = "biome check --write --no-errors-on-unmatched {{ files }}"
     }
 }
 
