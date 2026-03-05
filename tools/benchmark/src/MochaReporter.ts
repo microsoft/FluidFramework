@@ -29,7 +29,7 @@ import { getName, getSuiteName } from "./mocha/mochaReporterUtilities.js";
 module.exports = class {
 	private readonly data: Map<Test, Readonly<BenchmarkResult>> = new Map();
 	public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
-		const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportDir);
+		const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportFile);
 		runner
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.

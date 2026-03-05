@@ -101,21 +101,19 @@ export class BenchmarkReporter {
 	private totalSuccessfulBenchmarkCount = 0;
 	private totalGeometricMeanProductValues: number[] = [];
 
-	private readonly outputDirectory: string;
+	private readonly outputFilePath: string | undefined;
 
 	/**
-	 * @param outputDirectory - location to output files to.
-	 * If not specified, defaults to a '.output' directory next to the javascript version of this file.
+	 * Completed suites accumulated for writing to a single output file.
 	 */
-	public constructor(outputDirectory?: string) {
-		// If changing this or the result file logic in general,
-		// be sure to update the glob used to look for output files in the perf pipeline.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		this.outputDirectory = outputDirectory
-			? path.resolve(outputDirectory)
-			: path.join(__dirname, ".output");
+	private readonly completedSuites: ReportSuite[] = [];
 
-		fs.mkdirSync(this.outputDirectory, { recursive: true });
+	/**
+	 * @param outputFilePath - path to write the combined results JSON file to.
+	 * If not provided, no file is written.
+	 */
+	public constructor(outputFilePath?: string) {
+		this.outputFilePath = outputFilePath ? path.resolve(outputFilePath) : undefined;
 	}
 
 	/**
@@ -213,12 +211,8 @@ export class BenchmarkReporter {
 
 		// Output results from suite
 		console.log(`\n${chalk.bold(disambiguatedSuiteName)}`);
-		const filenameFull: string = this.writeCompletedBenchmarks(
-			disambiguatedSuiteName,
-			benchmarksArray,
-		);
-		console.log(`Results file: ${filenameFull}`);
 		console.log(`${table.toString()}`);
+		this.completedSuites.push(this.buildReportSuite(disambiguatedSuiteName, benchmarksArray));
 
 		// Accumulate data for overall summary
 		this.accumulateBenchmarkData(disambiguatedSuiteName, benchmarksArray);
@@ -329,17 +323,18 @@ export class BenchmarkReporter {
 				} failed. This will skew the geometric mean.`,
 			);
 		}
+
+		if (this.outputFilePath !== undefined) {
+			const root: ReportSuite = { suiteName: "root", contents: this.completedSuites };
+			const outputDir = path.dirname(this.outputFilePath);
+			fs.mkdirSync(outputDir, { recursive: true });
+			fs.writeFileSync(this.outputFilePath, JSON.stringify(root, undefined, 4));
+			console.log(`Results file: ${this.outputFilePath}`);
+		}
 	}
 
-	private writeCompletedBenchmarks(
-		suiteName: string,
-		benchmarks: readonly NamedResult[],
-	): string {
-		// Use the suite name as a filename, but first replace non-alphanumerics with underscores.
-		// TODO: this could collide if suites different only by non-alphanumeric characters.
-		// Detection and.or mitigation for this case would ideally be done here.
-		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
-		const benchmarkArray: ReportEntry[] = [];
+	private buildReportSuite(suiteName: string, benchmarks: readonly NamedResult[]): ReportSuite {
+		const contents: ReportEntry[] = [];
 		const names = new Set<string>();
 		for (const { name, result } of benchmarks) {
 			if (names.has(name)) {
@@ -351,21 +346,10 @@ export class BenchmarkReporter {
 			}
 			names.add(name);
 			if (!isResultError(result)) {
-				benchmarkArray.push(this.outputFriendlyObjectFromBenchmark(name, result));
+				contents.push(this.outputFriendlyObjectFromBenchmark(name, result));
 			}
 		}
-		const outputContentString: string = JSON.stringify(
-			{ suiteName, benchmarks: benchmarkArray } satisfies ReportFormat,
-			undefined,
-			4,
-		);
-
-		// If changing this or the result file logic in general,
-		// be sure to update the glob used to look for output files in the perf pipeline.
-		const outputFilename = `${suiteNameEscaped}_perfresult.json`;
-		const fullPath: string = path.join(this.outputDirectory, outputFilename);
-		fs.writeFileSync(fullPath, outputContentString);
-		return fullPath;
+		return { suiteName, contents };
 	}
 
 	/**
@@ -395,12 +379,14 @@ export interface ReportEntry extends BenchmarkData {
 }
 
 /**
- * The type which is Json serialized and written to disk for each benchmark result.
+ * The type which is Json serialized and written to disk for a test suite.
  * @remarks
  * This only includes passing tests.
+ * When using mocha, this corresponds to the contents of a describe block,
+ * which may include both it blocks and nested describe blocks.
  * @public
  */
-export interface ReportFormat {
+export interface ReportSuite {
 	readonly suiteName: string;
-	readonly benchmarks: readonly ReportEntry[];
+	readonly contents: readonly (ReportSuite | ReportEntry)[];
 }

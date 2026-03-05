@@ -342,7 +342,7 @@ export const userCategoriesSplitter = ":ff-cat:";
  * Reporter output location
  */
 export interface ReporterOptions {
-	reportDir?: string;
+	reportFile?: string;
 }
 
 /**

@@ -44,9 +44,11 @@ Lets you specify the path to a custom reporter to output the tests' results.
 This package includes `dist/MochaReporter.js`.
 If you don't specify one, the default mocha reporter will take over and you won't see benchmark information.
 
-### `--reporterOptions reportDir=<output-path>`
+### `--reporterOptions reportFile=<output-path>`
 
-If you use the reporter from this package, you can configure its output directory with this.
+If you use the reporter from this package, you can set the output file path with this.
+All benchmark results are combined into a single JSON file using a hierarchical `ReportSuite` structure.
+If omitted, no file is written (results are still printed to the console).
 
 ### `--parentProcess`
 

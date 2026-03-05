@@ -165,6 +165,25 @@ describe("memory use", () => {
 	});
 
 	benchmarkIt({
+		title: "empty-unrolled",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (callbacks) => {
+				while (callbacks.continue()) {
+					await callbacks.beforeAllocation();
+					await callbacks.whileAllocated();
+					await callbacks.afterDeallocation();
+					if (!callbacks.continue()) {
+						break;
+					}
+					await callbacks.beforeAllocation();
+					await callbacks.whileAllocated();
+					await callbacks.afterDeallocation();
+				}
+			},
+		}),
+	});
+
+	benchmarkIt({
 		title: "empty async GC",
 		...benchmarkMemoryUse({
 			enableAsyncGC: true,

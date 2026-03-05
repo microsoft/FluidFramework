@@ -49,7 +49,7 @@ export interface BenchmarkOptions extends Titled, BenchmarkDescription, MochaExc
 
 // @public
 export class BenchmarkReporter {
-    constructor(outputDirectory?: string);
+    constructor(outputFilePath?: string);
     recordResultsSummary(): void;
     recordSuiteResults(suiteName: string): void;
     recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
@@ -197,9 +197,9 @@ export interface ReportEntry extends BenchmarkData {
 }
 
 // @public
-export interface ReportFormat {
+export interface ReportSuite {
     // (undocumented)
-    readonly benchmarks: readonly ReportEntry[];
+    readonly contents: readonly (ReportSuite | ReportEntry)[];
     // (undocumented)
     readonly suiteName: string;
 }
