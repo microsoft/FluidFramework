@@ -47,7 +47,7 @@ If you don't specify one, the default mocha reporter will take over and you won'
 ### `--reporterOptions reportFile=<output-path>`
 
 If you use the reporter from this package, you can set the output file path with this.
-All benchmark results are combined into a single JSON file using a hierarchical `ReportSuite` structure.
+All benchmark results are combined into a single JSON file using a hierarchical `ReportArray` structure.
 If omitted, no file is written (results are still printed to the console).
 
 ### `--parentProcess`
@@ -87,42 +87,63 @@ benchmarkIt({
 
 -   `benchmarkFn` — a synchronous function to benchmark.
 -   `benchmarkFnAsync` — an asynchronous function to benchmark.
--   `benchmarkFnCustom` — an async function that controls the timing loop directly via a `BenchmarkTimer` argument,
-    for cases where you need full control over how batches are measured.
+-   `benchmarkFnCustom` — an async function that manages the batching loop directly via a `BenchmarkTimer` argument,
+    for cases where you need full control over timing. Use `state.timeBatch(fn)` for the common case, or
+    `state.timer.now()` / `state.recordBatch()` when you need to exclude setup/teardown from the measured time.
 
-It also accepts optional `BenchmarkTimingOptions` to tune `maxBenchmarkDurationSeconds`, `minBatchCount`, and `minBatchDurationSeconds`,
-and `HookArguments` (`before`/`after`) for one-time setup and teardown.
+It also accepts optional `BenchmarkTimingOptions` to tune `maxBenchmarkDurationSeconds`, `minBatchCount`, and `minBatchDurationSeconds`.
 
 Look at the documentation for `DurationBenchmark` and `BenchmarkTimingOptions` for more details.
 
 > **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
 > The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
-> The problem can be alleviated but not fully fixed using the `beforeEachBatch` option.
-> See documentation on `OnBatch` for more detail.
+> For full control over per-batch setup and teardown, use `benchmarkFnCustom`.
+> See documentation on `DurationBenchmarkCustom` for more detail.
 
 ## Profiling custom measurements
 
-To report fully custom measurements, call `benchmarkIt` directly and provide a `run` function that returns a `CollectedData` object:
+To report fully custom measurements, call `benchmarkIt` directly and provide a `run` function that returns a `CollectedData` array:
 
 ```typescript
 benchmarkIt({
 	title: "My custom measurement",
-	run: async (timer) => {
-		// collect data using timer or any other means
-		return {
-			primary: {
-				name: "My metric",
-				value: 42,
-				units: "things/op",
-				type: ValueType.SmallerIsBetter,
-			},
-			additional: [],
-		};
-	},
+	run: (): CollectedData => [
+		{
+			// The first element is the primary measurement (all fields required).
+			name: "My metric",
+			value: 42,
+			units: "things/op",
+			type: ValueType.SmallerIsBetter,
+		},
+		// Additional measurements are optional.
+		{
+			name: "Sample count",
+			value: 100,
+			units: "count",
+		},
+	],
 });
 ```
 
-Look at the documentation on `CollectedData`, `Measurement`, and `ValueType` for details on what the returned object should contain.
+`CollectedData` is a tuple `[PrimaryMeasurement, ...Measurement[]]`. The first element is the primary measurement (used for regression detection) and requires all fields including `units` and `type`. Additional measurements are optional and their fields `units` and `type` are optional too.
+
+`collectDurationData` and `collectMemoryUseData` can be used within `run` function which can be more flexible or ergonomic than `benchmarkDuration` or `benchmarkMemoryUse` in some cases:
+
+```typescript
+benchmarkIt({
+	title: "My custom duration measurement",
+	run: async (): Promise<CollectedData> => {
+		// Optional setup can run here
+		const data = await collectDurationData({
+			benchmarkFn: () => {
+				// code to benchmark
+			},
+		});
+		// Extra measurements can be added:
+		return [...data, { name: "Extra metric", value: 1 }];
+	},
+});
+```
 
 ## Profiling memory usage
 
@@ -133,36 +154,43 @@ benchmarkIt({
 	title: "My memory test",
 	...benchmarkMemoryUse({
 		benchmarkFn: async (state) => {
-			let myObject: MyObject | undefined;
+			// If you test requires one time setup, do it here:
+			const holder: { value: unknown } = { value: undefined };
 			while (state.continue()) {
+				// Do any required per iteration setup here
+				holder.value = undefined;
+				// Collect a baseline "before" heap measurement.
 				await state.beforeAllocation();
-				// Allocate memory here.
-				myObject = createSomething();
+				// Allocate the memory you want to measure.
+				holder.value = createSomething();
+				// Collect an "after allocation" heap measurement.
 				await state.whileAllocated();
-				// Release references to the memory here so it can be reclaimed by GC.
-				myObject = undefined;
-				await state.afterDeallocation();
+				// To help confirm you are measuring the allocation you expect,
+				// you can optionally free it here then call afterDeallocation:
+				// holder.value = undefined;
+				// await state.afterDeallocation();
 			}
-			// Use value to make clear to linter and optimizer that assignment to undefined matters.
-			assert(myObject === undefined);
 		},
 	}),
 });
 ```
 
-The argument to `benchmarkMemoryUse` must implement `MemoryUseBenchmark`, which has a single `benchmarkFn` property.
-That function receives a `MemoryUseCallbacks` object and must loop until `state.continue()` returns false, calling the
-callbacks in order for each iteration:
+This measures the difference in the retained portion of the heap from `beforeAllocation` to `whileAllocated`.
+This does not include memory which was used during the operation but released before `whileAllocated` was called.
 
-1.  `state.beforeAllocation()` — GC runs and a baseline "before" heap measurement is taken.
-2.  Allocate the memory you want to measure.
-3.  `state.whileAllocated()` — GC runs and an "after allocation" heap measurement is taken.
-4.  Release references to the memory allocated in step 2 (so it can be reclaimed by GC).
-5.  `state.afterDeallocation()` — GC runs and a "after deallocation" heap measurement is taken.
+The argument to `benchmarkMemoryUse` must implement `MemoryUseBenchmark`, which requires a `benchmarkFn` property.
+That function receives a `MemoryUseCallbacks` object and must loop until `state.continue()` returns false, following
+this pattern each iteration:
 
-The benchmark measures the difference between the "while allocated" and "before" readings as well as
-the difference between "while allocated" and "after deallocation" readings, and reports the mean across iterations.
-Memory should not accumulate across iterations (i.e. what you allocate in step 2 should be fully releasable in step 4).
+1.  Release references to any memory allocated in the previous iteration (so GC can reclaim it).
+2.  Setup anything needed to do the allocation under test that should not be included in the measurement.
+3.  `state.beforeAllocation()` — GC runs and a baseline "before" heap measurement is taken.
+4.  Do the operation who's allocation of the memory you want to measure.
+5.  `state.whileAllocated()` — GC runs and an "after allocation" heap measurement is taken.
+6.  _(Optional)_ Free memory, then call `state.afterDeallocation()` — if called, GC runs and a "after deallocation" heap measurement is taken as well.
+
+The benchmark reports the mean heap difference between the "while allocated" and "before" readings across iterations.
+Memory must not accumulate across iterations (i.e. what you allocate in step 4 must be fully releasable).
 
 For more details, look at the documentation for `MemoryUseBenchmark` and `MemoryUseCallbacks`.
 
