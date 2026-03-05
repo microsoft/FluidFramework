@@ -16,6 +16,7 @@ import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
 import { isContainerMessageDirtyable } from "./containerRuntime.js";
+import { ContainerMessageType } from "./messageTypes.js";
 import type {
 	InboundContainerRuntimeMessage,
 	InboundSequencedContainerRuntimeMessage,
@@ -85,10 +86,6 @@ export interface IPendingMessage {
 		 */
 		length: number;
 		/**
-		 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
-		 */
-		ignoreBatchId?: boolean;
-		/**
 		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
 		 */
 		staged: boolean;
@@ -144,6 +141,8 @@ export interface IRuntimeStateHandler {
 	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
+	/** Set the derived batchId for the ID allocation batch before replay flushes it. */
+	setIdAllocationBatchId(batchId: string): void;
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
@@ -403,13 +402,11 @@ export class PendingStateManager implements IDisposable {
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
-	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
 		batch: LocalBatchMessage[] | [LocalEmptyBatchPlaceholder],
 		clientSequenceNumber: number | undefined,
 		staged: boolean,
-		ignoreBatchId?: boolean,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
@@ -443,7 +440,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId, staged },
+				batchInfo: { clientId, batchStartCsn, length: batch.length, staged },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -503,32 +500,127 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
+	 * Scan pending messages to derive a deterministic batchId for any ID Allocation batch,
+	 * and set it on the Outbox so it will be used when the ID allocation batch is flushed
+	 * during replay. This enables fork detection via DuplicateBatchDetector for ID allocation
+	 * batches that get resubmitted after rehydration.
+	 *
+	 * @param messageCount - Number of pending messages to scan. Defaults to all.
+	 * @param skipNonStaged - If true, skip non-staged messages (for committingStagedBatches mode).
+	 */
+	private deriveIdAllocationBatchId(messageCount?: number, skipNonStaged?: boolean): void {
+		const count = messageCount ?? this.pendingMessages.length;
+		let scanIndex = 0;
+		const dataBatchIds: string[] = [];
+		let hasIdAllocBatch = false;
+		let idAllocBatchInfo: { clientId: string; batchStartCsn: number } | undefined;
+
+		while (scanIndex < count) {
+			const msg = this.pendingMessages.get(scanIndex);
+			assert(msg !== undefined, 0xc03 /* expected pending message at scan index */);
+
+			// In committingStagedBatches mode, skip non-staged messages (they won't be replayed)
+			if (skipNonStaged === true && !msg.batchInfo.staged) {
+				scanIndex++;
+				continue;
+			}
+
+			const isIdAlloc =
+				hasTypicalRuntimeOp(msg) && msg.runtimeOp.type === ContainerMessageType.IdAllocation;
+
+			if (isIdAlloc) {
+				hasIdAllocBatch = true;
+				idAllocBatchInfo = {
+					clientId: msg.batchInfo.clientId,
+					batchStartCsn: msg.batchInfo.batchStartCsn,
+				};
+			} else {
+				// Data batch (including empty batches) — collect its batchId
+				dataBatchIds.push(getEffectiveBatchId(msg));
+			}
+
+			// Advance past the current batch (could be multi-message)
+			const batchFlag = asBatchMetadata(msg.opMetadata)?.batch;
+			if (batchFlag === true) {
+				// Multi-message batch — find the end
+				scanIndex++;
+				while (scanIndex < count) {
+					const innerMsg = this.pendingMessages.get(scanIndex);
+					scanIndex++;
+					if (innerMsg?.opMetadata?.batch === false) {
+						break;
+					}
+				}
+			} else {
+				scanIndex++;
+			}
+		}
+
+		if (!hasIdAllocBatch) {
+			return;
+		}
+
+		let derivedIdAllocBatchId: string;
+		if (dataBatchIds.length > 0) {
+			// Derive from the first data batch's ID (deterministic — both forks see same stashed state)
+			derivedIdAllocBatchId = `idAlloc_[${dataBatchIds[0]}]`;
+		} else {
+			// Edge case: Only ID alloc ops exist (no data batches).
+			// Derive from the ID alloc pending message's own batchInfo.
+			assert(
+				idAllocBatchInfo !== undefined,
+				0xc04 /* idAllocBatchInfo must be set when hasIdAllocBatch is true */,
+			);
+			derivedIdAllocBatchId = `idAlloc_[${idAllocBatchInfo.clientId}_${idAllocBatchInfo.batchStartCsn}]`;
+		}
+
+		// Set the derived batchId on the Outbox for when the ID allocation batch is flushed during replay.
+		this.stateHandler.setIdAllocationBatchId(derivedIdAllocBatchId);
+	}
+
+	/**
 	 * Compares the batch ID of the incoming batch with the pending batch ID for this client.
 	 * They should not match, as that would indicate a forked container.
 	 * @param remoteBatchStart - BatchStartInfo for an incoming batch *NOT* submitted by this client
 	 * @returns whether the batch IDs match
 	 */
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
-		// Find the first pending message that uses Batch ID, to compare to the incoming remote batch.
-		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
-		const firstIndexUsingBatchId = Array.from({
-			length: this.pendingMessages.length,
-		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.ignoreBatchId !== true);
-		const pendingMessageUsingBatchId =
-			firstIndexUsingBatchId === -1
-				? undefined
-				: this.pendingMessages.get(firstIndexUsingBatchId);
-
-		if (pendingMessageUsingBatchId === undefined) {
-			return false;
-		}
-
-		// We must compare the effective batch IDs, since one of these ops
-		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
-		const pendingBatchId = getEffectiveBatchId(pendingMessageUsingBatchId);
 		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
-		return pendingBatchId === inboundBatchId;
+		// Scan all pending batches (at batch boundaries) and check if any match the
+		// incoming remote batch. We scan beyond the first because the pending queue may
+		// start with an ID allocation batch (from stashed state) whose effective batchId
+		// differs from the inbound batch, while a later data batch does match.
+		let scanIndex = 0;
+		while (scanIndex < this.pendingMessages.length) {
+			const msg = this.pendingMessages.get(scanIndex);
+			if (msg === undefined) {
+				break;
+			}
+
+			const pendingBatchId = getEffectiveBatchId(msg);
+			if (pendingBatchId === inboundBatchId) {
+				return true;
+			}
+
+			// Advance past the current batch (could be multi-message)
+			const batchFlag = asBatchMetadata(msg.opMetadata)?.batch;
+			if (batchFlag === true) {
+				// Multi-message batch — skip to end
+				scanIndex++;
+				while (scanIndex < this.pendingMessages.length) {
+					const innerMsg = this.pendingMessages.get(scanIndex);
+					scanIndex++;
+					if (innerMsg?.opMetadata?.batch === false) {
+						break;
+					}
+				}
+			} else {
+				scanIndex++;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -776,11 +868,16 @@ export class PendingStateManager implements IDisposable {
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
 
+		// Derive the batchId for any ID Allocation batch and set it on the Outbox,
+		// so the ID allocation batch will be flushed with this batchId during replay.
+		this.deriveIdAllocationBatchId(initialPendingMessagesCount, committingStagedBatches);
+
 		let seenStagedBatch = false;
 
-		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
-		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
-		// which must not be replayed.
+		// === Phase 3: Dequeue and replay, skipping ID Allocation batches ===
+		// Process exactly `initialPendingMessagesCount` items in the queue as it represents the
+		// number of messages that were pending when we connected. This is important because the
+		// `reSubmitFn` might add more items in the queue which must not be replayed.
 		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
@@ -801,12 +898,28 @@ export class PendingStateManager implements IDisposable {
 			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
-			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId =
-				pendingMessage.batchInfo.ignoreBatchId === true
-					? undefined
-					: getEffectiveBatchId(pendingMessage);
+			// Skip ID Allocation batches during replay. Fresh ID alloc ops were already submitted
+			// by submitIdAllocationOpIfNeeded before replay started, and the resubmit handler for
+			// IdAllocation is a no-op anyway (see ContainerRuntime.reSubmitCore).
+			if (
+				hasTypicalRuntimeOp(pendingMessage) &&
+				pendingMessage.runtimeOp.type === ContainerMessageType.IdAllocation
+			) {
+				// If it's a multi-message ID alloc batch, consume the rest of it
+				if (batchMetadataFlag === true) {
+					while (remainingPendingMessagesCount > 0) {
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const innerMsg = this.pendingMessages.shift()!;
+						remainingPendingMessagesCount--;
+						if (innerMsg.opMetadata?.batch === false) {
+							break;
+						}
+					}
+				}
+				continue;
+			}
 
+			const batchId = getEffectiveBatchId(pendingMessage);
 			const staged = pendingMessage.batchInfo.staged;
 
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {

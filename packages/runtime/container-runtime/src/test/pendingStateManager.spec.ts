@@ -96,6 +96,7 @@ describe("Pending State Manager", () => {
 			reSubmitBatch: sandbox.stub(),
 			isActiveConnection: sandbox.stub(),
 			isAttached: sandbox.stub(),
+			setIdAllocationBatchId: sandbox.stub(),
 		};
 		stubs.applyStashedOp.resolves(undefined);
 		stubs.clientId.returns("clientId");
@@ -231,6 +232,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -720,6 +722,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -791,6 +794,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				{ pendingStates: messages },
 				logger,
@@ -809,6 +813,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				undefined /* initialLocalState */,
 				logger,
@@ -826,6 +831,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				localStateWithEmptyBatch,
 				logger,
@@ -867,6 +873,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				pendingStates ? { pendingStates } : undefined,
 				logger,
@@ -1013,6 +1020,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
 				logger,
@@ -1087,6 +1095,7 @@ describe("Pending State Manager", () => {
 					reSubmitBatch: () => {},
 					isActiveConnection: () => false,
 					isAttached: () => true,
+					setIdAllocationBatchId: () => {},
 				},
 				{ pendingStates: initialMessages },
 				logger,
@@ -1459,6 +1468,208 @@ describe("Pending State Manager", () => {
 					batchId: Sinon.match.string,
 				}),
 				"Squash flag should be set to true",
+			);
+		});
+
+		it("should skip ID Allocation pending messages during replay", () => {
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = newPendingStateManager(stubs);
+
+			// Simulate the resubmit behavior: each reSubmitBatch call re-flushes back into PSM
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				pendingStateManager.onFlushBatch(
+					batch.map(({ runtimeOp, opMetadata, localOpMetadata }) => ({
+						runtimeOp,
+						referenceSequenceNumber: 15,
+						metadata: opMetadata,
+						localOpMetadata,
+					})),
+					/* clientSequenceNumber: */ 1,
+					/* staged: */ metadata.staged,
+				);
+			});
+
+			// Enqueue an ID Allocation pending message
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.IdAllocation,
+							contents: { first: 0, count: 5 },
+						} as unknown as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: 10,
+						metadata: undefined,
+						localOpMetadata: "ID_ALLOC",
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			// Enqueue a data batch
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: testAddressedDataStoreMessage,
+						},
+						referenceSequenceNumber: 10,
+						metadata: undefined,
+						localOpMetadata: "DATA_OP",
+					},
+				],
+				/* clientSequenceNumber: */ 2,
+				/* staged: */ false,
+			);
+
+			pendingStateManager.replayPendingStates();
+
+			// reSubmitBatch should only be called once (for the data batch, not the ID alloc batch)
+			assert.strictEqual(
+				stubs.reSubmitBatch.callCount,
+				1,
+				"reSubmitBatch should only be called for data batches",
+			);
+			const [resubmittedBatch] = stubs.reSubmitBatch.firstCall.args;
+			assert.strictEqual(resubmittedBatch.length, 1, "Data batch should have 1 message");
+			assert.strictEqual(
+				resubmittedBatch[0].runtimeOp.type,
+				ContainerMessageType.FluidDataStoreOp,
+				"Should be a data store op",
+			);
+		});
+
+		it("should derive batchId from first data batch for ID allocation", () => {
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = newPendingStateManager(stubs);
+
+			// Enqueue an ID Allocation pending message
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.IdAllocation,
+							contents: { first: 0, count: 5 },
+						} as unknown as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: 10,
+						metadata: undefined,
+						localOpMetadata: "ID_ALLOC",
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			// Enqueue a data batch
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: testAddressedDataStoreMessage,
+						},
+						referenceSequenceNumber: 10,
+						metadata: undefined,
+						localOpMetadata: "DATA_OP",
+					},
+				],
+				/* clientSequenceNumber: */ 2,
+				/* staged: */ false,
+			);
+
+			pendingStateManager.replayPendingStates();
+
+			// setIdAllocationBatchId should be called with derived batchId from the data batch
+			assert.strictEqual(
+				stubs.setIdAllocationBatchId.callCount,
+				1,
+				"setIdAllocationBatchId should be called once",
+			);
+			const derivedBatchId = stubs.setIdAllocationBatchId.firstCall.args[0];
+			assert.strictEqual(
+				derivedBatchId,
+				`idAlloc_[${clientId}_[2]]`,
+				"Derived batchId should be based on first data batch's batchId",
+			);
+		});
+
+		it("should derive batchId from ID alloc batchInfo when only ID alloc ops exist (edge case)", () => {
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = newPendingStateManager(stubs);
+
+			// Enqueue only an ID Allocation pending message (no data batches)
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.IdAllocation,
+							contents: { first: 0, count: 5 },
+						} as unknown as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: 10,
+						metadata: undefined,
+						localOpMetadata: "ID_ALLOC",
+					},
+				],
+				/* clientSequenceNumber: */ 3,
+				/* staged: */ false,
+			);
+
+			pendingStateManager.replayPendingStates();
+
+			// setIdAllocationBatchId should be called with batchId derived from the ID alloc's own batchInfo
+			assert.strictEqual(
+				stubs.setIdAllocationBatchId.callCount,
+				1,
+				"setIdAllocationBatchId should be called once",
+			);
+			const derivedBatchId = stubs.setIdAllocationBatchId.firstCall.args[0];
+			assert.strictEqual(
+				derivedBatchId,
+				`idAlloc_[${clientId}_3]`,
+				"Derived batchId should be based on ID alloc's own batchInfo",
+			);
+		});
+
+		it("should not call setIdAllocationBatchId when there are no ID alloc ops", () => {
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = newPendingStateManager(stubs);
+
+			// Simulate the resubmit behavior
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				pendingStateManager.onFlushBatch(
+					batch.map(({ runtimeOp, opMetadata, localOpMetadata }) => ({
+						runtimeOp,
+						referenceSequenceNumber: 15,
+						metadata: opMetadata,
+						localOpMetadata,
+					})),
+					/* clientSequenceNumber: */ 1,
+					/* staged: */ metadata.staged,
+				);
+			});
+
+			// Enqueue only a data batch (no ID alloc)
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: testAddressedDataStoreMessage,
+						},
+						referenceSequenceNumber: 10,
+						metadata: undefined,
+						localOpMetadata: "DATA_OP",
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+
+			pendingStateManager.replayPendingStates();
+
+			assert.strictEqual(
+				stubs.setIdAllocationBatchId.callCount,
+				0,
+				"setIdAllocationBatchId should not be called when no ID alloc ops exist",
 			);
 		});
 	});
