@@ -26,7 +26,6 @@ export interface Timer<T = unknown> {
 
 	/**
 	 * Converts a pair of raw timestamps into an elapsed duration in seconds.
-	 * @remarks
 	 * @param before - The timestamp captured before the measured operation.
 	 * @param after - The timestamp captured after the measured operation.
 	 * @returns The elapsed time in seconds as a floating-point number.
@@ -76,12 +75,14 @@ const timersWithResolution = timers.map((timer) => ({
 timersWithResolution.sort((a, b) => a.resolution - b.resolution);
 
 /**
- * The best available high-resolution timer for the current environment.
+ * The best available high-resolution timer for the current environment, paired with its measured resolution.
  */
 export const timerWithResolution = timersWithResolution[0];
 
 /**
  * The best available high-resolution timer for the current environment.
+ * @remarks
+ * This is the timer used internally by {@link collectDurationData} and related APIs.
  */
 export const timer: Timer = timerWithResolution.timer;
 

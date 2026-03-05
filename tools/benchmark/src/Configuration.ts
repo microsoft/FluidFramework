@@ -16,7 +16,7 @@ import type { Timer } from "./timer.js";
  *
  * When comparing two versions looking for changes: run `Measurement` tests.
  *
- * When looking a a single version (ex: current master) and looking for places to optimize:
+ * When looking at a single version (ex: current main branch) and looking for places to optimize:
  * run `Measurement` and `Perspective` tests.
  *
  * When looking into a specific issue (either with performance or the performance tests):
@@ -86,7 +86,7 @@ export const testTypes: readonly string[] = Object.values(TestType).filter(
 );
 
 /**
- * Object with a "title".
+ * An object with a title.
  * @public
  * @input
  */
@@ -124,7 +124,8 @@ export interface BenchmarkDescription {
  */
 export interface BenchmarkFunction {
 	/**
-	 * Runs the benchmark.
+	 * Runs the benchmark and returns the collected measurements.
+	 * @param timer - A high-resolution timer that can be used to measure durations if needed.
 	 */
 	readonly run: <TimeStamp>(timer: Timer<TimeStamp>) => CollectedData | Promise<CollectedData>;
 }
@@ -182,20 +183,20 @@ export function qualifiedTitle(
 export const isInPerformanceTestingMode = process.argv.includes("--perfMode");
 
 /**
- * If specified, the current process should not have performance tests run directly within it.
- * Instead child process will be created to run each test.
- * This has some overhead, but can reduce noise and cross test effects
- * (ex: tests performing very differently based on which tests ran before them due to different jitting).
- * This does not (and can not) remove all causes for effects of earlier tests on later ones.
- * Ex: cpu temperature will still be an issue, and thus running with fixed CPU clock speeds is still recommend
+ * If specified, the current process should not run performance tests directly.
+ * Instead, a child process will be forked for each test.
+ * This has some overhead, but can reduce noise and cross-test effects
+ * (e.g. tests performing very differently based on which tests ran before them due to different JIT state).
+ * This does not (and cannot) remove all sources of cross-test interference.
+ * CPU temperature will still be an issue, so running with fixed CPU clock speeds is still recommended
  * for more precise data.
  */
 export const isParentProcess: boolean = process.argv.includes("--parentProcess");
 
 /**
- * --childProcess should only be used to indicate that a test run with parentProcess is running,
- * and the current process is a child process which it spawned to run a particular test.
- * This can be used to adjust how test results are reported such that the parent process can aggregate them correctly.
+ * Indicates that this process is a child process spawned by a `--parentProcess` run.
+ * Only the specific test assigned to this child process is run, and results are returned
+ * via stdout as JSON for the parent process to collect.
  */
 export const isChildProcess = process.argv.includes("--childProcess");
 
@@ -212,9 +213,13 @@ export const performanceTestSuiteTag = "@Benchmark";
 export const userCategoriesSplitter = ":ff-cat:";
 
 /**
- * Reporter output location
+ * Options for the mocha reporter.
  */
 export interface ReporterOptions {
+	/**
+	 * Path to write the combined benchmark results JSON file to.
+	 * If not provided, no file is written.
+	 */
 	readonly reportFile?: string;
 }
 

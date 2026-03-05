@@ -61,11 +61,11 @@ async function getUsage(
 		usedBefore = usedAfter;
 		counter++;
 
-		// Experiments have shown that there are two ways to ensure garbage collection including the FinalizationRegistry, is run.
-		// 1. a sync GC then a wait of 8 seconds (but this sometimes fails after multiple runs unless a debugger takes a heap snapshot, possible due to some JIT optimization that breaks it).
-		// 2. two async GCs in a row.
-		// Since the second option is both more robust and faster, that is what is used here.
-		// In this case, the second iteration of this loop should pick up the finalizers.
+		// Experiments have found two ways to ensure GC runs including the FinalizationRegistry finalizers:
+		// 1. A sync GC then an 8-second wait (unreliable across multiple runs unless a debugger takes a heap snapshot, possibly due to JIT).
+		// 2. Two async GCs in a row.
+		// Option 2 is both more robust and faster, so it is used here.
+		// The second iteration of this loop will pick up any pending finalizers.
 
 		if (enableAsyncGC) {
 			await gc(gcOptionsAsync);
@@ -84,9 +84,10 @@ const defaults: Required<Omit<MemoryUseBenchmark, "benchmarkFn">> = {
 };
 
 /**
- * Runs the benchmark.
+ * Runs a memory usage benchmark and returns the collected heap measurements.
  * @remarks
- * To collect accurate data, set {@link isInPerformanceTestingMode} to true.
+ * Accurate data requires running with `--perfMode` (see {@link isInPerformanceTestingMode}).
+ * Without it, only a single iteration is run and the results are not statistically meaningful.
  * @public
  */
 export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<CollectedData> {
@@ -161,8 +162,8 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 	};
 
 	// Outside of actual measurement, async GC does not introduce bias or too much overhead,
-	// and can protect against cross test contamination due to finalizers.
-	// This also seems to help with the first test, preventing if from requiring an extra GC iteration.
+	// and can protect against cross-test contamination due to finalizers.
+	// This also seems to help with the first test, preventing it from requiring an extra GC iteration.
 	await getUsage(true);
 
 	await args.benchmarkFn(state);

@@ -147,13 +147,9 @@ export interface MemoryUseBenchmark {
 
 // @public @sealed
 export interface MemoryUseCallbacks {
-    // (undocumented)
     afterDeallocation(): Promise<void>;
-    // (undocumented)
     beforeAllocation(): Promise<void>;
-    // (undocumented)
     continue(): boolean;
-    // (undocumented)
     whileAllocated(): Promise<void>;
 }
 

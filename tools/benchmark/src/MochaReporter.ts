@@ -61,7 +61,7 @@ module.exports = class {
 				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
 				let benchmark: Readonly<BenchmarkResult> | undefined = this.data.get(test);
 				if (benchmark === undefined) {
-					// Mocha test complected with out reporting data.
+					// Mocha test completed without reporting data.
 					// This is an error, so report it as such.
 					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`;
 					console.error(chalk.red(error));

@@ -1,8 +1,8 @@
 # @fluid-tools/benchmark
 
 This package contains benchmarking tools to profile runtime and memory usage.
-There's the pieces you can use to profile your own code (described below) and various utilities for customizing/configuring
-benchmark, as well as authoring alternative reporters and profiling functions (ex: to support test frameworks other than
+It provides the tools you need to profile your own code (described below) and various utilities for customizing and configuring
+benchmarks, as well as authoring alternative reporters and profiling functions (e.g. to support test frameworks other than
 mocha).
 
 ## General use
@@ -127,7 +127,7 @@ benchmarkIt({
 
 `CollectedData` is a tuple `[PrimaryMeasurement, ...Measurement[]]`. The first element is the primary measurement (used for regression detection) and requires all fields including `units` and `type`. Additional measurements are optional and their fields `units` and `type` are optional too.
 
-`collectDurationData` and `collectMemoryUseData` can be used within `run` function which can be more flexible or ergonomic than `benchmarkDuration` or `benchmarkMemoryUse` in some cases:
+`collectDurationData` and `collectMemoryUseData` can be called directly within the `run` function, which is more flexible than `benchmarkDuration` or `benchmarkMemoryUse` when you need to add custom measurements or run setup/teardown outside the timed region:
 
 ```typescript
 benchmarkIt({
@@ -185,7 +185,7 @@ this pattern each iteration:
 1.  Release references to any memory allocated in the previous iteration (so GC can reclaim it).
 2.  Setup anything needed to do the allocation under test that should not be included in the measurement.
 3.  `state.beforeAllocation()` — GC runs and a baseline "before" heap measurement is taken.
-4.  Do the operation who's allocation of the memory you want to measure.
+4.  Do the operation whose memory allocation you want to measure.
 5.  `state.whileAllocated()` — GC runs and an "after allocation" heap measurement is taken.
 6.  _(Optional)_ Free memory, then call `state.afterDeallocation()` — if called, GC runs and a "after deallocation" heap measurement is taken as well.
 

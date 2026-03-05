@@ -12,9 +12,7 @@ import { isInPerformanceTestingMode } from "./Configuration.js";
  */
 
 /**
- * Contains the samples of all measurements we track for a given benchmark (a test which was potentially iterated
- * several times). Each property is an array and all should be the same length, which is the number of iterations
- * done during the benchmark.
+ * Statistics computed from a set of numeric samples.
  */
 export interface Stats {
 	/**

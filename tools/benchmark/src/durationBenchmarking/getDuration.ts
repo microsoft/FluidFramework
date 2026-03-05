@@ -62,7 +62,10 @@ export const nonPerfTestingArgs: Required<BenchmarkTimingOptions> = {
 };
 
 /**
- * Runs the benchmark.
+ * Runs a duration benchmark and returns the collected timing measurements.
+ * @remarks
+ * When not in performance testing mode (i.e. without `--perfMode`), runs only a single iteration
+ * and returns inaccurate data. Use {@link isInPerformanceTestingMode} to check the current mode.
  * @public
  */
 export async function collectDurationData(args: DurationBenchmark): Promise<CollectedData> {
@@ -239,7 +242,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 }
 
 /**
- * Run a performance benchmark and return its results.
+ * Runs a synchronous duration benchmark and returns the collected timing measurements.
  * @public
  */
 export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
@@ -253,7 +256,7 @@ export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
 }
 
 /**
- * Run a performance benchmark and return its results.
+ * Runs an asynchronous duration benchmark and returns the collected timing measurements.
  */
 export async function runBenchmarkAsync(args: DurationBenchmarkAsync): Promise<CollectedData> {
 	const state = new BenchmarkState(timer, args);

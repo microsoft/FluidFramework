@@ -12,10 +12,8 @@ import type {
 import { timer } from "./timer.js";
 
 /**
- * Wraps a function that returns CustomData, measuring its execution time
- * and capturing either its result or exception.
- * Returns a callback suitable for passing to emitResultsMocha.
- * This is a generic utility that is neither mocha-specific nor time benchmark-specific.
+ * Wraps a benchmark function, measuring its total execution time and capturing either its
+ * {@link CollectedData} result or any thrown exception as a {@link BenchmarkResult}.
  */
 export function captureResults(
 	f: () => CollectedData | Promise<CollectedData>,
