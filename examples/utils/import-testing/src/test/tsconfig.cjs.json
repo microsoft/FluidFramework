@@ -4,6 +4,8 @@
 	"compilerOptions": {
 		"outDir": "../../dist/test",
 	},
+	// crossPackageImporter.ts is a compile-time only ESM test with no CJS equivalent.
+	"exclude": ["./crossPackageImporter.ts"],
 	"references": [
 		{
 			"path": "../../tsconfig.cjs.json",
