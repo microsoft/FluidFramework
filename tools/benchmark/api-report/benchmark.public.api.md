@@ -59,7 +59,7 @@ export class BenchmarkReporter {
 // @public
 export type BenchmarkResult = BenchmarkError | BenchmarkData;
 
-// @public @sealed (undocumented)
+// @public @sealed
 export interface BenchmarkTimer<T> {
     readonly iterationsPerBatch: number;
     recordBatch(duration: number): boolean;
@@ -92,12 +92,12 @@ export type CollectedData = readonly [PrimaryMeasurement, ...Measurement[]];
 // @public
 export function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<CollectedData>;
 
-// @public @input (undocumented)
+// @public @input
 export type DurationBenchmark = DurationBenchmarkSync | DurationBenchmarkAsync | DurationBenchmarkCustom;
 
 // @public @input
 export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOptions, OnBatch {
-    benchmarkFnAsync: () => Promise<unknown>;
+    readonly benchmarkFnAsync: () => Promise<unknown>;
 }
 
 // @public @input
@@ -107,16 +107,18 @@ export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
 
 // @public @input
 export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOptions, OnBatch {
-    benchmarkFn: () => void;
+    readonly benchmarkFn: () => void;
 }
 
 // @public @input
 export interface HookArguments {
+    // @deprecated
     after?: HookFunction | undefined;
+    // @deprecated
     before?: HookFunction | undefined;
 }
 
-// @public
+// @public @deprecated
 export type HookFunction = () => void | Promise<unknown>;
 
 // @public
@@ -162,6 +164,7 @@ export interface MochaExclusiveOptions {
 
 // @public @input
 export interface OnBatch {
+    // @deprecated
     beforeEachBatch?: () => void;
 }
 

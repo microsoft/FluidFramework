@@ -8,6 +8,9 @@ import type { Timer } from "../timer.js";
 import type { Phase } from "./getDuration.js";
 
 /**
+ * A benchmark for measuring the duration of an operation.
+ * @remarks
+ * Provide to {@link benchmarkDuration} or {@link collectDurationData}.
  * @public
  * @input
  */
@@ -25,7 +28,7 @@ export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOpt
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
-	benchmarkFn: () => void;
+	readonly benchmarkFn: () => void;
 }
 
 /**
@@ -40,10 +43,11 @@ export interface DurationBenchmarkAsync extends HookArguments, BenchmarkTimingOp
 	 * in the body will always take at least 4ms per operation due to timeout throttling:
 	 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
 	 */
-	benchmarkFnAsync: () => Promise<unknown>;
+	readonly benchmarkFnAsync: () => Promise<unknown>;
 }
 
 /**
+ * Timer for reporting batch durations in {@link DurationBenchmarkCustom}.
  * @public
  * @sealed
  */
@@ -154,7 +158,7 @@ export interface OnBatch {
 	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
 	 * iterations per batch.
 	 *
-	 * If you need this, consider using {@link DurationBenchmarkCustom} instead of {@link DurationBenchmarkSync} or {@link DurationBenchmarkAsync}.
+	 * @deprecated Use {@link DurationBenchmarkCustom} instead of {@link DurationBenchmarkSync} or {@link DurationBenchmarkAsync}.
 	 * It offers much more control, and avoids the challenges of passing data between this callback and other parts of the benchmark.
 	 */
 	beforeEachBatch?: () => void;
@@ -162,6 +166,7 @@ export interface OnBatch {
 
 /**
  * Convenience type for a hook function supported by `HookArguments`. Supports synchronous and asynchronous functions.
+ * @deprecated All usages of this type have been deprecated. See their documentation for details and recommended alternatives.
  * @public
  */
 export type HookFunction = () => void | Promise<unknown>;
@@ -271,6 +276,7 @@ export interface HookArguments {
 	 *
 	 * @remarks
 	 * This does *not* execute on each iteration or cycle.
+	 * @deprecated Use {@link DurationBenchmarkCustom} or directly call {@link collectDurationData} from a function containing the setup code.
 	 */
 	before?: HookFunction | undefined;
 	/**
@@ -278,6 +284,7 @@ export interface HookArguments {
 	 *
 	 * @remarks
 	 * This does *not* execute on each iteration or cycle.
+	 * @deprecated Use {@link DurationBenchmarkCustom} or directly call {@link collectDurationData} from a function containing the teardown code.
 	 */
 	after?: HookFunction | undefined;
 }
