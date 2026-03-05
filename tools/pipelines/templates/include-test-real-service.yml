@@ -454,18 +454,20 @@ stages:
               FIC_BEARER_TOKEN: $(ficBearerToken)
             inputs:
               targetType: 'inline'
+              workingDirectory: ${{ variables.pipelineHostPath }}
               script: |
                 set -eu -o pipefail
 
                 echo "ficBearerToken is set to $FIC_BEARER_TOKEN"
                 echo "DEBUG"
-                payload=$(echo "$FIC_BEARER_TOKEN" | cut -d'.' -f2)
-                padded="${payload}$(printf '%0.s=' $(seq 1 $((4 - ${#payload} % 4))))"
-                echo "$padded" | base64 -d 2>/dev/null | jq '{aud, iss, exp, scp, roles}'
+                payload=$(echo "$FIC_BEARER_TOKEN" | cut -d'.' -f2 | tr '_-' '/+')
+                padding=$(( (4 - ${#payload} % 4) % 4 ))
+                padded="${payload}$(printf '%0.s=' $(seq 1 $padding))"
+                echo "$padded" | base64 -d 2>/dev/null | jq '{aud, iss, exp, scp, roles}' || true
                 echo "END DEBUG"
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --bearerToken=$FIC_BEARER_TOKEN
+                pnpm exec trips-setup --waitTime=3600 --accessToken="$SYSTEM_ACCESSTOKEN" --odspEndpoint=${{ parameters.odspTenantType }} --bearerToken="$FIC_BEARER_TOKEN"
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
