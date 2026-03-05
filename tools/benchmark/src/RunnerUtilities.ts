@@ -7,8 +7,8 @@ import { assert } from "./assert.js";
 import type { Measurement } from "./ResultTypes.js";
 
 /**
- * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
- * output to the command line.
+ * This file contains generic utilities of use to a test reporter,
+ * especially for convenient formatting of textual output to the command line.
  */
 
 /**
@@ -31,13 +31,14 @@ export function prettyNumber(num: number, numDecimals = 3): string {
 		return num.toExponential(numDecimals);
 	}
 	// Add commas to the numbers before the decimal.
-	// Since this only ever runs on strings less than about 12 characters, it's not a performance problem.
+	// Since this only ever runs on <= 9 characters, it's not a performance problem.
 	split[0] = split[0].replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 	return split.join(".");
 }
 
 /**
- * Computes the mean of a number of geometric values. All values must be greater than 0.
+ * Computes the mean of a number of geometric values.
+ * Negative values are clamped to 0.
  * @param values - Set of values whose geometric mean should be computed.
  */
 export function geometricMean(values: number[]): number {
@@ -45,7 +46,7 @@ export function geometricMean(values: number[]): number {
 	let sum = 0;
 	for (const value of values) {
 		if (value <= 0) {
-			return Number.POSITIVE_INFINITY;
+			return 0;
 		}
 		sum += Math.log(value);
 	}
