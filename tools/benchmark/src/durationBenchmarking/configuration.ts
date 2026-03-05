@@ -20,7 +20,7 @@ export type DurationBenchmark =
 	| DurationBenchmarkCustom;
 
 /**
- * Arguments to benchmark a synchronous function
+ * Configuration for benchmarking a synchronous function.
  * @public
  * @input
  */
@@ -64,9 +64,10 @@ export interface BenchmarkTimer<T> {
 	recordBatch(duration: number): boolean;
 
 	/**
-	 * A helper utility which uses `timer` to time running `callback` `iterationsPerBatch` times and passes the result to recordBatch returning the result.
+	 * Convenience method: times `callback` running `iterationsPerBatch` times, records the batch, and returns the result of {@link BenchmarkTimer.recordBatch}.
 	 * @remarks
-	 * This is implemented in terms of the other public APIs, and can be used in simple cases when no extra operations are required.
+	 * Use this when no per-batch setup or teardown is needed outside the measured callback.
+	 * Implemented in terms of the other public APIs on this interface.
 	 */
 	timeBatch(callback: () => void): boolean;
 }
