@@ -10,7 +10,7 @@ import {
 	performanceTestSuiteTag,
 	testTypes,
 	userCategoriesSplitter,
-} from "../Configuration";
+} from "../Configuration.js";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual

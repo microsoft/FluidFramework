@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isInPerformanceTestingMode } from "./Configuration";
+import { isInPerformanceTestingMode } from "./Configuration.js";
 
 /*
  * Common code for benchmarks which collect samples to approximate a value.

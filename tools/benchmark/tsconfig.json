@@ -1,12 +1,13 @@
 {
-	"extends": "../../common/build/build-common/ts-common-config.json",
+	"extends": "../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
 		"rootDir": "./src",
-		"outDir": "./dist",
+		"outDir": "./lib",
 		"composite": true,
 		// Uses Node types to detect Node and do special case optimization for it.
 		// This package should still support browser.
 		"types": ["mocha", "node"],
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

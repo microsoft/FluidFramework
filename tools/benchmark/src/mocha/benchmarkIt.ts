@@ -4,10 +4,10 @@
  */
 
 import type { Test } from "mocha";
-import { qualifiedTitle, type BenchmarkOptions } from "../Configuration";
-import { captureResults } from "../ResultUtilities";
-import { timer } from "../timer";
-import { supportParentProcessInner } from "./runner";
+import { qualifiedTitle, type BenchmarkOptions } from "../Configuration.js";
+import { captureResults } from "../ResultUtilities.js";
+import { timer } from "../timer.js";
+import { supportParentProcessInner } from "./runner.js";
 
 /**
  * This is a wrapper for Mocha's `it` function which runs the specified benchmark.

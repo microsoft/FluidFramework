@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert, assertProperUse } from "../assert";
+import { assert, assertProperUse } from "../assert.js";
 import {
 	isInPerformanceTestingMode,
 	type BenchmarkDescription,
 	type BenchmarkFunction,
-} from "../Configuration";
-import { ValueType, type CollectedData, type Measurement } from "../ResultTypes";
-import { brandMeasurementNameForMode, getArrayStatistics } from "../sampling";
-import { type MemoryUseCallbacks, type MemoryUseBenchmark } from "./configuration";
+} from "../Configuration.js";
+import { ValueType, type CollectedData, type Measurement } from "../ResultTypes.js";
+import { brandMeasurementNameForMode, getArrayStatistics } from "../sampling.js";
+import { type MemoryUseCallbacks, type MemoryUseBenchmark } from "./configuration.js";
 
 interface MemoryMeasurement {
 	before: number;

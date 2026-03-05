@@ -5,11 +5,11 @@
 
 import type { Test } from "mocha";
 
-import { isParentProcess } from "../Configuration";
-import type { BenchmarkResult } from "../ResultTypes";
+import { isParentProcess } from "../Configuration.js";
+import type { BenchmarkResult } from "../ResultTypes.js";
 import { fail } from "../assert.js";
 
-import { emitResultsMocha } from "./runnerUtilities";
+import { emitResultsMocha } from "./runnerUtilities.js";
 
 /**
  * Wrapper for the contents of a mocha test that supports running in a child process and emitting results to the mocha reporter.

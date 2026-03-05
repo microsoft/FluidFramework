@@ -4,7 +4,7 @@
  */
 
 import { assert } from "../assert.js";
-import type { Timer } from "../timer";
+import type { Timer } from "../timer.js";
 import type { Phase } from "./getDuration.js";
 
 /**

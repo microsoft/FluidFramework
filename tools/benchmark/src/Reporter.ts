@@ -45,9 +45,9 @@ import {
 	type BenchmarkData,
 	type BenchmarkResult,
 	type Measurement,
-} from "./ResultTypes";
-import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./RunnerUtilities";
-import { assert } from "./assert";
+} from "./ResultTypes.js";
+import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./RunnerUtilities.js";
+import { assert } from "./assert.js";
 
 /**
  * A node in the suite tree maintained by {@link BenchmarkReporter}.

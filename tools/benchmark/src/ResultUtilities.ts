@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { BenchmarkResult, BenchmarkError, BenchmarkData, CollectedData } from "./ResultTypes";
-import { timer } from "./timer";
+import type {
+	BenchmarkResult,
+	BenchmarkError,
+	BenchmarkData,
+	CollectedData,
+} from "./ResultTypes.js";
+import { timer } from "./timer.js";
 
 /**
  * Wraps a function that returns CustomData, measuring its execution time

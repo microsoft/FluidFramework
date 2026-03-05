@@ -8,7 +8,7 @@ import type { Test } from "mocha";
 import { benchmarkDuration } from "./durationBenchmarking/index.js";
 import type { DurationBenchmark } from "./durationBenchmarking/index.js";
 
-import { benchmarkIt } from "./mocha";
+import { benchmarkIt } from "./mocha/index.js";
 import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "./Configuration.js";
 
 /**

@@ -25,7 +25,7 @@ export {
 	TestType,
 	type BenchmarkFunction,
 	type BenchmarkOptions,
-} from "./Configuration";
+} from "./Configuration.js";
 export {
 	type DurationBenchmarkSync,
 	type DurationBenchmarkAsync,
@@ -39,9 +39,9 @@ export {
 	Phase,
 	collectDurationData,
 	benchmarkDuration,
-} from "./durationBenchmarking/index";
-export { benchmarkIt } from "./mocha";
-export { BenchmarkReporter, ReportEntry, type ReportSuite, type ReportArray } from "./Reporter";
+} from "./durationBenchmarking/index.js";
+export { benchmarkIt } from "./mocha/index.js";
+export { BenchmarkReporter, ReportEntry, type ReportSuite, type ReportArray } from "./Reporter.js";
 export {
 	type BenchmarkData,
 	type BenchmarkError,
@@ -50,8 +50,8 @@ export {
 	CollectedData,
 	Measurement,
 	ValueType,
-} from "./ResultTypes";
-export type { Timer } from "./timer";
+} from "./ResultTypes.js";
+export type { Timer } from "./timer.js";
 
 export {
 	MemoryUseBenchmark,

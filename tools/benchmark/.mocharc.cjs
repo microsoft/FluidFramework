@@ -13,5 +13,4 @@ const config = getFluidTestMochaConfig(__dirname);
 // so --v8-expose-gc can be tested as that is the documented (in the readme) approach.
 // This is ok as this package does not need the node-options from the default config.
 delete config["node-option"];
-config.spec = "dist/**/*.spec.js";
 module.exports = config;

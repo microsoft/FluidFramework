@@ -7,10 +7,10 @@ import {
 	isInPerformanceTestingMode,
 	type BenchmarkDescription,
 	type BenchmarkFunction,
-} from "../Configuration";
-import { ValueType, type CollectedData } from "../ResultTypes";
-import { getArrayStatistics } from "../sampling";
-import { type Timer, timer, timerWithResolution } from "../timer";
+} from "../Configuration.js";
+import { ValueType, type CollectedData } from "../ResultTypes.js";
+import { getArrayStatistics } from "../sampling.js";
+import { type Timer, timer, timerWithResolution } from "../timer.js";
 import {
 	benchmarkArgumentsIsCustom,
 	validateBenchmarkArguments,
@@ -19,7 +19,7 @@ import {
 	type BenchmarkTimingOptions,
 	type DurationBenchmarkSync,
 	type DurationBenchmarkAsync,
-} from "./configuration";
+} from "./configuration.js";
 
 /**
  * @public

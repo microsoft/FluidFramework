@@ -6,14 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { benchmark, benchmarkCustom } from "../legacy.js";
-import { BenchmarkType, isParentProcess } from "../Configuration";
+import { BenchmarkType, isParentProcess } from "../Configuration.js";
 import { type BenchmarkTimer, Phase, collectDurationData } from "../durationBenchmarking/index.js";
 import {
 	benchmarkDuration,
 	runBenchmarkAsync,
 	runBenchmarkSync,
 } from "../durationBenchmarking/getDuration.js";
-import { benchmarkIt } from "../mocha";
+import { benchmarkIt } from "../mocha/index.js";
 import { ValueType, type CollectedData } from "../ResultTypes.js";
 
 function doLoop(upperLimit: number): void {

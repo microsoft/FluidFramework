@@ -5,8 +5,8 @@
 
 import type { Test } from "mocha";
 
-import type { BenchmarkResult } from "../ResultTypes";
-import { isInPerformanceTestingMode } from "../Configuration";
+import type { BenchmarkResult } from "../ResultTypes.js";
+import { isInPerformanceTestingMode } from "../Configuration.js";
 
 /**
  * Executes a function, emits the results to a mocha test, and throws any exception.
