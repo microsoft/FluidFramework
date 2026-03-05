@@ -416,19 +416,6 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
               path: $(compatVersionInstallsPath)
 
-        # Install @ff-internal/trips-setup to provide the getFicToken function for ODSP tests.
-        # The ado-feeds-ff-download-only variable (from the ado-feeds group, set up in
-        # include-setup-npmrc-for-download.yml) provides authenticated access to the ADO feed.
-        - ${{ if ne(parameters.odspTenantType, 'none') }}:
-          - task: Bash@3
-            displayName: Install @ff-internal/trips-setup
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ variables.pipelineHostPath }}
-              script: |
-                set -eu -o pipefail
-                pnpm add @ff-internal/trips-setup
-
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if ne(parameters.odspTenantType, 'none') }}:
           # Retrieve a tenant from the tenant pool
@@ -454,7 +441,6 @@ stages:
               FIC_BEARER_TOKEN: $(ficBearerToken)
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.pipelineHostPath }}
               script: |
                 set -eu -o pipefail
 
