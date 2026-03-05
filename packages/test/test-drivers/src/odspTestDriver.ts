@@ -415,7 +415,7 @@ export class OdspTestDriver implements ITestDriver {
 			directory: directoryParts.join("/"),
 			driveId,
 			options,
-			getNewToken,
+			getNewToken: tokenConfig.getNewToken,
 		};
 
 		return new OdspTestDriver(driverConfig, api, tenantName, userIndex, endpointName);
