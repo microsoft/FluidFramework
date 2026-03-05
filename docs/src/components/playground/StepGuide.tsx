@@ -167,8 +167,10 @@ export function StepGuide({
 
 					{currentStepIndex < totalSteps - 1 && (
 						<button
-							className="ffcom-playground-nav-button ffcom-playground-nav-primary"
-							onClick={() => onNavigate(currentStepIndex + 1)}
+							className={`ffcom-playground-nav-button ${allPassed ? "ffcom-playground-nav-primary" : "ffcom-playground-nav-disabled"}`}
+							onClick={() => allPassed && onNavigate(currentStepIndex + 1)}
+							disabled={!allPassed}
+							title={allPassed ? undefined : "Complete all checklist items to continue"}
 						>
 							Next
 						</button>

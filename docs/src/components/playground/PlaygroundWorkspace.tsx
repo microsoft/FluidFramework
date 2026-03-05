@@ -85,23 +85,32 @@ export function PlaygroundWorkspace({
 	dependencies,
 	onCodeChange,
 }: PlaygroundWorkspaceProps): React.ReactElement {
+	// Memoize all object props so SandpackProvider doesn't see new references
+	// on every re-render (which would reset the editor and undo user typing).
+	const sandpackFiles = React.useMemo(
+		() => ({ "/index.html": indexHtml, ...files }),
+		[files],
+	);
+
+	const customSetup = React.useMemo(() => ({ dependencies }), [dependencies]);
+
+	const options = React.useMemo(
+		() => ({
+			activeFile,
+			visibleFiles: [activeFile],
+			recompileMode: "delayed" as const,
+			recompileDelay: 500,
+		}),
+		[activeFile],
+	);
+
 	return (
 		<div className="ffcom-playground-workspace">
 			<SandpackProvider
 				template="vite-react-ts"
-				files={{
-					"/index.html": indexHtml,
-					...files,
-				}}
-				customSetup={{
-					dependencies,
-				}}
-				options={{
-					activeFile,
-					visibleFiles: [activeFile],
-					recompileMode: "delayed",
-					recompileDelay: 500,
-				}}
+				files={sandpackFiles}
+				customSetup={customSetup}
+				options={options}
 			>
 				<SandpackLayout>
 					<SandpackCodeEditor

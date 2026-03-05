@@ -36,9 +36,13 @@ export function TutorialPlayground(): React.ReactElement {
 	const validateCode = React.useCallback(
 		(code: string) => {
 			if (currentStep === undefined) return;
+			// Strip comments so validation only matches actual code, not TODO hints.
+			const strippedCode = code
+				.replace(/\/\*[\s\S]*?\*\//g, "") // block comments (/* ... */ and {/* ... */})
+				.replace(/\/\/.*$/gm, ""); // single-line comments (// ...)
 			const results = currentStep.validationPatterns.map((vp) => {
 				const regex = new RegExp(vp.pattern, vp.flags ?? "s");
-				return regex.test(code);
+				return regex.test(strippedCode);
 			});
 			setValidationResults(results);
 		},
