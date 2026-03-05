@@ -6,10 +6,6 @@
 /*
 This file is compiled in isolation (via tsconfig.crossPackage.json) to produce .d.ts files
 that are consumed by crossPackageImporter.spec.ts.
-
-Isolation is critical: surrounding schema definitions can mask .d.ts generation failures.
-By compiling only these schemas, we ensure the test accurately detects regressions in
-objectAlpha/mapAlpha/optional cross-package consumption.
 */
 
 /* eslint-disable jsdoc/require-jsdoc */
