@@ -109,12 +109,12 @@ describe("runner", () => {
 				);
 
 				assert(isResultError(result.result));
-				assert(
-					result.result.error
-						.startsWith(`Child process must output a single json object or array. Found 2.
+				assert.equal(
+					result.result.error.split("\n").slice(0, 4).join("\n"),
+					`Child process must output a single json object or array. Found 2.
 This may be caused by there being multiple mocha tests with the same fullTitle: "runner supportParentProcess errors with duplicate test names"
 Such tests are not supported by --parentProcess since there is no way to filter the child process to the correct test.
-The full output from the run was:`),
+The full output from the run was:`,
 				);
 			}
 		});

@@ -9,7 +9,7 @@ import { Runner, type Suite, type Test, type Hook } from "mocha";
 import { isChildProcess } from "../Configuration.js";
 import { BenchmarkReporter } from "../Reporter.js";
 import type { BenchmarkResult, BenchmarkError } from "../ResultTypes.js";
-import { getName, getSuiteName } from "./mochaReporterUtilities.js";
+import { getName } from "./mochaReporterUtilities.js";
 
 /*
  * Users of this package should be able to author utilities like this for testing tools other than mocha.
@@ -35,7 +35,7 @@ module.exports = class {
 		runner
 			.on(Runner.constants.EVENT_SUITE_BEGIN, (suite: Suite) => {
 				if (!isChildProcess && !suite.root) {
-					benchmarkReporter.beginSuite(getName(suite.title));
+					benchmarkReporter.beginSuite(suite.title);
 				}
 			})
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
@@ -49,34 +49,27 @@ module.exports = class {
 					this.data.set(test, benchmark);
 				});
 			})
-			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-				console.error(chalk.red(`Test ${test.fullTitle()} failed with error: `, err));
-			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
-				// Type signature for `Test.state` indicates it will never be 'pending',
-				// but that is incorrect: skipped tests have state 'pending' here.
-				// See: https://github.com/mochajs/mocha/issues/4079
-				if (test.state === ("pending" as string)) {
+				if (test.state === "pending") {
 					return; // Test was skipped.
 				}
 
-				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
 				let benchmark: BenchmarkResult | undefined = this.data.get(test);
 				if (benchmark === undefined) {
 					// Mocha test completed without reporting data.
 					// This is an error, so report it as such.
-					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`;
-					console.error(chalk.red(error));
-					benchmarkReporter.recordTestResult(getName(test.title), { error });
-					return;
-				}
-				if (test.state !== "passed") {
+					const error = `Test ${test.fullTitle()} completed with status '${
+						test.state
+					}' without reporting any data.`;
+					benchmark = { error };
+				} else if (test.state !== "passed") {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
 					const error =
 						(benchmark as BenchmarkError).error ??
-						`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
-					console.error(chalk.red(error));
+						`Test ${test.fullTitle()} completed with status '${
+							test.state
+						}' after reporting data.`;
 					benchmark = { error };
 				}
 

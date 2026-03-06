@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Suite } from "mocha";
-
 import {
 	benchmarkTypes,
 	performanceTestSuiteTag,
@@ -25,11 +23,6 @@ const tags = [
 	...benchmarkTypes.map((x) => `@${x}`),
 	...testTypes.map((x) => `@${x}`),
 ];
-
-/**
- * Strip tags and user-specified category from a test suite's name.
- */
-export const getSuiteName = (suite: Suite): string => getName(suite.fullTitle());
 
 /**
  * Strip tags and user-specified category from the specified test/suite name.

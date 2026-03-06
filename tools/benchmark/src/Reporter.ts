@@ -30,7 +30,7 @@ SOFTWARE.
 // This file is a reporter used with node, so depending on node is fine.
 /* eslint-disable import-x/no-nodejs-modules */
 
-/* eslint no-console: ["error", { allow: ["log"] }] */
+/* eslint no-console: ["error", { allow: ["log","error"] }] */
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -132,9 +132,20 @@ export class BenchmarkReporter {
 	 */
 	public recordTestResult(testName: string, result: BenchmarkResult): void {
 		if (isChildProcess) {
-			// eslint-disable-next-line no-console
-			console.info(JSON.stringify(result));
+			// It is common to suppress console.log in test environments.
+			// Since this output is not to the user facing console, but for internal data transfer,
+			// write it directly to stdout to ensure it makes it to the parent process regardless of console.log configuration.
+			process.stdout.write(`\n${JSON.stringify(result)}\n`);
 			return;
+		}
+
+		if (isResultError(result)) {
+			console.error(
+				chalk.red(
+					`\nTest ${JSON.stringify([...this.suiteNames(), testName].join(" "))} failed:
+    ${result.error}\n`,
+				),
+			);
 		}
 
 		// Non-null assertion is safe: suiteStack always has at least the virtual root.
@@ -177,6 +188,10 @@ export class BenchmarkReporter {
 		table.newRow();
 	}
 
+	private suiteNames(): string[] {
+		return this.suiteStack.slice(1).map((s) => s.localName);
+	}
+
 	/**
 	 * Marks the current suite (stack top) as complete, prints its console table, and accumulates summary stats.
 	 * Must be called once for each {@link BenchmarkReporter.beginSuite} call, before {@link BenchmarkReporter.recordResultsSummary}.
@@ -188,10 +203,7 @@ export class BenchmarkReporter {
 			"recordSuiteResults called without a matching beginSuite",
 		);
 
-		const path = this.suiteStack
-			.slice(1)
-			.map((s) => s.localName)
-			.join(" / ");
+		const path = this.suiteNames().join(" / ");
 
 		// Non-null assertion is safe: we just checked length > 1.
 		const node = this.suiteStack.pop()!;
