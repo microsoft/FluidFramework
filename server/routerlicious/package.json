@@ -143,6 +143,7 @@
 		"commentsOverrides": [
 			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
 			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
+			"fast-xml-parser: override to 5.x because mongodb's transitive dep on @aws-sdk/credential-providers brings in an old version via @aws-sdk/client-sts. The empty-package pattern for @aws-sdk/credential-providers doesn't work here because pnpm resolves mongodb@5.x's optional peer dep before applying overrides.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
 			"@typescript-eslint/*: Pin to 8.52.0 to avoid 8.53.0 which may not be available in ADO package feed.",
