@@ -81,6 +81,7 @@ import {
 	getFirstFromCrossFieldMap,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
+import { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
 import {
 	type FieldChangeHandler,
 	NodeAttachState,
@@ -2686,6 +2687,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 		codecOptions: CodecWriteOptions,
+		private readonly mintRevisionTag?: () => RevisionTag,
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
@@ -2705,6 +2707,27 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (this.transactionDepth === 0) {
 			this.idAllocator = idAllocatorFromMaxId();
 		}
+	}
+
+	/**
+	 * Apply a changeset that originated from a different editor.
+	 * @remarks
+	 * The revision for the change will be changed to a new revision (using `mintRevisionTag`) before application.
+	 * The change will also have its local IDs replaced to avoid collisions with any IDs produced by this editor.
+	 */
+	public applyExternalChange(change: ModularChangeset): void {
+		assert(
+			this.mintRevisionTag !== undefined,
+			"mintRevisionTag is required to apply external changes",
+		);
+		const revision = this.mintRevisionTag();
+		const replacer = new DefaultRevisionReplacer(
+			revision,
+			this.changeFamily.rebaser.getRevisions(change),
+			this.idAllocator,
+		);
+		const newChange = this.changeFamily.rebaser.changeRevision(change, replacer);
+		this.applyChange(tagChange(newChange, revision));
 	}
 
 	/**

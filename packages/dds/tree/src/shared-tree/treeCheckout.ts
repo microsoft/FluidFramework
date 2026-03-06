@@ -63,7 +63,6 @@ import {
 	type TaggedChange,
 } from "../core/index.js";
 import {
-	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
 	allowsRepoSuperset,
@@ -784,19 +783,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 
-		// The change's revision may have been produced by an IdCompressor that overlaps or is otherwise incompatible with ours.
-		// Replace the revision to avoid any ID collisions in the changeset - every application of a serialized changed will result in a different revision.
-		// This means that applying the same serialized change twice will result in its insertions/mutations being performed twice.
-		// The second change will not be deduplicated with the first by the rebaser, as would be the case if they were truly the same change with the same revision.
-		const newRevision = this.#transaction.activeBranch.mintRevisionTag();
-		const newChange = this.changeFamily.rebaser.changeRevision(
-			decodedChange,
-			new DefaultRevisionReplacer(
-				newRevision,
-				this.changeFamily.rebaser.getRevisions(decodedChange),
-			),
+		// Extract the inner data change from the SharedTreeChange envelope.
+		// Serialized changes are always single data changes (not schema changes).
+		const innerChange = decodedChange.changes[0];
+		assert(
+			decodedChange.changes.length === 1 && innerChange?.type === "data",
+			0x1b2 /* Expected a single data change in serialized change */,
 		);
-		this.#transaction.activeBranch.apply(tagChange(newChange, newRevision));
+
+		// Delegate to the editor, which will replace the revision, shift local IDs to avoid
+		// collisions with other changes in the same transaction, and apply the change.
+		this.#transaction.activeBranchEditor.applyExternalChange(innerChange.innerChange);
 	}
 
 	// Revision is the revision of the commit, if any, which caused this change.

@@ -459,6 +459,112 @@ describe("simple-tree tree", () => {
 			assert.deepEqual([...viewA.root], [1, 2, 3, 4, 5]);
 		});
 
+		it("changes from different branches can be applied together in a transaction", () => {
+			const sf = new SchemaFactory("test");
+			class List extends sf.array("List", sf.number) {}
+			const config = new TreeViewConfiguration({ schema: List });
+			const viewA = getView(config);
+			viewA.initialize([1, 2, 3]);
+
+			// Capture changeA from viewA
+			let changeA: JsonCompatibleReadOnly | undefined;
+			viewA.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					changeA = metadata.getChange();
+				}
+			});
+			viewA.root.insertAtEnd(4);
+			assert(changeA !== undefined);
+
+			// Fork viewA to create viewB, then capture changeB from viewB
+			const viewB = viewA.fork();
+			let changeB: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					changeB = metadata.getChange();
+				}
+			});
+			viewB.root.insertAtEnd(5);
+			assert(changeB !== undefined);
+
+			// Apply both changes in a transaction on a third branch (forked from viewA's state after changeA)
+			const viewC = viewA.fork();
+			const capturedA = changeA;
+			const capturedB = changeB;
+			viewC.runTransaction(() => {
+				viewC.applyChange(capturedA);
+				viewC.applyChange(capturedB);
+			});
+			assert.deepEqual([...viewC.root], [1, 2, 3, 4, 5, 4]);
+		});
+
+		it("serialized changes can be mixed with editor edits in a transaction", () => {
+			const sf = new SchemaFactory("test");
+			class List extends sf.array("List", sf.number) {}
+			const config = new TreeViewConfiguration({ schema: List });
+			const viewA = getView(config);
+			viewA.initialize([1, 2, 3]);
+
+			// Capture a serialized change from a fork
+			const viewB = viewA.fork();
+			let serializedChange: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					serializedChange = metadata.getChange();
+				}
+			});
+			viewB.root.insertAtEnd(99);
+			assert(serializedChange !== undefined);
+
+			// In a transaction on viewA, mix direct edits with the serialized change
+			const captured = serializedChange;
+			viewA.runTransaction(() => {
+				viewA.root.insertAtEnd(10);
+				viewA.applyChange(captured);
+				viewA.root.insertAtEnd(20);
+			});
+			const result = [...viewA.root];
+			assert.equal(result.length, 6, "all three inserts should be present");
+			assert(result.includes(10), "editor insert 10 should be present");
+			assert(result.includes(20), "editor insert 20 should be present");
+			assert(result.includes(99), "serialized insert 99 should be present");
+		});
+
+		it("changes from different branches can overwrite a value field in a transaction", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+
+			let changeA: JsonCompatibleReadOnly | undefined;
+			viewA.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					changeA = metadata.getChange();
+				}
+			});
+			viewA.root = 4;
+			assert(changeA !== undefined);
+
+			const viewB = viewA.fork();
+			let changeB: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					changeB = metadata.getChange();
+				}
+			});
+			viewB.root = 5;
+			assert(changeB !== undefined);
+
+			const viewC = viewA.fork();
+			const capturedA = changeA;
+			const capturedB = changeB;
+			viewC.runTransaction(() => {
+				viewC.applyChange(capturedA);
+				viewC.applyChange(capturedB);
+			});
+			// changeA sets 3→4, changeB sets 4→5, so result should be 5
+			assert.equal(viewC.root, 5);
+		});
+
 		it("applied change is rolled back when transaction is aborted", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const viewA = getView(config);
