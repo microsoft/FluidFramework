@@ -59,6 +59,25 @@ const fontSet = new Set<string>(["monospace", "serif", "sans-serif", "Arial"]);
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
+/** The string literal values accepted by LineTag. */
+type LineTagValue = "h1" | "h2" | "h3" | "h4" | "h5" | "li";
+/** Quill header numbers → LineTag values. */
+const headerToLineTag: Record<number, LineTagValue> = {
+	1: "h1",
+	2: "h2",
+	3: "h3",
+	4: "h4",
+	5: "h5",
+};
+/** LineTag values → Quill attributes. Used by buildDeltaFromTree (tree → Quill). */
+const lineTagToQuillAttrs: Record<LineTagValue, Record<string, unknown>> = {
+	h1: { header: 1 },
+	h2: { header: 2 },
+	h3: { header: 3 },
+	h4: { header: 4 },
+	h5: { header: 5 },
+	li: { list: "bullet" },
+};
 /**
  * Parse CSS font-size from a pasted HTML element's inline style.
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
@@ -149,21 +168,15 @@ function parseSize(size: unknown): number {
 	return defaultSize;
 }
 
-/** Quill header numbers mapped to their LineTag string values. */
-const headerTags = { 1: "h1", 2: "h2", 3: "h3", 4: "h4", 5: "h5" } as const;
-
 /** Extract a LineTag from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time. */
 function parseLineTag(
 	attrs?: Record<string, unknown>,
 ): FormattedTextAsTree.LineTag | undefined {
-	// default no formatting on "\n", or line tag on "\n" that doesn't affect formatting
 	if (!attrs) return undefined;
-	// Header formatting. Quill passes header formatting as a number (1-5)
-	const header = attrs.header;
-	if (typeof header === "number" && header in headerTags) {
-		return FormattedTextAsTree.LineTag(headerTags[header as keyof typeof headerTags]);
+	if (typeof attrs.header === "number") {
+		const tag = headerToLineTag[attrs.header];
+		if (tag !== undefined) return FormattedTextAsTree.LineTag(tag);
 	}
-	// List formatting. Only treat "bullet" as an unordered list item.
 	if (attrs.list === "bullet") {
 		return FormattedTextAsTree.LineTag("li");
 	}
@@ -298,7 +311,7 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 			key = "";
 			ops.push({
 				insert: "\n",
-				attributes: lineTag === "li" ? { list: "bullet" } : { header: Number(lineTag[1]) },
+				attributes: lineTagToQuillAttrs[lineTag as LineTagValue],
 			});
 		}
 	}
@@ -423,6 +436,18 @@ const FormattedTextEditorView = React.forwardRef<
 								// Quill's implicit trailing newline — insert a new line atom
 								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
 								content += "\n";
+							} else if (
+								lineTag === undefined &&
+								content[utf16Pos] === "\n" &&
+								root.charactersWithFormatting()[cpPos]?.content instanceof
+									FormattedTextAsTree.StringLineAtom
+							) {
+								// Quill is clearing line formatting (e.g. { retain: 1, attributes: { header: null } }).
+								// StringLineAtom and StringTextAtom are distinct schema types in the tree,
+								// so we can't convert between them via formatRange — we must delete the
+								// StringLineAtom and insert a plain StringTextAtom("\n") in its place.
+								root.removeRange(cpPos, cpPos + 1);
+								root.insertAt(cpPos, "\n");
 							} else {
 								root.formatRange(cpPos, cpPos + cpCount, quillAttrsToPartial(op.attributes));
 							}
