@@ -6,17 +6,10 @@
 import { assert } from "./assert.js";
 import type { Measurement } from "./ResultTypes.js";
 
-/**
+/*
  * This file contains generic utilities of use to a test reporter,
  * especially for convenient formatting of textual output to the command line.
  */
-
-/**
- * Returns a string of `num` copies of `chr`.
- * @param num - Number of times to repeat `chr`.
- * @param chr - Character to repeat (space by default).
- */
-export const pad = (num: number, chr = " "): string => chr.repeat(num);
 
 /**
  * Nicely format a decimal number to make it human-readable.

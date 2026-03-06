@@ -5,16 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "../RunnerUtilities.js";
+import { formatMeasurementValue, geometricMean, prettyNumber } from "../RunnerUtilities.js";
 import { ValueType } from "../ResultTypes.js";
 
 describe("RunnerUtilities", () => {
-	it("pad", () => {
-		assert.equal(pad(3), "   ");
-		assert.equal(pad(3, "x"), "xxx");
-		assert.equal(pad(0), "");
-	});
-
 	describe("prettyNumber", () => {
 		it("formats a number with 3 decimal places by default", () => {
 			assert.equal(prettyNumber(1.5), "1.500");

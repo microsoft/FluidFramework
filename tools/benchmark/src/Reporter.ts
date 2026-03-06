@@ -45,7 +45,7 @@ import {
 	type BenchmarkResult,
 	type CollectedData,
 } from "./ResultTypes.js";
-import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./RunnerUtilities.js";
+import { formatMeasurementValue, geometricMean, prettyNumber } from "./RunnerUtilities.js";
 import { assert } from "./assert.js";
 import { testDurationName } from "./ResultUtilities.js";
 
@@ -147,9 +147,9 @@ export class BenchmarkReporter {
 		children.push(namedResult);
 
 		if (isResultError(result)) {
-			table.cell("status", `${pad(4)}${chalk.red("×")}`);
+			table.cell("status", `    ${chalk.red("×")}`);
 		} else {
-			table.cell("status", `${pad(4)}${chalk.green("✔")}`);
+			table.cell("status", `    ${chalk.green("✔")}`);
 		}
 
 		table.cell("name", chalk.italic(testName));
@@ -250,7 +250,7 @@ export class BenchmarkReporter {
 				statusSymbol = chalk.yellow("!");
 			}
 		}
-		this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
+		this.overallSummaryTable.cell("status", `    ${statusSymbol}`);
 		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));
 		this.overallSummaryTable.cell(
 			"# of passed tests",
