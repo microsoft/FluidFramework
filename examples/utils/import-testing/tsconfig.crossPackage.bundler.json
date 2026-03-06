@@ -1,0 +1,15 @@
+{
+	"extends": "./tsconfig.json",
+	"include": ["src/crossPackageSchemaExports.ts"],
+	// Override the exclude from tsconfig.json which excludes this file.
+	"exclude": [],
+	"compilerOptions": {
+		"outDir": "./lib/bundler",
+		// Use bundler resolution to reproduce TS 5.9's import path normalization bug:
+		// when all tree export tiers resolve to the same JS module (lib/index.js),
+		// TS 5.9's bundler emitter normalizes import("@fluidframework/tree/alpha")
+		// to import("@fluidframework/tree"), losing alpha-only types like ObjectNodeSchema.
+		"moduleResolution": "bundler",
+		"module": "esnext",
+	},
+}

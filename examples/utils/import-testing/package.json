@@ -22,13 +22,19 @@
 				"types": "./dist/crossPackageSchemaExports.d.ts",
 				"default": "./dist/crossPackageSchemaExports.js"
 			}
+		},
+		"./crossPackageSchemaBundler": {
+			"import": {
+				"types": "./lib/bundler/crossPackageSchemaExports.d.ts",
+				"default": "./lib/bundler/crossPackageSchemaExports.js"
+			}
 		}
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json && tsc --project ./tsconfig.crossPackage.json",
+		"build:esnext": "tsc --project ./tsconfig.json && tsc --project ./tsconfig.crossPackage.json && node ./node_modules/typescript-5.9/bin/tsc --project ./tsconfig.crossPackage.bundler.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
