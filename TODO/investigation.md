@@ -67,9 +67,23 @@ Likely similar to root cause 1 (SnapshotRefresher or similar timed objects), but
   - Added `makeSsm()` factory helper + `instancesToDispose` tracking array at outer describe scope
   - `afterEach` disposes all tracked instances, preventing 24h SnapshotRefresher timers from leaking
   - Removed `config.exit = true` from `.mocharc.cjs`
+- [x] Fix packages/runtime/container-runtime (3 spec files with ContainerRuntime not disposed)
+  - Root cause: GarbageCollector in ContainerRuntime creates MAX_INT32 timer on creation
+  - hardwareStats.spec.ts, runtimeLayerCompatValidation.spec.ts, containerRuntime.extensions.spec.ts
+  - Removed `config.exit = true` from `.mocharc.cjs`
+
+- [x] Fix packages/dds/tree (TestTreeProvider disposal)
+  - Root cause: LoaderContainerTracker skips non-interactive (summarizer) containers, so the
+    summarizer container created by `createSummarizer()` was never disposed
+  - Fix 1: Change `state: "disabled"` to `state: "summaryOnRequest"` for `SummarizeType.onDemand`
+    to prevent SummaryManager from spawning auto-summarizer containers with GC timers
+  - Fix 2: Capture `summarizerContainer` from `createSummarizer()` and dispose it explicitly
+    in `TestTreeProvider.dispose()`, clearing its GC session expiry timer
+  - Fix 3: Add `afterEach` cleanup in sharedTree.spec.ts and testTreeProvider.spec.ts
+  - Fix 4: Add `provider.dispose()` in `getIIDCompressor()` in nodeIdentifier.spec.ts
+  - Removed `config.exit = true` from `.mocharc.cjs`
 
 ### Todo
-- [ ] Fix packages/dds/tree (TestTreeProvider disposal)
 - [ ] Run diagnostics on packages/runtime/container-runtime
 - [ ] Run diagnostics on packages/framework/react
 - [ ] Fix remaining packages after root causes confirmed

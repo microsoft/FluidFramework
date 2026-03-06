@@ -157,6 +157,23 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
+	const providersToDispose: ITestTreeProvider[] = [];
+
+	afterEach(() => {
+		for (const provider of providersToDispose) {
+			provider.dispose();
+		}
+		providersToDispose.length = 0;
+	});
+
+	async function makeProvider(
+		...args: Parameters<typeof TestTreeProvider.create>
+	): Promise<ITestTreeProvider> {
+		const provider = await TestTreeProvider.create(...args);
+		providersToDispose.push(provider);
+		return provider;
+	}
+
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
@@ -319,7 +336,7 @@ describe("SharedTree", () => {
 
 	it("handle in op", async () => {
 		// TODO: ADO#7111 schema should be specified to enable compressed encoding.
-		const provider = await TestTreeProvider.create(
+		const provider = await makeProvider(
 			2,
 			SummarizeType.disabled,
 			configuredSharedTree({
@@ -389,7 +406,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can be connected to another tree", async () => {
-		const provider = await TestTreeProvider.create(2);
+		const provider = await makeProvider(2);
 		assert(provider.trees[0].isAttached());
 		assert(provider.trees[1].isAttached());
 
@@ -416,7 +433,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can summarize and load", async () => {
-		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const provider = await makeProvider(1, SummarizeType.onDemand);
 		const value = 42;
 		provider.trees[0]
 			.viewWith(
@@ -553,7 +570,7 @@ describe("SharedTree", () => {
 			});
 
 			it("on a client which uploaded a blob", async () => {
-				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+				const provider = await makeProvider(1, SummarizeType.onDemand);
 				await provider.ensureSynchronized();
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
@@ -570,7 +587,7 @@ describe("SharedTree", () => {
 
 		describe("uploads new schema data", () => {
 			it("without incremental summary context", async () => {
-				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+				const provider = await makeProvider(1, SummarizeType.onDemand);
 				await provider.ensureSynchronized();
 				const summaryTree = await provider.trees[0].summarize();
 				const indexes = summaryTree.summary.tree.indexes;
@@ -585,7 +602,7 @@ describe("SharedTree", () => {
 			});
 
 			it("when it has changed since the last summary", async () => {
-				const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+				const provider = await makeProvider(1, SummarizeType.onDemand);
 				await provider.ensureSynchronized();
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
@@ -609,7 +626,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can load from summary", async () => {
-		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const provider = await makeProvider(1, SummarizeType.onDemand);
 		const [tree1] = provider.trees;
 
 		const view1 = tree1.viewWith(
@@ -640,7 +657,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can process ops after loading from summary", async () => {
-		const provider = await TestTreeProvider.create(3, SummarizeType.onDemand);
+		const provider = await makeProvider(3, SummarizeType.onDemand);
 		const [container1, container2, container3] = provider.containers;
 		const [tree1, tree2, tree3] = provider.trees;
 
@@ -714,7 +731,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can load a summary from a tree and receive edits of the new state", async () => {
-		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const provider = await makeProvider(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 		const view = summarizingTree.viewWith(
 			new TreeViewConfiguration({
@@ -787,7 +804,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can load a summary from a tree and receive edits that require detached tree refreshers", async () => {
-		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const provider = await makeProvider(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 		const view = summarizingTree.viewWith(
 			new TreeViewConfiguration({
@@ -842,7 +859,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view.root], ["A", "C"]);
 			view.dispose();
 		};
-		const provider = await TestTreeProvider.create(
+		const provider = await makeProvider(
 			1,
 			SummarizeType.onDemand,
 			new SharedTreeTestFactory(onCreate),
@@ -882,7 +899,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view.root], ["A", "C"]);
 			view.dispose();
 		};
-		const provider = await TestTreeProvider.create(
+		const provider = await makeProvider(
 			1,
 			SummarizeType.onDemand,
 			new SharedTreeTestFactory(onCreate),
@@ -924,7 +941,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...viewUpgrade.root], ["A", "C"]);
 			viewUpgrade.dispose();
 		};
-		const provider = await TestTreeProvider.create(
+		const provider = await makeProvider(
 			1,
 			SummarizeType.onDemand,
 			new SharedTreeTestFactory(onCreate),
@@ -1017,11 +1034,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...viewInit.root], ["A", "B"]);
 			viewInit.dispose();
 		};
-		const provider = await TestTreeProvider.create(
-			1,
-			undefined,
-			new SharedTreeTestFactory(onCreate),
-		);
+		const provider = await makeProvider(1, undefined, new SharedTreeTestFactory(onCreate));
 		const view = provider.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
@@ -1957,7 +1970,7 @@ describe("SharedTree", () => {
 
 	describe("Rebasing", () => {
 		it("rebases stashed ops with prior state present", async () => {
-			const provider = await TestTreeProvider.create(2);
+			const provider = await makeProvider(2);
 			const tree1 = provider.trees[0];
 			const view1 = tree1.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
@@ -2004,7 +2017,7 @@ describe("SharedTree", () => {
 
 	describe("tolerates open async transactions in the face of inbound commits", () => {
 		it("committed transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
+			const provider = await makeProvider(2);
 			const tree1 = provider.trees[0];
 			const tree2 = provider.trees[1];
 			const config = new TreeViewConfiguration({
@@ -2036,7 +2049,7 @@ describe("SharedTree", () => {
 		});
 
 		it("aborted transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
+			const provider = await makeProvider(2);
 			const tree1 = provider.trees[0];
 			const tree2 = provider.trees[1];
 			const config = new TreeViewConfiguration({
@@ -2235,11 +2248,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...parentView.root], ["C", "B", "A"]);
 			parentView.dispose();
 		};
-		const provider = await TestTreeProvider.create(
-			1,
-			undefined,
-			new SharedTreeTestFactory(onCreate),
-		);
+		const provider = await makeProvider(1, undefined, new SharedTreeTestFactory(onCreate));
 		const [tree] = provider.trees;
 		assert.deepEqual(
 			[
@@ -2272,7 +2281,7 @@ describe("SharedTree", () => {
 
 	describe("Schema changes", () => {
 		it("handles two trees schematizing identically at the same time", async () => {
-			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+			const provider = await makeProvider(2, SummarizeType.disabled);
 			const [tree1, tree2] = provider.trees;
 			const value1 = "42";
 			const value2 = "42";
@@ -2332,7 +2341,7 @@ describe("SharedTree", () => {
 		// Undoing schema changes is not supported because it may render some of the forest contents invalid.
 		// This may be revisited in the future.
 		it.skip("can be undone at the tip", async () => {
-			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
+			const provider = await makeProvider(2, SummarizeType.disabled);
 
 			const tree = provider.trees[0];
 			const { undoStack } = createTestUndoRedoStacks(tree.kernel.checkout.events);
@@ -2362,7 +2371,7 @@ describe("SharedTree", () => {
 		// This doesn't bubble up b/c of issues using TestTreeProvider without proper listening to errors coming
 		// from containers.
 		it("can apply and resubmit stashed schema ops", async () => {
-			const provider = await TestTreeProvider.create(2);
+			const provider = await makeProvider(2);
 
 			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
@@ -2501,7 +2510,7 @@ describe("SharedTree", () => {
 				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			}).getFactory();
-			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
+			const provider = await makeProvider(1, SummarizeType.onDemand, factory);
 			provider.trees[0]
 				.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }))
 				.initialize(["A", "B", "C"]);
@@ -2547,7 +2556,7 @@ describe("SharedTree", () => {
 				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			}).getFactory();
-			const provider2 = await TestTreeProvider.create(1, SummarizeType.onDemand, factory2);
+			const provider2 = await makeProvider(1, SummarizeType.onDemand, factory2);
 
 			provider2.trees[0]
 				.viewWith(
@@ -2837,7 +2846,7 @@ describe("SharedTree", () => {
 		] as const) {
 			it(subCase, async () => {
 				const internalOption = resolveOptions({ enableSharedBranches: true });
-				const provider = await TestTreeProvider.create(
+				const provider = await makeProvider(
 					1,
 					SummarizeType.onDemand,
 					new SharedTreeTestFactory(() => {}, undefined, internalOption),

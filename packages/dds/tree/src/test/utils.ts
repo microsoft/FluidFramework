@@ -273,6 +273,7 @@ export class TestTreeProvider {
 	private readonly _trees: ISharedTree[] = [];
 	private readonly _containers: IContainer[] = [];
 	private readonly summarizer?: ISummarizer;
+	private readonly summarizerContainer?: IContainer;
 
 	public get trees(): readonly ISharedTree[] {
 		return this._trees;
@@ -321,8 +322,23 @@ export class TestTreeProvider {
 				),
 				{
 					summaryOptions: {
+						// For onDemand, use the manually-created summarizer (via createSummarizer below).
+						// Using "summaryOnRequest" prevents SummaryManager from creating an auto-summarizer
+						// on interactive containers asynchronously — which could escape tracking and leave
+						// GC and SummarizeHeuristicRunner timers alive after the test completes.
+						// Unlike "disabled", "summaryOnRequest" still allows summarizer containers to
+						// create their Summarizer instance (needed by createSummarizer()).
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
+							summarizeType === SummarizeType.disabled
+								? { state: "disabled" }
+								: summarizeType === SummarizeType.onDemand
+									? {
+											state: "summaryOnRequest",
+											initialSummarizerDelayMs: 0,
+											maxAckWaitTime: 20000,
+											maxOpsSinceLastSummary: 7000,
+										}
+									: undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
@@ -333,11 +349,15 @@ export class TestTreeProvider {
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
 			const firstTree = await this.getTree(container);
-			const { summarizer } = await createSummarizer(objProvider, container);
+			const { summarizer, container: summarizerContainer } = await createSummarizer(
+				objProvider,
+				container,
+			);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
 				firstTree,
 				summarizer,
+				summarizerContainer,
 			]) as ITestTreeProvider;
 			for (let i = 1; i < trees; i++) {
 				await provider.createTree();
@@ -400,16 +420,40 @@ export class TestTreeProvider {
 		return this.trees[Symbol.iterator]();
 	}
 
+	/**
+	 * Dispose the underlying test driver to free resources (e.g. local server timers).
+	 * Call this in afterEach/after hooks for tests that use this provider.
+	 */
+	public dispose(): void {
+		// Close all tracked containers and reset the tracker.
+		this.provider.resetLoaderContainerTracker();
+		// Dispose each container to trigger ContainerRuntime.dispose(), which clears the
+		// GarbageCollector session expiry timer that would otherwise keep the process alive.
+		for (const container of this._containers) {
+			if (container.disposed !== true) {
+				container.dispose();
+			}
+		}
+		// The summarizer container is not tracked by LoaderContainerTracker (it skips non-interactive
+		// clients), so we must dispose it explicitly to clear its GC session expiry timer.
+		if (this.summarizerContainer !== undefined && this.summarizerContainer.disposed !== true) {
+			this.summarizerContainer.dispose();
+		}
+		// Dispose the driver to release local server resources (e.g. DeliLambda timers).
+		this.provider.driver.dispose?.();
+	}
+
 	private constructor(
 		provider: ITestObjectProvider,
-		firstTreeParams?: [IContainer, ISharedTree, ISummarizer],
+		firstTreeParams?: [IContainer, ISharedTree, ISummarizer, IContainer],
 	) {
 		this.provider = provider;
 		if (firstTreeParams !== undefined) {
-			const [container, firstTree, summarizer] = firstTreeParams;
+			const [container, firstTree, summarizer, summarizerContainer] = firstTreeParams;
 			this._containers.push(container);
 			this._trees.push(firstTree);
 			this.summarizer = summarizer;
+			this.summarizerContainer = summarizerContainer;
 		}
 		return new Proxy(this, {
 			get: (target, prop, receiver) => {
