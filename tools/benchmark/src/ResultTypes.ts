@@ -61,7 +61,7 @@ export interface Measurement {
  * while others might show secondary measurements with an option to include diagnostic measurements as well.
  *
  * This is unrelated to statistical significance,
- * though often secondary measurements are used to details like margin of error
+ * though often secondary measurements are used for details like margin of error
  * which can be used to determine statistical significance.
  * @public
  */

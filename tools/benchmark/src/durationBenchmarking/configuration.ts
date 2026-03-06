@@ -117,16 +117,16 @@ export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
  * These options control how many batches are collected and how long the benchmark runs.
  *
  * A **batch** is a timed group of `iterationsPerBatch` operations
- * (typically calls to consecutive calls to `benchmarkFn` or `benchmarkFnAsync`).
+ * (typically consecutive calls to `benchmarkFn` or `benchmarkFnAsync`).
  * Batching is necessary for fast operations whose individual execution time is shorter than
  * the timer resolution: by running many iterations in one timed block and dividing the runtime,
  * an accurate per-operation time can be obtained.
  *
  * The framework runs a warmup batch, then grows `iterationsPerBatch` until each batch meets
  * `minBatchDurationSeconds`, then collects data batches.
- * Data collection stops when once at least `minBatchCount` batches have been collected and either:
+ * Data collection stops once at least `minBatchCount` batches have been collected and either:
  * - The relative margin of error of the arithmetic mean based on collected batches is below 1%.
- * - The total elapsed time has exceeds `maxBenchmarkDurationSeconds`.
+ * - The total elapsed time exceeds `maxBenchmarkDurationSeconds`.
  *
  * For benchmarks of impure functions (where successive calls produce different results),
  * use {@link DurationBenchmarkCustom} to perform any necessary per-batch reset
@@ -225,7 +225,7 @@ export interface HookArguments {
 }
 
 /**
- * Validates arguments to `benchmark`.
+ * Validates a `DurationBenchmarkSync | DurationBenchmarkAsync` and determines if it is async.
  */
 export function validateBenchmarkArguments(
 	args: DurationBenchmarkSync | DurationBenchmarkAsync,
@@ -247,7 +247,7 @@ export function validateBenchmarkArguments(
 }
 
 /**
- * Validates arguments to `benchmark`.
+ * Returns true if `args` is a {@link DurationBenchmarkCustom}.
  */
 export function benchmarkArgumentsIsCustom(
 	args: DurationBenchmark,

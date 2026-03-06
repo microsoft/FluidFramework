@@ -104,12 +104,9 @@ const tTable = {
  * This assumes the data is a sample taken from an infinite population and thus reports sample variance.
  *
  * @param array - List of numbers for which to compute the statistics.
- * @param fractionOfSamplesToUse - Percentage of samples to use to get the statistics. The samples at the extremes
- * (lowest, highest) are the ones that get discarded. If an odd number of samples need to be discarded, 1 more sample
- * is discarded from the higher end than the lower end.
- *
- * @remarks
- * This outputs the same object that the Benchmark.js library does.
+ * @param fractionOfSamplesToUse - Fraction of samples to use. The samples at the extremes
+ * (lowest and highest) are discarded. If an odd number of samples must be discarded, one extra
+ * is dropped from the high end.
  */
 export function getArrayStatistics(array: number[], fractionOfSamplesToUse: number = 1): Stats {
 	if (fractionOfSamplesToUse < 0.1 || fractionOfSamplesToUse > 1) {

@@ -21,7 +21,7 @@ import { getName, getSuiteName } from "./mocha/mochaReporterUtilities.js";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
- * The path of the output file can be controlled with --reporterOptions reportDir=<path>.
+ * The path of the output file can be controlled with --reporterOptions reportFile=<path>.
  * Mocha expects the `exports` of the reporter module to be a constructor accepting a `Mocha.Runner`, so we
  * match that here.
  *

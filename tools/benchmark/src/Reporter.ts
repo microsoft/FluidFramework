@@ -339,7 +339,7 @@ function suiteNodeToReportSuite(node: SuiteNode): ReportSuite | undefined {
 }
 
 /**
- * Recursively converts a array of suite children into a {@link ReportArray} for JSON output.
+ * Recursively converts an array of suite children into a {@link ReportArray} for JSON output.
  */
 function suiteChildrenToReportSuite(children: readonly (SuiteNode | NamedResult)[]): ReportArray {
 	const contents: (ReportSuite | ReportEntry)[] = [];

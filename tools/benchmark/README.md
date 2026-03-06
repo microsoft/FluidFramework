@@ -102,7 +102,7 @@ Look at the documentation for `DurationBenchmark` and `BenchmarkTimingOptions` f
 
 ## Profiling custom measurements
 
-To report fully custom measurements, call `benchmarkIt` directly and provide a `run` function that returns a `CollectedData` array:
+To report fully custom measurements, call `benchmarkIt` directly and provide a `run` function that returns a `CollectedData`:
 
 ```typescript
 benchmarkIt({
@@ -154,7 +154,7 @@ benchmarkIt({
 	title: "My memory test",
 	...benchmarkMemoryUse({
 		benchmarkFn: async (state) => {
-			// If you test requires one time setup, do it here:
+			// If your test requires one-time setup, do it here:
 			const holder: { value: unknown } = { value: undefined };
 			while (state.continue()) {
 				// Do any required per iteration setup here
@@ -183,11 +183,11 @@ That function receives a `MemoryUseCallbacks` object and must loop until `state.
 this pattern each iteration:
 
 1.  Release references to any memory allocated in the previous iteration (so GC can reclaim it).
-2.  Setup anything needed to do the allocation under test that should not be included in the measurement.
+2.  Set up anything needed to do the allocation under test that should not be included in the measurement.
 3.  `state.beforeAllocation()` — GC runs and a baseline "before" heap measurement is taken.
 4.  Do the operation whose memory allocation you want to measure.
 5.  `state.whileAllocated()` — GC runs and an "after allocation" heap measurement is taken.
-6.  _(Optional)_ Free memory, then call `state.afterDeallocation()` — if called, GC runs and a "after deallocation" heap measurement is taken as well.
+6.  _(Optional)_ Free memory, then call `state.afterDeallocation()` — if called, GC runs and an "after deallocation" heap measurement is taken as well.
 
 The benchmark reports the mean heap difference between the "while allocated" and "before" readings across iterations.
 Memory must not accumulate across iterations (i.e. what you allocate in step 4 must be fully releasable).
