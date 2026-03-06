@@ -9,16 +9,23 @@
 -   Suites with colliding names now emit a warning and a disambiguation number is added as a suffix.
 -   Multiple benchmarks with the same name in the same suite no longer overwrite results, and emit a warning.
 -   Include ArrayBuffer memory usage.
+-   New `benchmarkDuration` and `benchmarkMemoryUse` helpers cover the common mocha use cases for duration and memory benchmarks respectively.
+-   `benchmark` and `benchmarkCustom` are still exported but are now considered legacy; prefer `benchmarkIt` or the new typed helpers.
 
 ### ⚠ BREAKING CHANGES
 
--   Mocha specific API surface reduced to `benchmarkIt` which can be used to wrap any kind of benchmark for use in mocha. All tests will need to be edited to accommodate this.
--   Naming of types and functions are now clear about duration vs memory: most type imports will need to be updated to accommodate this.
+-   Mocha specific API surface reduced to `benchmarkIt` which can be used to wrap any kind of benchmark for use in mocha. Most tests will need to be edited to accommodate this. Some limited support for the old APIs have been kept as deprecated functions.
+-   `BenchmarkData` and `CustomData` have been removed. Use `CollectedData` and `Measurement` instead.
+-   Duration benchmark argument types have been renamed: `BenchmarkArguments` → `DurationBenchmark`, `BenchmarkSyncArguments` → `DurationBenchmarkSync`, `BenchmarkAsyncArguments` → `DurationBenchmarkAsync`, `CustomBenchmark` / `CustomBenchmarkArguments` → `DurationBenchmarkCustom`.
+-   `runBenchmark` has been renamed to `collectDurationData`. It now returns `CollectedData` instead of `BenchmarkData`.
+-   `captureResults` now runs the callback instead of returning a wrapper around it.
 -   Memory benchmarks now require sampling memory before during and after the allocation being measured is retained in memory to allow for the test to know what it's supposed to measure and sanity check that the test is freeing it properly. As this is an entirely different API, all memory tests will need significant changes.
 -   Formatting of the output json results files has changed: code consuming them will have to be updated.
--   Reporter now accepts `reportFile` instead of `reportDir`, and saves results to a single file.
+-   `isResultError`, `prettyNumber`, `geometricMean`, and `Stats` are no longer exported from the package.
+-   Reporter now accepts `reportFile` instead of `reportDir`, and saves results to a single JSON file.
 -   Reporter now only writes a file if a path was provided: there is no longer a default path.
 -   `MochaReporter` is now provided at `@fluid-tools/benchmark/dist/mocha/Reporter.js` instead of `@fluid-tools/benchmark/dist/MochaReporter.js`
+-   Report JSON files now include error results alongside passing results. `ReportEntry.data` is `BenchmarkResult`, which may be either `CollectedData` or `BenchmarkError`.
 
 ## 0.52.0
 
