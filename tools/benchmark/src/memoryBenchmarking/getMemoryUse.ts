@@ -95,7 +95,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 	const data: MemoryMeasurement[] = [];
 	const unset = -1;
 
-	// Likely due to JIT behavior, the first couple, then often the 11 and 12 iterations tend to be different (13 for async GC cases).
+	// Likely due to JIT behavior, the first couple of iterations and often the 11th and 12th tend to be outliers (13th for async GC cases).
 	// To mitigate this we trim some samples from the beginning.
 	const trimCount = isInPerformanceTestingMode ? args.warmUpIterations : 0;
 	const count = trimCount + (isInPerformanceTestingMode ? args.keepIterations : 1);

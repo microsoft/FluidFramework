@@ -51,7 +51,7 @@ export enum BenchmarkType {
 	Diagnostic,
 
 	/**
-	 * Tests which verify correctness of the `benchmark` helper library. Generally not useful for any other scenario.
+	 * Tests which verify correctness of this benchmarking library. Generally not useful for any other scenario.
 	 */
 	OwnCorrectness,
 }
@@ -130,24 +130,23 @@ export interface BenchmarkFunction {
 }
 
 /**
- * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take in
- * an options object extending this interface should use the corresponding `it.only` or `describe.only` variants
+ * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take
+ * an options object extending this interface should use the corresponding `it.only` or `describe.only` variants.
  * @public
  * @input
  */
 export interface MochaExclusiveOptions {
 	/**
-	 * When true, `mocha`-provided functions should use their `.only` counterparts (so as to aid individual test runs)
+	 * When true, `mocha`-provided functions should use their `.only` counterparts to aid individual test runs.
 	 */
 	readonly only?: boolean;
 }
 
 /**
- * Tags and formats the provided Title from the supplied {@link BenchmarkDescription} to create a
- * tagged and formatted Title for the Reporter.
+ * Formats and tags the title from the supplied {@link BenchmarkDescription} for use by the reporter.
  *
  * @param args - See {@link BenchmarkDescription} and {@link Titled}
- * @returns A formatted tagged title from the supplied `BenchmarkDescription`.
+ * @returns A tagged, formatted title.
  *
  * @public
  */

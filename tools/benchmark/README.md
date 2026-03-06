@@ -21,9 +21,9 @@ like this:
 
 ### `--perfMode` (required)
 
-Indicates that the tests should be run as profiling instead of just correctness tests.
-When run like this, many iterations will be run for tests that require it and measured,
-but when run as correctness tests only one iteration will be run and no measuring will take place.
+Enables performance-testing mode instead of correctness-test mode.
+In performance-testing mode, many iterations are run and measured for each test.
+In correctness-test mode, only one iteration is run and no measurement takes place.
 
 ### `--v8-expose-gc` (required)
 
@@ -52,12 +52,12 @@ If omitted, no file is written (results are still printed to the console).
 
 ### `--parentProcess`
 
-If you pass this **optional** flag, child processes will be forked for performance tests which support this.
-The forked process will run only that test, and propagate the results back to the parent.
+If you pass this **optional** flag, each performance test is run in a forked child process.
+The forked process runs only that test and propagates the results back to the parent.
 This can have significant overhead (the child process reruns mocha test discovery which may incur significant startup cost,
-in addition to the overhead of forking NodeJS), but can be used to reduce influences of previous tests on the state of
+in addition to the overhead of forking NodeJS), but reduces influences of previous tests on the state of
 the JIT and heap.
-If you want to use this, you'll want to test it thoroughly in your scenario to make sure the tradeoffs make sense.
+Test this thoroughly in your scenario to make sure the tradeoffs are worthwhile.
 
 ## Profiling durations
 
@@ -157,7 +157,7 @@ benchmarkIt({
 			// If your test requires one-time setup, do it here:
 			const holder: { value: unknown } = { value: undefined };
 			while (state.continue()) {
-				// Do any required per iteration setup here
+				// Release the previous allocation, then do any per-iteration setup.
 				holder.value = undefined;
 				// Collect a baseline "before" heap measurement.
 				await state.beforeAllocation();

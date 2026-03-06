@@ -139,7 +139,7 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 	}
 	mean /= n;
 
-	// We want the the sample variance, not population variance (since the dataset is only a subset of the infinite population of possible samples).
+	// We want the sample variance, not population variance (since the dataset is only a subset of the infinite population of possible samples).
 	// Therefore there is additional variance due to how the population is sampled which is accounted for by using `n - 1` here,
 	// See https://en.wikipedia.org/wiki/Variance#Population_variance_and_sample_variance.
 	const variance = finalSamples.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / (n - 1);

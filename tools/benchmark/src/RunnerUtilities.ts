@@ -12,9 +12,9 @@ import type { Measurement } from "./ResultTypes.js";
  */
 
 /**
- * Creates and returns a padding string consisting of `num` copies of `chr`
- * @param num - Number of characters to pad
- * @param chr - Character to use for padding (space by default)
+ * Returns a string of `num` copies of `chr`.
+ * @param num - Number of times to repeat `chr`.
+ * @param chr - Character to repeat (space by default).
  */
 export const pad = (num: number, chr = " "): string => chr.repeat(num);
 

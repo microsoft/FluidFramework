@@ -9,10 +9,10 @@ import { timer } from "./timer.js";
 
 /**
  * Wraps a benchmark function, measuring its total execution time and capturing either its
- * {@link CollectedData} result (adding in the "Test Duration" measurement) or any thrown exception as a {@link BenchmarkResult}.
+ * {@link CollectedData} result (with an appended "Test Duration" measurement) or any thrown exception as a {@link BenchmarkError}.
  * @remarks
  * Useful for wrapping the body of benchmarks.
- * Users of mocha can use {@link benchmarkIt} which is built on this.
+ * Mocha users can use {@link benchmarkIt}, which is built on this.
  * @public
  */
 export function captureResults(
