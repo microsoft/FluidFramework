@@ -9,6 +9,11 @@ import { captureResults } from "../ResultUtilities.js";
 import { timer } from "../timer.js";
 import { supportParentProcessInner } from "./runner.js";
 
+/*
+ * Users of this package should be able to author utilities like this for testing tools other than mocha.
+ * Therefore, this file should not rely on non-public APIs, except for the mocha specific stuff (like supportParentProcessInner).
+ */
+
 /**
  * This is a wrapper for Mocha's `it` function which runs the specified benchmark.
  * @remarks

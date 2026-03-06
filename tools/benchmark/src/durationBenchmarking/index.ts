@@ -14,4 +14,4 @@ export type {
 	HookFunction,
 	HookArguments,
 } from "./configuration.js";
-export { Phase, benchmarkDuration, collectDurationData } from "./getDuration.js";
+export { Phase, benchmarkDuration, collectDurationData, runBenchmarkSync } from "./getDuration.js";

@@ -38,6 +38,7 @@ export {
 	type DurationBenchmarkCustom,
 	Phase,
 	collectDurationData,
+	runBenchmarkSync,
 	benchmarkDuration,
 } from "./durationBenchmarking/index.js";
 export { benchmarkIt } from "./mocha/index.js";
@@ -52,7 +53,8 @@ export {
 	Measurement,
 	ValueType,
 } from "./ResultTypes.js";
-export type { Timer } from "./timer.js";
+export { timer, type Timer } from "./timer.js";
+export { captureResults } from "./ResultUtilities.js";
 
 export {
 	MemoryUseBenchmark,

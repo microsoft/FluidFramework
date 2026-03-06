@@ -118,7 +118,6 @@ export interface BenchmarkDescription {
 
 /**
  * Options to configure a benchmark that reports custom measurements.
- *
  * @public
  * @input
  */
@@ -211,17 +210,6 @@ export const performanceTestSuiteTag = "@Benchmark";
  * writing the test name in reporters.
  */
 export const userCategoriesSplitter = ":ff-cat:";
-
-/**
- * Options for the mocha reporter.
- */
-export interface ReporterOptions {
-	/**
-	 * Path to write the combined benchmark results JSON file to.
-	 * If not provided, no file is written.
-	 */
-	readonly reportFile?: string;
-}
 
 /**
  * Options to configure a benchmark test.

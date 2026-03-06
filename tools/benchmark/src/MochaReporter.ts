@@ -6,13 +6,18 @@
 import chalk from "chalk";
 import { Runner, type Suite, type Test, type Hook } from "mocha";
 
-import { isChildProcess, type ReporterOptions } from "./Configuration.js";
+import { isChildProcess } from "./Configuration.js";
 import { BenchmarkReporter } from "./Reporter.js";
 import type { BenchmarkResult, BenchmarkError } from "./ResultTypes.js";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
 // Since it's not moved yet, it needs this lint suppression to do this import:
 // eslint-disable-next-line import-x/no-internal-modules
 import { getName, getSuiteName } from "./mocha/mochaReporterUtilities.js";
+
+/*
+ * Users of this package should be able to author utilities like this for testing tools other than mocha.
+ * Therefore, this file should not rely on non-public APIs, except for the mocha specific stuff (like isChildProcess).
+ */
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
@@ -106,3 +111,14 @@ module.exports = class {
 			});
 	}
 };
+
+/**
+ * Options for the mocha reporter.
+ */
+interface ReporterOptions {
+	/**
+	 * Path to write the combined benchmark results JSON file to.
+	 * If not provided, no file is written.
+	 */
+	readonly reportFile?: string;
+}

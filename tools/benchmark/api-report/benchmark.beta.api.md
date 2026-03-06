@@ -84,6 +84,12 @@ export enum BenchmarkType {
 }
 
 // @public
+export function captureResults(f: () => CollectedData | Promise<CollectedData>): () => Promise<{
+    result: BenchmarkResult;
+    exception?: Error;
+}>;
+
+// @public
 export function collectDurationData(args: DurationBenchmark): Promise<CollectedData>;
 
 // @public
@@ -199,6 +205,9 @@ export interface ReportSuite {
     readonly suiteName: string;
 }
 
+// @public
+export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData;
+
 // @public (undocumented)
 export enum TestType {
     ExecutionTime = 0,
@@ -210,6 +219,9 @@ export interface Timer<T = unknown> {
     now(): T;
     toSeconds(before: T, after: T): number;
 }
+
+// @public
+export const timer: Timer;
 
 // @public @input
 export interface Titled {
