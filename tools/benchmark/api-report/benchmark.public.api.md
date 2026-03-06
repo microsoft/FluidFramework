@@ -190,7 +190,7 @@ export interface ReportEntry {
     // (undocumented)
     readonly benchmarkName: string;
     // (undocumented)
-    readonly data: CollectedData;
+    readonly data: BenchmarkResult;
 }
 
 // @public

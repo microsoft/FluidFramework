@@ -37,12 +37,7 @@ import * as path from "node:path";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import {
-	isResultError,
-	ValueType,
-	type BenchmarkResult,
-	type CollectedData,
-} from "./ResultTypes.js";
+import { isResultError, ValueType, type BenchmarkResult } from "./ResultTypes.js";
 import { formatMeasurementValue, geometricMean, prettyNumber } from "./RunnerUtilities.js";
 import { assert } from "./assert.js";
 import { testDurationName } from "./ResultUtilities.js";
@@ -346,9 +341,7 @@ function buildReportArray(children: readonly (SuiteNode | NamedResult)[]): Repor
 				contents.push({ suiteName: child.localName, contents: childContents });
 			}
 		} else {
-			if (!isResultError(child.result)) {
-				contents.push({ benchmarkName: child.name, data: child.result });
-			}
+			contents.push({ benchmarkName: child.name, data: child.result });
 		}
 	}
 	return contents;
@@ -360,13 +353,12 @@ function buildReportArray(children: readonly (SuiteNode | NamedResult)[]): Repor
  */
 export interface ReportEntry {
 	readonly benchmarkName: string;
-	readonly data: CollectedData;
+	readonly data: BenchmarkResult;
 }
 
 /**
  * A suite containing benchmark results and/or child suites.
  * @remarks
- * This only includes passing tests.
  * When using mocha, this corresponds to the contents of a describe block,
  * which may include both it blocks and nested describe blocks.
  * @public
@@ -379,7 +371,7 @@ export interface ReportSuite {
 /**
  * The type that is JSON-serialized and written to disk for a test suite.
  * @remarks
- * This only includes passing tests and non-empty suites.
+ * This only includes non-empty suites.
  * When using mocha, this corresponds to the contents of a describe block,
  * which may include both it blocks and nested describe blocks.
  * @public

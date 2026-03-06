@@ -74,7 +74,7 @@ describe("BenchmarkReporter", () => {
 			fs.rmSync(tmpDir, { recursive: true, force: true });
 		});
 
-		it("writes passing results and excludes errors", async () => {
+		it("writes both passing and error results", async () => {
 			await withSilentConsole(async () => {
 				const reporter = new BenchmarkReporter(outputFile);
 				reporter.beginSuite("MySuite");
@@ -85,16 +85,19 @@ describe("BenchmarkReporter", () => {
 			});
 
 			const output = JSON.parse(fs.readFileSync(outputFile, "utf8")) as ReportArray;
-			assert.equal(output.length, 1, "only the passing suite should be present");
+			assert.equal(output.length, 1);
 			const suite = output[0] as ReportSuite;
 			assert.equal(suite.suiteName, "MySuite");
-			assert.equal(suite.contents.length, 1, "only passing test should be in contents");
-			const entry = suite.contents[0] as ReportEntry;
-			assert.equal(entry.benchmarkName, "passing test");
-			assert.deepEqual(entry.data, successResult);
+			assert.equal(suite.contents.length, 2);
+			const passing = suite.contents[0] as ReportEntry;
+			assert.equal(passing.benchmarkName, "passing test");
+			assert.deepEqual(passing.data, successResult);
+			const failing = suite.contents[1] as ReportEntry;
+			assert.equal(failing.benchmarkName, "failing test");
+			assert.deepEqual(failing.data, errorResult);
 		});
 
-		it("omits suites that contain only errors", async () => {
+		it("includes suites that contain only errors", async () => {
 			await withSilentConsole(async () => {
 				const reporter = new BenchmarkReporter(outputFile);
 				reporter.beginSuite("AllErrors");
@@ -104,7 +107,11 @@ describe("BenchmarkReporter", () => {
 			});
 
 			const output = JSON.parse(fs.readFileSync(outputFile, "utf8")) as ReportArray;
-			assert.equal(output.length, 0);
+			assert.equal(output.length, 1);
+			const suite = output[0] as ReportSuite;
+			assert.equal(suite.suiteName, "AllErrors");
+			assert.equal(suite.contents.length, 1);
+			assert.equal((suite.contents[0] as ReportEntry).benchmarkName, "bad test");
 		});
 
 		it("writes nested suites correctly", async () => {
