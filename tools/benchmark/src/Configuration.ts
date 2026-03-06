@@ -10,17 +10,17 @@ import type { Timer } from "./timer.js";
 /**
  * Kinds of benchmarks.
  *
- * Example: if you have two tests on the same scenario,
- * one with and one without a feature so you can see the actual cost of that feature,
- * the test with the feature enabled should be Measurement, but the baseline you compare it to should be Perspective.
+ * Example: if you have two tests on the same scenario —
+ * one with a feature enabled and one without — the test with the feature should be `Measurement`,
+ * and the baseline should be `Perspective`.
  *
- * When comparing two versions looking for changes: run `Measurement` tests.
+ * When comparing two versions for regressions: run `Measurement` tests.
  *
- * When looking at a single version (ex: current main branch) and looking for places to optimize:
+ * When profiling a single version (e.g., the current main branch) for optimization opportunities:
  * run `Measurement` and `Perspective` tests.
  *
- * When looking into a specific issue (either with performance or the performance tests):
- * use `.only` to restrict to the relevant tests and run all tests (`Perspective`, `Measurement` and `Diagnostic`).
+ * When investigating a specific issue: use `.only` to restrict mocha to the relevant tests,
+ * then run without a type filter so all types (`Perspective`, `Measurement`, and `Diagnostic`) are included.
  *
  * @public
  */
@@ -137,7 +137,7 @@ export interface BenchmarkFunction {
  */
 export interface MochaExclusiveOptions {
 	/**
-	 * When true, `mocha`-provided functions should use their `.only` counterparts to aid individual test runs.
+	 * When true, `mocha`-provided functions use their `.only` counterparts to restrict the run to this test.
 	 */
 	readonly only?: boolean;
 }

@@ -78,8 +78,7 @@ function isSuiteNode(item: SuiteNode | NamedResult): item is SuiteNode {
  * Collects and formats performance data for a sequence of suites of benchmarks.
  * Data must be provided in the form of one {@link CollectedData} for each test in each suite.
  *
- * The data will be aggregated and processed.
- * Human friendly tables are logged to the console, and a machine friendly version is logged to json files.
+ * Human-friendly tables are logged to the console, and a machine-friendly version is written to a JSON file.
  * @public
  */
 export class BenchmarkReporter {
@@ -89,7 +88,7 @@ export class BenchmarkReporter {
 	private readonly overallSummaryTable: Table = new Table();
 
 	/**
-	 * Stack of the currently open suites nodes (most-recently-opened at the end).
+	 * Stack of currently open suite nodes (most-recently-opened at the end).
 	 * Index 0 holds a special root that holds top-level content.
 	 * Pushed by {@link BenchmarkReporter.beginSuite} and popped by {@link BenchmarkReporter.recordSuiteResults}.
 	 */
@@ -172,8 +171,7 @@ export class BenchmarkReporter {
 
 	/**
 	 * Marks the current suite (stack top) as complete, prints its console table, and accumulates summary stats.
-	 * Calling this is optional since {@link BenchmarkReporter.recordResultsSummary} will call it automatically
-	 * for any remaining open suites.
+	 * Must be called once for each {@link BenchmarkReporter.beginSuite} call, before {@link BenchmarkReporter.recordResultsSummary}.
 	 */
 	public recordSuiteResults(): void {
 		// Never pop the root suite.
@@ -277,7 +275,7 @@ export class BenchmarkReporter {
 
 	/**
 	 * Logs the overall summary (aggregating all suites) and saves the results to disk.
-	 * This will also close any suites that were not explicitly closed.
+	 * All suites must already be closed via {@link BenchmarkReporter.recordSuiteResults} before calling this.
 	 */
 	public recordResultsSummary(): void {
 		assert(
@@ -379,9 +377,9 @@ export interface ReportSuite {
 }
 
 /**
- * The type which is Json serialized and written to disk for a test suite.
+ * The type that is JSON-serialized and written to disk for a test suite.
  * @remarks
- * This only includes passing tests, and suites which were non-empty.
+ * This only includes passing tests and non-empty suites.
  * When using mocha, this corresponds to the contents of a describe block,
  * which may include both it blocks and nested describe blocks.
  * @public

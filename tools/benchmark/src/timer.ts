@@ -82,7 +82,7 @@ export const timerWithResolution = timersWithResolution[0];
 /**
  * The best available high-resolution timer for the current environment.
  * @remarks
- * When timing repeatable durations consider using the higher level APIs, see {@link DurationBenchmark}.
+ * When timing repeatable durations, consider using the higher-level APIs; see {@link DurationBenchmark}.
  *
  * Using this timer via the `timer` parameter of {@link BenchmarkFunction.run} is recommended as it is more type safe,
  * but this export can be used if needed for other purposes.

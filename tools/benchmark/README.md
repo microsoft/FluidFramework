@@ -9,8 +9,7 @@ mocha).
 
 This package exports `benchmarkIt` which is used instead of mocha's `it()` to define benchmark tests.
 
-The tests you write using `benchmarkIt` will also act as correctness tests.
-When you run mocha on a package that contains benchmark tests, they'll behave like any other mocha test defined with `it()`.
+Tests written with `benchmarkIt` double as correctness tests: without `--perfMode` they behave like any other mocha `it()` test.
 
 To run them as benchmark tests, invoke `mocha` as you normally would for your package but pass some additional arguments,
 like this:
@@ -54,7 +53,7 @@ If omitted, no file is written (results are still printed to the console).
 If you pass this **optional** flag, each performance test is run in a forked child process.
 The forked process runs only that test and propagates the results back to the parent.
 This can have significant overhead (the child process reruns mocha test discovery which may incur significant startup cost,
-in addition to the overhead of forking NodeJS), but reduces influences of previous tests on the state of
+in addition to the overhead of forking Node.js), but reduces the influence of previous tests on the state of
 the JIT and heap.
 Test this thoroughly in your scenario to make sure the tradeoffs are worthwhile.
 

@@ -151,7 +151,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 	}
 
 	/**
-	 * Returns true if IterationPerBatch should be grown more.
+	 * Returns true if `iterationsPerBatch` should be increased further.
 	 */
 	private growBatchSize(duration: number): boolean {
 		if (duration < this.options.minBatchDurationSeconds) {
@@ -184,7 +184,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 			return false;
 		}
 
-		// Exit if way too many samples to avoid out of memory.
+		// Stop collecting if sample count is extreme, to avoid running out of memory.
 		if (this.samples.length > 1_000_000) {
 			// Test failed to converge after many samples.
 			// TODO: produce some warning or error state in this case (and probably the case for hitting max time as well).
