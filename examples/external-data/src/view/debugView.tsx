@@ -4,7 +4,14 @@
  */
 
 import isEqual from "lodash.isequal";
-import React, { useEffect, useState } from "react";
+import {
+	type Dispatch,
+	type FC,
+	type SetStateAction,
+	type SyntheticEvent,
+	useEffect,
+	useState,
+} from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import type { ITaskData } from "../model-interface/index.js";
@@ -17,7 +24,7 @@ const externalTaskListId = "task-list-1";
  */
 async function fetchExternalServiceData(
 	externalData: Record<string, unknown>,
-	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
+	setExternalData: Dispatch<SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
 		const response = await fetch(
@@ -52,7 +59,7 @@ async function fetchExternalServiceData(
  *
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
-export const DebugView: React.FC = () => {
+export const DebugView: FC = () => {
 	return (
 		<div>
 			<ControlsView />
@@ -64,7 +71,7 @@ export const DebugView: React.FC = () => {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface IExternalDataDebugViewProps {}
 
-const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
+const ExternalDataDebugView: FC<IExternalDataDebugViewProps> = (
 	props: IExternalDataDebugViewProps,
 ) => {
 	const [externalData, setExternalData] = useState({});
@@ -120,7 +127,7 @@ function debugResetExternalData(): void {
 // TODO: Implement simulation of an external data change.  Maybe include UI for the debug user to edit the data
 // themselves (as if they were editing it outside of Fluid).
 // TODO: Consider how we might simulate errors/failures here to play with retry and recovery.
-const ControlsView: React.FC = () => {
+const ControlsView: FC = () => {
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
@@ -141,18 +148,18 @@ interface IExternalServerTaskRowProps {
 /**
  * The view for a single task in the ExternalServerTaskListView, as a table row.
  */
-const ExternalServerTaskRow: React.FC<IExternalServerTaskRowProps> = (
+const ExternalServerTaskRow: FC<IExternalServerTaskRowProps> = (
 	props: IExternalServerTaskRowProps,
 ) => {
 	const { task } = props;
 
-	const idChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+	const idChangeHandler = (e: SyntheticEvent<HTMLInputElement>): void => {
 		task.id = e.currentTarget.value;
 	};
-	const nameChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+	const nameChangeHandler = (e: SyntheticEvent<HTMLInputElement>): void => {
 		task.name = e.currentTarget.value;
 	};
-	const priorityChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+	const priorityChangeHandler = (e: SyntheticEvent<HTMLInputElement>): void => {
 		task.priority = Number.parseInt(e.currentTarget.value, 10);
 	};
 
@@ -196,7 +203,7 @@ export interface ExternalServerDataTask {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const ExternalServerTaskListView: React.FC = () => {
+export const ExternalServerTaskListView: FC = () => {
 	const [externalData, setExternalData] = useState({});
 	useEffect(() => {
 		// HACK: Populate the external view form with the data in the external server to start off with

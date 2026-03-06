@@ -421,9 +421,12 @@ extends:
                   # At this point we want to publish the artifact with the bundle size analysis,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
+                  # TODO(AB#56981): Re-enable once githubPublicRepoSecret is rotated in prague-key-vault.
+                  # Disabled because the token is expired/rejected.
+                  # Original condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
                   - task: Npm@1
-                    displayName: (PR only) Compare bundle sizes against baseline
-                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+                    displayName: (PR only) Compare bundle sizes against baseline (DISABLED)
+                    condition: false
                     continueOnError: true
                     env:
                       ADO_API_TOKEN: $(System.AccessToken)
