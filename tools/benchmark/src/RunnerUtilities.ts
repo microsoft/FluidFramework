@@ -48,9 +48,9 @@ export function geometricMean(values: number[]): number {
 
 /**
  * Formats a measurement for display, including appropriate units and number formatting.
- * @param measurement - The measurement to format.
  * @remarks
- * This special cases several well known units.
+ * Special-cases several well-known units.
+ * @param measurement - The measurement to format.
  */
 export function formatMeasurementValue(
 	measurement: Measurement,

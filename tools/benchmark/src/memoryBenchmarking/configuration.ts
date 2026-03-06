@@ -38,19 +38,16 @@ export interface MemoryUseCallbacks {
  */
 export interface MemoryUseBenchmark {
 	/**
-	 * A function that should loop until `state.continue()` returns false, and in each loop call the callbacks in order:
+	 * A function that loops until `state.continue()` returns false, calling the callbacks in order each iteration:
 	 * 1. `state.beforeAllocation()`
-	 * 2. Allocate memory in some way.
+	 * 2. Allocate the memory to measure.
 	 * 3. `state.whileAllocated()`
 	 * 4. Deallocate the memory allocated in step 2.
-	 * 5. Optionally call `state.afterDeallocation()` to measure deallocation separately from allocation
-	 * (the amounts will both be reported, but the mean of them is the primary result).
+	 * 5. Optionally call `state.afterDeallocation()` to measure freed bytes separately
+	 *    (both amounts are reported; their mean is the primary result).
 	 * @remarks
-	 * The benchmark will measure memory allocated in step 2 and freed in step 4.
-	 * In a valid use of this function (to collect accurate data) these amounts should be the same.
-	 *
-	 * This measures the difference in the retained portion of the heap from `beforeAllocation` to `whileAllocated`.
-	 * This does not include memory which was used during the operation but released before `whileAllocated` was called.
+	 * Reports the difference in retained heap between `beforeAllocation` and `whileAllocated`.
+	 * Memory released before `whileAllocated` is called is not included in the measurement.
 	 * @privateRemarks
 	 * Other schemes (like allowing leaking memory across iterations) could be added as different measurement API / benchmark types if needed.
 	 */

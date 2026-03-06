@@ -110,7 +110,7 @@ export interface BenchmarkDescription {
 
 	/**
 	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
-	 * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+	 * with `@` prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
 	 * only execute specific tests.
 	 */
 	readonly category?: string;

@@ -32,11 +32,10 @@ cross-test contamination and get accurate results for memory tests.
 
 ### `--fgrep @Benchmark`
 
-All tests created with the tools in this package get tagged with `@Benchmark` in their name by default, so most of the
-time you'll want to use `--fgrep @Benchmark` to only run tests that were defined with the tools provided here.
-You can change the `@Benchmark` tag to a few other values (like `@Measurement`, `@Perspective`, or `@Diagnostic`) with
-one of the arguments to the functions exposed in this package, and if you do, you can be more specific about which tests
-you want to run by passing a different filter, e.g. `--fgrep @Measurement`.
+All tests created with the tools in this package are tagged with `@Benchmark`, so use `--fgrep @Benchmark` to run only
+benchmark tests.
+Each test is also tagged based on its `type` option: `@Measurement` (the default), `@Perspective`, or `@Diagnostic`.
+Use a more specific filter like `--fgrep @Measurement` to run only tests of a particular type.
 
 ### `--reporter <path>`
 
@@ -114,6 +113,7 @@ benchmarkIt({
 			value: 42,
 			units: "things/op",
 			type: ValueType.SmallerIsBetter,
+			significance: "Primary",
 		},
 		// Additional measurements are optional.
 		{
@@ -125,7 +125,7 @@ benchmarkIt({
 });
 ```
 
-`CollectedData` is a tuple `[PrimaryMeasurement, ...Measurement[]]`. The first element is the primary measurement (used for regression detection) and requires all fields including `units` and `type`. Additional measurements are optional and their fields `units` and `type` are optional too.
+`CollectedData` is a tuple `[PrimaryMeasurement, ...Measurement[]]`. The first element is the primary measurement (used for regression detection) and requires all fields: `name`, `value`, `units`, `type`, and `significance: "Primary"`. Additional measurements are optional and their `units`, `type`, and `significance` fields are optional.
 
 `collectDurationData` and `collectMemoryUseData` can be called directly within the `run` function, which is more flexible than `benchmarkDuration` or `benchmarkMemoryUse` when you need to add custom measurements or run setup/teardown outside the timed region:
 

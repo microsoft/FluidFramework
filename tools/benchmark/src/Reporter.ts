@@ -357,8 +357,7 @@ function suiteChildrenToReportSuite(children: readonly (SuiteNode | NamedResult)
 }
 
 /**
- * The Benchmark object contains a lot of data we don't need and also has vague names, so
- * this method extracts the necessary data and provides friendlier names.
+ * Creates a {@link ReportEntry} from a benchmark name and its collected data.
  */
 function outputFriendlyObjectFromBenchmark(
 	benchmarkName: string,

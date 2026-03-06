@@ -103,7 +103,7 @@ const tTable = {
  * Compute statistics for an array of numbers.
  * This assumes the data is a sample taken from an infinite population and thus reports sample variance.
  *
- * @param array - List of numbers for which to compute the statistics.
+ * @param array - Array of numbers for which to compute the statistics.
  * @param fractionOfSamplesToUse - Fraction of samples to use. The samples at the extremes
  * (lowest and highest) are discarded. If an odd number of samples must be discarded, one extra
  * is dropped from the high end.

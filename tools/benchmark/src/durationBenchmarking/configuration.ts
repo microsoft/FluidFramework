@@ -181,8 +181,8 @@ export interface OnBatch {
 	 * Executes before the start of each batch.
 	 *
 	 * @remarks
-	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
-	 * iterations per batch.
+	 * Each batch runs `benchmarkFn` many times (a typical micro-benchmark may run 10k iterations per batch),
+	 * so this callback runs far fewer times than `benchmarkFn`.
 	 *
 	 * @deprecated Use {@link DurationBenchmarkCustom} instead of {@link DurationBenchmarkSync} or {@link DurationBenchmarkAsync}.
 	 * It offers much more control and avoids the challenges of passing state between this callback and the rest of the benchmark.
@@ -210,7 +210,7 @@ export interface HookArguments {
 	 * Executes once, before the test body it's declared for.
 	 *
 	 * @remarks
-	 * This does *not* execute on each iteration or cycle.
+	 * This does *not* execute on each iteration or batch.
 	 * @deprecated Use {@link DurationBenchmarkCustom} or directly call {@link collectDurationData} from a function containing the setup code.
 	 */
 	before?: HookFunction | undefined;
@@ -218,7 +218,7 @@ export interface HookArguments {
 	 * Executes once, after the test body it's declared for.
 	 *
 	 * @remarks
-	 * This does *not* execute on each iteration or cycle.
+	 * This does *not* execute on each iteration or batch.
 	 * @deprecated Use {@link DurationBenchmarkCustom} or directly call {@link collectDurationData} from a function containing the teardown code.
 	 */
 	after?: HookFunction | undefined;
