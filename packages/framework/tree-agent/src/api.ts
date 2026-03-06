@@ -349,6 +349,12 @@ export interface TreeAgent {
 	 * @returns The model's text response.
 	 */
 	invoke(prompt: string): Promise<string>;
+
+	/**
+	 * Unsubscribes from tree change events and releases resources held by the agent.
+	 * @remarks After calling this method, the agent should not be used again.
+	 */
+	dispose(): void;
 }
 
 /**

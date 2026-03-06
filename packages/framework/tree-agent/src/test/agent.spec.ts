@@ -624,6 +624,7 @@ describe("createTreeAgent", () => {
 		const result = await agent.invoke("Edit it");
 		assert.equal(result, "Done editing");
 		assert.equal(view.root, "Edited");
+		agent.dispose();
 	});
 
 	it("can apply multiple sequential edits", async () => {
@@ -638,6 +639,7 @@ describe("createTreeAgent", () => {
 		const result = await agent.invoke("Edit twice");
 		assert.equal(result, "All done");
 		assert.equal(view.root, "Second");
+		agent.dispose();
 	});
 
 	it("handles edit errors and allows retry", async () => {
@@ -652,6 +654,7 @@ describe("createTreeAgent", () => {
 		const result = await agent.invoke("Try editing");
 		assert.equal(result, "Fixed it");
 		assert.equal(view.root, "Recovered");
+		agent.dispose();
 	});
 
 	it("limits the number of sequential edits", async () => {
@@ -668,6 +671,7 @@ describe("createTreeAgent", () => {
 		assert.equal(result, "Gave up");
 		// Tree should NOT have merged because too many edits triggered rollback behavior
 		assert.equal(view.root, "Initial");
+		agent.dispose();
 	});
 
 	it("merges on success, rolls back on failure", async () => {
@@ -683,6 +687,7 @@ describe("createTreeAgent", () => {
 		const result = await agent.invoke("Edit");
 		assert.equal(result, "Oops");
 		assert.equal(view.root, "Initial", "Tree should have been rolled back");
+		agent.dispose();
 	});
 
 	it("does not roll back if failed edit is followed by successful edit", async () => {
@@ -697,6 +702,7 @@ describe("createTreeAgent", () => {
 		const result = await agent.invoke("Edit");
 		assert.equal(result, "Fixed");
 		assert.equal(view.root, "Recovered");
+		agent.dispose();
 	});
 
 	it("rejects models without invoke()", () => {
@@ -740,6 +746,7 @@ describe("createTreeAgent", () => {
 		const result = await agent.invoke("Edit");
 		assert.equal(result, "Done");
 		assert.equal(view.root, "Edited");
+		agent.dispose();
 	});
 
 	it("sends tree-changed notification between calls", async () => {
@@ -763,6 +770,7 @@ describe("createTreeAgent", () => {
 				m.role === "system" && m.content.includes("The tree has changed since the last query"),
 		);
 		assert.ok(treeChangedMsg !== undefined, "Expected tree-changed system message");
+		agent.dispose();
 	});
 
 	it("does not send tree-changed notification after agent's own edit", async () => {
@@ -789,6 +797,7 @@ describe("createTreeAgent", () => {
 			undefined,
 			"Should NOT have tree-changed notification after agent's own edit",
 		);
+		agent.dispose();
 	});
 });
 

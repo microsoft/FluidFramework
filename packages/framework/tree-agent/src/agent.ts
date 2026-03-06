@@ -76,51 +76,6 @@ function treeChangedText(stringified: string): string {
 	return `The tree has changed since the last query. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``;
 }
 
-/**
- * Creates a tree tracker that monitors a tree for external changes and can notify consumers.
- * @param tree - The tree or subtree to track.
- * @returns An object with the subtree wrapper, and a `refreshIfDirty` function that calls the provided
- * callback with the tree-changed notification text if the tree has been modified since the last check.
- */
-function createTreeTracker<TSchema extends ImplicitFieldSchema>(
-	tree: ViewOrTree<TSchema>,
-): {
-	outerTree: Subtree<TSchema>;
-	refreshIfDirty: (onDirty: (text: string) => void, logger: Logger | undefined) => void;
-	resetDirty: () => void;
-} {
-	const outerTree = new Subtree(tree);
-	let isDirty = false;
-
-	if (tree instanceof TreeNode) {
-		Tree.on(tree, "treeChanged", () => {
-			isDirty = true;
-		});
-	} else {
-		tree.events.on("changed", () => {
-			isDirty = true;
-		});
-	}
-
-	return {
-		outerTree,
-		refreshIfDirty(onDirty: (text: string) => void, logger: Logger | undefined): void {
-			if (isDirty) {
-				const stringified = stringifyTree(outerTree.field);
-				const text = treeChangedText(stringified);
-				onDirty(text);
-				logger?.log(
-					`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
-				);
-				isDirty = false;
-			}
-		},
-		resetDirty(): void {
-			isDirty = false;
-		},
-	};
-}
-
 // #endregion
 
 /**
@@ -131,21 +86,17 @@ function createTreeTracker<TSchema extends ImplicitFieldSchema>(
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	private readonly outerTree: Subtree<TSchema>;
 	private readonly editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
-	private readonly refreshIfDirty: (
-		onDirty: (text: string) => void,
-		logger: Logger | undefined,
-	) => void;
-	private readonly resetDirty: () => void;
+	private isDirty = false;
 
 	public constructor(
 		private readonly client: SharedTreeChatModel,
 		tree: ViewOrTree<TSchema>,
 		private readonly options?: Readonly<SemanticAgentOptions<TSchema>>,
 	) {
-		const tracker = createTreeTracker(tree);
-		this.outerTree = tracker.outerTree;
-		this.refreshIfDirty = tracker.refreshIfDirty;
-		this.resetDirty = tracker.resetDirty;
+		this.outerTree = new Subtree(tree);
+		this.outerTree.onTreeChanged(() => {
+			this.isDirty = true;
+		});
 		this.editor = this.options?.editor ?? createDefaultEditor();
 
 		const prompt = getPrompt({
@@ -168,7 +119,15 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	public async query(userPrompt: string): Promise<string> {
 		this.options?.logger?.log(`## User Query\n\n${userPrompt}\n\n`);
 
-		this.refreshIfDirty((text) => this.client.appendContext?.(text), this.options?.logger);
+		if (this.isDirty) {
+			const stringified = stringifyTree(this.outerTree.field);
+			const text = treeChangedText(stringified);
+			this.client.appendContext?.(text);
+			this.options?.logger?.log(
+				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
+			);
+			this.isDirty = false;
+		}
 
 		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
 		// The branch will be merged back into the outer branch if and only if the query succeeds.
@@ -226,7 +185,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 			queryTree.branch.dispose();
 		} else {
 			this.outerTree.branch.merge(queryTree.branch);
-			this.resetDirty();
+			this.isDirty = false;
 		}
 		this.options?.logger?.log(`## Response\n\n`);
 		this.options?.logger?.log(`${responseMessage}\n\n`);
@@ -370,53 +329,133 @@ export function createContext<TSchema extends ImplicitFieldSchema>(
 // #region Factory functions
 
 /**
- * Shared state for agents created via {@link createTreeAgent}.
+ * Internal implementation of the {@link TreeAgent} interface.
  */
-function createAgentState<TSchema extends ImplicitFieldSchema>(
-	model: SharedTreeChatModel,
-	tree: ViewOrTree<TSchema>,
-	editToolName: string | undefined,
-	options?: TreeAgentOptions<TSchema>,
-): {
-	outerTree: Subtree<TSchema>;
-	history: TreeAgentChatMessage[];
-	tracker: ReturnType<typeof createTreeTracker<TSchema>>;
-} {
-	if (model.invoke === undefined) {
-		throw new UsageError(
-			"The provided SharedTreeChatModel does not implement invoke(). Provide a model that implements invoke(), such as the one returned by createLangchainChatModel from @fluidframework/tree-agent-langchain.",
-		);
+class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
+	readonly #model: SharedTreeChatModel;
+	readonly #outerTree: Subtree<TSchema>;
+	readonly #history: TreeAgentChatMessage[];
+	readonly #editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+	readonly #maxEditCount: number;
+	readonly #editToolName: string;
+	readonly #options?: TreeAgentOptions<TSchema>;
+	readonly #offTreeChanged: () => void;
+	#isDirty = false;
+
+	public constructor(
+		model: SharedTreeChatModel,
+		tree: ViewOrTree<TSchema>,
+		options?: TreeAgentOptions<TSchema>,
+	) {
+		if (model.invoke === undefined) {
+			throw new UsageError(
+				"The provided SharedTreeChatModel does not implement invoke(). Provide a model that implements invoke(), such as the one returned by createLangchainChatModel from @fluidframework/tree-agent-langchain.",
+			);
+		}
+
+		const editToolName = model.editToolName;
+		if (editToolName === undefined) {
+			throw new UsageError(
+				"The provided SharedTreeChatModel does not have an editToolName. Editing requires a model with editToolName set.",
+			);
+		}
+
+		this.#model = model;
+		this.#options = options;
+		this.#editToolName = editToolName;
+		this.#outerTree = new Subtree(tree);
+		this.#editor = options?.editor ?? createDefaultEditor();
+		this.#maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+
+		const prompt = getPrompt({
+			subtree: this.#outerTree,
+			editToolName: this.#editToolName,
+			domainHints: options?.domainHints,
+		});
+
+		logAgentHeader(options?.logger, model.name);
+		options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
+
+		this.#history = [{ role: "system", content: prompt }];
+
+		this.#offTreeChanged = this.#outerTree.onTreeChanged(() => {
+			this.#isDirty = true;
+		});
 	}
 
-	const tracker = createTreeTracker(tree);
-	const { outerTree } = tracker;
+	public dispose(): void {
+		this.#offTreeChanged();
+	}
 
-	const prompt = getPrompt({
-		subtree: outerTree,
-		editToolName,
-		domainHints: options?.domainHints,
-	});
+	public async invoke(prompt: string): Promise<string> {
+		this.#options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
+		if (this.#isDirty) {
+			const stringified = stringifyTree(this.#outerTree.field);
+			const text = treeChangedText(stringified);
+			this.#history.push({ role: "system", content: text });
+			this.#options?.logger?.log(
+				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
+			);
+			this.#isDirty = false;
+		}
+		this.#history.push({ role: "user", content: prompt });
 
-	logAgentHeader(options?.logger, model.name);
-	options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
+		// Fork a branch for this edit session
+		const queryTree = this.#outerTree.fork();
+		let editCount = 0;
+		let rollbackEdits = false;
 
-	const history: TreeAgentChatMessage[] = [{ role: "system", content: prompt }];
+		while (true) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const response = await this.#model.invoke!(this.#history);
 
-	return { outerTree, history, tracker };
-}
+			if (response.type === "done") {
+				this.#history.push({ role: "assistant", content: response.text });
+				if (rollbackEdits) {
+					queryTree.branch.dispose();
+				} else {
+					this.#outerTree.branch.merge(queryTree.branch);
+					this.#isDirty = false;
+				}
+				this.#options?.logger?.log(`## Response\n\n${response.text}\n\n`);
+				return response.text;
+			}
 
-/**
- * Begins a query by logging, refreshing tree state if dirty, and pushing the user message to history.
- */
-function beginQuery(
-	prompt: string,
-	history: TreeAgentChatMessage[],
-	tracker: Pick<ReturnType<typeof createTreeTracker>, "refreshIfDirty">,
-	logger: Logger | undefined,
-): void {
-	logger?.log(`## User Query\n\n${prompt}\n\n`);
-	tracker.refreshIfDirty((text) => history.push({ role: "system", content: text }), logger);
-	history.push({ role: "user", content: prompt });
+			// response.type === "edit"
+			this.#history.push({
+				role: "tool_call",
+				toolCallId: response.toolCallId,
+				toolName: this.#editToolName,
+				code: response.code,
+			});
+
+			editCount++;
+			if (editCount > this.#maxEditCount) {
+				rollbackEdits = true;
+				const errorMessage = `The maximum number of edits (${this.#maxEditCount}) for this query has been exceeded.`;
+				this.#history.push({
+					role: "tool_result",
+					toolCallId: response.toolCallId,
+					content: errorMessage,
+				});
+				continue;
+			}
+
+			const editResult = await applyTreeFunction(
+				queryTree,
+				response.code,
+				this.#editor,
+				this.#options?.logger,
+			);
+
+			rollbackEdits = editResult.type !== "success";
+			this.#history.push({
+				role: "tool_result",
+				toolCallId: response.toolCallId,
+				content: editResult.message,
+			});
+		}
+	}
 }
 
 /**
@@ -432,81 +471,7 @@ export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
 	tree: ViewOrTree<TSchema>,
 	options?: TreeAgentOptions<TSchema>,
 ): TreeAgent {
-	const editToolName = model.editToolName;
-	if (editToolName === undefined) {
-		throw new UsageError(
-			"The provided SharedTreeChatModel does not have an editToolName. Editing requires a model with editToolName set.",
-		);
-	}
-
-	const { outerTree, history, tracker } = createAgentState(model, tree, editToolName, options);
-
-	const editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema> =
-		options?.editor ?? createDefaultEditor();
-	const maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
-
-	return {
-		async invoke(prompt: string): Promise<string> {
-			beginQuery(prompt, history, tracker, options?.logger);
-
-			// Fork a branch for this edit session
-			const queryTree = outerTree.fork();
-			let editCount = 0;
-			let rollbackEdits = false;
-
-			// eslint-disable-next-line no-constant-condition
-			while (true) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const response = await model.invoke!(history);
-
-				if (response.type === "done") {
-					history.push({ role: "assistant", content: response.text });
-					if (rollbackEdits) {
-						queryTree.branch.dispose();
-					} else {
-						outerTree.branch.merge(queryTree.branch);
-						tracker.resetDirty();
-					}
-					options?.logger?.log(`## Response\n\n${response.text}\n\n`);
-					return response.text;
-				}
-
-				// response.type === "edit"
-				history.push({
-					role: "tool_call",
-					toolCallId: response.toolCallId,
-					toolName: editToolName,
-					code: response.code,
-				});
-
-				editCount++;
-				if (editCount > maxEditCount) {
-					rollbackEdits = true;
-					const errorMessage = `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`;
-					history.push({
-						role: "tool_result",
-						toolCallId: response.toolCallId,
-						content: errorMessage,
-					});
-					continue;
-				}
-
-				const editResult = await applyTreeFunction(
-					queryTree,
-					response.code,
-					editor,
-					options?.logger,
-				);
-
-				rollbackEdits = editResult.type !== "success";
-				history.push({
-					role: "tool_result",
-					toolCallId: response.toolCallId,
-					content: editResult.message,
-				});
-			}
-		},
-	};
+	return new TreeAgentImpl(model, tree, options);
 }
 
 // #endregion

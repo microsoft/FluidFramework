@@ -161,6 +161,7 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 						domainHints: options?.domainHints,
 					});
 		await agent.invoke(prompt);
+		agent.dispose();
 	}
 
 	return view;
