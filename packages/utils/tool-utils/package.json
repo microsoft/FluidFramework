@@ -131,7 +131,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IResources": {
+				"backCompat": false
+			},
+			"TypeAlias_OdspTokenConfig": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }

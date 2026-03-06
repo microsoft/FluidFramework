@@ -15,7 +15,7 @@ import { unauthPostAsync } from "./odspRequest.js";
  */
 export interface IOdspTokens {
 	readonly accessToken: string;
-	readonly refreshToken: string;
+	readonly refreshToken?: string; // Refresh token is not used in federated credential flow, so it's optional
 	readonly receivedAt?: number; // Unix timestamp in seconds
 	readonly expiresIn?: number; // Seconds from reception until the token expires
 }
@@ -33,7 +33,13 @@ export interface IPublicClientConfig {
  */
 export interface IOdspAuthRequestInfo {
 	accessToken: string;
-	refreshTokenFn?: () => Promise<string>;
+	refreshTokenFn?: () =>
+		| Promise<string>
+		| Promise<{
+				GUID: string;
+				UserPrincipalName: string;
+				Token: string;
+		  }>;
 }
 
 /**
@@ -167,7 +173,7 @@ export async function fetchTokens(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const refreshToken = parsedResponse.refresh_token;
 
-	if (accessToken === undefined || refreshToken === undefined) {
+	if (accessToken === undefined) {
 		try {
 			throwOdspNetworkError(
 				// pre-0.58 error message: unableToGetAccessToken
@@ -239,7 +245,10 @@ export async function refreshTokens(
 ): Promise<IOdspTokens> {
 	// Clear out the old tokens while awaiting the new tokens
 	const refresh_token = tokens.refreshToken;
-	assert(refresh_token.length > 0, 0x1ec /* "No refresh token provided." */);
+	assert(
+		refresh_token !== undefined && refresh_token.length > 0,
+		0x1ec /* "No refresh token provided." */,
+	);
 
 	const credentials: TokenRequestCredentials = {
 		grant_type: "refresh_token",
@@ -265,7 +274,7 @@ export async function authRequestWithRetry(
 
 	if (authRequestInfo.refreshTokenFn && (result.status === 401 || result.status === 403)) {
 		// Unauthorized, try to refresh the token
-		const refreshedAccessToken = await authRequestInfo.refreshTokenFn();
+		const refreshedAccessToken = (await authRequestInfo.refreshTokenFn()) as string;
 		return requestCallback(createConfig(refreshedAccessToken));
 	}
 	return result;
