@@ -65,8 +65,14 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container and add data
-			const { container, testFluidObject, urlResolver, codeLoader, loaderProps, deltaConnectionServer } =
-				await initializeContainer();
+			const {
+				container,
+				testFluidObject,
+				urlResolver,
+				codeLoader,
+				loaderProps,
+				deltaConnectionServer,
+			} = await initializeContainer();
 
 			// Add data in detached state
 			testFluidObject.root.set("detached-key1", "detached-value1");
@@ -149,8 +155,14 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container with initial data
-			const { container, testFluidObject, urlResolver, codeLoader, loaderProps, deltaConnectionServer } =
-				await initializeContainer();
+			const {
+				container,
+				testFluidObject,
+				urlResolver,
+				codeLoader,
+				loaderProps,
+				deltaConnectionServer,
+			} = await initializeContainer();
 
 			// Add initial data
 			testFluidObject.root.set("shared-key", "initial-value");
@@ -227,7 +239,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container and simulate multiple sessions/snapshots for the same container
-			const { container, testFluidObject, urlResolver, deltaConnectionServer } = await initializeContainer();
+			const { container, testFluidObject, urlResolver, deltaConnectionServer } =
+				await initializeContainer();
 
 			// Attach to get a consistent URL
 			await container.attach(urlResolver.createCreateNewRequest("test-doc"));

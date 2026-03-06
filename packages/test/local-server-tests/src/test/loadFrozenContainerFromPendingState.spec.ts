@@ -81,8 +81,14 @@ const initialize = async (): Promise<{
 
 describe("loadFrozenContainerFromPendingState", () => {
 	it("loadFrozenContainerFromPendingState", async () => {
-		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } =
-			await initialize();
+		const {
+			container,
+			ITestFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
 
 		for (let i = 0; i < 10; i++) {
 			ITestFluidObject.root.set(`detached-${i}`, i);
@@ -161,8 +167,14 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("frozen container loads DDS", async () => {
-		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } =
-			await initialize();
+		const {
+			container,
+			ITestFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
 		const newSharedMap1 = SharedMap.create(ITestFluidObject.runtime);
 		// Set a value while in local state.
 		newSharedMap1.set("newKey", "newValue");
@@ -207,8 +219,14 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("frozen container loads blob", async () => {
-		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } =
-			await initialize();
+		const {
+			container,
+			ITestFluidObject,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 		const blobHandle = await ITestFluidObject.runtime.uploadBlob(
 			stringToBuffer("test", "utf-8"),
@@ -253,7 +271,13 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("uploading blob on frozen container", async () => {
-		const { container, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } = await initialize();
+		const {
+			container,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");
@@ -295,7 +319,13 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("trying to attach a frozen container", async () => {
-		const { container, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } = await initialize();
+		const {
+			container,
+			urlResolver,
+			codeLoader,
+			documentServiceFactory,
+			deltaConnectionServer,
+		} = await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");
