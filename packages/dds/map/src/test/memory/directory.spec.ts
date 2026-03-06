@@ -4,8 +4,8 @@
  */
 
 import {
-	type IMemoryTestObject,
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -39,18 +39,22 @@ describe("SharedDirectory memory usage", () => {
 		// See the comment at the top of the test suite for more details.
 	});
 
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			public readonly title = "Create empty directory";
-			public readonly minSampleCount = 500;
-
-			private dir: ISharedDirectory = createLocalDirectory("testDirectory");
-
-			public async run(): Promise<void> {
-				this.dir = createLocalDirectory("testDirectory");
-			}
-		})(),
-	);
+	benchmarkIt({
+		title: "Create empty directory",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const dir = createLocalDirectory("testDirectory");
+						await state.whileAllocated();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
 		? [1000, 10_000, 100_000]
@@ -58,39 +62,43 @@ describe("SharedDirectory memory usage", () => {
 			[10];
 
 	for (const x of numbersOfEntriesForTests) {
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Add ${x} integers to a local directory`;
-				private dir: ISharedDirectory = createLocalDirectory("testDirectory");
-
-				public async run(): Promise<void> {
-					for (let i = 0; i < x; i++) {
-						this.dir.set(i.toString().padStart(6, "0"), i);
+		benchmarkIt({
+			title: `Add ${x} integers to a local directory`,
+			...benchmarkMemoryUse({
+				benchmarkFn: async (state) => {
+					while (state.continue()) {
+						await state.beforeAllocation();
+						{
+							const dir = createLocalDirectory("testDirectory");
+							for (let i = 0; i < x; i++) {
+								dir.set(i.toString().padStart(6, "0"), i);
+							}
+							await state.whileAllocated();
+						}
+						await state.afterDeallocation();
 					}
-				}
+				},
+			}),
+		});
 
-				public beforeIteration(): void {
-					this.dir = createLocalDirectory("testDirectory");
-				}
-			})(),
-		);
-
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Add ${x} integers to a local directory, clear it`;
-				private dir: ISharedDirectory = createLocalDirectory("testDirectory");
-
-				public async run(): Promise<void> {
-					for (let i = 0; i < x; i++) {
-						this.dir.set(i.toString().padStart(6, "0"), i);
+		benchmarkIt({
+			title: `Add ${x} integers to a local directory, clear it`,
+			...benchmarkMemoryUse({
+				benchmarkFn: async (state) => {
+					while (state.continue()) {
+						await state.beforeAllocation();
+						{
+							const dir = createLocalDirectory("testDirectory");
+							for (let i = 0; i < x; i++) {
+								dir.set(i.toString().padStart(6, "0"), i);
+							}
+							dir.clear();
+							await state.whileAllocated();
+						}
+						await state.afterDeallocation();
 					}
-					this.dir.clear();
-				}
-
-				public beforeIteration(): void {
-					this.dir = createLocalDirectory("testDirectory");
-				}
-			})(),
-		);
+				},
+			}),
+		});
 	}
 });

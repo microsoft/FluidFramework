@@ -13,10 +13,10 @@ const config = getFluidTestMochaConfig(packageDir);
 const newConfig = {
 	"extends": "../.mocharc.cjs",
 	"exit": true,
-	"fgrep": ["@Benchmark", "@MemoryUsage"],
+	"fgrep": ["@Benchmark", "@Memory"],
 	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
 	"recursive": true,
-	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
+	"reporter": "@fluid-tools/benchmark/dist/mocha/Reporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
 	"require": [...config.require, "@fluid-internal/mocha-test-setup"],
 	"spec": [

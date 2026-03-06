@@ -7,12 +7,12 @@ import { strict as assert } from "node:assert";
 
 import {
 	benchmark,
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 	BenchmarkType,
 	isInPerformanceTestingMode,
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
-	type IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -122,13 +122,9 @@ interface MatrixBenchmarkOptions extends TestMatrixOptions {
 	/**
 	 * Optional action to perform on the matrix after the operation being measured.
 	 *
-	 * @remarks Note: in memory benchmarking tests, this currently gets executed after
-	 * {@link MatrixBenchmarkOptions.operation} but *before* the memory is measured.
-	 * This is an issue and makes it difficult to do proper cleanup without impacting the memory measurement.
-	 *
-	 * AB#46769 tracks adding a hook to the benchmark infrastructure to allow post-measurement cleanup steps.
-	 * Once that has been completed, this code should be updated to leverage it to perform the necessary
-	 * post-measurement cleanup steps.
+	 * @remarks In memory benchmarking tests, this is executed after the memory snapshot is taken
+	 * (after {@link MatrixBenchmarkOptions.operation}) but before cleanup, so it does not affect
+	 * the primary memory measurement.
 	 */
 	readonly afterOperation?: (
 		matrix: ISharedMatrix,
@@ -207,47 +203,28 @@ function runMemoryBenchmark({
 	operation,
 	afterOperation,
 }: MemoryBenchmarkConfig): Test {
-	return benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			readonly title = title;
-
-			private matrix: ISharedMatrix | undefined;
-			private undoRedoStack: UndoRedoStackManager | undefined;
-			private cleanUp: (() => void) | undefined;
-
-			async run(): Promise<void> {
-				assert(this.matrix !== undefined, "matrix is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
-				operation(this.matrix, this.undoRedoStack);
-			}
-
-			beforeIteration(): void {
-				const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
-					matrixSize,
-					initialCellValue,
-				});
-				this.matrix = matrix;
-				this.undoRedoStack = undoRedoStack;
-				this.cleanUp = cleanUp;
-
-				beforeOperation?.(this.matrix, this.undoRedoStack);
-			}
-
-			afterIteration(): void {
-				assert(this.matrix !== undefined, "matrix is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
-				assert(this.cleanUp !== undefined, "cleanUp is not initialized");
-
-				afterOperation?.(this.matrix, this.undoRedoStack);
-
-				this.cleanUp();
-				this.undoRedoStack = undefined;
-
-				// TODO: AB#46769: this.matrix = undefined;'
-				this.cleanUp = undefined;
-			}
-		})(),
-	);
+	return benchmarkIt({
+		title,
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
+							matrixSize,
+							initialCellValue,
+						});
+						beforeOperation?.(matrix, undoRedoStack);
+						operation(matrix, undoRedoStack);
+						afterOperation?.(matrix, undoRedoStack);
+						await state.whileAllocated();
+						cleanUp();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 }
 
 type BenchmarkOptions =

@@ -1,0 +1,3568 @@
+[
+    {
+        "suiteName": "AppendOnlySortedMap Perf",
+        "contents": [
+            {
+                "benchmarkName": "lookup a key",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 209.8747870127359,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 90,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 262144,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 3.2978721022687956,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.5713522091954142,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.098024145,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "lookup a pair or lower",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 285.8093881318064,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 66,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 262144,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 6.979100544345313,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.441872392633502,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.117774677,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "suiteName": "EditLog Perf",
+        "contents": [
+            {
+                "benchmarkName": "process 10 sequenced inserts",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 1817.4116389576977,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 41,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 65536,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 41.57525107568701,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.2876078365785526,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.018919282,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 10 sequenced inserts with a target edit log size of 2",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 3512.1536957496833,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 86,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 16384,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 120.54724872012623,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.432288537543484,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.056176444,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 50 sequenced inserts",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 8705.053424337637,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 69,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 8192,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 436.6131788562366,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 5.015628940720237,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.046231794,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 50 sequenced inserts with a target edit log size of 12",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 11796.335006864943,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 101,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4096,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 559.1441898835035,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.739982287363884,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.025622467,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 100 sequenced inserts",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 14824.473876953123,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 5,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4096,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 59.901152340665,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 0.4040693304724316,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 0.387127017,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 100 sequenced inserts with a target edit log size of 25",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 23527.432666015622,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 5,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4096,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 67.33171839615834,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 0.2861838745942567,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 0.602758962,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 500 sequenced inserts",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 71690.14020230876,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 67,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1024,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 2626.4800291597217,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.663655869200179,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.019328471,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 500 sequenced inserts with a target edit log size of 125",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 91844.24183067905,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 52,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1024,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 4996.130609016036,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 5.439786435633857,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.035889924,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 1000 sequenced inserts",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 128049.65612150487,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 76,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 512,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 4880.83446730092,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.811673232975769,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.078327472,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "process 1000 sequenced inserts with a target edit log size of 250",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 181760.58711674524,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 106,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 256,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 5772.824501188471,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.1760595587648344,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.029667188,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "suiteName": "Forest Perf",
+        "contents": [
+            {
+                "benchmarkName": "100 random inserts in TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 749487.7512254899,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 102,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 64,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 32055.393561408895,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.276973640862711,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.013384659,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "walk 100 node TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 17278.750212751114,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 70,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4096,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 566.989109091781,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.281424305059765,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.06659332,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "insert 100 nodes into Forest",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 31371.53404651987,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 77,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 2048,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 1225.502898165007,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.9064168693432295,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.070937214,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100 nodes against Forest with 100 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 3355.04589369032,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 45,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 32768,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 105.82638881851979,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.154245639904437,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.06673832,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100 nodes against Forest with 1000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 18316.37948700877,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 66,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4096,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 542.5615219137792,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.9621657615174497,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.060106128,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100 nodes against Forest with 10000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 162063.37096133473,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 59,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 512,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 3259.8508824588266,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.0114667880359995,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.026034927,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100 nodes against Forest with 100000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 3276052.8051861706,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 94,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 16,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 69317.84074566106,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.1158950990022847,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.245191637,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "1000 random inserts in TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 8277488.0743243275,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 74,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 8,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 356748.58725423884,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.309865312410727,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.000587713,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "walk 1000 node TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 596373.6272836541,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 65,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 128,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 17413.321219591988,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.919867751179021,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.078857714,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "insert 1000 nodes into Forest",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 470998.55306783546,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 41,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 256,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 28623.3262183843,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 6.077157993787262,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.091242461,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 1000 nodes against Forest with 100 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 21165.80303847999,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 114,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 2048,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 491.99763771400717,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.3244931308277907,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.034889952,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 1000 nodes against Forest with 1000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 50558.051367187494,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 5,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1024,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 371.30982068228457,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 0.7344227292020733,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 0.336469952,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 1000 nodes against Forest with 10000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 191657.35426980196,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 101,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 256,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 6013.277271021718,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.1375144950381824,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.049824941,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 1000 nodes against Forest with 100000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 4256874.993055555,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 72,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 16,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 108458.1323874259,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.547834563250245,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.154785903,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "10000 random inserts in TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 130894734.81081082,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 37,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 6228436.058894084,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.75835492382209,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.047215063,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "walk 10000 node TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 15018185.945121953,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 82,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 404754.4765369993,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.6950956528039747,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.146574032,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "insert 10000 nodes into Forest",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 5312094.869612068,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 58,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 16,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 252409.65072943072,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.751602840780284,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.050820736,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 10000 nodes against Forest with 100 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 174875.4818892046,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 55,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 512,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 4766.1753175369695,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.7254680107510225,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.050403819,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 10000 nodes against Forest with 1000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 190031.95806525732,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 51,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 512,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 5518.759379488607,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.9041217254591754,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.069060002,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 10000 nodes against Forest with 10000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 296578.5655649039,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 65,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 256,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 7958.461778172906,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.6834244622547607,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.032504289,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 10000 nodes against Forest with 100000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 3007877.0232843133,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 51,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 32,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 75225.1439955223,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.500938150502698,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.1784241,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "100000 random inserts in TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 1235229378.8,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 5,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 60007942.057926856,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.858040384063998,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 7.30849654,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "walk 100000 node TreeView",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 213235259.3181818,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 22,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 5869196.661309617,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.7524512972555897,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 6.368779993,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "insert 100000 nodes into Forest",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 78298278.98412699,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 63,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 2237646.478470325,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.8578488665427138,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.136108297,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100000 nodes against Forest with 100 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 3409769.4076388897,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 45,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 32,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 81028.95586968507,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.376376410913779,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.188339029,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100000 nodes against Forest with 1000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 3170963.809948979,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 49,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 32,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 81432.96110969063,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.5680823241877646,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.211098433,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100000 nodes against Forest with 10000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 3753680.4062499995,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 82,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 16,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 123823.12270200235,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.2987124448803056,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.116637783,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "invoke delta on Forest with 100000 nodes against Forest with 100000 nodes",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 7348198.142857141,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 42,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 16,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 214636.51677801798,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.920940788547689,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.337255065,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "suiteName": "IdCompressor Perf",
+        "contents": [
+            {
+                "benchmarkName": "allocate local ID (override)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 4077.221850420977,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 37,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 32768,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 254.4278856433113,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 6.240226678296678,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.293505145,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "allocate local ID (sequential)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 45.46593357049502,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 52,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 2097152,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 2.2286501528952516,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.9018022459381045,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.179238604,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =1, overrides present)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 18668.44709660457,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 65,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4096,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 724.2663922853009,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.8796284904545217,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.111605841,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =10, overrides present)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 17166.643502371655,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 35,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 8192,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 733.438200603182,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.2724613026527525,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.100607674,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =500, overrides present)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 17848.21968347886,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 68,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4096,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 924.4303718458264,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 5.179398215842906,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.160791974,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =1000, overrides present)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 18232.019091057056,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 33,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 8192,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 958.6003247079907,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 5.257784779186587,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.224965672,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =1)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 611.4904117271551,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 61,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 23.654784213058928,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.868381868203947,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.178404371,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =10)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 633.187523664054,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 59,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 33.160668328593346,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 5.237100714919831,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.065774586,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =500)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 580.6550046480619,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 65,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 20.52439538479371,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.5346970611634796,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.084138971,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "finalize a range of IDs (cluster size =1000)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 578.1716268686149,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 65,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 24.236716147305156,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.191958757743185,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.073089024,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "takes a ID creation range'})",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 304.5020637512207,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 62,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 262144,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 11.355045471281699,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.7290536988146035,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.097069232,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "decompress local ID into stable IDs (override)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 85.20845756530763,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 55,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1048576,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 3.3275976712881685,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 3.9052434070147872,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.116122484,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "decompress local ID into stable IDs (sequential)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 479.87763812873953,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 79,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 8.969156496920478,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.8690507296600205,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.129934631,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "decompress final ID into stable IDs (override)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 77.22452211380005,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 8,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1048576,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 0.7431443240932124,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 0.9623165074405974,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 0.80168252,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "decompress final ID into stable IDs (sequential, overrides present in owning cluster)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 456.5339424826882,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 33,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 4.55055581100286,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 0.9967617711525177,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 2.116110476,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "decompress final ID into stable IDs (sequential, overrides not present in owning cluster)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 482.6485107617499,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 78,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 9.599191575057747,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.988857597407195,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.095322103,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "compress a stable ID to a local ID (override)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 409.31493850376285,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 92,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 7.507816581042891,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.8342395731969774,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.093459373,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "compress a stable ID to a local ID (sequential)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 1008.818220214844,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 75,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 65536,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 27.315065878599952,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.707630109295882,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.10834257,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "compress a stable ID to a final ID (override)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 420.27328821818037,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 90,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 11.365739543135472,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.7043687671235177,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.110316094,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "compress a stable ID to a final ID (sequential)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 1145.254251653498,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 66,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 65536,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 47.939906400178096,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 4.185961879727868,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.115238386,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "normalize a final ID from the local session to session space",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 270.2837854112898,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 70,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 262144,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 6.395192530572166,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.366102916917723,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.128987342,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "normalize a local ID from the local session to session space",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 121.87769634692694,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 77,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 524288,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 2.4949796653068126,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.0471175121367655,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.094972555,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "normalize a local ID from a remote session to session space",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 1562.2679657297033,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 97,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 32768,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 29.025688536638686,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.8579199710519179,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.125489264,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "serialize an IdCompressor (with overrides)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 245043.4940664557,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 79,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 256,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 3739.588620542935,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.5260917800693619,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.131742779,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "deserialize an IdCompressor (with overrides)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 547399.8507812499,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 70,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 128,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 13085.52583962538,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.390487651932988,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.079868157,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "serialize an IdCompressor (without overrides)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 169901.49999999997,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 113,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 256,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 4617.148533692823,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.7175443028418367,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.091534752,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "deserialize an IdCompressor (without overrides)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 256705.73666666672,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 75,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 256,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 4772.068206889653,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.8589643803271136,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.054431218,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "suiteName": "NumericUuid Perf",
+        "contents": [
+            {
+                "benchmarkName": "convert uuid string to numeric uuid",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 112.06838648659846,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 84,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 524288,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 2.1441210631437664,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.9132256030117545,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.010535575,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "incrementing a uuid",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 15.087037236262589,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 78,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 4194304,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 0.30388661889994745,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.0142232973982326,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.008688447,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "convert a uuid string into a session uuid",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 124.91014714558916,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 75,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 524288,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 2.5444022886656783,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.036986063029809,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.005644692,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "convert an numeric uuid into a uuid string",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 432.56574135265123,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 87,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 12.91486522191713,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.985642178118823,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.004501049,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "compute the delta between two distant numeric uuids",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 207.87926122644453,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 91,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 262144,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 3.192146921136471,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.535577383863819,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.027420546,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "compute the delta between two close numeric uuids",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 72.13737970498894,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 65,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 1048576,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 1.1402655732934623,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.5806861546075852,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.001441857,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "generate a random v4 uuid string",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 634.6625452041626,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 8,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 131072,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 6.1563159613739655,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 0.9700140661985275,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 0.760856308,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "suiteName": "SessionIdNormalizer Perf",
+        "contents": [
+            {
+                "benchmarkName": "normalize a local ID to a final ID",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 241.71643966283554,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 78,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 262144,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 3.0789729482208843,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.273795424306129,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.062293967,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "normalize a final ID to session space",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 357.13385225691883,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 53,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 262144,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 6.885177984043319,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.9278984449478023,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.102641656,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "suiteName": "SharedTree Perf",
+        "contents": [
+            {
+                "benchmarkName": "get currentView with 1 sequenced edit(s)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 828.3738788982013,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 91,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 65536,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 15.73411828419472,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 1.8993981685084353,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.016913768,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "benchmarkName": "get currentView with 1000 sequenced edit(s)",
+                "data": [
+                    {
+                        "name": "Period",
+                        "value": 887.095690020393,
+                        "units": "ns/op",
+                        "type": "SmallerIsBetter",
+                        "significance": "Primary"
+                    },
+                    {
+                        "name": "Batch Count",
+                        "value": 85,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Iterations Per Batch",
+                        "value": 65536,
+                        "units": "count",
+                        "significance": "Diagnostic"
+                    },
+                    {
+                        "name": "Margin of Error",
+                        "value": 20.263842424415135,
+                        "units": "ns",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Relative Margin of Error",
+                        "value": 2.284290483245308,
+                        "units": "%",
+                        "type": "SmallerIsBetter"
+                    },
+                    {
+                        "name": "Test Duration",
+                        "value": 5.100302017,
+                        "units": "seconds",
+                        "type": "SmallerIsBetter",
+                        "significance": "Diagnostic"
+                    }
+                ]
+            },
+            {
+                "suiteName": "Summary Load",
+                "contents": [
+                    {
+                        "benchmarkName": "load 0.0.2 format without history",
+                        "data": [
+                            {
+                                "name": "Period",
+                                "value": 2938822.183894231,
+                                "units": "ns/op",
+                                "type": "SmallerIsBetter",
+                                "significance": "Primary"
+                            },
+                            {
+                                "name": "Batch Count",
+                                "value": 52,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Iterations Per Batch",
+                                "value": 32,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Margin of Error",
+                                "value": 49581.59426990139,
+                                "units": "ns",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Relative Margin of Error",
+                                "value": 1.687124676737021,
+                                "units": "%",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Test Duration",
+                                "value": 5.038871525,
+                                "units": "seconds",
+                                "type": "SmallerIsBetter",
+                                "significance": "Diagnostic"
+                            }
+                        ]
+                    },
+                    {
+                        "benchmarkName": "load 0.0.2 format with history",
+                        "data": [
+                            {
+                                "name": "Period",
+                                "value": 16373181.329999996,
+                                "units": "ns/op",
+                                "type": "SmallerIsBetter",
+                                "significance": "Primary"
+                            },
+                            {
+                                "name": "Batch Count",
+                                "value": 75,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Iterations Per Batch",
+                                "value": 4,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Margin of Error",
+                                "value": 437670.56318068743,
+                                "units": "ns",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Relative Margin of Error",
+                                "value": 2.6730942164474736,
+                                "units": "%",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Test Duration",
+                                "value": 5.006088392,
+                                "units": "seconds",
+                                "type": "SmallerIsBetter",
+                                "significance": "Diagnostic"
+                            }
+                        ]
+                    },
+                    {
+                        "benchmarkName": "load 0.1.1 format without history",
+                        "data": [
+                            {
+                                "name": "Period",
+                                "value": 2055784.9387499997,
+                                "units": "ns/op",
+                                "type": "SmallerIsBetter",
+                                "significance": "Primary"
+                            },
+                            {
+                                "name": "Batch Count",
+                                "value": 75,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Iterations Per Batch",
+                                "value": 32,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Margin of Error",
+                                "value": 34244.497107883275,
+                                "units": "ns",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Relative Margin of Error",
+                                "value": 1.665762622461147,
+                                "units": "%",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Test Duration",
+                                "value": 5.028665238,
+                                "units": "seconds",
+                                "type": "SmallerIsBetter",
+                                "significance": "Diagnostic"
+                            }
+                        ]
+                    },
+                    {
+                        "benchmarkName": "load 0.1.1 format with history",
+                        "data": [
+                            {
+                                "name": "Period",
+                                "value": 8879969.467857143,
+                                "units": "ns/op",
+                                "type": "SmallerIsBetter",
+                                "significance": "Primary"
+                            },
+                            {
+                                "name": "Batch Count",
+                                "value": 70,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Iterations Per Batch",
+                                "value": 8,
+                                "units": "count",
+                                "significance": "Diagnostic"
+                            },
+                            {
+                                "name": "Margin of Error",
+                                "value": 165600.12531889425,
+                                "units": "ns",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Relative Margin of Error",
+                                "value": 1.8648726881135977,
+                                "units": "%",
+                                "type": "SmallerIsBetter"
+                            },
+                            {
+                                "name": "Test Duration",
+                                "value": 5.073823172,
+                                "units": "seconds",
+                                "type": "SmallerIsBetter",
+                                "significance": "Diagnostic"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

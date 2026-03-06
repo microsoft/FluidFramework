@@ -10,12 +10,12 @@ import {
 	isMemoryTest,
 } from "@fluid-private/test-version-utils";
 import {
-	BenchmarkArguments,
 	BenchmarkTimer,
-	IMemoryTestObject,
+	MemoryUseCallbacks,
 	Phase,
 	benchmark,
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
@@ -115,21 +115,35 @@ export interface IBenchmarkParameters {
  */
 export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T): void {
 	if (isMemoryTest()) {
-		const t: IMemoryTestObject = {
+		const runMethod = obj.run.bind(obj);
+		const beforeIterationMethod = obj.beforeIteration?.bind(obj);
+		const afterIterationMethod = obj.afterIteration?.bind(obj);
+		const beforeMethod = obj.before?.bind(obj);
+		const afterMethod = obj.after?.bind(obj);
+		benchmarkIt({
 			title,
-			...obj,
-			run: obj.run.bind(obj),
-			beforeIteration: obj.beforeIteration?.bind(obj),
-			afterIteration: obj.afterIteration?.bind(obj),
-			before: obj.before?.bind(obj),
-			after: obj.after?.bind(obj),
-		};
-		benchmarkMemory(t);
+			...benchmarkMemoryUse({
+				benchmarkFn: async (state: MemoryUseCallbacks) => {
+					await beforeMethod?.();
+					while (state.continue()) {
+						beforeIterationMethod?.();
+						await state.beforeAllocation();
+						{
+							await runMethod();
+							await state.whileAllocated();
+							afterIterationMethod?.();
+						}
+						await state.afterDeallocation();
+					}
+					await afterMethod?.();
+				},
+			}),
+		});
 	} else {
 		const runMethod = obj.run.bind(obj);
 		const beforeMethod = obj.before?.bind(obj);
 		const afterMethod = obj.after?.bind(obj);
-		const t1: BenchmarkArguments = {
+		benchmark({
 			title,
 			...obj,
 			benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
@@ -147,14 +161,11 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 			before: obj.before?.bind(obj),
 			after: obj.after?.bind(obj),
 			beforeEachBatch: obj.beforeEachBatch?.bind(obj),
-		};
-		// Force batch size to be always 1
-		t1.minBatchDurationSeconds = 0;
-		if (obj.minSampleCount !== undefined) {
-			t1.minBatchCount = obj.minSampleCount;
-		}
-		// No need to warm up
-		t1.startPhase = Phase.CollectData;
-		benchmark(t1);
+			// Force batch size to be always 1
+			minBatchDurationSeconds: 0,
+			...(obj.minSampleCount !== undefined ? { minBatchCount: obj.minSampleCount } : {}),
+			// No need to warm up
+			startPhase: Phase.CollectData,
+		});
 	}
 }

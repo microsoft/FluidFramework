@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkIt, benchmarkMemoryUse } from "@fluid-tools/benchmark";
 import {
 	IContainer,
 	IFluidCodeDetails,
@@ -60,60 +60,76 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 		loaderContainerTracker.reset();
 	});
 
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Create loader";
-			private loader: ILoader | undefined;
+	benchmarkIt({
+		title: "Create loader",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const newLoader: ILoader = createLoader();
+						await state.whileAllocated();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 
-			beforeIteration(): void {
-				this.loader = undefined;
-			}
+	benchmarkIt({
+		title: "Create detached container",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const container: IContainer = await loader.createDetachedContainer(codeDetails);
+						await state.whileAllocated();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 
-			async run(): Promise<void> {
-				this.loader = createLoader();
-			}
-		})(),
-	);
+	benchmarkIt({
+		title: "Create detached container and attach it",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						const container: IContainer = await loader.createDetachedContainer(codeDetails);
+						await container.attach(provider.driver.createCreateNewRequest("containerTest"));
+						await state.whileAllocated();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Create detached container";
-			private container: IContainer | undefined;
-
-			beforeIteration(): void {
-				this.container = undefined;
-			}
-
-			async run(): Promise<void> {
-				this.container = await loader.createDetachedContainer(codeDetails);
-			}
-		})(),
-	);
-
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Create detached container and attach it";
-			private container: IContainer | undefined;
-
-			beforeIteration(): void {
-				this.container = undefined;
-			}
-
-			async run(): Promise<void> {
-				this.container = await loader.createDetachedContainer(codeDetails);
-				await this.container.attach(provider.driver.createCreateNewRequest("containerTest"));
-			}
-		})(),
-	);
-
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Load existing container";
-			async run(): Promise<void> {
-				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
-				const testRequest: IRequest = { url: requestUrl };
-				const container = await loader.resolve(testRequest);
-			}
-		})(),
-	);
+	benchmarkIt({
+		title: "Load existing container",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						const requestUrl = await provider.driver.createContainerUrl(
+							fileName,
+							containerUrl,
+						);
+						const testRequest: IRequest = { url: requestUrl };
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const container = await loader.resolve(testRequest);
+						await state.whileAllocated();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 });
