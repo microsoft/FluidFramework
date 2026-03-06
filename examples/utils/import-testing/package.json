@@ -14,20 +14,11 @@
 	"type": "module",
 	"exports": {
 		"./crossPackageSchema": {
-			"import": {
-				"types": "./lib/crossPackageSchemaExports.d.ts",
-				"default": "./lib/crossPackageSchemaExports.js"
-			},
-			"require": {
-				"types": "./dist/crossPackageSchemaExports.d.ts",
-				"default": "./dist/crossPackageSchemaExports.js"
-			}
+			"import": "./lib/crossPackageSchemaExports.js",
+			"require": "./dist/crossPackageSchemaExports.js"
 		},
 		"./crossPackageSchemaBundler": {
-			"import": {
-				"types": "./lib/bundler/crossPackageSchemaExports.d.ts",
-				"default": "./lib/bundler/crossPackageSchemaExports.js"
-			}
+			"import": "./lib/bundler/crossPackageSchemaExports.js"
 		}
 	},
 	"scripts": {

@@ -6,16 +6,16 @@
 /*
 Compile-time only test — if this file compiles, the test passes.
 
-This tests the TS 5.9 bundler-mode import path normalization bug:
+This tests the TS 5.6+ bundler-mode import path normalization bug:
 When tree's export tiers all point to the same JS module (lib/index.js),
-TS 5.9's bundler emitter normalizes import("@fluidframework/tree/alpha")
+TS 5.6+'s bundler emitter normalizes import("@fluidframework/tree/alpha")
 to import("@fluidframework/tree") in the provider's .d.ts output.
 Since ObjectNodeSchema is alpha-only and not in the public tier,
 the consumer can't resolve it, causing:
 TS2322: Type 'typeof AppState' is not assignable to type 'ImplicitFieldSchema'.
 
 The provider's .d.ts is built by tsconfig.crossPackage.bundler.json using
-TS 5.9 + moduleResolution: "bundler" to trigger the normalization.
+TS 5.6+ + moduleResolution: "bundler" to trigger the normalization.
 This file consumes those .d.ts files and verifies the types still work.
 */
 import { TreeViewConfiguration } from "@fluidframework/tree";

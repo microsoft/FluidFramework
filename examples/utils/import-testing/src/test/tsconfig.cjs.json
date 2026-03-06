@@ -4,8 +4,8 @@
 	"compilerOptions": {
 		"outDir": "../../dist/test",
 	},
-	// The bundler importer is ESM-only (no CJS bundler output exists).
-	"exclude": ["./crossPackageBundlerImporter.ts"],
+	// Cross-package importers are ESM-only compile-time tests (no CJS schema output exists).
+	"exclude": ["./crossPackageImporter.ts", "./crossPackageBundlerImporter.ts"],
 	"references": [
 		{
 			"path": "../../tsconfig.cjs.json",

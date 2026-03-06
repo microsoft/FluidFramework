@@ -1,6 +1,4 @@
 {
-	"extends": "./tsconfig.json",
+	"extends": "./tsconfig.base.json",
 	"include": ["src/crossPackageSchemaExports.ts"],
-	// Override the exclude from tsconfig.json which excludes this file.
-	"exclude": [],
 }
