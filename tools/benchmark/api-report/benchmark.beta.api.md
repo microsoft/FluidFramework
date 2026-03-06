@@ -78,7 +78,7 @@ export enum BenchmarkType {
 }
 
 // @public
-export function captureResults(f: () => CollectedData | Promise<CollectedData>): () => Promise<{
+export function captureResults(f: () => CollectedData | Promise<CollectedData>, durationMeasurementName?: string): Promise<{
     result: BenchmarkResult;
     exception?: Error;
 }>;

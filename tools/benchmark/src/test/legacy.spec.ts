@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, isParentProcess } from "../Configuration.js";
+import { BenchmarkType, isChildProcess } from "../Configuration.js";
 import { type BenchmarkTimer, Phase } from "../durationBenchmarking/index.js";
 import { benchmark, benchmarkCustom } from "../legacy.js";
 import { ValueType, type CollectedData } from "../ResultTypes.js";
@@ -40,7 +40,7 @@ describe("legacy", () => {
 			});
 
 			afterEach(() => {
-				if (!isParentProcess) {
+				if (isChildProcess || !process.argv.includes("--parentProcess")) {
 					// If running with separate processes,
 					// this check must only be done in the child process (it will fail in the parent process)
 					assert(afterHasBeenCalled, "after should be called after test execution");

@@ -46,6 +46,7 @@ import {
 import { formatMeasurementValue, geometricMean, prettyNumber } from "./RunnerUtilities.js";
 import { assert } from "./assert.js";
 import { testDurationName } from "./ResultUtilities.js";
+import { isChildProcess } from "./Configuration.js";
 
 /**
  * A node in the suite tree maintained by {@link BenchmarkReporter}.
@@ -135,6 +136,12 @@ export class BenchmarkReporter {
 	 * Appends a benchmark result to the currently open suite (the stack top).
 	 */
 	public recordTestResult(testName: string, result: BenchmarkResult): void {
+		if (isChildProcess) {
+			// eslint-disable-next-line no-console
+			console.info(JSON.stringify(result));
+			return;
+		}
+
 		// Non-null assertion is safe: suiteStack always has at least the virtual root.
 		const node = this.suiteStack.at(-1)!;
 
@@ -152,7 +159,13 @@ export class BenchmarkReporter {
 		table.cell("name", chalk.italic(testName));
 
 		if (isResultError(result)) {
-			table.cell("error", result.error);
+			// Full error should be included outside of table, so limit text in table to avoid breaking formatting.
+			const errorColumns = 50;
+			const message =
+				result.error.length > errorColumns
+					? `${result.error.slice(0, errorColumns - 1)}…`
+					: result.error;
+			table.cell("error", chalk.red(message));
 		} else {
 			for (const measurement of result) {
 				const text = formatMeasurementValue(measurement);

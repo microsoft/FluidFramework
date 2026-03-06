@@ -61,7 +61,7 @@ module.exports = class {
 				}
 
 				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
-				let benchmark: Readonly<BenchmarkResult> | undefined = this.data.get(test);
+				let benchmark: BenchmarkResult | undefined = this.data.get(test);
 				if (benchmark === undefined) {
 					// Mocha test completed without reporting data.
 					// This is an error, so report it as such.
@@ -80,12 +80,7 @@ module.exports = class {
 					benchmark = { error };
 				}
 
-				if (isChildProcess) {
-					// Write the data to stdout so the parent process can collect it.
-					console.info(JSON.stringify(benchmark));
-				} else {
-					benchmarkReporter.recordTestResult(getName(test.title), benchmark);
-				}
+				benchmarkReporter.recordTestResult(getName(test.title), benchmark);
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
 				if (!isChildProcess && !suite.root) {

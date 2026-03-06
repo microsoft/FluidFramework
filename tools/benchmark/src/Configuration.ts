@@ -176,17 +176,6 @@ export function qualifiedTitle(
 export const isInPerformanceTestingMode = process.argv.includes("--perfMode");
 
 /**
- * If specified, the current process should not run performance tests directly.
- * Instead, a child process will be forked for each test.
- * This has some overhead, but can reduce noise and cross-test effects
- * (e.g. tests performing very differently based on which tests ran before them due to different JIT state).
- * This does not (and cannot) remove all sources of cross-test interference.
- * CPU temperature will still be an issue, so running with fixed CPU clock speeds is still recommended
- * for more precise data.
- */
-export const isParentProcess: boolean = process.argv.includes("--parentProcess");
-
-/**
  * Indicates that this process is a child process spawned by a `--parentProcess` run.
  * Only the specific test assigned to this child process is run, and results are returned
  * via stdout as JSON for the parent process to collect.
