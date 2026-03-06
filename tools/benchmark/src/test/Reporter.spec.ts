@@ -8,12 +8,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { strict as assert } from "node:assert";
 
-import {
-	BenchmarkReporter,
-	type ReportArray,
-	type ReportEntry,
-	type ReportSuite,
-} from "../Reporter.js";
+import { BenchmarkReporter, type ReportArray } from "../Reporter.js";
 import { ValueType, type CollectedData, type BenchmarkResult } from "../ResultTypes.js";
 
 // A minimal passing CollectedData result.
@@ -85,16 +80,15 @@ describe("BenchmarkReporter", () => {
 			});
 
 			const output = JSON.parse(fs.readFileSync(outputFile, "utf8")) as ReportArray;
-			assert.equal(output.length, 1);
-			const suite = output[0] as ReportSuite;
-			assert.equal(suite.suiteName, "MySuite");
-			assert.equal(suite.contents.length, 2);
-			const passing = suite.contents[0] as ReportEntry;
-			assert.equal(passing.benchmarkName, "passing test");
-			assert.deepEqual(passing.data, successResult);
-			const failing = suite.contents[1] as ReportEntry;
-			assert.equal(failing.benchmarkName, "failing test");
-			assert.deepEqual(failing.data, errorResult);
+			assert.deepEqual(output, [
+				{
+					suiteName: "MySuite",
+					contents: [
+						{ benchmarkName: "passing test", data: successResult },
+						{ benchmarkName: "failing test", data: errorResult },
+					],
+				},
+			]);
 		});
 
 		it("includes suites that contain only errors", async () => {
@@ -107,11 +101,12 @@ describe("BenchmarkReporter", () => {
 			});
 
 			const output = JSON.parse(fs.readFileSync(outputFile, "utf8")) as ReportArray;
-			assert.equal(output.length, 1);
-			const suite = output[0] as ReportSuite;
-			assert.equal(suite.suiteName, "AllErrors");
-			assert.equal(suite.contents.length, 1);
-			assert.equal((suite.contents[0] as ReportEntry).benchmarkName, "bad test");
+			assert.deepEqual(output, [
+				{
+					suiteName: "AllErrors",
+					contents: [{ benchmarkName: "bad test", data: errorResult }],
+				},
+			]);
 		});
 
 		it("writes nested suites correctly", async () => {
@@ -126,14 +121,17 @@ describe("BenchmarkReporter", () => {
 			});
 
 			const output = JSON.parse(fs.readFileSync(outputFile, "utf8")) as ReportArray;
-			assert.equal(output.length, 1);
-			const outer = output[0] as ReportSuite;
-			assert.equal(outer.suiteName, "Outer");
-			assert.equal(outer.contents.length, 1);
-			const inner = outer.contents[0] as ReportSuite;
-			assert.equal(inner.suiteName, "Inner");
-			assert.equal(inner.contents.length, 1);
-			assert.equal((inner.contents[0] as ReportEntry).benchmarkName, "nested test");
+			assert.deepEqual(output, [
+				{
+					suiteName: "Outer",
+					contents: [
+						{
+							suiteName: "Inner",
+							contents: [{ benchmarkName: "nested test", data: successResult }],
+						},
+					],
+				},
+			]);
 		});
 
 		it("includes multiple suites at the top level", async () => {
@@ -149,9 +147,16 @@ describe("BenchmarkReporter", () => {
 			});
 
 			const output = JSON.parse(fs.readFileSync(outputFile, "utf8")) as ReportArray;
-			assert.equal(output.length, 2);
-			assert.equal((output[0] as ReportSuite).suiteName, "Suite A");
-			assert.equal((output[1] as ReportSuite).suiteName, "Suite B");
+			assert.deepEqual(output, [
+				{
+					suiteName: "Suite A",
+					contents: [{ benchmarkName: "a1", data: successResult }],
+				},
+				{
+					suiteName: "Suite B",
+					contents: [{ benchmarkName: "b1", data: successResult }],
+				},
+			]);
 		});
 
 		it("does not error when no outputFilePath is provided", async () => {
