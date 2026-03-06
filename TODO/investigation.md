@@ -2,121 +2,93 @@
 
 ## Summary of Root Causes Found
 
-### Root Cause 1: SnapshotRefresher 24-hour timer (CONFIRMED via --detect-open-handles)
-**Affected packages:** packages/loader/container-loader (and likely others)
+### Root Cause 1: SnapshotRefresher 24-hour timer
+**Affected packages:** packages/loader/container-loader
 
-`SnapshotRefresher` creates a 24-hour (86400000ms) `setTimeout` via the `Timer` class's
-`setLongTimeout`. Tests create `SerializedStateManager` instances (which own a `SnapshotRefresher`)
-without calling `.dispose()` after the test completes. The timer keeps the process alive.
+`SnapshotRefresher` creates a 24-hour (86400000ms) `setTimeout` via `Timer.setLongTimeout`.
+Tests created `SerializedStateManager` instances without calling `.dispose()` after tests.
 
-**Location:** `packages/loader/container-loader/src/test/serializedStateManager.spec.ts`
-**Fix:** Add `afterEach` cleanup to call `serializedStateManager.dispose()` for each test
-that creates an instance with offline load enabled.
+**Fix:** Added `afterEach` cleanup to dispose each `SerializedStateManager` instance.
 
-### Root Cause 2: DeliLambda.readClientIdleTimer (CONFIRMED by code analysis)
-**Affected packages:** Any package that uses TestTreeProvider.create() or TestObjectProvider
-with a local server driver (e.g. packages/dds/tree, packages/test/local-server-tests, etc.)
+### Root Cause 2: DeliLambda.readClientIdleTimer (60s setInterval)
+**Affected packages:** All packages using LocalDeltaConnectionServer directly or via TestTreeProvider/LocalServerTestDriver
 
 `DeliLambda` creates a 60-second `setInterval` (readClientIdleTimer) when the local orderer
-is set up. This timer is only cleared when `DeliLambda.close()` is called, which happens when
-`LocalServerTestDriver.dispose()` is called. Tests that use `TestTreeProvider.create()` directly
-(not through `describeCompat`) don't call `driver.dispose()` after tests.
+is set up. Only cleared when `DeliLambda.close()` is called via `LocalDeltaConnectionServer.close()`.
 
-`describeCompat` already handles this with `provider.driver.dispose?.()` in its `after` hook,
-but calls it fire-and-forget (not awaited). This still causes a brief hang while the async
-cleanup chain completes.
+**Fixes applied:**
+- `packages/test/test-drivers/src/localServerTestDriver.ts`: Made `dispose()` async, awaiting `server.close()`
+- `packages/test/test-driver-definitions/src/interfaces.ts`: Updated `dispose()` to `void | Promise<void>`
+- `packages/test/test-version-utils/src/describeCompat.ts` + `describeWithVersions.ts`: Await `driver.dispose()` in `after` hook
+- `packages/test/local-server-tests/src/test/*.spec.ts`: All files changed to `deltaConnectionServer.close()` (instead of just `webSocketServer.close()`)
+- `packages/test/test-end-to-end-tests/src/test/dataStoresNested.spec.ts`: Hoisted `driver` to outer scope, added `await driver.dispose()` in `afterEach`
 
-**Location:** packages/dds/tree/src/test/* (and others using TestTreeProvider)
-**Fix:** Add proper cleanup for TestTreeProvider instances in tests
+### Root Cause 3: GC timers in ContainerRuntime
+**Affected packages:** packages/runtime/container-runtime
 
-### Root Cause 3: JSDOM (suspected)
-**Affected packages:** packages/framework/react
+`GarbageCollector` creates a MAX_INT32 timer on construction. Tests creating `ContainerRuntime`
+instances without disposing them left this timer alive.
 
-JSDOM keeps the process alive through internal timers and window/document event handling.
-Tests use `globalJsdom()` from the `global-jsdom` package.
-**Status:** Not yet confirmed via diagnostics.
+**Fix:** Dispose all `ContainerRuntime` instances in test cleanup.
 
-### Root Cause 4: Other packages (unknown)
-**Affected packages:** packages/runtime/container-runtime, and others
+### Root Cause 4: ApplicationInsights diagnosticLogInterval
+**Affected packages:** packages/framework/client-logger/fluid-telemetry
 
-Likely similar to root cause 1 (SnapshotRefresher or similar timed objects), but not yet confirmed.
+ApplicationInsights SDK creates a `setInterval` (10s) for internal log polling, even without
+calling `initialize()`. Stop it with `appInsightsClient.stopPollingInternalLogs?.()`.
 
-## Packages affected
-- packages/dds/tree (Root cause 2 - TestTreeProvider not disposed)
-- packages/runtime/container-runtime (Root cause 4 - TBD)
-- packages/loader/container-loader (Root cause 1 - SnapshotRefresher 24h timer - CONFIRMED)
-- packages/service-clients/odsp-client (Root cause 2 - likely local server)
-- packages/test/local-server-tests (Root cause 2 - local server)
-- packages/test/snapshots (Root cause 4 - TBD)
-- packages/framework/react (Root cause 3 - JSDOM)
-- packages/framework/client-logger/fluid-telemetry (Root cause 4 - TBD)
-- packages/test/test-end-to-end-tests/src/test (Root cause 2 - local server)
-- examples/data-objects/table-document (Root cause 2 - uses describeCompat with local server)
-- examples/data-objects/webflow (Root cause 4 - TBD)
-- examples/data-objects/inventory-app (Root cause 4 - TBD)
+### Root Cause 5: Quill requires document at ESM module-load time
+**Affected packages:** examples/data-objects/inventory-app
 
-## Tasks
+`@fluidframework/react` exports Quill-dependent code, which needs `document` at import time.
+The fix is a `globalSetup.ts` file that calls `globalJsdom()` at module load time (before test
+files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) alphabetically.
 
-### Done
-- [x] Understand scope of the problem
-- [x] Identify primary root cause (DeliLambda.readClientIdleTimer for local server packages)
-- [x] Confirm secondary root cause (SnapshotRefresher 24h timer via diagnostics)
+## All Fixed Packages
 
-### Done (continued)
-- [x] Fix packages/loader/container-loader (serializedStateManager.spec.ts cleanup)
-  - Added `makeSsm()` factory helper + `instancesToDispose` tracking array at outer describe scope
-  - `afterEach` disposes all tracked instances, preventing 24h SnapshotRefresher timers from leaking
-  - Removed `config.exit = true` from `.mocharc.cjs`
-- [x] Fix packages/runtime/container-runtime (3 spec files with ContainerRuntime not disposed)
-  - Root cause: GarbageCollector in ContainerRuntime creates MAX_INT32 timer on creation
-  - hardwareStats.spec.ts, runtimeLayerCompatValidation.spec.ts, containerRuntime.extensions.spec.ts
-  - Removed `config.exit = true` from `.mocharc.cjs`
+| Package | Config.exit removed | Root Cause |
+|---------|---------------------|-----------|
+| packages/loader/container-loader | ✅ | 1 - SnapshotRefresher |
+| packages/runtime/container-runtime | ✅ | 3 - GC timer |
+| packages/dds/tree | ✅ | 2 - DeliLambda + GC timer in TestTreeProvider |
+| packages/test/local-server-tests | ✅ | 2 - DeliLambda |
+| examples/data-objects/table-document | ✅ | 2 - describeCompat driver await |
+| packages/framework/client-logger/fluid-telemetry | ✅ | 4 - ApplicationInsights |
+| packages/framework/react | ✅ | Already clean |
+| packages/test/snapshots | ✅ | Already clean (pending tests) |
+| examples/data-objects/webflow | ✅ | Already clean after describeCompat fix |
+| packages/service-clients/odsp-client | ✅ | Already clean |
+| examples/data-objects/inventory-app | ✅ | 5 - Quill/JSDOM |
+| experimental/dds/tree | ✅ | Already clean |
+| experimental/PropertyDDS/packages/property-dds | ✅ | Already clean |
+| experimental/PropertyDDS/packages/property-common | ✅ | Already clean |
+| experimental/PropertyDDS/packages/property-properties | ✅ | Already clean |
+| packages/dds/matrix/src/test/memory | ✅ | Already clean (benchmark) |
+| packages/dds/sequence/src/test/memory | ✅ | Already clean (benchmark) |
+| packages/dds/map/src/test/memory | ✅ | Already clean (benchmark) |
+| packages/test/test-end-to-end-tests | ✅ | 2 - dataStoresNested.spec.ts |
+| packages/test/test-end-to-end-tests/benchmark | ✅ | Already clean (benchmark) |
 
-- [x] Fix packages/dds/tree (TestTreeProvider disposal)
-  - Root cause: LoaderContainerTracker skips non-interactive (summarizer) containers, so the
-    summarizer container created by `createSummarizer()` was never disposed
-  - Fix 1: Change `state: "disabled"` to `state: "summaryOnRequest"` for `SummarizeType.onDemand`
-    to prevent SummaryManager from spawning auto-summarizer containers with GC timers
-  - Fix 2: Capture `summarizerContainer` from `createSummarizer()` and dispose it explicitly
-    in `TestTreeProvider.dispose()`, clearing its GC session expiry timer
-  - Fix 3: Add `afterEach` cleanup in sharedTree.spec.ts and testTreeProvider.spec.ts
-  - Fix 4: Add `provider.dispose()` in `getIIDCompressor()` in nodeIdentifier.spec.ts
-  - Removed `config.exit = true` from `.mocharc.cjs`
+## Remaining (not fixed)
 
-### Todo
-- [ ] Run diagnostics on packages/runtime/container-runtime
-- [ ] Run diagnostics on packages/framework/react
-- [ ] Fix remaining packages after root causes confirmed
-- [ ] Remove --exit flag from fixed packages and verify tests pass
+- `tools/test-tools/.mocharc.cjs`: Standalone package (own pnpm workspace, not part of main monorepo). Tests appear to be trivially clean (just spawnSync) but can't verify without separate install.
 
-## Key findings
+## Key implementation notes
 
-1. `packages/loader/container-loader/src/test/serializedStateManager.spec.ts`:
-   - Creates SerializedStateManager instances (with SnapshotRefresher) without disposing them
-   - The SnapshotRefresher's internal Timer (24h default) keeps the process alive
-   - Fix: Add afterEach/after cleanup to dispose each SerializedStateManager
+### describeCompat/describeWithVersions after hook
+The `after` hook now awaits `provider.driver.dispose?.()` so LocalDeltaConnectionServer
+is fully closed before mocha considers the suite done.
 
-2. `packages/dds/tree/.mocharc.cjs` already has comment:
-   > "In this package, tests which use TestTreeProvider.create cause this issue"
-   - TestTreeProvider creates LocalServerTestDriver → LocalDeltaConnectionServer
-   - DeliLambda (inside the server) creates a 60s setInterval (readClientIdleTimer)
-   - Not cleared because driver.dispose() is never called after tests
+### localServerTestDriver.dispose()
+Changed from fire-and-forget `void this._server.close()` to `await this._server.close()`.
 
-3. describeCompat already does driver.dispose() (line 182 in describeCompat.ts),
-   but fire-and-forget (not awaited), so it's still async.
+### Quill/JSDOM setup pattern
+For packages that import @fluidframework/react (which transitively imports Quill):
+- Create a `globalSetup.ts` in the test directory
+- Name it to sort alphabetically BEFORE the test files (e.g., 'g' before 'i')
+- Call `globalJsdom()` at module-load time (top level, not inside before())
+- Clean up in `before()` hook; individual tests can call `globalJsdom()` themselves
 
-## Test diagnostic approach used
-```bash
-# Create a script to trace timer creation and report on SIGTERM:
-cat > /tmp/mocha_trace.js << 'EOF'
-# (intercepts setTimeout/setInterval and logs on SIGTERM)
-EOF
-
-# Run tests and send SIGTERM after completion:
-cd /workspaces/FluidFramework/packages/loader/container-loader
-mocha --no-exit --require /tmp/mocha_trace.js "lib/test/loader.spec.js" &
-PID=$!
-sleep 5
-kill -TERM $PID
-# Look at output for active timer stacks
-```
+### Memory/benchmark test mocharcs
+The `@fluid-tools/benchmark` library has no `setInterval`/`setTimeout` timers.
+Memory tests using this library exit cleanly without `--exit`.
