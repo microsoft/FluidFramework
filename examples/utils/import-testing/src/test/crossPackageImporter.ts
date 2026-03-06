@@ -9,12 +9,14 @@ The schemas in crossPackageSchemaExports.ts are compiled by a separate tsconfig 
 */
 import { TreeViewConfiguration } from "@fluidframework/tree";
 
+/* eslint-disable import-x/no-internal-modules */
 import {
 	AppState,
 	Container,
 	Dimensions,
 	Position,
 } from "@fluid-example/import-testing/crossPackageSchema";
+/* eslint-enable import-x/no-internal-modules */
 
 const _config = new TreeViewConfiguration({ schema: AppState });
 const _container = new Container({
