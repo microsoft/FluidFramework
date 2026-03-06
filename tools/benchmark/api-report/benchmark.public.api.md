@@ -12,7 +12,7 @@ export function benchmark(args: Titled & DurationBenchmark & BenchmarkDescriptio
 // @public @deprecated
 export const benchmarkCustom: typeof benchmarkIt;
 
-// @public
+// @public @sealed
 export interface BenchmarkData {
     readonly data: CollectedData;
     readonly elapsedSeconds: number;
@@ -27,7 +27,7 @@ export interface BenchmarkDescription {
 // @public
 export function benchmarkDuration(args: DurationBenchmark): BenchmarkDescription & BenchmarkFunction;
 
-// @public
+// @public @sealed
 export interface BenchmarkError {
     readonly error: string;
 }
@@ -56,7 +56,7 @@ export class BenchmarkReporter {
     recordTestResult(testName: string, result: BenchmarkResult): void;
 }
 
-// @public
+// @public @sealed
 export type BenchmarkResult = BenchmarkError | BenchmarkData;
 
 // @public @sealed
@@ -129,9 +129,6 @@ export type HookFunction = () => void | Promise<unknown>;
 
 // @public
 export const isInPerformanceTestingMode: boolean;
-
-// @public
-export function isResultError(result: BenchmarkResult): result is BenchmarkError;
 
 // @public
 export interface Measurement {

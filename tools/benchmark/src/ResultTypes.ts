@@ -7,7 +7,9 @@
  * Result of successfully running a benchmark.
  *
  * TODO: flatten this into a CollectedData, and validate in the process.
+ *
  * @public
+ * @sealed
  */
 export interface BenchmarkData {
 	/**
@@ -26,7 +28,10 @@ export interface BenchmarkData {
 
 /**
  * Result of failing to run a benchmark.
+ * @remarks
+ * See {@link BenchmarkResult} for more details.
  * @public
+ * @sealed
  */
 export interface BenchmarkError {
 	/**
@@ -37,13 +42,15 @@ export interface BenchmarkError {
 
 /**
  * Result of trying to run a benchmark.
+ * @remarks
+ * Produced by {@link captureResults}.
  * @public
+ * @sealed
  */
 export type BenchmarkResult = BenchmarkError | BenchmarkData;
 
 /**
  * Provides type narrowing when the provided result is a {@link BenchmarkError}.
- * @public
  */
 export function isResultError(result: BenchmarkResult): result is BenchmarkError {
 	return (result as Partial<BenchmarkError>).error !== undefined;

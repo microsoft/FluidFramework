@@ -47,7 +47,6 @@ export {
 	type BenchmarkData,
 	type BenchmarkError,
 	type BenchmarkResult,
-	isResultError,
 	CollectedData,
 	PrimaryMeasurement,
 	Measurement,
