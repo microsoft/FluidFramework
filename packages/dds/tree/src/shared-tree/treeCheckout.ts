@@ -63,6 +63,7 @@ import {
 	type TaggedChange,
 } from "../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
 	allowsRepoSuperset,
@@ -715,6 +716,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							idCompressor: this.idCompressor,
 							originatorId: this.idCompressor.localSessionId,
 							revision,
+							schema: undefined, // By not passing the schema, we avoid compressing identifiers in identifier fields
 						};
 						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
@@ -775,19 +777,26 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
 		const { revision, originatorId, change } = serializedChange;
-		if (originatorId !== this.idCompressor.localSessionId) {
-			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-			);
-		}
 		const context: ChangeEncodingContext = {
 			idCompressor: this.idCompressor,
-			originatorId: this.idCompressor.localSessionId,
+			originatorId,
 			revision,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+
+		// The change's revision may have been produced by an IdCompressor that overlaps or is otherwise incompatible with ours.
+		// Replace the revision to avoid any ID collisions in the changeset - every application of a serialized changed will result in a different revision.
+		// This means that applying the same serialized change twice will result in its insertions/mutations being performed twice.
+		// The second change will not be deduplicated with the first by the rebaser, as would be the case if they were truly the same change with the same revision.
+		const newRevision = this.#transaction.activeBranch.mintRevisionTag();
+		const newChange = this.changeFamily.rebaser.changeRevision(
+			decodedChange,
+			new DefaultRevisionReplacer(
+				newRevision,
+				this.changeFamily.rebaser.getRevisions(decodedChange),
+			),
+		);
+		this.#transaction.activeBranch.apply(tagChange(newChange, newRevision));
 	}
 
 	// Revision is the revision of the commit, if any, which caused this change.

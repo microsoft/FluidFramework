@@ -124,7 +124,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly mintRevisionTag: () => RevisionTag,
+		public readonly mintRevisionTag: () => RevisionTag,
 		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration

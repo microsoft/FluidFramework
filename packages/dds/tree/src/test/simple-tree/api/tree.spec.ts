@@ -309,7 +309,7 @@ describe("simple-tree tree", () => {
 			assert.equal(viewA.root, 4);
 		});
 
-		it("fail to apply to a branch in another session", () => {
+		it("can be applied to a view with a different session", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const viewA = getView(config);
 			viewA.initialize(3);
@@ -323,10 +323,9 @@ describe("simple-tree tree", () => {
 			});
 			viewA.root = 4;
 
-			const c = change ?? assert.fail("change not captured");
-			assert.throws(() => {
-				viewB.applyChange(c);
-			}, /cannot apply change.*same sharedtree/i);
+			assert(change !== undefined);
+			viewB.applyChange(change);
+			assert.equal(viewB.root, 4);
 		});
 
 		it("error if malformed", () => {
@@ -383,7 +382,84 @@ describe("simple-tree tree", () => {
 			assert.equal(viewA.root, 4);
 		});
 
-		it("apply before transactions", () => {
+		it("applying the same change twice is not idempotent", () => {
+			const sf = new SchemaFactory("test");
+			class List extends sf.array("List", sf.number) {}
+			const config = new TreeViewConfiguration({ schema: List });
+			const viewA = getView(config);
+			viewA.initialize([1, 2, 3]);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			// Insert a node on viewB
+			viewB.root.insertAtEnd(4);
+			assert(change !== undefined);
+
+			// Apply the same serialized change twice to viewA
+			viewA.applyChange(change);
+			viewA.applyChange(change);
+
+			// Each application should produce a distinct effect - the node is inserted twice
+			assert.deepEqual([...viewA.root], [1, 2, 3, 4, 4]);
+		});
+
+		it("non-transaction change can be applied inside a transaction", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			// Make a non-transaction change on viewB
+			viewB.root = 4;
+			assert(change !== undefined);
+
+			// Apply that non-transaction change inside a transaction on viewA
+			const capturedChange = change;
+			viewA.runTransaction(() => {
+				viewA.applyChange(capturedChange);
+			});
+			assert.equal(viewA.root, 4);
+		});
+
+		it("multiple non-transaction changes can be applied together in a transaction", () => {
+			const sf = new SchemaFactory("test");
+			class List extends sf.array("List", sf.number) {}
+			const config = new TreeViewConfiguration({ schema: List });
+			const viewA = getView(config);
+			viewA.initialize([1, 2, 3]);
+			const viewB = viewA.fork();
+
+			const changes: JsonCompatibleReadOnly[] = [];
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				changes.push(metadata.getChange());
+			});
+
+			// Make two separate non-transaction changes on viewB
+			viewB.root.insertAtEnd(4);
+			viewB.root.insertAtEnd(5);
+			assert.equal(changes.length, 2);
+
+			// Apply both non-transaction changes together inside a single transaction on viewA
+			viewA.runTransaction(() => {
+				viewA.applyChange(changes[0]);
+				viewA.applyChange(changes[1]);
+			});
+			assert.deepEqual([...viewA.root], [1, 2, 3, 4, 5]);
+		});
+
+		it("applied change is rolled back when transaction is aborted", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const viewA = getView(config);
 			viewA.initialize(3);
@@ -396,15 +472,77 @@ describe("simple-tree tree", () => {
 			});
 
 			viewB.root = 4;
-			viewA.runTransaction(() => {
-				viewA.root = 5;
-				assert(change !== undefined);
-				// Even though the serialized change (= 4) is applied _after_ the transaction change (= 5),
-				// it is considered a change external to the transaction and so will be applied before the transaction changes,
-				// as is the general policy for external changes applied during a transaction.
-				viewA.applyChange(change);
+			assert(change !== undefined);
+
+			const capturedChange = change;
+			Tree.runTransaction(viewA, () => {
+				viewA.applyChange(capturedChange);
+				assert.equal(viewA.root, 4);
+				return Tree.runTransaction.rollback;
 			});
-			assert.equal(viewA.root, 5);
+			// The serialized change should be rolled back along with the transaction
+			assert.equal(viewA.root, 3);
+		});
+
+		it("can apply a change with an identifier field build to a view with a different id compressor", () => {
+			const sf = new SchemaFactory("test");
+			class HasId extends sf.object("HasId", { id: sf.identifier }) {}
+			const config = new TreeViewConfiguration({
+				schema: SchemaFactory.optional(HasId),
+			});
+
+			// Two independent views get different id compressors with different sessions
+			const viewA = getView(config);
+			viewA.initialize(undefined);
+			const viewB = getView(config);
+			viewB.initialize(undefined);
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewA.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					change = metadata.getChange();
+				}
+			});
+
+			// Insert a node with a default identifier on viewA
+			viewA.root = new HasId({ id: undefined });
+			assert(change !== undefined);
+			const identifierOnA = viewA.root.id;
+
+			// Apply the serialized change to viewB (different compressor instance and session)
+			viewB.applyChange(change);
+			assert(viewB.root !== undefined);
+			assert.equal(viewB.root.id, identifierOnA);
+		});
+
+		it("each application gets a unique revision", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			assert(change !== undefined);
+
+			// Track the changes applied to viewA
+			const appliedChanges: JsonCompatibleReadOnly[] = [];
+			viewA.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					appliedChanges.push(metadata.getChange());
+				}
+			});
+
+			viewA.applyChange(change);
+			viewA.applyChange(change);
+
+			// Each application should produce a separate change event
+			assert.equal(appliedChanges.length, 2);
 		});
 	});
 });
