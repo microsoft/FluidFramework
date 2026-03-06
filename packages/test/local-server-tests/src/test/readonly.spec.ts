@@ -20,6 +20,7 @@ import type {
 import { SharedMap, ISharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
 
@@ -169,6 +170,7 @@ describe("readonly", () => {
 			"shouldn't be any readonly events",
 		);
 
+		container.dispose();
 		await deltaConnectionServer.close();
 	});
 
@@ -189,6 +191,7 @@ describe("readonly", () => {
 			"shouldn't be any readonly events",
 		);
 
+		loadedContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 
@@ -205,12 +208,17 @@ describe("readonly", () => {
 
 		loadedContainer.forceReadonly?.(true);
 
+		// Wait for the reconnect triggered by forceReadonly to complete so the
+		// socketConnectionTimeout (62s) is cleared before we close the server.
+		await waitForContainerConnection(loadedContainer);
+
 		assert(entrypoint.DefaultDataStore.isReadOnly() === true, "should be readonly");
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 1,
 			"should be any readonly events",
 		);
 
+		loadedContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 
@@ -233,6 +241,7 @@ describe("readonly", () => {
 			"shouldn't be any readonly events",
 		);
 
+		loadedContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 });

@@ -163,6 +163,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 			"Expected frozen container's data to remain unchanged after new changes in the original container.",
 		);
 
+		container.dispose();
+		frozenContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 
@@ -215,6 +217,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 			"Expected newSharedMap1 to have key 'newKey' with value 'newValue', but it did not",
 		);
 
+		container.dispose();
+		frozenContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 
@@ -267,6 +271,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 			"Expected newBlobRetrieved to have value 'test', but it did not",
 		);
 
+		container.dispose();
+		frozenContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 
@@ -315,6 +321,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		}
 
+		container.dispose();
+		frozenContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 
@@ -361,6 +369,8 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		}
 
+		container.dispose();
+		frozenContainer.dispose();
 		await deltaConnectionServer.close();
 	});
 });

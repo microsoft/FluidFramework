@@ -271,7 +271,7 @@ const catchUp = async (
 	);
 };
 
-const createClients = async (
+const createClientsBase = async (
 	deltaConnectionServer: ILocalDeltaConnectionServer,
 ): Promise<{
 	original: {
@@ -354,7 +354,7 @@ const createClients = async (
  * loads DDSes created by `addDDS`.
  */
 async function assertDeepConsistent(
-	clients: Awaited<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClientsBase>>,
 	message: string,
 ): Promise<void> {
 	const { original, loaded } = clients;
@@ -369,7 +369,7 @@ async function assertDeepConsistent(
  * Verify clients are consistent via their data representation from `enumerateDataSynchronous`.
  */
 function assertConsistent(
-	clients: Awaited<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClientsBase>>,
 	message: string,
 ): void {
 	const { original, loaded } = clients;
@@ -384,7 +384,7 @@ function assertConsistent(
  * Verify clients are not consistent via their data representation from `enumerateDataSynchronous`.
  */
 function assertNotConsistent(
-	clients: Awaited<ReturnType<typeof createClients>>,
+	clients: Awaited<ReturnType<typeof createClientsBase>>,
 	message: string,
 ): void {
 	const { original, loaded } = clients;
@@ -428,12 +428,28 @@ async function ensureConnected(client: Client): Promise<void> {
 
 describe("Staging Mode", () => {
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
+	let containersToDispose: IContainer[] = [];
+
+	// Shadow the module-level createClients to track containers for disposal.
+	async function createClients(
+		server: ILocalDeltaConnectionServer,
+	): Promise<Awaited<ReturnType<typeof createClientsBase>>> {
+		const clients = await createClientsBase(server);
+		containersToDispose.push(clients.original.container, clients.loaded.container);
+		return clients;
+	}
 
 	beforeEach(() => {
 		deltaConnectionServer = LocalDeltaConnectionServer.create();
+		containersToDispose = [];
 	});
 
 	afterEach(async () => {
+		for (const c of containersToDispose) {
+			if (!c.closed && !c.disposed) {
+				c.dispose();
+			}
+		}
 		await deltaConnectionServer.close();
 	});
 

@@ -148,6 +148,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 				"Additional offline data should be restored",
 			);
 
+			container.dispose();
+			frozenContainer.dispose();
 			await deltaConnectionServer.close();
 		});
 
@@ -230,6 +232,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 				);
 			}
 
+			container.dispose();
+			restoredContainer.dispose();
 			await deltaConnectionServer.close();
 		});
 	});
@@ -284,6 +288,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			assert.strictEqual(keys.length, 0, "Keys iterator should be empty");
 			assert.strictEqual(entriesArray.length, 0, "Entries iterator should be empty");
 
+			container.dispose();
 			await deltaConnectionServer.close();
 		});
 	});

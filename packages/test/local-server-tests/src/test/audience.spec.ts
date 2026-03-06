@@ -142,6 +142,8 @@ describe("Audience correctness", () => {
 			"client2's audience doesn't have client1",
 		);
 
+		container1.dispose();
+		container2.dispose();
 		await deltaConnectionServer.close();
 	});
 });

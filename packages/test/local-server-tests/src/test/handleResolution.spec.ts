@@ -140,6 +140,7 @@ describe("Multi-level handle access", () => {
 		assert.strictEqual(dataObject3.root.get("key2"), "value2");
 		assert.strictEqual(dataObject3C2.root.get("key1"), "value1");
 
+		loaderContainerTracker.reset();
 		await deltaConnectionServer.close();
 	});
 
@@ -217,6 +218,7 @@ describe("Multi-level handle access", () => {
 		assert.strictEqual(dataObject3.root.get("key2"), "value2");
 		assert.strictEqual(dataObject3C2.root.get("key1"), "value1");
 
+		loaderContainerTracker.reset();
 		await deltaConnectionServer.close();
 	});
 
@@ -280,6 +282,7 @@ describe("Multi-level handle access", () => {
 			"Must be able to access data object 3 handle in container 2 after rehydrate",
 		);
 
+		loaderContainerTracker.reset();
 		await deltaConnectionServer.close();
 	});
 });
