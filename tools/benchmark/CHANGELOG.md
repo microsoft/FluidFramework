@@ -12,7 +12,7 @@
 -   New `benchmarkDuration` and `benchmarkMemoryUse` helpers cover the common mocha use cases for duration and memory benchmarks respectively.
 -   `benchmark` and `benchmarkCustom` are still exported but are now considered legacy; prefer `benchmarkIt` or the new typed helpers.
 -   Console output been cleaned up, especially for errors. Errors are now printed in full once, and a truncated version included in the table. Previously they were printed in full three times, including once in the table.
--	When using `--parentProcess`, the test duration is collected for both the parent and child process: previously only the parent process collected this data.
+-   When using `--parentProcess`, the test duration is collected for both the parent and child process: previously only the parent process collected this data.
 
 ### ⚠ BREAKING CHANGES
 
