@@ -245,7 +245,9 @@ export interface SharedTreeChatQuery {
  * @alpha
  */
 export interface TreeAgentSystemMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
 	readonly role: "system";
+	/** The text content of the message. */
 	readonly content: string;
 }
 
@@ -254,7 +256,9 @@ export interface TreeAgentSystemMessage {
  * @alpha
  */
 export interface TreeAgentUserMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
 	readonly role: "user";
+	/** The text content of the message. */
 	readonly content: string;
 }
 
@@ -263,7 +267,9 @@ export interface TreeAgentUserMessage {
  * @alpha
  */
 export interface TreeAgentAssistantMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
 	readonly role: "assistant";
+	/** The text content of the message. */
 	readonly content: string;
 }
 
@@ -272,6 +278,7 @@ export interface TreeAgentAssistantMessage {
  * @alpha
  */
 export interface TreeAgentToolCallMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
 	readonly role: "tool_call";
 	/** A unique identifier for this tool invocation, used to correlate with the result. */
 	readonly toolCallId: string;
@@ -286,6 +293,7 @@ export interface TreeAgentToolCallMessage {
  * @alpha
  */
 export interface TreeAgentToolResultMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
 	readonly role: "tool_result";
 	/** The identifier of the tool call this result corresponds to. */
 	readonly toolCallId: string;
@@ -310,6 +318,7 @@ export type TreeAgentChatMessage =
  * @alpha
  */
 export interface TreeAgentEditResponse {
+	/** Identifies this response as a request to edit the tree. */
 	readonly type: "edit";
 	/** A unique identifier for this tool call, to be included in the subsequent tool result message. */
 	readonly toolCallId: string;
@@ -322,6 +331,7 @@ export interface TreeAgentEditResponse {
  * @alpha
  */
 export interface TreeAgentDoneResponse {
+	/** Identifies this response as the model's final answer. */
 	readonly type: "done";
 	/** The model's final text response to the user. */
 	readonly text: string;

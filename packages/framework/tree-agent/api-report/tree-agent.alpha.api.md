@@ -162,9 +162,7 @@ export interface TreeAgent {
 
 // @alpha
 export interface TreeAgentAssistantMessage {
-    // (undocumented)
     readonly content: string;
-    // (undocumented)
     readonly role: "assistant";
 }
 
@@ -177,7 +175,6 @@ export type TreeAgentChatResponse = TreeAgentEditResponse | TreeAgentDoneRespons
 // @alpha
 export interface TreeAgentDoneResponse {
     readonly text: string;
-    // (undocumented)
     readonly type: "done";
 }
 
@@ -185,7 +182,6 @@ export interface TreeAgentDoneResponse {
 export interface TreeAgentEditResponse {
     readonly code: string;
     readonly toolCallId: string;
-    // (undocumented)
     readonly type: "edit";
 }
 
@@ -199,16 +195,13 @@ export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
 
 // @alpha
 export interface TreeAgentSystemMessage {
-    // (undocumented)
     readonly content: string;
-    // (undocumented)
     readonly role: "system";
 }
 
 // @alpha
 export interface TreeAgentToolCallMessage {
     readonly code: string;
-    // (undocumented)
     readonly role: "tool_call";
     readonly toolCallId: string;
     readonly toolName: string;
@@ -217,16 +210,13 @@ export interface TreeAgentToolCallMessage {
 // @alpha
 export interface TreeAgentToolResultMessage {
     readonly content: string;
-    // (undocumented)
     readonly role: "tool_result";
     readonly toolCallId: string;
 }
 
 // @alpha
 export interface TreeAgentUserMessage {
-    // (undocumented)
     readonly content: string;
-    // (undocumented)
     readonly role: "user";
 }
 
