@@ -349,21 +349,11 @@ function suiteChildrenToReportSuite(children: readonly (SuiteNode | NamedResult)
 			}
 		} else {
 			if (!isResultError(child.result)) {
-				contents.push(outputFriendlyObjectFromBenchmark(child.name, child.result));
+				contents.push({ benchmarkName: child.name, data: child.result });
 			}
 		}
 	}
 	return contents;
-}
-
-/**
- * Creates a {@link ReportEntry} from a benchmark name and its collected data.
- */
-function outputFriendlyObjectFromBenchmark(
-	benchmarkName: string,
-	data: CollectedData,
-): ReportEntry {
-	return { benchmarkName, data };
 }
 
 /**
