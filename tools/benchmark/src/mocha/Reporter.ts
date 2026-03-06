@@ -6,13 +6,10 @@
 import chalk from "chalk";
 import { Runner, type Suite, type Test, type Hook } from "mocha";
 
-import { isChildProcess } from "./Configuration.js";
-import { BenchmarkReporter } from "./Reporter.js";
-import type { BenchmarkResult, BenchmarkError } from "./ResultTypes.js";
-// TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
-// Since it's not moved yet, it needs this lint suppression to do this import:
-// eslint-disable-next-line import-x/no-internal-modules
-import { getName, getSuiteName } from "./mocha/mochaReporterUtilities.js";
+import { isChildProcess } from "../Configuration.js";
+import { BenchmarkReporter } from "../Reporter.js";
+import type { BenchmarkResult, BenchmarkError } from "../ResultTypes.js";
+import { getName, getSuiteName } from "./mochaReporterUtilities.js";
 
 /*
  * Users of this package should be able to author utilities like this for testing tools other than mocha.

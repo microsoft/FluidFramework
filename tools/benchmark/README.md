@@ -16,7 +16,7 @@ To run them as benchmark tests, invoke `mocha` as you normally would for your pa
 like this:
 
 ```console
---v8-expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js
+--v8-expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/mocha/Reporter.js
 ```
 
 ### `--perfMode` (required)
@@ -41,7 +41,7 @@ you want to run by passing a different filter, e.g. `--fgrep @Measurement`.
 ### `--reporter <path>`
 
 Lets you specify the path to a custom reporter to output the tests' results.
-This package includes `dist/MochaReporter.js`.
+This package includes `dist/mocha/Reporter.js`.
 If you don't specify one, the default mocha reporter will take over and you won't see benchmark information.
 
 ### `--reporterOptions reportFile=<output-path>`

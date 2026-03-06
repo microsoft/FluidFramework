@@ -18,6 +18,7 @@
 -   Formatting of the output json results files has changed: code consuming them will have to be updated.
 -   Reporter now accepts `reportFile` instead of `reportDir`, and saves results to a single file.
 -   Reporter now only writes a file if a path was provided: there is no longer a default path.
+-   `MochaReporter` is now provided at `@fluid-tools/benchmark/dist/mocha/Reporter.js` instead of `@fluid-tools/benchmark/dist/MochaReporter.js`
 
 ## 0.52.0
 
