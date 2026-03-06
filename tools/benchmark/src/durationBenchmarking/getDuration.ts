@@ -202,16 +202,19 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 				value: 1e9 * stats.arithmeticMean,
 				units: "ns/op",
 				type: ValueType.SmallerIsBetter,
+				significance: "Primary",
 			},
 			{
 				name: "Batch Count",
 				value: this.samples.length,
 				units: "count",
+				significance: "Diagnostic",
 			},
 			{
 				name: "Iterations Per Batch",
 				value: this.iterationsPerBatch,
 				units: "count",
+				significance: "Diagnostic",
 			},
 			{
 				name: "Margin of Error",

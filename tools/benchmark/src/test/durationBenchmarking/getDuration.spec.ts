@@ -134,17 +134,20 @@ describe("getDuration", () => {
 		assert.deepEqual(result, [
 			{
 				name: "Period",
+				significance: "Primary",
 				type: "SmallerIsBetter",
 				units: "ns/op",
 				value: 1500000000,
 			},
 			{
 				name: "Batch Count",
+				significance: "Diagnostic",
 				units: "count",
 				value: 2,
 			},
 			{
 				name: "Iterations Per Batch",
+				significance: "Diagnostic",
 				units: "count",
 				value: 1,
 			},

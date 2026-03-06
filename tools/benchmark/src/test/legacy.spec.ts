@@ -176,6 +176,7 @@ describe("legacy", () => {
 						units: "custom units",
 						name: "test",
 						type: ValueType.SmallerIsBetter,
+						significance: "Primary",
 					},
 				] satisfies CollectedData;
 			},

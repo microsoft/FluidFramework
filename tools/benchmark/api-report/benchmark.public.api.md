@@ -12,12 +12,6 @@ export function benchmark(args: Titled & DurationBenchmark & BenchmarkDescriptio
 // @public @deprecated
 export const benchmarkCustom: typeof benchmarkIt;
 
-// @public @sealed
-export interface BenchmarkData {
-    readonly data: CollectedData;
-    readonly elapsedSeconds: number;
-}
-
 // @public @input
 export interface BenchmarkDescription {
     readonly category?: string;
@@ -57,7 +51,7 @@ export class BenchmarkReporter {
 }
 
 // @public @sealed
-export type BenchmarkResult = BenchmarkError | BenchmarkData;
+export type BenchmarkResult = BenchmarkError | CollectedData;
 
 // @public @sealed
 export interface BenchmarkTimer<T> {
@@ -133,6 +127,7 @@ export const isInPerformanceTestingMode: boolean;
 // @public
 export interface Measurement {
     readonly name: string;
+    readonly significance?: Significance;
     readonly type?: ValueType;
     readonly units?: string;
     readonly value: number;
@@ -178,7 +173,9 @@ export enum Phase {
 }
 
 // @public
-export type PrimaryMeasurement = Required<Measurement>;
+export type PrimaryMeasurement = Required<Measurement> & {
+    significance: "Primary";
+};
 
 // @public
 export function qualifiedTitle(args: BenchmarkDescription & Titled & {
@@ -189,9 +186,11 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled & {
 export type ReportArray = readonly (ReportSuite | ReportEntry)[];
 
 // @public
-export interface ReportEntry extends BenchmarkData {
+export interface ReportEntry {
     // (undocumented)
     readonly benchmarkName: string;
+    // (undocumented)
+    readonly data: CollectedData;
 }
 
 // @public
@@ -204,6 +203,9 @@ export interface ReportSuite {
 
 // @public
 export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData;
+
+// @public
+export type Significance = "Primary" | "Secondary" | "Diagnostic";
 
 // @public (undocumented)
 export enum TestType {

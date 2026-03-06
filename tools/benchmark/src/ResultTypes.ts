@@ -4,29 +4,6 @@
  */
 
 /**
- * Result of successfully running a benchmark.
- *
- * TODO: flatten this into a CollectedData, and validate in the process.
- *
- * @public
- * @sealed
- */
-export interface BenchmarkData {
-	/**
-	 * Time it took to run the benchmark in seconds.
-	 * @remarks
-	 * This is metadata about the benchmark run (how long it took to collect the data),
-	 * not a measured result.
-	 */
-	readonly elapsedSeconds: number;
-
-	/**
-	 * Data reported by the benchmark.
-	 */
-	readonly data: CollectedData;
-}
-
-/**
  * Result of failing to run a benchmark.
  * @remarks
  * See {@link BenchmarkResult} for more details.
@@ -47,7 +24,7 @@ export interface BenchmarkError {
  * @public
  * @sealed
  */
-export type BenchmarkResult = BenchmarkError | BenchmarkData;
+export type BenchmarkResult = BenchmarkError | CollectedData;
 
 /**
  * Provides type narrowing when the provided result is a {@link BenchmarkError}.
@@ -69,7 +46,26 @@ export interface Measurement {
 	readonly units?: string;
 	/** Whether a smaller or larger value is better. */
 	readonly type?: ValueType;
+
+	/**
+	 * How important this measurement is within the benchmark's set of measurements.
+	 */
+	readonly significance?: Significance;
 }
+
+/**
+ * How important a given {@link Measurement} is within a given benchmark's set of measurements.
+ * @remarks
+ * This is used somewhat like a logging level:
+ * some outputs may choose to only display primary measurements (such as the suite geometric mean),
+ * while others might show secondary measurements with an option to include diagnostic measurements as well.
+ *
+ * This is unrelated to statistical significance,
+ * though often secondary measurements are used to details like margin of error
+ * which can be used to determine statistical significance.
+ * @public
+ */
+export type Significance = "Primary" | "Secondary" | "Diagnostic";
 
 /**
  * Indicates whether a benchmark result is better if the value is smaller or larger.
@@ -92,4 +88,4 @@ export type CollectedData = readonly [PrimaryMeasurement, ...Measurement[]];
  * The main measurement for a benchmark, which will be used for evaluating improvements and regressions.
  * @public
  */
-export type PrimaryMeasurement = Required<Measurement>;
+export type PrimaryMeasurement = Required<Measurement> & { significance: "Primary" };

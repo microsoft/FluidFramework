@@ -42,12 +42,12 @@ import Table from "easy-table";
 import {
 	isResultError,
 	ValueType,
-	type BenchmarkData,
 	type BenchmarkResult,
-	type Measurement,
+	type CollectedData,
 } from "./ResultTypes.js";
 import { formatMeasurementValue, geometricMean, pad, prettyNumber } from "./RunnerUtilities.js";
 import { assert } from "./assert.js";
+import { testDurationName } from "./ResultUtilities.js";
 
 /**
  * A node in the suite tree maintained by {@link BenchmarkReporter}.
@@ -78,7 +78,7 @@ function isSuiteNode(item: SuiteNode | NamedResult): item is SuiteNode {
 
 /**
  * Collects and formats performance data for a sequence of suites of benchmarks.
- * Data must be provided in the form of one {@link BenchmarkData} for each test in each suite.
+ * Data must be provided in the form of one {@link CollectedData} for each test in each suite.
  *
  * The data will be aggregated and processed.
  * Human friendly tables are logged to the console, and a machine friendly version is logged to json files.
@@ -157,25 +157,15 @@ export class BenchmarkReporter {
 		if (isResultError(result)) {
 			table.cell("error", result.error);
 		} else {
-			table.cell(
-				"Test Duration",
-				formatMeasurementValue({
-					value: result.elapsedSeconds,
-					units: "seconds",
-					type: ValueType.SmallerIsBetter,
-					name: "Test Duration",
-				}),
-			);
-
-			function measurementCell(measurement: Measurement, primary: boolean): void {
+			for (const measurement of result) {
 				const text = formatMeasurementValue(measurement);
-				const final = primary ? chalk.bold(text) : text;
+				const final =
+					measurement.significance === "Primary"
+						? chalk.bold(text)
+						: measurement.significance === "Diagnostic"
+						? chalk.dim(text)
+						: text;
 				table.cell(measurement.name, final, Table.padLeft);
-			}
-
-			measurementCell(result.data[0], true);
-			for (const measurement of result.data.slice(1)) {
-				measurementCell(measurement, false);
 			}
 		}
 
@@ -228,14 +218,20 @@ export class BenchmarkReporter {
 			if (isResultError(result)) {
 				countFailure++;
 			} else {
-				sumRuntime += result.elapsedSeconds;
+				const elapsedDiagnostic = result.find((m) => m.name === testDurationName);
+				sumRuntime += elapsedDiagnostic?.value ?? 0;
 				countSuccessful++;
-				const primary = result.data[0];
-				geometricMeanProductValues.push(
-					// Geometric mean may end up as NaN or infinity depending on questionable values passing through here (like when this divides by 0).
-					// Such results do about as good of job at conveying the situation as is practical: for once the floating point edge cases do something we like.
-					primary.type === ValueType.SmallerIsBetter ? primary.value : 1 / primary.value,
-				);
+				for (const measurement of result) {
+					if (measurement.significance === "Primary") {
+						geometricMeanProductValues.push(
+							// Geometric mean may end up as NaN or infinity depending on questionable values passing through here (like when this divides by 0).
+							// Such results do about as good of job at conveying the situation as is practical: for once the floating point edge cases do something we like.
+							measurement.type === ValueType.SmallerIsBetter
+								? measurement.value
+								: 1 / measurement.value,
+						);
+					}
+				}
 			}
 		}
 
@@ -266,8 +262,9 @@ export class BenchmarkReporter {
 			`${prettyNumber(sumRuntime, 1)}`,
 			Table.padLeft,
 		);
+
 		this.overallSummaryTable.cell(
-			"geometric mean of primary measurement (smaller is better)",
+			geoMeanColumn,
 			`${prettyNumber(geometricMean(geometricMeanProductValues))}`,
 			Table.padLeft,
 		);
@@ -303,7 +300,7 @@ export class BenchmarkReporter {
 			Table.padLeft,
 		);
 		this.overallSummaryTable.cell(
-			"geometric mean of primary measurement (smaller is better)",
+			geoMeanColumn,
 			`${prettyNumber(geometricMean(this.totalGeometricMeanProductValues))}`,
 			Table.padLeft,
 		);
@@ -328,6 +325,8 @@ export class BenchmarkReporter {
 		}
 	}
 }
+
+const geoMeanColumn = "geometric mean of primary measurements (smaller is better)";
 
 /**
  * Recursively converts a suite node into a {@link ReportSuite} for JSON output.
@@ -365,21 +364,18 @@ function suiteChildrenToReportSuite(children: readonly (SuiteNode | NamedResult)
  */
 function outputFriendlyObjectFromBenchmark(
 	benchmarkName: string,
-	benchmark: BenchmarkData,
+	data: CollectedData,
 ): ReportEntry {
-	return {
-		benchmarkName,
-		elapsedSeconds: benchmark.elapsedSeconds,
-		data: benchmark.data,
-	};
+	return { benchmarkName, data };
 }
 
 /**
  * A single benchmark result entry in the report.
  * @public
  */
-export interface ReportEntry extends BenchmarkData {
+export interface ReportEntry {
 	readonly benchmarkName: string;
+	readonly data: CollectedData;
 }
 
 /**

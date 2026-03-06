@@ -11,17 +11,22 @@ describe("ResultTypes", () => {
 	it("isResultError", () => {
 		assert(isResultError({ error: "something went wrong" }));
 		assert(
-			!isResultError({
-				elapsedSeconds: 1.5,
-				data: [
-					{
-						name: "test",
-						value: 42,
-						units: "ns/op",
-						type: ValueType.SmallerIsBetter,
-					},
-				],
-			}),
+			!isResultError([
+				{
+					name: "test",
+					value: 42,
+					units: "ns/op",
+					type: ValueType.SmallerIsBetter,
+					significance: "Primary" as const,
+				},
+				{
+					name: "Test Duration",
+					value: 1.5,
+					units: "seconds",
+					type: ValueType.SmallerIsBetter,
+					significance: "Diagnostic" as const,
+				},
+			]),
 		);
 	});
 });

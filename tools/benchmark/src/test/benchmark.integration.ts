@@ -28,6 +28,7 @@ describe("integration tests", () => {
 				value: "hello world".length,
 				units: "letters",
 				type: ValueType.SmallerIsBetter,
+				significance: "Primary",
 			},
 		],
 	});
@@ -40,6 +41,7 @@ describe("integration tests", () => {
 				value: 100000,
 				units: "numbers",
 				type: ValueType.LargerIsBetter,
+				significance: "Primary",
 			},
 		],
 	});
@@ -52,6 +54,7 @@ describe("integration tests", () => {
 				value: 1000000000,
 				units: "bytes",
 				type: ValueType.SmallerIsBetter,
+				significance: "Primary",
 			},
 			{
 				name: "Samples",
@@ -220,6 +223,7 @@ describe("integration tests", () => {
 					value: 1,
 					units: "numbers",
 					type: ValueType.SmallerIsBetter,
+					significance: "Primary",
 				},
 			],
 		});
@@ -234,6 +238,7 @@ describe("integration tests", () => {
 					value: 1,
 					units: "numbers",
 					type: ValueType.SmallerIsBetter,
+					significance: "Primary",
 				},
 			],
 		});
@@ -247,6 +252,7 @@ describe("integration tests", () => {
 					value: 1,
 					units: "numbers",
 					type: ValueType.SmallerIsBetter,
+					significance: "Primary",
 				},
 			],
 		});
@@ -264,6 +270,7 @@ describe("integration tests", () => {
 							value: 1,
 							units: "numbers",
 							type: ValueType.SmallerIsBetter,
+							significance: "Primary",
 						},
 					],
 				});
@@ -277,6 +284,7 @@ describe("integration tests", () => {
 						value: 1,
 						units: "numbers",
 						type: ValueType.SmallerIsBetter,
+						significance: "Primary",
 					},
 				],
 			});

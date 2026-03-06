@@ -44,12 +44,12 @@ export {
 export { benchmarkIt } from "./mocha/index.js";
 export { BenchmarkReporter, ReportEntry, type ReportSuite, type ReportArray } from "./Reporter.js";
 export {
-	type BenchmarkData,
 	type BenchmarkError,
 	type BenchmarkResult,
 	CollectedData,
 	PrimaryMeasurement,
 	Measurement,
+	type Significance,
 	ValueType,
 } from "./ResultTypes.js";
 export { timer, type Timer } from "./timer.js";

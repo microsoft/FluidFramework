@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BenchmarkResult,
-	BenchmarkError,
-	BenchmarkData,
-	CollectedData,
-} from "./ResultTypes.js";
+import type { BenchmarkResult, BenchmarkError, CollectedData, Measurement } from "./ResultTypes.js";
+import { ValueType } from "./ResultTypes.js";
 import { timer } from "./timer.js";
 
 /**
  * Wraps a benchmark function, measuring its total execution time and capturing either its
- * {@link CollectedData} result or any thrown exception as a {@link BenchmarkResult}.
+ * {@link CollectedData} result (adding in the "Test Duration" measurement) or any thrown exception as a {@link BenchmarkResult}.
  * @remarks
  * Useful for wrapping the body of benchmarks.
  * Users of mocha can use {@link benchmarkIt} which is built on this.
@@ -35,11 +31,17 @@ export function captureResults(
 
 		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
 
-		const result: BenchmarkData = {
-			elapsedSeconds,
-			data,
+		const elapsedMeasurement: Measurement = {
+			name: testDurationName,
+			value: elapsedSeconds,
+			units: "seconds",
+			type: ValueType.SmallerIsBetter,
+			significance: "Diagnostic",
 		};
+		const result: CollectedData = [...data, elapsedMeasurement];
 
 		return { result };
 	};
 }
+
+export const testDurationName = "Test Duration";

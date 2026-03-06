@@ -16,6 +16,7 @@ describe("benchmarkIt", () => {
 				value: 1,
 				units: "numbers",
 				type: ValueType.SmallerIsBetter,
+				significance: "Primary",
 			},
 		],
 	});

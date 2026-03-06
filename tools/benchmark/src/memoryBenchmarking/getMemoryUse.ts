@@ -247,6 +247,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 			name: "Samples",
 			value: meanStats.samples.length,
 			units: "count",
+			significance: "Diagnostic",
 		},
 		{
 			name: "Margin of Error",
@@ -271,6 +272,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 			value: leakPerIteration,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
+			significance: "Diagnostic",
 		},
 		{
 			name: "Growth per Iteration",
@@ -279,24 +281,28 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 				iterationsBetweenStartAndEndStats,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
+			significance: "Diagnostic",
 		},
 		{
 			name: "Max GCs",
 			value: Math.max(...data.map((x) => x.gcMaxIterations)),
 			units: "count",
 			type: ValueType.SmallerIsBetter,
+			significance: "Diagnostic",
 		},
 		{
 			name: "Mean GCs",
 			value: getArrayStatistics(trimmed.map((x) => x.gcIterations / x.gcCalls))
 				.arithmeticMean,
 			type: ValueType.SmallerIsBetter,
+			significance: "Diagnostic",
 		},
 		{
 			name: "Max Last GC Delta",
 			value: Math.max(...trimmed.map((x) => x.gcMaxLastDelta)),
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
+			significance: "Diagnostic",
 		},
 	];
 
@@ -323,6 +329,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 			value: meanStats.arithmeticMean,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
+			significance: "Primary",
 		},
 		...additional,
 	];
