@@ -82,21 +82,33 @@ export function formatMeasurementValue(
 		return `${prettyNumber(measurement.value, 3)}%`;
 	}
 	if (measurement.units === "ns/op") {
-		const units = ["ns", "ms", "s"];
-		// Scaling factors between the above units
-		const scale = [1e6, 1e3];
-		let value = measurement.value;
-		let unitIndex = 0;
-		while (scaleUnits && Math.abs(value) >= scale[unitIndex] && unitIndex < units.length - 1) {
-			value /= scale[unitIndex];
-			unitIndex++;
-		}
-		let decimals = 1;
-		if (scaleUnits) {
-			decimals = Math.abs(value) > 1000 ? 0 : 2;
-		}
-		return `${prettyNumber(value, decimals)} ${units[unitIndex]}/op`;
+		return scaleUnits
+			? `${formatNanosecondDuration(measurement.value)}/op`
+			: `${prettyNumber(measurement.value, 1)} ns/op`;
+	}
+	if (measurement.units === "seconds") {
+		return scaleUnits
+			? `${formatNanosecondDuration(measurement.value * 1e9)}`
+			: `${prettyNumber(measurement.value, 3)} s`;
 	}
 
 	return `${prettyNumber(measurement.value)}${measurement.units ? ` ${measurement.units}` : ""}`;
+}
+
+/**
+ * Formats a duration in nanoseconds for display, including appropriate units and number formatting.
+ * @param nanoseconds - The duration in nanoseconds to format.
+ */
+export function formatNanosecondDuration(nanoseconds: number): string {
+	const units = ["ns", "ms", "s"];
+	// Scaling factors between the above units
+	const scale = [1e6, 1e3];
+	let value = nanoseconds;
+	let unitIndex = 0;
+	while (Math.abs(value) >= scale[unitIndex] && unitIndex < units.length - 1) {
+		value /= scale[unitIndex];
+		unitIndex++;
+	}
+	const decimals = Math.abs(value) > 1000 ? 0 : 2;
+	return `${prettyNumber(value, decimals)} ${units[unitIndex]}`;
 }

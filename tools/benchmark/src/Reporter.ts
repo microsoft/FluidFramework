@@ -326,7 +326,7 @@ export class BenchmarkReporter {
 	}
 }
 
-const geoMeanColumn = "geometric mean of primary measurements (smaller is better)";
+const geoMeanColumn = "primary measurement geometric mean (smaller is better)";
 
 /**
  * Recursively converts a suite node into a {@link ReportSuite} for JSON output.
