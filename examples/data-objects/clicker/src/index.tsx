@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 import { TaskManager } from "@fluidframework/task-manager/legacy";
-import React from "react";
+import { Component } from "react";
 
 import { ClickerAgent } from "./agent.js";
 
@@ -105,7 +105,7 @@ export interface ClickerState {
 	value: number;
 }
 
-export class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
+export class ClickerReactView extends Component<ClickerProps, ClickerState> {
 	constructor(props: ClickerProps) {
 		super(props);
 

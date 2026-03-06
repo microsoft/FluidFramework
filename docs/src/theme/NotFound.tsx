@@ -5,11 +5,11 @@
 
 import Link from "@docusaurus/Link";
 import Layout from "@theme/Layout";
-import React from "react";
+import type { ReactElement } from "react";
 
 import "@site/src/css/notFound.css";
 
-export default function NotFound(): React.ReactElement {
+export default function NotFound(): ReactElement {
 	return (
 		<Layout title="404 - Page Not Found">
 			<main className="ffcom-not-found">

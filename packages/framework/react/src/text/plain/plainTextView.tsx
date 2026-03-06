@@ -4,7 +4,7 @@
  */
 
 import type { TextAsTree } from "@fluidframework/tree/internal";
-import * as React from "react";
+import { type ChangeEvent, type FC, useCallback, useRef } from "react";
 
 import { withMemoizedTreeObservations } from "../../useTree.js";
 
@@ -17,7 +17,7 @@ import type { MainViewProps } from "./quillView.js";
  * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
  * @internal
  */
-export const MainView: React.FC<MainViewProps> = ({ root }) => {
+export const MainView: FC<MainViewProps> = ({ root }) => {
 	return <PlainTextEditorView root={root} />;
 };
 
@@ -32,17 +32,17 @@ export const MainView: React.FC<MainViewProps> = ({ root }) => {
 const PlainTextEditorView = withMemoizedTreeObservations(
 	({ root }: { root: TextAsTree.Tree }) => {
 		// Reference to the textarea element
-		const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+		const textareaRef = useRef<HTMLTextAreaElement>(null);
 		// Guards against update loops between textarea and the tree
-		const isUpdatingRef = React.useRef<boolean>(false);
+		const isUpdatingRef = useRef<boolean>(false);
 
 		// Access tree content during render to establish observation.
 		// The HOC will automatically re-render when this content changes.
 		const currentText = root.fullString();
 
 		// Handle textarea changes - sync textarea → tree
-		const handleChange = React.useCallback(
-			(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+		const handleChange = useCallback(
+			(event: ChangeEvent<HTMLTextAreaElement>) => {
 				if (isUpdatingRef.current) {
 					return;
 				}

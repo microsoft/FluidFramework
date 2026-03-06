@@ -4,49 +4,6 @@
  */
 
 /**
- * Contains the samples of all measurements we track for a given benchmark (a test which was potentially iterated
- * several times). Each property is an array and all should be the same length, which is the number of iterations
- * done during the benchmark.
- * @public
- */
-export interface Stats {
-	/**
-	 * Margin of error.
-	 */
-	readonly marginOfError: number;
-
-	/**
-	 * Margin of error as a percentage of the mean.
-	 */
-	readonly marginOfErrorPercent: number;
-
-	/**
-	 * Standard error of the mean.
-	 */
-	readonly standardErrorOfMean: number;
-
-	/**
-	 * Standard deviation.
-	 */
-	readonly standardDeviation: number;
-
-	/**
-	 * Arithmetic mean.
-	 */
-	readonly arithmeticMean: number;
-
-	/**
-	 * Sample values.
-	 */
-	readonly samples: readonly number[];
-
-	/**
-	 * Variance.
-	 */
-	readonly variance: number;
-}
-
-/**
  * Custom data type for a benchmark.
  * @public
  */
@@ -59,6 +16,9 @@ export type CustomData = Record<string, { rawValue: unknown; formattedValue: str
 export interface BenchmarkData {
 	/**
 	 * Time it took to run the benchmark in seconds.
+	 * @remarks
+	 * This is metadata about the benchmark run (how long it took to collect the data),
+	 * not a measured result.
 	 */
 	elapsedSeconds: number;
 
