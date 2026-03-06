@@ -115,7 +115,11 @@ const runtimeFactory: IRuntimeFactory = {
 	},
 };
 
-async function createContainerAndGetLoadProps(): Promise<ILoadExistingContainerProps> {
+async function createContainerAndGetLoadProps(): Promise<
+	ILoadExistingContainerProps & {
+		deltaConnectionServer: ReturnType<typeof LocalDeltaConnectionServer.create>;
+	}
+> {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
 	const { loaderProps, codeDetails, urlResolver } = createLoader({
@@ -130,7 +134,7 @@ async function createContainerAndGetLoadProps(): Promise<ILoadExistingContainerP
 	const url = await container.getAbsoluteUrl("");
 	assert(url !== undefined, "container must have url");
 	container.dispose();
-	return { ...loaderProps, request: { url } };
+	return { ...loaderProps, request: { url }, deltaConnectionServer };
 }
 
 describe("readonly", () => {
@@ -164,12 +168,13 @@ describe("readonly", () => {
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
 		);
+
+		await deltaConnectionServer.close();
 	});
 
 	it("Readonly is correct after container load", async () => {
-		const loadedContainer = await loadExistingContainer(
-			await createContainerAndGetLoadProps(),
-		);
+		const { deltaConnectionServer, ...loadProps } = await createContainerAndGetLoadProps();
+		const loadedContainer = await loadExistingContainer(loadProps);
 
 		const entrypoint: FluidObject<DefaultDataStore> = await loadedContainer.getEntryPoint();
 
@@ -183,12 +188,13 @@ describe("readonly", () => {
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
 		);
+
+		await deltaConnectionServer.close();
 	});
 
 	it("Readonly is correct after datastore load and forceReadonly", async () => {
-		const loadedContainer = await loadExistingContainer(
-			await createContainerAndGetLoadProps(),
-		);
+		const { deltaConnectionServer, ...loadProps } = await createContainerAndGetLoadProps();
+		const loadedContainer = await loadExistingContainer(loadProps);
 
 		const entrypoint: FluidObject<DefaultDataStore> = await loadedContainer.getEntryPoint();
 
@@ -204,12 +210,13 @@ describe("readonly", () => {
 			entrypoint.DefaultDataStore.readonlyEventCount === 1,
 			"should be any readonly events",
 		);
+
+		await deltaConnectionServer.close();
 	});
 
 	it("Readonly is correct after forceReadonly before datastore load", async () => {
-		const loadedContainer = await loadExistingContainer(
-			await createContainerAndGetLoadProps(),
-		);
+		const { deltaConnectionServer, ...loadProps } = await createContainerAndGetLoadProps();
+		const loadedContainer = await loadExistingContainer(loadProps);
 
 		loadedContainer.forceReadonly?.(true);
 
@@ -225,5 +232,7 @@ describe("readonly", () => {
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
 		);
+
+		await deltaConnectionServer.close();
 	});
 });

@@ -427,15 +427,23 @@ async function ensureConnected(client: Client): Promise<void> {
 }
 
 describe("Staging Mode", () => {
+	let deltaConnectionServer: ILocalDeltaConnectionServer;
+
+	beforeEach(() => {
+		deltaConnectionServer = LocalDeltaConnectionServer.create();
+	});
+
+	afterEach(async () => {
+		await deltaConnectionServer.close();
+	});
+
 	it("entering staging mode does not change the data model", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 		clients.original.dataObject.enterStagingMode();
 		assertConsistent(clients, "states should match after branch");
 	});
 
 	it("blocks outbound changes", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
@@ -459,7 +467,6 @@ describe("Staging Mode", () => {
 	});
 
 	it("allows inbound changes to flow", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
@@ -476,7 +483,6 @@ describe("Staging Mode", () => {
 	});
 
 	it("commitChanges sends changes applied to other clients", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
 		const stagingControls = clients.original.dataObject.enterStagingMode();
@@ -503,7 +509,6 @@ describe("Staging Mode", () => {
 	});
 
 	it("discardChanges rolls back all changes applied in staging mode", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
 		const stagingControls = clients.original.dataObject.enterStagingMode();
@@ -531,7 +536,6 @@ describe("Staging Mode", () => {
 	// Analogous to the basic behavioral tests for staging mode above, but is worth testing separately as it involves
 	// an attach op for the created DDS.
 	it("enter staging mode, create dds, and merge", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
 		const branchData = clients.original.dataObject.enterStagingMode();
@@ -563,7 +567,6 @@ describe("Staging Mode", () => {
 
 	for (const commit of [false, true]) {
 		it(`${commit ? "commitChanges" : "discardChanges"} allows subsequent outbound changes to flow`, async () => {
-			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);
 			const stagingControls = clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
@@ -588,7 +591,6 @@ describe("Staging Mode", () => {
 	}
 
 	it("can be exited while disconnected and functionality is preserved", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 		const stagingControls = clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
@@ -617,7 +619,6 @@ describe("Staging Mode", () => {
 		squash: [undefined, false, true],
 	})) {
 		it(`respects squash=${squash} when exiting staging mode ${disconnectBeforeCommit ? "while disconnected" : ""}`, async () => {
-			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);
 
 			// Use Sinon to spy on the methods
@@ -671,7 +672,6 @@ describe("Staging Mode", () => {
 	}
 
 	it("Aliasing a datastore not supported in staging mode", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
 		clients.original.dataObject.enterStagingMode();

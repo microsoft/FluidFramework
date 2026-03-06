@@ -30,6 +30,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 		urlResolver: LocalResolver;
 		codeLoader: ICodeDetailsLoader;
 		loaderProps: ILoaderProps;
+		deltaConnectionServer: ReturnType<typeof LocalDeltaConnectionServer.create>;
 	}> => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
@@ -55,6 +56,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			urlResolver,
 			codeLoader,
 			loaderProps,
+			deltaConnectionServer,
 		};
 	};
 
@@ -63,7 +65,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container and add data
-			const { container, testFluidObject, urlResolver, codeLoader, loaderProps } =
+			const { container, testFluidObject, urlResolver, codeLoader, loaderProps, deltaConnectionServer } =
 				await initializeContainer();
 
 			// Add data in detached state
@@ -139,13 +141,15 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 				"offline-value2",
 				"Additional offline data should be restored",
 			);
+
+			await deltaConnectionServer.close();
 		});
 
 		it("should handle container state deduplication in real scenarios", async () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container with initial data
-			const { container, testFluidObject, urlResolver, codeLoader, loaderProps } =
+			const { container, testFluidObject, urlResolver, codeLoader, loaderProps, deltaConnectionServer } =
 				await initializeContainer();
 
 			// Add initial data
@@ -213,6 +217,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 					`Op key ${i} should have correct value after deduplication`,
 				);
 			}
+
+			await deltaConnectionServer.close();
 		});
 	});
 
@@ -221,7 +227,7 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 			const store = new PendingLocalStateStore<string>();
 
 			// Create container and simulate multiple sessions/snapshots for the same container
-			const { container, testFluidObject, urlResolver } = await initializeContainer();
+			const { container, testFluidObject, urlResolver, deltaConnectionServer } = await initializeContainer();
 
 			// Attach to get a consistent URL
 			await container.attach(urlResolver.createCreateNewRequest("test-doc"));
@@ -264,6 +270,8 @@ describe("PendingLocalStateStore End-to-End Tests", () => {
 
 			assert.strictEqual(keys.length, 0, "Keys iterator should be empty");
 			assert.strictEqual(entriesArray.length, 0, "Entries iterator should be empty");
+
+			await deltaConnectionServer.close();
 		});
 	});
 });

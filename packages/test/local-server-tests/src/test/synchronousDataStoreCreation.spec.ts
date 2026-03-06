@@ -262,5 +262,7 @@ describe("Scenario Test", () => {
 			}
 			container2.dispose();
 		}
+
+		await deltaConnectionServer.close();
 	});
 });

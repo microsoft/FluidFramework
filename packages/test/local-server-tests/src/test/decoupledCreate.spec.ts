@@ -128,5 +128,7 @@ describe("Scenario Test", () => {
 			const entryPoint: FluidObject<ITestFluidObject> = await container2.getEntryPoint();
 			assert.strictEqual(entryPoint.ITestFluidObject?.root.get("someKey"), "someValue");
 		}
+
+		await deltaConnectionServer.close();
 	});
 });

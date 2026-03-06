@@ -175,11 +175,11 @@ function createCompatSuite(
 				// which is problematic for suites that run a large number of test cases (usually combintorially generated).
 				// Heap snapshots for a large number of suites help detect bugs with leaking objects across suites,
 				// which is problematic for issues that tend to get hit "later in the overall test run".
-				after("Cleanup TestObjectProvider", function () {
+				after("Cleanup TestObjectProvider", async function () {
 					if (provider === undefined) {
 						throw new Error("Expected provider to be set up by before hook");
 					}
-					provider.driver.dispose?.();
+					await provider.driver.dispose?.();
 					provider = undefined;
 					Object.defineProperty(this, "__fluidTestProvider", {
 						get: () => {

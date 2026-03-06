@@ -221,6 +221,6 @@ describe("No Delta Stream", () => {
 	});
 
 	afterEach(async () => {
-		await deltaConnectionServer.webSocketServer.close();
+		await deltaConnectionServer.close();
 	});
 });

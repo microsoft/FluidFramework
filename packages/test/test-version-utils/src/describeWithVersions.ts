@@ -139,11 +139,11 @@ function createTestSuiteWithInstalledVersion(
 		});
 
 		// See remarks in `createCompatSuite` for cleanup justification + tips on debugging memory leaks
-		after("Cleanup TestObjectProvider", function () {
+		after("Cleanup TestObjectProvider", async function () {
 			if (provider === undefined) {
 				throw new Error("Expected provider to be set up by before hook");
 			}
-			provider.driver.dispose?.();
+			await provider.driver.dispose?.();
 			provider = undefined;
 			Object.defineProperty(this, "__fluidTestProvider", {
 				get: () => {

@@ -81,7 +81,7 @@ const initialize = async (): Promise<{
 
 describe("loadFrozenContainerFromPendingState", () => {
 	it("loadFrozenContainerFromPendingState", async () => {
-		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } =
 			await initialize();
 
 		for (let i = 0; i < 10; i++) {
@@ -156,10 +156,12 @@ describe("loadFrozenContainerFromPendingState", () => {
 			toComparableArray(frozenEntryPoint.ITestFluidObject.root),
 			"Expected frozen container's data to remain unchanged after new changes in the original container.",
 		);
+
+		await deltaConnectionServer.close();
 	});
 
 	it("frozen container loads DDS", async () => {
-		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } =
 			await initialize();
 		const newSharedMap1 = SharedMap.create(ITestFluidObject.runtime);
 		// Set a value while in local state.
@@ -200,10 +202,12 @@ describe("loadFrozenContainerFromPendingState", () => {
 			newSharedMap1Retrieved.get("newKey") === "newValue",
 			"Expected newSharedMap1 to have key 'newKey' with value 'newValue', but it did not",
 		);
+
+		await deltaConnectionServer.close();
 	});
 
 	it("frozen container loads blob", async () => {
-		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } =
 			await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 		const blobHandle = await ITestFluidObject.runtime.uploadBlob(
@@ -244,10 +248,12 @@ describe("loadFrozenContainerFromPendingState", () => {
 			bufferToString(newBlobRetrieved, "utf-8") === "test",
 			"Expected newBlobRetrieved to have value 'test', but it did not",
 		);
+
+		await deltaConnectionServer.close();
 	});
 
 	it("uploading blob on frozen container", async () => {
-		const { container, urlResolver, codeLoader, documentServiceFactory } = await initialize();
+		const { container, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } = await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");
@@ -284,10 +290,12 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Error message mismatch",
 			);
 		}
+
+		await deltaConnectionServer.close();
 	});
 
 	it("trying to attach a frozen container", async () => {
-		const { container, urlResolver, codeLoader, documentServiceFactory } = await initialize();
+		const { container, urlResolver, codeLoader, documentServiceFactory, deltaConnectionServer } = await initialize();
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");
@@ -322,5 +330,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Error message mismatch",
 			);
 		}
+
+		await deltaConnectionServer.close();
 	});
 });
