@@ -34,7 +34,10 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json && tsc --project ./tsconfig.crossPackage.json && tsc --project ./tsconfig.crossPackage.bundler.json",
+		"build:esnext": "npm run build:esnext:main && npm run build:esnext:crossPackage && npm run build:esnext:bundler",
+		"build:esnext:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
+		"build:esnext:crossPackage": "tsc --project ./tsconfig.crossPackage.json",
+		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -85,6 +88,15 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:esnext:main": [
+				"^build:esnext"
+			],
+			"build:esnext:crossPackage": [
+				"build:esnext:main"
+			],
+			"build:esnext:bundler": [
+				"build:esnext:main"
+			],
 			"build:test:esm": [
 				"build:esnext"
 			]
