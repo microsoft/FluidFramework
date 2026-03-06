@@ -76,6 +76,7 @@
 		"@microsoft/applicationinsights-react-js": "^17.3.4",
 		"@microsoft/applicationinsights-web": "^3.3.4",
 		"@playwright/test": "^1.49.0",
+		"playwright": "^1.49.0",
 		"@rushstack/node-core-library": "^5.9.0",
 		"@types/fs-extra": "^11.0.4",
 		"@types/hast": "^3.0.4",
