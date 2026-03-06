@@ -173,7 +173,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 		`Expected benchmarkFn to run the benchmark ${count} times, but it ran it ${sampleIndex} times.`,
 	);
 
-	const usedAfter = data[0].after !== unset;
+	const hasDeallocationData = data[0].after !== unset;
 
 	for (const measurement of data) {
 		assertProperUse(
@@ -187,8 +187,8 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 		);
 
 		assertProperUse(
-			(measurement.after !== unset) === usedAfter,
-			`Expected benchmarkFn to call "usedAfter" on all or none of the samples, but it was called on some samples and not others.`,
+			(measurement.after !== unset) === hasDeallocationData,
+			`Expected benchmarkFn to call "afterDeallocation" on all or none of the samples, but it was called on some samples and not others.`,
 		);
 	}
 
@@ -197,7 +197,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 
 	const processedAll = data.map((x) => {
 		const allocatedBytes = x.while - x.before;
-		const freedBytes = usedAfter ? x.while - x.after : allocatedBytes;
+		const freedBytes = hasDeallocationData ? x.while - x.after : allocatedBytes;
 		return { allocatedBytes, freedBytes, meanBytes: (allocatedBytes + freedBytes) / 2 };
 	});
 
@@ -219,25 +219,20 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 	// Split up data into "first" and "last" halves and compute stats on those
 	// to see if there is a trend in the data that might indicate leaking memory across iterations.
 	const sizeOfHalf = Math.max(1, Math.floor(processed.length / 2));
-	const firstHalfSize = getArrayStatistics(
+	const firstHalfStats = getArrayStatistics(
 		processed.slice(0, sizeOfHalf).map((x) => x.meanBytes),
 	);
-	const lastHalfSize = getArrayStatistics(processed.slice(-sizeOfHalf).map((x) => x.meanBytes));
-	assert(firstHalfSize.samples.length === sizeOfHalf, `invalid first half size`);
-	assert(lastHalfSize.samples.length === sizeOfHalf, `invalid last half size`);
+	const lastHalfStats = getArrayStatistics(processed.slice(-sizeOfHalf).map((x) => x.meanBytes));
+	assert(firstHalfStats.samples.length === sizeOfHalf, `invalid first half size`);
+	assert(lastHalfStats.samples.length === sizeOfHalf, `invalid last half size`);
 
 	const averageIndexInStart = (0 + (sizeOfHalf - 1)) / 2;
 	const averageIndexInEnd = (processed.length - sizeOfHalf + (processed.length - 1)) / 2;
 	const iterationsBetweenStartAndEndStats = averageIndexInEnd - averageIndexInStart;
 
-	const sizeStartBeforeMeasurement = getArrayStatistics(
-		trimmed.slice(0, sizeOfHalf).map((x) => x.before),
-	);
-	const sizeEndBeforeMeasurement = getArrayStatistics(
-		trimmed.slice(-sizeOfHalf).map((x) => x.before),
-	);
-	const leak =
-		sizeEndBeforeMeasurement.arithmeticMean - sizeStartBeforeMeasurement.arithmeticMean;
+	const startBeforeStats = getArrayStatistics(trimmed.slice(0, sizeOfHalf).map((x) => x.before));
+	const endBeforeStats = getArrayStatistics(trimmed.slice(-sizeOfHalf).map((x) => x.before));
+	const leak = endBeforeStats.arithmeticMean - startBeforeStats.arithmeticMean;
 	const leakPerIteration = leak / iterationsBetweenStartAndEndStats;
 
 	const meanStats = getArrayStatistics(processed.map((x) => x.meanBytes));
@@ -277,7 +272,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 		{
 			name: "Growth per Iteration",
 			value:
-				(lastHalfSize.arithmeticMean - firstHalfSize.arithmeticMean) /
+				(lastHalfStats.arithmeticMean - firstHalfStats.arithmeticMean) /
 				iterationsBetweenStartAndEndStats,
 			units: "bytes",
 			type: ValueType.SmallerIsBetter,
@@ -306,7 +301,7 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 		},
 	];
 
-	if (usedAfter) {
+	if (hasDeallocationData) {
 		additional.push(
 			{
 				name: "Mean Allocated",

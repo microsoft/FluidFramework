@@ -12,7 +12,7 @@ import { ValueType, type CollectedData } from "../ResultTypes.js";
 import { getArrayStatistics } from "../sampling.js";
 import { type Timer, timer, timerWithResolution } from "../timer.js";
 import {
-	benchmarkArgumentsIsCustom,
+	isCustomBenchmark,
 	validateBenchmarkArguments,
 	type DurationBenchmark,
 	type BenchmarkTimer,
@@ -52,9 +52,9 @@ export const defaultTimingOptions: Required<BenchmarkTimingOptions> = {
 };
 
 /**
- * Default values for when performance testing mode is not enabled.
+ * Default timing options for correctness-only test runs (i.e., without `--perfMode`).
  */
-export const nonPerfTestingArgs: Required<BenchmarkTimingOptions> = {
+export const correctnessTestTimingOptions: Required<BenchmarkTimingOptions> = {
 	maxBenchmarkDurationSeconds: 0,
 	minBatchCount: 1,
 	minBatchDurationSeconds: 0,
@@ -71,9 +71,9 @@ export const nonPerfTestingArgs: Required<BenchmarkTimingOptions> = {
 export async function collectDurationData(args: DurationBenchmark): Promise<CollectedData> {
 	const timingArgs: BenchmarkTimingOptions = isInPerformanceTestingMode
 		? args
-		: nonPerfTestingArgs;
+		: correctnessTestTimingOptions;
 
-	if (benchmarkArgumentsIsCustom(args)) {
+	if (isCustomBenchmark(args)) {
 		const state = new BenchmarkState(timer, timingArgs);
 		await args.benchmarkFnCustom(state);
 		return state.computeData();
@@ -84,7 +84,7 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 		...args,
 		...timingArgs,
 	};
-	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
+	const { isAsync, benchmarkFn } = validateBenchmarkArguments(args);
 
 	await options.before?.();
 
@@ -93,10 +93,10 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 	if (isAsync) {
 		data = await runBenchmarkAsync({
 			...options,
-			benchmarkFnAsync: argsBenchmarkFn,
+			benchmarkFnAsync: benchmarkFn,
 		});
 	} else {
-		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn });
+		data = runBenchmarkSync({ ...options, benchmarkFn });
 	}
 	await options.after?.();
 	return data;
@@ -318,7 +318,7 @@ async function doBatchAsync(
  *
  * @remarks
  * Used before the test to help reduce noise from previous allocations
- * (ex: from previous tests or startup).
+ * (e.g., from previous tests or startup).
  */
 function tryRunGarbageCollection(): void {
 	global?.gc?.();

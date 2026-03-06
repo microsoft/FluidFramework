@@ -99,7 +99,7 @@ export class BenchmarkReporter {
 	private totalSumRuntimeSeconds = 0;
 	private totalBenchmarkCount = 0;
 	private totalSuccessfulBenchmarkCount = 0;
-	private totalGeometricMeanProductValues: number[] = [];
+	private geometricMeanInputs: number[] = [];
 
 	private readonly outputFilePath: string | undefined;
 
@@ -200,17 +200,14 @@ export class BenchmarkReporter {
 	/**
 	 * Accumulates benchmark data for a suite and logs it to the overall summary table.
 	 */
-	private accumulateBenchmarkData(
-		suiteName: string,
-		benchmarksArray: readonly NamedResult[],
-	): void {
+	private accumulateBenchmarkData(suiteName: string, benchmarks: readonly NamedResult[]): void {
 		// Accumulate totals for suite
 		let sumRuntime = 0;
 		let countSuccessful = 0;
 		let countFailure = 0;
 		const geometricMeanProductValues: number[] = [];
 
-		for (const { result } of benchmarksArray) {
+		for (const { result } of benchmarks) {
 			if (isResultError(result)) {
 				countFailure++;
 			} else {
@@ -233,7 +230,7 @@ export class BenchmarkReporter {
 
 		// Add row to overallSummaryTable
 		let statusSymbol: string;
-		switch (benchmarksArray.length) {
+		switch (benchmarks.length) {
 			case countSuccessful: {
 				statusSymbol = chalk.green("✔");
 				break;
@@ -250,7 +247,7 @@ export class BenchmarkReporter {
 		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));
 		this.overallSummaryTable.cell(
 			"# of passed tests",
-			`${countSuccessful} out of ${benchmarksArray.length}`,
+			`${countSuccessful} out of ${benchmarks.length}`,
 			Table.padLeft,
 		);
 		this.overallSummaryTable.cell(
@@ -267,10 +264,10 @@ export class BenchmarkReporter {
 		this.overallSummaryTable.newRow();
 
 		// Update accumulators for overall totals
-		this.totalBenchmarkCount += benchmarksArray.length;
+		this.totalBenchmarkCount += benchmarks.length;
 		this.totalSuccessfulBenchmarkCount += countSuccessful;
 		this.totalSumRuntimeSeconds += sumRuntime;
-		this.totalGeometricMeanProductValues.push(...geometricMeanProductValues);
+		this.geometricMeanInputs.push(...geometricMeanProductValues);
 	}
 
 	/**
@@ -297,7 +294,7 @@ export class BenchmarkReporter {
 		);
 		this.overallSummaryTable.cell(
 			geoMeanColumn,
-			`${prettyNumber(geometricMean(this.totalGeometricMeanProductValues))}`,
+			`${prettyNumber(geometricMean(this.geometricMeanInputs))}`,
 			Table.padLeft,
 		);
 		this.overallSummaryTable.newRow();
@@ -313,7 +310,7 @@ export class BenchmarkReporter {
 
 		if (this.outputFilePath !== undefined) {
 			// Build the report from the root's children.
-			const root = suiteChildrenToReportSuite(this.suiteStack[0].children);
+			const root = buildReportArray(this.suiteStack[0].children);
 			const outputDir = path.dirname(this.outputFilePath);
 			fs.mkdirSync(outputDir, { recursive: true });
 			fs.writeFileSync(this.outputFilePath, JSON.stringify(root, undefined, 4));
@@ -325,25 +322,15 @@ export class BenchmarkReporter {
 const geoMeanColumn = "primary measurement geometric mean (smaller is better)";
 
 /**
- * Recursively converts a suite node into a {@link ReportSuite} for JSON output.
- * Returns undefined if the node (and all its descendants) contain no reportable content.
- */
-function suiteNodeToReportSuite(node: SuiteNode): ReportSuite | undefined {
-	const contents = suiteChildrenToReportSuite(node.children);
-	if (contents.length === 0) return undefined;
-	return { suiteName: node.localName, contents };
-}
-
-/**
  * Recursively converts an array of suite children into a {@link ReportArray} for JSON output.
  */
-function suiteChildrenToReportSuite(children: readonly (SuiteNode | NamedResult)[]): ReportArray {
+function buildReportArray(children: readonly (SuiteNode | NamedResult)[]): ReportArray {
 	const contents: (ReportSuite | ReportEntry)[] = [];
 	for (const child of children) {
 		if (isSuiteNode(child)) {
-			const childSuite = suiteNodeToReportSuite(child);
-			if (childSuite !== undefined) {
-				contents.push(childSuite);
+			const childContents = buildReportArray(child.children);
+			if (childContents.length > 0) {
+				contents.push({ suiteName: child.localName, contents: childContents });
 			}
 		} else {
 			if (!isResultError(child.result)) {

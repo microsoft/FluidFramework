@@ -249,9 +249,7 @@ export function validateBenchmarkArguments(
 /**
  * Returns true if `args` is a {@link DurationBenchmarkCustom}.
  */
-export function benchmarkArgumentsIsCustom(
-	args: DurationBenchmark,
-): args is DurationBenchmarkCustom {
+export function isCustomBenchmark(args: DurationBenchmark): args is DurationBenchmarkCustom {
 	const intersection = args as Partial<DurationBenchmarkSync> &
 		Partial<DurationBenchmarkAsync> &
 		Partial<DurationBenchmarkCustom>;
