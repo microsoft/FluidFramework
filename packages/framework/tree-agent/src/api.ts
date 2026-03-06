@@ -344,7 +344,7 @@ export type TreeAgentChatResponse = TreeAgentEditResponse | TreeAgentDoneRespons
  */
 export interface TreeAgent {
 	/**
-	 * Process the user's prompt, potentially editing the tree, and return a response.
+	 * Process the user's prompt, potentially editing the tree in a multi-turn conversation, and return a response.
 	 * @param prompt - The user's question or edit instruction.
 	 * @returns The model's text response.
 	 */
