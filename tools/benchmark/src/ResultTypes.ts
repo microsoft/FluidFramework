@@ -4,9 +4,7 @@
  */
 
 /**
- * Result of failing to run a benchmark.
- * @remarks
- * See {@link BenchmarkResult} for more details.
+ * The error case of {@link BenchmarkResult}: indicates the benchmark did not complete successfully.
  * @public
  * @sealed
  */
@@ -27,7 +25,7 @@ export interface BenchmarkError {
 export type BenchmarkResult = BenchmarkError | CollectedData;
 
 /**
- * Provides type narrowing when the provided result is a {@link BenchmarkError}.
+ * Returns true if `result` is a {@link BenchmarkError}.
  */
 export function isResultError(result: BenchmarkResult): result is BenchmarkError {
 	return (result as Partial<BenchmarkError>).error !== undefined;
@@ -54,15 +52,13 @@ export interface Measurement {
 }
 
 /**
- * How important a given {@link Measurement} is within a given benchmark's set of measurements.
+ * How important a given {@link Measurement} is within a benchmark's set of measurements.
  * @remarks
- * This is used somewhat like a logging level:
- * some outputs may choose to only display primary measurements (such as the suite geometric mean),
- * while others might show secondary measurements with an option to include diagnostic measurements as well.
+ * Analogous to a logging level: some outputs show only primary measurements (e.g. the suite geometric mean),
+ * while others include secondary measurements and optionally diagnostic ones.
  *
- * This is unrelated to statistical significance,
- * though often secondary measurements are used for details like margin of error
- * which can be used to determine statistical significance.
+ * This is unrelated to statistical significance, though secondary measurements often include
+ * details like margin of error that can inform statistical significance.
  * @public
  */
 export type Significance = "Primary" | "Secondary" | "Diagnostic";
@@ -79,7 +75,9 @@ export enum ValueType {
 }
 
 /**
- * Data for a benchmark.
+ * The measurements collected from a benchmark run.
+ * @remarks
+ * A required {@link PrimaryMeasurement} followed by zero or more additional {@link Measurement | Measurements}.
  * @public
  */
 export type CollectedData = readonly [PrimaryMeasurement, ...Measurement[]];

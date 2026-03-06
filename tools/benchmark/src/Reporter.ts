@@ -220,8 +220,8 @@ export class BenchmarkReporter {
 				for (const measurement of result) {
 					if (measurement.significance === "Primary") {
 						geometricMeanProductValues.push(
-							// Geometric mean may end up as NaN or infinity depending on questionable values passing through here (like when this divides by 0).
-							// Such results do about as good of job at conveying the situation as is practical: for once the floating point edge cases do something we like.
+							// Geometric mean may end up as NaN or infinity for questionable values (e.g. when this divides by 0).
+							// Such results do about as good a job conveying the situation as is practical: for once, the floating-point edge cases do something we like.
 							measurement.type === ValueType.SmallerIsBetter
 								? measurement.value
 								: 1 / measurement.value,

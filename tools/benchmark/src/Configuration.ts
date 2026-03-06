@@ -32,21 +32,16 @@ export enum BenchmarkType {
 
 	/**
 	 * Tests that measure the actual performance of features.
-	 * These tests are the ones that should be optimized for to improve actual user experience, and thus
-	 * should be used to compare across versions to look for regressions and improvements.
+	 * These are the tests to optimize to improve user experience, and should be compared across versions
+	 * to detect regressions and improvements.
 	 */
 	Measurement,
 
 	/**
-	 * Tests that provide extra details which typically aren't useful unless looking into some specific area.
+	 * Tests that provide extra details not typically needed unless investigating a specific area.
 	 *
-	 * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
-	 * measuring what they claim accurately.
-	 *
-	 * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
-	 * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
-	 * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
-	 * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
+	 * Use `Diagnostic` for tests that help confirm other tests are measuring what they claim,
+	 * or for supplementary tests that are useful during investigations but not worth running routinely.
 	 */
 	Diagnostic,
 
@@ -172,8 +167,8 @@ export function qualifiedTitle(
 /**
  * Determines if we are in a mode where we actually want to run benchmarks and output data.
  * @remarks
- * When not in performanceTestingMode, performance tests should be run as correctness tests, and should be
- * adjusted to run quickly (ex: smaller iteration counts or data sizes).
+ * When not in performance testing mode, performance tests should be run as correctness tests, and should be
+ * adjusted to run quickly (e.g., smaller iteration counts or data sizes).
  *
  * Use the `--perfMode` flag to enable.
  * @public

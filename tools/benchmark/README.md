@@ -91,12 +91,12 @@ benchmarkIt({
 
 It also accepts optional `BenchmarkTimingOptions` to tune `maxBenchmarkDurationSeconds`, `minBatchCount`, and `minBatchDurationSeconds`.
 
-Look at the documentation for `DurationBenchmark` and `BenchmarkTimingOptions` for more details.
+See the documentation for `DurationBenchmark` and `BenchmarkTimingOptions` for more details.
 
-> **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
-> The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
+> **NOTE**: Be aware of pitfalls when benchmarking impure functions.
+> The test execution strategy assumes each iteration of `benchmarkFn` is an independent event.
 > For full control over per-batch setup and teardown, use `benchmarkFnCustom`.
-> See documentation on `DurationBenchmarkCustom` for more detail.
+> See `DurationBenchmarkCustom` for details.
 
 ## Profiling custom measurements
 
@@ -124,7 +124,7 @@ benchmarkIt({
 });
 ```
 
-`CollectedData` is a tuple `[PrimaryMeasurement, ...Measurement[]]`. The first element is the primary measurement (used for regression detection) and requires all fields: `name`, `value`, `units`, `type`, and `significance: "Primary"`. Additional measurements are optional and their `units`, `type`, and `significance` fields are optional.
+`CollectedData` is a tuple `[PrimaryMeasurement, ...Measurement[]]`. The first element is the primary measurement (used for regression detection) and requires all fields: `name`, `value`, `units`, `type`, and `significance: "Primary"`. Additional measurements are optional; their `units`, `type`, and `significance` fields are also optional.
 
 `collectDurationData` and `collectMemoryUseData` can be called directly within the `run` function, which is more flexible than `benchmarkDuration` or `benchmarkMemoryUse` when you need to add custom measurements or run setup/teardown outside the timed region:
 
@@ -175,7 +175,7 @@ benchmarkIt({
 ```
 
 This measures the difference in the retained portion of the heap from `beforeAllocation` to `whileAllocated`.
-This does not include memory which was used during the operation but released before `whileAllocated` was called.
+This does not include memory that was used during the operation but released before `whileAllocated` was called.
 
 The argument to `benchmarkMemoryUse` must implement `MemoryUseBenchmark`, which requires a `benchmarkFn` property.
 That function receives a `MemoryUseCallbacks` object and must loop until `state.continue()` returns false, following
@@ -189,9 +189,9 @@ this pattern each iteration:
 6.  _(Optional)_ Free memory, then call `state.afterDeallocation()` — if called, GC runs and an "after deallocation" heap measurement is taken as well.
 
 The benchmark reports the mean heap difference between the "while allocated" and "before" readings across iterations.
-Memory must not accumulate across iterations (i.e. what you allocate in step 4 must be fully releasable).
+Memory must not accumulate across iterations (i.e., what you allocate in step 4 must be fully releasable).
 
-For more details, look at the documentation for `MemoryUseBenchmark` and `MemoryUseCallbacks`.
+For more details, see the documentation for `MemoryUseBenchmark` and `MemoryUseCallbacks`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
