@@ -32,7 +32,7 @@ async function getIIDCompressor(): Promise<IIdCompressor> {
 	).runtime;
 	const compressor =
 		runtime.idCompressor ?? fail("Expected IIdCompressor to be present in runtime");
-	provider.dispose();
+	await provider.dispose();
 	return compressor;
 }
 

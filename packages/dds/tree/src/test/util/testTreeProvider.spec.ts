@@ -16,9 +16,9 @@ import {
 describe("TestTreeProvider", () => {
 	const providersToDispose: ITestTreeProvider[] = [];
 
-	afterEach(() => {
+	afterEach(async () => {
 		for (const provider of providersToDispose) {
-			provider.dispose();
+			await provider.dispose();
 		}
 		providersToDispose.length = 0;
 	});

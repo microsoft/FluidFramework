@@ -424,7 +424,7 @@ export class TestTreeProvider {
 	 * Dispose the underlying test driver to free resources (e.g. local server timers).
 	 * Call this in afterEach/after hooks for tests that use this provider.
 	 */
-	public dispose(): void {
+	public async dispose(): Promise<void> {
 		// Close all tracked containers and reset the tracker.
 		this.provider.resetLoaderContainerTracker();
 		// Dispose each container to trigger ContainerRuntime.dispose(), which clears the
@@ -440,7 +440,7 @@ export class TestTreeProvider {
 			this.summarizerContainer.dispose();
 		}
 		// Dispose the driver to release local server resources (e.g. DeliLambda timers).
-		this.provider.driver.dispose?.();
+		await this.provider.driver.dispose?.();
 	}
 
 	private constructor(
