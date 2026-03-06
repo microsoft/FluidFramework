@@ -348,7 +348,7 @@ export interface TreeAgent {
 	 * @param prompt - The user's question or edit instruction.
 	 * @returns The model's text response.
 	 */
-	invokeAgent(prompt: string): Promise<string>;
+	invoke(prompt: string): Promise<string>;
 }
 
 /**

@@ -156,7 +156,7 @@ export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: View
 
 // @alpha
 export interface TreeAgent {
-    invokeAgent(prompt: string): Promise<string>;
+    invoke(prompt: string): Promise<string>;
 }
 
 // @alpha

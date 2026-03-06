@@ -446,7 +446,7 @@ export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
 	const maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 
 	return {
-		async invokeAgent(prompt: string): Promise<string> {
+		async invoke(prompt: string): Promise<string> {
 			beginQuery(prompt, history, tracker, options?.logger);
 
 			// Fork a branch for this edit session
