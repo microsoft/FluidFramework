@@ -9,6 +9,8 @@ import {
 	BenchmarkType,
 	benchmarkCustom,
 	isInPerformanceTestingMode,
+	ValueType,
+	type CollectedData,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -325,6 +327,27 @@ describe("Op Size", () => {
 		};
 	};
 
+	const opStatsToCollectedData = (opStats: Record<string, number>): CollectedData => [
+		{
+			name: "Total Op Size",
+			value: opStats["Total Op Size (Bytes)"],
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+			significance: "Primary",
+		},
+		{
+			name: "Max Op Size",
+			value: opStats["Max Op Size (Bytes)"],
+			units: "bytes",
+			type: ValueType.SmallerIsBetter,
+		},
+		{
+			name: "Total Ops",
+			value: opStats["Total Ops:"],
+			units: "count",
+		},
+	];
+
 	const initializeOpDataCollection = (tree: ITreePrivate) => {
 		currentTestOps.length = 0;
 		registerOpListener(tree, currentTestOps);
@@ -385,12 +408,9 @@ describe("Op Size", () => {
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}
@@ -429,12 +449,9 @@ describe("Op Size", () => {
 						only: false,
 						type: BenchmarkType.Measurement,
 						title,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}
@@ -473,12 +490,9 @@ describe("Op Size", () => {
 						only: false,
 						type: BenchmarkType.Measurement,
 						title,
-						run: async (reporter) => {
+						run: async () => {
 							benchmarkOps(style, percentile);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
+							return opStatsToCollectedData(getOperationsStats(currentTestOps));
 						},
 					});
 				}
