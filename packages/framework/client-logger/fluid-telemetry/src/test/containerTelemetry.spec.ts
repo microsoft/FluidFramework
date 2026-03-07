@@ -69,10 +69,8 @@ describe("container telemetry via", () => {
 	});
 
 	afterEach(() => {
-		// ApplicationInsights creates internal polling timers (diagnosticLogInterval) that would keep
-		// the process alive. Stop the internal log poller to allow the process to exit cleanly.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-		(appInsightsClient as any).stopPollingInternalLogs?.();
+		// Dispose the container to trigger cleanup of the heartbeat interval in ContainerTelemetryManager.
+		mockFluidContainer.dispose();
 	});
 
 	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry using Azure App Insights", () => {

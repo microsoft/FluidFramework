@@ -24,6 +24,8 @@ import type { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 export class ContainerTelemetryManager {
 	private static readonly HEARTBEAT_EMISSION_INTERNAL_MS = 60000;
 
+	private heartbeatInterval: ReturnType<typeof setInterval> | undefined;
+
 	public constructor(
 		private readonly container: IFluidContainer,
 		private readonly telemetryProducer: ContainerEventTelemetryProducer,
@@ -45,10 +47,12 @@ export class ContainerTelemetryManager {
 		);
 		this.container.on(
 			IFluidContainerSystemEventNames.DISPOSED,
-			(error?: ICriticalContainerError) =>
+			(error?: ICriticalContainerError) => {
 				this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISPOSED, {
 					error,
-				}),
+				});
+				clearInterval(this.heartbeatInterval);
+			},
 		);
 	}
 
@@ -57,7 +61,7 @@ export class ContainerTelemetryManager {
 	 * if and only if the container is in a "connected" state. It is used to keep a pulse check on a live container
 	 */
 	private setupHeartbeatTelemetryEmission(): void {
-		setInterval(() => {
+		this.heartbeatInterval = setInterval(() => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState may not be typed precisely
 			if (this.container.connectionState === ConnectionState.Connected) {
 				const telemetry = this.telemetryProducer.produceHeartbeatTelemetry();
@@ -66,6 +70,10 @@ export class ContainerTelemetryManager {
 				}
 			}
 		}, ContainerTelemetryManager.HEARTBEAT_EMISSION_INTERNAL_MS);
+		// In Node.js, unref() allows the process to exit even if the interval is still pending.
+		// The optional chaining handles browser environments where setInterval returns a number.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+		(this.heartbeatInterval as any).unref?.();
 	}
 
 	/**

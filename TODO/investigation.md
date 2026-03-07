@@ -109,3 +109,9 @@ For packages that import @fluidframework/react (which transitively imports Quill
 ### Memory/benchmark test mocharcs
 The `@fluid-tools/benchmark` library has no `setInterval`/`setTimeout` timers.
 Memory tests using this library exit cleanly without `--exit`.
+
+## Notes for pending packages
+
+- There are still 5 packages whose mocha tests hang. I should tackle them one by one and ensure that they are fixed before moving on to the next one.
+- For each, I should build the package with `pnpm build`, run its mocha tests with `pnpm test:mocha`. Rebuild and re-test after every attempt at a fix.
+- You can try using `.only` on specific test suites and run tests like that to identify exactly which ones are hanging.

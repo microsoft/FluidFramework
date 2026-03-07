@@ -7,8 +7,18 @@
 [x] Remove --exit from local-server-stress-tests: harness already properly disposes
     containers and closes server in finally block.
 
-## Next
+[x] Fix examples/data-objects/webflow - already clean after describeCompat driver await fix
 
-[] Verify a broader set of packages exits cleanly by running pnpm test:mocha from root
-   (spot-check some packages not in the investigation list)
-[] Update investigation.md with new findings about container disposal pattern
+[x] Fix experimental/dds/tree - already clean after DeliLambda + GC timer fixes
+
+[x] Fix packages/framework/client-logger/fluid-telemetry - ApplicationInsights stopPollingInternalLogs
+
+[x] Fix packages/framework/react - already clean
+
+[x] Fix packages/service-clients/odsp-client - already clean
+
+## Remaining
+
+- tools/test-tools/.mocharc.cjs: Standalone package (own pnpm-workspace.yaml, not part of main
+  monorepo). Tests appear to be trivially clean (just spawnSync) but can't verify without
+  separate install. Low priority.
