@@ -83,6 +83,10 @@ describe("textEditor", () => {
 	});
 
 	after(() => {
+		// Close JSDOM window to clear timers (e.g. requestAnimationFrame intervals) before cleanup.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+		const jsdom = (globalThis as any).$jsdom as { window: { close(): void } } | undefined;
+		jsdom?.window.close();
 		cleanup();
 	});
 
