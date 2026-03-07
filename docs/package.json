@@ -115,6 +115,10 @@
 		"node": ">=18.0"
 	},
 	"pnpm": {
+		"overrides": {
+			"jws": "^4.0.1",
+			"validator": "^13.15.0"
+		},
 		"onlyBuiltDependencies": [
 			"@parcel/watcher",
 			"core-js",
