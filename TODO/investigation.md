@@ -54,7 +54,7 @@ files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) 
 | packages/test/local-server-tests | ✅ | 2 - DeliLambda |
 | examples/data-objects/table-document | ✅ | 2 - describeCompat driver await |
 | packages/framework/client-logger/fluid-telemetry | ✅ | 4 - ApplicationInsights |
-| packages/framework/react | ✅ | Already clean |
+| packages/framework/react | ✅ | 7 - JSDOM timers + IFluidContainer.dispose() |
 | packages/test/snapshots | ✅ | Already clean (pending tests) |
 | examples/data-objects/webflow | ✅ | Already clean after describeCompat fix |
 | packages/service-clients/odsp-client | ✅ | Already clean |
@@ -109,6 +109,32 @@ For packages that import @fluidframework/react (which transitively imports Quill
 ### Memory/benchmark test mocharcs
 The `@fluid-tools/benchmark` library has no `setInterval`/`setTimeout` timers.
 Memory tests using this library exit cleanly without `--exit`.
+
+## Root Cause 7: JSDOM timers + IFluidContainer.dispose() not calling ContainerRuntime.dispose()
+**Affected packages:** packages/framework/react
+
+Two issues:
+1. **JSDOM requestAnimationFrame timers**: When tests call `globalJsdom()` and render React
+   components, JSDOM's `requestAnimationFrame` (implemented as recursive `setTimeout`) keeps the
+   process alive. Fix: call `jsdom.window.close()` (which calls `stopAllTimers()`) before
+   `cleanup()` in `after()` hooks. Note: `cleanup()` alone does NOT stop timers.
+
+2. **IFluidContainer.dispose() called container.close() instead of container.dispose()**:
+   `FluidContainer.dispose()` was calling `this.container.close()` which goes through `closeCore()`
+   and emits "closed" but does NOT call `disposeCore()`. Only `disposeCore()` calls
+   `this._runtime?.dispose()` which triggers `ContainerRuntime.dispose()` →
+   `GarbageCollector.dispose()` → `sessionExpiryTimer.clear()`. Fix: changed to
+   `this.container.dispose()` and added "disposed" event listener (in addition to "closed")
+   in `FluidContainer` constructor.
+
+**Files changed:**
+- `packages/framework/fluid-static/src/fluidContainer.ts`: Call `container.dispose()` instead
+  of `container.close()` in `FluidContainer.dispose()`; also subscribe to "disposed" event
+- `packages/framework/react/src/test/mochaHooks.ts`: Add `window.close()` before `cleanup()`
+- `packages/framework/react/src/test/reactSharedTreeView.spec.tsx`: Wrap test in try/finally
+  with `container.dispose()`, add `window.close()` to DOM tests `after()` hook
+- `packages/framework/react/src/test/{useObservation,useTree}.spec.tsx`: Add `window.close()`
+- `packages/framework/react/src/test/text/textEditor.test.tsx`: Add `window.close()`
 
 ## Notes for pending packages
 
