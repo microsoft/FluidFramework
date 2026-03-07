@@ -24,7 +24,7 @@ function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite {
 /**
  * Appends a benchmark result to the currently open suite (the stack top).
  */
-export function recordTestResult(parent: ReportPath, entry: ReportEntry): void {
+export function recordTestResult(parent: ReportPath | undefined, entry: ReportEntry): void {
 	if (isChildProcess) {
 		// It is common to suppress console.log in test environments.
 		// Since this output is not to the user facing console, but for internal data transfer,
@@ -77,7 +77,7 @@ export interface ReportSuiteWithPath extends ReportPath {
 	readonly parent?: ReportPath;
 }
 
-function suiteNames(parent: ReportPath): string[] {
+function suiteNames(parent: ReportPath | undefined): string[] {
 	const names: string[] = [];
 	let current: ReportPath | undefined = parent;
 	while (current !== undefined) {
@@ -87,30 +87,22 @@ function suiteNames(parent: ReportPath): string[] {
 	return names.reverse();
 }
 
-function fullName(parent: ReportPath, benchmarkName?: string): string {
+function fullName(parent: ReportPath | undefined, benchmarkName?: string): string {
 	const names = suiteNames(parent);
 	if (benchmarkName !== undefined) {
 		names.push(benchmarkName);
 	}
 	return names.join(" / ");
 }
-
-function visitSuites(
-	reportParent: ReportSuiteWithPath,
-	callback: (reportParent: ReportSuiteWithPath) => void,
-): void {
-	callback(reportParent);
-	visitSuitesArray(reportParent, reportParent.report.contents, callback);
-}
-
 function visitSuitesArray(
 	parent: ReportPath | undefined,
 	array: ReportArray,
-	callback: (reportParent: ReportSuiteWithPath) => void,
+	callback: (parent: ReportPath | undefined, reportParent: ReportArray) => void,
 ): void {
+	callback(parent, array);
 	for (const content of array) {
 		if (isSuiteNode(content)) {
-			visitSuites({ report: content, parent }, callback);
+			visitSuitesArray({ report: content, parent }, content.contents, callback);
 		}
 	}
 }
@@ -162,7 +154,10 @@ export function reportTable(heading: string, reports: readonly ReportEntry[]): s
 	}
 
 	table.cell("Status", status(stats.countSuccessful, stats.countFailure));
-	table.cell("Name", "Total");
+	table.cell(
+		"Name",
+		`Total (${stats.countSuccessful} of ${stats.countSuccessful + stats.countFailure} passing)`,
+	);
 	table.cell(
 		testDurationName,
 		`${formatMeasurementValue({ value: stats.sumRuntime, units: "seconds" })}`,
@@ -183,18 +178,19 @@ function status(passing: number, failing: number): string {
 /**
  * If suite has direct tests, log them in a table.
  */
-export function logSuiteTests(reportParent: ReportSuiteWithPath): void {
+export function logSuiteTests(
+	parent: ReportPath | undefined,
+	reports: Readonly<ReportArray>,
+): void {
 	if (isChildProcess) {
 		// Child process tests report their output via recordTestResult.
 		return;
 	}
 
-	const directBenchmarks = reportParent.report.contents.filter(
-		(c): c is ReportEntry => !isSuiteNode(c),
-	);
+	const directBenchmarks = reports.filter((c): c is ReportEntry => !isSuiteNode(c));
 
 	if (directBenchmarks.length > 0) {
-		console.log(reportTable(fullName(reportParent), directBenchmarks));
+		console.log(reportTable(fullName(parent), directBenchmarks));
 	}
 }
 
@@ -243,14 +239,14 @@ export function generateOverallSummary(content: ReportArray, parent?: ReportPath
 	let countFailure = 0;
 	const geometricMeanProductValues: number[] = [];
 
-	visitSuitesArray(parent, content, (reports) => {
-		const stats = getShallowStats(reports.report.contents);
+	visitSuitesArray(parent, content, (parentInner, contentsInner) => {
+		const stats = getShallowStats(contentsInner);
 		sumRuntime += stats.sumRuntime;
 		countSuccessful += stats.countSuccessful;
 		countFailure += stats.countFailure;
 		geometricMeanProductValues.push(...stats.geometricMeanProductValues);
 		table.cell("Status", status(stats.countSuccessful, stats.countFailure));
-		table.cell("Suite Name", fullName(reports));
+		table.cell("Suite Name", fullName(parentInner));
 		table.cell(
 			"# of passed tests",
 			`${stats.countSuccessful} out of ${stats.countSuccessful + stats.countFailure}`,
@@ -324,9 +320,7 @@ export function onCompletion(
 	}
 
 	if (!incremental) {
-		visitSuitesArray(undefined, reports, (rp) => {
-			logSuiteTests(rp);
-		});
+		visitSuitesArray(undefined, reports, logSuiteTests);
 	}
 
 	console.log(generateOverallSummary(reports, undefined));

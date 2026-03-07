@@ -12,10 +12,12 @@ import {
 	recordTestResult,
 	type ReportArray,
 	type ReportEntry,
+	type ReportPath,
 	type ReportSuiteWithPath,
 } from "../Reporter.js";
 import type { BenchmarkResult, BenchmarkError } from "../ResultTypes.js";
 import { parseBenchmarkResult } from "./runner.js";
+import { assert } from "../assert.js";
 
 /*
  * Users of this package should be able to author utilities like this for testing tools other than mocha.
@@ -43,18 +45,20 @@ module.exports = class {
 		this.reportFile = options?.reporterOptions?.reportFile;
 		runner
 			.on(Runner.constants.EVENT_SUITE_BEGIN, (suite: Suite) => {
-				const parentData =
-					// When in parallel mode, this can be null instead of undefined (despite what the type say), so check for both.
-					suite.parent === undefined || suite.parent === null
-						? undefined
-						: this.suiteData.get(suiteId(suite.parent));
-				const report = { suiteName: suite.title, contents: [] };
-				if (parentData === undefined) {
-					this.reports.push(report);
+				const parent = suite.parent;
+				if (parent === undefined || parent === null) {
+					// Ignore root suites so that they all are implicitly merged together.
 				} else {
-					parentData.report.contents.push(report);
+					const report = { suiteName: suite.title, contents: [] };
+					const parentData = this.suiteData.get(suiteId(parent));
+					if (parentData === undefined) {
+						this.reports.push(report);
+					} else {
+						parentData.report.contents.push(report);
+					}
+					assert(!this.suiteData.has(suiteId(suite)), `duplicate suite id`);
+					this.suiteData.set(suiteId(suite), { report, parent: parentData });
 				}
-				this.suiteData.set(suiteId(suite), { report, parent: parentData });
 			})
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.
@@ -92,11 +96,7 @@ module.exports = class {
 					}
 				}
 
-				const suiteData =
-					test.parent === undefined
-						? undefined
-						: this.suiteData.get(suiteId(test.parent));
-				const reports = suiteData?.report.contents ?? this.reports;
+				const suiteData = this.getSuiteData(test.parent);
 
 				if (benchmark === undefined) {
 					// Mocha test completed without reporting data.
@@ -117,20 +117,15 @@ module.exports = class {
 				}
 
 				const report: ReportEntry = { benchmarkName: test.title, data: benchmark };
-				reports.push(report);
-				recordTestResult(
-					suiteData ?? { report: { suiteName: "" }, parent: undefined },
-					report,
-				);
+				suiteData.content.push(report);
+				recordTestResult(suiteData.parent, report);
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
-				const suiteData = this.suiteData.get(suiteId(suite));
-				if (suiteData === undefined) {
-					console.error(chalk.red(`No data found for suite ${suite.fullTitle()}.`));
-					return;
+				if (!suite.root) {
+					const suiteData = this.getSuiteData(suite);
+					Object.freeze(suiteData.content);
+					logSuiteTests(suiteData.parent, suiteData.content);
 				}
-				Object.freeze(suiteData.report.contents);
-				logSuiteTests(suiteData);
 			})
 			.on(Runner.constants.EVENT_HOOK_END, (hook: Hook) => {
 				// In parallel mode, "error" does not exist, so skip this check.
@@ -147,8 +142,26 @@ module.exports = class {
 				}
 			})
 			.once(Runner.constants.EVENT_RUN_END, () => {
+				const suiteData = this.getSuiteData(undefined);
+				logSuiteTests(suiteData.parent, suiteData.content);
 				onCompletion(this.reports, true, this.reportFile);
 			});
+	}
+
+	private getSuiteData(suite: Suite | undefined): {
+		content: ReportArray;
+		parent?: ReportPath;
+	} {
+		if (suite === undefined) {
+			return { content: this.reports };
+		}
+		const suiteData = this.suiteData.get(suiteId(suite));
+		if (suiteData === undefined) {
+			// In parallel mode, tests directly in the root fail to have "root" set to true, and thus would fail this assert.
+			// assert(suite.root, `expected root`);
+			return { content: this.reports };
+		}
+		return { content: suiteData.report.contents, parent: suiteData };
 	}
 };
 

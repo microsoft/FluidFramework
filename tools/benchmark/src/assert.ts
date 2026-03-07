@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import chalk from "chalk";
+
 /**
  * Asserts the specified condition.
  *
@@ -24,7 +26,10 @@ export function assert(condition: boolean, message: string): asserts condition {
  * Use this instead of the node 'assert' package, which requires polyfills to run in browser environments.
  */
 export function fail(message: string): never {
-	throw new Error(`Failed assertion in @fluid-tools/benchmark: ${message}`);
+	const fullMessage = `Failed assertion in @fluid-tools/benchmark: ${message}`;
+	// Many places in the reporter don't report exceptions well, so log the error here to help ensure it gets seen.
+	console.error(chalk.red(fullMessage));
+	throw new Error(fullMessage);
 }
 
 /**

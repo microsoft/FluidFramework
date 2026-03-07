@@ -56,7 +56,7 @@ describe("mocha integration", () => {
 				// From suite table:
 				assert.match(result, /✔\s+mocha-integration-inner\s+1\.000 ms/);
 				// From summary table:
-				assert.match(result, /✔\s+ \/ mocha integration\s+1 out of 1 /);
+				assert.match(result, /✔\s+mocha integration\s+1 out of 1 /);
 			});
 
 			it("perf with error", () => {
@@ -64,7 +64,7 @@ describe("mocha integration", () => {
 				// From suite table:
 				assert.match(result, /×\s+mocha-integration-inner\s+Example Error/);
 				// From summary table:
-				assert.match(result, /×\s+ \/ mocha integration\s+0 out of 1/);
+				assert.match(result, /×\s+mocha integration\s+0 out of 1/);
 			});
 		});
 	}
@@ -79,4 +79,11 @@ describe("mocha integration", () => {
 			return sampleResult;
 		},
 	});
+});
+
+benchmarkIt({
+	title: "top level test",
+	run: (): CollectedData => {
+		return sampleResult;
+	},
 });
