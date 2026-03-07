@@ -549,6 +549,7 @@ interface BuildArgs {
 	family: ModularChangeFamily;
 	maxId?: number;
 	revisions?: RevisionInfo[];
+	builds?: ChangeAtomIdBTree<TreeChunk>;
 	renames?: RenameDescription[];
 	roots?: {
 		detachId: ChangeAtomId;
@@ -615,6 +616,10 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 
 	if (args.revisions !== undefined) {
 		result.revisions = args.revisions;
+	}
+
+	if (args.builds !== undefined) {
+		result.builds = args.builds;
 	}
 
 	if (args.renames !== undefined) {

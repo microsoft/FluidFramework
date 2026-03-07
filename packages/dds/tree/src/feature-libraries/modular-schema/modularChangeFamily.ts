@@ -4943,23 +4943,32 @@ function composeRootRename(
 			return { value: undefined, length: detachEntry.length };
 		}
 
-		// XXX: Cleanup detachLocation if nodes are now attached in input context.
 		const detachLocationEntry1 = change1.rootNodes.detachLocations.getFirst(
 			composedOldId,
 			countProcessed,
 		);
 		countProcessed = detachLocationEntry1.length;
 
-		const detachLocationEntry2 = change2.rootNodes.detachLocations.getFirst(
-			oldId,
+		if (detachLocationEntry1.value !== undefined) {
+			return detachLocationEntry1;
+		}
+
+		// If `change1` may have no detach location entry if `composedOldId` is a build in `change1`.
+		const attachLocationEntry1 = getFirstAttachField(
+			change1.crossFieldKeys,
+			composedOldId,
 			countProcessed,
 		);
-		countProcessed = detachLocationEntry2.length;
+		countProcessed = attachLocationEntry1.length;
 
-		return {
-			value: detachLocationEntry1.value ?? detachLocationEntry2.value,
-			length: countProcessed,
-		};
+		// These nodes may be detached in `change1`'s input context, but not have a detach location entry
+		// if they are built and attached without a rename in `change1`.
+		// In that case, their detach location is the first place they are attached.
+		if (attachLocationEntry1.value !== undefined) {
+			return attachLocationEntry1;
+		}
+
+		return change2.rootNodes.detachLocations.getFirst(oldId, countProcessed);
 	};
 
 	insertRootRename(

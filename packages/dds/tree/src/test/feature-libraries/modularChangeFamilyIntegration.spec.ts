@@ -35,6 +35,9 @@ import {
 	FieldKinds as defaultFieldKinds,
 	fieldKindConfigurations,
 	ModularChangeFormatVersion,
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+	type TreeChunk,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
@@ -2185,6 +2188,55 @@ describe("ModularChangeFamily integration", () => {
 					MarkMaker.detach(1, moveId1, { cellRename: moveId2 }),
 					MarkMaker.attach(1, moveId2, { cellId: { revision: tag2, localId: brand(3) } }),
 				]),
+			);
+
+			assertEqual(composed, expected);
+		});
+
+		it("insert (with build) and remove", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(
+				family,
+				mintRevisionTag,
+				changeReceiver,
+				codecOptions,
+			);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+
+			const newNode = chunkFromJsonTrees(["A"]);
+			editor.sequenceField(fieldAPath).insert(0, newNode);
+			editor.sequenceField(fieldAPath).remove(0, 1);
+
+			const [insertUntagged, removeUntagged] = getChanges();
+			const insert = tagChangeInline(insertUntagged, tag1);
+			const remove = tagChangeInline(removeUntagged, tag2);
+
+			const composed = family.compose([insert, remove]);
+
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const buildId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const detachId: ChangeAtomId = { revision: tag2, localId: brand(1) };
+
+			const builds = newChangeAtomIdBTree<TreeChunk>();
+			setInChangeAtomIdMap(builds, buildId, newNode);
+			const expected = Change.build(
+				{
+					family,
+					maxId: 1,
+					builds,
+					renames: [
+						{
+							oldId: buildId,
+							newId: detachId,
+							count: 1,
+							detachLocation: fieldAId,
+						},
+					],
+					detachedMoves: [{ detachId, count: 1, newLocation: fieldAId }],
+					revisions: [{ revision: tag1 }, { revision: tag2 }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [MarkMaker.rename(1, buildId, detachId)]),
 			);
 
 			assertEqual(composed, expected);
