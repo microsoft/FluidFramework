@@ -9,11 +9,13 @@ import { Runner, type Suite, type Test, type Hook } from "mocha";
 import {
 	logSuiteTests,
 	onCompletion,
+	recordTestResult,
 	type ReportArray,
 	type ReportEntry,
 	type ReportSuiteWithPath,
 } from "../Reporter.js";
 import type { BenchmarkResult, BenchmarkError } from "../ResultTypes.js";
+import { parseBenchmarkResult } from "./runner.js";
 
 /*
  * Users of this package should be able to author utilities like this for testing tools other than mocha.
@@ -33,7 +35,7 @@ import type { BenchmarkResult, BenchmarkError } from "../ResultTypes.js";
  */
 // eslint-disable-next-line unicorn/prefer-module
 module.exports = class {
-	private readonly suiteData: Map<Suite, ReportSuiteWithPath> = new Map();
+	private readonly suiteData: Map<MochaId, ReportSuiteWithPath> = new Map();
 	private readonly testData: Map<string, ReportEntry> = new Map();
 	private readonly reportFile?: string;
 	private readonly reports: ReportArray = [];
@@ -42,12 +44,17 @@ module.exports = class {
 		runner
 			.on(Runner.constants.EVENT_SUITE_BEGIN, (suite: Suite) => {
 				const parentData =
-					suite.parent === undefined ? undefined : this.suiteData.get(suite.parent);
+					// When in parallel mode, this can be null instead of undefined (despite what the type say), so check for both.
+					suite.parent === undefined || suite.parent === null
+						? undefined
+						: this.suiteData.get(suiteId(suite.parent));
 				const report = { suiteName: suite.title, contents: [] };
-				if (suite.parent === undefined) {
+				if (parentData === undefined) {
 					this.reports.push(report);
+				} else {
+					parentData.report.contents.push(report);
 				}
-				this.suiteData.set(suite, { report, parent: parentData });
+				this.suiteData.set(suiteId(suite), { report, parent: parentData });
 			})
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.
@@ -79,14 +86,16 @@ module.exports = class {
 					const test2 = test as Test;
 					const body = test2.body;
 					try {
-						benchmark = JSON.parse(body) as BenchmarkResult;
+						benchmark = parseBenchmarkResult(body);
 					} catch {
 						// If the body isn't json, then the event was not put into the body, and so treat it like no data was reported.
 					}
 				}
 
 				const suiteData =
-					test.parent === undefined ? undefined : this.suiteData.get(test.parent);
+					test.parent === undefined
+						? undefined
+						: this.suiteData.get(suiteId(test.parent));
 				const reports = suiteData?.report.contents ?? this.reports;
 
 				if (benchmark === undefined) {
@@ -107,10 +116,15 @@ module.exports = class {
 					benchmark = { error };
 				}
 
-				reports.push({ benchmarkName: test.title, data: benchmark });
+				const report: ReportEntry = { benchmarkName: test.title, data: benchmark };
+				reports.push(report);
+				recordTestResult(
+					suiteData ?? { report: { suiteName: "" }, parent: undefined },
+					report,
+				);
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
-				const suiteData = this.suiteData.get(suite);
+				const suiteData = this.suiteData.get(suiteId(suite));
 				if (suiteData === undefined) {
 					console.error(chalk.red(`No data found for suite ${suite.fullTitle()}.`));
 					return;
@@ -147,4 +161,14 @@ interface ReporterOptions {
 	 * If not provided, no file is written.
 	 */
 	readonly reportFile?: string;
+}
+
+type MochaId = Suite | string;
+
+function suiteId(suite: Suite): MochaId {
+	// In parallel mode, mocha objects like suites and tests have unstable object identity, and instead rely on an id property.
+	if ("__mocha_id__" in suite) {
+		return suite.__mocha_id__ as string;
+	}
+	return suite;
 }

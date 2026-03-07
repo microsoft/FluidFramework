@@ -250,9 +250,14 @@ export function generateOverallSummary(content: ReportArray, parent?: ReportPath
 		countFailure += stats.countFailure;
 		geometricMeanProductValues.push(...stats.geometricMeanProductValues);
 		table.cell("Status", status(stats.countSuccessful, stats.countFailure));
-		table.cell("Name", fullName(reports));
+		table.cell("Suite Name", fullName(reports));
 		table.cell(
-			testDurationName,
+			"# of passed tests",
+			`${stats.countSuccessful} out of ${stats.countSuccessful + stats.countFailure}`,
+			Table.padLeft,
+		);
+		table.cell(
+			`Suite ${testDurationName}`,
 			`${formatMeasurementValue({ value: stats.sumRuntime, units: "seconds" })}`,
 			Table.padLeft,
 		);
@@ -264,12 +269,15 @@ export function generateOverallSummary(content: ReportArray, parent?: ReportPath
 		table.newRow();
 	});
 
-	table.pushDelimeter();
-
 	table.cell("Status", status(countSuccessful, countFailure));
-	table.cell("Name", chalk.italic("Total"));
+	table.cell("Suite Name", "Total");
 	table.cell(
-		testDurationName,
+		"# of passed tests",
+		`${countSuccessful} out of ${countSuccessful + countFailure}`,
+		Table.padLeft,
+	);
+	table.cell(
+		`Suite ${testDurationName}`,
 		`${formatMeasurementValue({ value: sumRuntime, units: "seconds" })}`,
 		Table.padLeft,
 	);
@@ -278,6 +286,8 @@ export function generateOverallSummary(content: ReportArray, parent?: ReportPath
 		`${prettyNumber(geometricMean(geometricMeanProductValues))}`,
 		Table.padLeft,
 	);
+
+	table.newRow();
 
 	const title = parent === undefined ? "Overall Summary" : `Summary for ${fullName(parent)}`;
 

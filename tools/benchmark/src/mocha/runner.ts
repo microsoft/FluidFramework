@@ -4,7 +4,12 @@
  */
 
 import { isChildProcess } from "../Configuration.js";
-import { isResultError, type BenchmarkResult, type CollectedData } from "../ResultTypes.js";
+import {
+	isResultError,
+	type BenchmarkError,
+	type BenchmarkResult,
+	type CollectedData,
+} from "../ResultTypes.js";
 import { captureResults } from "../ResultUtilities.js";
 import { fail } from "../assert.js";
 
@@ -114,19 +119,7 @@ ${result.stdout}`,
 		);
 	}
 
-	const fromChild = JSON.parse(output[0], (_key, value: unknown): unknown => {
-		if (value === null) {
-			// Assumes all nulls in the data were NaN values which failed to survive JSON.stringify
-			// since JSON doesn't support NaN.
-			// If there are actually null values in the data, or infinities, this will cause them to be misreported as NaN.
-			// Generally this should be fine, as we don't expect to hit those other cases,
-			// and if we do the NaN indicates some numeric issue that should be investigated anyway.
-			return Number.NaN;
-		}
-		return value;
-		// This type cast assumes the data is well formed. More validation might be nice, but it should be valid as we control the output.
-	}) as BenchmarkResult;
-
+	const fromChild = parseBenchmarkResult(output[0]);
 	if (isResultError(fromChild)) {
 		// Caught by captureResults and converted back into error data.
 		// Prioritize this over ChildProcessErrors, since if we have structured error data, its likely that everything worked correctly except a test failed,
@@ -138,4 +131,34 @@ ${result.stdout}`,
 	throwChildProcessErrors();
 
 	return fromChild;
+}
+
+export function parseBenchmarkResult(json: string): BenchmarkResult {
+	const report = parseReport(json) as Partial<BenchmarkError & CollectedData>;
+	// A minimal sanity check of the data to catch most cases which pass in the wrong thing.
+	if (report.error === undefined) {
+		if (!Array.isArray(report)) {
+			throw new Error(`${JSON.stringify(report)} is not a BenchmarkResult.`);
+		}
+	} else {
+		if (typeof report.error !== "string") {
+			throw new Error(`${JSON.stringify(report)} is not a BenchmarkResult.`);
+		}
+	}
+	return report as BenchmarkResult;
+}
+
+function parseReport(text: string): unknown {
+	return JSON.parse(text, (_key, value: unknown): unknown => {
+		if (value === null) {
+			// Assumes all nulls in the data were NaN values which failed to survive JSON.stringify
+			// since JSON doesn't support NaN.
+			// If there are actually null values in the data, or infinities, this will cause them to be misreported as NaN.
+			// Generally this should be fine, as we don't expect to hit those other cases,
+			// and if we do the NaN indicates some numeric issue that should be investigated anyway.
+			return Number.NaN;
+		}
+		return value;
+		// This type cast assumes the data is well formed. More validation might be nice, but it should be valid as we control the output.
+	});
 }
