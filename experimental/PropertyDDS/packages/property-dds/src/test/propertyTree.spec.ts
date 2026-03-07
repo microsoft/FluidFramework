@@ -65,6 +65,7 @@ interface withSummarizer extends Result {
 
 describe("PropertyDDS summarizer", () => {
 	let objProvider: ITestObjectProvider;
+	let driver: LocalServerTestDriver;
 	const propertyDdsId = "PropertyTree";
 	const USERS = "users";
 	const getClient = async (withSummarizer = false, load = false) => {
@@ -97,7 +98,7 @@ describe("PropertyDDS summarizer", () => {
 	};
 
 	beforeEach(async () => {
-		const driver = new LocalServerTestDriver();
+		driver = new LocalServerTestDriver();
 		const registry = [[propertyDdsId, new PropertyTreeFactory()]] as ChannelFactoryRegistry;
 
 		objProvider = new TestObjectProvider(
@@ -109,6 +110,11 @@ describe("PropertyDDS summarizer", () => {
 					new TestFluidObjectFactory(registry),
 				),
 		);
+	});
+
+	afterEach(async () => {
+		objProvider.reset();
+		await driver.dispose();
 	});
 
 	it("Scenario 1", async function () {
@@ -399,6 +405,11 @@ function executePerPropertyTreeType(
 			container2 = await loadContainer();
 			dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedPropertyTree2 = await dataObject2.getSharedObject(propertyDdsId);
+		});
+
+		afterEach(async () => {
+			opProcessingController.reset();
+			await deltaConnectionServer.close();
 		});
 
 		describe("APIs", () => {
