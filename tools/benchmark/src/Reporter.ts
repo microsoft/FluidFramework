@@ -113,7 +113,7 @@ export class BenchmarkReporter {
 	 * and must be paired with a matching {@link BenchmarkReporter.recordSuiteResults} call.
 	 * When using mocha, call this from `EVENT_SUITE_BEGIN`.
 	 *
-	 * @param localName - the local `suite.title` string (tags stripped), used in JSON output.
+	 * @param localName - the name of the suite (in Mocha, `suite.title`).
 	 */
 	public beginSuite(localName: string): void {
 		const node: SuiteNode = {
