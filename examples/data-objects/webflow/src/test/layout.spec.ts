@@ -19,7 +19,10 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { FlowDocument } from "../document/index.js";
-import { htmlFormatter } from "../index.js";
+// Import htmlFormatter directly to avoid loading webflowView.tsx which imports CSS files.
+// Using the main index.js would transitively import CSS via host/webflowView.tsx,
+// requiring --experimental-loader=esm-loader-css which prevents clean process exit in Node.js 20.
+import { htmlFormatter } from "../html/formatters.js";
 import { Layout } from "../view/layout.js";
 
 interface ISnapshotNode {

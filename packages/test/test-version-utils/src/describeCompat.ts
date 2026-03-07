@@ -179,6 +179,9 @@ function createCompatSuite(
 					if (provider === undefined) {
 						throw new Error("Expected provider to be set up by before hook");
 					}
+					// Reset the provider before disposing the driver to ensure all containers are
+					// disposed first. This clears GC sessionExpiryTimers so the process can exit.
+					provider.reset();
 					await provider.driver.dispose?.();
 					provider = undefined;
 					Object.defineProperty(this, "__fluidTestProvider", {
