@@ -3,361 +3,48 @@
  * Licensed under the MIT License.
  */
 
-/*
-The MIT License (MIT)
-
-Copyright (c) 2015 Robert Klep
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
 // This file is a reporter used with node, so depending on node is fine.
 /* eslint-disable import-x/no-nodejs-modules */
 
 /* eslint no-console: ["error", { allow: ["log","error"] }] */
 import * as fs from "node:fs";
-import * as path from "node:path";
 
 import chalk from "chalk";
 import Table from "easy-table";
 
 import { isResultError, ValueType, type BenchmarkResult } from "./ResultTypes.js";
 import { formatMeasurementValue, geometricMean, prettyNumber } from "./RunnerUtilities.js";
-import { assert } from "./assert.js";
 import { testDurationName } from "./ResultUtilities.js";
-import { isChildProcess } from "./Configuration.js";
+import { getName, isChildProcess } from "./Configuration.js";
 
-/**
- * A node in the suite tree maintained by {@link BenchmarkReporter}.
- * Each node corresponds to one mocha `describe` block.
- */
-interface SuiteNode {
-	/**
-	 * The local (non-prefixed) title of this suite — the string passed to `describe()`.
-	 * Used as the `suiteName` in JSON output.
-	 */
-	readonly localName: string;
-	readonly table: Table;
-	/**
-	 * Direct test results and child suite nodes in event-arrival order.
-	 * This is the authoritative ordered contents of the suite for both console and JSON output.
-	 */
-	readonly children: (SuiteNode | NamedResult)[];
-}
-
-interface NamedResult {
-	readonly name: string;
-	readonly result: BenchmarkResult;
-}
-
-function isSuiteNode(item: SuiteNode | NamedResult): item is SuiteNode {
-	return "table" in item;
+function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite {
+	return "contents" in item;
 }
 
 /**
- * Collects and formats performance data for a sequence of suites of benchmarks.
- * Data must be provided in the form of one {@link CollectedData} for each test in each suite.
- *
- * Human-friendly tables are logged to the console, and a machine-friendly version is written to a JSON file.
- * @public
+ * Appends a benchmark result to the currently open suite (the stack top).
  */
-export class BenchmarkReporter {
-	/**
-	 * Overall totals (one row per suite)
-	 */
-	private readonly overallSummaryTable: Table = new Table();
-
-	/**
-	 * Stack of currently open suite nodes (most-recently-opened at the end).
-	 * Index 0 holds a special root that holds top-level content.
-	 * Pushed by {@link BenchmarkReporter.beginSuite} and popped by {@link BenchmarkReporter.recordSuiteResults}.
-	 */
-	private readonly suiteStack: SuiteNode[] = [
-		{ localName: "root", table: new Table(), children: [] },
-	];
-
-	private totalSumRuntimeSeconds = 0;
-	private totalBenchmarkCount = 0;
-	private totalSuccessfulBenchmarkCount = 0;
-	private geometricMeanInputs: number[] = [];
-
-	private readonly outputFilePath: string | undefined;
-
-	/**
-	 * @param outputFilePath - path to write the combined results JSON file to.
-	 * If not provided, no file is written.
-	 */
-	public constructor(outputFilePath?: string) {
-		this.outputFilePath = outputFilePath ? path.resolve(outputFilePath) : undefined;
+export function recordTestResult(parent: ReportPath, entry: ReportEntry): void {
+	if (isChildProcess) {
+		// It is common to suppress console.log in test environments.
+		// Since this output is not to the user facing console, but for internal data transfer,
+		// write it directly to stdout to ensure it makes it to the parent process regardless of console.log configuration.
+		process.stdout.write(`\n${JSON.stringify(entry.data)}\n`);
+		return;
 	}
 
-	/**
-	 * Registers the start of a suite and pushes it onto the stack.
-	 * Must be called before any {@link BenchmarkReporter.recordTestResult} calls for tests in the suite,
-	 * and must be paired with a matching {@link BenchmarkReporter.recordSuiteResults} call.
-	 * When using mocha, call this from `EVENT_SUITE_BEGIN`.
-	 *
-	 * @param localName - the name of the suite (in Mocha, `suite.title`).
-	 */
-	public beginSuite(localName: string): void {
-		const node: SuiteNode = {
-			localName,
-			table: new Table(),
-			children: [],
-		};
-
-		// Always attach to the current stack top (virtual root is always present).
-		this.suiteStack.at(-1)!.children.push(node);
-		this.suiteStack.push(node);
-	}
-
-	/**
-	 * Appends a benchmark result to the currently open suite (the stack top).
-	 */
-	public recordTestResult(testName: string, result: BenchmarkResult): void {
-		if (isChildProcess) {
-			// It is common to suppress console.log in test environments.
-			// Since this output is not to the user facing console, but for internal data transfer,
-			// write it directly to stdout to ensure it makes it to the parent process regardless of console.log configuration.
-			process.stdout.write(`\n${JSON.stringify(result)}\n`);
-			return;
-		}
-
-		if (isResultError(result)) {
-			console.error(
-				chalk.red(
-					`\nTest ${JSON.stringify([...this.suiteNames(), testName].join(" "))} failed:
-    ${result.error}\n`,
-				),
-			);
-		}
-
-		// Non-null assertion is safe: suiteStack always has at least the virtual root.
-		const node = this.suiteStack.at(-1)!;
-
-		const { table, children } = node;
-
-		const namedResult: NamedResult = { name: testName, result };
-		children.push(namedResult);
-
-		if (isResultError(result)) {
-			table.cell("status", `    ${chalk.red("×")}`);
-		} else {
-			table.cell("status", `    ${chalk.green("✔")}`);
-		}
-
-		table.cell("name", chalk.italic(testName));
-
-		if (isResultError(result)) {
-			// Full error should be included outside of table, so limit text in table to avoid breaking formatting.
-			const errorColumns = 50;
-			const message =
-				result.error.length > errorColumns
-					? `${result.error.slice(0, errorColumns - 1)}…`
-					: result.error;
-			table.cell("error", chalk.red(message));
-		} else {
-			for (const measurement of result) {
-				const text = formatMeasurementValue(measurement);
-				const final =
-					measurement.significance === "Primary"
-						? chalk.bold(text)
-						: measurement.significance === "Diagnostic"
-						? chalk.dim(text)
-						: text;
-				table.cell(measurement.name, final, Table.padLeft);
-			}
-		}
-
-		table.newRow();
-	}
-
-	private suiteNames(): string[] {
-		return this.suiteStack.slice(1).map((s) => s.localName);
-	}
-
-	/**
-	 * Marks the current suite (stack top) as complete, prints its console table, and accumulates summary stats.
-	 * Must be called once for each {@link BenchmarkReporter.beginSuite} call, before {@link BenchmarkReporter.recordResultsSummary}.
-	 */
-	public recordSuiteResults(): void {
-		// Never pop the root suite.
-		assert(
-			this.suiteStack.length > 1,
-			"recordSuiteResults called without a matching beginSuite",
+	if (isResultError(entry.data)) {
+		console.error(
+			chalk.red(
+				`\nTest ${JSON.stringify(fullName(parent, entry.benchmarkName))} failed:\n    ${
+					entry.data.error
+				}\n`,
+			),
 		);
-
-		const path = this.suiteNames().join(" / ");
-
-		// Non-null assertion is safe: we just checked length > 1.
-		const node = this.suiteStack.pop()!;
-
-		// Only output and accumulate stats for suites with direct benchmarks.
-		const directBenchmarks = node.children.filter((c): c is NamedResult => !isSuiteNode(c));
-		if (directBenchmarks.length > 0) {
-			console.log(`${chalk.bold(path)}`);
-			console.log(`${node.table.toString()}`);
-			this.accumulateBenchmarkData(path, directBenchmarks);
-		}
-	}
-
-	/**
-	 * Accumulates benchmark data for a suite and logs it to the overall summary table.
-	 */
-	private accumulateBenchmarkData(suiteName: string, benchmarks: readonly NamedResult[]): void {
-		// Accumulate totals for suite
-		let sumRuntime = 0;
-		let countSuccessful = 0;
-		let countFailure = 0;
-		const geometricMeanProductValues: number[] = [];
-
-		for (const { result } of benchmarks) {
-			if (isResultError(result)) {
-				countFailure++;
-			} else {
-				const elapsedDiagnostic = result.find((m) => m.name === testDurationName);
-				sumRuntime += elapsedDiagnostic?.value ?? 0;
-				countSuccessful++;
-				for (const measurement of result) {
-					if (measurement.significance === "Primary") {
-						geometricMeanProductValues.push(
-							// Geometric mean may end up as NaN or infinity for questionable values (e.g. when this divides by 0).
-							// Such results do about as good a job conveying the situation as is practical: for once, the floating-point edge cases do something we like.
-							measurement.type === ValueType.SmallerIsBetter
-								? measurement.value
-								: 1 / measurement.value,
-						);
-					}
-				}
-			}
-		}
-
-		// Add row to overallSummaryTable
-		let statusSymbol: string;
-		switch (benchmarks.length) {
-			case countSuccessful: {
-				statusSymbol = chalk.green("✔");
-				break;
-			}
-			case countFailure: {
-				statusSymbol = chalk.red("×");
-				break;
-			}
-			default: {
-				statusSymbol = chalk.yellow("!");
-			}
-		}
-		this.overallSummaryTable.cell("status", `    ${statusSymbol}`);
-		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));
-		this.overallSummaryTable.cell(
-			"# of passed tests",
-			`${countSuccessful} out of ${benchmarks.length}`,
-			Table.padLeft,
-		);
-		this.overallSummaryTable.cell(
-			"total time (s)",
-			`${prettyNumber(sumRuntime, 1)}`,
-			Table.padLeft,
-		);
-
-		this.overallSummaryTable.cell(
-			geoMeanColumn,
-			`${prettyNumber(geometricMean(geometricMeanProductValues))}`,
-			Table.padLeft,
-		);
-		this.overallSummaryTable.newRow();
-
-		// Update accumulators for overall totals
-		this.totalBenchmarkCount += benchmarks.length;
-		this.totalSuccessfulBenchmarkCount += countSuccessful;
-		this.totalSumRuntimeSeconds += sumRuntime;
-		this.geometricMeanInputs.push(...geometricMeanProductValues);
-	}
-
-	/**
-	 * Logs the overall summary (aggregating all suites) and saves the results to disk.
-	 * All suites must already be closed via {@link BenchmarkReporter.recordSuiteResults} before calling this.
-	 */
-	public recordResultsSummary(): void {
-		assert(
-			this.suiteStack.length === 1,
-			"all suites should be closed except root when calling recordResultsSummary",
-		);
-
-		const countFailure: number = this.totalBenchmarkCount - this.totalSuccessfulBenchmarkCount;
-		this.overallSummaryTable.cell("suite name", "total");
-		this.overallSummaryTable.cell(
-			"# of passed tests",
-			`${this.totalSuccessfulBenchmarkCount} out of ${this.totalBenchmarkCount}`,
-			Table.padLeft,
-		);
-		this.overallSummaryTable.cell(
-			"total time (s)",
-			`${prettyNumber(this.totalSumRuntimeSeconds, 1)}`,
-			Table.padLeft,
-		);
-		this.overallSummaryTable.cell(
-			geoMeanColumn,
-			`${prettyNumber(geometricMean(this.geometricMeanInputs))}`,
-			Table.padLeft,
-		);
-		this.overallSummaryTable.newRow();
-		console.log(`\n${chalk.bold("Overall summary")}`);
-		console.log(`${this.overallSummaryTable.toString()}`);
-		if (countFailure > 0) {
-			console.log(
-				`* ${countFailure} benchmark${
-					countFailure > 1 ? "s" : ""
-				} failed. This will skew the geometric mean.`,
-			);
-		}
-
-		if (this.outputFilePath !== undefined) {
-			// Build the report from the root's children.
-			const root = buildReportArray(this.suiteStack[0].children);
-			const outputDir = path.dirname(this.outputFilePath);
-			fs.mkdirSync(outputDir, { recursive: true });
-			fs.writeFileSync(this.outputFilePath, JSON.stringify(root, undefined, 4));
-			console.log(`Results file: ${this.outputFilePath}`);
-		}
 	}
 }
 
 const geoMeanColumn = "primary measurement geometric mean (smaller is better)";
-
-/**
- * Recursively converts an array of suite children into a {@link ReportArray} for JSON output.
- */
-function buildReportArray(children: readonly (SuiteNode | NamedResult)[]): ReportArray {
-	const contents: (ReportSuite | ReportEntry)[] = [];
-	for (const child of children) {
-		if (isSuiteNode(child)) {
-			const childContents = buildReportArray(child.children);
-			if (childContents.length > 0) {
-				contents.push({ suiteName: child.localName, contents: childContents });
-			}
-		} else {
-			contents.push({ benchmarkName: child.name, data: child.result });
-		}
-	}
-	return contents;
-}
 
 /**
  * A single benchmark result entry in the report.
@@ -380,6 +67,54 @@ export interface ReportSuite {
 	readonly contents: ReportArray;
 }
 
+export interface ReportPath {
+	readonly report: Pick<ReportSuite, "suiteName">;
+	readonly parent?: ReportPath;
+}
+
+export interface ReportSuiteWithPath extends ReportPath {
+	readonly report: ReportSuite;
+	readonly parent?: ReportPath;
+}
+
+function suiteNames(parent: ReportPath): string[] {
+	const names: string[] = [];
+	let current: ReportPath | undefined = parent;
+	while (current !== undefined) {
+		names.push(current.report.suiteName);
+		current = current.parent;
+	}
+	return names.reverse();
+}
+
+function fullName(parent: ReportPath, benchmarkName?: string): string {
+	const names = suiteNames(parent);
+	if (benchmarkName !== undefined) {
+		names.push(benchmarkName);
+	}
+	return names.join(" / ");
+}
+
+function visitSuites(
+	reportParent: ReportSuiteWithPath,
+	callback: (reportParent: ReportSuiteWithPath) => void,
+): void {
+	callback(reportParent);
+	visitSuitesArray(reportParent, reportParent.report.contents, callback);
+}
+
+function visitSuitesArray(
+	parent: ReportPath | undefined,
+	array: ReportArray,
+	callback: (reportParent: ReportSuiteWithPath) => void,
+): void {
+	for (const content of array) {
+		if (isSuiteNode(content)) {
+			visitSuites({ report: content, parent }, callback);
+		}
+	}
+}
+
 /**
  * The type that is JSON-serialized and written to disk for a test suite.
  * @remarks
@@ -388,4 +123,206 @@ export interface ReportSuite {
  * which may include both it blocks and nested describe blocks.
  * @public
  */
-export type ReportArray = readonly (ReportSuite | ReportEntry)[];
+export type ReportArray = (ReportSuite | ReportEntry)[];
+
+export function reportTable(heading: string, reports: readonly ReportEntry[]): string {
+	const table = new Table();
+
+	// Accumulate totals for suite
+	const stats = getShallowStats(reports);
+
+	for (const report of reports) {
+		const result = report.data;
+		const name = chalk.italic(getName(report.benchmarkName));
+		if (isResultError(result)) {
+			table.cell("Status", status(0, 1));
+			table.cell("Name", name);
+			// Full error should be included outside of table, so limit text in table to avoid breaking formatting.
+			const errorColumns = 50;
+			const message =
+				result.error.length > errorColumns
+					? `${result.error.slice(0, errorColumns - 1)}…`
+					: result.error;
+			table.cell("Error", chalk.red(message));
+		} else {
+			table.cell("Status", status(1, 0));
+			table.cell("Name", name);
+			for (const measurement of result) {
+				const text = formatMeasurementValue(measurement);
+				const final =
+					measurement.significance === "Primary"
+						? chalk.bold(text)
+						: measurement.significance === "Diagnostic"
+						? chalk.dim(text)
+						: text;
+				table.cell(measurement.name, final, Table.padLeft);
+			}
+		}
+		table.newRow();
+	}
+
+	table.cell("Status", status(stats.countSuccessful, stats.countFailure));
+	table.cell("Name", "Total");
+	table.cell(
+		testDurationName,
+		`${formatMeasurementValue({ value: stats.sumRuntime, units: "seconds" })}`,
+		Table.padLeft,
+	);
+
+	table.newRow();
+
+	return `${chalk.bold(heading)}\n${table.toString()}`;
+}
+
+function status(passing: number, failing: number): string {
+	const mark =
+		failing === 0 ? chalk.green("✔") : passing === 0 ? chalk.red("×") : chalk.yellow("!");
+	return `  ${mark}`;
+}
+
+/**
+ * If suite has direct tests, log them in a table.
+ */
+export function logSuiteTests(reportParent: ReportSuiteWithPath): void {
+	if (isChildProcess) {
+		// Child process tests report their output via recordTestResult.
+		return;
+	}
+
+	const directBenchmarks = reportParent.report.contents.filter(
+		(c): c is ReportEntry => !isSuiteNode(c),
+	);
+
+	if (directBenchmarks.length > 0) {
+		console.log(reportTable(fullName(reportParent), directBenchmarks));
+	}
+}
+
+function getShallowStats(reports: Readonly<ReportArray>) {
+	// Accumulate totals for suite
+	let sumRuntime = 0;
+	let countSuccessful = 0;
+	let countFailure = 0;
+	const geometricMeanProductValues: number[] = [];
+
+	for (const report of reports) {
+		if (isSuiteNode(report)) {
+			continue;
+		}
+		const result = report.data;
+		if (isResultError(result)) {
+			countFailure++;
+		} else {
+			countSuccessful++;
+			for (const measurement of result) {
+				if (measurement.significance === "Primary") {
+					geometricMeanProductValues.push(
+						// Geometric mean may end up as NaN or infinity for questionable values (e.g. when this divides by 0).
+						// Such results do about as good a job conveying the situation as is practical: for once, the floating-point edge cases do something we like.
+						measurement.type === ValueType.SmallerIsBetter
+							? measurement.value
+							: 1 / measurement.value,
+					);
+				}
+				if (measurement.name === testDurationName) {
+					sumRuntime += measurement.value;
+				}
+			}
+		}
+	}
+
+	return { sumRuntime, countSuccessful, countFailure, geometricMeanProductValues };
+}
+
+export function generateOverallSummary(content: ReportArray, parent?: ReportPath): string {
+	const table = new Table();
+
+	// Accumulate totals for suite
+	let sumRuntime = 0;
+	let countSuccessful = 0;
+	let countFailure = 0;
+	const geometricMeanProductValues: number[] = [];
+
+	visitSuitesArray(parent, content, (reports) => {
+		const stats = getShallowStats(reports.report.contents);
+		sumRuntime += stats.sumRuntime;
+		countSuccessful += stats.countSuccessful;
+		countFailure += stats.countFailure;
+		geometricMeanProductValues.push(...stats.geometricMeanProductValues);
+		table.cell("Status", status(stats.countSuccessful, stats.countFailure));
+		table.cell("Name", fullName(reports));
+		table.cell(
+			testDurationName,
+			`${formatMeasurementValue({ value: stats.sumRuntime, units: "seconds" })}`,
+			Table.padLeft,
+		);
+		table.cell(
+			geoMeanColumn,
+			`${prettyNumber(geometricMean(stats.geometricMeanProductValues))}`,
+			Table.padLeft,
+		);
+		table.newRow();
+	});
+
+	table.pushDelimeter();
+
+	table.cell("Status", status(countSuccessful, countFailure));
+	table.cell("Name", chalk.italic("Total"));
+	table.cell(
+		testDurationName,
+		`${formatMeasurementValue({ value: sumRuntime, units: "seconds" })}`,
+		Table.padLeft,
+	);
+	table.cell(
+		geoMeanColumn,
+		`${prettyNumber(geometricMean(geometricMeanProductValues))}`,
+		Table.padLeft,
+	);
+
+	const title = parent === undefined ? "Overall Summary" : `Summary for ${fullName(parent)}`;
+
+	const notes: string[] = [];
+	if (countFailure > 0) {
+		notes.push(
+			`* ${countFailure} benchmark${
+				countFailure > 1 ? "s" : ""
+			} failed. This will skew the geometric mean.`,
+		);
+	}
+
+	const mainOutput = `${chalk.bold(title)}\n${table.toString()}`;
+	if (notes.length > 0) {
+		return `${mainOutput}\n\n${notes.join("\n")}`;
+	}
+	return mainOutput;
+}
+
+/**
+ *
+ * @param reports - The full report data for the test run, including all suites and benchmarks.
+ * @param incremental - If true, suites were already logged as they completed using {@link logSuiteTests}, so only print the overall summary here. If false, print all suites and the overall summary.
+ * @param outputFilePath - The file path to write the results to. If undefined, results are not written to a file.
+ */
+export function onCompletion(
+	reports: ReportArray,
+	incremental: boolean,
+	outputFilePath: string | undefined,
+): void {
+	if (isChildProcess) {
+		// Child process tests report their output via recordTestResult.
+		return;
+	}
+
+	if (!incremental) {
+		visitSuitesArray(undefined, reports, (rp) => {
+			logSuiteTests(rp);
+		});
+	}
+
+	console.log(generateOverallSummary(reports, undefined));
+
+	if (outputFilePath !== undefined) {
+		fs.writeFileSync(outputFilePath, JSON.stringify(reports, undefined, "\t"));
+		console.log(`Results file: ${outputFilePath}`);
+	}
+}

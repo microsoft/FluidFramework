@@ -42,7 +42,7 @@ export {
 	benchmarkDuration,
 } from "./durationBenchmarking/index.js";
 export { benchmarkIt } from "./mocha/index.js";
-export { BenchmarkReporter, ReportEntry, type ReportSuite, type ReportArray } from "./Reporter.js";
+export { ReportEntry, type ReportSuite, type ReportArray } from "./Reporter.js";
 export {
 	type BenchmarkError,
 	type BenchmarkResult,

@@ -41,15 +41,6 @@ export function benchmarkMemoryUse(args: MemoryUseBenchmark): BenchmarkDescripti
 export interface BenchmarkOptions extends Titled, BenchmarkDescription, MochaExclusiveOptions, BenchmarkFunction {
 }
 
-// @public
-export class BenchmarkReporter {
-    constructor(outputFilePath?: string);
-    beginSuite(localName: string): void;
-    recordResultsSummary(): void;
-    recordSuiteResults(): void;
-    recordTestResult(testName: string, result: BenchmarkResult): void;
-}
-
 // @public @sealed
 export type BenchmarkResult = BenchmarkError | CollectedData;
 
@@ -183,7 +174,7 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled & {
 }): string;
 
 // @public
-export type ReportArray = readonly (ReportSuite | ReportEntry)[];
+export type ReportArray = (ReportSuite | ReportEntry)[];
 
 // @public
 export interface ReportEntry {

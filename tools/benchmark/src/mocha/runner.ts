@@ -39,10 +39,14 @@ async function parentProcessRun(
 	// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
 	const command = process.argv0 ?? fail("there must be a command");
 
+	const reusedArgs = process.argv.slice(1);
+	reusedArgs[0] =
+		"/workspaces/FluidFramework/tools/benchmark/node_modules/.pnpm/mocha@10.8.2/node_modules/mocha/lib/cli/cli.js";
+
 	// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
 	// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
 	// put in mocha's --node-option flag.
-	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
+	const childArgs = [...process.execArgv, ...reusedArgs];
 	childArgs.push("--childProcess");
 
 	// Remove arguments for any existing test filters.
@@ -60,8 +64,13 @@ async function parentProcessRun(
 	// Remove arguments for debugging if they're present; in order to debug child processes we need
 	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
 	// of scope for now.
+	// Also strip parallel.
 	let inspectArgIndex: number = -1;
-	while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
+	while (
+		(inspectArgIndex = childArgs.findIndex((x) =>
+			x.match(/^((--inspect|--debug).*|--parallel)/),
+		)) >= 0
+	) {
 		childArgs.splice(inspectArgIndex, 1);
 	}
 
@@ -71,12 +80,29 @@ async function parentProcessRun(
 
 	// Find the BenchmarkResult in the child's output.
 	const output = result.stdout.split("\n").filter((s) => s.match(/^(\[.*\]|\{.*\})$/));
+
+	const throwChildProcessErrors = () => {
+		if (result.error) {
+			// If we did not find an error in the output, error if the child process reported other errors:
+			throw new Error(`Child process reported error: ${result.error.message}`);
+		}
+		if (result.stderr !== "") {
+			throw new Error(`Child process logged errors:\n${result.stderr}\n`);
+		}
+	};
+
 	if (output.length === 0) {
+		// Prioritize errors from child process over error that child process had no output
+		// since its likely that if such errors occurred, they caused the lack of output.
+		throwChildProcessErrors();
 		throw new Error(
 			`Child process must output a line with a json object or array. Got:\n${result.stdout}`,
 		);
 	}
 	if (output.length > 1) {
+		// Prioritize errors from child process over error that child process had invalid output
+		// since its likely that if such errors occurred, they caused the invalid output.
+		throwChildProcessErrors();
 		throw new Error(
 			`Child process must output a single json object or array. Found ${output.length}.
 This may be caused by there being multiple mocha tests with the same fullTitle: ${JSON.stringify(
@@ -103,16 +129,13 @@ ${result.stdout}`,
 
 	if (isResultError(fromChild)) {
 		// Caught by captureResults and converted back into error data.
+		// Prioritize this over ChildProcessErrors, since if we have structured error data, its likely that everything worked correctly except a test failed,
+		// and the output is much cleaner if we just propagate this error as if it were thrown in this process.
 		throw new Error(fromChild.error);
 	}
 
-	// If we did not find an error in the output, error if the child process reported other errors:
-	if (result.error) {
-		throw new Error(`Child process reported error: ${result.error.message}`);
-	}
-	if (result.stderr !== "") {
-		throw new Error(`Child process logged errors: ${result.stderr}`);
-	}
+	// Last chance to report errors from the child process even if the data looked good.
+	throwChildProcessErrors();
 
 	return fromChild;
 }

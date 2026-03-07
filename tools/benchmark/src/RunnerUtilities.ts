@@ -63,7 +63,7 @@ export function geometricMean(values: number[]): number {
  * @param measurement - The measurement to format.
  */
 export function formatMeasurementValue(
-	measurement: Measurement,
+	measurement: Pick<Measurement, "value" | "units">,
 	scaleUnits: boolean = true,
 ): string {
 	if (measurement.units === "count") {

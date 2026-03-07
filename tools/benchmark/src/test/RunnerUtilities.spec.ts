@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { formatMeasurementValue, geometricMean, prettyNumber } from "../RunnerUtilities.js";
-import { ValueType } from "../ResultTypes.js";
 
 describe("RunnerUtilities", () => {
 	describe("prettyNumber", () => {
@@ -63,90 +62,61 @@ describe("RunnerUtilities", () => {
 
 	describe("formatMeasurementValue", () => {
 		it("formats count measurements as integers without units", () => {
-			assert.equal(
-				formatMeasurementValue({ name: "items", value: 42, units: "count" }),
-				"42",
-			);
-			assert.equal(
-				formatMeasurementValue({ name: "items", value: 1000, units: "count" }),
-				"1,000",
-			);
+			assert.equal(formatMeasurementValue({ value: 42, units: "count" }), "42");
+			assert.equal(formatMeasurementValue({ value: 1000, units: "count" }), "1,000");
 		});
 
 		it("throws for non-integer count measurements", () => {
-			assert.throws(() =>
-				formatMeasurementValue({ name: "items", value: 1.5, units: "count" }),
-			);
+			assert.throws(() => formatMeasurementValue({ value: 1.5, units: "count" }));
 		});
 
 		it("formats bytes with binary prefix scaling", () => {
+			assert.equal(formatMeasurementValue({ value: 1024, units: "bytes" }), "1.00 KiB");
 			assert.equal(
-				formatMeasurementValue({ name: "mem", value: 1024, units: "bytes" }),
-				"1.00 KiB",
-			);
-			assert.equal(
-				formatMeasurementValue({ name: "mem", value: 1024 * 1024, units: "bytes" }),
+				formatMeasurementValue({ value: 1024 * 1024, units: "bytes" }),
 				"1.00 MiB",
 			);
 		});
 
 		it("formats bytes without scaling when scaleUnits is false", () => {
 			assert.equal(
-				formatMeasurementValue({ name: "mem", value: 1024, units: "bytes" }, false),
+				formatMeasurementValue({ value: 1024, units: "bytes" }, false),
 				"1,024.00 B",
 			);
 		});
 
 		it("formats percentage measurements", () => {
-			assert.equal(
-				formatMeasurementValue({ name: "rate", value: 42.5, units: "%" }),
-				"42.500%",
-			);
+			assert.equal(formatMeasurementValue({ value: 42.5, units: "%" }), "42.500%");
 		});
 
 		it("scales ns/op to ms/op when value reaches 1e6", () => {
 			assert.equal(
-				formatMeasurementValue({ name: "time", value: 1_000_000, units: "ns/op" }),
+				formatMeasurementValue({ value: 1_000_000, units: "ns/op" }),
 				"1.00 ms/op",
 			);
 		});
 
 		it("scales ns/op to s/op when value reaches 1e9", () => {
 			assert.equal(
-				formatMeasurementValue({ name: "time", value: 1_000_000_000, units: "ns/op" }),
+				formatMeasurementValue({ value: 1_000_000_000, units: "ns/op" }),
 				"1.00 s/op",
 			);
 		});
 
 		it("keeps ns/op units when scaleUnits is false", () => {
-			const result = formatMeasurementValue(
-				{ name: "time", value: 1_000_000, units: "ns/op" },
-				false,
-			);
-			assert.match(result, /ns\/op/);
+			const result = formatMeasurementValue({ value: 1_000_000, units: "ns/op" }, false);
+			assert.equal(result, "1,000,000.0 ns/op");
 		});
 
 		it("formats measurements with custom units", () => {
 			assert.equal(
-				formatMeasurementValue({ name: "score", value: 42.123, units: "custom" }),
+				formatMeasurementValue({ value: 42.123, units: "custom" }),
 				"42.123 custom",
 			);
 		});
 
 		it("formats measurements with no units", () => {
-			assert.equal(formatMeasurementValue({ name: "score", value: 42.123 }), "42.123");
-		});
-
-		it("handles ValueType on non-special units without affecting format", () => {
-			assert.equal(
-				formatMeasurementValue({
-					name: "score",
-					value: 1.5,
-					units: "ops",
-					type: ValueType.LargerIsBetter,
-				}),
-				"1.500 ops",
-			);
+			assert.equal(formatMeasurementValue({ value: 42.123 }), "42.123");
 		});
 	});
 });

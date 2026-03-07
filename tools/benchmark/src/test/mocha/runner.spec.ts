@@ -9,7 +9,7 @@ import { supportParentProcess } from "../../mocha/runner.js";
 import type { CollectedData } from "../../ResultTypes.js";
 import { isResultError, ValueType } from "../../ResultTypes.js";
 import { isChildProcess } from "../../Configuration.js";
-import { BenchmarkReporter } from "../../Reporter.js";
+import { recordTestResult } from "../../Reporter.js";
 
 const sampleResult: CollectedData = [
 	{
@@ -43,9 +43,11 @@ describe("runner", () => {
 
 		it("runs child process when isParentProcess is true", async function () {
 			if (isChildProcess) {
-				const benchmarkReporter = new BenchmarkReporter();
 				// Writes result to console so parent process can capture it.
-				benchmarkReporter.recordTestResult("unused", sampleResult);
+				recordTestResult(
+					{ report: { suiteName: "unused" } },
+					{ data: sampleResult, benchmarkName: "unused2" },
+				);
 			} else {
 				const result = await supportParentProcess(
 					this?.test?.fullTitle() ?? assert.fail(),
@@ -71,9 +73,10 @@ describe("runner", () => {
 					false,
 					async () => sampleResult,
 				);
-				const benchmarkReporter = new BenchmarkReporter();
-				// Writes result to console so parent process can capture it.
-				benchmarkReporter.recordTestResult("unused", result.result);
+				recordTestResult(
+					{ report: { suiteName: "unused" } },
+					{ data: result.result, benchmarkName: "unused2" },
+				);
 			} else {
 				const result = await supportParentProcess(
 					this?.test?.fullTitle() ?? assert.fail(),
@@ -95,8 +98,10 @@ describe("runner", () => {
 
 		it("errors with duplicate test names", async function () {
 			if (isChildProcess) {
-				const benchmarkReporter = new BenchmarkReporter();
-				benchmarkReporter.recordTestResult("unused", sampleResult);
+				recordTestResult(
+					{ report: { suiteName: "unused" } },
+					{ data: sampleResult, benchmarkName: "unused2" },
+				);
 			} else {
 				const result = await supportParentProcess(
 					this?.test?.fullTitle() ?? assert.fail(),
@@ -122,8 +127,10 @@ The full output from the run was:`,
 		if (isChildProcess) {
 			// Exists to make above test work properly. Not a real test case.
 			it("errors with duplicate test names", async function () {
-				const benchmarkReporter = new BenchmarkReporter();
-				benchmarkReporter.recordTestResult("unused", sampleResult);
+				recordTestResult(
+					{ report: { suiteName: "unused" } },
+					{ data: sampleResult, benchmarkName: "unused2" },
+				);
 			});
 		}
 	});

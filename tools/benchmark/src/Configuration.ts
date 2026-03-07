@@ -173,7 +173,8 @@ export function qualifiedTitle(
  * Use the `--perfMode` flag to enable.
  * @public
  */
-export const isInPerformanceTestingMode = process.argv.includes("--perfMode");
+export const isInPerformanceTestingMode =
+	process.argv.includes("--perfMode") || "FLUID_TEST_PERF_MODE" in process.env;
 
 /**
  * Indicates that this process is a child process spawned by a `--parentProcess` run.
@@ -206,3 +207,27 @@ export interface BenchmarkOptions
 		BenchmarkDescription,
 		MochaExclusiveOptions,
 		BenchmarkFunction {}
+
+/**
+ * Tags used to mark tests.
+ */
+const tags = [
+	performanceTestSuiteTag,
+	...benchmarkTypes.map((x) => `@${x}`),
+	...testTypes.map((x) => `@${x}`),
+];
+
+/**
+ * Strip tags and user-specified category from the specified test/suite name.
+ */
+export function getName(name: string): string {
+	let s = name;
+	for (const tag of tags) {
+		s = s.replace(tag, "");
+	}
+	const indexOfSplitter = s.indexOf(userCategoriesSplitter);
+	if (indexOfSplitter >= 0) {
+		s = s.slice(0, indexOfSplitter);
+	}
+	return s.trim();
+}

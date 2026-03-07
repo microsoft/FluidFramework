@@ -6,10 +6,14 @@
 import chalk from "chalk";
 import { Runner, type Suite, type Test, type Hook } from "mocha";
 
-import { isChildProcess } from "../Configuration.js";
-import { BenchmarkReporter } from "../Reporter.js";
+import {
+	logSuiteTests,
+	onCompletion,
+	type ReportArray,
+	type ReportEntry,
+	type ReportSuiteWithPath,
+} from "../Reporter.js";
 import type { BenchmarkResult, BenchmarkError } from "../ResultTypes.js";
-import { getName } from "./mochaReporterUtilities.js";
 
 /*
  * Users of this package should be able to author utilities like this for testing tools other than mocha.
@@ -29,32 +33,62 @@ import { getName } from "./mochaReporterUtilities.js";
  */
 // eslint-disable-next-line unicorn/prefer-module
 module.exports = class {
-	private readonly data: Map<Test, Readonly<BenchmarkResult>> = new Map();
+	private readonly suiteData: Map<Suite, ReportSuiteWithPath> = new Map();
+	private readonly testData: Map<string, ReportEntry> = new Map();
+	private readonly reportFile?: string;
+	private readonly reports: ReportArray = [];
 	public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
-		const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportFile);
+		this.reportFile = options?.reporterOptions?.reportFile;
 		runner
 			.on(Runner.constants.EVENT_SUITE_BEGIN, (suite: Suite) => {
-				if (!isChildProcess && !suite.root) {
-					benchmarkReporter.beginSuite(suite.title);
+				const parentData =
+					suite.parent === undefined ? undefined : this.suiteData.get(suite.parent);
+				const report = { suiteName: suite.title, contents: [] };
+				if (suite.parent === undefined) {
+					this.reports.push(report);
 				}
+				this.suiteData.set(suite, { report, parent: parentData });
 			})
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.
-				test.on("benchmark end", (benchmark: Readonly<BenchmarkResult>) => {
-					// There are (at least) two ways a benchmark can fail:
-					// The actual benchmark part of the test aborts for some reason OR
-					// the mocha test fails (ex: validation after the benchmark reports an issue).
-					// So instead of reporting the data now, wait until the mocha test ends so we can confirm the
-					// test passed.
-					this.data.set(test, benchmark);
-				});
+				// In non-parallel mode, we can subscribe to events on the test object, so do that if possible.
+				if ("on" in test) {
+					test.on("benchmark end", (benchmark: BenchmarkResult) => {
+						// There are (at least) two ways a benchmark can fail:
+						// The actual benchmark part of the test aborts for some reason OR
+						// the mocha test fails (ex: validation after the benchmark reports an issue).
+						// So instead of reporting the data now, wait until the mocha test ends so we can confirm the
+						// test passed.
+						this.testData.set(test.id, { benchmarkName: test.title, data: benchmark });
+					});
+				}
 			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
 				if (test.state === "pending") {
 					return; // Test was skipped.
 				}
 
-				let benchmark: BenchmarkResult | undefined = this.data.get(test);
+				let benchmark: BenchmarkResult | undefined = this.testData.get(test.id)?.data;
+
+				if (!("on" in test)) {
+					// In parallel mode, we can not subscribe to events on the test,
+					// but the event we are in is delayed until after the test ran so we can get the results off of it.
+					// To make this work, the emit code crammed the results in the test body, so parse that.
+
+					// The if above narrows test to `never` here, so undo that:
+					const test2 = test as Test;
+					const body = test2.body;
+					try {
+						benchmark = JSON.parse(body) as BenchmarkResult;
+					} catch {
+						// If the body isn't json, then the event was not put into the body, and so treat it like no data was reported.
+					}
+				}
+
+				const suiteData =
+					test.parent === undefined ? undefined : this.suiteData.get(test.parent);
+				const reports = suiteData?.report.contents ?? this.reports;
+
 				if (benchmark === undefined) {
 					// Mocha test completed without reporting data.
 					// This is an error, so report it as such.
@@ -73,26 +107,33 @@ module.exports = class {
 					benchmark = { error };
 				}
 
-				benchmarkReporter.recordTestResult(getName(test.title), benchmark);
+				reports.push({ benchmarkName: test.title, data: benchmark });
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
-				if (!isChildProcess && !suite.root) {
-					benchmarkReporter.recordSuiteResults();
+				const suiteData = this.suiteData.get(suite);
+				if (suiteData === undefined) {
+					console.error(chalk.red(`No data found for suite ${suite.fullTitle()}.`));
+					return;
 				}
+				Object.freeze(suiteData.report.contents);
+				logSuiteTests(suiteData);
 			})
 			.on(Runner.constants.EVENT_HOOK_END, (hook: Hook) => {
-				// Documentation ( https://mochajs.org/api/hook#error ) implies this is an Error.
-				// Inspecting with the debugger shows the non-error case uses `null`
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				const error: Error | null = hook.error();
-				if (error !== null) {
-					console.error(chalk.red(`Hook ${hook.fullTitle()} failed with error: `, error));
+				// In parallel mode, "error" does not exist, so skip this check.
+				if ("error" in hook) {
+					// Documentation ( https://mochajs.org/api/hook#error ) implies this is an Error.
+					// Inspecting with the debugger shows the non-error case uses `null`
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					const error: Error | null = hook.error();
+					if (error !== null) {
+						console.error(
+							chalk.red(`Hook ${hook.fullTitle()} failed with error: `, error),
+						);
+					}
 				}
 			})
 			.once(Runner.constants.EVENT_RUN_END, () => {
-				if (!isChildProcess) {
-					benchmarkReporter.recordResultsSummary();
-				}
+				onCompletion(this.reports, true, this.reportFile);
 			});
 	}
 };
