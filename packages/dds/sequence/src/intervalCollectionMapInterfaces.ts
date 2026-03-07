@@ -42,7 +42,7 @@ export type IntervalMessageLocalMetadata =
 	| IntervalChangeLocalMetadata
 	| IntervalDeleteLocalMetadata;
 /**
- * Optional flags that configure options for sequence DDSs
+ * Optional flags that configure options for sequence DDSes
  * @internal
  */
 export interface SequenceOptions
