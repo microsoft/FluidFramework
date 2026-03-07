@@ -96,7 +96,7 @@ describe("memory use", () => {
 					a.length = 1024;
 					a.fill(0);
 					await callbacks.whileAllocated();
-					// Use "a" to ensure that memory is not freed until whileAllocated.
+					// Use "a" after the whileAllocated call to ensure that memory is not freed before that call completes
 					assert(a.length === 1024);
 				}
 			},

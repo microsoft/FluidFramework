@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-// For these tests, import from the public AIP like a user would.
+// For these tests, import from the public API like a user would.
 import {
 	benchmarkDuration,
 	benchmarkIt,
@@ -167,7 +167,7 @@ describe("integration tests", () => {
 	// Putting these in their own suite helps keep the reporter output from having way too many columns in any given table.
 	describe("memory use", () => {
 		benchmarkIt({
-			title: "collectMemoryUseData test",
+			title: "benchmarkMemoryUse test",
 			...benchmarkMemoryUse({
 				benchmarkFn: async (state) => {
 					const foo: { value: unknown } = { value: undefined };
@@ -183,7 +183,7 @@ describe("integration tests", () => {
 			}),
 		});
 
-		// This pattern isn't very useful since does not allow much what beyond benchmarkMemoryUse does.
+		// This pattern isn't very useful since it does not allow much beyond what benchmarkMemoryUse does.
 		// It does allow adding extra data to the result though, which might be useful in some cases.
 		benchmarkIt({
 			title: "collectMemoryUseData test",
@@ -214,6 +214,8 @@ describe("integration tests", () => {
 		});
 	});
 
+	// This test and its sibling with the same name exist so we can validate (by looking at the output)
+	// that duplicate names are handled correctly (reported separately, not merged/mixed in weird ways).
 	describe("duplicate suite name", () => {
 		benchmarkIt({
 			title: "test",

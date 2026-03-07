@@ -105,13 +105,13 @@ describe("getDuration", () => {
 		// that the output of duration tests is as expected.
 		// Currently doing this requires forcing `isInPerformanceTestingMode` to true,
 		// which is not ideal but is worth it to have this test.
-		// A better option would to allow setting `isInPerformanceTestingMode` as a parameter to override a default from the environment,
+		// A better option would be to allow setting `isInPerformanceTestingMode` as a parameter to override a default from the environment,
 		// but that is not currently supported.
 		const mutableConfig = Configuration as Mutable<typeof Configuration>;
 
 		let result: CollectedData;
 
-		// It is critically import to restore this value after the test to avoid messing up unrelated tests,
+		// It is critically important to restore this value after the test to avoid messing up unrelated tests,
 		// so we do that in a finally block to ensure it happens even if the test fails.
 		mutableConfig.isInPerformanceTestingMode = true;
 		try {
