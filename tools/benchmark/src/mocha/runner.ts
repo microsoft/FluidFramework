@@ -72,7 +72,7 @@ async function parentProcessRun(
 	// Find the BenchmarkResult in the child's output.
 	const output = result.stdout.split("\n").filter((s) => s.match(/^(\[.*\]|\{.*\})$/));
 	if (output.length === 0) {
-		fail(
+		throw new Error(
 			`Child process must output a line with a json object or array. Got:\n${result.stdout}`,
 		);
 	}
