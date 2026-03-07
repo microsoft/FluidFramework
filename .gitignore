@@ -56,6 +56,10 @@ UPCOMING.md
 build_output_archive
 
 # Claude Code
-# This is a local file that likely contains author specific information and
-# should not be shared generally.
-.claude/settings.local.json
+# Local settings contain author-specific information and should not be shared.
+**/.claude/**/*.local.*
+CLAUDE.local.md
+# Session-specific task tracking
+**/.claude/todos/
+# Git worktrees created by Claude Code
+**/.claude/worktrees/

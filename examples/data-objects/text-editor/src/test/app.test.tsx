@@ -9,7 +9,6 @@ import { strict as assert } from "node:assert";
 import { FormattedTextAsTree, type TreeView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import { TextAsTree, independentView } from "fluid-framework/alpha";
-import * as React from "react";
 
 import { App, TextEditorRoot, treeConfig } from "../app.js";
 
