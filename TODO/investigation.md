@@ -60,7 +60,7 @@ files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) 
 | packages/service-clients/odsp-client | ✅ | Already clean |
 | examples/data-objects/inventory-app | ✅ | 5 - Quill/JSDOM |
 | experimental/dds/tree | ✅ | Already clean |
-| experimental/PropertyDDS/packages/property-dds | ✅ | Already clean |
+| experimental/PropertyDDS/packages/property-dds | ✅ | 6 - Container GC timer not disposed |
 | experimental/PropertyDDS/packages/property-common | ✅ | Already clean |
 | experimental/PropertyDDS/packages/property-properties | ✅ | Already clean |
 | packages/dds/matrix/src/test/memory | ✅ | Already clean (benchmark) |
@@ -68,10 +68,27 @@ files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) 
 | packages/dds/map/src/test/memory | ✅ | Already clean (benchmark) |
 | packages/test/test-end-to-end-tests | ✅ | 2 - dataStoresNested.spec.ts |
 | packages/test/test-end-to-end-tests/benchmark | ✅ | Already clean (benchmark) |
+| packages/test/local-server-stress-tests | ✅ | Already clean - harness disposes properly |
 
 ## Remaining (not fixed)
 
 - `tools/test-tools/.mocharc.cjs`: Standalone package (own pnpm workspace, not part of main monorepo). Tests appear to be trivially clean (just spawnSync) but can't verify without separate install.
+
+## Root Cause 6: Container not disposed after test (GC sessionExpiryTimer)
+**Affected packages:** experimental/PropertyDDS/packages/property-dds
+
+When tests create containers via `TestObjectProvider.makeTestContainer()`/`loadTestContainer()`
+or directly via `LocalDeltaConnectionServer`, calling `deltaConnectionServer.close()` alone
+is NOT sufficient. The containers themselves have active `ContainerRuntime` instances with a
+`GarbageCollector.sessionExpiryTimer` (MAX_INT32 timeout) that must be explicitly cleared
+by disposing the containers.
+
+**Pattern:** `opProcessingController.reset()` calls `container.close()` + `container.dispose()`
+on all tracked containers, which cascades to `ContainerRuntime.dispose()` → `GarbageCollector.dispose()`
+→ `sessionExpiryTimer.clear()`.
+
+**Fix:** In `afterEach`, call `opProcessingController.reset()` BEFORE `deltaConnectionServer.close()`,
+or call `objProvider.reset()` if using `TestObjectProvider`.
 
 ## Key implementation notes
 
