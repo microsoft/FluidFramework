@@ -55,7 +55,7 @@ files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) 
 | examples/data-objects/table-document | ✅ | 2 - describeCompat driver await |
 | packages/framework/client-logger/fluid-telemetry | ✅ | 4 - ApplicationInsights |
 | packages/framework/react | ✅ | 7 - JSDOM timers + IFluidContainer.dispose() |
-| packages/test/snapshots | ✅ | Already clean (pending tests) |
+| packages/test/snapshots | ✅ | 10 - worker threads + container dispose leaks |
 | examples/data-objects/webflow | ✅ | 2 - describeCompat/WithVersions missing provider.reset() + esm-loader-css removed |
 | packages/service-clients/odsp-client | ✅ | Already clean |
 | examples/data-objects/inventory-app | ✅ | 5 - Quill/JSDOM |
@@ -174,3 +174,33 @@ for Timer 2, clear it unconditionally after `await Promise.race()`).
 
 **File changed:**
 `packages/runtime/container-runtime/src/summary/summaryDelayLoadedModule/summarizer.ts`
+
+## Root Cause 10: Worker thread MessagePort + container dispose leaks (packages/test/snapshots)
+**Affected packages:** packages/test/snapshots
+
+Three leaks:
+
+1. **Worker threads staying alive**: `processNode()` creates Worker threads to run `processOneNode()`.
+   After work completes, the worker posts "true" and the parent resolves the promise. BUT the worker
+   thread itself stays alive because its containers were closed via `container.close()` (not `dispose()`),
+   leaving GC sessionExpiryTimers (MAX_INT32) running in the worker. The live worker keeps its
+   `MessagePort` open in the parent thread, which holds a reference in the parent's event loop.
+   **Fix:** Call `worker.terminate()` immediately after the worker sends "true", proactively releasing
+   all worker resources.
+
+2. **validateSnapshots.ts containers not disposed**: In `Mode.BackCompat`, `validateSnapshots()` runs
+   in the main thread (not a worker) and calls `loadContainer()` + `uploadSummary()` but never disposes
+   the container. The container's GC sessionExpiryTimer (MAX_INT32) keeps the process alive.
+   **Fix:** Added `finally { container?.dispose(); }`.
+
+3. **LocalDeltaConnectionServer not closed in serialized.spec.ts**: Each test created its own
+   `LocalDeltaConnectionServer` (even though containers are detached and never connect). Also,
+   `LoaderContainerTracker` was never reset.
+   **Fix:** Collect servers in an array, add `after()` hook to close them and reset the tracker.
+   Note: detached containers don't create DeliLambda timers (orderer is only created on connection),
+   so these servers didn't actually cause the hang in practice, but cleaning them up is correct.
+
+**Files changed:**
+- `packages/test/snapshots/src/replayMultipleFiles.ts`: `worker.terminate()` on success
+- `packages/test/snapshots/src/validateSnapshots.ts`: `finally { container?.dispose() }`
+- `packages/test/snapshots/src/test/serialized.spec.ts`: track servers + `after()` cleanup
