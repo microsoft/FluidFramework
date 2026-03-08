@@ -248,6 +248,117 @@ describe("Semantic Agent", () => {
 		assert.equal(view.root, "Initial", "Tree should not have changed");
 	});
 
+	it("recovers from errors by replaying successful edits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				// Edit A succeeds
+				const resultA = await edit(`context.root = "A";`);
+				assert.equal(resultA.type, "success", resultA.message);
+				// Edit B fails
+				const resultB = await edit(`throw new Error("boom");`);
+				assert.equal(resultB.type, "editingError", resultB.message);
+				// Edit C succeeds (sandbox should have been rebuilt with A replayed)
+				const resultC = await edit(`context.root = context.root + "+C";`);
+				assert.equal(resultC.type, "success", resultC.message);
+				return resultC.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		await agent.query("Query");
+		assert.equal(view.root, "A+C");
+	});
+
+	it("recovers from multiple consecutive errors", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				// Edit A succeeds
+				const resultA = await edit(`context.root = "A";`);
+				assert.equal(resultA.type, "success", resultA.message);
+				// Edit B fails
+				const resultB = await edit(`throw new Error("boom1");`);
+				assert.equal(resultB.type, "editingError", resultB.message);
+				// Edit C also fails
+				const resultC = await edit(`throw new Error("boom2");`);
+				assert.equal(resultC.type, "editingError", resultC.message);
+				// Edit D succeeds (sandbox rebuilt twice, A replayed each time)
+				const resultD = await edit(`context.root = context.root + "+D";`);
+				assert.equal(resultD.type, "success", resultD.message);
+				return resultD.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		await agent.query("Query");
+		assert.equal(view.root, "A+D");
+	});
+
+	it("rolls back entirely if edit replay fails during recovery", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		let editCallCount = 0;
+		const agent = new SharedTreeSemanticAgent(
+			{
+				editToolName,
+				async query({ edit }) {
+					// Edit A succeeds
+					const resultA = await edit(`context.root = "A";`);
+					assert.equal(resultA.type, "success", resultA.message);
+					// Edit B fails, triggering replay of A
+					const resultB = await edit(`throw new Error("boom");`);
+					assert.equal(resultB.type, "editingError", resultB.message);
+					return resultB.message;
+				},
+			} satisfies SharedTreeChatModel,
+			view,
+			{
+				editor: async (tree, code) => {
+					editCallCount++;
+					const context = createContext(tree);
+					if (editCallCount === 3) {
+						// Third call is the replay of A during recovery — make it fail
+						throw new Error("replay failed");
+					}
+					// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+					const fn = new Function("context", code);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+					await fn(context);
+				},
+			},
+		);
+		await agent.query("Query");
+		assert.equal(view.root, "Initial", "Tree should not have changed after replay failure");
+	});
+
+	it("groups multiple edits into a single transaction on the outer branch", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		let changeCount = 0;
+		view.events.on("changed", () => {
+			changeCount++;
+		});
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query({ edit }) {
+				const result1 = await edit(`context.root = "First";`);
+				assert.equal(result1.type, "success", result1.message);
+				const result2 = await edit(`context.root = "Second";`);
+				assert.equal(result2.type, "success", result2.message);
+				const result3 = await edit(`context.root = "Third";`);
+				assert.equal(result3.type, "success", result3.message);
+				return result3.message;
+			},
+		};
+		const agent = new SharedTreeSemanticAgent(model, view);
+		await agent.query("Query");
+		assert.equal(view.root, "Third");
+		assert.equal(changeCount, 1, "Expected exactly one change event on the outer branch");
+	});
+
 	it("supplies the system prompt as context", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("X");

@@ -21,14 +21,13 @@ import type {
 	SharedTreeChatModel,
 	EditResult,
 	SemanticAgentOptions,
-	Logger,
 	AsynchronousEditor,
 	Context,
 	SynchronousEditor,
 	ViewOrTree,
 } from "./api.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
-import { Subtree } from "./subtree.js";
+import { copyIndependentSubtree, Subtree } from "./subtree.js";
 import {
 	llmDefault,
 	findSchemas,
@@ -114,13 +113,17 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 			);
 		}
 
-		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
+		// Fork a branch that will live for the lifetime of this query.
 		// The branch will be merged back into the outer branch if and only if the query succeeds.
-		const queryTree = this.outerTree.fork();
+		const snapshotTree = this.outerTree.fork();
+		// Create an independent view as a "sandbox" for LLM edits.
+		// This provides isolation - errors cannot corrupt the query branch or outer tree.
+		let sandbox = copyIndependentSubtree(snapshotTree.viewOrTree);
 		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 		let active = true;
 		let editCount = 0;
 		let rollbackEdits = false;
+		const successfulEditCodes: string[] = [];
 		const { editToolName } = this.client;
 		const edit = async (editCode: string): Promise<EditResult> => {
 			if (editToolName === undefined) {
@@ -144,15 +147,50 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 				};
 			}
 
-			const editResult = await applyTreeFunction(
-				queryTree,
-				editCode,
-				this.editor,
-				this.options?.logger,
+			this.options?.logger?.log(`### Editing Tool Invoked\n\n`);
+			this.options?.logger?.log(
+				`#### Generated Code\n\n\`\`\`javascript\n${editCode}\n\`\`\`\n\n`,
 			);
 
-			rollbackEdits = editResult.type !== "success";
-			return editResult;
+			try {
+				await this.editor(sandbox.viewOrTree, editCode);
+			} catch (error: unknown) {
+				rollbackEdits = true;
+				this.options?.logger?.log(`#### Error\n\n`);
+				this.options?.logger?.log(`\`\`\`JSON\n${toErrorString(error)}\n\`\`\`\n\n`);
+
+				// Rebuild the sandbox from scratch and replay successful edits.
+				// eslint-disable-next-line require-atomic-updates -- edits are called sequentially, not concurrently
+				sandbox = copyIndependentSubtree(snapshotTree.viewOrTree);
+				try {
+					for (const successfulEdit of successfulEditCodes) {
+						await this.editor(sandbox.viewOrTree, successfulEdit);
+					}
+				} catch (replayError: unknown) {
+					successfulEditCodes.length = 0;
+					return {
+						type: "editingError",
+						message: `An internal error occurred. All edits for this query have been discarded and the state of the tree will be reset to its state as it was before the query began. Error: ${toErrorString(replayError)}`,
+					};
+				}
+
+				return {
+					type: "editingError",
+					message: `Running the generated code produced an error. The state of the tree will be reset to its previous state as it was before the code ran. Please try again. Here is the error: ${toErrorString(error)}`,
+				};
+			}
+
+			successfulEditCodes.push(editCode);
+			rollbackEdits = false;
+
+			this.options?.logger?.log(`#### New Tree State\n\n`);
+			this.options?.logger?.log(
+				`${`\`\`\`JSON\n${stringifyTree(sandbox.field)}\n\`\`\``}\n\n`,
+			);
+			return {
+				type: "success",
+				message: `After running the code, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(sandbox.field)}\n\`\`\``,
+			};
 		};
 
 		const responseMessage = await this.client.query({
@@ -161,9 +199,19 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		});
 		active = false;
 
-		if (!rollbackEdits) {
-			this.outerTree.branch.merge(queryTree.branch);
-			this.outerTreeIsDirty = false;
+		try {
+			if (!rollbackEdits && successfulEditCodes.length > 0) {
+				// Replay all successful edits on the query branch, then merge into the outer tree.
+				await snapshotTree.branch.runTransactionAsync(async () => {
+					for (const code of successfulEditCodes) {
+						await this.editor(snapshotTree.viewOrTree, code);
+					}
+				});
+				this.outerTree.branch.merge(snapshotTree.branch, false);
+				this.outerTreeIsDirty = false;
+			}
+		} finally {
+			snapshotTree.branch.dispose();
 		}
 		this.options?.logger?.log(`## Response\n\n`);
 		this.options?.logger?.log(`${responseMessage}\n\n`);
@@ -204,41 +252,6 @@ function constructTreeNode(schema: TreeNodeSchema, content: FactoryContentObject
 
 	// Cast to never because tagContentSchema is typed to only accept InsertableContent, but we know that 'toInsert' (either the original content or contentWithDefaults) produces valid content for the schema.
 	return TreeAlpha.tagContentSchema(schema, toInsert as never);
-}
-
-/**
- * Applies the given function (as a string of JavaScript code or an actual function) to the given tree.
- */
-async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
-	tree: Subtree<TSchema>,
-	editCode: string,
-	editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>,
-	logger: Logger | undefined,
-): Promise<EditResult> {
-	logger?.log(`### Editing Tool Invoked\n\n`);
-	logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${editCode}\n\`\`\`\n\n`);
-
-	// Fork a branch to edit. If the edit fails or produces an error, we discard this branch, otherwise we merge it.
-	const editTree = tree.fork();
-	try {
-		await editor(editTree.viewOrTree, editCode);
-	} catch (error: unknown) {
-		logger?.log(`#### Error\n\n`);
-		logger?.log(`\`\`\`JSON\n${toErrorString(error)}\n\`\`\`\n\n`);
-		editTree.branch.dispose();
-		return {
-			type: "editingError",
-			message: `Running the generated code produced an error. The state of the tree will be reset to its previous state as it was before the code ran. Please try again. Here is the error: ${toErrorString(error)}`,
-		};
-	}
-
-	tree.branch.merge(editTree.branch);
-	logger?.log(`#### New Tree State\n\n`);
-	logger?.log(`${`\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``}\n\n`);
-	return {
-		type: "success",
-		message: `After running the code, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``,
-	};
 }
 
 function createDefaultEditor<
