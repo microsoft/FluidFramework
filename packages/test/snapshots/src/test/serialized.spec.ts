@@ -39,6 +39,12 @@ import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.j
 describe(`Container Serialization Backwards Compatibility`, () => {
 	const loaderContainerTracker = new LoaderContainerTracker();
 	const contentFolder = getTestContent("serializedContainerTestContent");
+	const deltaConnectionServers: { close(): Promise<void> }[] = [];
+
+	after(async () => {
+		loaderContainerTracker.reset();
+		await Promise.all(deltaConnectionServers.map((s) => s.close()));
+	});
 
 	// Ideally we would have each test call this.skip() but in this case they're created dynamically
 	// based on the contents of the folder which might or might not exist, so this is the alternative
@@ -164,6 +170,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 		function createTestLoaderProps(): ILoaderProps {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			deltaConnectionServers.push(deltaConnectionServer);
 			const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 			const urlResolver = new LocalResolver();
 
