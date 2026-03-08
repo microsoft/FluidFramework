@@ -169,19 +169,22 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		// if the summarizer container fails to connect.
 		let coordinatorTimedOut = false;
 		const coordinatorTimeoutMs = 2 * 60 * 1000; // 2 minutes
+		let coordinatorTimeoutId: ReturnType<typeof setTimeout> | undefined;
 		const coordinatorResult = await Promise.race([
 			this.runCoordinatorCreateFn(this.runtime).then((coordinator) => {
+				// Clear the timeout when coordinator is created to avoid leaving a dangling timer.
+				clearTimeout(coordinatorTimeoutId);
 				if (coordinatorTimedOut) {
 					coordinator.stop("summarizerClientDisconnected");
 				}
 				return coordinator;
 			}),
-			new Promise<undefined>((resolve) =>
-				setTimeout(() => {
+			new Promise<undefined>((resolve) => {
+				coordinatorTimeoutId = setTimeout(() => {
 					coordinatorTimedOut = true;
 					resolve(undefined);
-				}, coordinatorTimeoutMs),
-			),
+				}, coordinatorTimeoutMs);
+			}),
 		]);
 
 		// If we timed out before coordinator was created, exit early
@@ -252,10 +255,13 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			!runCoordinator.cancelled && Summarizer.stopReasonCanRunLastSummary(stopReason),
 		);
 		const summarizerStopTimeoutMs = 2 * 60 * 1000; // 2 minutes
-		const timeoutPromise = new Promise<"timeout">((resolve) =>
-			setTimeout(() => resolve("timeout"), summarizerStopTimeoutMs),
-		);
+		let stopTimeoutId: ReturnType<typeof setTimeout> | undefined;
+		const timeoutPromise = new Promise<"timeout">((resolve) => {
+			stopTimeoutId = setTimeout(() => resolve("timeout"), summarizerStopTimeoutMs);
+		});
 		const waitStopResult = await Promise.race([waitStopPromise, timeoutPromise]);
+		// Clear the timeout regardless of which promise won to avoid leaving a dangling timer.
+		clearTimeout(stopTimeoutId);
 		if (waitStopResult === "timeout") {
 			this.logger.sendTelemetryEvent({
 				eventName: "SummarizerStopTimeout",

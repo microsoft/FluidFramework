@@ -7,9 +7,12 @@
 [x] Remove --exit from local-server-stress-tests: harness already properly disposes
     containers and closes server in finally block.
 
-[x] Fix examples/data-objects/webflow - already clean after describeCompat driver await fix
+[x] Fix examples/data-objects/webflow - removed esm-loader-css from mocharc, changed layout.spec.ts
+    to import htmlFormatter directly (avoids CSS import chain), and fixed describeCompat/describeWithVersions
+    to call provider.reset() before driver.dispose() in cleanup hook.
 
-[x] Fix experimental/dds/tree - already clean after DeliLambda + GC timer fixes
+[x] Fix experimental/dds/tree - SummaryManager.dispose() not closing summarizer container,
+    and Summarizer.runCore() leaving dangling Promise.race() 2-minute timeout timers (root causes 8, 9)
 
 [x] Fix packages/framework/client-logger/fluid-telemetry - ApplicationInsights stopPollingInternalLogs
 

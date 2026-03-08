@@ -505,6 +505,11 @@ export class SummaryManager
 		if (this.summarizerStopTimeout !== undefined) {
 			clearTimeout(this.summarizerStopTimeout);
 		}
+		// Close the summarizer to dispose the summarizer container and clear its timers
+		// (e.g. GarbageCollector.sessionExpiryTimer). Without this, the summarizer container
+		// created by startSummarization() would remain alive after the parent container is disposed.
+		this.summarizer?.close();
+		this.summarizer = undefined;
 		this._disposed = true;
 	}
 

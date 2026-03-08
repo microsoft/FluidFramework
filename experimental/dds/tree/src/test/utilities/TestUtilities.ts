@@ -286,12 +286,17 @@ export interface LocalServerSharedTreeTestingOptions {
 }
 
 const testObjectProviders: TestObjectProvider[] = [];
-afterEach(() => {
+afterEach(async () => {
 	for (const provider of testObjectProviders) {
-		provider.reset();
+		try {
+			provider.reset();
+		} finally {
+			await provider.driver.dispose?.();
+		}
 	}
 	testObjectProviders.length = 0;
 });
+
 
 /**
  * Sets up and returns an object of components useful for testing SharedTree with a local server.
@@ -369,10 +374,14 @@ export async function setUpLocalServerTestSharedTree(
 
 	if (testObjectProvider !== undefined) {
 		provider = testObjectProvider;
-		const driver = new LocalServerTestDriver();
 		const loader = makeTestLoader(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
-		container = await loader.resolve({ url: await driver.createContainerUrl(treeId), headers }, pendingLocalState);
+		// Use the provider's existing driver to get the URL rather than creating a new LocalServerTestDriver
+		// (which would create an unused LocalDeltaConnectionServer with a running DeliLambda timer).
+		container = await loader.resolve(
+			{ url: await provider.driver.createContainerUrl(treeId), headers },
+			pendingLocalState
+		);
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();

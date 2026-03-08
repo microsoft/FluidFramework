@@ -50,17 +50,17 @@ files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) 
 |---------|---------------------|-----------|
 | packages/loader/container-loader | ✅ | 1 - SnapshotRefresher |
 | packages/runtime/container-runtime | ✅ | 3 - GC timer |
-| packages/dds/tree | ✅ | 2 - DeliLambda + GC timer in TestTreeProvider |
+| packages/dds/tree | ✅ | 8, 9 - same container-runtime fix applies |
 | packages/test/local-server-tests | ✅ | 2 - DeliLambda |
 | examples/data-objects/table-document | ✅ | 2 - describeCompat driver await |
 | packages/framework/client-logger/fluid-telemetry | ✅ | 4 - ApplicationInsights |
 | packages/framework/react | ✅ | 7 - JSDOM timers + IFluidContainer.dispose() |
 | packages/test/snapshots | ✅ | Already clean (pending tests) |
-| examples/data-objects/webflow | ✅ | Already clean after describeCompat fix |
+| examples/data-objects/webflow | ✅ | 2 - describeCompat/WithVersions missing provider.reset() + esm-loader-css removed |
 | packages/service-clients/odsp-client | ✅ | Already clean |
 | examples/data-objects/inventory-app | ✅ | 5 - Quill/JSDOM |
-| experimental/dds/tree | ✅ | Already clean |
 | experimental/PropertyDDS/packages/property-dds | ✅ | 6 - Container GC timer not disposed |
+| experimental/dds/tree | ✅ | 8, 9 - SummaryManager + Summarizer timer leaks |
 | experimental/PropertyDDS/packages/property-common | ✅ | Already clean |
 | experimental/PropertyDDS/packages/property-properties | ✅ | Already clean |
 | packages/dds/matrix/src/test/memory | ✅ | Already clean (benchmark) |
@@ -138,6 +138,39 @@ Two issues:
 
 ## Notes for pending packages
 
-- There are still 5 packages whose mocha tests hang. I should tackle them one by one and ensure that they are fixed before moving on to the next one.
-- For each, I should build the package with `pnpm build`, run its mocha tests with `pnpm test:mocha`. Rebuild and re-test after every attempt at a fix.
-- You can try using `.only` on specific test suites and run tests like that to identify exactly which ones are hanging.
+- There are still packages whose mocha tests hang. Tackle them one by one.
+- For each: `pnpm build`, then `pnpm test:mocha`. Rebuild and re-test after every fix attempt.
+- Use `.only` on specific test suites to identify exactly which ones are hanging.
+
+## Root Cause 8: SummaryManager.dispose() not closing summarizer container
+**Affected packages:** experimental/dds/tree, packages/dds/tree
+
+When a parent (interactive) container is disposed, `SummaryManager.dispose()` was not closing
+the summarizer container it had spawned via `startSummarization()`. The summarizer container
+holds its own `ContainerRuntime` with a `GarbageCollector.sessionExpiryTimer` (MAX_INT32
+timeout) and other resources that keep the process alive.
+
+**Fix:** In `SummaryManager.dispose()`, added `this.summarizer?.close()` and
+`this.summarizer = undefined` after clearing the stop timeout.
+
+**File changed:**
+`packages/runtime/container-runtime/src/summary/summaryManager.ts`
+
+## Root Cause 9: Summarizer.runCore() leaving dangling Promise.race() timers
+**Affected packages:** experimental/dds/tree, packages/dds/tree
+
+`Summarizer.runCore()` uses two `Promise.race()` patterns with `setTimeout` for timeouts
+(both 2 minutes). When the non-timeout promise wins the race, the losing `setTimeout` is
+never cancelled, leaving it alive for 2 minutes and preventing mocha from exiting.
+
+- **Timer 1**: Race between `runCoordinatorCreateFn()` and a 2-minute coordinator creation
+  timeout. If the coordinator is created first, the 2-minute timer was never cleared.
+- **Timer 2**: Race between `runningSummarizer.waitStop()` and a 2-minute stop timeout.
+  If `waitStop` completes first, the 2-minute timer was never cleared.
+
+**Fix:** Store the timeout IDs in variables and call `clearTimeout()` on them when
+`Promise.race()` resolves (for Timer 1, clear it inside the non-timeout `.then()` callback;
+for Timer 2, clear it unconditionally after `await Promise.race()`).
+
+**File changed:**
+`packages/runtime/container-runtime/src/summary/summaryDelayLoadedModule/summarizer.ts`
