@@ -54,6 +54,7 @@ import {
 	isFluidError,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
+import { run, sleep, call, type Operation, type Task } from "effection";
 
 import {
 	type IConnectionDetailsInternal,
@@ -104,10 +105,8 @@ const waitForOnline = async (): Promise<void> => {
  * Interface to track the current in-progress connection attempt.
  */
 interface IPendingConnection {
-	/**
-	 * Used to cancel an in-progress connection attempt.
-	 */
-	abort(): void;
+	/** Effection task handle. Call {@link Task.halt} to cancel the connection attempt. */
+	task: Task<void>;
 
 	/**
 	 * Desired ConnectionMode of this in-progress connection attempt.
@@ -460,16 +459,6 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode): void {
-		this.connectCore(reason, connectionMode).catch((error) => {
-			const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
-			this.props.closeHandler(normalizedError);
-		});
-	}
-
-	private async connectCore(
-		reason: IConnectionStateChangeReason,
-		connectionMode?: ConnectionMode,
-	): Promise<void> {
 		assert(!this._disposed, 0x26a /* "not closed" */);
 
 		let requestedMode = connectionMode ?? this.defaultReconnectionMode;
@@ -512,25 +501,42 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (docService.policies?.storageOnly === true) {
 			const frozenDeltaStreamConnection = new FrozenDeltaStream();
-			this.setupNewSuccessfulConnection(frozenDeltaStreamConnection, "read", reason);
+			// try-catch preserves prior behavior: connectCore was async, so errors here
+			// (e.g. from connectHandler) were caught by .catch() and routed to closeHandler.
+			try {
+				this.setupNewSuccessfulConnection(frozenDeltaStreamConnection, "read", reason);
+			} catch (error: unknown) {
+				const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
+				this.props.closeHandler(normalizedError);
+				return;
+			}
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
 			return;
 		}
 
+		// Start the retry loop as a structured effection task
+		const task = run(() => this.retryConnectOperation(docService, requestedMode, reason));
+		this.pendingConnection = { task, connectionMode: requestedMode };
+
+		task.catch((error: unknown) => {
+			if (!this._disposed) {
+				const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
+				this.props.closeHandler(normalizedError);
+			}
+		});
+	}
+
+	private *retryConnectOperation(
+		docService: IDocumentService,
+		initialRequestedMode: ConnectionMode,
+		reason: IConnectionStateChangeReason,
+	): Operation<void> {
+		let requestedMode = initialRequestedMode;
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performanceNow();
 
 		let lastError: unknown;
-
-		const abortController = new AbortController();
-		const abortSignal = abortController.signal;
-		this.pendingConnection = {
-			abort: (): void => {
-				abortController.abort();
-			},
-			connectionMode: requestedMode,
-		};
 
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
 		let connection: IDocumentDeltaConnection | undefined;
@@ -538,23 +544,17 @@ export class ConnectionManager implements IConnectionManager {
 			if (this._disposed) {
 				throw new Error("Attempting to connect a closed DeltaManager");
 			}
-			if (abortSignal.aborted === true) {
-				this.logger.sendTelemetryEvent({
-					eventName: "ConnectionAttemptCancelled",
-					attempts: connectRepeatCount,
-					duration: formatTick(performanceNow() - connectStartTime),
-					connectionEstablished: false,
-				});
-				return;
-			}
 			connectRepeatCount++;
 
 			try {
 				this.client.mode = requestedMode;
-				connection = await docService.connectToDeltaStream({
-					...this.client,
-					mode: requestedMode,
-				});
+				// async wrapper required by promise-function-async lint rule
+				connection = yield* call(async () =>
+					docService.connectToDeltaStream({
+						...this.client,
+						mode: requestedMode,
+					}),
+				);
 
 				if (connection.disposed) {
 					// Nobody observed this connection, so drop it on the floor and retry.
@@ -585,6 +585,7 @@ export class ConnectionManager implements IConnectionManager {
 						text: origError.message,
 						error: origError,
 					});
+					// eslint-disable-next-line require-atomic-updates -- synchronous assignment in catch block, no race
 					requestedMode = "read";
 					break;
 				} else if (
@@ -597,6 +598,7 @@ export class ConnectionManager implements IConnectionManager {
 						text: origError.message,
 						error: origError,
 					});
+					// eslint-disable-next-line require-atomic-updates -- synchronous assignment in catch block, no race
 					requestedMode = "read";
 					break;
 				}
@@ -644,14 +646,12 @@ export class ConnectionManager implements IConnectionManager {
 					this.props.reconnectionDelayHandler(delayMs, origError);
 				}
 
-				await new Promise<void>((resolve) => {
-					setTimeout(resolve, delayMs);
-				});
+				yield* sleep(delayMs);
 
 				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 				// should probably live in the driver.
-				await waitForOnline();
+				yield* call(waitForOnline);
 				this.logger.sendPerformanceEvent({
 					eventName: "WaitBetweenConnectionAttempts",
 					duration: performanceNow() - waitStartTime,
@@ -676,8 +676,8 @@ export class ConnectionManager implements IConnectionManager {
 			);
 		}
 
-		// Check for abort signal after while loop as well or we've been disposed
-		if (abortSignal.aborted === true || this._disposed) {
+		// If disposed while connecting, clean up the connection we just obtained
+		if (this._disposed) {
 			connection.dispose();
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
@@ -768,7 +768,9 @@ export class ConnectionManager implements IConnectionManager {
 			this.pendingConnection !== undefined,
 			0x345 /* this.pendingConnection is undefined when trying to cancel */,
 		);
-		this.pendingConnection.abort();
+		// Halt the effection task, cancelling any active sleep() or call() in the generator
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		this.pendingConnection.task.halt();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({
 			eventName: "ConnectionCancelReceived",
@@ -941,28 +943,24 @@ export class ConnectionManager implements IConnectionManager {
 
 	/**
 	 * Disconnect the current connection and reconnect. Closes the container if it fails.
-	 * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
 	 * @param requestedMode - Read or write
-	 * @param error - Error reconnect information including whether or not to reconnect
-	 * @returns A promise that resolves when the connection is reestablished or we stop trying
+	 * @param error - Driver error with retry information
 	 */
 	private reconnectOnError(requestedMode: ConnectionMode, error: IAnyDriverError): void {
-		this.reconnect(requestedMode, { text: error.message, error }).catch(
+		run(() => this.reconnectOperation(requestedMode, { text: error.message, error })).catch(
 			this.props.closeHandler,
 		);
 	}
 
 	/**
 	 * Disconnect the current connection and reconnect.
-	 * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
 	 * @param requestedMode - Read or write
-	 * @param error - Error reconnect information including whether or not to reconnect
-	 * @returns A promise that resolves when the connection is reestablished or we stop trying
+	 * @param reason - Reason for reconnection including whether or not to reconnect
 	 */
-	private async reconnect(
+	private *reconnectOperation(
 		requestedMode: ConnectionMode,
 		reason: IConnectionStateChangeReason<IAnyDriverError>,
-	): Promise<void> {
+	): Operation<void> {
 		// We quite often get protocol errors before / after observing nack/disconnect
 		// we do not want to run through same sequence twice.
 		// If we're already disconnected/disconnecting it's not appropriate to call this again.
@@ -999,15 +997,13 @@ export class ConnectionManager implements IConnectionManager {
 		const delayMs = getRetryDelayFromError(reason.error);
 		if (reason.error !== undefined && delayMs !== undefined) {
 			this.props.reconnectionDelayHandler(delayMs, reason.error);
-			await new Promise<void>((resolve) => {
-				setTimeout(resolve, delayMs);
-			});
+			yield* sleep(delayMs);
 		}
 
 		// If we believe we're offline, we assume there's no point in trying again until we at least think we're online.
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.
-		await waitForOnline();
+		yield* call(waitForOnline);
 
 		this.triggerConnect(
 			{
@@ -1085,9 +1081,11 @@ export class ConnectionManager implements IConnectionManager {
 					.then(async () => {
 						if (this.pendingReconnect) {
 							// still valid?
-							await this.reconnect(
-								"write", // connectionMode
-								{ text: "Switch to write" }, // message
+							await run(() =>
+								this.reconnectOperation(
+									"write", // connectionMode
+									{ text: "Switch to write" }, // message
+								),
 							);
 						}
 					})
@@ -1139,9 +1137,11 @@ export class ConnectionManager implements IConnectionManager {
 				// not work well with de-facto "read" connection we are in after receiving own leave op on timeout.
 				// Clients need to be able to transition to "read" state after some time of inactivity!
 				// Note - this may close container!
-				this.reconnect(
-					"read", // connectionMode
-					{ text: "Switch to read" }, // message
+				run(() =>
+					this.reconnectOperation(
+						"read", // connectionMode
+						{ text: "Switch to read" }, // message
+					),
 				).catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection" }, error);
 				});
