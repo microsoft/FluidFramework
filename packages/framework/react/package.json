@@ -38,8 +38,10 @@
 			}
 		},
 		"./quill": {
-			"types": "./lib/text/quill.d.ts",
-			"import": "./lib/text/quill.js"
+			"import": {
+				"types": "./lib/text/quill.d.ts",
+				"default": "./lib/text/quill.js"
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -60,6 +62,7 @@
 		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
+		"check:exports:esm:text:quill": "api-extractor run --config api-extractor/api-extractor-lint-text_quill.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
