@@ -13,9 +13,9 @@
 -   `benchmark` and `benchmarkCustom` are still exported but are now considered legacy; prefer `benchmarkIt` or the new typed helpers.
 -   Console output been cleaned up, especially for errors. Errors are now printed in full once, and a truncated version included in the table. Previously they were printed in full three times, including once in the table.
 -   When using `--parentProcess`, the test duration is collected for both the parent and child process: previously only the parent process collected this data.
-- 	Top level tests (outside of any describe block) are now handled correctly.
-- 	FLUID_TEST_PERF_MODE environment variable can be used instead of --perfMode.
--	Mocha parallel mode now works as long as you use the FLUID_TEST_PERF_MODE environment variable instead of --perfMode and do not use --parentProcess.
+-   Top level tests (outside of any describe block) are now handled correctly.
+-   FLUID_TEST_PERF_MODE environment variable can be used instead of --perfMode.
+-   Mocha parallel mode now works as long as you use the FLUID_TEST_PERF_MODE environment variable instead of --perfMode and do not use --parentProcess.
 
 ### ⚠ BREAKING CHANGES
 
