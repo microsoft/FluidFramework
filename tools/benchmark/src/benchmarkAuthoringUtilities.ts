@@ -25,8 +25,13 @@ export async function captureResults(
 	try {
 		data = await f();
 	} catch (error) {
-		const benchmarkError: BenchmarkError = { error: (error as Error).message };
-		return { result: benchmarkError, exception: error as Error };
+		const benchmarkError: BenchmarkError = {
+			error: error instanceof Error ? error.message : String(error),
+		};
+		return {
+			result: benchmarkError,
+			exception: error instanceof Error ? error : undefined,
+		};
 	}
 
 	const elapsedSeconds = timer.toSeconds(startTime, timer.now());

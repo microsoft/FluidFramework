@@ -351,7 +351,9 @@ export function prettyNumber(num: number, numDecimals = 3): string {
 
 /**
  * Computes the geometric mean of a set of values.
+ * @remarks
  * Returns 0 if any value is non-positive.
+ * Returns NaN if `values` is empty.
  * @param values - The values to compute the geometric mean of.
  */
 export function geometricMean(values: number[]): number {

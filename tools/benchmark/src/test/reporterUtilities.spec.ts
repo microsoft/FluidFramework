@@ -340,6 +340,10 @@ describe("reporterUtilities", () => {
 		it("returns NaN when any value is NaN", () => {
 			assert.equal(geometricMean([1, NaN, 2]), Number.NaN);
 		});
+
+		it("returns NaN for empty array", () => {
+			assert.equal(geometricMean([]), Number.NaN);
+		});
 	});
 
 	describe("formatMeasurementValue", () => {

@@ -5,12 +5,13 @@
 
 import type { Test } from "mocha";
 
-import type { BenchmarkResult } from "../reportTypes.js";
+import { isResultError, type BenchmarkResult } from "../reportTypes.js";
 import { isInPerformanceTestingMode } from "../Configuration.js";
 
 /**
- * Executes a function, emits the results to a mocha test, and throws any exception.
- * This handles mocha-specific result emission.
+ * Executes a function, emits the results to a mocha test, and throws any errors.
+ * @remarks
+ * This handles mocha-specific result emission and ensures the test fails if there is an error.
  */
 export async function emitResultsMocha(
 	f: () => Promise<{ result: BenchmarkResult; exception?: Error }>,
@@ -26,5 +27,8 @@ export async function emitResultsMocha(
 	}
 	if (exception !== undefined) {
 		throw exception;
+	}
+	if (isResultError(result)) {
+		throw new Error(result.error);
 	}
 }
