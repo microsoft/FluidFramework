@@ -1008,7 +1008,7 @@ export const tagCodeArtifacts = <
  *
  * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
  *
- * @internal
+ * @beta
  */
 export const LogLevelValue = {
 	/**
@@ -1036,6 +1036,6 @@ export const LogLevelValue = {
  * enabling consumers to make sampling or filtering decisions.
  *
  * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
- * @internal
+ * @beta
  */
 export type LogLevelValue = number & BrandedType<"LogLevelValue">;
