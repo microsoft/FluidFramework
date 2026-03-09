@@ -61,10 +61,6 @@ steps:
       set -eu -o pipefail
       echo "Using node $(node --version)"
       sudo corepack enable
-      # pnpm 10.31 seems to have a change that breaks the 'npmAuthenticate' task below for some reason.
-      # Trying this as a mitigation while we figure out the problem.
-      sudo corepack install --global pnpm@10.30.3
-      sudo corepack use pnpm@10.30.3
       echo "Using pnpm $(pnpm -v)"
       # This ensures all subsequent tasks in this job will use the pnpm configuration set here.
       echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"

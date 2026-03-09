@@ -58,6 +58,28 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+          # In pipeline jobs that don't check out the repo, we sometimes want a stub package.json file to be able to
+          # control certain things about dependency installs during a pipeline run.
+          # In this case we need to pin the version of pnpm, just like we do in the package.json files in the repo,
+          # because version 10.31 introduced a break.
+          - task: Bash@3
+            name: PrepareBuildToolsZipDirectory
+            displayName: Prepare buildTools-zip directory and package.json
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Pipeline.Workspace)'
+              script: |
+                set -eu -o pipefail
+                mkdir -p buildTools-zip
+                cat > buildTools-zip/package.json <<'EOF'
+                {
+                  "name": "build-tools-zip",
+                  "private": true,
+                  "packageManager": "pnpm@10.30.3"
+                }
+                EOF
+
+
           - template: /tools/pipelines/templates/include-install-pnpm.yml@self
             parameters:
               buildDirectory: buildTools-zip
