@@ -198,6 +198,9 @@ export class OrderedClientElection
 		private readonly logger: ITelemetryLoggerExt,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
 		private readonly quorum: Pick<IQuorumClients, "getMembers" | "on">,
+		/**
+		 * Serialized state from summary or current sequence number at time of load if new.
+		 */
 		initialState: ISerializedElection | number,
 		private readonly isEligibleFn: (c: ITrackedClient) => boolean,
 		private readonly recordPerformanceEvents: boolean = false,
