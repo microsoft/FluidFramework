@@ -84,14 +84,33 @@ const defaults: Required<Omit<MemoryUseBenchmark, "benchmarkFn">> = {
 };
 
 /**
+ * Like {...defaults, ...obj} but only applies the properties from `obj` that are not undefined, allowing `undefined` to be used to indicate "use the default" for individual properties.
+ * @remarks
+ * This allows explicit undefined and omitted settings to work the same, which is what the typescript typing expects.
+ * Do not use this when the ability to overwrite a default with `undefined` is needed, as it will not work correctly in that case.
+ */
+function applyDefaults<T extends object>(
+	obj: T,
+	defaults: { [K in keyof T as undefined extends T[K] ? K : never]-?: NonNullable<T[K]> },
+): Required<T> {
+	const result = { ...defaults };
+	for (const [key, value] of Object.entries(obj) as [keyof T, T[keyof T]][]) {
+		if (value !== undefined) {
+			(result as T)[key] = value;
+		}
+	}
+	return result as T as Required<T>;
+}
+
+/**
  * Runs a memory usage benchmark and returns the collected heap measurements.
  * @remarks
- * Accurate data requires running with `--perfMode` (see {@link isInPerformanceTestingMode}).
+ * Collecting accurate data requires running with `--perfMode` (see {@link isInPerformanceTestingMode}).
  * Without it, only a single iteration is run and the results are not statistically meaningful.
  * @public
  */
 export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<CollectedData> {
-	const args = { ...defaults, ...argsIn }; // TODO: we probably want to not include explicit undefined fields from argsIn.
+	const args = applyDefaults(argsIn, defaults);
 	const data: MemoryMeasurement[] = [];
 	const unset = -1;
 
