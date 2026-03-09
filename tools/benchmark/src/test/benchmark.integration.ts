@@ -260,6 +260,7 @@ describe("integration tests", () => {
 		});
 	});
 
+	// Test that nesting works as expected (including suites which contain suites and no tests directly).
 	describe("nested", () => {
 		describe("nested", () => {
 			// Test empty suite name
