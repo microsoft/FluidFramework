@@ -25,6 +25,7 @@
 	"postCreateCommand": "sh scripts/codespace-setup/post-create.sh && source scripts/codespace-setup/ai-setup.sh",
 	"remoteUser": "node",
 	"features": {
+		"github-cli": "latest",
 		"git-lfs": "latest"
 	},
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build

@@ -1,6 +1,10 @@
 shopt -s expand_aliases
 
-# TODO: these are samples to ensure it's working - we should replace them with aliases that make sense for our actual usage of the agents, once we have that fleshed out a bit more.
-alias haiku="claude --model haiku"
-alias sonnet="claude --model sonnet"
-alias opus="claude --model opus"
+alias claude="agency claude"
+alias haiku="agency claude --model haiku"
+alias sonnet="agency claude --model sonnet"
+alias opus="agency claude --model opus"
+
+alias copilot="agency copilot"
+alias copilot-ado="agency copilot --mcp 'ado --org fluidframework'"
+alias copilot-work="agency copilot --mcp 'workiq'"
