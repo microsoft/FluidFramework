@@ -66,8 +66,8 @@ describe("LangchainChatModel", () => {
 				{ role: "user", content: "Edit the tree" },
 			]);
 
-			assert.equal(response.type, "tool");
-			assert.ok(response.type === "tool");
+			assert.equal(response.role, "tool_call");
+			assert.ok(response.role === "tool_call");
 			assert.equal(response.toolCallId, toolCallId);
 			assert.equal(response.toolName, toolName);
 			assert.deepEqual(response.toolArgs, args);
@@ -124,7 +124,7 @@ describe("LangchainChatModel", () => {
 
 			const response = await invokeModel(chatModel, [{ role: "user", content: "Edit" }]);
 
-			assert.ok(response.type === "tool");
+			assert.ok(response.role === "tool_call");
 			assert.equal(response.toolCallId, undefined);
 			assert.equal(response.toolName, toolName);
 			assert.deepEqual(response.toolArgs, args);
@@ -174,7 +174,7 @@ describe("LangchainChatModel", () => {
 
 			const response = await invokeModel(chatModel, [{ role: "user", content: "Edit" }]);
 
-			assert.ok(response.type === "tool");
+			assert.ok(response.role === "tool_call");
 			// The chatModel should NOT rewrite the key — it should pass through as-is
 			assert.deepEqual(response.toolArgs, { input: 'context.root = "via input key";' });
 		});
