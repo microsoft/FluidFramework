@@ -172,7 +172,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 
 		if (this.client.query === undefined) {
 			throw new UsageError(
-				"The provided SharedTreeChatModel does not implement query(). Use createEditAgent or createAnalysisAgent instead.",
+				"The provided SharedTreeChatModel does not implement query(). Use createTreeAgent instead.",
 			);
 		}
 		const responseMessage = await this.client.query({

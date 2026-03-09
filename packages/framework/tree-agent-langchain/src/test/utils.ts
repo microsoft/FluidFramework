@@ -105,7 +105,7 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 
 /**
  * The API implementation to use when querying the LLM.
- * - `"new"`: Uses the new stateless `createLangchainChatModel` + `createEditAgent` + `edit()`.
+ * - `"new"`: Uses the new stateless `createLangchainChatModel` + `createTreeAgent` + `message()`.
  * - `"legacy"`: Uses the legacy stateful `createLegacyLangchainChatModel` + `SharedTreeSemanticAgent` + `query()`.
  */
 type ApiImplementation = "new" | "legacy";
