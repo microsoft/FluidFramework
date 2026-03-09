@@ -56,12 +56,12 @@ export {
 	parseReport,
 	type BenchmarkError,
 	type BenchmarkResult,
-	CollectedData,
-	PrimaryMeasurement,
-	Measurement,
+	type CollectedData,
+	type PrimaryMeasurement,
+	type Measurement,
 	type Significance,
 	ValueType,
-	ReportEntry,
+	type ReportEntry,
 	type ReportArray,
 	type ReportSuite,
 } from "./ResultTypes.js";
@@ -69,8 +69,8 @@ export { timer, type Timer } from "./timer.js";
 export { captureResults } from "./ResultUtilities.js";
 
 export {
-	MemoryUseBenchmark,
-	MemoryUseCallbacks,
+	type MemoryUseBenchmark,
+	type MemoryUseCallbacks,
 	benchmarkMemoryUse,
 	collectMemoryUseData,
 } from "./memoryBenchmarking/index.js";

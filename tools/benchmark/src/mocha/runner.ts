@@ -31,22 +31,21 @@ export async function supportParentProcess(
  * The provided test must write a {@link BenchmarkResult} to stdout.
  * See {@link recordTestResult} which does this for child processes.
  */
-async function runTestInChildProcess(
-	testFullTitle: string,
-): Promise<CollectedData | Promise<CollectedData>> {
+async function runTestInChildProcess(testFullTitle: string): Promise<CollectedData> {
 	// Instead of running the benchmark in this process, create a new process.
 	// See {@link isParentProcess} for why.
 	// Launch new process, with:
 	// - mocha filter to run only this test.
-	// - --parentProcess flag removed.
 	// - --childProcess flag added (so data will be returned via stdout as json)
 
 	// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
 	const command = process.argv0 ?? fail("there must be a command");
 
 	const reusedArgs = process.argv.slice(1);
-	reusedArgs[0] =
-		"/workspaces/FluidFramework/tools/benchmark/node_modules/.pnpm/mocha@10.8.2/node_modules/mocha/lib/cli/cli.js";
+
+	// reusedArgs[0] should be the script for mocha thats currently running (.../node_modules/mocha/lib/cli/cli.js)
+	// But this is not the case for mocha parallel mode due to how it sets up its workers.
+	// This is one of the main reasons mocha parallel mode is not currently supported here.
 
 	// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
 	// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
@@ -69,13 +68,8 @@ async function runTestInChildProcess(
 	// Remove arguments for debugging if they're present; in order to debug child processes we need
 	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
 	// of scope for now.
-	// Also strip parallel.
 	let inspectArgIndex: number = -1;
-	while (
-		(inspectArgIndex = childArgs.findIndex((x) =>
-			x.match(/^((--inspect|--debug).*|--parallel)/),
-		)) >= 0
-	) {
+	while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
 		childArgs.splice(inspectArgIndex, 1);
 	}
 
