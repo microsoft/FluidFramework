@@ -314,38 +314,10 @@ export type TreeAgentChatMessage =
 	| TreeAgentToolResultMessage;
 
 /**
- * The model wants to invoke a tool with the provided arguments.
- * @remarks Modeled after LangChain's `ToolCall` type: the `toolArgs` record preserves
- * the argument names exactly as returned by the LLM.
- * @alpha
- */
-export interface TreeAgentToolResponse {
-	/** Identifies this response as a tool invocation request. */
-	readonly type: "tool";
-	/** An optional identifier for this tool call, included only if the LLM returns one. */
-	readonly toolCallId?: string;
-	/** The name of the tool being called. */
-	readonly toolName: string;
-	/** The arguments to the tool call, as returned by the LLM. */
-	readonly toolArgs: Record<string, unknown>;
-}
-
-/**
- * The model has finished and is returning its final text response.
- * @alpha
- */
-export interface TreeAgentDoneResponse {
-	/** Identifies this response as the model's final answer. */
-	readonly type: "done";
-	/** The model's final text response to the user. */
-	readonly text: string;
-}
-
-/**
  * A response from a {@link SharedTreeChatModel} after invoking it with a message history.
  * @alpha
  */
-export type TreeAgentChatResponse = TreeAgentToolResponse | TreeAgentDoneResponse;
+export type TreeAgentChatResponse = TreeAgentToolCallMessage | TreeAgentAssistantMessage;
 
 // #endregion
 
@@ -440,8 +412,8 @@ export interface SharedTreeChatModel {
 	 * @remarks This is the stateless API. The model should not maintain any internal message history;
 	 * all context is provided via the `history` parameter.
 	 * Implementations should convert the {@link TreeAgentChatMessage} array to the underlying LLM's
-	 * message format, invoke the LLM, and return either a {@link TreeAgentToolResponse} (if the model
-	 * wants to call a tool) or a {@link TreeAgentDoneResponse} (if the model is done).
+	 * message format, invoke the LLM, and return either a {@link TreeAgentToolCallMessage} (if the model
+	 * wants to call a tool) or a {@link TreeAgentAssistantMessage} (if the model is done).
 	 */
 	invoke?(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
 }

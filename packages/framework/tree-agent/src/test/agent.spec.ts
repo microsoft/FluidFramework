@@ -618,12 +618,12 @@ describe("createTreeAgent", () => {
 		view.initialize("Content");
 		const model = createMockInvokeModel([
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c1",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "Edited";` },
 			},
-			{ type: "done", text: "Done editing" },
+			{ role: "assistant", content: "Done editing" },
 		]);
 		const agent = createTreeAgent(model, view);
 		const result = await agent.message("Edit it");
@@ -637,18 +637,18 @@ describe("createTreeAgent", () => {
 		view.initialize("Content");
 		const model = createMockInvokeModel([
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c1",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "First";` },
 			},
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c2",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "Second";` },
 			},
-			{ type: "done", text: "All done" },
+			{ role: "assistant", content: "All done" },
 		]);
 		const agent = createTreeAgent(model, view);
 		const result = await agent.message("Edit twice");
@@ -662,18 +662,18 @@ describe("createTreeAgent", () => {
 		view.initialize("Content");
 		const model = createMockInvokeModel([
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c1",
 				toolName: editToolName,
 				toolArgs: { js: `throw new Error("boom");` },
 			},
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c2",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "Recovered";` },
 			},
-			{ type: "done", text: "Fixed it" },
+			{ role: "assistant", content: "Fixed it" },
 		]);
 		const agent = createTreeAgent(model, view);
 		const result = await agent.message("Try editing");
@@ -687,24 +687,24 @@ describe("createTreeAgent", () => {
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c1",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "One";` },
 			},
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c2",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "Two";` },
 			},
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c3",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "Three";` },
 			},
-			{ type: "done", text: "Gave up" },
+			{ role: "assistant", content: "Gave up" },
 		]);
 		const agent = createTreeAgent(model, view, { maximumSequentialEdits: 2 });
 		const result = await agent.message("Edit a lot");
@@ -720,18 +720,18 @@ describe("createTreeAgent", () => {
 		// First edit succeeds, second fails → rollback
 		const model = createMockInvokeModel([
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c1",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "Good";` },
 			},
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c2",
 				toolName: editToolName,
 				toolArgs: { js: `throw new Error("boom");` },
 			},
-			{ type: "done", text: "Oops" },
+			{ role: "assistant", content: "Oops" },
 		]);
 		const agent = createTreeAgent(model, view);
 		const result = await agent.message("Edit");
@@ -745,18 +745,18 @@ describe("createTreeAgent", () => {
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c1",
 				toolName: editToolName,
 				toolArgs: { js: `throw new Error("boom");` },
 			},
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c2",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "Recovered";` },
 			},
-			{ type: "done", text: "Fixed" },
+			{ role: "assistant", content: "Fixed" },
 		]);
 		const agent = createTreeAgent(model, view);
 		const result = await agent.message("Edit");
@@ -782,7 +782,7 @@ describe("createTreeAgent", () => {
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			async invoke() {
-				return { type: "done", text: "nope" };
+				return { role: "assistant", content: "nope" };
 			},
 		};
 		assert.throws(() => createTreeAgent(model, view), /editToolName/);
@@ -792,8 +792,13 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model = createMockInvokeModel([
-			{ type: "tool", toolCallId: "c1", toolName: editToolName, toolArgs: { js: "Code" } },
-			{ type: "done", text: "Done" },
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: "Code" },
+			},
+			{ role: "assistant", content: "Done" },
 		]);
 		const agent = createTreeAgent(model, view, {
 			editor: async (tree, js) => {
@@ -813,8 +818,8 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
-			{ type: "done", text: "First" },
-			{ type: "done", text: "Second" },
+			{ role: "assistant", content: "First" },
+			{ role: "assistant", content: "Second" },
 		]);
 		const agent = createTreeAgent(model, view);
 		await agent.message("First query");
@@ -838,13 +843,13 @@ describe("createTreeAgent", () => {
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
 			{
-				type: "tool",
+				role: "tool_call",
 				toolCallId: "c1",
 				toolName: editToolName,
 				toolArgs: { js: `context.root = "AgentEdited";` },
 			},
-			{ type: "done", text: "Edited" },
-			{ type: "done", text: "Second response" },
+			{ role: "assistant", content: "Edited" },
+			{ role: "assistant", content: "Second response" },
 		]);
 		const agent = createTreeAgent(model, view);
 		await agent.message("Edit it");
@@ -869,8 +874,13 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
-			{ type: "tool", toolCallId: "c1", toolName: editToolName, toolArgs: { a: 1, b: 2 } },
-			{ type: "done", text: "Gave up" },
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { a: 1, b: 2 },
+			},
+			{ role: "assistant", content: "Gave up" },
 		]);
 		const agent = createTreeAgent(model, view);
 		const result = await agent.message("Edit");
@@ -891,8 +901,12 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model = createMockInvokeModel([
-			{ type: "tool", toolName: editToolName, toolArgs: { js: `context.root = "Edited";` } },
-			{ type: "done", text: "Done" },
+			{
+				role: "tool_call",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Edited";` },
+			},
+			{ role: "assistant", content: "Done" },
 		]);
 		const agent = createTreeAgent(model, view);
 		const result = await agent.message("Edit");

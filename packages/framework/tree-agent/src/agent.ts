@@ -409,25 +409,20 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const response = await this.#model.invoke!(this.#history);
 
-			if (response.type === "done") {
-				this.#history.push({ role: "assistant", content: response.text });
+			if (response.role === "assistant") {
+				this.#history.push(response);
 				if (rollbackEdits) {
 					queryTree.branch.dispose();
 				} else {
 					this.#outerTree.branch.merge(queryTree.branch);
 					this.#isDirty = false;
 				}
-				this.#options?.logger?.log(`## Response\n\n${response.text}\n\n`);
-				return response.text;
+				this.#options?.logger?.log(`## Response\n\n${response.content}\n\n`);
+				return response.content;
 			}
 
-			// response.type === "tool"
-			this.#history.push({
-				role: "tool_call",
-				toolCallId: response.toolCallId,
-				toolName: response.toolName,
-				toolArgs: response.toolArgs,
-			});
+			// response.role === "tool_call"
+			this.#history.push(response);
 
 			// Extract the code string from the tool call args.
 			// We expect exactly one string-valued argument (e.g. { js: "..." } or { code: "..." }).

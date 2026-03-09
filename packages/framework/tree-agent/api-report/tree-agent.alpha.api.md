@@ -170,13 +170,7 @@ export interface TreeAgentAssistantMessage {
 export type TreeAgentChatMessage = TreeAgentSystemMessage | TreeAgentUserMessage | TreeAgentAssistantMessage | TreeAgentToolCallMessage | TreeAgentToolResultMessage;
 
 // @alpha
-export type TreeAgentChatResponse = TreeAgentToolResponse | TreeAgentDoneResponse;
-
-// @alpha
-export interface TreeAgentDoneResponse {
-    readonly text: string;
-    readonly type: "done";
-}
+export type TreeAgentChatResponse = TreeAgentToolCallMessage | TreeAgentAssistantMessage;
 
 // @alpha
 export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
@@ -198,14 +192,6 @@ export interface TreeAgentToolCallMessage {
     readonly toolArgs: Record<string, unknown>;
     readonly toolCallId?: string;
     readonly toolName: string;
-}
-
-// @alpha
-export interface TreeAgentToolResponse {
-    readonly toolArgs: Record<string, unknown>;
-    readonly toolCallId?: string;
-    readonly toolName: string;
-    readonly type: "tool";
 }
 
 // @alpha
