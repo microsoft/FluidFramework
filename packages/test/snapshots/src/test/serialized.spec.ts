@@ -43,7 +43,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 	after(async () => {
 		loaderContainerTracker.reset();
-		await Promise.all(deltaConnectionServers.map((s) => s.close()));
+		await Promise.all(deltaConnectionServers.map(async (s) => s.close()));
 	});
 
 	// Ideally we would have each test call this.skip() but in this case they're created dynamically
