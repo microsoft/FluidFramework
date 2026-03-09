@@ -11,8 +11,8 @@ overrides:
   json5@<1.0.2: ^1.0.2
   json5@>=2.0.0 <2.2.2: ^2.2.2
   mdast-util-gfm-footnote: ^2.1.0
-  oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
-  oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
+  oclif>@aws-sdk/client-cloudfront: '-'
+  oclif>@aws-sdk/client-s3: '-'
   qs: ^6.14.0
   sharp: ^0.34.5
 
@@ -2968,9 +2968,6 @@ packages:
 
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
-
-  empty-npm-package@1.0.0:
-    resolution: {integrity: sha512-q4Mq/+XO7UNDdMiPpR/LIBIW1Zl4V0Z6UT9aKGqIAnBCtCb3lvZJM1KbDbdzdC8fKflwflModfjR29Nt0EpcwA==}
 
   encoding@0.1.13:
     resolution: {integrity: sha512-ETBauow1T35Y/WZMkio9jiM0Z5xjHHmJ4XmjZOq1l/dXz3lr2sRn87nJy20RupqSh1F2m3HHPSp8ShIPQJrJ3A==}
@@ -8542,8 +8539,6 @@ snapshots:
 
   emoji-regex@9.2.2: {}
 
-  empty-npm-package@1.0.0: {}
-
   encoding@0.1.13:
     dependencies:
       iconv-lite: 0.6.3
@@ -10644,8 +10639,6 @@ snapshots:
 
   oclif@4.22.50(@types/node@22.19.1):
     dependencies:
-      '@aws-sdk/client-cloudfront': empty-npm-package@1.0.0
-      '@aws-sdk/client-s3': empty-npm-package@1.0.0
       '@inquirer/confirm': 3.2.0
       '@inquirer/input': 2.2.4
       '@inquirer/select': 2.5.0
