@@ -215,7 +215,59 @@ export class OrderedClientElection
 			}
 		} else {
 			this._electionSequenceNumber = initialState.electionSequenceNumber;
-			this.initFromSerializedState(initialState);
+			const members = quorum.getMembers();
+
+			// Try to restore the elected parent
+			let initialParent: ITrackedClient | undefined;
+			if (initialState.electedParentId !== undefined) {
+				const member = members.get(initialState.electedParentId);
+				if (member !== undefined) {
+					const tracked = this.toTrackedClient(initialState.electedParentId, member);
+					if (this.isEligibleFn(tracked)) {
+						initialParent = tracked;
+					}
+				}
+			}
+
+			// Try to restore the elected client
+			let initialClient: ITrackedClient | undefined;
+			if (initialState.electedClientId !== undefined) {
+				const member = members.get(initialState.electedClientId);
+				if (member === undefined) {
+					// Cannot find initially elected client in quorum.
+					this.logger.sendErrorEvent({
+						eventName: "InitialElectedClientNotFound",
+						clientId: initialState.electedClientId,
+					});
+				} else {
+					const tracked = this.toTrackedClient(initialState.electedClientId, member);
+					if (this.isEligibleFn(tracked)) {
+						initialClient = tracked;
+					} else {
+						// Initially elected client is ineligible — elect next eligible after it.
+						const fallback = this.findNextEligibleParentAfter(tracked.sequenceNumber);
+						initialClient = fallback;
+						initialParent = fallback;
+						this.logger.sendErrorEvent({
+							eventName: "InitialElectedClientIneligible",
+							clientId: initialState.electedClientId,
+							electedClientId: initialClient?.clientId,
+						});
+					}
+				}
+			}
+
+			// If no parent was found but we have an interactive client, use it
+			if (
+				initialParent === undefined &&
+				initialClient !== undefined &&
+				initialClient.client.details.type !== summarizerClientType
+			) {
+				initialParent = initialClient;
+			}
+
+			this._electedParent = initialParent;
+			this._electedClient = initialClient;
 		}
 
 		quorum.on("addMember", (clientId: string, client: ISequencedClient) => {
@@ -259,62 +311,6 @@ export class OrderedClientElection
 				this.tryElectingParent(nextParent, sequenceNumber, "RemoveClient");
 			}
 		});
-	}
-
-	private initFromSerializedState(state: ISerializedElection): void {
-		const members = this.quorum.getMembers();
-
-		// Try to restore the elected parent
-		let initialParent: ITrackedClient | undefined;
-		if (state.electedParentId !== undefined) {
-			const member = members.get(state.electedParentId);
-			if (member !== undefined) {
-				const tracked = this.toTrackedClient(state.electedParentId, member);
-				if (this.isEligibleFn(tracked)) {
-					initialParent = tracked;
-				}
-			}
-		}
-
-		// Try to restore the elected client
-		let initialClient: ITrackedClient | undefined;
-		if (state.electedClientId !== undefined) {
-			const member = members.get(state.electedClientId);
-			if (member === undefined) {
-				// Cannot find initially elected client in quorum.
-				this.logger.sendErrorEvent({
-					eventName: "InitialElectedClientNotFound",
-					clientId: state.electedClientId,
-				});
-			} else {
-				const tracked = this.toTrackedClient(state.electedClientId, member);
-				if (this.isEligibleFn(tracked)) {
-					initialClient = tracked;
-				} else {
-					// Initially elected client is ineligible — elect next eligible after it.
-					const fallback = this.findNextEligibleParentAfter(tracked.sequenceNumber);
-					initialClient = fallback;
-					initialParent = fallback;
-					this.logger.sendErrorEvent({
-						eventName: "InitialElectedClientIneligible",
-						clientId: state.electedClientId,
-						electedClientId: initialClient?.clientId,
-					});
-				}
-			}
-		}
-
-		// If no parent was found but we have an interactive client, use it
-		if (
-			initialParent === undefined &&
-			initialClient !== undefined &&
-			initialClient.client.details.type !== summarizerClientType
-		) {
-			initialParent = initialClient;
-		}
-
-		this._electedParent = initialParent;
-		this._electedClient = initialClient;
 	}
 
 	/**
