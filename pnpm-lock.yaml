@@ -15424,9 +15424,6 @@ importers:
       debug:
         specifier: ^4.3.4
         version: 4.4.3(supports-color@8.1.1)
-      mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -15491,6 +15488,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      mocha:
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)
