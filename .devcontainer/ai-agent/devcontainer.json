@@ -22,7 +22,7 @@
 			]
 		}
 	},
-	"postCreateCommand": "scripts/codespace-setup/post-create.sh",
+	"postCreateCommand": "sh scripts/codespace-setup/post-create.sh && source scripts/codespace-setup/ai-setup.sh",
 	"remoteUser": "node",
 	"features": {
 		"git-lfs": "latest"
