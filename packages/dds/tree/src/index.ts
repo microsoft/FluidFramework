@@ -144,6 +144,8 @@ export {
 	type AllowedTypes,
 	type System_Unsafe,
 	type FieldSchemaAlphaUnsafe,
+	type FieldHasDefaultAlphaUnsafe,
+	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,

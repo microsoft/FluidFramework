@@ -459,4 +459,339 @@ describe("withDefault", () => {
 			assert.equal(obj.name, "default");
 		});
 	});
+
+	it("withDefault with undefined as the default value", () => {
+		const TestSchema = factory.objectAlpha("TestObject", {
+			name: SchemaFactoryAlpha.withDefault(factory.optional(factory.string), undefined),
+		});
+
+		const obj1 = new TestSchema({});
+		assert.equal(obj1.name, undefined);
+
+		const obj2 = new TestSchema({ name: "hello" });
+		assert.equal(obj2.name, "hello");
+	});
+
+	describe("withDefaultRecursive", () => {
+		describe("optionalRecursive with static default", () => {
+			it("number", () => {
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptNumber", {
+					count: SchemaFactoryAlpha.withDefaultRecursive(factory.optional(factory.number), 0),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert.equal(node1.count, 0);
+
+				const node2 = new RecursiveNode({ count: 42 });
+				assert.equal(node2.count, 42);
+
+				const node3 = new RecursiveNode({ count: undefined });
+				assert.equal(node3.count, 0);
+			});
+
+			it("string", () => {
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptString", {
+					label: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optional(factory.string),
+						"default-label",
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert.equal(node1.label, "default-label");
+
+				const node2 = new RecursiveNode({ label: "custom" });
+				assert.equal(node2.label, "custom");
+
+				const node3 = new RecursiveNode({ label: undefined });
+				assert.equal(node3.label, "default-label");
+			});
+
+			it("boolean", () => {
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptBoolean", {
+					enabled: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optional(factory.boolean),
+						false,
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert.equal(node1.enabled, false);
+
+				const node2 = new RecursiveNode({ enabled: true });
+				assert.equal(node2.enabled, true);
+
+				const node3 = new RecursiveNode({ enabled: undefined });
+				assert.equal(node3.enabled, false);
+			});
+
+			it("null", () => {
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptNull", {
+					value: SchemaFactoryAlpha.withDefaultRecursive(factory.optional(factory.null), null),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node = new RecursiveNode({});
+				assert.equal(node.value, null);
+			});
+
+			it("multiple fields", () => {
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptMultiple", {
+					count: SchemaFactoryAlpha.withDefaultRecursive(factory.optional(factory.number), 0),
+					label: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optional(factory.string),
+						"untitled",
+					),
+					enabled: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optional(factory.boolean),
+						false,
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node = new RecursiveNode({});
+				assert.equal(node.count, 0);
+				assert.equal(node.label, "untitled");
+				assert.equal(node.enabled, false);
+			});
+
+			it("node type", () => {
+				// Use a non-recursive node as the default to avoid infinite recursion.
+				const Metadata = factory.objectAlpha("OptMetadata", { version: factory.number });
+
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptNode", {
+					meta: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optional(Metadata),
+						() => new Metadata({ version: 1 }),
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert(node1.meta !== undefined);
+				assert.equal(node1.meta.version, 1);
+
+				const node2 = new RecursiveNode({ meta: new Metadata({ version: 42 }) });
+				assert.equal(node2.meta?.version, 42);
+
+				const node3 = new RecursiveNode({ meta: undefined });
+				assert(node3.meta !== undefined);
+				assert.equal(node3.meta.version, 1);
+			});
+		});
+
+		describe("optionalRecursive with generator function default", () => {
+			it("generator is called each time a default is needed", () => {
+				let callCount = 0;
+
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeGenerator", {
+					value: factory.number,
+					score: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optional(factory.number),
+						() => {
+							callCount++;
+							return callCount * 10;
+						},
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({ value: 0 });
+				assert.equal(callCount, 1);
+				assert.equal(node1.score, 10);
+
+				const node2 = new RecursiveNode({ value: 0 });
+				assert.equal(callCount, 2);
+				assert.equal(node2.score, 20);
+			});
+
+			it("explicit value skips the generator", () => {
+				let callCount = 0;
+
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeGeneratorSkip", {
+					value: factory.number,
+					score: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optional(factory.number),
+						() => {
+							callCount++;
+							return 999;
+						},
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node = new RecursiveNode({ value: 1, score: 42 });
+				assert.equal(callCount, 0);
+				assert.equal(node.score, 42);
+			});
+		});
+
+		describe("requiredRecursive with default", () => {
+			it("number", () => {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeReqNumber", {
+					count: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([factory.number]),
+						0,
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert.equal(node1.count, 0);
+
+				const node2 = new RecursiveNode({ count: 42 });
+				assert.equal(node2.count, 42);
+
+				const node3 = new RecursiveNode({ count: undefined });
+				assert.equal(node3.count, 0);
+			});
+
+			it("string", () => {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeReqString", {
+					label: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([factory.string]),
+						"default-label",
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert.equal(node1.label, "default-label");
+
+				const node2 = new RecursiveNode({ label: "custom" });
+				assert.equal(node2.label, "custom");
+
+				const node3 = new RecursiveNode({ label: undefined });
+				assert.equal(node3.label, "default-label");
+			});
+
+			it("boolean", () => {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeReqBoolean", {
+					enabled: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([factory.boolean]),
+						false,
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert.equal(node1.enabled, false);
+
+				const node2 = new RecursiveNode({ enabled: true });
+				assert.equal(node2.enabled, true);
+
+				const node3 = new RecursiveNode({ enabled: undefined });
+				assert.equal(node3.enabled, false);
+			});
+
+			it("null", () => {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeReqNull", {
+					value: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([factory.null]),
+						null,
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node = new RecursiveNode({});
+				assert.equal(node.value, null);
+			});
+
+			it("multiple fields", () => {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeReqMultiple", {
+					count: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([factory.number]),
+						0,
+					),
+					label: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([factory.string]),
+						"untitled",
+					),
+					enabled: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([factory.boolean]),
+						false,
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node = new RecursiveNode({});
+				assert.equal(node.count, 0);
+				assert.equal(node.label, "untitled");
+				assert.equal(node.enabled, false);
+			});
+
+			it("node type", () => {
+				// Use a non-recursive node as the default to avoid infinite recursion.
+				const Metadata = factory.objectAlpha("ReqMetadata", { version: factory.number });
+
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeReqNode", {
+					meta: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.requiredRecursive([Metadata]),
+						() => new Metadata({ version: 1 }),
+					),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node1 = new RecursiveNode({});
+				assert(node1.meta !== undefined);
+				assert.equal(node1.meta.version, 1);
+
+				const node2 = new RecursiveNode({ meta: new Metadata({ version: 42 }) });
+				assert.equal(node2.meta.version, 42);
+
+				const node3 = new RecursiveNode({ meta: undefined });
+				assert(node3.meta !== undefined);
+				assert.equal(node3.meta.version, 1);
+			});
+		});
+
+		describe("cloning behavior", () => {
+			it("generator returning the same recursive instance is cloned for each use", () => {
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeClone", {
+					count: factory.number,
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const sharedChild = new RecursiveNode({ count: 42, child: undefined });
+
+				class Wrapper extends factory.objectAlpha("WrapperClone", {
+					node: SchemaFactoryAlpha.withDefaultRecursive(
+						factory.optionalRecursive([() => RecursiveNode]),
+						() => sharedChild,
+					),
+				}) {}
+
+				const obj1 = new Wrapper({});
+				const obj2 = new Wrapper({});
+
+				assert(obj1.node !== undefined);
+				assert(obj2.node !== undefined);
+				assert(obj1.node !== obj2.node, "Each use should get a cloned instance");
+				assert(obj1.node !== sharedChild, "Should not be the shared instance");
+				assert(obj2.node !== sharedChild, "Should not be the shared instance");
+
+				obj1.node.count = 99;
+				assert.equal(obj1.node.count, 99);
+				assert.equal(obj2.node.count, 42);
+				assert.equal(sharedChild.count, 42, "Original instance should be unchanged");
+			});
+		});
+
+		describe("instance method", () => {
+			it("can use instance withDefaultRecursive method", () => {
+				class RecursiveNode extends factory.objectRecursive("RecursiveNodeInstance", {
+					value: factory.number,
+					label: factory.withDefaultRecursive(factory.optional(factory.string), "default"),
+					child: factory.optionalRecursive([() => RecursiveNode]),
+				}) {}
+
+				const node = new RecursiveNode({ value: 7 });
+				assert.equal(node.value, 7);
+				assert.equal(node.label, "default");
+			});
+		});
+	});
 });

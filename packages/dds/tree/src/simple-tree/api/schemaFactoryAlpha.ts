@@ -53,11 +53,13 @@ import { schemaStatics } from "./schemaStatics.js";
 import { TreeBeta } from "./treeBeta.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
+	FieldSchemaAlphaUnsafe,
+	InsertableObjectFromSchemaRecordAlphaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
+	Unenforced,
 } from "./typesUnsafe.js";
-import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
@@ -136,6 +138,32 @@ export interface SchemaStaticsAlpha {
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
 	>;
+	/**
+	 * {@link SchemaStaticsAlpha.withDefault} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.withDefault} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	withDefaultRecursive: <
+		Kind extends FieldKind,
+		Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		TCustomMetadata = unknown,
+	>(
+		fieldSchema: System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata>,
+		defaultValue: Unenforced<
+			NodeProvider<
+				System_Unsafe.InsertableTreeFieldFromImplicitFieldUnsafe<
+					System_Unsafe.FieldSchemaUnsafe<Kind, Types>
+				>
+			>
+		>,
+	) => FieldSchemaAlphaUnsafe<
+		Kind,
+		Types,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata> & { defaultProvider: DefaultProvider }
+	>;
 }
 
 const withDefault = <
@@ -167,6 +195,11 @@ const withDefault = <
 			insertableValue = TreeBeta.clone(insertableValue as any);
 		}
 
+		// For optional fields with an undefined default, return an empty array (no value).
+		if (insertableValue === undefined) {
+			return [];
+		}
+
 		// Convert the insertable value to an unhydrated flex tree.
 		// For insertable data, this creates a fresh tree structure.
 		const allowedTypeSet = normalizeAllowedTypes(typedFieldSchema.allowedTypes).evaluateSet();
@@ -189,6 +222,8 @@ const withDefault = <
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
 	withDefault,
+
+	withDefaultRecursive: withDefault as SchemaStaticsAlpha["withDefaultRecursive"],
 };
 
 /**
@@ -295,6 +330,56 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
+	 * Alpha version of {@link SchemaFactory.objectRecursive} that supports field defaults via {@link SchemaStaticsAlpha.withDefaultRecursive}.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * Use this instead of {@link SchemaFactory.objectRecursive} when fields use {@link SchemaStaticsAlpha.withDefaultRecursive}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public objectRecursiveAlpha<
+		const Name extends TName,
+		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
+		const TCustomMetadata = unknown,
+	>(
+		name: Name,
+		t: T,
+		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecordAlphaUnsafe<T>,
+		false,
+		T,
+		never,
+		TCustomMetadata
+	> &
+		SimpleObjectNodeSchema<SchemaType.View, TCustomMetadata> &
+		Pick<ObjectNodeSchema, "fields"> {
+		type TScopedName = ScopedSchemaName<TScope, Name>;
+		return this.objectAlpha(
+			name,
+			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
+			options,
+		) as unknown as TreeNodeSchemaClass<
+			TScopedName,
+			NodeKind.Object,
+			System_Unsafe.TreeObjectNodeUnsafe<T, TScopedName>,
+			object & InsertableObjectFromSchemaRecordAlphaUnsafe<T>,
+			false,
+			T,
+			never,
+			TCustomMetadata
+		> &
+			ObjectNodeSchema<
+				ScopedSchemaName<TScope, Name>,
+				RestrictiveStringRecord<ImplicitFieldSchema>,
+				false,
+				TCustomMetadata
+			>;
+	}
+
+	/**
 	 * {@inheritDoc SchemaStatics.leaves}
 	 */
 	public static override readonly leaves = schemaStatics.leaves;
@@ -358,6 +443,16 @@ export class SchemaFactoryAlpha<
 	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
 	 */
 	public static readonly withDefault = schemaStaticsAlpha.withDefault;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
+	 */
+	public readonly withDefaultRecursive = schemaStaticsAlpha.withDefaultRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
+	 */
+	public static readonly withDefaultRecursive = schemaStaticsAlpha.withDefaultRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.

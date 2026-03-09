@@ -141,6 +141,8 @@ export {
 	type AllowedTypesFullFromMixedUnsafe,
 	type UnannotateAllowedTypesListUnsafe,
 	type AnnotateAllowedTypesListUnsafe,
+	type FieldHasDefaultAlphaUnsafe,
+	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type TreeViewAlpha,
 	type TreeViewBeta,
 	type TreeBranch,
