@@ -387,7 +387,7 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 		this.#offTreeChanged();
 	}
 
-	public async invoke(prompt: string): Promise<string> {
+	public async message(prompt: string): Promise<string> {
 		this.#options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
 		if (this.#isDirty) {
 			const stringified = stringifyTree(this.#outerTree.field);

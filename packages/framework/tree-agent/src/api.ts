@@ -358,7 +358,7 @@ export interface TreeAgent {
 	 * @param prompt - The user's question or edit instruction.
 	 * @returns The model's text response.
 	 */
-	invoke(prompt: string): Promise<string>;
+	message(prompt: string): Promise<string>;
 
 	/**
 	 * Unsubscribes from tree change events and releases resources held by the agent.

@@ -621,7 +621,7 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "Done editing" },
 		]);
 		const agent = createTreeAgent(model, view);
-		const result = await agent.invoke("Edit it");
+		const result = await agent.message("Edit it");
 		assert.equal(result, "Done editing");
 		assert.equal(view.root, "Edited");
 		agent.dispose();
@@ -636,7 +636,7 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "All done" },
 		]);
 		const agent = createTreeAgent(model, view);
-		const result = await agent.invoke("Edit twice");
+		const result = await agent.message("Edit twice");
 		assert.equal(result, "All done");
 		assert.equal(view.root, "Second");
 		agent.dispose();
@@ -651,7 +651,7 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "Fixed it" },
 		]);
 		const agent = createTreeAgent(model, view);
-		const result = await agent.invoke("Try editing");
+		const result = await agent.message("Try editing");
 		assert.equal(result, "Fixed it");
 		assert.equal(view.root, "Recovered");
 		agent.dispose();
@@ -667,7 +667,7 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "Gave up" },
 		]);
 		const agent = createTreeAgent(model, view, { maximumSequentialEdits: 2 });
-		const result = await agent.invoke("Edit a lot");
+		const result = await agent.message("Edit a lot");
 		assert.equal(result, "Gave up");
 		// Tree should NOT have merged because too many edits triggered rollback behavior
 		assert.equal(view.root, "Initial");
@@ -684,7 +684,7 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "Oops" },
 		]);
 		const agent = createTreeAgent(model, view);
-		const result = await agent.invoke("Edit");
+		const result = await agent.message("Edit");
 		assert.equal(result, "Oops");
 		assert.equal(view.root, "Initial", "Tree should have been rolled back");
 		agent.dispose();
@@ -699,7 +699,7 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "Fixed" },
 		]);
 		const agent = createTreeAgent(model, view);
-		const result = await agent.invoke("Edit");
+		const result = await agent.message("Edit");
 		assert.equal(result, "Fixed");
 		assert.equal(view.root, "Recovered");
 		agent.dispose();
@@ -743,7 +743,7 @@ describe("createTreeAgent", () => {
 				ctx.root = "Edited";
 			},
 		});
-		const result = await agent.invoke("Edit");
+		const result = await agent.message("Edit");
 		assert.equal(result, "Done");
 		assert.equal(view.root, "Edited");
 		agent.dispose();
@@ -757,11 +757,11 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "Second" },
 		]);
 		const agent = createTreeAgent(model, view);
-		await agent.invoke("First query");
+		await agent.message("First query");
 		// Mutate tree externally
 		view.root = "ExternallyChanged";
-		await agent.invoke("Second query");
-		// The second invoke call should have the tree-changed system message in its history
+		await agent.message("Second query");
+		// The second message call should have the tree-changed system message in its history
 		assert.ok(model.invokeHistory.length >= 2, "Expected at least 2 invoke calls");
 		const secondHistory = model.invokeHistory[1];
 		assert.notEqual(secondHistory, undefined);
@@ -782,10 +782,10 @@ describe("createTreeAgent", () => {
 			{ type: "done", text: "Second response" },
 		]);
 		const agent = createTreeAgent(model, view);
-		await agent.invoke("Edit it");
+		await agent.message("Edit it");
 		assert.equal(view.root, "AgentEdited");
 		// Second call — no external change, only agent's own edit from the previous call
-		await agent.invoke("Follow up");
+		await agent.message("Follow up");
 		const secondHistory = model.invokeHistory[2];
 		assert.notEqual(secondHistory, undefined);
 		const treeChangedMsg = secondHistory?.find(
