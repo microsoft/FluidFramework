@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IPublicClientConfig,
 	IOdspTokens,
@@ -11,7 +10,6 @@ import type {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	fetchTokens,
-	getLoginPageUrl,
 	getOdspScope,
 	pushScope,
 	refreshTokens,
@@ -21,11 +19,6 @@ import { Mutex } from "async-mutex";
 import { debug } from "./debug.js";
 import type { IAsyncCache, IResources } from "./fluidToolRc.js";
 import { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
-import { endResponse, serverListenAndHandle } from "./httpHelpers.js";
-
-const odspAuthRedirectPort = 7000;
-const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
-const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
 // TODO: Add documentation
 // eslint-disable-next-line jsdoc/require-description
@@ -45,17 +38,11 @@ export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 /**
  * @internal
  */
-export type OdspTokenConfig =
-	| {
-			type: "password";
-			username: string;
-			password: string;
-	  }
-	| {
-			type: "browserLogin";
-			navigator: (url: string) => void;
-			redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
-	  };
+export type OdspTokenConfig = {
+	type: "password";
+	username: string;
+	password: string;
+};
 
 /**
  * @internal
@@ -157,12 +144,10 @@ export class OdspTokenManager {
 	private static getCacheKey(
 		isPush: boolean,
 		tokenConfig: OdspTokenConfig,
-		server: string,
 	): IOdspTokenManagerCacheKey {
-		// If we are using password, we should cache the token per user instead of per server
 		return {
 			isPush,
-			userOrServer: tokenConfig.type === "password" ? tokenConfig.username : server,
+			userOrServer: tokenConfig.username,
 		};
 	}
 
@@ -190,12 +175,11 @@ export class OdspTokenManager {
 		};
 		if (!forceReauth && !forceRefresh) {
 			// check and return if it exists without lock
-			const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
+			const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig);
 			const tokensFromCache = await this.getTokenFromCache(cacheKey);
 			if (tokensFromCache) {
 				if (isValidAndNotExpiredToken(tokensFromCache)) {
 					debug(`${cacheKeyToString(cacheKey)}: Token reused from cache `);
-					await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
 					return tokensFromCache;
 				}
 				debug(`${cacheKeyToString(cacheKey)}: Token expired from cache `);
@@ -217,7 +201,7 @@ export class OdspTokenManager {
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
 		const scope = isPush ? pushScope : getOdspScope(server);
-		const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
+		const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig);
 		let tokens: IOdspTokens | undefined;
 		if (!forceReauth) {
 			// check the cache again under the lock (if it is there)
@@ -239,36 +223,16 @@ export class OdspTokenManager {
 		}
 
 		if (tokens) {
-			await this.onTokenRetrievalFromCache(tokenConfig, tokens);
 			return tokens;
 		}
 
-		switch (tokenConfig.type) {
-			case "password": {
-				tokens = await this.acquireTokensWithPassword(
-					server,
-					scope,
-					clientConfig,
-					tokenConfig.username,
-					tokenConfig.password,
-				);
-				break;
-			}
-			case "browserLogin": {
-				tokens = await this.acquireTokensViaBrowserLogin(
-					getLoginPageUrl(server, clientConfig, scope, odspAuthRedirectUri),
-					server,
-					clientConfig,
-					scope,
-					tokenConfig.navigator,
-					tokenConfig.redirectUriCallback,
-				);
-				break;
-			}
-			default: {
-				unreachableCase(tokenConfig);
-			}
-		}
+		tokens = await this.acquireTokensWithPassword(
+			server,
+			scope,
+			clientConfig,
+			tokenConfig.username,
+			tokenConfig.password,
+		);
 
 		if (!isValidAndNotExpiredToken(tokens)) {
 			throw new Error(
@@ -294,66 +258,6 @@ export class OdspTokenManager {
 			password,
 		};
 		return fetchTokens(server, scope, clientConfig, credentials);
-	}
-
-	private async acquireTokensViaBrowserLogin(
-		loginPageUrl: string,
-		server: string,
-		clientConfig: IPublicClientConfig,
-		scope: string,
-		navigator: (url: string) => void,
-		redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
-	): Promise<IOdspTokens> {
-		// Start up a local auth redirect handler service to receive the tokens after login
-		const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
-			// extract code from request URL and fetch the tokens
-			const credentials: TokenRequestCredentials = {
-				grant_type: "authorization_code",
-				code: this.extractAuthorizationCode(req.url),
-				redirect_uri: odspAuthRedirectUri,
-			};
-			const tokens = await fetchTokens(server, scope, clientConfig, credentials);
-
-			// redirect now that the browser is done with auth
-			if (redirectUriCallback) {
-				res.writeHead(301, { Location: await redirectUriCallback(tokens) });
-				await endResponse(res);
-			} else {
-				res.write("Please close the window");
-				await endResponse(res);
-			}
-
-			return tokens;
-		});
-
-		// Now that our local redirect handler is up, navigate the browser to the login page
-		navigator(loginPageUrl);
-
-		// Receive and extract the tokens
-		const odspTokens = await tokenGetter();
-
-		return odspTokens;
-	}
-
-	private async onTokenRetrievalFromCache(
-		config: OdspTokenConfig,
-		tokens: IOdspTokens,
-	): Promise<void> {
-		if (config.type === "browserLogin" && config.redirectUriCallback) {
-			config.navigator(await config.redirectUriCallback(tokens));
-		}
-	}
-
-	private extractAuthorizationCode(relativeUrl: string | undefined): string {
-		if (relativeUrl === undefined) {
-			throw new Error("Failed to get authorization");
-		}
-		const parsedUrl = new URL(relativeUrl, odspAuthRedirectOrigin);
-		const code = parsedUrl.searchParams.get("code");
-		if (code === null || code === undefined) {
-			throw new Error("Failed to get authorization");
-		}
-		return code;
 	}
 }
 
