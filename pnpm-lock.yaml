@@ -11,8 +11,8 @@ overrides:
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
-  oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
-  oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
+  oclif>@aws-sdk/client-cloudfront: '-'
+  oclif>@aws-sdk/client-s3: '-'
   axios@<0.30.0: ^0.30.0
   tar: '>=7.5.7'
 
@@ -40182,8 +40182,6 @@ snapshots:
 
   oclif@4.22.52(@types/node@20.19.30):
     dependencies:
-      '@aws-sdk/client-cloudfront': empty-npm-package@1.0.0
-      '@aws-sdk/client-s3': empty-npm-package@1.0.0
       '@inquirer/confirm': 3.2.0
       '@inquirer/input': 2.3.0
       '@inquirer/select': 2.5.0
