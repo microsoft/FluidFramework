@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/smde",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
@@ -37,7 +37,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",

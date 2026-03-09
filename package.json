@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -163,7 +163,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@changesets/cli": "^2.29.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
 		"@fluid-tools/build-cli": "^0.63.0",
@@ -171,7 +171,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:^",
-		"@fluidframework/test-tools": "^1.0.195075",
+		"@fluidframework/test-tools": "^2.0.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.12.0",
 		"auto-changelog": "^2.4.0",
@@ -354,7 +354,6 @@
 	},
 	"pnpm": {
 		"comments": [
-			"biome is overridden to make review of the upgrade easier. This can be removed once merged.",
 			"node types are forced to a consistent version to avoid conflicts between globals.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
@@ -364,7 +363,6 @@
 			"Security overrides: tar is overridden to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w, GHSA-34x7-hfp2-rc4v). The existing axios@<0.30.0 override resolves to 0.30.2 which is also affected by GHSA-43fc-jf86-j433 (DoS via __proto__), but updating that pre-1.0 override is out of scope here."
 		],
 		"overrides": {
-			"@biomejs/biome": "~2.3.11",
 			"@types/node": "~20.19.30",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",

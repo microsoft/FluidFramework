@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/functional-tests",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Functional tests",
 	"homepage": "https://fluidframework.com",
@@ -57,7 +57,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-controller",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -51,7 +51,7 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
@@ -63,7 +63,7 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/test-tools": "^1.0.195075",
+		"@fluidframework/test-tools": "^2.0.0",
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",

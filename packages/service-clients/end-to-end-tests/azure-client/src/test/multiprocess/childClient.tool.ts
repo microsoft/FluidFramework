@@ -220,9 +220,13 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 // - Fallout: Until the above is addressed, keep the casts in place and document new usages accordingly.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type WorkspaceSchema = {
-	latest?: ReturnType<typeof StateFactory.latest<{ value: string }>>;
+	latest?: ReturnType<typeof StateFactory.latest<{ value: string }, "latest">>;
 	latestMap?: ReturnType<
-		typeof StateFactory.latestMap<{ value: Record<string, string | number> }, string>
+		typeof StateFactory.latestMap<
+			{ value: Record<string, string | number> },
+			string,
+			"latestMap"
+		>
 	>;
 };
 const WorkspaceSchema: WorkspaceSchema = {};
@@ -316,10 +320,7 @@ class MessageHandler {
 		);
 
 		if (latest && !workspace.states.latest) {
-			workspace.add(
-				"latest",
-				StateFactory.latest<{ value: string }>({ local: { value: "initial" } }),
-			);
+			workspace.add("latest", StateFactory.latest({ local: { value: "initial" } }));
 			// Cast required due to optional keys in WorkspaceSchema
 			// TODO: AB#47518
 			const latestState = workspace.states.latest as LatestRaw<{ value: string }>;

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/import-testing",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "import-testing",
 	"homepage": "https://fluidframework.com",
@@ -44,7 +44,7 @@
 		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
