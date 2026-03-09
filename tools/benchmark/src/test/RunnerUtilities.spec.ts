@@ -67,7 +67,10 @@ describe("RunnerUtilities", () => {
 		});
 
 		it("throws for non-integer count measurements", () => {
-			assert.throws(() => formatMeasurementValue({ value: 1.5, units: "count" }));
+			assert.throws(
+				() => formatMeasurementValue({ value: 1.5, units: "count" }),
+				/expected integer value for count measurement/,
+			);
 		});
 
 		it("formats bytes with binary prefix scaling", () => {
