@@ -1,0 +1,31 @@
+// Codespaces profile optimized for AI-agent workflows with extra CLI tooling.
+{
+	"name": "Fluid (AI Agent)",
+	"build": {
+		"dockerfile": "../Dockerfile",
+		"args": {
+			"NODE_VERSION": "18"
+		}
+	},
+	"runArgs": ["--init"],
+	"overrideCommand": false,
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"biomejs.biome",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"mutantdino.resourcemonitor"
+			]
+		}
+	},
+	"postCreateCommand": "sudo apt-get update && sudo apt-get -y install --no-install-recommends jq ripgrep fd-find sqlite3 shellcheck tree && sudo apt-get clean -y && . /usr/local/share/nvm/nvm.sh; nvm install; npm i -g corepack@latest; corepack prepare pnpm@latest --activate; corepack enable",
+	"remoteUser": "node",
+	"features": {
+		"git-lfs": "latest"
+	},
+	"hostRequirements": {
+		"cpus": 8,
+		"memory": "32gb"
+	}
+}

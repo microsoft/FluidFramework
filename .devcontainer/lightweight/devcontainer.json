@@ -1,0 +1,26 @@
+// Lightweight Codespaces profile for docs, API review, and focused package edits.
+{
+	"name": "Fluid (Lightweight)",
+	"build": {
+		"dockerfile": "../Dockerfile",
+		"args": {
+			"NODE_VERSION": "18"
+		}
+	},
+	"runArgs": ["--init"],
+	"overrideCommand": false,
+	"customizations": {
+		"vscode": {
+			"extensions": ["biomejs.biome", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+		}
+	},
+	"postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install; npm i -g corepack@latest; corepack prepare pnpm@latest --activate; corepack enable",
+	"remoteUser": "node",
+	"features": {
+		"git-lfs": "latest"
+	},
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "16gb"
+	}
+}

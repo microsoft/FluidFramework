@@ -1,0 +1,34 @@
+// Codespaces profile for examples/e2e flows that rely on Tinylicious + Docker access.
+{
+	"name": "Fluid (Tinylicious)",
+	"build": {
+		"dockerfile": "../Dockerfile",
+		"args": {
+			"NODE_VERSION": "18"
+		}
+	},
+	"runArgs": ["--init"],
+	"mounts": ["source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"],
+	"overrideCommand": false,
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"biomejs.biome",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"ms-azuretools.vscode-docker",
+				"mutantdino.resourcemonitor"
+			]
+		}
+	},
+	"forwardPorts": [7070],
+	"postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install; npm i -g corepack@latest; corepack prepare pnpm@latest --activate; corepack enable",
+	"remoteUser": "node",
+	"features": {
+		"git-lfs": "latest"
+	},
+	"hostRequirements": {
+		"cpus": 8,
+		"memory": "32gb"
+	}
+}

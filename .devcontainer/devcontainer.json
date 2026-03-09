@@ -2,7 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/blob/master/containers/docker-from-docker/.devcontainer/devcontainer.json
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json
 {
-	"name": "Fluid",
+	"name": "Fluid (Full)",
 	"build": {
 		"dockerfile": "Dockerfile",
 		// Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
