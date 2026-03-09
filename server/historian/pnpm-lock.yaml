@@ -8,10 +8,10 @@ overrides:
   '@fluidframework/eslint-config-fluid': link:../../common/build/eslint-config-fluid
   '@types/node': ^18.17.1
   eslint: ~9.39.2
-  mongodb>@aws-sdk/credential-providers: npm:empty-npm-package@1.0.0
+  mongodb>@aws-sdk/credential-providers: '-'
   nanoid: ^3.3.9
-  oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
-  oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
+  oclif>@aws-sdk/client-cloudfront: '-'
+  oclif>@aws-sdk/client-s3: '-'
   qs: ^6.11.0
   socket.io-parser: ^4.2.4
   sharp: ^0.33.2
@@ -2200,9 +2200,6 @@ packages:
 
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
-
-  empty-npm-package@1.0.0:
-    resolution: {integrity: sha512-q4Mq/+XO7UNDdMiPpR/LIBIW1Zl4V0Z6UT9aKGqIAnBCtCb3lvZJM1KbDbdzdC8fKflwflModfjR29Nt0EpcwA==}
 
   enabled@2.0.0:
     resolution: {integrity: sha512-AKrN98kuwOzMIdAizXGI86UFBoo26CL21UM763y1h/GMSJ4/OHU9k2YlsmBpyScFo/wbLzWQJBMCW4+IO3/+OQ==}
@@ -7716,8 +7713,6 @@ snapshots:
 
   emoji-regex@9.2.2: {}
 
-  empty-npm-package@1.0.0: {}
-
   enabled@2.0.0: {}
 
   encodeurl@1.0.2: {}
@@ -9453,7 +9448,6 @@ snapshots:
       mongodb-connection-string-url: 2.6.0
       socks: 2.8.3
     optionalDependencies:
-      '@aws-sdk/credential-providers': empty-npm-package@1.0.0
       '@mongodb-js/saslprep': 1.1.1
 
   morgan@1.10.0:
@@ -9728,8 +9722,6 @@ snapshots:
 
   oclif@4.22.52(@types/node@18.19.3):
     dependencies:
-      '@aws-sdk/client-cloudfront': empty-npm-package@1.0.0
-      '@aws-sdk/client-s3': empty-npm-package@1.0.0
       '@inquirer/confirm': 3.2.0
       '@inquirer/input': 2.3.0
       '@inquirer/select': 2.5.0

@@ -77,10 +77,10 @@
 			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
 			"@types/node": "^18.17.1",
 			"eslint": "~9.39.2",
-			"mongodb>@aws-sdk/credential-providers": "npm:empty-npm-package@1.0.0",
+			"mongodb>@aws-sdk/credential-providers": "-",
 			"nanoid": "^3.3.9",
-			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
-			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-cloudfront": "-",
+			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.4",
 			"sharp": "^0.33.2"
