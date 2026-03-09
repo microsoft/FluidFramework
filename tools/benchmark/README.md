@@ -24,6 +24,10 @@ Enables performance-testing mode instead of correctness-test mode.
 In performance-testing mode, many iterations are run and measured for each test.
 In correctness-test mode, only one iteration is run and no measurement takes place.
 
+Can also be set using the `FLUID_TEST_PERF_MODE` environment variable.
+If using [Mocha's Parallel Mode](https://mochajs.org/features/parallel-mode/),
+then this must be set using the environment variable.
+
 ### `--v8-expose-gc` (required)
 
 This is necessary so the package can perform explicit garbage collection between tests to help reduce
@@ -50,12 +54,14 @@ If omitted, no file is written (results are still printed to the console).
 
 ### `--parentProcess`
 
-If you pass this **optional** flag, each performance test is run in a forked child process.
+If you pass this **optional** flag when, each performance test is run in a forked child process.
 The forked process runs only that test and propagates the results back to the parent.
 This can have significant overhead (the child process reruns mocha test discovery which may incur significant startup cost,
 in addition to the overhead of forking Node.js), but reduces the influence of previous tests on the state of
 the JIT and heap.
 Test this thoroughly in your scenario to make sure the tradeoffs are worthwhile.
+
+Using `--parentProcess` is currently unsupported with [Mocha's Parallel Mode](https://mochajs.org/features/parallel-mode/).
 
 ## Profiling durations
 

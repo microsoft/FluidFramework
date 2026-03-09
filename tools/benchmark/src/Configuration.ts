@@ -170,7 +170,10 @@ export function qualifiedTitle(
  * When not in performance testing mode, performance tests should be run as correctness tests, and should be
  * adjusted to run quickly (e.g., smaller iteration counts or data sizes).
  *
- * Use the `--perfMode` flag to enable.
+ * Use the `--perfMode` flag or the `FLUID_TEST_PERF_MODE` environment variable to enable.
+ * If the tests are run in a separate process and do not receive the arguments given to the parent,
+ * as is done with Mocha's parallel mode,
+ * the environment variable must be used instead of the flag.
  * @public
  */
 export const isInPerformanceTestingMode =

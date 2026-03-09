@@ -21,7 +21,7 @@ export async function supportParentProcess(
 	isParentProcess: boolean,
 	run: () => CollectedData | Promise<CollectedData>,
 ): Promise<{ result: BenchmarkResult; exception?: Error }> {
-	const inner = isParentProcess ? async () => await parentProcessRun(testFullTitle) : run;
+	const inner = isParentProcess ? async () => await runTestInChildProcess(testFullTitle) : run;
 	return captureResults(inner, isChildProcess ? "Child Process Duration" : undefined);
 }
 
@@ -31,7 +31,7 @@ export async function supportParentProcess(
  * The provided test must write a {@link BenchmarkResult} to stdout.
  * See {@link recordTestResult} which does this for child processes.
  */
-async function parentProcessRun(
+async function runTestInChildProcess(
 	testFullTitle: string,
 ): Promise<CollectedData | Promise<CollectedData>> {
 	// Instead of running the benchmark in this process, create a new process.
