@@ -170,19 +170,12 @@ export interface TreeAgentAssistantMessage {
 export type TreeAgentChatMessage = TreeAgentSystemMessage | TreeAgentUserMessage | TreeAgentAssistantMessage | TreeAgentToolCallMessage | TreeAgentToolResultMessage;
 
 // @alpha
-export type TreeAgentChatResponse = TreeAgentEditResponse | TreeAgentDoneResponse;
+export type TreeAgentChatResponse = TreeAgentToolResponse | TreeAgentDoneResponse;
 
 // @alpha
 export interface TreeAgentDoneResponse {
     readonly text: string;
     readonly type: "done";
-}
-
-// @alpha
-export interface TreeAgentEditResponse {
-    readonly code: string;
-    readonly toolCallId: string;
-    readonly type: "edit";
 }
 
 // @alpha
@@ -201,17 +194,25 @@ export interface TreeAgentSystemMessage {
 
 // @alpha
 export interface TreeAgentToolCallMessage {
-    readonly code: string;
     readonly role: "tool_call";
-    readonly toolCallId: string;
+    readonly toolArgs: Record<string, unknown>;
+    readonly toolCallId?: string;
     readonly toolName: string;
+}
+
+// @alpha
+export interface TreeAgentToolResponse {
+    readonly toolArgs: Record<string, unknown>;
+    readonly toolCallId?: string;
+    readonly toolName: string;
+    readonly type: "tool";
 }
 
 // @alpha
 export interface TreeAgentToolResultMessage {
     readonly content: string;
     readonly role: "tool_result";
-    readonly toolCallId: string;
+    readonly toolCallId?: string;
 }
 
 // @alpha

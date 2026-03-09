@@ -421,13 +421,27 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 				return response.text;
 			}
 
-			// response.type === "edit"
+			// response.type === "tool"
 			this.#history.push({
 				role: "tool_call",
 				toolCallId: response.toolCallId,
-				toolName: this.#editToolName,
-				code: response.code,
+				toolName: response.toolName,
+				toolArgs: response.toolArgs,
 			});
+
+			// Extract the code string from the tool call args.
+			// We expect exactly one string-valued argument (e.g. { js: "..." } or { code: "..." }).
+			const code = extractCodeFromToolArgs(response.toolArgs);
+			if (code === undefined) {
+				rollbackEdits = true;
+				const errorMessage = `Expected a single string argument in the tool call, but received: ${JSON.stringify(response.toolArgs)}`;
+				this.#history.push({
+					role: "tool_result",
+					toolCallId: response.toolCallId,
+					content: errorMessage,
+				});
+				continue;
+			}
 
 			editCount++;
 			if (editCount > this.#maxEditCount) {
@@ -443,7 +457,7 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 
 			const editResult = await applyTreeFunction(
 				queryTree,
-				response.code,
+				code,
 				this.#editor,
 				this.#options?.logger,
 			);
@@ -456,6 +470,18 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 			});
 		}
 	}
+}
+
+/**
+ * Extracts the JavaScript code string from a tool call's args record.
+ * @returns The single string value if args contains exactly one string-valued property, or `undefined` otherwise.
+ */
+function extractCodeFromToolArgs(args: Record<string, unknown>): string | undefined {
+	const stringValues = Object.values(args).filter((v): v is string => typeof v === "string");
+	if (stringValues.length === 1) {
+		return stringValues[0];
+	}
+	return undefined;
 }
 
 /**

@@ -617,7 +617,12 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: `context.root = "Edited";` },
+			{
+				type: "tool",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Edited";` },
+			},
 			{ type: "done", text: "Done editing" },
 		]);
 		const agent = createTreeAgent(model, view);
@@ -631,8 +636,18 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: `context.root = "First";` },
-			{ type: "edit", toolCallId: "c2", code: `context.root = "Second";` },
+			{
+				type: "tool",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "First";` },
+			},
+			{
+				type: "tool",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Second";` },
+			},
 			{ type: "done", text: "All done" },
 		]);
 		const agent = createTreeAgent(model, view);
@@ -646,8 +661,18 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: `throw new Error("boom");` },
-			{ type: "edit", toolCallId: "c2", code: `context.root = "Recovered";` },
+			{
+				type: "tool",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `throw new Error("boom");` },
+			},
+			{
+				type: "tool",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Recovered";` },
+			},
 			{ type: "done", text: "Fixed it" },
 		]);
 		const agent = createTreeAgent(model, view);
@@ -661,9 +686,24 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: `context.root = "One";` },
-			{ type: "edit", toolCallId: "c2", code: `context.root = "Two";` },
-			{ type: "edit", toolCallId: "c3", code: `context.root = "Three";` },
+			{
+				type: "tool",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "One";` },
+			},
+			{
+				type: "tool",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Two";` },
+			},
+			{
+				type: "tool",
+				toolCallId: "c3",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Three";` },
+			},
 			{ type: "done", text: "Gave up" },
 		]);
 		const agent = createTreeAgent(model, view, { maximumSequentialEdits: 2 });
@@ -679,8 +719,18 @@ describe("createTreeAgent", () => {
 		view.initialize("Initial");
 		// First edit succeeds, second fails → rollback
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: `context.root = "Good";` },
-			{ type: "edit", toolCallId: "c2", code: `throw new Error("boom");` },
+			{
+				type: "tool",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Good";` },
+			},
+			{
+				type: "tool",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `throw new Error("boom");` },
+			},
 			{ type: "done", text: "Oops" },
 		]);
 		const agent = createTreeAgent(model, view);
@@ -694,8 +744,18 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: `throw new Error("boom");` },
-			{ type: "edit", toolCallId: "c2", code: `context.root = "Recovered";` },
+			{
+				type: "tool",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `throw new Error("boom");` },
+			},
+			{
+				type: "tool",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Recovered";` },
+			},
 			{ type: "done", text: "Fixed" },
 		]);
 		const agent = createTreeAgent(model, view);
@@ -732,7 +792,7 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: "Code" },
+			{ type: "tool", toolCallId: "c1", toolName: editToolName, toolArgs: { js: "Code" } },
 			{ type: "done", text: "Done" },
 		]);
 		const agent = createTreeAgent(model, view, {
@@ -777,7 +837,12 @@ describe("createTreeAgent", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
-			{ type: "edit", toolCallId: "c1", code: `context.root = "AgentEdited";` },
+			{
+				type: "tool",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "AgentEdited";` },
+			},
 			{ type: "done", text: "Edited" },
 			{ type: "done", text: "Second response" },
 		]);
@@ -796,6 +861,52 @@ describe("createTreeAgent", () => {
 			treeChangedMsg,
 			undefined,
 			"Should NOT have tree-changed notification after agent's own edit",
+		);
+		agent.dispose();
+	});
+
+	it("adds error to history when tool args have no single string value", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{ type: "tool", toolCallId: "c1", toolName: editToolName, toolArgs: { a: 1, b: 2 } },
+			{ type: "done", text: "Gave up" },
+		]);
+		const agent = createTreeAgent(model, view);
+		const result = await agent.message("Edit");
+		assert.equal(result, "Gave up");
+		assert.equal(view.root, "Initial", "Tree should not have changed");
+		// Verify the error was added to history
+		const lastHistory = model.invokeHistory[1];
+		assert.notEqual(lastHistory, undefined);
+		const errorMsg = lastHistory?.find(
+			(m) =>
+				m.role === "tool_result" && m.content.includes("Expected a single string argument"),
+		);
+		assert.ok(errorMsg !== undefined, "Expected error message in history");
+		agent.dispose();
+	});
+
+	it("works with optional toolCallId (undefined)", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{ type: "tool", toolName: editToolName, toolArgs: { js: `context.root = "Edited";` } },
+			{ type: "done", text: "Done" },
+		]);
+		const agent = createTreeAgent(model, view);
+		const result = await agent.message("Edit");
+		assert.equal(result, "Done");
+		assert.equal(view.root, "Edited");
+		// Verify the tool_call message has no toolCallId
+		const lastHistory = model.invokeHistory[1];
+		assert.notEqual(lastHistory, undefined);
+		const toolCallMsg = lastHistory?.find((m) => m.role === "tool_call");
+		assert.ok(toolCallMsg !== undefined);
+		assert.equal(
+			(toolCallMsg as { toolCallId?: string }).toolCallId,
+			undefined,
+			"toolCallId should be undefined",
 		);
 		agent.dispose();
 	});

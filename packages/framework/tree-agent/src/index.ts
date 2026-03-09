@@ -24,7 +24,7 @@ export type {
 	TreeAgentToolCallMessage,
 	TreeAgentToolResultMessage,
 	TreeAgentChatResponse,
-	TreeAgentEditResponse,
+	TreeAgentToolResponse,
 	TreeAgentDoneResponse,
 	TreeAgentOptions,
 	// Existing API

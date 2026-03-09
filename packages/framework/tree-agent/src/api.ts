@@ -280,12 +280,12 @@ export interface TreeAgentAssistantMessage {
 export interface TreeAgentToolCallMessage {
 	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
 	readonly role: "tool_call";
-	/** A unique identifier for this tool invocation, used to correlate with the result. */
-	readonly toolCallId: string;
+	/** An optional identifier for this tool invocation, used to correlate with the result. */
+	readonly toolCallId?: string;
 	/** The name of the tool being called. */
 	readonly toolName: string;
-	/** The JavaScript code to execute against the tree. */
-	readonly code: string;
+	/** The arguments to the tool call, as returned by the LLM. */
+	readonly toolArgs: Record<string, unknown>;
 }
 
 /**
@@ -295,8 +295,8 @@ export interface TreeAgentToolCallMessage {
 export interface TreeAgentToolResultMessage {
 	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
 	readonly role: "tool_result";
-	/** The identifier of the tool call this result corresponds to. */
-	readonly toolCallId: string;
+	/** The identifier of the tool call this result corresponds to, if one was provided. */
+	readonly toolCallId?: string;
 	/** The result content (e.g. the EditResult serialized as text, or the new tree state). */
 	readonly content: string;
 }
@@ -314,16 +314,20 @@ export type TreeAgentChatMessage =
 	| TreeAgentToolResultMessage;
 
 /**
- * The model wants to invoke the edit tool with the provided JavaScript code.
+ * The model wants to invoke a tool with the provided arguments.
+ * @remarks Modeled after LangChain's `ToolCall` type: the `toolArgs` record preserves
+ * the argument names exactly as returned by the LLM.
  * @alpha
  */
-export interface TreeAgentEditResponse {
-	/** Identifies this response as a request to edit the tree. */
-	readonly type: "edit";
-	/** A unique identifier for this tool call, to be included in the subsequent tool result message. */
-	readonly toolCallId: string;
-	/** The JavaScript code to execute against the tree. */
-	readonly code: string;
+export interface TreeAgentToolResponse {
+	/** Identifies this response as a tool invocation request. */
+	readonly type: "tool";
+	/** An optional identifier for this tool call, included only if the LLM returns one. */
+	readonly toolCallId?: string;
+	/** The name of the tool being called. */
+	readonly toolName: string;
+	/** The arguments to the tool call, as returned by the LLM. */
+	readonly toolArgs: Record<string, unknown>;
 }
 
 /**
@@ -341,7 +345,7 @@ export interface TreeAgentDoneResponse {
  * A response from a {@link SharedTreeChatModel} after invoking it with a message history.
  * @alpha
  */
-export type TreeAgentChatResponse = TreeAgentEditResponse | TreeAgentDoneResponse;
+export type TreeAgentChatResponse = TreeAgentToolResponse | TreeAgentDoneResponse;
 
 // #endregion
 
@@ -436,8 +440,8 @@ export interface SharedTreeChatModel {
 	 * @remarks This is the stateless API. The model should not maintain any internal message history;
 	 * all context is provided via the `history` parameter.
 	 * Implementations should convert the {@link TreeAgentChatMessage} array to the underlying LLM's
-	 * message format, invoke the LLM, and return either a {@link TreeAgentEditResponse} (if the model
-	 * wants to call the edit tool) or a {@link TreeAgentDoneResponse} (if the model is done).
+	 * message format, invoke the LLM, and return either a {@link TreeAgentToolResponse} (if the model
+	 * wants to call a tool) or a {@link TreeAgentDoneResponse} (if the model is done).
 	 */
 	invoke?(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
 }

@@ -15,7 +15,6 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import type { BaseMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
 import { tool } from "@langchain/core/tools"; // eslint-disable-line import-x/no-internal-modules
-import { v4 as uuid } from "uuid";
 
 // #region New stateless implementation
 
@@ -68,19 +67,18 @@ class LangchainChatModel implements SharedTreeChatModel {
 		const responseMessage = await runnable.invoke(messages);
 
 		// Parse the response into TreeAgentChatResponse.
-		// Return the first tool call as an edit response regardless of tool name.
-		// If the name doesn't match the expected edit tool, the code will likely fail
-		// in applyTreeFunction, and the error will be fed back to the LLM for self-correction.
+		// Return the first tool call as a tool response, preserving the raw args.
+		// Arg parsing (extracting code) is the agent's responsibility.
 		const firstToolCall =
 			responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0
 				? responseMessage.tool_calls[0]
 				: undefined;
 		if (firstToolCall !== undefined) {
-			const code = extractCodeFromArgs(firstToolCall.args);
 			return {
-				type: "edit",
-				toolCallId: firstToolCall.id ?? uuid(),
-				code,
+				type: "tool",
+				toolCallId: firstToolCall.id,
+				toolName: firstToolCall.name,
+				toolArgs: firstToolCall.args,
 			};
 		}
 
@@ -92,27 +90,6 @@ class LangchainChatModel implements SharedTreeChatModel {
 					: JSON.stringify(responseMessage.content);
 		return { type: "done", text };
 	}
-}
-
-/**
- * Extracts the JavaScript code string from a tool call's args.
- * @remarks Different LLM providers may return the code under different key names
- * (e.g. `js`, `code`, `input`), so this function handles multiple formats:
- * 1. If args is a raw string, use it directly.
- * 2. If args is an object with a single string-valued property, use that value.
- * 3. Otherwise, stringify the entire args object as a fallback.
- */
-function extractCodeFromArgs(args: unknown): string {
-	if (typeof args === "string") {
-		return args;
-	}
-	if (typeof args === "object" && args !== null) {
-		const values = Object.values(args).filter((v): v is string => typeof v === "string");
-		if (values.length === 1 && values[0] !== undefined) {
-			return values[0];
-		}
-	}
-	return JSON.stringify(args);
 }
 
 /**
@@ -142,7 +119,7 @@ function convertToLangchainMessages(history: readonly TreeAgentChatMessage[]): B
 							{
 								id: msg.toolCallId,
 								name: msg.toolName,
-								args: { js: msg.code },
+								args: msg.toolArgs,
 							},
 						],
 					}),
@@ -153,7 +130,7 @@ function convertToLangchainMessages(history: readonly TreeAgentChatMessage[]): B
 				messages.push(
 					new ToolMessage({
 						content: msg.content,
-						tool_call_id: msg.toolCallId,
+						tool_call_id: msg.toolCallId ?? "",
 					}),
 				);
 				break;
