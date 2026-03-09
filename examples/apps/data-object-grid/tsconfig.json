@@ -2,19 +2,14 @@
 	// Use Bundler over Node16 as there are no tests run under Node.js.
 	"extends": "../../../common/build/build-common/tsconfig.bundler.json",
 	"compilerOptions": {
+		"rootDir": "./src",
 		"outDir": "./lib",
+		"types": ["react", "react-dom"],
 		// After the upgrade to React 18 we're getting compilation issues from the .d.ts files of some fluentUi components.
 		// Skipping lib check seems acceptable since this is just an example app.
 		"skipLibCheck": true,
-		"types": [
-			"jest",
-			"puppeteer",
-			"jest-environment-puppeteer",
-			"expect-puppeteer",
-			"react",
-			"react-dom",
-		],
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
+	"exclude": ["src/test/**"],
 }
