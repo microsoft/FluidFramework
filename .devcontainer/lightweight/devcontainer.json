@@ -11,10 +11,18 @@
 	"overrideCommand": false,
 	"customizations": {
 		"vscode": {
-			"extensions": ["biomejs.biome", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+			"extensions": [
+				"biomejs.biome",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"MAI-EngineeringSystems.mai-ai-telemetry",
+				"ms-azure-devops.azure-pipelines",
+				"ms-azuretools.vscode-docker",
+				"mutantdino.resourcemonitor"
+			]
 		}
 	},
-	"postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install; npm i -g corepack@latest; corepack prepare pnpm@latest --activate; corepack enable",
+	"postCreateCommand": "scripts/codespace-setup/post-create.sh",
 	"remoteUser": "node",
 	"features": {
 		"git-lfs": "latest"
