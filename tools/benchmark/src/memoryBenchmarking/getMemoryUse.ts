@@ -340,6 +340,7 @@ interface ProcessedMeasurement {
 	meanBytes: number;
 }
 
+// See note in benchmarkMemoryUse for details.
 let warmedUp = false;
 async function warmupCollectMemoryUseData(): Promise<void> {
 	if (!warmedUp) {
