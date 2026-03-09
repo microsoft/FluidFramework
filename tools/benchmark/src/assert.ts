@@ -12,7 +12,7 @@ import chalk from "chalk";
  * @remarks
  * Only use this for logic errors in the code (i.e., bugs), not for invalid user input or runtime conditions.
  * Use this instead of the node 'assert' package, which requires polyfills to run in browser environments.
-  */
+ */
 export function assert(condition: boolean, message: string): asserts condition {
 	if (!condition) {
 		fail(message);
