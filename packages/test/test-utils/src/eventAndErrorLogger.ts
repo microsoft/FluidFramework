@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
@@ -130,7 +135,6 @@ const primaryEventProps = ({
  *
  * @internal
  */
-
 export function getUnexpectedLogErrorException(
 	logger: IEventAndErrorTrackingLogger | undefined,
 	prefix?: string,
