@@ -19,10 +19,10 @@ import type {
 	ISequencedClient,
 } from "@fluidframework/driver-definitions";
 import {
+	type ITelemetryLoggerExt,
 	LogLevelValue,
 	UsageError,
 	createChildLogger,
-	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { summarizerClientType } from "./summarizerTypes.js";
