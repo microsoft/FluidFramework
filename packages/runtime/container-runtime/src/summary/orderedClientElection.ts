@@ -285,6 +285,7 @@ export class OrderedClientElection
 				// Elect this client: either no one is elected, or a summarizer supersedes an interactive client.
 				this.tryElectingClient(tracked, sequenceNumber, "AddClient");
 			} else if (this._electedParent === undefined && !isSummarizer) {
+				// This is an odd case. If the _electedClient is set, the _electedParent should be as well.
 				this.tryElectingParent(tracked, sequenceNumber, "AddClient");
 			}
 		});
@@ -292,13 +293,16 @@ export class OrderedClientElection
 		quorum.on("removeMember", (clientId: string) => {
 			const sequenceNumber = deltaManager.lastSequenceNumber;
 
+			// Removing the _electedClient. There are 2 possible cases:
 			if (this._electedClient?.clientId === clientId) {
 				if (this._electedParent?.clientId === clientId) {
-					// The elected interactive client left — elect next oldest.
+					// 1. The _electedClient is an interactive client that has left the quorum.
+					// Automatically shift to next oldest client.
 					const nextClient = this.findOldestEligibleParent();
 					this.tryElectingClient(nextClient, sequenceNumber, "RemoveClient");
 				} else {
-					// The elected summarizer left — revert to parent.
+					// 2. The _electedClient is a summarizer that we've been allowing to finish its work.
+					// Let the _electedParent become the _electedClient so that it can start its own summarizer.
 					this.tryElectingClient(
 						this._electedParent,
 						sequenceNumber,
@@ -306,7 +310,9 @@ export class OrderedClientElection
 					);
 				}
 			} else if (this._electedParent?.clientId === clientId) {
-				// The parent left but summarizer is still working — elect next parent.
+				// Removing the _electedParent (but not _electedClient).
+				// Shift to the next oldest parent, but do not replace the _electedClient,
+				// which is a summarizer that is still doing work.
 				const nextParent = this.findOldestEligibleParent();
 				this.tryElectingParent(nextParent, sequenceNumber, "RemoveClient");
 			}
@@ -315,6 +321,8 @@ export class OrderedClientElection
 
 	/**
 	 * Tries changing the elected client, raising an event if it is different.
+	 * Note that this function does no eligibility or suitability checks. If we get here, then
+	 * we will set _electedClient, and we will set _electedParent if this is an interactive client.
 	 */
 	private tryElectingClient(
 		client: ITrackedClient | undefined,
@@ -339,6 +347,7 @@ export class OrderedClientElection
 				true /* forceSend */,
 				reason,
 			);
+			// Changing the elected client. Record the sequence number and note that we have to fire an event.
 			this._electionSequenceNumber = sequenceNumber;
 			this._electedClient = client;
 			change = true;
@@ -351,6 +360,7 @@ export class OrderedClientElection
 				true /* forceSend */,
 				reason,
 			);
+			// Changing the elected parent as well.
 			this._electedParent = client;
 			change = true;
 		}
@@ -449,6 +459,10 @@ export class OrderedClientElection
 		};
 	}
 
+	/**
+	 * (Re-)start election with the oldest client in the quorum. This is called if we need to summarize
+	 * and no client has been elected.
+	 */
 	public resetElectedClient(sequenceNumber: number): void {
 		const firstClient = this.findOldestEligibleParent();
 		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
