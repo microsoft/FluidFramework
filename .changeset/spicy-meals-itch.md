@@ -133,6 +133,45 @@ class GameState extends sf.object("GameState", {
 }) {}
 ```
 
+### Recursive types
+
+`withDefaultRecursive` is available for use inside recursive schemas (defined with `objectRecursive`, `objectRecursiveAlpha`).
+It works the same as `withDefault` but is necessary to avoid TypeScript's circular reference limitations.
+
+```typescript
+class TreeNode extends sf.objectRecursive("TreeNode", {
+	value: sf.number,
+	label: SchemaFactoryAlpha.withDefaultRecursive(sf.optional(sf.string), "untitled"),
+	child: sf.optionalRecursive([() => TreeNode]),
+}) {}
+
+// `label` is optional in the constructor — the default is used when omitted
+const leaf = new TreeNode({ value: 1 });
+// leaf.label === "untitled"
+
+const root = new TreeNode({ value: 0, label: "root", child: leaf });
+// root.label === "root"
+// root.child.label === "untitled"
+```
+
+> **Warning:** Do not use the recursive type itself as a default value — this causes infinite recursion at construction
+> time, since creating the default value would trigger the same default again.
+> Instead, use a primitive or a separate node type as the default:
+>
+> ```typescript
+> const DefaultTag = sf.objectAlpha("Tag", { id: sf.number });
+>
+> class TreeNode extends sf.objectRecursive("TreeNode", {
+> 	value: sf.number,
+> 	// ✅ Safe: default is a non-recursive node
+> 	tag: SchemaFactoryAlpha.withDefaultRecursive(sf.optional(DefaultTag), () => new DefaultTag({ id: 0 })),
+> 	child: sf.optionalRecursive([() => TreeNode]),
+> }) {}
+>
+> // ❌ Unsafe: would cause infinite recursion at construction time
+> // child: SchemaFactoryAlpha.withDefaultRecursive(sf.optionalRecursive([() => TreeNode]), () => new TreeNode({ value: 0 }))
+> ```
+
 ### Type Safety
 
 The default value (or the value returned by a generator function) must be of an allowed type for the field. TypeScript
