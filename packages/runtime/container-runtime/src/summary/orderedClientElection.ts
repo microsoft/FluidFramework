@@ -133,6 +133,18 @@ export interface IOrderedClientElection extends IEventProvider<IOrderedClientEle
 	serialize(): ISerializedElection;
 }
 
+function isSummarizerClient(client: ITrackedClient): boolean {
+	return client.client.details.type === summarizerClientType;
+}
+
+function toTrackedClient(clientId: string, client: ISequencedClient): ITrackedClient {
+	return {
+		clientId,
+		sequenceNumber: client.sequenceNumber,
+		client: client.client as Immutable<IClient>,
+	};
+}
+
 /**
  * Deterministically maintains a currently elected client by reading quorum members directly,
  * excluding ineligible clients. Observes quorum membership events to detect when clients join
@@ -225,7 +237,7 @@ export class OrderedClientElection
 			if (initialState.electedParentId !== undefined) {
 				const member = members.get(initialState.electedParentId);
 				if (member !== undefined) {
-					const tracked = this.toTrackedClient(initialState.electedParentId, member);
+					const tracked = toTrackedClient(initialState.electedParentId, member);
 					if (this.isEligibleFn(tracked)) {
 						initialParent = tracked;
 					}
@@ -243,7 +255,7 @@ export class OrderedClientElection
 						clientId: initialState.electedClientId,
 					});
 				} else {
-					const tracked = this.toTrackedClient(initialState.electedClientId, member);
+					const tracked = toTrackedClient(initialState.electedClientId, member);
 					if (this.isEligibleFn(tracked)) {
 						initialClient = tracked;
 					} else {
@@ -275,14 +287,14 @@ export class OrderedClientElection
 
 		quorum.on("addMember", (clientId: string, client: ISequencedClient) => {
 			const sequenceNumber = deltaManager.lastSequenceNumber;
-			const tracked = this.toTrackedClient(clientId, client);
+			const tracked = toTrackedClient(clientId, client);
 			if (!this.isEligibleFn(tracked)) {
 				return;
 			}
 
 			const isSummarizer = client.client.details.type === summarizerClientType;
 			const electedIsSummarizer =
-				this._electedClient !== undefined && this.isSummarizerClient(this._electedClient);
+				this._electedClient !== undefined && isSummarizerClient(this._electedClient);
 
 			if (this._electedClient === undefined || (!electedIsSummarizer && isSummarizer)) {
 				// Elect this client: either no one is elected, or a summarizer supersedes an interactive client.
@@ -340,7 +352,7 @@ export class OrderedClientElection
 			reason,
 		);
 		let change = false;
-		const isSummarizer = client !== undefined && this.isSummarizerClient(client);
+		const isSummarizer = client !== undefined && isSummarizerClient(client);
 		const prevClient = this._electedClient;
 		if (this._electedClient?.clientId !== client?.clientId) {
 			this.sendPerformanceEvent(
@@ -403,7 +415,7 @@ export class OrderedClientElection
 	private findOldestEligibleParent(): ITrackedClient | undefined {
 		let oldest: ITrackedClient | undefined;
 		for (const [clientId, client] of this.quorum.getMembers()) {
-			const tracked = this.toTrackedClient(clientId, client);
+			const tracked = toTrackedClient(clientId, client);
 			if (
 				this.isEligibleFn(tracked) &&
 				client.client.details.type !== summarizerClientType &&
@@ -422,7 +434,7 @@ export class OrderedClientElection
 	private findNextEligibleParentAfter(sequenceNumber: number): ITrackedClient | undefined {
 		let nextOldest: ITrackedClient | undefined;
 		for (const [clientId, client] of this.quorum.getMembers()) {
-			const tracked = this.toTrackedClient(clientId, client);
+			const tracked = toTrackedClient(clientId, client);
 			if (
 				this.isEligibleFn(tracked) &&
 				client.client.details.type !== summarizerClientType &&
@@ -441,25 +453,13 @@ export class OrderedClientElection
 	private findSummarizerInQuorum(): ITrackedClient | undefined {
 		for (const [clientId, client] of this.quorum.getMembers()) {
 			if (client.client.details.type === summarizerClientType) {
-				const tracked = this.toTrackedClient(clientId, client);
+				const tracked = toTrackedClient(clientId, client);
 				if (this.isEligibleFn(tracked)) {
 					return tracked;
 				}
 			}
 		}
 		return undefined;
-	}
-
-	private isSummarizerClient(client: ITrackedClient): boolean {
-		return client.client.details.type === summarizerClientType;
-	}
-
-	private toTrackedClient(clientId: string, client: ISequencedClient): ITrackedClient {
-		return {
-			clientId,
-			sequenceNumber: client.sequenceNumber,
-			client: client.client as Immutable<IClient>,
-		};
 	}
 
 	/**
@@ -482,7 +482,7 @@ export class OrderedClientElection
 		const currentParentSeq = this._electedParent?.sequenceNumber ?? -1;
 		let nextOldest: ITrackedClient | undefined;
 		for (const [clientId, client] of this.quorum.getMembers()) {
-			const tracked = this.toTrackedClient(clientId, client);
+			const tracked = toTrackedClient(clientId, client);
 			if (
 				this.isEligibleFn(tracked) &&
 				client.client.details.type !== summarizerClientType &&
@@ -499,7 +499,7 @@ export class OrderedClientElection
 	public getAllEligibleClients(): ITrackedClient[] {
 		const result: ITrackedClient[] = [];
 		for (const [clientId, client] of this.quorum.getMembers()) {
-			const tracked = this.toTrackedClient(clientId, client);
+			const tracked = toTrackedClient(clientId, client);
 			if (this.isEligibleFn(tracked)) {
 				result.push(tracked);
 			}
