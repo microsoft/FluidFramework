@@ -4,7 +4,7 @@ This repo includes multiple Codespaces/devcontainer profiles under `.devcontaine
 
 | Profile | File | Best for |
 | --- | --- | --- |
-| `Stabdard` | `.devcontainer/devcontainer.json` | Full-repo development, heavier tasks, and broad day-to-day work. |
+| `Standard` | `.devcontainer/devcontainer.json` | Full-repo development, heavier tasks, and broad day-to-day work. |
 | `Lightweight` | `.devcontainer/lightweight/devcontainer.json` | Docs, API review, and focused edits with lower compute requirements. |
 | `Fluid (AI Agent)` | `.devcontainer/ai-agent/devcontainer.json` | AI-agent-assisted workflows with additional default CLI tooling. |
 
