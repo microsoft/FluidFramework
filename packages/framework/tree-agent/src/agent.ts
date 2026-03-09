@@ -405,64 +405,69 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 		let editCount = 0;
 		let rollbackEdits = false;
 
-		while (true) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const response = await this.#model.invoke!(this.#history);
+		try {
+			while (true) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const response = await this.#model.invoke!(this.#history);
 
-			if (response.role === "assistant") {
-				this.#history.push(response);
-				if (rollbackEdits) {
-					queryTree.branch.dispose();
-				} else {
-					this.#outerTree.branch.merge(queryTree.branch);
-					this.#isDirty = false;
+				if (response.role === "assistant") {
+					this.#history.push(response);
+					if (rollbackEdits) {
+						queryTree.branch.dispose();
+					} else {
+						this.#outerTree.branch.merge(queryTree.branch);
+						this.#isDirty = false;
+					}
+					this.#options?.logger?.log(`## Response\n\n${response.content}\n\n`);
+					return response.content;
 				}
-				this.#options?.logger?.log(`## Response\n\n${response.content}\n\n`);
-				return response.content;
-			}
 
-			// response.role === "tool_call"
-			this.#history.push(response);
+				// response.role === "tool_call"
+				this.#history.push(response);
 
-			// Extract the code string from the tool call args.
-			// We expect exactly one string-valued argument (e.g. { js: "..." } or { code: "..." }).
-			const code = extractCodeFromToolArgs(response.toolArgs);
-			if (code === undefined) {
-				rollbackEdits = true;
-				const errorMessage = `Expected a single string argument in the tool call, but received: ${JSON.stringify(response.toolArgs)}`;
+				// Extract the code string from the tool call args.
+				// We expect exactly one string-valued argument (e.g. { js: "..." } or { code: "..." }).
+				const code = extractCodeFromToolArgs(response.toolArgs);
+				if (code === undefined) {
+					rollbackEdits = true;
+					const errorMessage = `Expected a single string argument in the tool call, but received: ${JSON.stringify(response.toolArgs)}`;
+					this.#history.push({
+						role: "tool_result",
+						toolCallId: response.toolCallId,
+						content: errorMessage,
+					});
+					continue;
+				}
+
+				editCount++;
+				if (editCount > this.#maxEditCount) {
+					rollbackEdits = true;
+					const errorMessage = `The maximum number of edits (${this.#maxEditCount}) for this query has been exceeded.`;
+					this.#history.push({
+						role: "tool_result",
+						toolCallId: response.toolCallId,
+						content: errorMessage,
+					});
+					continue;
+				}
+
+				const editResult = await applyTreeFunction(
+					queryTree,
+					code,
+					this.#editor,
+					this.#options?.logger,
+				);
+
+				rollbackEdits = editResult.type !== "success";
 				this.#history.push({
 					role: "tool_result",
 					toolCallId: response.toolCallId,
-					content: errorMessage,
+					content: editResult.message,
 				});
-				continue;
 			}
-
-			editCount++;
-			if (editCount > this.#maxEditCount) {
-				rollbackEdits = true;
-				const errorMessage = `The maximum number of edits (${this.#maxEditCount}) for this query has been exceeded.`;
-				this.#history.push({
-					role: "tool_result",
-					toolCallId: response.toolCallId,
-					content: errorMessage,
-				});
-				continue;
-			}
-
-			const editResult = await applyTreeFunction(
-				queryTree,
-				code,
-				this.#editor,
-				this.#options?.logger,
-			);
-
-			rollbackEdits = editResult.type !== "success";
-			this.#history.push({
-				role: "tool_result",
-				toolCallId: response.toolCallId,
-				content: editResult.message,
-			});
+		} catch (error) {
+			queryTree.branch.dispose();
+			throw error;
 		}
 	}
 }
