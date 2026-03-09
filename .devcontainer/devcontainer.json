@@ -5,7 +5,7 @@
 	"name": "Standard",
 	"build": {
 		"dockerfile": "Dockerfile",
-		// Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
+		// Update 'NODE_VERSION' to pick the desired Node.js version (default: 24)
 		"args": {
 			"NODE_VERSION": "24"
 		}
