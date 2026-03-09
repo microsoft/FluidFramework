@@ -1,10 +1,10 @@
 // Lightweight Codespaces profile for docs, API review, and focused package edits.
 {
-	"name": "Fluid (Lightweight)",
+	"name": "Lightweight (Review/Docs)",
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
-			"NODE_VERSION": "18"
+			"NODE_VERSION": "24"
 		}
 	},
 	"runArgs": ["--init"],

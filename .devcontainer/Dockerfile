@@ -45,6 +45,11 @@ RUN rm -rf /tmp/library-scripts/
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get -y install --no-install-recommends \
+        fd-find \
+        jq \
+        sqlite3 \
+        shellcheck \
+        tree \
         vim
 
 # Note: To minimize security risk, please do not install Azure CLI and Github CLI in Github Codespaces.

@@ -1,10 +1,10 @@
 // Codespaces profile optimized for AI-agent workflows with extra CLI tooling.
 {
-	"name": "Fluid (AI Agent)",
+	"name": "AI-enabled",
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
-			"NODE_VERSION": "18"
+			"NODE_VERSION": "24"
 		}
 	},
 	"runArgs": ["--init"],
@@ -15,17 +15,22 @@
 				"biomejs.biome",
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
+				"MAI-EngineeringSystems.mai-ai-telemetry",
+				"ms-azure-devops.azure-pipelines",
+				"ms-azuretools.vscode-docker",
 				"mutantdino.resourcemonitor"
 			]
 		}
 	},
-	"postCreateCommand": "sudo apt-get update && sudo apt-get -y install --no-install-recommends jq ripgrep fd-find sqlite3 shellcheck tree && sudo apt-get clean -y && . /usr/local/share/nvm/nvm.sh; nvm install; npm i -g corepack@latest; corepack prepare pnpm@latest --activate; corepack enable",
+	"postCreateCommand": "scripts/codespace-setup/post-create.sh",
 	"remoteUser": "node",
 	"features": {
 		"git-lfs": "latest"
 	},
+	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
+	// can be lengthy enough that it's convenient.
 	"hostRequirements": {
-		"cpus": 8,
-		"memory": "32gb"
+		"cpus": 16,
+		"memory": "64gb"
 	}
 }
