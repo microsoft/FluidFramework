@@ -169,7 +169,7 @@ function parseSize(size: unknown): number {
 }
 
 /** Extract a LineTag from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time. */
-function parseLineTag(
+export function parseLineTag(
 	attrs?: Record<string, unknown>,
 ): FormattedTextAsTree.LineTag | undefined {
 	if (!attrs) return undefined;
@@ -267,7 +267,7 @@ function formatToQuillAttrs(
  * This is used to sync Quill's display when the tree changes externally
  * (e.g., from a remote collaborator's edit).
  */
-function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
+export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 	const ops: QuillDeltaOp[] = [];
 	// Accumulator for current run of identically-formatted text
 	let text = "";

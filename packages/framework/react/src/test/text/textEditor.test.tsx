@@ -21,6 +21,8 @@ import {
 	type FormattedEditorHandle,
 	parseCssFontFamily,
 	parseCssFontSize,
+	parseLineTag,
+	buildDeltaFromTree,
 	// Allow import of files being tested
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../text/formatted/quillFormattedView.js";
@@ -962,132 +964,69 @@ describe("textEditor", () => {
 				});
 			}
 		});
-	});
-
-	// Line-level formatting tests: exercises the tree operations that the Quill
-	// delta handler performs (swap newline → line atom, insert implicit trailing
-	// newline, clear header). Quill always ends documents with a trailing \n,
-	// so tests start with that state.
-	describe("line tag round-trip through rendering", () => {
-		function createPlainFormat(): FormattedTextAsTree.CharacterFormat {
-			return new FormattedTextAsTree.CharacterFormat({
-				bold: false,
-				italic: false,
-				underline: false,
-				size: 12,
-				font: "Arial",
+		describe("parseLineTag", () => {
+			it("return lineTag for valid header", () => {
+				const result = parseLineTag({ header: 1 });
+				assert.ok(result, "Expected a line tag for header 1");
+				assert.equal(result.value, "h1", "Expected tag to be h1");
 			});
-		}
-
-		for (const reactStrictMode of [false, true]) {
-			describe(`StrictMode: ${reactStrictMode}`, () => {
-				it("swap trailing newline to h1 line atom", () => {
-					// Quill starts with "Hello\n". Applying header 1 retains to the \n
-					// then swaps it to a StringLineAtom — removeRange + insertWithFormattingAt.
-					const { tree: text } = createFormattedTreeView("Hello\n");
-					const content = <FormattedMainView root={toPropTreeNode(text)} />;
-					const rendered = render(content, { reactStrictMode });
-
-					text.removeRange(5, 6);
-					text.insertWithFormattingAt(5, [
-						new FormattedTextAsTree.StringAtom({
-							content: new FormattedTextAsTree.StringLineAtom({
-								tag: FormattedTextAsTree.LineTag("h1"),
-							}),
-							format: createPlainFormat(),
-						}),
-					]);
-
-					rendered.rerender(content);
-					const el = rendered.container.querySelector("h1");
-					assert.ok(el, "Expected <h1> tag");
-					assert.match(el.textContent ?? "", /Hello/);
-				});
-
-				it("insert line atom at end for implicit trailing newline", () => {
-					// Tree has no trailing \n. Quill retains past end with { list: "bullet" },
-					// so the delta handler inserts a new StringLineAtom.
-					const { tree: text } = createFormattedTreeView("Item");
-					const content = <FormattedMainView root={toPropTreeNode(text)} />;
-					const rendered = render(content, { reactStrictMode });
-
-					text.insertWithFormattingAt(4, [
-						new FormattedTextAsTree.StringAtom({
-							content: new FormattedTextAsTree.StringLineAtom({
-								tag: FormattedTextAsTree.LineTag("li"),
-							}),
-							format: createPlainFormat(),
-						}),
-					]);
-
-					rendered.rerender(content);
-					const el = rendered.container.querySelector("li");
-					assert.ok(el, "Expected <li> tag");
-					assert.match(el.textContent ?? "", /Item/);
-				});
-
-				it("insert newline with line tag creates new header line", () => {
-					// Pressing Enter at the end of a header line in Quill sends
-					// { insert: "\n", attributes: { header: 1 } }. The delta handler
-					// calls insertWithFormattingAt with a StringLineAtom.
-					const { tree: text } = createFormattedTreeView("Hello\nWorld");
-					const content = <FormattedMainView root={toPropTreeNode(text)} />;
-					const rendered = render(content, { reactStrictMode });
-
-					// Insert a \n with h1 line tag after "Hello" (index 5)
-					text.insertWithFormattingAt(5, [
-						new FormattedTextAsTree.StringAtom({
-							content: new FormattedTextAsTree.StringLineAtom({
-								tag: FormattedTextAsTree.LineTag("h1"),
-							}),
-							format: createPlainFormat(),
-						}),
-					]);
-
-					rendered.rerender(content);
-					const el = rendered.container.querySelector("h1");
-					assert.ok(el, "Expected <h1> tag");
-					assert.match(el.textContent ?? "", /Hello/);
-					assert.match(rendered.baseElement.textContent ?? "", /World/);
-				});
-				it("clear header swaps line atom back to plain newline", () => {
-					// Quill clears a header by sending { retain: N }, { retain: 1, attributes: { header: null } }.
-					// parseLineTag returns undefined for { header: null }, so the delta handler
-					// detects the existing StringLineAtom and swaps it back to a plain \n.
-					const { tree: text } = createFormattedTreeView("Hello\n");
-					const content = <FormattedMainView root={toPropTreeNode(text)} />;
-
-					// Swap trailing \n to h1 line atom (simulates applying header)
-					text.removeRange(5, 6);
-					text.insertWithFormattingAt(5, [
-						new FormattedTextAsTree.StringAtom({
-							content: new FormattedTextAsTree.StringLineAtom({
-								tag: FormattedTextAsTree.LineTag("h1"),
-							}),
-							format: createPlainFormat(),
-						}),
-					]);
-
-					const rendered = render(content, { reactStrictMode });
-					assert.ok(rendered.container.querySelector("h1"), "Initially: has <h1>");
-
-					// Simulate clearing: remove the StringLineAtom and insert a plain \n
-					// (what the delta handler now does for { retain: 1, attributes: { header: null } })
-					text.removeRange(5, 6);
-					text.insertAt(5, "\n");
-
-					const atom = text.charactersWithFormatting()[5];
-					assert.ok(atom, "Expected atom at index 5");
-					assert(
-						atom.content instanceof FormattedTextAsTree.StringTextAtom,
-						"After clear: atom should be StringTextAtom, not StringLineAtom",
-					);
-
-					rendered.rerender(content);
-					assert.ok(!rendered.container.querySelector("h1"), "After clear: no <h1>");
-					assert.match(rendered.baseElement.textContent ?? "", /Hello/);
-				});
+			it("returns lineTag for valid bullet list", () => {
+				const result = parseLineTag({ list: "bullet" });
+				assert.ok(result, "Expected a line tag for bullet list");
+				assert.equal(result.value, "li", "Expected tag to be li)");
 			});
-		}
+			// Tests for unsupported parameters - should return undefined, not throw an error.
+			// Also used for when formatting is stripped from a newline and it becomes a default newline
+			it("returns undefined for unsupported parameter", () => {
+				assert.equal(
+					parseLineTag({ header: 7 }),
+					undefined,
+					"Expected undefined for unsupported lineTag",
+				);
+			});
+		});
+		// tests quillFormattedview conversion that feeds into quill delta generation,
+		// specifically for line atoms which have special handling for headers and lists.
+		// Quill always has a trailing newline, so these tests set up the string with a newline,
+		// then replace it with a line atom with the appropriate tag.
+		describe("buildDeltaFromTree with line Atoms", () => {
+			it("emits header attribute for h1 line atom", () => {
+				const { tree } = createFormattedTreeView("Hello\n");
+				tree.removeRange(5, 6);
+				tree.insertWithFormattingAt(5, [
+					new FormattedTextAsTree.StringAtom({
+						content: new FormattedTextAsTree.StringLineAtom({
+							tag: FormattedTextAsTree.LineTag("h1"),
+						}),
+						format: createPlainFormat(),
+					}),
+				]);
+
+				const ops = buildDeltaFromTree(tree);
+				const lineOp = ops.find((op) => op.insert === "\n" && op.attributes?.header === 1);
+				assert.ok(lineOp, "Expected { insert : `\\n`, attributes: { header: 1 } } in delta");
+			});
+			it("emits header attribute for li line atom", () => {
+				const { tree } = createFormattedTreeView("item\n");
+				tree.removeRange(4, 5);
+				tree.insertWithFormattingAt(4, [
+					new FormattedTextAsTree.StringAtom({
+						content: new FormattedTextAsTree.StringLineAtom({
+							tag: FormattedTextAsTree.LineTag("li"),
+						}),
+						format: createPlainFormat(),
+					}),
+				]);
+
+				const ops = buildDeltaFromTree(tree);
+				const lineOp = ops.find(
+					(op) => op.insert === "\n" && op.attributes?.list === "bullet",
+				);
+				assert.ok(
+					lineOp,
+					"Expected { insert : `\\n`, attributes: { list: 'bullet' } } in delta",
+				);
+			});
+		});
 	});
 });
