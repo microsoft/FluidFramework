@@ -165,47 +165,34 @@ describe("Reporter", () => {
 	});
 
 	describe("recordTestResult", () => {
-		it("calls console.error for error results", () => {
-			const errors: unknown[] = [];
+		function captureConsoleErrors(fn: () => void): string[] {
 			const original = console.error;
+			const errors: string[] = [];
 			console.error = (...args: unknown[]) => errors.push(args.join(" "));
 			try {
-				recordTestResult(undefined, errorEntry);
+				fn();
 			} finally {
 				console.error = original;
 			}
-			// console.error was called
+			return errors;
+		}
+
+		it("calls console.error for error results", () => {
+			const errors = captureConsoleErrors(() => recordTestResult(undefined, errorEntry));
 			assert(errors.length > 0);
-			// error text appears in output
-			assert(errors.some((e) => String(e).includes("Example Error Text")));
+			assert(errors.some((e) => e.includes("Example Error Text")));
 		});
 
 		it("does not call console.error for success results", () => {
-			const errors: unknown[] = [];
-			const original = console.error;
-			console.error = (...args: unknown[]) => errors.push(args);
-			try {
-				recordTestResult(undefined, successEntry);
-			} finally {
-				console.error = original;
-			}
+			const errors = captureConsoleErrors(() => recordTestResult(undefined, successEntry));
 			assert.deepEqual(errors, []);
 		});
 
 		it("includes the full path in the error message", () => {
-			const errors: unknown[] = [];
-			const original = console.error;
-			console.error = (...args: unknown[]) => errors.push(args.join(" "));
 			const parent: ReportPath = { report: { suiteName: "MySuite" } };
-			try {
-				recordTestResult(parent, errorEntry);
-			} finally {
-				console.error = original;
-			}
+			const errors = captureConsoleErrors(() => recordTestResult(parent, errorEntry));
 			const combined = errors.join(" ");
-			// suite name
 			assert.match(combined, /MySuite/);
-			// benchmark name
 			assert.match(combined, /Example Failing Test/);
 		});
 	});

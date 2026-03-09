@@ -34,8 +34,7 @@ import { isChildProcess } from "../Configuration.js";
  * Mocha expects the `exports` of the reporter module to be a constructor accepting a `Mocha.Runner`, so we
  * match that here.
  *
- * This reporter takes output from mocha events and sends them to BenchmarkReporter.
- * This logic is coupled to BenchmarkRunner, and depends on how it emits the actual benchmark data.
+ * This reporter listens to mocha events and builds a report from benchmark data emitted by each test via `emitResultsMocha`.
  *
  * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
  */
@@ -65,8 +64,8 @@ module.exports = class {
 				}
 			})
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
-				// Forward results from `benchmark end` to BenchmarkReporter.
-				// In non-parallel mode, we can subscribe to events on the test object, so do that if possible.
+				// In non-parallel mode, subscribe to the `benchmark end` event on the test object.
+				// In parallel mode, `on` does not exist, so the data is captured another way, see the `EVENT_TEST_END` handler below.
 				if ("on" in test) {
 					test.on("benchmark end", (benchmark: BenchmarkResult) => {
 						// There are (at least) two ways a benchmark can fail:

@@ -34,7 +34,7 @@ export interface Timer<T = unknown> {
 }
 
 /**
- * A place to collect all supported timer implementations for the current platform.
+ * Supported timer implementations for the current platform.
  */
 const timers: Timer[] = [];
 {
@@ -60,7 +60,7 @@ const timers: Timer[] = [];
 }
 
 // We could add more timer fallbacks, like a Date.now() based timer,
-// but all platforms we care about support one of the better ones so there is no need for now.
+// but all platforms we care about support one of the better options.
 
 if (timers.length === 0) {
 	throw new Error("Unable to find a working timer.");

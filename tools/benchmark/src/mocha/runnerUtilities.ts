@@ -20,7 +20,7 @@ export async function emitResultsMocha(
 	// Only emit results in perfMode
 	if (isInPerformanceTestingMode) {
 		test.emit("benchmark end", result);
-		// If test is running in parallel mode, the reporter can not subscribe to events on tests.
+		// If test is running in parallel mode, the reporter cannot subscribe to events on tests.
 		// It can however access the test body, so cramming the results in there makes them usable on the reporter side.
 		test.body = JSON.stringify(result);
 	}

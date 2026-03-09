@@ -28,8 +28,8 @@ export async function supportParentProcess(
 /**
  * Runs the specified test in a child process and returns the results.
  * @remarks
- * The provided test must write a {@link BenchmarkResult} to the console.
- * See {@link BenchmarkReporter.recordTestResult} which does this for child processes.
+ * The provided test must write a {@link BenchmarkResult} to stdout.
+ * See {@link recordTestResult} which does this for child processes.
  */
 async function parentProcessRun(
 	testFullTitle: string,

@@ -7,13 +7,12 @@ import chalk from "chalk";
 
 /**
  * Asserts the specified condition.
- *
- * @param condition - The condition that should be true, if the condition is false an error will be thrown.
- * Only use this API when `false` indicates a logic error in the problem and thus a bug that should be fixed.
+ * @param condition - The condition that should be true. An error is thrown if it is false.
  * @param message - The message to include in the error when the condition does not hold.
  * @remarks
+ * Only use this for logic errors in the code (i.e., bugs), not for invalid user input or runtime conditions.
  * Use this instead of the node 'assert' package, which requires polyfills to run in browser environments.
- */
+  */
 export function assert(condition: boolean, message: string): asserts condition {
 	if (!condition) {
 		fail(message);

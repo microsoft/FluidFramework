@@ -101,7 +101,7 @@ export interface ReportEntry {
  * A suite containing benchmark results and/or child suites.
  * @remarks
  * When using mocha, this corresponds to the contents of a describe block,
- * which may include both it blocks and nested describe blocks.
+ * which may include both `it` blocks and nested `describe` blocks.
  * @public
  */
 export interface ReportSuite {
@@ -114,7 +114,7 @@ export interface ReportSuite {
  * @remarks
  * This only includes non-empty suites.
  * When using mocha, this corresponds to the contents of a describe block
- * (or the implicit top level suite).
+ * (or the implicit top level suite),
  * which may include both `it` blocks and nested `describe` blocks.
  * @public
  */

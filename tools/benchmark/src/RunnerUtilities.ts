@@ -44,9 +44,9 @@ export function geometricMean(values: number[]): number {
 			// A negative value is thus better than infinitely good, which we can approximate as infinitely good,
 			// and thus 0.
 			// Generally, tests should not produce 0 if they want to use the geometric mean for anything,
-			// but we don't have a simply way to know if the user cares about the geometric mean,
+			// but we don't have a simple way to know if the user cares about the geometric mean,
 			// nor a way to know if 0 or negative values are valid.
-			// Thus, for now, we simply cap the geometric mean at 0 for these cases to ensure negative values don't produce a seemingly meaningful but actually misleading result.
+			// Thus, for now, we cap the geometric mean at 0 for these cases to ensure negative values don't produce a seemingly meaningful but actually misleading result.
 			// As this happens at the end of an often very slow data collection,
 			// we really don't want to throw here and lose that data, which contains everything the user would need to see why the geometric mean is 0.
 			return 0;
