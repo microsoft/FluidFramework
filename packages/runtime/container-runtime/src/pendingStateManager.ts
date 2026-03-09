@@ -868,16 +868,20 @@ export class PendingStateManager implements IDisposable {
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
 
-		// Derive the batchId for any ID Allocation batch and set it on the Outbox,
-		// so the ID allocation batch will be flushed with this batchId during replay.
+		// === Phase 1: Pre-scan ===
+		// Scan pending messages to derive a deterministic batchId for any ID Allocation batch.
+		// This must happen before replay because the ID alloc batch will be flushed during replay
+		// and needs its batchId set on the Outbox beforehand.
 		this.deriveIdAllocationBatchId(initialPendingMessagesCount, committingStagedBatches);
 
 		let seenStagedBatch = false;
 
-		// === Phase 3: Dequeue and replay, skipping ID Allocation batches ===
+		// === Phase 2: Dequeue and replay ===
 		// Process exactly `initialPendingMessagesCount` items in the queue as it represents the
 		// number of messages that were pending when we connected. This is important because the
 		// `reSubmitFn` might add more items in the queue which must not be replayed.
+		// ID Allocation batches are skipped here — fresh ID alloc ops were already submitted
+		// by submitIdAllocationOpIfNeeded before replay started.
 		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
@@ -898,9 +902,7 @@ export class PendingStateManager implements IDisposable {
 			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
-			// Skip ID Allocation batches during replay. Fresh ID alloc ops were already submitted
-			// by submitIdAllocationOpIfNeeded before replay started, and the resubmit handler for
-			// IdAllocation is a no-op anyway (see ContainerRuntime.reSubmitCore).
+			// Skip ID Allocation batches (handled by submitIdAllocationOpIfNeeded before replay).
 			if (
 				hasTypicalRuntimeOp(pendingMessage) &&
 				pendingMessage.runtimeOp.type === ContainerMessageType.IdAllocation
