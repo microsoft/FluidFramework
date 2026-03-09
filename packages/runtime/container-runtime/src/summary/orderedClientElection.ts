@@ -321,12 +321,24 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		reason: string,
 	): void {
-		this.sendPerformanceEvent("TryElectingClient", client, sequenceNumber, false, reason);
+		this.sendPerformanceEvent(
+			"TryElectingClient",
+			client,
+			sequenceNumber,
+			false /* forceSend */,
+			reason,
+		);
 		let change = false;
 		const isSummarizer = client !== undefined && this.isSummarizerClient(client);
 		const prevClient = this._electedClient;
 		if (this._electedClient?.clientId !== client?.clientId) {
-			this.sendPerformanceEvent("ClientElected", client, sequenceNumber, true, reason);
+			this.sendPerformanceEvent(
+				"ClientElected",
+				client,
+				sequenceNumber,
+				true /* forceSend */,
+				reason,
+			);
 			this._electionSequenceNumber = sequenceNumber;
 			this._electedClient = client;
 			change = true;
@@ -336,7 +348,7 @@ export class OrderedClientElection
 				"InteractiveClientElected",
 				client,
 				sequenceNumber,
-				true,
+				true /* forceSend */,
 				reason,
 			);
 			this._electedParent = client;
@@ -352,9 +364,21 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		reason: string,
 	): void {
-		this.sendPerformanceEvent("TryElectingParent", client, sequenceNumber, false, reason);
+		this.sendPerformanceEvent(
+			"TryElectingParent",
+			client,
+			sequenceNumber,
+			false /* forceSend */,
+			reason,
+		);
 		if (this._electedParent?.clientId !== client?.clientId) {
-			this.sendPerformanceEvent("ParentElected", client, sequenceNumber, true, reason);
+			this.sendPerformanceEvent(
+				"ParentElected",
+				client,
+				sequenceNumber,
+				true /* forceSend */,
+				reason,
+			);
 			this._electedParent = client;
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
