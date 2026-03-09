@@ -69,8 +69,8 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"mongodb's optional dep on @aws-sdk/credential-providers is not needed and brings in a large transitive dependency tree. Override with empty package, following the same pattern as oclif's AWS deps.",
-			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
+			"mongodb>@aws-sdk/credential-providers: not needed and brings in a large transitive dependency tree (including fast-xml-parser). Dropped with '-'.",
+			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies with '-'. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint is overridden to v9 for flat config support across all packages"
 		],
 		"overrides": {
