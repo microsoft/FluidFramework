@@ -18,35 +18,42 @@ import {
 import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Ordered Client Collection", () => {
+	const mockLogger = new MockLogger();
+	const testQuorum = new TestQuorumClients();
+
+	let currentSequenceNumber: number = 0;
+	const testDeltaManager = {
+		get lastSequenceNumber() {
+			return currentSequenceNumber;
+		},
+	};
+
+	function addClient(clientId: string, sequenceNumber: number, interactive = true) {
+		if (sequenceNumber > currentSequenceNumber) {
+			currentSequenceNumber = sequenceNumber;
+		}
+		const details: ISequencedClient["client"]["details"] = { capabilities: { interactive } };
+		const c: Partial<ISequencedClient["client"]> = { details };
+		const client: ISequencedClient = {
+			client: c as ISequencedClient["client"],
+			sequenceNumber,
+		};
+		testQuorum.addClient(clientId, client);
+	}
+	function removeClient(clientId: string, opCount = 1) {
+		currentSequenceNumber += opCount;
+		testQuorum.removeClient(clientId);
+	}
+
+	afterEach(() => {
+		mockLogger.clear();
+		testQuorum.reset();
+		currentSequenceNumber = 0;
+	});
+
 	describe("Ordered Client Election", () => {
 		let election: IOrderedClientElection;
 		let electionEventCount = 0;
-		const mockLogger = new MockLogger();
-		const testQuorum = new TestQuorumClients();
-
-		let currentSequenceNumber: number = 0;
-		const testDeltaManager = {
-			get lastSequenceNumber() {
-				return currentSequenceNumber;
-			},
-		};
-
-		function addClient(clientId: string, sequenceNumber: number, interactive = true) {
-			if (sequenceNumber > currentSequenceNumber) {
-				currentSequenceNumber = sequenceNumber;
-			}
-			const details: ISequencedClient["client"]["details"] = { capabilities: { interactive } };
-			const c: Partial<ISequencedClient["client"]> = { details };
-			const client: ISequencedClient = {
-				client: c as ISequencedClient["client"],
-				sequenceNumber,
-			};
-			testQuorum.addClient(clientId, client);
-		}
-		function removeClient(clientId: string, opCount = 1) {
-			currentSequenceNumber += opCount;
-			testQuorum.removeClient(clientId);
-		}
 		function createOrderedClientElection(
 			initialClients: [id: string, seq: number, int: boolean][] = [],
 			initialState?: ISerializedElection,
@@ -123,9 +130,6 @@ describe("Ordered Client Collection", () => {
 		}
 
 		afterEach(() => {
-			mockLogger.clear();
-			testQuorum.reset();
-			currentSequenceNumber = 0;
 			electionEventCount = 0;
 		});
 
