@@ -288,31 +288,32 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
 	// TODO:Performance: Optimize this loop by adding an API to get runs to FormattedTextAsTree.Tree, and implementing that using cursors.
 	// Something like `getUniformRun(startIndex, maxLength): number` and `substring(startIndex, length): string`.
 	for (const atom of root.charactersWithFormatting()) {
-		const lineTag =
-			atom.content instanceof FormattedTextAsTree.StringLineAtom
-				? atom.content.tag.value
-				: undefined;
-		if (lineTag === undefined) {
-			const a = formatToQuillAttrs(atom.format);
-			const k = JSON.stringify(a);
-			if (k === key) {
-				// Same formatting as previous character - extend current run
-				text += atom.content.content;
-			} else {
-				// Different formatting - push current run and start new one
-				pushRun();
-				text = atom.content.content;
-				attrs = a;
-				key = k;
-			}
-		} else {
+		const attribute = formatToQuillAttrs(atom.format);
+
+		if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
+			// Merge line-specific attributes (header/list) into the format
+			const lineTag = atom.content.tag.value;
+			Object.assign(attribute, lineTagToQuillAttrs[lineTag as LineTagValue]);
+
+			// Line atoms always break the current run and emit a newline
 			pushRun();
 			text = "";
 			key = "";
-			ops.push({
-				insert: "\n",
-				attributes: lineTagToQuillAttrs[lineTag as LineTagValue],
-			});
+			const op: QuillDeltaOp = { insert: "\n" };
+			if (Object.keys(attribute).length > 0) op.attributes = attribute;
+			ops.push(op);
+		} else {
+			const stringifiedAttr = JSON.stringify(attribute);
+			if (stringifiedAttr === key) {
+				// Same formatting as previous character - extend run
+				text += atom.content.content;
+			} else {
+				// Different formatting - push previous run and start a new one
+				pushRun();
+				text = atom.content.content;
+				attrs = attribute;
+				key = stringifiedAttr;
+			}
 		}
 	}
 
