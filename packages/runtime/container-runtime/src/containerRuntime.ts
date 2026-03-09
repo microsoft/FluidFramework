@@ -1794,7 +1794,9 @@ export class ContainerRuntime
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
 				setIdAllocationBatchId: (batchId: string) => {
-					this.outbox.setIdAllocationBatchId(batchId);
+					if (this.batchIdTrackingEnabled) {
+						this.outbox.setIdAllocationBatchId(batchId);
+					}
 				},
 			},
 			pendingRuntimeState?.pending,
