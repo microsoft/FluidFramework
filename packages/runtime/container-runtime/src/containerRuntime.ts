@@ -71,7 +71,6 @@ import {
 	Lazy,
 	LazyPromise,
 	PromiseCache,
-	delay,
 	fail,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
@@ -1445,6 +1444,15 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
+	/**
+	 * Timer and resolve function for the delay in {@link fetchLatestSnapshotAndMaybeClose}.
+	 * Tracked at class level so {@link dispose} can cancel the timer and resolve the promise early,
+	 * preventing the timer from keeping the event loop alive after the container is disposed.
+	 */
+	private closeSummarizerDelayHandle?: {
+		timer: ReturnType<typeof setTimeout>;
+		resolve: () => void;
+	};
 
 	private readonly signalTelemetryManager = new SignalTelemetryManager();
 
@@ -2345,6 +2353,14 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
+
+		// Cancel the closeSummarizerDelay timer if it's still running, so it doesn't keep the
+		// event loop alive after the container is disposed.
+		if (this.closeSummarizerDelayHandle !== undefined) {
+			clearTimeout(this.closeSummarizerDelayHandle.timer);
+			this.closeSummarizerDelayHandle.resolve();
+			this.closeSummarizerDelayHandle = undefined;
+		}
 
 		this.mc.logger.sendTelemetryEvent(
 			{
@@ -5164,7 +5180,24 @@ export class ContainerRuntime
 			return;
 		}
 
-		await delay(this.closeSummarizerDelayMs);
+		// Use a cancellable delay: track the timer and a resolve function at class level so
+		// dispose() can cancel it and resolve the promise early, preventing the timer from
+		// keeping the event loop alive after the container is disposed.
+		await new Promise<void>((resolve) => {
+			this.closeSummarizerDelayHandle = {
+				timer: setTimeout(() => {
+					this.closeSummarizerDelayHandle = undefined;
+					resolve();
+				}, this.closeSummarizerDelayMs),
+				resolve,
+			};
+		});
+		// Clear any lingering handle (e.g. if the promise was resolved early via dispose()).
+		this.closeSummarizerDelayHandle = undefined;
+		// If the container was disposed while we were waiting, skip the close logic.
+		if (this._disposed) {
+			return;
+		}
 		this._summarizer?.stop("latestSummaryStateStale");
 		this.disposeFn();
 	}

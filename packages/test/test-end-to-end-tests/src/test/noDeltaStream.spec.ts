@@ -139,6 +139,7 @@ describeCompat(
 					}
 					scenarioToSeqNum.set(scenario, initContainer.deltaManager.lastSequenceNumber);
 					initContainer.close();
+					initContainer.dispose?.();
 				}
 				const containerUrl = await provider.driver.createContainerUrl(
 					provider.documentId,
@@ -187,6 +188,7 @@ describeCompat(
 					});
 					scenarioToSeqNum.set(scenario, summaryContainer.deltaManager.lastSequenceNumber);
 					summaryContainer.close();
+					summaryContainer.dispose?.();
 				}
 			}
 			return {
@@ -234,6 +236,7 @@ describeCompat(
 						...validationLoaderProps,
 						request: { url: containerUrl },
 					});
+					try {
 					const validationDataObject =
 						await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
@@ -276,7 +279,7 @@ describeCompat(
 							},
 							sequenceNumber,
 						);
-
+						try {
 						const deltaManager = storageOnlyContainer.deltaManager;
 						const loadedSeqNum = deltaManager.lastSequenceNumber;
 
@@ -294,6 +297,10 @@ describeCompat(
 							loadedSeqNum,
 							"deltaManager.lastSequenceNumber === loadedSeqNum",
 						);
+						} finally {
+							storageOnlyContainer.close();
+							storageOnlyContainer.dispose?.();
+						}
 					} else {
 						const storageOnlyContainer = await loadExistingContainer({
 							...storageOnlyLoaderProps,
@@ -304,7 +311,7 @@ describeCompat(
 								},
 							},
 						});
-
+						try {
 						const deltaManager = storageOnlyContainer.deltaManager;
 
 						storageOnlyContainer.connect();
@@ -333,6 +340,14 @@ describeCompat(
 								)}`,
 							);
 						}
+						} finally {
+							storageOnlyContainer.close();
+							storageOnlyContainer.dispose?.();
+						}
+					}
+					} finally {
+						validationContainer.close();
+						validationContainer.dispose?.();
 					}
 				}
 			});

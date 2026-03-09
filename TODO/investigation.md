@@ -66,9 +66,86 @@ files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) 
 | packages/dds/matrix/src/test/memory | ✅ | Already clean (benchmark) |
 | packages/dds/sequence/src/test/memory | ✅ | Already clean (benchmark) |
 | packages/dds/map/src/test/memory | ✅ | Already clean (benchmark) |
-| packages/test/test-end-to-end-tests | ✅ | 2 - dataStoresNested.spec.ts |
+| packages/test/test-end-to-end-tests | ✅ | 2, 11a, 11b, 11c, 11d, 12, 13, 14, 15 - multiple fixes |
 | packages/test/test-end-to-end-tests/benchmark | ✅ | Already clean (benchmark) |
 | packages/test/local-server-stress-tests | ✅ | Already clean - harness disposes properly |
+
+## Root Cause 11d: describeInstallVersions after hook throws when before hook fails
+
+**Affected packages:** packages/test/test-end-to-end-tests (legacy chunking tests)
+
+When the `before("Create TestObjectProvider")` hook in `describeInstallVersions` fails (e.g. due
+to a package installation error for old versions like 0.56.0 that are incompatible with modern
+Node.js), `provider` remains `undefined`. The `after("Cleanup TestObjectProvider")` hook was
+throwing `"Expected provider to be set up by before hook"` in that case, producing a spurious
+test failure.
+
+**Fix:** Changed the `after` hook to `return` early instead of `throw` when `provider === undefined`.
+
+**File changed:** `packages/test/test-version-utils/src/describeWithVersions.ts`
+
+## Root Cause 11a: N-1 SummaryManager.dispose() not closing summarizer container
+**Affected packages:** packages/test/test-end-to-end-tests (compat tests using old ContainerRuntime)
+
+When compat tests run with an N-1 `@fluidframework/container-runtime`, the older `SummaryManager.dispose()`
+does NOT call `this.summarizer?.close()` (that fix was added in the current version). So when the parent
+interactive container is disposed via `provider.reset()`, the summarizer container it had spawned remains
+alive with its own `ContainerRuntime` instance holding a `GarbageCollector.sessionExpiryTimer` (MAX_INT32
+`setTimeout`), preventing mocha from exiting.
+
+**Fix:** In `LoaderContainerTracker.addContainer()`, non-interactive (summarizer) containers are now
+tracked in a separate `trackedSummarizerContainers: Set<IContainer>` instead of being silently discarded.
+In `reset()`, after disposing all interactive containers, the summarizer containers are explicitly disposed
+too. This is idempotent for the current runtime version (where `SummaryManager.dispose()` already closes
+the summarizer), but critical for N-1 compat scenarios.
+
+**File changed:**
+`packages/test/test-utils/src/loaderContainerTracker.ts`
+
+## Root Cause 11b: TestObjectProviderWithVersionedLoad has two drivers; only one was disposed
+**Affected packages:** packages/test/test-end-to-end-tests (compat tests)
+
+`TestObjectProviderWithVersionedLoad` (used for cross-client compat tests) maintains two separate
+`LocalServerTestDriver` instances: `driverForCreating` and `driverForLoading`. Each driver has its own
+`LocalDeltaConnectionServer` with a `DeliLambda.readClientIdleTimer` (60-second `setInterval`).
+
+The `describeCompat` and `describeWithVersions` `after` hooks previously called
+`await provider.driver.dispose?.()`, which invokes the `driver` getter. That getter returns either
+`driverForCreating` or `driverForLoading` based on the `useCreateApi` flag (set to `true` by `reset()`).
+So only `driverForCreating` was ever disposed, leaving `driverForLoading`'s server and its 60-second
+`setInterval` alive.
+
+**Fix 1:** Added `dispose(): Promise<void>` to the `ITestObjectProvider` interface and implemented it in:
+- `TestObjectProvider.dispose()`: delegates to `await this.driver.dispose?.()` (single driver)
+- `TestObjectProviderWithVersionedLoad.dispose()`: explicitly disposes BOTH `driverForCreating` AND
+  `driverForLoading`, ensuring both `LocalDeltaConnectionServer` instances are closed.
+
+**Fix 2:** Changed `describeCompat.ts` and `describeWithVersions.ts` `after("Cleanup TestObjectProvider")`
+hooks to call `await provider.dispose()` instead of `await provider.driver.dispose?.()`.
+
+**Files changed:**
+- `packages/test/test-utils/src/testObjectProvider.ts`
+- `packages/test/test-version-utils/src/describeCompat.ts`
+- `packages/test/test-version-utils/src/describeWithVersions.ts`
+
+## Root Cause 11c: Local TestObjectProvider instances in container.spec.ts never reset
+**Affected packages:** packages/test/test-end-to-end-tests
+
+Three tests in `container.spec.ts` created their own `TestObjectProvider` instances (with `new
+TestObjectProvider(Loader, provider.driver, runtimeFactory)`) locally inside `it()` blocks, without
+calling `.reset()` at the end. The containers tracked by these local providers were never disposed,
+leaving their `GarbageCollector.sessionExpiryTimer` (MAX_INT32 `setTimeout`) running after the tests.
+
+**Affected tests:**
+- "Delta manager receives readonly event when calling container.forceReadonly()"
+- "getPendingLocalState() called on container"
+- "can control op processing with connect() and disconnect()"
+
+**Fix:** Wrapped each test body in a `try/finally` block, calling `localTestObjectProvider.reset()` in
+the `finally` clause to ensure cleanup even if the test throws.
+
+**File changed:**
+`packages/test/test-end-to-end-tests/src/test/container.spec.ts`
 
 ## Remaining (not fixed)
 
@@ -142,19 +219,25 @@ Two issues:
 - For each: `pnpm build`, then `pnpm test:mocha`. Rebuild and re-test after every fix attempt.
 - Use `.only` on specific test suites to identify exactly which ones are hanging.
 
-## Root Cause 8: SummaryManager.dispose() not closing summarizer container
+## Root Cause 8: Summarizer container GC timer not cleared after parent container disposed
 **Affected packages:** experimental/dds/tree, packages/dds/tree
 
-When a parent (interactive) container is disposed, `SummaryManager.dispose()` was not closing
-the summarizer container it had spawned via `startSummarization()`. The summarizer container
-holds its own `ContainerRuntime` with a `GarbageCollector.sessionExpiryTimer` (MAX_INT32
-timeout) and other resources that keep the process alive.
+When a parent (interactive) container is disposed, the summarizer container it had spawned via
+`startSummarization()` was left alive. The summarizer container holds its own `ContainerRuntime`
+with a `GarbageCollector.sessionExpiryTimer` (MAX_INT32 timeout) that kept the process alive.
 
-**Fix:** In `SummaryManager.dispose()`, added `this.summarizer?.close()` and
-`this.summarizer = undefined` after clearing the stop timeout.
+**Initial fix attempt (reverted):** Added `this.summarizer?.close()` in `SummaryManager.dispose()`.
+This caused a regression: `close()` triggers an async chain that calls back into the (now-disposed)
+interactive container's runtime, producing spurious "Runtime is closed" `ContainerClose` events
+that failed the "Verify container telemetry" afterEach hook in the mixinSummaryHandler test.
 
-**File changed:**
-`packages/runtime/container-runtime/src/summary/summaryManager.ts`
+**Actual fix:** In `LoaderContainerTracker.addContainer()`, non-interactive (summarizer) containers
+are tracked in `trackedSummarizerContainers`. In `reset()`, they are explicitly disposed via
+`container.dispose()` (NOT `container.close()`, to avoid `ContainerClose` telemetry events).
+This is the root cause 11a fix. It covers both N-1 compat and current version.
+
+**Files changed:**
+`packages/test/test-utils/src/loaderContainerTracker.ts`
 
 ## Root Cause 9: Summarizer.runCore() leaving dangling Promise.race() timers
 **Affected packages:** experimental/dds/tree, packages/dds/tree
@@ -204,3 +287,66 @@ Three leaks:
 - `packages/test/snapshots/src/replayMultipleFiles.ts`: `worker.terminate()` on success
 - `packages/test/snapshots/src/validateSnapshots.ts`: `finally { container?.dispose() }`
 - `packages/test/snapshots/src/test/serialized.spec.ts`: track servers + `after()` cleanup
+
+## Root Cause 12: NoopHeuristic timer not cleared on container close/dispose
+
+**Affected packages:** packages/loader/container-loader (and all packages with containers)
+
+`NoopHeuristic` holds a `Timer` (2000ms `setTimeout`) that fires after an op is processed if no
+ops were sent by the client. Neither `container.ts`'s `closeCore()` nor `disposeCore()` cleared
+this timer, so after tests, 400+ active `Timeout` objects were keeping the event loop alive.
+
+**Fix:**
+- Added `dispose()` method to `NoopHeuristic` that calls `this.timer?.clear()`
+- Added `this.timer?.clear()` to `notifyDisconnect()` (timer shouldn't keep the event loop alive after disconnect; will be restarted on reconnect when the next op arrives)
+- In `container.ts` `closeCore()`: call `this.noopHeuristic?.dispose(); this.noopHeuristic = undefined`
+- In `container.ts` `disposeCore()`: same cleanup (handles dispose-without-close-first)
+
+**Files changed:**
+- `packages/loader/container-loader/src/noopHeuristic.ts`
+- `packages/loader/container-loader/src/container.ts`
+
+## Root Cause 13: SummaryManager.delayBeforeCreatingSummarizer() timer not cancellable
+
+**Affected packages:** packages/runtime/container-runtime
+
+`SummaryManager.delayBeforeCreatingSummarizer()` creates a 5-second `setTimeout` to delay
+summarizer creation after election. The timer was stored in a local variable inside the function
+and was not accessible from `dispose()`. If the container was disposed while the delay was
+running, the timer kept the event loop alive for up to 5 seconds.
+
+**Fix:** Promoted the timer to a class field `delayBeforeCreatingSummarizerTimer`. In `dispose()`,
+cancel it with `clearTimeout()`. Also clear it after `Promise.race()` resolves (in case the
+op-count branch resolved the promise without going through the timer's `clearTimeout` path).
+
+**File changed:** `packages/runtime/container-runtime/src/summary/summaryManager.ts`
+
+## Root Cause 14: ContainerRuntime.fetchLatestSnapshotAndMaybeClose() non-cancellable delay
+
+**Affected packages:** packages/runtime/container-runtime
+
+`ContainerRuntime.fetchLatestSnapshotAndMaybeClose()` used a `delay()` utility (5-second
+`setTimeout`) to wait before closing the summarizer after fetching a snapshot. The `delay()`
+call was not cancellable, so if the container was disposed mid-delay, the timer kept the event
+loop alive.
+
+**Fix:** Replaced `await delay(ms)` with a cancellable promise pattern: stored the timer and
+resolve function in `this.closeSummarizerDelayHandle`. In `dispose()`, cancel the timer and
+resolve the promise early. Added a `_disposed` guard after the delay to skip the close logic
+if the container was disposed during the wait.
+
+**File changed:** `packages/runtime/container-runtime/src/containerRuntime.ts`
+
+## Root Cause 15: noDeltaStream.spec.ts containers bypass LoaderContainerTracker
+
+**Affected packages:** packages/test/test-end-to-end-tests
+
+Several containers in `noDeltaStream.spec.ts` were created via `createLoader()` / direct loader
+APIs outside of the `TestObjectProvider` factory methods. These containers bypassed the
+`LoaderContainerTracker`, so they were never disposed by `provider.reset()`. Their
+`GarbageCollector.sessionExpiryTimer` (MAX_INT32 `setTimeout`) kept the process alive.
+
+**Fix:** Wrapped container usage in `try/finally` blocks to call `container.close()` +
+`container.dispose()` after each test.
+
+**File changed:** `packages/test/test-end-to-end-tests/src/test/noDeltaStream.spec.ts`

@@ -105,6 +105,11 @@ export class SummaryManager
 	private _disposed = false;
 	private summarizerStopTimeout?: ReturnType<typeof setTimeout>;
 	/**
+	 * Timer for the delay in {@link delayBeforeCreatingSummarizer}.
+	 * Tracked at the class level so {@link dispose} can cancel it if the container is disposed mid-delay.
+	 */
+	private delayBeforeCreatingSummarizerTimer?: ReturnType<typeof setTimeout>;
+	/**
 	 * Monotonically increasing counter that tracks summarizer lifecycle generations.
 	 * Incremented each time {@link cleanupAfterSummarizerStop} runs. Used by the
 	 * promise chain in {@link startSummarization} to detect that cleanup has already
@@ -457,18 +462,21 @@ export class SummaryManager
 		}
 
 		if (delayMs > 0) {
-			let timer: number | undefined;
 			let resolveOpPromiseFn: (value: void | PromiseLike<void>) => void;
 			// Create a listener that will break the delay if we've exceeded the initial delay ops count.
 			const opsListenerFn = (): void => {
 				if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
-					clearTimeout(timer);
+					clearTimeout(this.delayBeforeCreatingSummarizerTimer);
+					this.delayBeforeCreatingSummarizerTimer = undefined;
 					resolveOpPromiseFn();
 				}
 			};
 			// Create a Promise that will resolve when the delay expires.
 			const delayPromise = new Promise<void>((resolve) => {
-				timer = setTimeout(() => resolve(), delayMs);
+				this.delayBeforeCreatingSummarizerTimer = setTimeout(() => {
+					this.delayBeforeCreatingSummarizerTimer = undefined;
+					resolve();
+				}, delayMs);
 			});
 			// Create a Promise that will resolve if the ops count passes the threshold.
 			const opPromise = new Promise<void>((resolve) => {
@@ -477,6 +485,10 @@ export class SummaryManager
 			this.summaryCollection.addOpListener(opsListenerFn);
 			await Promise.race([delayPromise, opPromise]);
 			this.summaryCollection.removeOpListener(opsListenerFn);
+			// Clear the timer in case Promise.race resolved via opPromise without opsListenerFn clearing it
+			// (e.g., if resolveOpPromiseFn was called from dispose() or some other path).
+			clearTimeout(this.delayBeforeCreatingSummarizerTimer);
+			this.delayBeforeCreatingSummarizerTimer = undefined;
 		}
 		return startWithInitialDelay;
 	}
@@ -505,10 +517,18 @@ export class SummaryManager
 		if (this.summarizerStopTimeout !== undefined) {
 			clearTimeout(this.summarizerStopTimeout);
 		}
-		// Close the summarizer to dispose the summarizer container and clear its timers
-		// (e.g. GarbageCollector.sessionExpiryTimer). Without this, the summarizer container
-		// created by startSummarization() would remain alive after the parent container is disposed.
-		this.summarizer?.close();
+		// Cancel the delayBeforeCreatingSummarizer timer if it's still running.
+		// This prevents the timer from keeping the event loop alive after the container is disposed.
+		if (this.delayBeforeCreatingSummarizerTimer !== undefined) {
+			clearTimeout(this.delayBeforeCreatingSummarizerTimer);
+			this.delayBeforeCreatingSummarizerTimer = undefined;
+		}
+		// Clear the summarizer reference so it can be GC'd. The summarizer container itself
+		// is tracked by LoaderContainerTracker.trackedSummarizerContainers and will be
+		// disposed via that path (in tests) or when its own container is GC'd (in production).
+		// We deliberately do NOT call this.summarizer?.close() here, because doing so
+		// can trigger an async chain that calls back into the (already-disposed) interactive
+		// container's runtime, producing spurious "Runtime is closed" ContainerClose events.
 		this.summarizer = undefined;
 		this._disposed = true;
 	}

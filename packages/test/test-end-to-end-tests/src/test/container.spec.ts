@@ -307,19 +307,26 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = await localTestObjectProvider.makeTestContainer();
-		const dataObject = (await container.getEntryPoint()) as ITestDataObject;
+		try {
+			const container = await localTestObjectProvider.makeTestContainer();
+			const dataObject = (await container.getEntryPoint()) as ITestDataObject;
 
-		let runCount = 0;
+			let runCount = 0;
 
-		dataObject._context.deltaManager.on("readonly", () => {
-			runCount++;
-		});
+			dataObject._context.deltaManager.on("readonly", () => {
+				runCount++;
+			});
 
-		container.forceReadonly?.(true);
-		assert.strictEqual(container.readOnlyInfo.readonly, true);
+			container.forceReadonly?.(true);
+			assert.strictEqual(container.readOnlyInfo.readonly, true);
 
-		assert.strictEqual(runCount, 1);
+			assert.strictEqual(runCount, 1);
+		} finally {
+			// Dispose all containers tracked by this local provider, clearing their GC
+			// sessionExpiryTimers (MAX_INT32 setTimeouts in GarbageCollector). Without this,
+			// the timers would outlive the test and prevent mocha from exiting cleanly.
+			localTestObjectProvider.reset();
+		}
 	});
 
 	it("getPendingLocalState() called on container", async () => {
@@ -333,15 +340,23 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: ContainerAlpha = asLegacyAlpha(
-			await localTestObjectProvider.makeTestContainer(),
-		);
-		const pendingString = await container.getPendingLocalState();
-		container.close();
-		assert.ok(pendingString);
-		const pendingLocalState: { url?: string } = JSON.parse(pendingString);
-		assert.strictEqual(container.closed, true);
-		assert.strictEqual(pendingLocalState.url, container.resolvedUrl?.url);
+		try {
+			const container: ContainerAlpha = asLegacyAlpha(
+				await localTestObjectProvider.makeTestContainer(),
+			);
+			const pendingString = await container.getPendingLocalState();
+			container.close();
+			assert.ok(pendingString);
+			const pendingLocalState: { url?: string } = JSON.parse(pendingString);
+			assert.strictEqual(container.closed, true);
+			assert.strictEqual(pendingLocalState.url, container.resolvedUrl?.url);
+		} finally {
+			// Dispose all containers tracked by this local provider, clearing their GC
+			// sessionExpiryTimers (MAX_INT32 setTimeouts in GarbageCollector). Without this,
+			// the timers would outlive the test and prevent mocha from exiting cleanly.
+			// Note: container.close() above is not sufficient — only dispose() clears GC timers.
+			localTestObjectProvider.reset();
+		}
 	});
 
 	it("can call connect() and disconnect() on Container", async () => {
@@ -385,68 +400,75 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container1 = await localTestObjectProvider.makeTestContainer();
-		await waitForContainerConnection(container1, false, {
-			durationMs: timeoutMs,
-			errorMsg: "container1 initial connect timeout",
-		});
-		assert.strictEqual(
-			container1.connectionState,
-			ConnectionState.Connected,
-			"container is not connected after connected event fires",
-		);
+		try {
+			const container1 = await localTestObjectProvider.makeTestContainer();
+			await waitForContainerConnection(container1, false, {
+				durationMs: timeoutMs,
+				errorMsg: "container1 initial connect timeout",
+			});
+			assert.strictEqual(
+				container1.connectionState,
+				ConnectionState.Connected,
+				"container is not connected after connected event fires",
+			);
 
-		const dataObject = (await container1.getEntryPoint()) as ITestDataObject;
-		const directory1 = dataObject._root;
-		directory1.set("key", "value");
-		let value1 = await directory1.get("key");
-		assert.strictEqual(value1, "value", "value1 is not set");
+			const dataObject = (await container1.getEntryPoint()) as ITestDataObject;
+			const directory1 = dataObject._root;
+			directory1.set("key", "value");
+			let value1 = await directory1.get("key");
+			assert.strictEqual(value1, "value", "value1 is not set");
 
-		const container2 = await localTestObjectProvider.loadTestContainer();
-		await waitForContainerConnection(container2, false, {
-			durationMs: timeoutMs,
-			errorMsg: "container2 initial connect timeout",
-		});
-		const dataObjectTest = (await container2.getEntryPoint()) as ITestDataObject;
-		const directory2 = dataObjectTest._root;
-		await localTestObjectProvider.ensureSynchronized();
-		let value2 = await directory2.get("key");
-		assert.strictEqual(value2, "value", "value2 is not set");
+			const container2 = await localTestObjectProvider.loadTestContainer();
+			await waitForContainerConnection(container2, false, {
+				durationMs: timeoutMs,
+				errorMsg: "container2 initial connect timeout",
+			});
+			const dataObjectTest = (await container2.getEntryPoint()) as ITestDataObject;
+			const directory2 = dataObjectTest._root;
+			await localTestObjectProvider.ensureSynchronized();
+			let value2 = await directory2.get("key");
+			assert.strictEqual(value2, "value", "value2 is not set");
 
-		let disconnectedEventFired = false;
-		container2.once("disconnected", () => {
-			disconnectedEventFired = true;
-		});
-		container2.disconnect();
-		assert(
-			disconnectedEventFired,
-			"disconnected event didn't fire when calling container.disconnect",
-		);
-		assert.strictEqual(
-			container2.connectionState,
-			ConnectionState.Disconnected,
-			"container can't disconnect()",
-		);
+			let disconnectedEventFired = false;
+			container2.once("disconnected", () => {
+				disconnectedEventFired = true;
+			});
+			container2.disconnect();
+			assert(
+				disconnectedEventFired,
+				"disconnected event didn't fire when calling container.disconnect",
+			);
+			assert.strictEqual(
+				container2.connectionState,
+				ConnectionState.Disconnected,
+				"container can't disconnect()",
+			);
 
-		directory1.set("key", "new-value");
-		value1 = await directory1.get("key");
-		assert.strictEqual(value1, "new-value", "value1 is not changed");
+			directory1.set("key", "new-value");
+			value1 = await directory1.get("key");
+			assert.strictEqual(value1, "new-value", "value1 is not changed");
 
-		const valueChangePromise = timeoutPromise(
-			(resolve) => directory2.once("valueChanged", () => resolve()),
-			{ durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
-		);
-		await assert.rejects(valueChangePromise, "valueChanged event fired while disconnected");
-		value2 = await directory2.get("key");
-		assert.notStrictEqual(value1, value2, "container2 processing ops after disconnect()");
+			const valueChangePromise = timeoutPromise(
+				(resolve) => directory2.once("valueChanged", () => resolve()),
+				{ durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
+			);
+			await assert.rejects(valueChangePromise, "valueChanged event fired while disconnected");
+			value2 = await directory2.get("key");
+			assert.notStrictEqual(value1, value2, "container2 processing ops after disconnect()");
 
-		container2.connect();
-		await timeoutPromise((resolve) => directory2.once("valueChanged", () => resolve()), {
-			durationMs: timeoutMs,
-			errorMsg: "valueChanged timeout after connect()",
-		});
-		value2 = await directory2.get("key");
-		assert.strictEqual(value1, value2, "container2 not processing ops after connect()");
+			container2.connect();
+			await timeoutPromise((resolve) => directory2.once("valueChanged", () => resolve()), {
+				durationMs: timeoutMs,
+				errorMsg: "valueChanged timeout after connect()",
+			});
+			value2 = await directory2.get("key");
+			assert.strictEqual(value1, value2, "container2 not processing ops after connect()");
+		} finally {
+			// Dispose all containers tracked by this local provider, clearing their GC
+			// sessionExpiryTimers (MAX_INT32 setTimeouts in GarbageCollector). Without this,
+			// the timers would outlive the test and prevent mocha from exiting cleanly.
+			localTestObjectProvider.reset();
+		}
 	});
 
 	it("can cancel connect() with disconnect()", async () => {

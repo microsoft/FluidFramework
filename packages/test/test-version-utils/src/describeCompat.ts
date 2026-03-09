@@ -179,10 +179,17 @@ function createCompatSuite(
 					if (provider === undefined) {
 						throw new Error("Expected provider to be set up by before hook");
 					}
-					// Reset the provider before disposing the driver to ensure all containers are
-					// disposed first. This clears GC sessionExpiryTimers so the process can exit.
+					// Reset (dispose all containers) before disposing the drivers, to ensure containers
+					// are torn down cleanly before their underlying server is shut down.
+					// This is especially important for GC sessionExpiryTimers: disposing containers
+					// triggers ContainerRuntime.dispose() → GarbageCollector.dispose() → timer.clear().
 					provider.reset();
-					await provider.driver.dispose?.();
+					// Use provider.dispose() rather than provider.driver.dispose?.() so that all drivers
+					// are disposed. TestObjectProviderWithVersionedLoad has two drivers (one for creating,
+					// one for loading containers) and exposes only one via the `driver` getter; calling
+					// provider.dispose() ensures both LocalDeltaConnectionServer instances are closed and
+					// their DeliLambda.readClientIdleTimer setIntervals are cleared.
+					await provider.dispose();
 					provider = undefined;
 					Object.defineProperty(this, "__fluidTestProvider", {
 						get: () => {

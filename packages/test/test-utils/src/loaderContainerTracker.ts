@@ -54,6 +54,26 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	private readonly containers = new Map<IContainer, ContainerRecord>();
 	private lastProposalSeqNum: number = 0;
 
+	/**
+	 * Summarizer containers are tracked separately from interactive containers. They are excluded from the main
+	 * `containers` map (and therefore from `ensureSynchronized`) because they run on a separate client that is
+	 * not part of the test's op flow control. However, we still need to dispose them during `reset()` to clear
+	 * their GC sessionExpiryTimers (MAX_INT32 setTimeout in GarbageCollector).
+	 *
+	 * This matters especially in compat testing: older versions of ContainerRuntime (e.g. N-1) have a
+	 * SummaryManager.dispose() that does NOT close the spawned summarizer container. When the parent container
+	 * is disposed via reset(), the N-1 SummaryManager leaves the summarizer container alive. Without explicit
+	 * tracking here, those containers' timers prevent mocha from exiting.
+	 *
+	 * In the current version, SummaryManager.dispose() does call summarizer.close(), so the summarizer container
+	 * is already cleaned up via the parent chain. Calling dispose() again here is idempotent.
+	 *
+	 * reset() calls dispose() only (not close()) on these containers because close() emits a ContainerClose
+	 * telemetry event that the tracker would record as an unexpected error when the container is already in an
+	 * errored state (e.g. tests that deliberately throw from mixinSummaryHandler).
+	 */
+	private readonly trackedSummarizerContainers = new Set<IContainer>();
+
 	constructor(private readonly syncSummarizerClients: boolean = false) {}
 
 	/**
@@ -115,11 +135,17 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			containerWithClone.clone = patch(containerWithClone.clone);
 		}
 
-		// ignore summarizer
+		// Summarizer containers (non-interactive clients) are excluded from the main `containers` map
+		// because they must not participate in ensureSynchronized() — they process ops independently.
+		// However, they ARE tracked in a separate set so reset() can dispose them and clear their timers.
+		//
+		// When syncSummarizerClients is true the caller explicitly wants to synchronize summarizers too,
+		// so in that case we fall through and add the container to the main map as usual.
 		if (
 			!container.deltaManager.clientDetails.capabilities.interactive &&
 			!this.syncSummarizerClients
 		) {
+			this.trackedSummarizerContainers.add(container);
 			return;
 		}
 
@@ -203,6 +229,29 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			container.dispose?.();
 		}
 		this.containers.clear();
+
+		// Dispose summarizer containers tracked separately from interactive containers. This is critical for
+		// compat scenarios using older ContainerRuntime versions (e.g. N-1): those versions have a
+		// SummaryManager.dispose() that does NOT close the spawned summarizer container. Consequently, when
+		// the parent interactive container is disposed above, the summarizer container stays alive with its
+		// GarbageCollector.sessionExpiryTimer (MAX_INT32 setTimeout) still running — preventing mocha from
+		// exiting.
+		//
+		// In the current version, SummaryManager.dispose() already calls summarizer.close(), so the
+		// container would already be closed when we reach this point; dispose() on an already-closed
+		// container is idempotent.
+		//
+		// IMPORTANT: We call dispose() only (not close() first) because the summarizer container may already
+		// be in an errored/closed state when reset() is called — e.g. when a test deliberately throws from
+		// mixinSummaryHandler. In that case, calling close() emits a ContainerClose telemetry event with
+		// the prior error as its cause, which the LoaderContainerTracker would then pick up as an unexpected
+		// error in the "Verify Container Telemetry" afterEach hook and fail the test.
+		// dispose() skips the ContainerClose telemetry path and goes directly to ContainerRuntime.dispose()
+		// → GarbageCollector.dispose() → sessionExpiryTimer.clear(), which is all we need here.
+		for (const container of this.trackedSummarizerContainers) {
+			container.dispose?.();
+		}
+		this.trackedSummarizerContainers.clear();
 
 		// REVIEW: do we need to unpatch the loaders?
 	}
