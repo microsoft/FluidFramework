@@ -46,12 +46,4 @@ export {
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
 
-export {
-	FormattedMainView,
-	PlainTextMainView,
-	PlainQuillView,
-	type FormattedMainViewProps,
-	type PlainMainViewProps,
-	type FormattedEditorHandle,
-} from "./text/index.js";
 export { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";

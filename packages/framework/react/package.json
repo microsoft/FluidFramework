@@ -36,6 +36,10 @@
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}
+		},
+		"./quill": {
+			"types": "./lib/text/quill.d.ts",
+			"import": "./lib/text/quill.js"
 		}
 	},
 	"main": "lib/index.js",
