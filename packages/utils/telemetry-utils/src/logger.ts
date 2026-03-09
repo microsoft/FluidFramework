@@ -11,6 +11,8 @@ import {
 	type Tagged,
 	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { BrandedType } from "@fluidframework/core-interfaces/legacy";
 
 import {
 	CachedConfigProvider,
@@ -1001,10 +1003,10 @@ export const tagCodeArtifacts = <
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
 
 /**
- * String values that indicate the importance of a telemetry event for diagnostics,
+ * Numerical values that indicate the importance of a telemetry event for diagnostics,
  * enabling consumers to make sampling or filtering decisions.
  *
- * If an event does not contain a `logLevel` value, it should be treated as `essential`.
+ * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
  *
  * @internal
  */
@@ -1013,18 +1015,27 @@ export const LogLevelValue = {
 	 * Chatty logs useful for local debugging.
 	 * They need not be collected in production.
 	 */
-	verbose: "verbose",
+	verbose: 10 as 10 & BrandedType<"LogLevelValue">,
 
 	/**
 	 * Information about the session. These logs could be omitted in some sessions
 	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
 	 * from a particular session, all should be.
 	 */
-	info: "info",
+	info: 15 as 15 & BrandedType<"LogLevelValue">,
 
 	/**
 	 * Essential information about the operation of Fluid. It is recommended that
 	 * these should always be collected, even in production, for diagnostic purposes.
 	 */
-	essential: "essential",
-};
+	essential: 25 as 25 & BrandedType<"LogLevelValue">,
+} as const satisfies Record<string, LogLevelValue>;
+
+/**
+ * LogLevelValue is a numeric value that indicates the importance of a telemetry event for diagnostics,
+ * enabling consumers to make sampling or filtering decisions.
+ *
+ * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
+ * @internal
+ */
+export type LogLevelValue = number & BrandedType<"LogLevelValue">;

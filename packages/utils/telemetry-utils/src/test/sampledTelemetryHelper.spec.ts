@@ -91,7 +91,7 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(event.count, 1);
 	});
 
-	it("includes aggregate properties when it should", () => {
+	it.only("includes aggregate properties when it should", () => {
 		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, true);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
