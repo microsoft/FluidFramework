@@ -11,7 +11,7 @@ import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
-import * as React from "react";
+import { createRef, type FC } from "react";
 
 import { toPropTreeNode } from "../../propNode.js";
 import {
@@ -62,7 +62,7 @@ function createFormattedTreeViewWithEvents(
 	return treeView;
 }
 
-const views: { name: string; component: React.FC<MainViewProps> }[] = [
+const views: { name: string; component: FC<MainViewProps> }[] = [
 	{ name: "Quill", component: QuillMainView },
 	{ name: "Plain TextArea", component: PlainTextMainView },
 ];
@@ -705,7 +705,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = React.createRef<FormattedEditorHandle>();
+						const editorRef = createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
@@ -736,7 +736,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = React.createRef<FormattedEditorHandle>();
+						const editorRef = createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
@@ -774,7 +774,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = React.createRef<FormattedEditorHandle>();
+						const editorRef = createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
