@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { isResultError, isSuiteNode, ValueType, type ReportEntry } from "../ResultTypes.js";
+import { isResultError, isSuiteNode, ValueType, type ReportEntry } from "../reportTypes.js";
 
 const successEntry: ReportEntry = {
 	benchmarkName: "passing test",

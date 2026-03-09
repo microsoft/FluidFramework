@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { BenchmarkType, isChildProcess } from "../Configuration.js";
 import { type BenchmarkTimer, Phase } from "../durationBenchmarking/index.js";
 import { benchmark, benchmarkCustom } from "../legacy.js";
-import { ValueType, type CollectedData } from "../ResultTypes.js";
+import { ValueType, type CollectedData } from "../reportTypes.js";
 
 function doLoop(upperLimit: number): void {
 	let i = 0;

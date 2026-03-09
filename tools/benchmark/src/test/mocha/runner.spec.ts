@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { supportParentProcess } from "../../mocha/runner.js";
-import type { CollectedData } from "../../ResultTypes.js";
-import { isResultError, ValueType } from "../../ResultTypes.js";
+import type { CollectedData } from "../../reportTypes.js";
+import { isResultError, ValueType } from "../../reportTypes.js";
 import { isChildProcess } from "../../Configuration.js";
-import { recordTestResult } from "../../Reporter.js";
+import { recordTestResult } from "../../reporterUtilities.js";
 
 const sampleResult: CollectedData = [
 	{

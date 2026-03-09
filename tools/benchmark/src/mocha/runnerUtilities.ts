@@ -5,7 +5,7 @@
 
 import type { Test } from "mocha";
 
-import type { BenchmarkResult } from "../ResultTypes.js";
+import type { BenchmarkResult } from "../reportTypes.js";
 import { isInPerformanceTestingMode } from "../Configuration.js";
 
 /**

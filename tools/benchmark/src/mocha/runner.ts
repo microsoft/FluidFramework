@@ -9,8 +9,8 @@ import {
 	parseBenchmarkResult,
 	type BenchmarkResult,
 	type CollectedData,
-} from "../ResultTypes.js";
-import { captureResults } from "../ResultUtilities.js";
+} from "../reportTypes.js";
+import { captureResults } from "../testAuthroingUtilities.js";
 import { fail } from "../assert.js";
 
 /**

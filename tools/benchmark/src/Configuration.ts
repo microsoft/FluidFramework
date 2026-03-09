@@ -4,7 +4,7 @@
  */
 
 import { fail } from "./assert.js";
-import type { CollectedData } from "./ResultTypes.js";
+import type { CollectedData } from "./reportTypes.js";
 import type { Timer } from "./timer.js";
 
 /**

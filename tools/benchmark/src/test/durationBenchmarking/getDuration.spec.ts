@@ -11,7 +11,7 @@ import {
 	runBenchmarkSync,
 } from "../../durationBenchmarking/getDuration.js";
 import * as Configuration from "../../Configuration.js";
-import type { CollectedData } from "../../ResultTypes.js";
+import type { CollectedData } from "../../reportTypes.js";
 
 describe("getDuration", () => {
 	it("collectDurationData sync", async () => {

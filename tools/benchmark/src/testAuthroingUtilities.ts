@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { BenchmarkResult, BenchmarkError, CollectedData, Measurement } from "./ResultTypes.js";
-import { ValueType } from "./ResultTypes.js";
+import type { BenchmarkResult, BenchmarkError, CollectedData, Measurement } from "./reportTypes.js";
+import { ValueType } from "./reportTypes.js";
 import { timer } from "./timer.js";
 
 /**

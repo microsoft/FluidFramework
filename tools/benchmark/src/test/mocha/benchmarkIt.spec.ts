@@ -5,7 +5,7 @@
 
 import { benchmarkDuration } from "../../durationBenchmarking/getDuration.js";
 import { benchmarkIt } from "../../mocha/index.js";
-import { ValueType, type CollectedData } from "../../ResultTypes.js";
+import { ValueType, type CollectedData } from "../../reportTypes.js";
 
 describe("benchmarkIt", () => {
 	benchmarkIt({

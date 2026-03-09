@@ -12,14 +12,14 @@ import {
 	recordTestResult,
 	type ReportSuiteWithPath,
 	type SuiteData,
-} from "../Reporter.js";
+} from "../reporterUtilities.js";
 import {
 	type BenchmarkResult,
 	type BenchmarkError,
 	parseBenchmarkResult,
 	type ReportArray,
 	type ReportEntry,
-} from "../ResultTypes.js";
+} from "../reportTypes.js";
 import { assert } from "../assert.js";
 import { isChildProcess } from "../Configuration.js";
 

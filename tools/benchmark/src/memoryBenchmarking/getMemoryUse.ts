@@ -9,7 +9,7 @@ import {
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
-import { ValueType, type CollectedData, type Measurement } from "../ResultTypes.js";
+import { ValueType, type CollectedData, type Measurement } from "../reportTypes.js";
 import { brandMeasurementNameForMode, getArrayStatistics } from "../sampling.js";
 import { type MemoryUseCallbacks, type MemoryUseBenchmark } from "./configuration.js";
 

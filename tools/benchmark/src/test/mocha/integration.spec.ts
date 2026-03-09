@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 import childProcess from "node:child_process";
 
-import type { CollectedData } from "../../ResultTypes.js";
-import { ValueType } from "../../ResultTypes.js";
+import type { CollectedData } from "../../reportTypes.js";
+import { ValueType } from "../../reportTypes.js";
 import { benchmarkIt } from "../../mocha/index.js";
 import { argv } from "node:process";
 

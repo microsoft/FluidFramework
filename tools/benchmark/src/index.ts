@@ -49,7 +49,7 @@ export {
 	type ReportPath,
 	type ReportSuiteWithPath,
 	type SuiteData,
-} from "./Reporter.js";
+} from "./reporterUtilities.js";
 export {
 	isSuiteNode,
 	parseBenchmarkResult,
@@ -64,9 +64,9 @@ export {
 	type ReportEntry,
 	type ReportArray,
 	type ReportSuite,
-} from "./ResultTypes.js";
+} from "./reportTypes.js";
 export { timer, type Timer } from "./timer.js";
-export { captureResults } from "./ResultUtilities.js";
+export { captureResults } from "./testAuthroingUtilities.js";
 
 export {
 	type MemoryUseBenchmark,

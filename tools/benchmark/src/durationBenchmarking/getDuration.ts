@@ -8,7 +8,7 @@ import {
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
-import { ValueType, type CollectedData } from "../ResultTypes.js";
+import { ValueType, type CollectedData } from "../reportTypes.js";
 import { getArrayStatistics } from "../sampling.js";
 import { type Timer, timer, timerWithResolution } from "../timer.js";
 import {
