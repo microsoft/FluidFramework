@@ -31,6 +31,7 @@
 -   Reporter now only writes a file if a path was provided: there is no longer a default path.
 -   `MochaReporter` is now provided at `@fluid-tools/benchmark/dist/mocha/Reporter.js` instead of `@fluid-tools/benchmark/dist/MochaReporter.js`
 -   Report JSON files now include error results alongside passing results. `ReportEntry.data` is `BenchmarkResult`, which may be either `CollectedData` or `BenchmarkError`.
+-   The APIs for writing reporters have been refactored significantly. If updating a reporter, review how the [updated Mocha reporter](./src/mocha/Reporter.ts) works.
 
 ## 0.52.0
 
