@@ -195,11 +195,13 @@ module.exports = {
 			label:
 				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: [
-				// TODO: Remove @biomejs/biome once all packages are updated to the latest version
-				"@biomejs/biome",
 				"react-virtualized-auto-sizer",
 				"@types/react",
 				"@types/react-dom",
+				// "quill-delta" 5 does not support CommonJS so @fluid-experimental/ot is stuck on version 4 for its dev-dep.
+				// Other use of quill delta is in our react package for text editing, which is ESM only and uses up to date quill packages.
+				// This results in us being stuck using 2 versions as long as @fluid-experimental/ot tests support CommonJS and use quill-delta.
+				"quill-delta",
 			],
 			packages: ["**"],
 			isIgnored: true,

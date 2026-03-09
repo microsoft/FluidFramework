@@ -53,7 +53,7 @@ API documentation for **@fluidframework/tree** is available at <https://fluidfra
 
 ## Status
 
-Notable considerations that users should be wary of:
+Notable considerations that users should be aware of:
 
 -   The persisted format is stable: documents created with released versions 2.0.0 or greater of this package are fully supported long term.
 -   All range changes are currently atomized.

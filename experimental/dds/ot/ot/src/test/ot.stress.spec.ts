@@ -234,7 +234,6 @@ describe("SharedOT", () => {
 			const start = Date.now();
 			let lastStatus = start;
 
-			// eslint-disable-next-line no-constant-condition
 			while (true) {
 				await stress(
 					/* numClients: */ 2,

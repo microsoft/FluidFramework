@@ -11,7 +11,7 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 
 export {
 	ForestSummarizer,
-	getCodecTreeForForestFormat,
+	forestCodecBuilder,
 	ForestFormatVersion,
 } from "./forest-summary/index.js";
 export {
@@ -104,9 +104,8 @@ export {
 	type FieldBatch,
 	type FieldBatchCodec,
 	FieldBatchFormatVersion,
-	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
@@ -204,7 +203,6 @@ export {
 	AnchorTreeIndex,
 	hasElement,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
 

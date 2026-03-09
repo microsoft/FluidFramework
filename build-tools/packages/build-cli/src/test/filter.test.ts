@@ -17,7 +17,7 @@ import {
 	selectAndFilterPackages,
 	selectPackagesFromContext,
 } from "../filter.js";
-import { Context } from "../library/index.js";
+import { Context } from "../library/context.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 import { FluidAppOdspUrlResolver } from "@fluidframework/odsp-urlresolver/internal";
-// eslint-disable-next-line import-x/no-deprecated
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspSampleCache } from "./odspPersistantCache.js";
@@ -91,7 +90,6 @@ export function start(div: HTMLDivElement, odspAccessToken: string): void {
 	});
 }
 
-// eslint-disable-next-line import-x/no-deprecated
 function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement): void {
 	const fields = new Set([
 		"eventName",

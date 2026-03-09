@@ -22,6 +22,7 @@ export type {
 	TreeBranch,
 	TreeBranchAlpha,
 	TreeBranchEvents,
+	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
@@ -141,7 +142,7 @@ export {
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
-export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
 	type IdentifierIndex,
@@ -164,6 +165,7 @@ export {
 	type TransactionResultExt,
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
+	type WithValue,
 	rollback,
 } from "./transactionTypes.js";
 

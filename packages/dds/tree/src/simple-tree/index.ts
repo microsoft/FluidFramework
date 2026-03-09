@@ -96,10 +96,10 @@ export {
 	importConcise,
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	type SimpleTreeIndex,
 	type IdentifierIndex,
-	createSimpleTreeIndex,
+	createTreeIndex,
 	createIdentifierIndex,
+	type TreeIndexKey,
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 	type DirtyTreeMap,
@@ -202,6 +202,8 @@ export {
 	type SnapshotFileSystem,
 	type SnapshotSchemaCompatibilityOptions,
 	createCustomizedFluidFrameworkScopedFactory,
+	type TreeContextAlpha,
+	type WithValue,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
