@@ -207,16 +207,18 @@ export class TreeNodeKernel {
 		// Lazily migrate existing event listeners to the anchor node
 		this.#eventBuffer.migrateEventSource(inner.anchorNode.events);
 
-		// Note: We intentionally don't call getStatus() here because it accesses
-		// treeStatusFromAnchorCache which can modify the anchor node's cache during
-		// hydration, which causes issues with the tree state.
-		// Instead, we schedule a deferred status check that runs after hydration completes.
-		// This ensures status change events fire for the New -> InDocument transition.
-		queueMicrotask(() => {
-			if (!this.disposed) {
-				this.checkAndEmitStatusChange();
-			}
-		});
+		// Emit the status change synchronously. We know the transition is New -> InDocument
+		// because hydrate() is only called on unhydrated (New) nodes being inserted into a document.
+		// We avoid calling getStatus() here because it accesses treeStatusFromAnchorCache which
+		// can modify the anchor node's cache during hydration, causing issues with the tree state.
+		const oldStatus = this.#lastKnownStatus;
+		if (oldStatus !== TreeStatus.InDocument) {
+			this.#lastKnownStatus = TreeStatus.InDocument;
+			this.#statusEvents.emit("statusChanged", {
+				oldStatus,
+				newStatus: TreeStatus.InDocument,
+			});
+		}
 	}
 
 	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
@@ -232,11 +234,6 @@ export class TreeNodeKernel {
 				// TODO: this should be triggered on change even for unhydrated nodes.
 				innerNode.anchorNode.events.on("childrenChanging", () => {
 					this.generationNumber += 1;
-				}),
-				// Check for status changes after a batch of changes completes.
-				// This detects when a node is moved (e.g., detached then re-attached via undo).
-				innerNode.anchorNode.events.on("childrenChangedAfterBatch", () => {
-					this.checkAndEmitStatusChange();
 				}),
 			]),
 		};
@@ -293,7 +290,11 @@ export class TreeNodeKernel {
 	public dispose(): void {
 		debugAssert(() => !this.disposed || "Cannot dispose a disposed node");
 
-		// Emit status change to Deleted before fully disposing
+		// Emit status change to Deleted before setting `this.disposed = true`.
+		// This ordering matters: listeners receiving this event may still need to call
+		// methods on the kernel (e.g., `getStatus()`, `getInnerNode()`) which throw
+		// once `disposed` is true. Emitting first ensures listeners can still inspect
+		// the node during their callback.
 		const oldStatus = this.#lastKnownStatus;
 		if (oldStatus !== TreeStatus.Deleted) {
 			this.#lastKnownStatus = TreeStatus.Deleted;

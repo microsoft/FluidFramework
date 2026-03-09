@@ -28,7 +28,6 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	type TreeView,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
@@ -78,7 +77,7 @@ import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
  */
-export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
+export const ViewSlot = anchorSlot<TreeBranch>();
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.

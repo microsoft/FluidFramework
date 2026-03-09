@@ -1224,11 +1224,7 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
 // @alpha @sealed
 export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.ParentObject"> {
-    readonly type: ParentType;
 }
-
-// @alpha
-export type ParentType = "root" | "detached" | "unhydrated";
 
 // @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;

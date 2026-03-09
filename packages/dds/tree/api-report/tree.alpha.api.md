@@ -859,11 +859,7 @@ export type Off = Off_2;
 
 // @alpha @sealed
 export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.ParentObject"> {
-    readonly type: ParentType;
 }
-
-// @alpha
-export type ParentType = "root" | "detached" | "unhydrated";
 
 // @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;

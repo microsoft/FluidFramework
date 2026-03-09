@@ -75,7 +75,6 @@ export {
 	TreeAlpha,
 	type ObservationResults,
 	type TreeIdentifierUtils,
-	type ParentType,
 	type ParentObject,
 	type TreeNodeParent,
 	independentView,
