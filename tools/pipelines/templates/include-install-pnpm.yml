@@ -81,6 +81,7 @@ steps:
   env:
     NPM_REGISTRY: ${{ parameters.primaryRegistry }}
     NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
+    CI: true
     # We should leverage the primary npm registry to install pnpm as well. However, ADO artifacts feeds do not implement
     # the full npm registry API including a route that corepack uses to get package metadata--the version route here:
     # https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
