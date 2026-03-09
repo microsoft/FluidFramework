@@ -8,7 +8,7 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, rootFieldKey } from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type DeltaMark } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
 import {
@@ -38,6 +38,24 @@ import {
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
+
+/**
+ * A single sequential operation in an array node change delta.
+ *
+ * Operations are applied in order and are relative to the original array state before the change.
+ *
+ * @remarks
+ * Maps directly to Quill delta semantics:
+ * - `"retain"` — elements that were not added or removed (may have nested changes).
+ * - `"insert"` — elements added to the array.
+ * - `"remove"` — elements removed from the array (includes moves, represented as remove + insert).
+ *
+ * @sealed @beta
+ */
+export type ArrayNodeDeltaOp =
+	| { readonly type: "retain"; readonly count: number }
+	| { readonly type: "insert"; readonly count: number }
+	| { readonly type: "remove"; readonly count: number };
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -192,8 +210,17 @@ export const treeNodeApi: TreeNodeApi = {
 						listener({ changedProperties });
 					});
 				} else if (isArrayNodeSchema(nodeSchema)) {
-					return kernel.events.on("childrenChangedAfterBatch", () => {
-						listener({ changedProperties: undefined });
+					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
+						const marks = fieldMarks.get(EmptyKey);
+						// `marks` is undefined when the field was modified across multiple batches
+						// within a single flush (e.g. due to an interleaved schema change) and the
+						// marks could not be composed. Emit `undefined` so callers know the delta is
+						// unavailable rather than receiving stale marks from only the first batch.
+						// TODO: Once the eventing stack is rewritten to walk the composed delta at
+						// flush time, `marks` will always be defined. Remove the `undefined` fallback
+						// and simplify to: `const delta = deltaMarksToArrayOps(marks);`
+						const delta = marks !== undefined ? deltaMarksToArrayOps(marks) : undefined;
+						listener({ delta });
 					});
 				} else {
 					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
@@ -233,6 +260,38 @@ export const treeNodeApi: TreeNodeApi = {
 		return getIdentifierFromNode(node, "preferCompressed");
 	},
 };
+
+/**
+ * Converts an array of internal {@link DeltaMark}s for a sequence field into sequential
+ * array delta ops suitable for inclusion in {@link NodeChangedData.delta}.
+ *
+ * Each mark in the delta describes a contiguous run of positions in the original array:
+ * - A mark with only `count` (no attach/detach) → `"retain"` (elements unchanged at this level)
+ * - A mark with only `attach` → `"insert"` (new elements added)
+ * - A mark with only `detach` → `"remove"` (elements removed)
+ * - A mark with both `attach` and `detach` → `"remove"` + `"insert"` (replacement)
+ */
+function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDeltaOp[] {
+	const ops: ArrayNodeDeltaOp[] = [];
+	for (const mark of marks) {
+		if (mark.attach !== undefined && mark.detach === undefined) {
+			ops.push({ type: "insert", count: mark.count });
+		} else if (mark.detach !== undefined && mark.attach === undefined) {
+			ops.push({ type: "remove", count: mark.count });
+		} else if (mark.attach !== undefined && mark.detach !== undefined) {
+			// Replacement: content removed and new content attached in the same position.
+			// The `Delta.Mark` format allows both to be set simultaneously (e.g. when a slot's
+			// content is atomically swapped), even though the sequence-field encoder does not
+			// currently emit such marks for array (EmptyKey) fields.  Handle it defensively.
+			ops.push({ type: "remove", count: mark.count });
+			ops.push({ type: "insert", count: mark.count });
+		} else {
+			// Neither attach nor detach: elements retained (may have nested changes in mark.fields).
+			ops.push({ type: "retain", count: mark.count });
+		}
+	}
+	return ops;
+}
 
 /**
  * Returns a schema for a value if the value is a {@link TreeNode} or a {@link TreeLeafValue}.

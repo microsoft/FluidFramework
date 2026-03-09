@@ -38,7 +38,8 @@ import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
 import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { treeNodeApi } from "./treeNodeApi.js";
+import { treeNodeApi, type ArrayNodeDeltaOp } from "./treeNodeApi.js";
+export type { ArrayNodeDeltaOp };
 import { cursorFromVerbose } from "./verboseTree.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
@@ -54,7 +55,7 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	 * @remarks
 	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
 	 *
-	 * Set to `undefined` when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
+	 * Not present when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
 	 *
 	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
 	 */
@@ -64,6 +65,23 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 			? string & keyof TInfo
 			: string
 	>;
+
+	/**
+	 * When the node changed is an array node, the sequential operations describing what changed.
+	 * @remarks
+	 * `undefined` in any of the following cases:
+	 * - The node is not an array node.
+	 * - The array node is {@link Unhydrated} — unhydrated nodes are not visited by the delta
+	 *   pipeline, so no field marks are available.
+	 * - The array was modified across multiple batches within a single flush (e.g. due to an
+	 *   interleaved schema change) and the marks from those batches could not be composed.
+	 *
+	 * Each op covers a contiguous range of the array in its original state:
+	 * - `"retain"` — elements unchanged at the array level (may have nested changes).
+	 * - `"insert"` — new elements inserted.
+	 * - `"remove"` — elements removed (moves within the same array appear as `"remove"` + `"insert"`).
+	 */
+	readonly delta?: readonly ArrayNodeDeltaOp[];
 }
 
 /**
@@ -112,7 +130,15 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 			// Make the properties of object, map, and record nodes required:
 			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
 				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
-				: unknown),
+				: // For array nodes, guarantee `delta` is always present in the data object.
+				// The value may still be `undefined` when marks could not be composed across
+				// multiple batches (e.g. due to an interleaved schema change).
+				// TODO: Once the eventing stack is rewritten, `delta` will always be defined.
+				// Simplify back to `Required<Pick<NodeChangedData<TNode>, "delta">>` and
+				// remove `| undefined` from `NodeChangedData.delta`.
+					TNode extends WithType<string, NodeKind.Array>
+					? { readonly delta: readonly ArrayNodeDeltaOp[] | undefined }
+					: unknown),
 	) => void;
 }
 

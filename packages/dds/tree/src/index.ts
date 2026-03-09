@@ -129,6 +129,7 @@ export {
 	normalizeFieldSchema,
 	type InternalTreeNode,
 	type WithType,
+	type ArrayNodeDeltaOp,
 	type NodeChangedData,
 	type SchemaUpgrade,
 	contentSchemaSymbol,

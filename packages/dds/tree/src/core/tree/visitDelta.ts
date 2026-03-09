@@ -75,6 +75,7 @@ export function visitDelta(
 	}
 	const detachConfig: PassConfig = {
 		func: detachPass,
+		isFirstPass: true,
 		latestRevision,
 		refreshers,
 		detachedFieldIndex,
@@ -98,6 +99,7 @@ export function visitDelta(
 	);
 	const attachConfig: PassConfig = {
 		func: attachPass,
+		isFirstPass: false,
 		latestRevision,
 		refreshers,
 		detachedFieldIndex,
@@ -318,10 +320,25 @@ export interface DeltaVisitor {
 	 * @remarks This should only be called when the "current location" is a Field.
 	 */
 	exitField(key: FieldKey): void;
+
+	/**
+	 * Called once per field per delta (during the first/detach pass) with the full sequential mark list for that field.
+	 * Invoked after `enterField` but before any `attach`, `detach`, or `enterNode` calls for the field.
+	 * @remarks
+	 * This optional hook allows visitors to capture the complete ordered change description for a field
+	 * (e.g. for constructing a Quill-style delta) without needing to reconstruct it from the two-pass attach/detach calls.
+	 */
+	fieldMarks?(key: FieldKey, marks: readonly Delta.Mark[]): void;
 }
 
 interface PassConfig {
 	readonly func: Pass;
+
+	/**
+	 * True for the first (detach) pass, false for the second (attach) pass.
+	 * Used to ensure `fieldMarks` is called exactly once per field per delta visit.
+	 */
+	readonly isFirstPass: boolean;
 
 	/**
 	 * The latest revision tag associated with the given delta. This is used to keep track
@@ -372,6 +389,9 @@ function visitFieldMarks(
 	if (fields !== undefined) {
 		for (const [key, field] of fields) {
 			visitor.enterField(key);
+			if (config.isFirstPass) {
+				visitor.fieldMarks?.(key, field.marks);
+			}
 			config.func(field, visitor, config);
 			visitor.exitField(key);
 		}
