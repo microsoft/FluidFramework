@@ -12,17 +12,23 @@ import * as fs from "node:fs";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import { isResultError, ValueType, type BenchmarkResult } from "./ResultTypes.js";
+import {
+	isResultError,
+	isSuiteNode,
+	ValueType,
+	type ReportArray,
+	type ReportEntry,
+	type ReportSuite,
+} from "./ResultTypes.js";
 import { formatMeasurementValue, geometricMean, prettyNumber } from "./RunnerUtilities.js";
 import { testDurationName } from "./ResultUtilities.js";
 import { getName, isChildProcess } from "./Configuration.js";
 
-function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite {
-	return "contents" in item;
-}
-
 /**
- * Appends a benchmark result to the currently open suite (the stack top).
+ * Reporters should call this when they observe a test being finished.
+ * @remarks
+ * The reporter must also add the `entry` to the proper {@link ReportArray}.
+ * @public
  */
 export function recordTestResult(parent: ReportPath | undefined, entry: ReportEntry): void {
 	if (isChildProcess) {
@@ -47,34 +53,32 @@ export function recordTestResult(parent: ReportPath | undefined, entry: ReportEn
 const geoMeanColumn = "primary measurement geometric mean (smaller is better)";
 
 /**
- * A single benchmark result entry in the report.
+ * A linked-list node representing the ancestry of a suite in the report tree.
  * @public
  */
-export interface ReportEntry {
-	readonly benchmarkName: string;
-	readonly data: BenchmarkResult;
-}
-
-/**
- * A suite containing benchmark results and/or child suites.
- * @remarks
- * When using mocha, this corresponds to the contents of a describe block,
- * which may include both it blocks and nested describe blocks.
- * @public
- */
-export interface ReportSuite {
-	readonly suiteName: string;
-	readonly contents: ReportArray;
-}
-
 export interface ReportPath {
 	readonly report: Pick<ReportSuite, "suiteName">;
 	readonly parent?: ReportPath;
 }
 
+/**
+ * A {@link ReportPath} node whose {@link ReportPath.report} is a full {@link ReportSuite}.
+ * @public
+ */
 export interface ReportSuiteWithPath extends ReportPath {
 	readonly report: ReportSuite;
 	readonly parent?: ReportPath;
+}
+
+/**
+ * A {@link ReportArray} with an associated {@link ReportPath} representing its position in some hierarchy.
+ * @remarks
+ * This is like a {@link ReportSuiteWithPath}, except it does not require the top level content array to be part of a suite.
+ * @public
+ */
+export interface SuiteData {
+	content: ReportArray;
+	parent?: ReportPath;
 }
 
 function suiteNames(parent: ReportPath | undefined): string[] {
@@ -94,28 +98,22 @@ function fullName(parent: ReportPath | undefined, benchmarkName?: string): strin
 	}
 	return names.join(" / ");
 }
-function visitSuitesArray(
-	parent: ReportPath | undefined,
-	array: ReportArray,
-	callback: (parent: ReportPath | undefined, reportParent: ReportArray) => void,
-): void {
-	callback(parent, array);
-	for (const content of array) {
+
+/**
+ * Walk the `report` and apply `callback` to each suite in the tree, including the root suite represented by `report` itself.
+ * @public
+ */
+export function visitSuitesArray(report: SuiteData, callback: (data: SuiteData) => void): void {
+	callback(report);
+	for (const content of report.content) {
 		if (isSuiteNode(content)) {
-			visitSuitesArray({ report: content, parent }, content.contents, callback);
+			visitSuitesArray(
+				{ content: content.contents, parent: { report: content, parent: report.parent } },
+				callback,
+			);
 		}
 	}
 }
-
-/**
- * The type that is JSON-serialized and written to disk for a test suite.
- * @remarks
- * This only includes non-empty suites.
- * When using mocha, this corresponds to the contents of a describe block,
- * which may include both it blocks and nested describe blocks.
- * @public
- */
-export type ReportArray = (ReportSuite | ReportEntry)[];
 
 export function reportTable(heading: string, reports: readonly ReportEntry[]): string {
 	const table = new Table();
@@ -176,22 +174,16 @@ function status(passing: number, failing: number): string {
 }
 
 /**
- * If suite has direct tests, log them in a table.
+ * If suite has direct tests, format them into a table.
+ * @public
  */
-export function logSuiteTests(
-	parent: ReportPath | undefined,
-	reports: Readonly<ReportArray>,
-): void {
-	if (isChildProcess) {
-		// Child process tests report their output via recordTestResult.
-		return;
-	}
+export function formatResultArrayTable(data: SuiteData): string | undefined {
+	const directBenchmarks = data.content.filter((c): c is ReportEntry => !isSuiteNode(c));
 
-	const directBenchmarks = reports.filter((c): c is ReportEntry => !isSuiteNode(c));
-
-	if (directBenchmarks.length > 0) {
-		console.log(reportTable(fullName(parent), directBenchmarks));
+	if (directBenchmarks.length === 0) {
+		return undefined;
 	}
+	return reportTable(fullName(data.parent), directBenchmarks);
 }
 
 function getShallowStats(reports: Readonly<ReportArray>) {
@@ -230,7 +222,12 @@ function getShallowStats(reports: Readonly<ReportArray>) {
 	return { sumRuntime, countSuccessful, countFailure, geometricMeanProductValues };
 }
 
-export function generateOverallSummary(content: ReportArray, parent?: ReportPath): string {
+/**
+ * Formats a summary table for the entire suite hierarchy, including subtotals for each suite and an overall total.
+ * @remarks
+ * Includes notes about the results if applicable (e.g. if there were any failures).
+ */
+export function formatOverallSummary(data: SuiteData): string {
 	const table = new Table();
 
 	// Accumulate totals for suite
@@ -239,14 +236,14 @@ export function generateOverallSummary(content: ReportArray, parent?: ReportPath
 	let countFailure = 0;
 	const geometricMeanProductValues: number[] = [];
 
-	visitSuitesArray(parent, content, (parentInner, contentsInner) => {
-		const stats = getShallowStats(contentsInner);
+	visitSuitesArray(data, (innerData) => {
+		const stats = getShallowStats(innerData.content);
 		sumRuntime += stats.sumRuntime;
 		countSuccessful += stats.countSuccessful;
 		countFailure += stats.countFailure;
 		geometricMeanProductValues.push(...stats.geometricMeanProductValues);
 		table.cell("Status", status(stats.countSuccessful, stats.countFailure));
-		table.cell("Suite Name", fullName(parentInner));
+		table.cell("Suite Name", fullName(innerData.parent));
 		table.cell(
 			"# of passed tests",
 			`${stats.countSuccessful} out of ${stats.countSuccessful + stats.countFailure}`,
@@ -285,7 +282,8 @@ export function generateOverallSummary(content: ReportArray, parent?: ReportPath
 
 	table.newRow();
 
-	const title = parent === undefined ? "Overall Summary" : `Summary for ${fullName(parent)}`;
+	const title =
+		data.parent === undefined ? "Overall Summary" : `Summary for ${fullName(data.parent)}`;
 
 	const notes: string[] = [];
 	if (countFailure > 0) {
@@ -304,29 +302,30 @@ export function generateOverallSummary(content: ReportArray, parent?: ReportPath
 }
 
 /**
- *
+ * Reporters should call this when all benchmark tests have completed to log a summary and optionally write results to disk.
  * @param reports - The full report data for the test run, including all suites and benchmarks.
- * @param incremental - If true, suites were already logged as they completed using {@link logSuiteTests}, so only print the overall summary here. If false, print all suites and the overall summary.
+ * @param incremental - If true, suites were already logged as they completed using {@link formatResultArrayTable}, so only print the overall summary here. If false, print all suites and the overall summary.
  * @param outputFilePath - The file path to write the results to. If undefined, results are not written to a file.
+ * @public
  */
-export function onCompletion(
-	reports: ReportArray,
+export function finishLoggingReport(
+	reports: SuiteData,
 	incremental: boolean,
 	outputFilePath: string | undefined,
 ): void {
-	if (isChildProcess) {
-		// Child process tests report their output via recordTestResult.
-		return;
-	}
-
 	if (!incremental) {
-		visitSuitesArray(undefined, reports, logSuiteTests);
+		visitSuitesArray(reports, (data) => {
+			const text = formatResultArrayTable(data);
+			if (text !== undefined) {
+				console.log(text);
+			}
+		});
 	}
 
-	console.log(generateOverallSummary(reports, undefined));
+	console.log(formatOverallSummary(reports));
 
 	if (outputFilePath !== undefined) {
-		fs.writeFileSync(outputFilePath, JSON.stringify(reports, undefined, "\t"));
+		fs.writeFileSync(outputFilePath, JSON.stringify(reports.content, undefined, "\t"));
 		console.log(`Results file: ${outputFilePath}`);
 	}
 }

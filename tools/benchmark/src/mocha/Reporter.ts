@@ -7,17 +7,21 @@ import chalk from "chalk";
 import { Runner, type Suite, type Test, type Hook } from "mocha";
 
 import {
-	logSuiteTests,
-	onCompletion,
+	formatResultArrayTable,
+	finishLoggingReport,
 	recordTestResult,
+	type ReportSuiteWithPath,
+	type SuiteData,
+} from "../Reporter.js";
+import {
+	type BenchmarkResult,
+	type BenchmarkError,
+	parseBenchmarkResult,
 	type ReportArray,
 	type ReportEntry,
-	type ReportPath,
-	type ReportSuiteWithPath,
-} from "../Reporter.js";
-import type { BenchmarkResult, BenchmarkError } from "../ResultTypes.js";
-import { parseBenchmarkResult } from "./runner.js";
+} from "../ResultTypes.js";
 import { assert } from "../assert.js";
+import { isChildProcess } from "../Configuration.js";
 
 /*
  * Users of this package should be able to author utilities like this for testing tools other than mocha.
@@ -121,10 +125,11 @@ module.exports = class {
 				recordTestResult(suiteData.parent, report);
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
+				// Parallel mode (and possibly other cases) result in multiple roots,
+				// so don't print the root until the end of the run.
 				if (!suite.root) {
 					const suiteData = this.getSuiteData(suite);
-					Object.freeze(suiteData.content);
-					logSuiteTests(suiteData.parent, suiteData.content);
+					logSuite(suiteData);
 				}
 			})
 			.on(Runner.constants.EVENT_HOOK_END, (hook: Hook) => {
@@ -142,16 +147,20 @@ module.exports = class {
 				}
 			})
 			.once(Runner.constants.EVENT_RUN_END, () => {
+				if (isChildProcess) {
+					// Child process tests report their output via recordTestResult and let the parent process do the pretty printing.
+					return;
+				}
+
+				// Print the root suite
 				const suiteData = this.getSuiteData(undefined);
-				logSuiteTests(suiteData.parent, suiteData.content);
-				onCompletion(this.reports, true, this.reportFile);
+				logSuite(suiteData);
+
+				finishLoggingReport(suiteData, true, this.reportFile);
 			});
 	}
 
-	private getSuiteData(suite: Suite | undefined): {
-		content: ReportArray;
-		parent?: ReportPath;
-	} {
+	private getSuiteData(suite: Suite | undefined): SuiteData {
 		if (suite === undefined) {
 			return { content: this.reports };
 		}
@@ -164,6 +173,22 @@ module.exports = class {
 		return { content: suiteData.report.contents, parent: suiteData };
 	}
 };
+
+function logSuite(suite: SuiteData): void {
+	// We should not add more content after printing,
+	// so freeze the content to catch any bugs where we do that.
+	Object.freeze(suite.content);
+
+	if (isChildProcess) {
+		// Child process tests report their output via recordTestResult and let the parent process do the pretty printing.
+		return;
+	}
+
+	const text = formatResultArrayTable(suite);
+	if (text !== undefined) {
+		console.log(text);
+	}
+}
 
 /**
  * Options for the mocha reporter.

@@ -87,3 +87,89 @@ export type CollectedData = readonly [PrimaryMeasurement, ...Measurement[]];
  * @public
  */
 export type PrimaryMeasurement = Required<Measurement> & { significance: "Primary" };
+
+/**
+ * A single benchmark result entry in the report.
+ * @public
+ */
+export interface ReportEntry {
+	readonly benchmarkName: string;
+	readonly data: BenchmarkResult;
+}
+
+/**
+ * A suite containing benchmark results and/or child suites.
+ * @remarks
+ * When using mocha, this corresponds to the contents of a describe block,
+ * which may include both it blocks and nested describe blocks.
+ * @public
+ */
+export interface ReportSuite {
+	readonly suiteName: string;
+	readonly contents: ReportArray;
+}
+
+/**
+ * The type that is JSON-serialized and written to disk for benchmark report files.
+ * @remarks
+ * This only includes non-empty suites.
+ * When using mocha, this corresponds to the contents of a describe block
+ * (or the implicit top level suite).
+ * which may include both `it` blocks and nested `describe` blocks.
+ * @public
+ */
+export type ReportArray = (ReportSuite | ReportEntry)[];
+
+/**
+ * Type guard for distinguishing between a suite and an entry in the report data structure.
+ * @public
+ */
+export function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite {
+	return "contents" in item;
+}
+
+/**
+ * Parses a JSON string produced by applying `JSON.stringify` to a {@link BenchmarkResult}.
+ * @remarks
+ * This has some minimal validation to catch common cases of passing in the wrong data,
+ * but it assumes the data is generally well formed (e.g. that all the expected properties are present and of the correct type).
+ * Uses {@link parseReport} to convert `null` values back to `NaN`.
+ * @throws If `json` does not contain a valid {@link BenchmarkResult}.
+ * @public
+ */
+export function parseBenchmarkResult(json: string): BenchmarkResult {
+	const report = parseReport(json) as Partial<BenchmarkError & CollectedData>;
+	// A minimal sanity check of the data to catch most cases which pass in the wrong thing.
+	if (report.error === undefined) {
+		if (!Array.isArray(report)) {
+			throw new Error(`${JSON.stringify(report)} is not a BenchmarkResult.`);
+		}
+	} else {
+		if (typeof report.error !== "string") {
+			throw new Error(`${JSON.stringify(report)} is not a BenchmarkResult.`);
+		}
+	}
+	return report as BenchmarkResult;
+}
+
+/**
+ * Parses a JSON string for one of the report data structures (e.g. a {@link ReportArray} or {@link ReportSuite}).
+ * @remarks
+ * Converts `null` values back to `NaN` since JSON does not support `NaN` and reports can contain `NaN` values but not `null`.
+ * For {@link BenchmarkResult} values, consider using {@link parseBenchmarkResult} instead, which has some additional validation.
+ * @public
+ */
+export function parseReport(text: string): unknown {
+	return JSON.parse(text, (_key, value: unknown): unknown => {
+		if (value === null) {
+			// Assumes all nulls in the data were NaN values which failed to survive JSON.stringify
+			// since JSON doesn't support NaN.
+			// If there are actually null values in the data, or infinities, this will cause them to be misreported as NaN.
+			// Generally this should be fine, as we don't expect to hit those other cases,
+			// and if we do the NaN indicates some numeric issue that should be investigated anyway.
+			return Number.NaN;
+		}
+		return value;
+		// This type cast assumes the data is well formed. More validation might be nice, but it should be valid as we control the output.
+	});
+}

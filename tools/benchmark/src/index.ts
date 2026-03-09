@@ -42,8 +42,18 @@ export {
 	benchmarkDuration,
 } from "./durationBenchmarking/index.js";
 export { benchmarkIt } from "./mocha/index.js";
-export { ReportEntry, type ReportSuite, type ReportArray } from "./Reporter.js";
 export {
+	formatResultArrayTable,
+	finishLoggingReport,
+	recordTestResult,
+	type ReportPath,
+	type ReportSuiteWithPath,
+	type SuiteData,
+} from "./Reporter.js";
+export {
+	isSuiteNode,
+	parseBenchmarkResult,
+	parseReport,
 	type BenchmarkError,
 	type BenchmarkResult,
 	CollectedData,
@@ -51,6 +61,9 @@ export {
 	Measurement,
 	type Significance,
 	ValueType,
+	ReportEntry,
+	type ReportArray,
+	type ReportSuite,
 } from "./ResultTypes.js";
 export { timer, type Timer } from "./timer.js";
 export { captureResults } from "./ResultUtilities.js";

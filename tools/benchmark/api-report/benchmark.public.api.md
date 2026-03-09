@@ -101,6 +101,12 @@ export interface DurationBenchmarkSync extends HookArguments, BenchmarkTimingOpt
     readonly benchmarkFn: () => void;
 }
 
+// @public
+export function finishLoggingReport(reports: SuiteData, incremental: boolean, outputFilePath: string | undefined): void;
+
+// @public
+export function formatResultArrayTable(data: SuiteData): string | undefined;
+
 // @public @input
 export interface HookArguments {
     // @deprecated
@@ -114,6 +120,9 @@ export type HookFunction = () => void | Promise<unknown>;
 
 // @public
 export const isInPerformanceTestingMode: boolean;
+
+// @public
+export function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite;
 
 // @public
 export interface Measurement {
@@ -153,6 +162,12 @@ export interface OnBatch {
     beforeEachBatch?: () => void;
 }
 
+// @public
+export function parseBenchmarkResult(json: string): BenchmarkResult;
+
+// @public
+export function parseReport(text: string): unknown;
+
 // @public (undocumented)
 export enum Phase {
     // (undocumented)
@@ -174,6 +189,9 @@ export function qualifiedTitle(args: BenchmarkDescription & Titled & {
 }): string;
 
 // @public
+export function recordTestResult(parent: ReportPath | undefined, entry: ReportEntry): void;
+
+// @public
 export type ReportArray = (ReportSuite | ReportEntry)[];
 
 // @public
@@ -185,6 +203,14 @@ export interface ReportEntry {
 }
 
 // @public
+export interface ReportPath {
+    // (undocumented)
+    readonly parent?: ReportPath;
+    // (undocumented)
+    readonly report: Pick<ReportSuite, "suiteName">;
+}
+
+// @public
 export interface ReportSuite {
     // (undocumented)
     readonly contents: ReportArray;
@@ -193,10 +219,26 @@ export interface ReportSuite {
 }
 
 // @public
+export interface ReportSuiteWithPath extends ReportPath {
+    // (undocumented)
+    readonly parent?: ReportPath;
+    // (undocumented)
+    readonly report: ReportSuite;
+}
+
+// @public
 export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData;
 
 // @public
 export type Significance = "Primary" | "Secondary" | "Diagnostic";
+
+// @public
+export interface SuiteData {
+    // (undocumented)
+    content: ReportArray;
+    // (undocumented)
+    parent?: ReportPath;
+}
 
 // @public (undocumented)
 export enum TestType {
