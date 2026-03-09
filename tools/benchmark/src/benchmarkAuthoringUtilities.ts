@@ -44,3 +44,19 @@ export async function captureResults(
 }
 
 export const testDurationName = "Test Duration";
+
+/**
+ * Returns The enumerable subset of the properties of `obj` that are not `undefined`.
+ * @remarks
+ * Useful for defaulting properties using the pattern `{...defaults, ...stripUndefined(obj)}`.
+ * Do not use this pattern if `obj` is intended to be able to explicitly override default values with `undefined`.
+ */
+export function stripUndefined<T extends object>(obj: T): T {
+	const result: Partial<T> = {};
+	for (const [key, value] of Object.entries(obj) as [keyof T, T[keyof T]][]) {
+		if (value !== undefined) {
+			result[key] = value;
+		}
+	}
+	return result as T;
+}

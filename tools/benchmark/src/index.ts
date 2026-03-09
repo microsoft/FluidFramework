@@ -66,7 +66,7 @@ export {
 	type ReportSuite,
 } from "./reportTypes.js";
 export { timer, type Timer } from "./timer.js";
-export { captureResults } from "./testAuthroingUtilities.js";
+export { captureResults } from "./benchmarkAuthoringUtilities.js";
 
 export {
 	type MemoryUseBenchmark,

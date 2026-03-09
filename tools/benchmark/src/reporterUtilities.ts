@@ -21,7 +21,7 @@ import {
 	type ReportEntry,
 	type ReportSuite,
 } from "./reportTypes.js";
-import { testDurationName } from "./testAuthroingUtilities.js";
+import { testDurationName } from "./benchmarkAuthoringUtilities.js";
 import { getName, isChildProcess } from "./Configuration.js";
 import { assert } from "./assert.js";
 

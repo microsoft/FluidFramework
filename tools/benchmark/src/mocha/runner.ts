@@ -10,7 +10,7 @@ import {
 	type BenchmarkResult,
 	type CollectedData,
 } from "../reportTypes.js";
-import { captureResults } from "../testAuthroingUtilities.js";
+import { captureResults } from "../benchmarkAuthoringUtilities.js";
 import { fail } from "../assert.js";
 
 /**

@@ -8,6 +8,7 @@ import {
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
+import { stripUndefined } from "../benchmarkAuthoringUtilities.js";
 import { ValueType, type CollectedData } from "../reportTypes.js";
 import { getArrayStatistics } from "../sampling.js";
 import { type Timer, timer, timerWithResolution } from "../timer.js";
@@ -81,7 +82,7 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 
 	const options = {
 		...defaultTimingOptions,
-		...args,
+		...stripUndefined(args),
 		...timingArgs,
 	};
 	const { isAsync, benchmarkFn } = validateBenchmarkArguments(args);
@@ -119,7 +120,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		this.samples = [];
 		this.options = {
 			...defaultTimingOptions,
-			...options,
+			...stripUndefined(options),
 		};
 		this.phase = this.options.startPhase;
 
