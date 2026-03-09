@@ -4,10 +4,9 @@ This repo includes multiple Codespaces/devcontainer profiles under `.devcontaine
 
 | Profile | File | Best for |
 | --- | --- | --- |
-| `Fluid (Full)` | `.devcontainer/devcontainer.json` | Full-repo development, heavier tasks, and broad day-to-day work. |
-| `Fluid (Lightweight)` | `.devcontainer/lightweight/devcontainer.json` | Docs, API review, and focused edits with lower compute requirements. |
-| `Fluid (Tinylicious)` | `.devcontainer/tinylicious/devcontainer.json` | Example apps, realsvc flows, and Tinylicious workflows that need Docker socket access and port 7070 forwarding. |
-| `Fluid (AI Agent)` | `.devcontainer/ai-agent/devcontainer.json` | AI-agent-assisted workflows with additional default CLI tooling (`jq`, `ripgrep`, `fd-find`, `sqlite3`, `shellcheck`, `tree`). |
+| `Stabdard` | `.devcontainer/devcontainer.json` | Full-repo development, heavier tasks, and broad day-to-day work. |
+| `Lightweight` | `.devcontainer/lightweight/devcontainer.json` | Docs, API review, and focused edits with lower compute requirements. |
+| `Fluid (AI Agent)` | `.devcontainer/ai-agent/devcontainer.json` | AI-agent-assisted workflows with additional default CLI tooling. |
 
 ## Selecting a profile in Codespaces
 
