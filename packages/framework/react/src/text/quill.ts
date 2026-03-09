@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { type PropTreeNode } from "../propNode.js";
+export { type UndoRedo } from "../undoRedo.js";
 export {
 	FormattedMainView,
 	type FormattedMainViewProps,
