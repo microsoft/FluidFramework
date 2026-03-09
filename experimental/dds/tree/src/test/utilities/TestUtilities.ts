@@ -297,7 +297,6 @@ afterEach(async () => {
 	testObjectProviders.length = 0;
 });
 
-
 /**
  * Sets up and returns an object of components useful for testing SharedTree with a local server.
  * Required for tests that involve the uploadBlob API.
