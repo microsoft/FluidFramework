@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
 echo "Setting up playwright CLI..."
 npm install -g @playwright/cli@latest
 echo "Playwright CLI installed."

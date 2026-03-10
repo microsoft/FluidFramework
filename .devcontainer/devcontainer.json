@@ -28,7 +28,7 @@
 			]
 		}
 	},
-	"postCreateCommand": "scripts/codespace-setup/post-create.sh",
+	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh",
 
 	// Forward port for Tinylicious
 	"forwardPorts": [7070],

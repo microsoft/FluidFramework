@@ -1,9 +1,10 @@
-# TODO: This needs to be somewhere it'll be invoked on every shell start, not just when the codespace is initially
-# created.
-source agent-aliases.sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-sh ./playwright-setup.sh
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+source "$SCRIPT_DIR/agent-aliases.sh"
+
+bash "$SCRIPT_DIR/playwright-setup.sh"
 
 echo "Installing Agency, which will require you to authenticate, so look for a popup window..."
-curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency && exec $SHELL -l
-echo "Agency installed and authenticated."
+curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency

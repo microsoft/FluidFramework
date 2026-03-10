@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
 # Invoke 'nvm' to install our preferred version of node, per the '.nvmrc' file
 # located at the root of the ${workspaceFolder}.
 . /usr/local/share/nvm/nvm.sh

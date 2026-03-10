@@ -50,7 +50,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
         sqlite3 \
         shellcheck \
         tree \
-        vim
+        vim \
+    && ln -s /usr/bin/fdfind /usr/local/bin/fd
 
 # Note: To minimize security risk, please do not install Azure CLI and Github CLI in Github Codespaces.
 #       Do feel free to manually install 'gh' and 'az' in local dev containers (see "features" section
