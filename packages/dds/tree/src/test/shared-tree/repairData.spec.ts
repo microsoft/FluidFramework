@@ -219,9 +219,9 @@ describe("Repair Data", () => {
 			const anchorB = TestAnchor.fromValue(view1.checkout.forest, "B");
 
 			// remove in first tree in a transaction
-			view1.checkout.transaction.start(false);
+			view1.checkout.transaction.start();
 			view1.root.removeAt(0);
-			view1.checkout.transaction.start(false);
+			view1.checkout.transaction.start();
 			view1.root.removeAt(0);
 			assert.equal(anchorA.treeStatus, TreeStatus.Removed);
 			assert.equal(anchorB.treeStatus, TreeStatus.Removed);

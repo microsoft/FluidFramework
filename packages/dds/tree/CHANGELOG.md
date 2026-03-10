@@ -1,5 +1,143 @@
 # @fluidframework/tree
 
+## 2.90.0
+
+### Minor Changes
+
+- Add alpha TextAsTree domain for collaboratively editable text ([#26568](https://github.com/microsoft/FluidFramework/pull/26568)) [06736bd81de](https://github.com/microsoft/FluidFramework/commit/06736bd81dea4c8e44cb13304f471a7b1bca42bd)
+
+  A newly exported `TextAsTree` alpha namespace has been added with an initial version of collaboratively editable text.
+  Users of SharedTree can add `TextAsTree.Tree` nodes to their tree to experiment with it.
+
+- Added new TreeAlpha.context(node) API ([#26432](https://github.com/microsoft/FluidFramework/pull/26432)) [ffa62f45e2c](https://github.com/microsoft/FluidFramework/commit/ffa62f45e2ca6c6106c67ed94f69359336823516)
+
+  This release introduces a node-scoped context that works for both hydrated and [unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class).
+  The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` methods and an `isBranch()` type guard.
+  `TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
+
+  #### Migration
+
+  If you previously used `TreeAlpha.branch(node)` to discover a branch, switch to `TreeAlpha.context(node)` and check `isBranch()`:
+
+  ```ts
+  import { TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const context = TreeAlpha.context(node);
+  if (context.isBranch()) {
+    // Same branch APIs as before
+    context.fork();
+  }
+  ```
+
+  `TreeAlpha.branch(node)` is now deprecated.
+  Prefer the context API above.
+
+  #### New transaction entry point
+
+  You can now run transactions from a node context, regardless of whether the node is hydrated:
+
+  ```ts
+  // A synchronous transaction without a return value
+  const context = TreeAlpha.context(node);
+  context.runTransaction(() => {
+    node.count += 1;
+  });
+  ```
+
+  ```ts
+  // An asynchronous transaction with a return value
+  const context = TreeAlpha.context(node);
+  const result = await context.runTransactionAsync(async () => {
+    await doWork(node);
+    return { value: node.foo };
+  });
+  ```
+
+- Promote checkSchemaCompatibilitySnapshots to beta ([#26288](https://github.com/microsoft/FluidFramework/pull/26288)) [eb4ef62672d](https://github.com/microsoft/FluidFramework/commit/eb4ef62672d33f6a903e3726b58d1f65c24d9150)
+
+  [`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
+  It is recommended that all SharedTree applications use this API to write schema compatibility tests.
+
+  Usage should look something like:
+
+  ```typescript
+  import fs from "node:fs";
+  import path from "node:path";
+
+  import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
+
+  // The TreeViewConfiguration the application uses, which contains the application's schema.
+  import { treeViewConfiguration } from "./schema.js";
+  // The next version of the application which will be released.
+  import { packageVersion } from "./version.js";
+
+  // Provide some way to run the check in "update" mode when updating snapshots is intended.
+  const regenerateSnapshots = process.argv.includes("--snapshot");
+
+  // Setup the actual test. In this case using Mocha syntax.
+  describe("schema", () => {
+    it("schema compatibility", () => {
+      // Select a path to save the snapshots in.
+      // This will depend on how your application organizes its test data.
+      const snapshotDirectory = path.join(
+        import.meta.dirname,
+        "../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
+      );
+      snapshotSchemaCompatibility({
+        snapshotDirectory,
+        fileSystem: { ...fs, ...path },
+        version: packageVersion,
+        minVersionForCollaboration: "2.0.0",
+        schema: treeViewConfiguration,
+        mode: regenerateSnapshots ? "update" : "assert",
+      });
+    });
+  });
+  ```
+
+## 2.83.0
+
+### Minor Changes
+
+- Fix false positive error from FormatValidator ([#26372](https://github.com/microsoft/FluidFramework/pull/26372)) [adad917d30](https://github.com/microsoft/FluidFramework/commit/adad917d30e251f4bfd510e7a1ebc4a73bd1f7ee)
+
+  Users of the alpha API [FormatValidatorBasic](https://fluidframework.com/docs/api/fluid-framework/#formatvalidatorbasic-variable)
+  could hit an "Invalid JSON." error when parsing data.
+  This would occur where the result of evaluating "[MinimumVersionForCollab](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) \< 2.74.0"
+  differed between the client encoding the data and the client decoding it.
+  For example opening an old document with a new client that sets `MinimumVersionForCollab = 2.74.0` would throw this error.
+  This has been fixed: this case will no longer throw.
+
+- New beta ExtensibleUnionNode API ([#26438](https://github.com/microsoft/FluidFramework/pull/26438)) [05f716ffb5](https://github.com/microsoft/FluidFramework/commit/05f716ffb56e280624e65853dd9291411ee752ff)
+
+  The new `ExtensibleUnionNode` API allows for creation of unions which can tolerate future additions not yet known to the current code.
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("extensibleUnionNodeExample.items");
+  class ItemA extends sf.object("A", { x: sf.string }) {}
+  class ItemB extends sf.object("B", { x: sf.number }) {}
+
+  class AnyItem extends ExtensibleUnionNode.createSchema(
+    [ItemA, ItemB], // Future versions may add more members here
+    sf,
+    "ExtensibleUnion",
+  ) {}
+  // Instances of the union are created using `create`.
+  const anyItem = AnyItem.create(new ItemA({ x: "hello" }));
+  // Reading the content from the union is done via the `union` property,
+  // which can be `undefined` to handle the case where a future version of this schema allows a type unknown to the current version.
+  const childNode: ItemA | ItemB | undefined = anyItem.union;
+  // To determine which member of the union was present, its schema can be inspected:
+  const aSchema = Tree.schema(childNode ?? assert.fail("No child"));
+  assert.equal(aSchema, ItemA);
+  ```
+
+- Improve error messages when failing to construct nodes ([#26433](https://github.com/microsoft/FluidFramework/pull/26433)) [8c612c6f2b](https://github.com/microsoft/FluidFramework/commit/8c612c6f2bc04a1fc1cdc54e620c2180eb73b107)
+
+  The error messages when constructing tree nodes have been improved.
+  Several cases now list not only the schema identifiers, but also schema names which can help when there are identifier collisions and make it easier to find the implementations.
+  Additionally some cases which did not include what schema were encountered and which were allowed now include both.
+
 ## 2.82.0
 
 ### Minor Changes

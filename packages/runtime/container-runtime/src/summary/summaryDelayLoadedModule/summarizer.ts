@@ -194,7 +194,10 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			return "summarizerClientDisconnected";
 		}
 
-		assert(coordinatorResult !== undefined, "Expect coordinatorResult to be defined");
+		assert(
+			coordinatorResult !== undefined,
+			0xcd6 /* Expect coordinatorResult to be defined */,
+		);
 		const runCoordinator = coordinatorResult;
 
 		// Wait for either external signal to cancel, or loss of connectivity.

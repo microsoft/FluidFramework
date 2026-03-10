@@ -263,6 +263,8 @@ export enum SummarizeType {
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link TestTreeProvider.create} and satisfy the {@link ITestObjectProvider} interface.
+ * @remarks
+ * When possible, prefer {@link TestTreeProviderLite} which is simpler and has lower overhead.
  */
 export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
@@ -1129,9 +1131,9 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// This block makes sure we still validate the encoded data schema for codecs following the latter
 			// pattern.
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
 					describe(
@@ -1149,16 +1151,6 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 							}
 						},
 					);
-				}
-			});
-
-			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of successes) {
-					it(name, () => {
-						const encoded = codec.binary.encode(data, context);
-						const decoded = codec.binary.decode(encoded, context);
-						assertEquivalent(decoded, data);
-					});
 				}
 			});
 
@@ -1197,9 +1189,9 @@ export function makeDiscontinuedEncodingTestSuite(
 		describe(`${version} (discontinued)`, () => {
 			const codec = family.resolve(version);
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			it("throws when encoding", () => {
 				assert.throws(
 					() => jsonCodec.encode({}, {}),
@@ -1532,12 +1524,31 @@ export function moveWithin(
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	if (isInPerformanceTestingMode) {
+	emulateProductionBuildHooks(isInPerformanceTestingMode);
+}
+
+function emulateProductionBuildHooks(enable = true): void {
+	if (enable) {
 		before(() => {
 			emulateProductionBuild();
 		});
 		after(() => {
 			emulateProductionBuild(false);
+		});
+	}
+}
+
+/**
+ * Creates two describe blocks, one with production build emulation enabled and one without,
+ * and places the test suite in both contexts.
+ *
+ * Use this for testing code which has debugAsserts to confirm they don't break the desired behavior.
+ */
+export function suitesWithAndWithoutProduction(fn: (emulateProduction: boolean) => void) {
+	for (const emulateProduction of [true, false]) {
+		describe(`emulateProductionBuild: ${emulateProduction}`, () => {
+			emulateProductionBuildHooks(emulateProduction);
+			fn(emulateProduction);
 		});
 	}
 }

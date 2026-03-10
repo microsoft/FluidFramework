@@ -11,7 +11,6 @@ import {
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
 // TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
