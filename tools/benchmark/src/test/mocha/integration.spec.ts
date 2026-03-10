@@ -10,6 +10,7 @@ import type { CollectedData } from "../../reportTypes.js";
 import { ValueType } from "../../reportTypes.js";
 import { benchmarkIt } from "../../mocha/index.js";
 import { argv } from "node:process";
+import chalk from "chalk/index.js";
 
 const sampleResult: CollectedData = [
 	{
@@ -24,6 +25,16 @@ const sampleResult: CollectedData = [
 const perfModeArgs = ["--perfMode", "--reporter", "./dist/mocha/Reporter.js"];
 
 describe("mocha integration", () => {
+	// Disable chalk colors so assertions can match plain strings.
+	let originalChalkLevel: chalk.Level;
+	before(() => {
+		originalChalkLevel = chalk.level;
+		chalk.level = 0;
+	});
+	after(() => {
+		chalk.level = originalChalkLevel;
+	});
+
 	function integrationTest(testArgs: string[], shouldFail: boolean): string {
 		const args = [...testArgs, "--fgrep", "mocha-integration-inner"];
 		if (shouldFail) {
