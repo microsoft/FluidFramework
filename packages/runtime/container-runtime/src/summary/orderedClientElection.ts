@@ -296,14 +296,17 @@ export class OrderedClientElection
 				return;
 			}
 
-			const isSummarizer = client.client.details.type === summarizerClientType;
-			const electedIsSummarizer =
+			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
+			const electedClientIsSummarizer =
 				this._electedClient !== undefined && isSummarizerClient(this._electedClient);
 
-			if (this._electedClient === undefined || (!electedIsSummarizer && isSummarizer)) {
+			if (
+				this._electedClient === undefined ||
+				(!electedClientIsSummarizer && newClientIsSummarizer)
+			) {
 				// Elect this client: either no one is elected, or a summarizer supersedes an interactive client.
 				this.tryElectingClient(tracked, sequenceNumber, "AddClient");
-			} else if (this._electedParent === undefined && !isSummarizer) {
+			} else if (this._electedParent === undefined && !newClientIsSummarizer) {
 				// This is an odd case. If the _electedClient is set, the _electedParent should be as well.
 				this.tryElectingParent(tracked, sequenceNumber, "AddClient");
 			}
