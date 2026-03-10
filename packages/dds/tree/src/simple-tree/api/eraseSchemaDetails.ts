@@ -126,7 +126,7 @@ export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = un
  * The type of an erased schema.
  * @remarks
  * Provides an {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}
- * compatible way explicitly type the return value from {@link eraseSchemaDetails}.
+ * compatible way to explicitly type the return value from {@link eraseSchemaDetails}.
  * @example
  * ```typescript
  * export const Square: SquareSchema & ErasedSchema<Square> = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
@@ -145,7 +145,7 @@ export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<
 /**
  * The type of an erased schema's node.
  * @remarks
- * Provides an way concisly explicitly type the Node type for a schema returned from {@link eraseSchemaDetails}.
+ * Provides a way to concisely and explicitly type the node type for a schema returned from {@link eraseSchemaDetails}.
  * @example
  * ```typescript
  * export const Square: SquareSchema & ErasedSchema<Square> = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
@@ -153,15 +153,15 @@ export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<
  * ```
  * @alpha
  */
-export type ErasedNode<TExtra, identfier extends string> = TExtra &
+export type ErasedNode<TExtra, Identifier extends string> = TExtra &
 	TreeNode &
-	WithType<identfier>;
+	WithType<Identifier>;
 
 /**
  * The type of a subclassable erased schema.
  * @remarks
  * Provides an {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}
- * compatible way explicitly type the return value from {@link eraseSchemaDetailsSubclassable}.
+ * compatible way to explicitly type the return value from {@link eraseSchemaDetailsSubclassable}.
  * @example
  * ```typescript
  * export const SquareSubclassable: SquareSchema &
@@ -174,10 +174,10 @@ export type ErasedNode<TExtra, identfier extends string> = TExtra &
  * ```
  * @alpha
  */
-export type ErasedSchemaSubclassable<TExtra, identfier extends string> = TreeNodeSchemaClass<
-	identfier,
+export type ErasedSchemaSubclassable<TExtra, Identifier extends string> = TreeNodeSchemaClass<
+	Identifier,
 	NodeKind,
-	ErasedNode<TExtra, identfier>,
+	ErasedNode<TExtra, Identifier>,
 	never,
 	false
 >;
