@@ -69,10 +69,7 @@ class LangchainChatModel implements SharedTreeChatModel {
 		// Parse the response into TreeAgentChatResponse.
 		// Return the first tool call as a tool_call message, preserving the raw args.
 		// Arg parsing (extracting code) is the agent's responsibility.
-		const firstToolCall =
-			responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0
-				? responseMessage.tool_calls[0]
-				: undefined;
+		const firstToolCall = responseMessage.tool_calls?.[0];
 		if (firstToolCall !== undefined) {
 			return {
 				role: "tool_call",
@@ -82,12 +79,14 @@ class LangchainChatModel implements SharedTreeChatModel {
 			};
 		}
 
-		const content =
-			typeof responseMessage.text === "string"
-				? responseMessage.text
-				: typeof responseMessage.content === "string"
-					? responseMessage.content
-					: JSON.stringify(responseMessage.content);
+		let content: string;
+		if (typeof responseMessage.text === "string") {
+			content = responseMessage.text;
+		} else if (typeof responseMessage.content === "string") {
+			content = responseMessage.content;
+		} else {
+			content = JSON.stringify(responseMessage.content);
+		}
 		return { role: "assistant", content };
 	}
 }

@@ -993,8 +993,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			} else if (message.operation.type === MessageType.ClientJoin) {
 				const clientJoinMessage = dataContent as IClientJoin;
 
+				const clientId = clientJoinMessage.clientId;
 				if (clientJoinMessage.detail.mode === "read") {
-					if (this.sequencedSignalClients.has(clientJoinMessage.clientId)) {
+					if (this.sequencedSignalClients.has(clientId)) {
 						// Return if the client has already been added due to a prior join message.
 						return;
 					}
@@ -1009,25 +1010,25 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 					this.addSequencedSignalClient(clientJoinMessage, signalMessage);
 
 					return signalMessage;
-				} else {
-					if (this.clientSeqManager.has(clientJoinMessage.clientId)) {
-						// Return if the client has already been added due to a prior join message.
-						// Do not call upsertClient here, as it would reset the client's
-						// clientSequenceNumber to 0, corrupting duplicate detection state.
-						return;
-					}
-
-					this.clientSeqManager.upsertClient(
-						clientJoinMessage.clientId,
-						0,
-						this.minimumSequenceNumber,
-						message.timestamp,
-						true,
-						clientJoinMessage.detail.scopes,
-						false,
-						message.operation.serverMetadata,
-					);
 				}
+
+				if (this.clientSeqManager.has(clientId)) {
+					// Return if the client has already been added due to a prior join message.
+					// Do not call upsertClient here, as it would reset the client's
+					// clientSequenceNumber to 0, corrupting duplicate detection state.
+					return;
+				}
+
+				this.clientSeqManager.upsertClient(
+					clientId,
+					0,
+					this.minimumSequenceNumber,
+					message.timestamp,
+					true,
+					clientJoinMessage.detail.scopes,
+					false,
+					message.operation.serverMetadata,
+				);
 			}
 		}
 
