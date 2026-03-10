@@ -170,14 +170,24 @@ export function qualifiedTitle(
  * When not in performance testing mode, performance tests should be run as correctness tests, and should be
  * adjusted to run quickly (e.g., smaller iteration counts or data sizes).
  *
- * Use the `--perfMode` flag or the `FLUID_TEST_PERF_MODE` environment variable to enable.
+ * Use the `--perfMode` flag or set `FLUID_TEST_PERF_MODE` environment variable to either "1" or "true" (case insensitive) to enable.
  * If the tests are run in a separate process and do not receive the arguments given to the parent,
  * as is done with Mocha's parallel mode,
  * the environment variable must be used instead of the flag.
  * @public
  */
 export const isInPerformanceTestingMode =
-	process.argv.includes("--perfMode") || "FLUID_TEST_PERF_MODE" in process.env;
+	process.argv.includes("--perfMode") || getEnvFlag("FLUID_TEST_PERF_MODE");
+
+/**
+ * Check for an environment variables flag.
+ * @remarks
+ * Defaults to `false` unless set to "1" or "true" (case insensitive) in the environment variables.
+ */
+function getEnvFlag(name: string): boolean {
+	const envValue = process.env[name];
+	return envValue === "1" || envValue?.toLowerCase() === "true";
+}
 
 /**
  * Indicates that this process is a child process spawned by a `--parentProcess` run.
