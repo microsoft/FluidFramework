@@ -125,6 +125,12 @@
 		}
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions."
+		],
+		"overrides": {
+			"qs": "^6.15.0"
+		},
 		"onlyBuiltDependencies": [
 			"@biomejs/biome",
 			"unrs-resolver"
