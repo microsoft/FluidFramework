@@ -308,13 +308,13 @@ export abstract class ErasedBaseType<out Name = unknown> {
 }
 
 // @alpha
-export type ErasedNode<TExtra, identfier extends string> = TExtra & TreeNode & WithType<identfier>;
+export type ErasedNode<TExtra, Identifier extends string> = TExtra & TreeNode & WithType<Identifier>;
 
 // @alpha
 export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<NodeType extends WithType<infer Identifier> ? Identifier : string, NodeKind, NodeType, never, false>;
 
 // @alpha
-export type ErasedSchemaSubclassable<TExtra, identfier extends string> = TreeNodeSchemaClass<identfier, NodeKind, ErasedNode<TExtra, identfier>, never, false>;
+export type ErasedSchemaSubclassable<TExtra, Identifier extends string> = TreeNodeSchemaClass<Identifier, NodeKind, ErasedNode<TExtra, Identifier>, never, false>;
 
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
