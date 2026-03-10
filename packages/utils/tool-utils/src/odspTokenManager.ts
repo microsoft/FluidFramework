@@ -45,7 +45,7 @@ export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 /**
  * @internal
  */
-export type OdspTokenConfig =
+export type LoginConfig =
 	| {
 			type: "password";
 			username: string;
@@ -57,7 +57,7 @@ export type OdspTokenConfig =
 			redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
 	  }
 	| {
-			type: "token";
+			type: "existingToken";
 			username: string;
 			token: string;
 			/**
@@ -132,7 +132,7 @@ export class OdspTokenManager {
 	public async getOdspTokens(
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		tokenConfig: LoginConfig,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
@@ -143,7 +143,7 @@ export class OdspTokenManager {
 	public async getPushTokens(
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		tokenConfig: LoginConfig,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
@@ -170,7 +170,7 @@ export class OdspTokenManager {
 
 	private static getCacheKey(
 		isPush: boolean,
-		tokenConfig: OdspTokenConfig,
+		tokenConfig: LoginConfig,
 		server: string,
 	): IOdspTokenManagerCacheKey {
 		// If we are using password, we should cache the token per user instead of per server
@@ -184,7 +184,7 @@ export class OdspTokenManager {
 		isPush: boolean,
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		tokenConfig: LoginConfig,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
@@ -226,12 +226,12 @@ export class OdspTokenManager {
 		isPush: boolean,
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		loginConfig: LoginConfig,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
 		const scope = isPush ? pushScope : getOdspScope(server);
-		const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
+		const cacheKey = OdspTokenManager.getCacheKey(isPush, loginConfig, server);
 		let tokens: IOdspTokens | undefined;
 		if (!forceReauth) {
 			// check the cache again under the lock (if it is there)
@@ -240,13 +240,13 @@ export class OdspTokenManager {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
 						// For bearer tokens, use getNewToken callback instead of OAuth refresh
-						if (tokenConfig.type === "token") {
+						if (loginConfig.type === "existingToken") {
 							const bearerToken = process.env.bearer__token;
 							const scopeEndpoint = isPush ? "push" : "storage";
 							if (bearerToken === undefined) {
 								throw new Error("Bearer token environment variable not set");
 							} else {
-								const newTokenData = await tokenConfig.getNewToken(bearerToken, scopeEndpoint);
+								const newTokenData = await loginConfig.getNewToken(bearerToken, scopeEndpoint);
 								tokens = await this.acquireTokensWithBearerToken(newTokenData.Token);
 								await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 							}
@@ -266,18 +266,18 @@ export class OdspTokenManager {
 		}
 
 		if (tokens) {
-			await this.onTokenRetrievalFromCache(tokenConfig, tokens);
+			await this.onTokenRetrievalFromCache(loginConfig, tokens);
 			return tokens;
 		}
 
-		switch (tokenConfig.type) {
+		switch (loginConfig.type) {
 			case "password": {
 				tokens = await this.acquireTokensWithPassword(
 					server,
 					scope,
 					clientConfig,
-					tokenConfig.username,
-					tokenConfig.password,
+					loginConfig.username,
+					loginConfig.password,
 				);
 				break;
 			}
@@ -287,17 +287,17 @@ export class OdspTokenManager {
 					server,
 					clientConfig,
 					scope,
-					tokenConfig.navigator,
-					tokenConfig.redirectUriCallback,
+					loginConfig.navigator,
+					loginConfig.redirectUriCallback,
 				);
 				break;
 			}
-			case "token": {
-				tokens = await this.acquireTokensWithBearerToken(tokenConfig.token);
+			case "existingToken": {
+				tokens = await this.acquireTokensWithBearerToken(loginConfig.token);
 				break;
 			}
 			default: {
-				unreachableCase(tokenConfig);
+				unreachableCase(loginConfig);
 			}
 		}
 
@@ -398,7 +398,7 @@ export class OdspTokenManager {
 	}
 
 	private async onTokenRetrievalFromCache(
-		config: OdspTokenConfig,
+		config: LoginConfig,
 		tokens: IOdspTokens,
 	): Promise<void> {
 		if (config.type === "browserLogin" && config.redirectUriCallback) {

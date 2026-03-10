@@ -15,11 +15,7 @@ export interface IOdspAuthRequestInfo {
     // (undocumented)
     accessToken: string;
     // (undocumented)
-    refreshTokenFn?: () => Promise<string> | Promise<{
-        GUID: string;
-        UserPrincipalName: string;
-        Token: string;
-    }>;
+    refreshTokenFn?: () => Promise<string>;
 }
 
 // @beta @legacy (undocumented)

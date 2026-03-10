@@ -15,7 +15,7 @@ import { unauthPostAsync } from "./odspRequest.js";
  */
 export interface IOdspTokens {
 	readonly accessToken: string;
-	readonly refreshToken?: string; // Refresh token is not used in federated credential flow, so it's optional
+	readonly refreshToken?: string; // Refresh token is not used in federated credential flow, so it's optional.
 	readonly receivedAt?: number; // Unix timestamp in seconds
 	readonly expiresIn?: number; // Seconds from reception until the token expires
 }
@@ -33,13 +33,7 @@ export interface IPublicClientConfig {
  */
 export interface IOdspAuthRequestInfo {
 	accessToken: string;
-	refreshTokenFn?: () =>
-		| Promise<string>
-		| Promise<{
-				GUID: string;
-				UserPrincipalName: string;
-				Token: string;
-		  }>;
+	refreshTokenFn?: () => Promise<string>;
 }
 
 /**
@@ -274,7 +268,7 @@ export async function authRequestWithRetry(
 
 	if (authRequestInfo.refreshTokenFn && (result.status === 401 || result.status === 403)) {
 		// Unauthorized, try to refresh the token
-		const refreshedAccessToken = (await authRequestInfo.refreshTokenFn()) as string;
+		const refreshedAccessToken = await authRequestInfo.refreshTokenFn();
 		return requestCallback(createConfig(refreshedAccessToken));
 	}
 	return result;

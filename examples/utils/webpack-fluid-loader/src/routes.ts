@@ -11,7 +11,7 @@ import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IPublicClientConfig } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	OdspTokenConfig,
+	LoginConfig,
 	OdspTokenManager,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
@@ -42,7 +42,7 @@ function getPublicClientConfig(): IPublicClientConfig {
 }
 
 function getTestTenantCredentials(mode: "spo" | "spo-df"): {
-	tokenConfig: OdspTokenConfig;
+	tokenConfig: LoginConfig;
 	siteUrl: string;
 	server: string;
 } {
