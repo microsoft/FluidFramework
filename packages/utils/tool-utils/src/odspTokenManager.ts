@@ -38,7 +38,7 @@ export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 /**
  * @internal
  */
-export type OdspTokenConfig = {
+export interface OdspTokenConfig {
 	type: "password";
 	username: string;
 	password: string;
