@@ -714,6 +714,25 @@ describe("createTreeAgent", () => {
 		agent.dispose();
 	});
 
+	it("terminates if the model never returns an assistant response", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		// Create many tool_call responses with malformed args (no string property).
+		// With maximumSequentialEdits: 2, maxModelCalls = 4. The model should be cut off.
+		const badResponses = Array.from({ length: 20 }, (_, i) => ({
+			role: "tool_call" as const,
+			toolCallId: `c${i}`,
+			toolName: editToolName,
+			toolArgs: {},
+		}));
+		const model = createMockInvokeModel(badResponses);
+		const agent = createTreeAgent(model, view, { maximumSequentialEdits: 2 });
+		const result = await agent.message("Do something");
+		assert(result.includes("failed to produce a response"));
+		assert.equal(view.root, "Initial");
+		agent.dispose();
+	});
+
 	it("merges on success, rolls back on failure", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
