@@ -105,6 +105,7 @@ declare type current_as_old_for_Interface_IAsyncCache = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_IOdspTokenManagerCacheKey": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IOdspTokenManagerCacheKey = requireAssignableTo<TypeOnly<old.IOdspTokenManagerCacheKey>, TypeOnly<current.IOdspTokenManagerCacheKey>>
 
 /*
@@ -114,6 +115,7 @@ declare type old_as_current_for_Interface_IOdspTokenManagerCacheKey = requireAss
  * typeValidation.broken:
  * "Interface_IOdspTokenManagerCacheKey": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IOdspTokenManagerCacheKey = requireAssignableTo<TypeOnly<current.IOdspTokenManagerCacheKey>, TypeOnly<old.IOdspTokenManagerCacheKey>>
 
 /*

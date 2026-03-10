@@ -134,6 +134,10 @@
 		"broken": {
 			"TypeAlias_OdspTokenConfig": {
 				"forwardCompat": false
+			},
+			"Interface_IOdspTokenManagerCacheKey": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "internal"

@@ -49,7 +49,7 @@ export interface OdspTokenConfig {
  */
 export interface IOdspTokenManagerCacheKey {
 	readonly isPush: boolean;
-	readonly userOrServer: string;
+	readonly user: string;
 }
 
 const isValidAndNotExpiredToken = (tokens: IOdspTokens): boolean => {
@@ -69,7 +69,7 @@ const isValidAndNotExpiredToken = (tokens: IOdspTokens): boolean => {
 };
 
 const cacheKeyToString = (key: IOdspTokenManagerCacheKey): string => {
-	return `${key.userOrServer}${key.isPush ? "[Push]" : ""}`;
+	return `${key.user}${key.isPush ? "[Push]" : ""}`;
 };
 
 /**
@@ -98,7 +98,7 @@ export class OdspTokenManager {
 	): Promise<void> {
 		debug(`${cacheKeyToString(key)}: Saving tokens`);
 		const memoryCache = key.isPush ? this.pushCache : this.storageCache;
-		memoryCache.set(key.userOrServer, value);
+		memoryCache.set(key.user, value);
 		await this.tokenCache?.save(key, value);
 	}
 
@@ -128,7 +128,7 @@ export class OdspTokenManager {
 		cacheKey: IOdspTokenManagerCacheKey,
 	): Promise<IOdspTokens | undefined> {
 		const memoryCache = cacheKey.isPush ? this.pushCache : this.storageCache;
-		const memoryToken = memoryCache.get(cacheKey.userOrServer);
+		const memoryToken = memoryCache.get(cacheKey.user);
 		if (memoryToken) {
 			debug(`${cacheKeyToString(cacheKey)}: Token found in memory `);
 			return memoryToken;
@@ -136,7 +136,7 @@ export class OdspTokenManager {
 		const fileToken = await this.tokenCache?.get(cacheKey);
 		if (fileToken) {
 			debug(`${cacheKeyToString(cacheKey)}: Token found in file`);
-			memoryCache.set(cacheKey.userOrServer, fileToken);
+			memoryCache.set(cacheKey.user, fileToken);
 			return fileToken;
 		}
 	}
@@ -147,7 +147,7 @@ export class OdspTokenManager {
 	): IOdspTokenManagerCacheKey {
 		return {
 			isPush,
-			userOrServer: tokenConfig.username,
+			user: tokenConfig.username,
 		};
 	}
 
@@ -220,10 +220,9 @@ export class OdspTokenManager {
 					debug(`${cacheKeyToString(cacheKey)}: Token reused from locked cache `);
 				}
 			}
-		}
-
-		if (tokens) {
-			return tokens;
+			if (tokens) {
+				return tokens;
+			}
 		}
 
 		tokens = await this.acquireTokensWithPassword(
@@ -278,7 +277,7 @@ async function loadAndPatchRC(): Promise<IResources> {
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
 	async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
 		const rc = await loadAndPatchRC();
-		return rc.tokens?.data[key.userOrServer]?.[key.isPush ? "push" : "storage"];
+		return rc.tokens?.data[key.user]?.[key.isPush ? "push" : "storage"];
 	},
 	async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
 		const rc = await loadAndPatchRC();
@@ -289,10 +288,10 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
 				data: {},
 			};
 		}
-		let prevTokens = rc.tokens.data[key.userOrServer];
+		let prevTokens = rc.tokens.data[key.user];
 		if (!prevTokens) {
 			prevTokens = {};
-			rc.tokens.data[key.userOrServer] = prevTokens;
+			rc.tokens.data[key.user] = prevTokens;
 		}
 		prevTokens[key.isPush ? "push" : "storage"] = tokens;
 		return saveRC(rc);
