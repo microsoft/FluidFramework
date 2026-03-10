@@ -63,6 +63,7 @@ import {
 	type TaggedChange,
 } from "../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
 	allowsRepoSuperset,
@@ -711,14 +712,22 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					kind,
 					isLocal: true,
 					getChange: () => {
+						// Give all serialized changes a revision of "root" by convention.
+						// This is not necessary for correctness - changes are "copied" when later applied and will be given a different revision at that time.
+						const replacer = new DefaultRevisionReplacer(
+							"root",
+							this.changeFamily.rebaser.getRevisions(change),
+						);
+						const root = this.changeFamily.rebaser.changeRevision(change, replacer);
 						const context: ChangeEncodingContext = {
 							idCompressor: this.idCompressor,
 							originatorId: this.idCompressor.localSessionId,
-							revision,
-							schema: undefined, // By not passing the schema, we avoid compressing identifiers in identifier fields
+							revision: "root",
+							// By not passing the schema, we avoid compressing identifiers in identifier fields.
+							// This ensures the change is self-contained - it does not rely on the ID compressor at application time to know about IDs from the compressor at encode time.
+							schema: undefined,
 						};
-						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
-
+						const encodedChange = this.changeFamily.codecs.resolve(4).encode(root, context);
 						assert(
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
