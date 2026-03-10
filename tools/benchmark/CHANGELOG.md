@@ -26,6 +26,8 @@
 -   `captureResults` now runs the callback instead of returning a wrapper around it.
 -   Memory benchmarks now require sampling memory before during and after the allocation being measured is retained in memory to allow for the test to know what it's supposed to measure and sanity check that the test is freeing it properly. As this is an entirely different API, all memory tests will need significant changes.
 -   Formatting of the output json results files has changed: code consuming them will have to be updated.
+    The new format includes failing tests (with their error messages) as well as the full hierarchal structure and can represent multiple tests and suites with the same qualified name.
+    See `ReportArray` type for format for the contents of the report.
 -   `isResultError`, `prettyNumber`, `geometricMean`, and `Stats` are no longer exported from the package.
 -   Reporter now accepts `reportFile` instead of `reportDir`, and saves results to a single JSON file.
 -   Reporter now only writes a file if a path was provided: there is no longer a default path.

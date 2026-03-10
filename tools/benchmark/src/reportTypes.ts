@@ -116,6 +116,9 @@ export interface ReportSuite {
  * When using mocha, this corresponds to the contents of a describe block
  * (or the implicit top level suite),
  * which may include both `it` blocks and nested `describe` blocks.
+ *
+ * Since reports can contain NaN values,
+ * use {@link parseReport} instead of `JSON.parse` when parsing serialized data in this format.
  * @public
  */
 export type ReportArray = (ReportSuite | ReportEntry)[];
