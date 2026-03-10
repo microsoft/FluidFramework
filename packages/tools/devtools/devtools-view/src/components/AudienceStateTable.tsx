@@ -13,7 +13,7 @@ import {
 	tokens,
 } from "@fluentui/react-components";
 import { EditRegular, Person12Regular, Search12Regular } from "@fluentui/react-icons";
-import React from "react";
+import { type ReactElement, useContext } from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
 
@@ -56,9 +56,9 @@ export interface AudienceStateTableProps {
 /**
  * Renders audience state data of client(s)'s clientId, userId, mode, and scopres who are currently connected to the container.
  */
-export function AudienceStateTable(props: AudienceStateTableProps): React.ReactElement {
+export function AudienceStateTable(props: AudienceStateTableProps): ReactElement {
 	const { audienceStateItems } = props;
-	const { themeInfo } = React.useContext(ThemeContext);
+	const { themeInfo } = useContext(ThemeContext);
 
 	const style = audienceStateStyle();
 

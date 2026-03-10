@@ -18,12 +18,13 @@ import {
 	type Titled,
 	type BenchmarkDescription,
 } from "../Configuration";
-import { isResultError, type BenchmarkResult, type Stats } from "../ResultTypes";
-import { getArrayStatistics, prettyNumber } from "../RunnerUtilities";
+import { isResultError, type BenchmarkResult } from "../ResultTypes";
+import { prettyNumber } from "../RunnerUtilities";
 import { assert } from "../assert.js";
 import { timer } from "../timer";
 
 import { supportParentProcess } from "./runner";
+import { getArrayStatistics, type Stats } from "../sampling";
 
 /**
  * This is a flag to enable/disable error throwing for memory regression tests.
