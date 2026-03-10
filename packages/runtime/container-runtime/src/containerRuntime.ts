@@ -1445,8 +1445,8 @@ export class ContainerRuntime
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 	/**
-	 * Timer and resolve function for the delay in {@link fetchLatestSnapshotAndMaybeClose}.
-	 * Tracked at class level so {@link dispose} can cancel the timer and resolve the promise early,
+	 * Timer and resolve function for the delay in `fetchLatestSnapshotAndMaybeClose`.
+	 * Tracked at class level so {@link ContainerRuntime.dispose} can cancel the timer and resolve the promise early,
 	 * preventing the timer from keeping the event loop alive after the container is disposed.
 	 */
 	private closeSummarizerDelayHandle?: {

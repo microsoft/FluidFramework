@@ -1164,6 +1164,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.dispose}
 	 *
+	 * @privateremarks
 	 * This override disposes BOTH drivers. Unlike the base {@link TestObjectProvider} which only has a single
 	 * driver, this class maintains two separate drivers — one for creating containers and one for loading
 	 * them — each backed by its own {@link LocalDeltaConnectionServer}. Each server independently holds a
