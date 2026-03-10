@@ -307,6 +307,15 @@ export abstract class ErasedBaseType<out Name = unknown> {
     protected abstract brand(dummy: never): Name;
 }
 
+// @alpha
+export type ErasedNode<TExtra, identfier extends string> = TExtra & TreeNode & WithType<identfier>;
+
+// @alpha
+export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<NodeType extends WithType<infer Identifier> ? Identifier : string, NodeKind, NodeType, never, false>;
+
+// @alpha
+export type ErasedSchemaSubclassable<TExtra, identfier extends string> = TreeNodeSchemaClass<identfier, NodeKind, ErasedNode<TExtra, identfier>, never, false>;
+
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;

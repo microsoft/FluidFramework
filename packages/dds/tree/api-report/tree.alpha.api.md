@@ -260,6 +260,15 @@ export function enumFromStrings<TScope extends string, const Members extends rea
 };
 
 // @alpha
+export type ErasedNode<TExtra, identfier extends string> = TExtra & TreeNode & WithType<identfier>;
+
+// @alpha
+export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<NodeType extends WithType<infer Identifier> ? Identifier : string, NodeKind, NodeType, never, false>;
+
+// @alpha
+export type ErasedSchemaSubclassable<TExtra, identfier extends string> = TreeNodeSchemaClass<identfier, NodeKind, ErasedNode<TExtra, identfier>, never, false>;
+
+// @alpha
 export function eraseSchemaDetails<TNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchema<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchema<T["identifier"], NodeKind, TNode & TreeNode & WithType<T["identifier"]>, never, false>;
 
 // @alpha

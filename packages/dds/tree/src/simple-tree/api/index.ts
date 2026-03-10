@@ -44,6 +44,11 @@ export {
 	eraseSchemaDetailsSubclassable,
 } from "./eraseSchemaDetails.js";
 export type {
+	ErasedSchema,
+	ErasedNode,
+	ErasedSchemaSubclassable,
+} from "./eraseSchemaDetails.js";
+export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
 	ValidateRecursiveSchemaTemplate,
