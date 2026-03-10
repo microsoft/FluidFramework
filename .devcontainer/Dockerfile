@@ -45,7 +45,13 @@ RUN rm -rf /tmp/library-scripts/
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get -y install --no-install-recommends \
-        vim
+        fd-find \
+        jq \
+        sqlite3 \
+        shellcheck \
+        tree \
+        vim \
+    && ln -s /usr/bin/fdfind /usr/local/bin/fd
 
 # Note: To minimize security risk, please do not install Azure CLI and Github CLI in Github Codespaces.
 #       Do feel free to manually install 'gh' and 'az' in local dev containers (see "features" section
@@ -55,6 +61,12 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 RUN apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
+
+# Optionally install Agency tooling for AI-ready codespace configs
+ARG AI_READY="false"
+RUN if [ "$AI_READY" = "true" ]; then \
+        curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency; \
+    fi
 
 USER node
 
