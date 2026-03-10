@@ -154,6 +154,8 @@ export type TreeObjectNode<
  * 1. Optional fields (which have an implicit undefined default)
  * 2. Identifier fields (which have auto-generated defaults)
  *
+ * Note that this cannot tell if required fields have defaults. Use `FieldHasDefaultAlpha` for alpha schemas if you need to check for required field defaults.
+ *
  * @system @public
  */
 export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
@@ -178,14 +180,11 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
  */
 export type FieldHasDefaultAlpha<T extends ImplicitFieldSchema> =
 	// Extract Kind and TProps from FieldSchemaAlpha and compute whether it has a default
-	[T] extends [FieldSchemaAlpha<infer Kind, infer _Types, infer _Meta, infer TProps>]
-		? // Optional and Identifier kinds always have defaults
-			Kind extends FieldKind.Optional | FieldKind.Identifier
+	[T] extends [FieldSchemaAlpha<infer _Kind, infer _Types, infer _Meta, infer TProps>]
+		? // Check if props has defaultProvider
+			TProps extends { defaultProvider: DefaultProvider }
 			? true
-			: // Check if props has defaultProvider
-				TProps extends { defaultProvider: DefaultProvider }
-				? true
-				: false
+			: false
 		: // Fallback to base FieldHasDefault for non-Alpha schemas
 			FieldHasDefault<T>;
 

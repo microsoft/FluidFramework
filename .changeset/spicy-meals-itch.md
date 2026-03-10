@@ -33,11 +33,11 @@ class Person extends sf.objectAlpha("Person", {
 }) {}
 
 // Before: all fields were required
-// const person = new Person({ name: "Alice", age: 0, role: "guest" });
+// const person = new Person({ name: "Alice", age: -1, role: "guest" });
 
 // After: fields with defaults are optional
 const person = new Person({ name: "Alice" });
-// person.age === 0
+// person.age === -1
 // person.role === "guest"
 
 // You can still provide values to override the defaults
@@ -106,7 +106,7 @@ class Article extends sf.object("Article", {
 }) {}
 ```
 
-### Dynamic defaults
+#### Dynamic defaults
 
 Generator functions are called each time a new node is created, enabling dynamic defaults:
 

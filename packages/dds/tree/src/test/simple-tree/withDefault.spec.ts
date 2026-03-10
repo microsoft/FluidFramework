@@ -191,6 +191,28 @@ describe("withDefault", () => {
 				assert.equal(obj2.numbers[0], 1);
 			});
 
+			it("map with function default", () => {
+				const MapSchema = factory.mapAlpha("StringMap", factory.string);
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					labels: SchemaFactoryAlpha.withDefault(
+						factory.optional(MapSchema),
+						() => new MapSchema({}),
+					),
+				});
+
+				const obj1 = new TestSchema({});
+				assert(obj1.labels !== undefined);
+				assert.equal(obj1.labels.size, 0);
+
+				const obj2 = new TestSchema({
+					labels: new MapSchema({ a: "alpha", b: "beta" }),
+				});
+				assert(obj2.labels !== undefined);
+				assert.equal(obj2.labels.size, 2);
+				assert.equal(obj2.labels.get("a"), "alpha");
+			});
+
 			it("nested object with dynamic default", () => {
 				const NestedSchema = factory.objectAlpha("Nested", {
 					id: factory.number,
@@ -280,6 +302,68 @@ describe("withDefault", () => {
 				const obj3 = new TestSchema({ id: 999 });
 				assert.equal(callCount, 2); // Default function not called
 				assert.equal(obj3.id, 999);
+			});
+		});
+
+		describe("custom node types", () => {
+			it("nested object with function default", () => {
+				const NestedSchema = factory.objectAlpha("NestedReq", {
+					x: factory.number,
+					y: factory.number,
+				});
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					position: SchemaFactoryAlpha.withDefault(
+						factory.required(NestedSchema),
+						() => new NestedSchema({ x: 0, y: 0 }),
+					),
+				});
+
+				const obj1 = new TestSchema({ position: undefined });
+				assert.equal(obj1.position.x, 0);
+				assert.equal(obj1.position.y, 0);
+
+				const obj2 = new TestSchema({ position: new NestedSchema({ x: 10, y: 20 }) });
+				assert.equal(obj2.position.x, 10);
+				assert.equal(obj2.position.y, 20);
+			});
+
+			it("array with function default", () => {
+				const ArraySchema = factory.arrayAlpha("NumberArrayReq", factory.number);
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					numbers: SchemaFactoryAlpha.withDefault(
+						factory.required(ArraySchema),
+						() => new ArraySchema([]),
+					),
+				});
+
+				const obj1 = new TestSchema({ numbers: undefined });
+				assert.equal(obj1.numbers.length, 0);
+
+				const obj2 = new TestSchema({ numbers: new ArraySchema([1, 2, 3]) });
+				assert.equal(obj2.numbers.length, 3);
+				assert.equal(obj2.numbers[0], 1);
+			});
+
+			it("map with function default", () => {
+				const MapSchema = factory.mapAlpha("StringMapReq", factory.string);
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					labels: SchemaFactoryAlpha.withDefault(
+						factory.required(MapSchema),
+						() => new MapSchema({}),
+					),
+				});
+
+				const obj1 = new TestSchema({ labels: undefined });
+				assert.equal(obj1.labels.size, 0);
+
+				const obj2 = new TestSchema({
+					labels: new MapSchema({ a: "alpha", b: "beta" }),
+				});
+				assert.equal(obj2.labels.size, 2);
+				assert.equal(obj2.labels.get("a"), "alpha");
 			});
 		});
 	});
@@ -472,6 +556,18 @@ describe("withDefault", () => {
 		assert.equal(obj2.name, "hello");
 	});
 
+	it("withDefault with undefined generator function as the default value", () => {
+		const TestSchema = factory.objectAlpha("TestObject", {
+			name: SchemaFactoryAlpha.withDefault(factory.optional(factory.string), () => undefined),
+		});
+
+		const obj1 = new TestSchema({});
+		assert.equal(obj1.name, undefined);
+
+		const obj2 = new TestSchema({ name: "hello" });
+		assert.equal(obj2.name, "hello");
+	});
+
 	describe("withDefaultRecursive", () => {
 		describe("optionalRecursive with static default", () => {
 			it("number", () => {
@@ -611,17 +707,20 @@ describe("withDefault", () => {
 			it("explicit value skips the generator", () => {
 				let callCount = 0;
 
-				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeGeneratorSkip", {
-					value: factory.number,
-					score: SchemaFactoryAlpha.withDefaultRecursive(
-						factory.optional(factory.number),
-						() => {
-							callCount++;
-							return 999;
-						},
-					),
-					child: factory.optionalRecursive([() => RecursiveNode]),
-				}) {}
+				class RecursiveNode extends factory.objectRecursiveAlpha(
+					"RecursiveNodeGeneratorSkip",
+					{
+						value: factory.number,
+						score: SchemaFactoryAlpha.withDefaultRecursive(
+							factory.optional(factory.number),
+							() => {
+								callCount++;
+								return 999;
+							},
+						),
+						child: factory.optionalRecursive([() => RecursiveNode]),
+					},
+				) {}
 
 				const node = new RecursiveNode({ value: 1, score: 42 });
 				assert.equal(callCount, 0);
@@ -757,7 +856,7 @@ describe("withDefault", () => {
 
 				const sharedChild = new RecursiveNode({ count: 42, child: undefined });
 
-				class Wrapper extends factory.objectAlpha("WrapperClone", {
+				class Wrapper extends factory.objectRecursiveAlpha("WrapperClone", {
 					node: SchemaFactoryAlpha.withDefaultRecursive(
 						factory.optionalRecursive([() => RecursiveNode]),
 						() => sharedChild,

@@ -74,6 +74,9 @@ import type {
  * 2. **A generator function**: A function that returns a value. The function is called each time a default is needed,
  * allowing for dynamic defaults or explicit control over value creation. The return value must be of an allowed type for the field.
  *
+ * Values should be preferred over generator functions when possible, as they are simpler and more efficient.
+ * Generator functions should be used when the default value needs to be dynamic or when it is not possible to provide a value directly.
+ *
  * @example
  * ```typescript
  * // Provide a value directly
