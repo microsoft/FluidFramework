@@ -47,7 +47,7 @@
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-example/typescript-versions-host": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
