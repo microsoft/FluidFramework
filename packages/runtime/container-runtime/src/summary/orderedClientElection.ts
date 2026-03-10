@@ -420,18 +420,7 @@ export class OrderedClientElection
 	 * Find the oldest eligible interactive (non-summarizer) client in the quorum.
 	 */
 	private findOldestEligibleParent(): ITrackedClient | undefined {
-		let oldest: ITrackedClient | undefined;
-		for (const [clientId, client] of this.quorum.getMembers()) {
-			const tracked = toTrackedClient(clientId, client);
-			if (
-				this.isEligibleFn(tracked) &&
-				client.client.details.type !== summarizerClientType &&
-				(oldest === undefined || client.sequenceNumber < oldest.sequenceNumber)
-			) {
-				oldest = tracked;
-			}
-		}
-		return oldest;
+		return this.findNextEligibleParentAfter(-1);
 	}
 
 	/**
@@ -485,22 +474,11 @@ export class OrderedClientElection
 	}
 
 	public peekNextElectedClient(): ITrackedClient | undefined {
-		// Find the next oldest eligible parent after the current one
 		const currentParentSeq = this._electedParent?.sequenceNumber ?? -1;
-		let nextOldest: ITrackedClient | undefined;
-		for (const [clientId, client] of this.quorum.getMembers()) {
-			const tracked = toTrackedClient(clientId, client);
-			if (
-				this.isEligibleFn(tracked) &&
-				client.client.details.type !== summarizerClientType &&
-				client.sequenceNumber > currentParentSeq &&
-				(nextOldest === undefined || client.sequenceNumber < nextOldest.sequenceNumber)
-			) {
-				nextOldest = tracked;
-			}
-		}
 		// If no younger client found, wrap around to oldest
-		return nextOldest ?? this.findOldestEligibleParent();
+		return (
+			this.findNextEligibleParentAfter(currentParentSeq) ?? this.findOldestEligibleParent()
+		);
 	}
 
 	public getAllEligibleClients(): ITrackedClient[] {
