@@ -320,9 +320,8 @@ export class OrderedClientElection
 				if (this._electedParent?.clientId === clientId) {
 					// 1. The _electedClient is an interactive client that has left the quorum.
 					// Automatically shift to next oldest client.
-					const nextClient =
-						this.findNextEligibleParentAfter(this._electedParent?.sequenceNumber ?? -1) ??
-						this.findOldestEligibleParent();
+					// In this case _electedClient === _electedParent, so the next parent is also the next client.
+					const nextClient = this.findNextEligibleParent();
 					this.tryElectingClient(nextClient, sequenceNumber, "RemoveClient");
 				} else {
 					// 2. The _electedClient is a summarizer that we've been allowing to finish its work.
@@ -337,9 +336,7 @@ export class OrderedClientElection
 				// Removing the _electedParent (but not _electedClient).
 				// Shift to the next oldest parent, but do not replace the _electedClient,
 				// which is a summarizer that is still doing work.
-				const nextParent =
-					this.findNextEligibleParentAfter(this._electedParent?.sequenceNumber ?? -1) ??
-					this.findOldestEligibleParent();
+				const nextParent = this.findNextEligibleParent();
 				this.tryElectingParent(nextParent, sequenceNumber, "RemoveClient");
 			}
 		});
@@ -428,6 +425,17 @@ export class OrderedClientElection
 	}
 
 	/**
+	 * Find the next eligible parent after the current one, wrapping around to
+	 * the oldest if no younger client is found.
+	 */
+	private findNextEligibleParent(): ITrackedClient | undefined {
+		const currentParentSeq = this._electedParent?.sequenceNumber ?? -1;
+		return (
+			this.findNextEligibleParentAfter(currentParentSeq) ?? this.findOldestEligibleParent()
+		);
+	}
+
+	/**
 	 * Find the next eligible interactive client after the given sequence number.
 	 * Returns undefined if no eligible client is found with a higher sequence number.
 	 */
@@ -478,11 +486,7 @@ export class OrderedClientElection
 	}
 
 	public peekNextElectedClient(): ITrackedClient | undefined {
-		const currentParentSeq = this._electedParent?.sequenceNumber ?? -1;
-		// If no younger client found, wrap around to oldest
-		return (
-			this.findNextEligibleParentAfter(currentParentSeq) ?? this.findOldestEligibleParent()
-		);
+		return this.findNextEligibleParent();
 	}
 
 	public getAllEligibleClients(): ITrackedClient[] {
