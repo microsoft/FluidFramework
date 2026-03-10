@@ -200,9 +200,17 @@ export class OrderedClientElection
 	public get electionSequenceNumber(): number {
 		return this._electionSequenceNumber;
 	}
+	/**
+	 * Currently elected client.
+	 * @see {@link IOrderedClientElection.electedClient}
+	 */
 	public get electedClient(): ITrackedClient | undefined {
 		return this._electedClient;
 	}
+	/**
+	 * Currently elected parent client.
+	 * @see {@link IOrderedClientElection.electedParent}
+	 */
 	public get electedParent(): ITrackedClient | undefined {
 		return this._electedParent;
 	}
@@ -290,6 +298,8 @@ export class OrderedClientElection
 			this._electedClient = initialClient;
 		}
 
+		// Updates tracking when a new client joins the quorum.
+		// Will automatically elect the new client if none is currently elected.
 		quorum.on("addMember", (clientId: string, client: ISequencedClient) => {
 			const sequenceNumber = deltaManager.lastSequenceNumber;
 			const tracked = toTrackedClient(clientId, client);
@@ -313,6 +323,8 @@ export class OrderedClientElection
 			}
 		});
 
+		// Updates tracking when a client leaves the quorum.
+		// Will automatically elect the next oldest client if the currently elected client is removed.
 		quorum.on("removeMember", (clientId: string) => {
 			const sequenceNumber = deltaManager.lastSequenceNumber;
 
@@ -420,6 +432,7 @@ export class OrderedClientElection
 
 	/**
 	 * Find the oldest eligible interactive (non-summarizer) client in the quorum.
+	 * @returns the oldest eligible parent client, or undefined if none are eligible.
 	 */
 	private findOldestEligibleParent(): ITrackedClient | undefined {
 		return this.findNextEligibleParentAfter(-1);
@@ -428,6 +441,7 @@ export class OrderedClientElection
 	/**
 	 * Find the next eligible parent after the current one, wrapping around to
 	 * the oldest if no younger client is found.
+	 * @returns the next eligible parent client, or undefined if none are eligible.
 	 */
 	private findNextEligibleParent(): ITrackedClient | undefined {
 		const currentParentSeq = this._electedParent?.sequenceNumber ?? -1;
@@ -438,7 +452,8 @@ export class OrderedClientElection
 
 	/**
 	 * Find the next eligible interactive client after the given sequence number.
-	 * Returns undefined if no eligible client is found with a higher sequence number.
+	 * @param sequenceNumber - sequence number to start searching after.
+	 * @returns the next eligible parent client, or undefined if none are found with a higher sequence number.
 	 */
 	private findNextEligibleParentAfter(sequenceNumber: number): ITrackedClient | undefined {
 		let nextOldest: ITrackedClient | undefined;
