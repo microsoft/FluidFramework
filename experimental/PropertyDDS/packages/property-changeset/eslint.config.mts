@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
+			// Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
 			"@typescript-eslint/ban-ts-comment": "off",
 			"@typescript-eslint/consistent-type-definitions": "off",
 			"@typescript-eslint/dot-notation": "off",
@@ -36,7 +37,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/restrict-plus-operands": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
-			"eqeqeq": "off",
+			eqeqeq: "off",
 			"import-x/no-internal-modules": "off",
 			"no-case-declarations": "off",
 			"no-inner-declarations": "off",
@@ -55,7 +56,7 @@ const config: Linter.Config[] = [
 			"depend/ban-dependencies": [
 				"error",
 				{
-					"allowed": ["lodash", "traverse"],
+					allowed: ["lodash", "traverse"],
 				},
 			],
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",

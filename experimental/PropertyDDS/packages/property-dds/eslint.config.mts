@@ -17,7 +17,7 @@ const config: Linter.Config[] = [
 			"depend/ban-dependencies": [
 				"error",
 				{
-					"allowed": ["axios", "lodash"],
+					allowed: ["axios", "lodash"],
 				},
 			],
 		},
