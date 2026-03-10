@@ -118,11 +118,13 @@
 		"commentsOverrides": [
 			"@types/react: pinned to v18 to prevent pnpm re-resolution from pulling in v19, which is incompatible with the React 18 docs site.",
 			"jws: overridden to ^3.2.3 to resolve a known vulnerability in jws 3.2.2 (transitive via jsonwebtoken). Stays within jsonwebtoken's declared ^3.2.2 range.",
-			"validator: overridden to ^13.15.0 to resolve a known vulnerability in older versions (transitive via swagger-tools)."
+			"validator: overridden to ^13.15.0 to resolve a known vulnerability in older versions (transitive via swagger-tools).",
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions."
 		],
 		"overrides": {
 			"@types/react": "^18.3.12",
 			"jws": "^3.2.3",
+			"qs": "^6.15.0",
 			"validator": "^13.15.0"
 		},
 		"onlyBuiltDependencies": [
