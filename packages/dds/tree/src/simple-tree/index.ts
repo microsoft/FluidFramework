@@ -261,6 +261,7 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type ObjectNodeSchemaPrivate,
 	objectSchema,
 	isObjectNodeSchema,

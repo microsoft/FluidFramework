@@ -122,6 +122,7 @@ export {
 	NodeKind,
 	type TreeObjectNode,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,

@@ -25,6 +25,34 @@ import type {
 } from "./objectNode.js";
 
 /**
+ * {@link (ObjectNodeSchema:interface)} with a workaround to avoid a specific known TypeScript issue which causes it to not be assignable to itself in some cases.
+ * @remarks
+ * See {@link ObjectNodeSchemaWorkaround.createFromInsertable} for details.
+ * @sealed
+ * @alpha
+ */
+export type ObjectNodeSchemaWorkaround<
+	TName extends string = string,
+	T extends
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
+	ImplicitlyConstructable extends boolean = boolean,
+	TCustomMetadata = unknown,
+> = ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> & {
+	/**
+	 * Typing checking workaround: not for for actual use.
+	 * @remarks
+	 * This API collides with {@link TreeNodeSchemaCore.createFromInsertable} to disable a type checking optimization which produces different and undesired results.
+	 * See {@link https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693} for more details.
+	 *
+	 * The specific issue here is non-empty POJO mode object schema not being assignable to `ObjectNodeSchema`,
+	 * @privateRemarks
+	 * See the above link and the tests in objectNode.spec.ts which reference it.
+	 * @system
+	 */
+	readonly createFromInsertable: unknown;
+};
+
+/**
  * A schema for {@link TreeObjectNode}s.
  * @sealed
  * @alpha

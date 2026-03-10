@@ -15,5 +15,6 @@ export {
 export {
 	isObjectNodeSchema,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type ObjectNodeSchemaPrivate,
 } from "./objectNodeTypes.js";

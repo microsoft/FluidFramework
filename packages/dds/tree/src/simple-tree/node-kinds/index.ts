@@ -33,6 +33,7 @@ export {
 	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type ObjectNodeSchemaPrivate,
 	objectSchema,
 	setField,

@@ -1217,6 +1217,11 @@ export const ObjectNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ObjectNodeSchema<string, RestrictiveStringRecord<ImplicitFieldSchema>, boolean, unknown>;
 };
 
+// @alpha @sealed
+export type ObjectNodeSchemaWorkaround<TName extends string = string, T extends RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean, TCustomMetadata = unknown> = ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> & {
+    readonly createFromInsertable: unknown;
+};
+
 // @beta @input
 export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly allowUnknownOptionalFields?: boolean;
