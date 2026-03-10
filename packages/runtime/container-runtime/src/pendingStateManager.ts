@@ -540,20 +540,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			// Advance past the current batch (could be multi-message)
-			const batchFlag = asBatchMetadata(msg.opMetadata)?.batch;
-			if (batchFlag === true) {
-				// Multi-message batch — find the end
-				scanIndex++;
-				while (scanIndex < count) {
-					const innerMsg = this.pendingMessages.get(scanIndex);
-					scanIndex++;
-					if (innerMsg?.opMetadata?.batch === false) {
-						break;
-					}
-				}
-			} else {
-				scanIndex++;
-			}
+			scanIndex = nextBatchIndex(this.pendingMessages, scanIndex, count);
 		}
 
 		if (!hasIdAllocBatch) {
@@ -587,12 +574,19 @@ export class PendingStateManager implements IDisposable {
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
 		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
-		// Scan all pending batches (at batch boundaries) and check if any match the
-		// incoming remote batch. We scan beyond the first because the pending queue may
-		// start with an ID allocation batch (from stashed state) whose effective batchId
-		// differs from the inbound batch, while a later data batch does match.
+		// Check the first pending batch, and if it's an ID allocation batch that doesn't
+		// match, also check the next batch. We look beyond the first because the pending
+		// queue may start with a stashed ID allocation batch whose effective batchId differs
+		// from the inbound batch, while the following data batch does match.
+		// ID alloc is always flushed first by the Outbox, so it can only be at position 0.
 		let scanIndex = 0;
-		while (scanIndex < this.pendingMessages.length) {
+		// maxBatches: 1 normally, 2 if the first batch is an unmatched ID alloc
+		const maxBatches = 2;
+		for (
+			let batchesSeen = 0;
+			batchesSeen < maxBatches && scanIndex < this.pendingMessages.length;
+			batchesSeen++
+		) {
 			const msg = this.pendingMessages.get(scanIndex);
 			if (msg === undefined) {
 				break;
@@ -603,21 +597,24 @@ export class PendingStateManager implements IDisposable {
 				return true;
 			}
 
-			// Advance past the current batch (could be multi-message)
-			const batchFlag = asBatchMetadata(msg.opMetadata)?.batch;
-			if (batchFlag === true) {
-				// Multi-message batch — skip to end
-				scanIndex++;
-				while (scanIndex < this.pendingMessages.length) {
-					const innerMsg = this.pendingMessages.get(scanIndex);
-					scanIndex++;
-					if (innerMsg?.opMetadata?.batch === false) {
-						break;
-					}
-				}
-			} else {
-				scanIndex++;
+			// Only continue scanning past the first batch if it was an ID allocation batch.
+			// Any other batch type at position 0 means there's no ID alloc to skip over.
+			if (
+				batchesSeen === 0 &&
+				hasTypicalRuntimeOp(msg) &&
+				msg.runtimeOp.type === ContainerMessageType.IdAllocation
+			) {
+				// Advance past this ID alloc batch (could be multi-message) and check one more
+				scanIndex = nextBatchIndex(
+					this.pendingMessages,
+					scanIndex,
+					this.pendingMessages.length,
+				);
+				continue;
 			}
+
+			// First batch wasn't an ID alloc — no need to check further
+			break;
 		}
 
 		return false;
@@ -1059,4 +1056,33 @@ function hasTypicalRuntimeOp(
 	message: IPendingMessage,
 ): message is IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage } {
 	return message.runtimeOp !== undefined && message.runtimeOp.type !== "groupedBatch";
+}
+
+/**
+ * Given the first message of a batch at `startIndex` in the deque, return the index of
+ * the first message of the *next* batch.  Handles both single-message batches (no batch
+ * metadata flag, or flag === undefined) and multi-message batches (flag === true on the
+ * first message, flag === false on the last).
+ */
+function nextBatchIndex(
+	messages: Deque<IPendingMessage>,
+	startIndex: number,
+	limit: number,
+): number {
+	const msg = messages.get(startIndex);
+	const batchFlag = asBatchMetadata(msg?.opMetadata)?.batch;
+	if (batchFlag !== true) {
+		// Single-message batch (or no batch metadata)
+		return startIndex + 1;
+	}
+	// Multi-message batch — scan forward to find the batch-end marker
+	let idx = startIndex + 1;
+	while (idx < limit) {
+		const inner = messages.get(idx);
+		idx++;
+		if (inner?.opMetadata?.batch === false) {
+			break;
+		}
+	}
+	return idx;
 }
