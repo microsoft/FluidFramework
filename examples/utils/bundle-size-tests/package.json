@@ -38,7 +38,7 @@
 	"dependencies": {
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/azure-client": "workspace:~",
+		"@tylerbu/levee-client": "^0.1.1",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",

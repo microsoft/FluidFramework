@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import type { LatestRaw, Presence } from "@fluidframework/presence/beta";
+import type { ILeveeAudience, LeveeMember } from "@tylerbu/levee-client";
 
 import type { IDiceRollerController } from "./controller.js";
-import type { ICustomUserDetails } from "./fluid.js";
 import type { DiceValues } from "./presence.js";
 
 function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
@@ -38,7 +37,7 @@ function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
 	return wrapperDiv;
 }
 
-function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
+function makeAudienceView(audience?: ILeveeAudience): HTMLDivElement {
 	// Accommodating the test which doesn't provide an audience
 	if (audience === undefined) {
 		const noAudienceDiv = document.createElement("div");
@@ -53,23 +52,13 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 	audienceDiv.style.fontSize = "20px";
 
 	const onAudienceChanged = (): void => {
-		const members = audience.getMembers() as ReadonlyMap<
-			string,
-			AzureMember<ICustomUserDetails>
-		>;
+		const members = audience.getMembers();
 		const self = audience.getMyself();
 		const memberStrings: string[] = [];
-		const useAzure = process.env.FLUID_CLIENT === "azure";
 
 		for (const member of members.values()) {
 			if (member.id !== self?.id) {
-				if (useAzure) {
-					const memberString = `${member.name}: {Gender: ${member.additionalDetails?.gender},
-                        Email: ${member.additionalDetails?.email}}`;
-					memberStrings.push(memberString);
-				} else {
-					memberStrings.push(member.name);
-				}
+				memberStrings.push(member.name);
 			}
 		}
 
@@ -126,7 +115,7 @@ function addLogEntry(logDiv: HTMLDivElement, entry: string): void {
 function makePresenceView(
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	presenceConfig?: { presence: Presence; lastRoll: LatestRaw<DiceValues> },
-	audience?: IAzureAudience,
+	audience?: ILeveeAudience,
 ): HTMLDivElement {
 	const presenceDiv = document.createElement("div");
 	// Accommodating the test which doesn't provide a presence
@@ -202,7 +191,7 @@ export function makeAppView(
 	diceRollerControllers: IDiceRollerController[],
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
 	presenceConfig?: { presence: Presence; lastRoll: LatestRaw<DiceValues> },
-	audience?: IAzureAudience,
+	audience?: ILeveeAudience,
 ): HTMLDivElement {
 	const diceRollerViews = diceRollerControllers.map((controller) =>
 		makeDiceRollerView(controller),

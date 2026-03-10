@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient } from "@fluidframework/azure-client";
-// TODO: Fix this once the tree-only mode API has been stabilized.
-// eslint-disable-next-line import-x/no-internal-modules
-import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
-import {
-	createTreeContainerRuntimeFactory,
-	isTreeContainerSchema,
-	// TODO: Fix this once the tree-only mode API has been stabilized.
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/fluid-static/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
+import { LeveeClient } from "@tylerbu/levee-client";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
 import { createRoot } from "react-dom/client";
@@ -30,24 +21,17 @@ import type { TodoList } from "./schema.js";
 import { TodoListAppView } from "./view.js";
 
 async function start(): Promise<void> {
-	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
+	// Create a custom ITelemetryBaseLogger object to pass into the Levee container
 	// and hook to the Telemetry system
 	const baseLogger = createChildLogger();
 
 	// Wrap telemetry logger for use with Devtools
 	const devtoolsLogger = createDevtoolsLogger(baseLogger);
 
-	const clientProps: AzureClientPropsInternal = {
+	const client = new LeveeClient({
 		connection: connectionConfig,
 		logger: devtoolsLogger,
-		createContainerRuntimeFactory: ({ schema, compatibilityMode }) => {
-			if (!isTreeContainerSchema(schema)) {
-				throw new Error("Invalid container schema");
-			}
-			return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
-		},
-	};
-	const client = new AzureClient(clientProps);
+	});
 	let container: IFluidContainer<TodoListContainerSchema>;
 	let containerId: string;
 

@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousEndpoint } from "@fluid-example/example-utils";
-import type { AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { AzureClient } from "@fluidframework/azure-client";
-// eslint-disable-next-line import-x/no-internal-modules -- #26985: `test-runtime-utils` internal `InsecureTokenProvider` used in examples
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import { LeveeClient } from "@tylerbu/levee-client";
 import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
@@ -16,16 +12,13 @@ import { Table } from "./tree/index.js";
 
 const userId = Math.random().toString(36).slice(2);
 
-const localConnectionConfig: AzureLocalConnectionConfig = {
-	type: "local",
-	tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", {
-		id: userId,
-		name: `TestUser-${userId}`,
-	}),
-	endpoint: getTinyliciousEndpoint(),
-};
-
-const client = new AzureClient({ connection: localConnectionConfig });
+const client = new LeveeClient({
+	connection: {
+		httpUrl: "http://localhost:4000",
+		tenantKey: "dev-tenant-secret-key",
+		user: { id: userId, name: `TestUser-${userId}` },
+	},
+});
 
 const containerSchema = {
 	initialObjects: { tree: SharedTree },

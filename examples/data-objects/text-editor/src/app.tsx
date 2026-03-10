@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import {
 	toPropTreeNode,
@@ -14,16 +13,11 @@ import {
 	type UndoRedo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-/**
- * InsecureTokenProvider is used here for local development and demo purposes only.
- * Do not use in production - implement proper authentication for production scenarios.
- */
-// eslint-disable-next-line import-x/no-internal-modules
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
+import { LeveeClient } from "@tylerbu/levee-client";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
@@ -32,23 +26,10 @@ import { type FC, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 /**
- * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
- * so in Codespaces we need to use the forwarded URL.
+ * Get the Levee HTTP endpoint URL.
  */
-function getTinyliciousEndpoint(): string {
-	const hostname = window.location.hostname;
-	const tinyliciousPort = 7070;
-
-	// Detect GitHub Codespaces: hostname like "ideal-giggle-xxx-8080.app.github.dev"
-	if (hostname.endsWith(".app.github.dev")) {
-		const match = /^(.+)-\d+\.app\.github\.dev$/.exec(hostname);
-		if (match) {
-			const codespaceName = match[1];
-			return `https://${codespaceName}-${tinyliciousPort}.app.github.dev`;
-		}
-	}
-
-	return `http://localhost:${tinyliciousPort}`;
+function getLeveeEndpoint(): string {
+	return "http://localhost:4000";
 }
 
 const containerSchema = {
@@ -66,15 +47,18 @@ export class TextEditorRoot extends sf.object("TextEditorRoot", {
 
 export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
 
-function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
-	return {
-		type: "local",
-		tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", {
-			id: userId,
-			name: `User-${userId}`,
-		}),
-		endpoint: getTinyliciousEndpoint(),
-	};
+function createLeveeClient(
+	userId: string,
+	logger?: ReturnType<typeof createDevtoolsLogger>,
+): LeveeClient {
+	return new LeveeClient({
+		connection: {
+			httpUrl: getLeveeEndpoint(),
+			tenantKey: "dev-tenant-secret-key",
+			user: { id: userId, name: `User-${userId}` },
+		},
+		logger,
+	});
 }
 
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
@@ -85,7 +69,7 @@ interface DualUserViews {
 	containerId: string;
 }
 
-async function createAndAttachNewContainer(client: AzureClient): Promise<{
+async function createAndAttachNewContainer(client: LeveeClient): Promise<{
 	container: IFluidContainer<typeof containerSchema>;
 	containerId: string;
 	treeView: TreeView<typeof TextEditorRoot>;
@@ -112,7 +96,7 @@ async function createAndAttachNewContainer(client: AzureClient): Promise<{
 }
 
 async function loadExistingContainer(
-	client: AzureClient,
+	client: LeveeClient,
 	containerId: string,
 ): Promise<{
 	container: IFluidContainer<typeof containerSchema>;
@@ -127,8 +111,8 @@ async function loadExistingContainer(
 }
 
 async function initFluid(): Promise<DualUserViews> {
-	const endpoint = getTinyliciousEndpoint();
-	console.log(`Connecting to Tinylicious at: ${endpoint}`);
+	const endpoint = getLeveeEndpoint();
+	console.log(`Connecting to Levee at: ${endpoint}`);
 
 	const user1Id = `user1-${Math.random().toString(36).slice(2, 6)}`;
 	const user2Id = `user2-${Math.random().toString(36).slice(2, 6)}`;
@@ -136,10 +120,7 @@ async function initFluid(): Promise<DualUserViews> {
 	// Initialize telemetry logger for use with Devtools
 	const devtoolsLogger = createDevtoolsLogger();
 
-	const client1 = new AzureClient({
-		connection: getConnectionConfig(user1Id),
-		logger: devtoolsLogger,
-	});
+	const client1 = createLeveeClient(user1Id, devtoolsLogger);
 
 	let containerId: string;
 	let user1Container: IFluidContainer;
@@ -181,10 +162,7 @@ async function initFluid(): Promise<DualUserViews> {
 	}
 
 	// User 2 connects to the loaded document
-	const client2 = new AzureClient({
-		connection: getConnectionConfig(user2Id),
-		logger: devtoolsLogger,
-	});
+	const client2 = createLeveeClient(user2Id, devtoolsLogger);
 	const { container: user2Container, treeView: user2View } = await loadExistingContainer(
 		client2,
 		containerId,
@@ -348,13 +326,12 @@ async function start(): Promise<void> {
 	} catch (error) {
 		console.error("Failed to start:", error);
 		rootElement.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 20px; border-radius: 4px; border: 1px solid #f5c6cb;">
-			<h2>Failed to connect to Tinylicious</h2>
+			<h2>Failed to connect to Levee</h2>
 			<p><strong>Error:</strong> ${error instanceof Error ? error.message : error}</p>
-			<p><strong>Tinylicious endpoint:</strong> ${getTinyliciousEndpoint()}</p>
+			<p><strong>Levee endpoint:</strong> ${getLeveeEndpoint()}</p>
 			<h3>Troubleshooting:</h3>
 			<ol>
-				<li>Make sure Tinylicious is running: <code>pnpm tinylicious</code></li>
-				<li>In Codespaces: Forward port 7070 and set visibility to <strong>Public</strong></li>
+				<li>Make sure Levee is running: <code>docker compose up</code></li>
 			</ol>
 		</div>`;
 	}
