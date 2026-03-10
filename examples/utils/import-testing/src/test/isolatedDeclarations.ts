@@ -6,16 +6,16 @@
 /*
  * Users of Fluid may want to enable the TypeScript compiler flag `isolatedDeclarations`:
  * https://www.typescriptlang.org/tsconfig/#isolatedDeclarations.
- * This flag is added in TypeScript 5.5 (which is newer that what we compile with by default)
+ * This flag is added in TypeScript 5.5 (which is newer than what we compile with by default)
  * and thus requires special setup to validate.
  * See ./build.spec.ts for the test which validates this.
  *
- * Note that as demonstrated in this file, while it is possible to use tree schema with `isolatedDeclarations`, its is not particularly nice to do so.
- * Consider using the `eraseSchemaDetails` pattern to encapsulate much of the schema as possible to reduce the amount of impacted code.
+ * Note that as demonstrated in this file, while it is possible to use tree schema with `isolatedDeclarations`, it is not particularly nice to do so.
+ * Consider using the `eraseSchemaDetails` pattern to encapsulate as much of the schema as possible to reduce the amount of impacted code.
  *
- * Another options is avoiding using `isolatedDeclarations` for schema.
+ * Another option is to avoid using `isolatedDeclarations` for schema.
  * This can be done by putting the schema in a separate TypeScript project with a ts-config file that disables `isolatedDeclarations`.
- * This can be done within the same package, and roughly amounts to using TypeScripts ability to generate d.ts files
+ * This can be done within the same package, and roughly amounts to using TypeScript's ability to generate d.ts files
  * to generate the extra boilerplate automatically.
  */
 
