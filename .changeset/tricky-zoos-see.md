@@ -7,7 +7,7 @@ Add logLevel property to logging events
 
 Events now include an optional `logLevel` property that indicates their importance for diagnostics and enables consumers to make sampling or filtering decisions.
 
-There are currently three supported values:
+There are currently three emitted values:
 1. 'verbose'
 Chatty logs useful for local debugging. They need not be collected in production.
 2. 'info'

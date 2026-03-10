@@ -175,7 +175,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 */
-	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	public abstract send(
+		event: ITelemetryBaseEvent & { logLevel: LogLevelValueType },
+		logLevel?: LogLevel,
+	): void;
 
 	/**
 	 * Send a telemetry event with the logger
@@ -191,7 +194,11 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		this.sendTelemetryEventCore(
-			{ ...event, category: event.category ?? "generic" },
+			{
+				...event,
+				category: event.category ?? "generic",
+				logLevel: event.logLevel ?? LogLevelValue.essential,
+			},
 			error,
 			event.category === "error" ? LogLevel.error : logLevel,
 		);
@@ -843,8 +850,12 @@ function convertToBaseEvent({
 	category,
 	eventName,
 	...props
-}: ITelemetryEventExt): ITelemetryBaseEvent {
-	const newEvent: ITelemetryBaseEvent = { category, eventName };
+}: ITelemetryEventExt): ITelemetryBaseEvent & { logLevel: LogLevelValueType } {
+	const newEvent: ITelemetryBaseEvent & { logLevel: LogLevelValueType } = {
+		category,
+		eventName,
+		logLevel: LogLevelValue.essential,
+	};
 	for (const key of Object.keys(props)) {
 		newEvent[key] = convertToBasePropertyType(props[key]);
 	}
@@ -1005,7 +1016,8 @@ export const tagCodeArtifacts = <
  * Numerical values that indicate the importance of a telemetry event for diagnostics,
  * enabling consumers to make sampling or filtering decisions.
  *
- * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
+ * @remarks
+ * If an event does not contain a `logLevel` property, it should be treated as an `essential`.
  *
  * @internal
  */
