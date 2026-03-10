@@ -168,6 +168,7 @@
 			"@babel/types": "7.27.7",
 			"@babel/runtime": "7.27.6",
 			"eslint": "^9.39.2",
+			"jws": "^3.2.3",
 			"mongodb>@aws-sdk/credential-providers": "-",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
