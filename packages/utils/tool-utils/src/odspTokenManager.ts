@@ -42,7 +42,7 @@ export interface OdspTokenConfig {
 	type: "password";
 	username: string;
 	password: string;
-};
+}
 
 /**
  * @internal
