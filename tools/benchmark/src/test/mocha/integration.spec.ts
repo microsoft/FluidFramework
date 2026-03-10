@@ -25,8 +25,9 @@ const perfModeArgs = ["--perfMode", "--reporter", "./dist/mocha/Reporter.js"];
 
 describe("mocha integration", () => {
 	function integrationTest(testArgs: string[], shouldFail: boolean): string {
-		// Disable colors so assertions can match plain strings.
-		const args = [...testArgs, "--fgrep", "mocha-integration-inner", "--no-color"];
+		// Disable colors with "--no-color" does not seem to work on CI (perhaps due to an environment variable),
+		// but enabling colors does seem to work locally, so we enable colors to get consistent results for these tests.
+		const args = [...testArgs, "--fgrep", "mocha-integration-inner", "--color"];
 		if (shouldFail) {
 			args.push("--integrationFail");
 		}
@@ -41,13 +42,13 @@ describe("mocha integration", () => {
 
 	it("correctness", () => {
 		const result = integrationTest([], false);
-		assert.match(result, /✔ @Benchmark @Measurement mocha-integration-inner\n/);
-		assert.match(result, / 1 passing \(/);
+		assert.match(result, /✔.*@Benchmark @Measurement mocha-integration-inner/);
+		assert.match(result, / 1 passing/);
 	});
 
 	it("correctness with error", () => {
 		const result = integrationTest(["--integrationFail"], true);
-		assert.match(result, / 0 passing \(/);
+		assert.match(result, / 0 passing/);
 	});
 	for (const parentProcess of [false, true]) {
 		describe(parentProcess ? "with parent process" : "without parent process", () => {
@@ -55,17 +56,17 @@ describe("mocha integration", () => {
 			it("perf", () => {
 				const result = integrationTest(args, false);
 				// From suite table:
-				assert.match(result, /✔\s+mocha-integration-inner\s+1\.000 ms/);
+				assert.match(result, /✔.+mocha-integration-inner.+1\.000 ms/);
 				// From summary table:
-				assert.match(result, /✔\s+mocha integration\s+1 out of 1 /);
+				assert.match(result, /✔.+mocha integration.+1 out of 1 /);
 			});
 
 			it("perf with error", () => {
 				const result = integrationTest([...args, "--integrationFail"], true);
 				// From suite table:
-				assert.match(result, /×\s+mocha-integration-inner\s+Example Error/);
+				assert.match(result, /×.+mocha-integration-inner.+Example Error/);
 				// From summary table:
-				assert.match(result, /×\s+mocha integration\s+0 out of 1/);
+				assert.match(result, /×.+mocha integration.+0 out of 1/);
 			});
 		});
 	}
