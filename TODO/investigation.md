@@ -66,7 +66,8 @@ files are loaded). Named with 'g' so it sorts before 'i' (inventoryApp.test.js) 
 | packages/dds/matrix/src/test/memory | ✅ | Already clean (benchmark) |
 | packages/dds/sequence/src/test/memory | ✅ | Already clean (benchmark) |
 | packages/dds/map/src/test/memory | ✅ | Already clean (benchmark) |
-| packages/test/test-end-to-end-tests | ✅ | 2, 11a, 11b, 11c, 11d, 12, 13, 14, 15 - multiple fixes |
+| packages/test/test-end-to-end-tests | ✅ | 2, 11a-d, 12, 13, 14, 15, 16, 17 - multiple fixes |
+| packages/test/mocha-test-setup | ✅ | 16 - global.setTimeout patch for N-1 timer unref |
 | packages/test/test-end-to-end-tests/benchmark | ✅ | Already clean (benchmark) |
 | packages/test/local-server-stress-tests | ✅ | Already clean - harness disposes properly |
 
@@ -147,6 +148,43 @@ the `finally` clause to ensure cleanup even if the test throws.
 **File changed:**
 `packages/test/test-end-to-end-tests/src/test/container.spec.ts`
 
+## Root Cause 16: N-1 compat Summarizer.runCore() timers (global.setTimeout patch)
+
+**Affected packages:** packages/test/test-end-to-end-tests (N-1 compat tests)
+
+N-1 packages (e.g. `@fluidframework/container-runtime@2.83.0`) create 2-minute `setTimeout`
+timers inside `Summarizer.runCore()` `Promise.race()` calls. Root cause 9 fixed this in the
+current version, but N-1 packages cannot be patched. These timers have no external cancellation
+mechanism, so they keep the process alive for up to 2 minutes after tests complete.
+
+**Fix:** Patch `globalThis.setTimeout` in `packages/test/mocha-test-setup/src/mochaHooks.ts`
+at module-load time to automatically call `unref()` on any timer with delay > 10,000ms.
+`unref()` marks a Node.js timer as non-blocking for the event loop, so the process can exit
+naturally after tests finish without waiting for those 2-minute timers to fire.
+
+**File changed:**
+`packages/test/mocha-test-setup/src/mochaHooks.ts`
+
+## Root Cause 17: compression.spec.ts describeInstallVersions socket leak
+
+**Affected packages:** packages/test/test-end-to-end-tests
+
+The `describeInstallVersions` block called `compressionSuite` with a factory that created a
+**new** `TestObjectProvider` (and a new `LocalDeltaConnectionServer` with OS socket connections)
+on every `beforeEach` call. The `afterEach` in `compressionSuite` only calls `provider.reset()`,
+never `provider.dispose()`, so the socket connections were never closed.
+
+After all 6 "Op Compression self-healing with old loader" tests completed, 2 OS socket handles
+remained open indefinitely, hanging the process. This was NOT a timer issue (hence the
+`global.setTimeout` patch alone was insufficient).
+
+**Fix:** Restructured the `describeInstallVersions` block to create the versioned provider
+ONCE in a `before` hook and dispose it in an `after` hook. The provider is reused across all
+tests in the suite (each test still gets clean state via `provider.reset()` in `afterEach`).
+
+**File changed:**
+`packages/test/test-end-to-end-tests/src/test/compression.spec.ts`
+
 ## Remaining (not fixed)
 
 - `tools/test-tools/.mocharc.cjs`: Standalone package (own pnpm workspace, not part of main monorepo). Tests appear to be trivially clean (just spawnSync) but can't verify without separate install.
@@ -170,8 +208,9 @@ or call `objProvider.reset()` if using `TestObjectProvider`.
 ## Key implementation notes
 
 ### describeCompat/describeWithVersions after hook
-The `after` hook now awaits `provider.driver.dispose?.()` so LocalDeltaConnectionServer
-is fully closed before mocha considers the suite done.
+The `after` hook now awaits `provider.dispose()` (NOT `provider.driver.dispose?.()`) so all
+LocalDeltaConnectionServer instances are fully closed. `TestObjectProviderWithVersionedLoad`
+has TWO drivers and overrides `dispose()` to close both.
 
 ### localServerTestDriver.dispose()
 Changed from fire-and-forget `void this._server.close()` to `await this._server.close()`.
