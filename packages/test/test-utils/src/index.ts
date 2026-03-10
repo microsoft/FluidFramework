@@ -36,10 +36,12 @@ export {
 } from "./testFluidObject.js";
 
 // #region Exports with load side-effect
-// The below runtime (not "type") exports transitively or directly load
-// timeoutUtils.ts that has load side-effect of patching Mocha's timeout
-// handling. For the side-effect to load, consumer must also load
-// mocha-test-setup, which is pervasively used.
+// The below runtime (not "type") exports transitively or directly import
+// timeoutUtils.ts, which always executes on import and may patch Mocha's timeout
+// handling. That patching only takes effect when consumers use
+// @fluid-internal/mocha-test-setup that sets globalThis.getMochaModule.
+// @fluid-internal/mocha-test-setup is pervasive in our tests and thus patch
+// is usually in effect (when this package is used).
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export type {
 	IDocumentIdStrategy,
