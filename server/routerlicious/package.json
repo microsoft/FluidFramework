@@ -143,7 +143,8 @@
 		"commentsOverrides": [
 			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
 			"node types >= 22 are bumped down to 20.x to work around issues with packages using different types.",
-			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
+			"mongodb>@aws-sdk/credential-providers: not needed and brings in a large transitive dependency tree (including fast-xml-parser). Dropped with '-'.",
+			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies with '-'. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
 			"@typescript-eslint/*: Pin to 8.52.0 to avoid 8.53.0 which may not be available in ADO package feed.",
 			"@babel/*: Pin to 7.27.x to avoid 7.28.x versions which may not be available in ADO package feed.",
@@ -167,8 +168,9 @@
 			"@babel/types": "7.27.7",
 			"@babel/runtime": "7.27.6",
 			"eslint": "^9.39.2",
-			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
-			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
+			"mongodb>@aws-sdk/credential-providers": "-",
+			"oclif>@aws-sdk/client-cloudfront": "-",
+			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.4",
 			"zookeeper": "^7.2.0"
