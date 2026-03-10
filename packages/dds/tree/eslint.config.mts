@@ -13,7 +13,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-empty-object-type": [
 				"error",
 				{
-					allowInterfaces: "always",
+					allowInterfaces: "with-single-extends",
 					allowObjectTypes: "always",
 				},
 			],
