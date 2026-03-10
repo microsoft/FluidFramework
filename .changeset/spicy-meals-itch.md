@@ -28,7 +28,7 @@ const sf = new SchemaFactoryAlpha("example");
 
 class Person extends sf.objectAlpha("Person", {
 	name: sf.required(sf.string),
-	age: sf.withDefault(sf.required(sf.number), 0),
+	age: sf.withDefault(sf.required(sf.number), -1),
 	role: sf.withDefault(sf.required(sf.string), "guest"),
 }) {}
 
