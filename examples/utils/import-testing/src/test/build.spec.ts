@@ -37,6 +37,12 @@ const typescriptVersions = Object.entries(typescriptHostPackageJson.devDependenc
 
 const execFileAsync = promisify(execFile);
 
+/**
+ * Invokes the provided version of tsc to compile code, validating that it type checks with that version of TypeScript.
+ * @param tscName - The name of the TypeScript compiler package to use. Use the package aliases defined in `@fluid-example/typescript-versions-host/package.json`.
+ * @param args - Additional arguments to pass to the TypeScript compiler.
+ * @param project - The path to the tsconfig file to use for compilation. Defaults to ./tsconfig.test.json.
+ */
 async function compileTest(
 	tscName: string,
 	args: string[],
