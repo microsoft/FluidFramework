@@ -138,10 +138,11 @@ function isSummarizerClient(client: ITrackedClient): boolean {
 }
 
 function toTrackedClient(clientId: string, client: ISequencedClient): ITrackedClient {
+	const clientClone: Immutable<IClient> = { ...client.client }; // shallow clone
 	return {
 		clientId,
 		sequenceNumber: client.sequenceNumber,
-		client: client.client as Immutable<IClient>,
+		client: clientClone,
 	};
 }
 
@@ -476,7 +477,10 @@ export class OrderedClientElection
 	 */
 	public resetElectedClient(sequenceNumber: number): void {
 		const firstClient = this.findOldestEligibleParent();
-		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
+		if (
+			this._electedClient === undefined ||
+			this._electedClient.clientId === this._electedParent?.clientId
+		) {
 			this.tryElectingClient(firstClient, sequenceNumber, "ResetElectedClient");
 		} else {
 			// The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
