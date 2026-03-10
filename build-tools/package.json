@@ -159,6 +159,7 @@
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"mdast-util-gfm-footnote": "^2.1.0",
+			"jws": "^3.2.3",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.14.0",

@@ -131,6 +131,7 @@
 			]
 		},
 		"overrides": {
+			"jws": "^3.2.3",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
 			"sharp": "^0.33.2"

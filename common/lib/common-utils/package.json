@@ -160,6 +160,7 @@
 			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies entirely via pnpm overrides. This helps reduce lockfile churn since the deps release very frequently."
 		],
 		"overrides": {
+			"jws": "^3.2.3",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
 			"sharp": "^0.33.2"
