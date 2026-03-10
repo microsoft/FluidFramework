@@ -25,7 +25,8 @@
 	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh",
 	"remoteUser": "node",
 	"features": {
-		"git-lfs": "latest"
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers/features/git-lfs:1": {}
 	},
 	"hostRequirements": {
 		"cpus": 4,
