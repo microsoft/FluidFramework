@@ -197,7 +197,8 @@ describe("Ordered Client Collection", () => {
 				mockLogger.matchEvents([
 					{
 						eventName: "InitialElectedClientIneligible",
-						clientId: "s",
+						electionSequenceNumber: 4321,
+						expectedClientId: "s",
 						electedClientId: "c",
 					},
 				]);
@@ -218,7 +219,8 @@ describe("Ordered Client Collection", () => {
 				mockLogger.matchEvents([
 					{
 						eventName: "InitialElectedClientIneligible",
-						clientId: "s",
+						electionSequenceNumber: 4321,
+						expectedClientId: "s",
 						electedClientId: undefined,
 					},
 				]);
@@ -236,7 +238,15 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 },
 				);
 				assertElectionState(3, undefined, 4321);
-				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
+				mockLogger.matchEvents([
+					{
+						eventName: "InitialElectedClientNotFound",
+						electionSequenceNumber: 4321,
+						expectedClientId: "x",
+						electedClientId: undefined,
+						clientCount: 4,
+					},
+				]);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 		});

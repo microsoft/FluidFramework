@@ -249,10 +249,13 @@ export class OrderedClientElection
 			if (initialState.electedClientId !== undefined) {
 				const member = members.get(initialState.electedClientId);
 				if (member === undefined) {
-					// Cannot find initially elected client in quorum.
+					// Cannot find initially elected client, so elect undefined.
 					this.logger.sendErrorEvent({
 						eventName: "InitialElectedClientNotFound",
-						clientId: initialState.electedClientId,
+						electionSequenceNumber: initialState.electionSequenceNumber,
+						expectedClientId: initialState.electedClientId,
+						electedClientId: undefined,
+						clientCount: members.size,
 					});
 				} else {
 					const tracked = toTrackedClient(initialState.electedClientId, member);
@@ -265,7 +268,8 @@ export class OrderedClientElection
 						initialParent = fallback;
 						this.logger.sendErrorEvent({
 							eventName: "InitialElectedClientIneligible",
-							clientId: initialState.electedClientId,
+							electionSequenceNumber: initialState.electionSequenceNumber,
+							expectedClientId: initialState.electedClientId,
 							electedClientId: initialClient?.clientId,
 						});
 					}
