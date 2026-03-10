@@ -475,7 +475,7 @@ describe("withDefault", () => {
 	describe("withDefaultRecursive", () => {
 		describe("optionalRecursive with static default", () => {
 			it("number", () => {
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptNumber", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeOptNumber", {
 					count: SchemaFactoryAlpha.withDefaultRecursive(factory.optional(factory.number), 0),
 					child: factory.optionalRecursive([() => RecursiveNode]),
 				}) {}
@@ -491,7 +491,7 @@ describe("withDefault", () => {
 			});
 
 			it("string", () => {
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptString", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeOptString", {
 					label: SchemaFactoryAlpha.withDefaultRecursive(
 						factory.optional(factory.string),
 						"default-label",
@@ -510,7 +510,7 @@ describe("withDefault", () => {
 			});
 
 			it("boolean", () => {
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptBoolean", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeOptBoolean", {
 					enabled: SchemaFactoryAlpha.withDefaultRecursive(
 						factory.optional(factory.boolean),
 						false,
@@ -529,7 +529,7 @@ describe("withDefault", () => {
 			});
 
 			it("null", () => {
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptNull", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeOptNull", {
 					value: SchemaFactoryAlpha.withDefaultRecursive(factory.optional(factory.null), null),
 					child: factory.optionalRecursive([() => RecursiveNode]),
 				}) {}
@@ -539,7 +539,7 @@ describe("withDefault", () => {
 			});
 
 			it("multiple fields", () => {
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptMultiple", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeOptMultiple", {
 					count: SchemaFactoryAlpha.withDefaultRecursive(factory.optional(factory.number), 0),
 					label: SchemaFactoryAlpha.withDefaultRecursive(
 						factory.optional(factory.string),
@@ -562,7 +562,7 @@ describe("withDefault", () => {
 				// Use a non-recursive node as the default to avoid infinite recursion.
 				const Metadata = factory.objectAlpha("OptMetadata", { version: factory.number });
 
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeOptNode", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeOptNode", {
 					meta: SchemaFactoryAlpha.withDefaultRecursive(
 						factory.optional(Metadata),
 						() => new Metadata({ version: 1 }),
@@ -587,7 +587,7 @@ describe("withDefault", () => {
 			it("generator is called each time a default is needed", () => {
 				let callCount = 0;
 
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeGenerator", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeGenerator", {
 					value: factory.number,
 					score: SchemaFactoryAlpha.withDefaultRecursive(
 						factory.optional(factory.number),
@@ -611,7 +611,7 @@ describe("withDefault", () => {
 			it("explicit value skips the generator", () => {
 				let callCount = 0;
 
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeGeneratorSkip", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeGeneratorSkip", {
 					value: factory.number,
 					score: SchemaFactoryAlpha.withDefaultRecursive(
 						factory.optional(factory.number),
@@ -750,7 +750,7 @@ describe("withDefault", () => {
 
 		describe("cloning behavior", () => {
 			it("generator returning the same recursive instance is cloned for each use", () => {
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeClone", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeClone", {
 					count: factory.number,
 					child: factory.optionalRecursive([() => RecursiveNode]),
 				}) {}
@@ -782,7 +782,7 @@ describe("withDefault", () => {
 
 		describe("instance method", () => {
 			it("can use instance withDefaultRecursive method", () => {
-				class RecursiveNode extends factory.objectRecursive("RecursiveNodeInstance", {
+				class RecursiveNode extends factory.objectRecursiveAlpha("RecursiveNodeInstance", {
 					value: factory.number,
 					label: factory.withDefaultRecursive(factory.optional(factory.string), "default"),
 					child: factory.optionalRecursive([() => RecursiveNode]),
