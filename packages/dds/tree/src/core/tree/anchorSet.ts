@@ -130,6 +130,13 @@ export interface AnchorEvents {
 	 */
 	childrenChangedAfterBatch(arg: {
 		changedFields: ReadonlySet<FieldKey>;
+		/**
+		 * The sequential delta marks for each changed field, keyed by field key.
+		 * @remarks
+		 * A field is absent from this map when no mark data was captured for it
+		 * (e.g. for unhydrated nodes, or when marks were invalidated by multiple
+		 * sequential batches touching the same field before the buffer was flushed).
+		 */
 		fieldMarks: ReadonlyMap<FieldKey, readonly Delta.Mark[]>;
 	}): void;
 
@@ -778,12 +785,12 @@ export class AnchorSet implements AnchorLocator {
 				const marksByNode: Map<PathNode, Map<FieldKey, readonly Delta.Mark[]>> = new Map();
 				for (const { node, event, changedField, fieldMarks } of this.bufferedEvents) {
 					if (event === "childrenChangedAfterBatch") {
-						const keys = getOrCreate(eventsByNode, node, () => new Set());
-						keys.add(
+						const resolvedField: FieldKey =
 							changedField ??
-								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
-						);
-						if (changedField !== undefined && fieldMarks !== undefined) {
+							fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */);
+						const keys = getOrCreate(eventsByNode, node, () => new Set());
+						keys.add(resolvedField);
+						if (fieldMarks !== undefined) {
 							const nodeMarks = getOrCreate(marksByNode, node, () => new Map());
 							// First-wins is safe here because `fieldMarks` is called at most once per
 							// field per delta visit (the hook fires during the detach pass only).
@@ -794,8 +801,8 @@ export class AnchorSet implements AnchorLocator {
 							// batch), `KernelEventBuffer` detects the collision and removes the entry
 							// for that field entirely, so the consumer receives `undefined` rather than
 							// stale marks.
-							if (!nodeMarks.has(changedField)) {
-								nodeMarks.set(changedField, fieldMarks);
+							if (!nodeMarks.has(resolvedField)) {
+								nodeMarks.set(resolvedField, fieldMarks);
 							}
 						}
 					}
@@ -835,10 +842,7 @@ export class AnchorSet implements AnchorLocator {
 							0xa24 /* Must be in a field to modify its contents */,
 						);
 						p.events.emit("childrenChanged", p);
-						const fieldMarks =
-							parentField === undefined
-								? undefined
-								: this.storedFieldMarks.get(p)?.get(parentField);
+						const fieldMarks = this.storedFieldMarks.get(p)?.get(parentField);
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
@@ -971,12 +975,7 @@ export class AnchorSet implements AnchorLocator {
 				if (this.parent !== undefined) {
 					const interned = this.anchorSet.internalizePath(this.parent);
 					if (interned instanceof PathNode) {
-						let nodeMap = this.storedFieldMarks.get(interned);
-						if (nodeMap === undefined) {
-							nodeMap = new Map();
-							this.storedFieldMarks.set(interned, nodeMap);
-						}
-						nodeMap.set(key, marks);
+						getOrCreate(this.storedFieldMarks, interned, () => new Map()).set(key, marks);
 					}
 				}
 			},

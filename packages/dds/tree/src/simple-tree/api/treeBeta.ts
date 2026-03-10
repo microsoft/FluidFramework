@@ -69,17 +69,13 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	/**
 	 * When the node changed is an array node, the sequential operations describing what changed.
 	 * @remarks
-	 * `undefined` in any of the following cases:
-	 * - The node is not an array node.
+	 * `undefined` when:
 	 * - The array node is {@link Unhydrated} — unhydrated nodes are not visited by the delta
 	 *   pipeline, so no field marks are available.
 	 * - The array was modified across multiple batches within a single flush (e.g. due to an
 	 *   interleaved schema change) and the marks from those batches could not be composed.
 	 *
-	 * Each op covers a contiguous range of the array in its original state:
-	 * - `"retain"` — elements unchanged at the array level (may have nested changes).
-	 * - `"insert"` — new elements inserted.
-	 * - `"remove"` — elements removed (moves within the same array appear as `"remove"` + `"insert"`).
+	 * See {@link ArrayNodeDeltaOp} for op semantics.
 	 */
 	readonly delta?: readonly ArrayNodeDeltaOp[];
 }

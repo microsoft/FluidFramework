@@ -16,6 +16,7 @@ import {
 import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeBeta,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
@@ -165,7 +166,7 @@ describe("array node delta in nodeChanged", () => {
 			// is always defined (for a single unbuffered edit).
 			const myArray = init(MyArray, [1, 2, 3]);
 
-			const deltas: (readonly { type: string }[] | undefined)[] = [];
+			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 			TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 				deltas.push(delta);
 			});
@@ -188,7 +189,7 @@ describe("array node delta in nodeChanged", () => {
 	it("delta is defined for a single unbuffered edit", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
-		const deltas: (readonly { type: string }[] | undefined)[] = [];
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
@@ -196,13 +197,16 @@ describe("array node delta in nodeChanged", () => {
 		myArray.insertAtEnd(4);
 
 		assert.equal(deltas.length, 1);
-		assert.notEqual(deltas[0], undefined, "delta should be defined for a single edit");
+		assert.deepEqual(deltas[0], [
+			{ type: "retain", count: 3 },
+			{ type: "insert", count: 1 },
+		]);
 	});
 
 	it("delta is defined when array is modified once within buffered events", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
-		const deltas: (readonly { type: string }[] | undefined)[] = [];
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
@@ -212,10 +216,13 @@ describe("array node delta in nodeChanged", () => {
 		});
 
 		assert.equal(deltas.length, 1);
-		assert.notEqual(
+		assert.deepEqual(
 			deltas[0],
-			undefined,
-			"delta should be defined when only one batch's marks arrive before the flush",
+			[
+				{ type: "retain", count: 3 },
+				{ type: "insert", count: 1 },
+			],
+			"delta should carry the single batch's marks through the flush",
 		);
 	});
 
@@ -226,7 +233,7 @@ describe("array node delta in nodeChanged", () => {
 		// consumer receives delta: undefined rather than stale marks.
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
-		const deltas: (readonly { type: string }[] | undefined)[] = [];
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
@@ -246,22 +253,19 @@ describe("array node delta in nodeChanged", () => {
 	});
 
 	it("delta is undefined when the same array is modified 3+ times within buffered events", () => {
-		// Regression test for the 3+ collision bug:
-		// After 2 delta visits invalidate a field's marks (deleting the key from #fieldMarksBuffer),
-		// a 3rd visit must NOT re-add its marks (since has(key) === false after deletion).
-		// The fix tracks permanently-invalidated keys in #invalidatedFieldMarkKeys so that any
-		// further batches for that field are discarded rather than incorrectly surfaced.
+		// Regression test: a third edit to the same array within one buffered window must also
+		// produce delta: undefined, not a spurious delta from only that third edit's marks.
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
-		const deltas: (readonly { type: string }[] | undefined)[] = [];
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
 		withBufferedTreeEvents(() => {
-			myArray.insertAtEnd(4); // 1st batch: marks stored in #fieldMarksBuffer
-			myArray.insertAtEnd(5); // 2nd batch: collision → key deleted from buffer and added to #invalidatedFieldMarkKeys
-			myArray.insertAtEnd(6); // 3rd batch: key is in #invalidatedFieldMarkKeys → correctly ignored
+			myArray.insertAtEnd(4); // 1st edit
+			myArray.insertAtEnd(5); // 2nd edit — marks become unavailable due to multiple batches
+			myArray.insertAtEnd(6); // 3rd edit — delta should still be undefined, not a spurious value
 		});
 
 		assert.equal(deltas.length, 1, "nodeChanged should fire exactly once when buffered");
@@ -277,7 +281,7 @@ describe("array node delta in nodeChanged", () => {
 		// well-defined delta (no composition needed).
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
-		const deltas: (readonly { type: string }[] | undefined)[] = [];
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
@@ -286,9 +290,135 @@ describe("array node delta in nodeChanged", () => {
 		myArray.insertAtEnd(5);
 
 		assert.equal(deltas.length, 2, "nodeChanged should fire once per edit when unbuffered");
-		assert.notEqual(deltas[0], undefined, "delta should be defined for the first edit");
-		assert.notEqual(deltas[1], undefined, "delta should be defined for the second edit");
+		assert.deepEqual(deltas[0], [
+			{ type: "retain", count: 3 },
+			{ type: "insert", count: 1 },
+		]);
+		assert.deepEqual(deltas[1], [
+			{ type: "retain", count: 4 },
+			{ type: "insert", count: 1 },
+		]);
 	});
+
+	it("delta contains retain before insert for insert at middle position", () => {
+		// The sequence-field encoder strips trailing no-op marks, so elements after the
+		// insertion point are not included as a trailing retain — consumers should treat
+		// the remainder of the array as implicitly retained.
+		const myArray = hydrate(MyArray, [1, 2, 3]);
+
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
+			deltas.push(delta);
+		});
+
+		myArray.insertAt(1, 99);
+
+		assert.equal(deltas.length, 1);
+		assert.deepEqual(deltas[0], [
+			{ type: "retain", count: 1 },
+			{ type: "insert", count: 1 },
+		]);
+	});
+
+	it("delta contains retain and remove for removeAt from middle of array", () => {
+		// The sequence-field encoder strips trailing no-op marks, so the element after the
+		// removed position is not included as a trailing retain.
+		const myArray = hydrate(MyArray, [1, 2, 3]);
+
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
+			deltas.push(delta);
+		});
+
+		myArray.removeAt(1);
+
+		assert.equal(deltas.length, 1);
+		assert.deepEqual(deltas[0], [
+			{ type: "retain", count: 1 },
+			{ type: "remove", count: 1 },
+		]);
+	});
+
+	it("insert at position 0 produces no leading retain", () => {
+		// Sparse encoding: no retain is emitted before the insert when operating at the start.
+		const myArray = hydrate(MyArray, [1, 2, 3]);
+
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
+			deltas.push(delta);
+		});
+
+		myArray.insertAt(0, 99);
+
+		assert.equal(deltas.length, 1);
+		assert.deepEqual(deltas[0], [{ type: "insert", count: 1 }]);
+	});
+
+	it("remove at position 0 produces no leading retain", () => {
+		// Sparse encoding: no retain is emitted before the remove when operating at the start.
+		const myArray = hydrate(MyArray, [1, 2, 3]);
+
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
+			deltas.push(delta);
+		});
+
+		myArray.removeAt(0);
+
+		assert.equal(deltas.length, 1);
+		assert.deepEqual(deltas[0], [{ type: "remove", count: 1 }]);
+	});
+
+	it("object node nodeChanged does not include delta", () => {
+		const MyObj = schemaFactory.object("deltaTestObject", { x: schemaFactory.number });
+		const obj = hydrate(MyObj, { x: 1 });
+
+		const events: { changedProperties?: ReadonlySet<string>; delta?: unknown }[] = [];
+		TreeBeta.on(obj, "nodeChanged", (data) => events.push(data));
+
+		obj.x = 2;
+
+		assert.equal(events.length, 1);
+		assert.deepEqual(events[0], {
+			changedProperties: new Set(["x"]),
+		});
+	});
+
+	it("map node nodeChanged does not include delta", () => {
+		const MyMap = schemaFactory.map("deltaTestMap", schemaFactory.number);
+		const map = hydrate(MyMap, new Map([["a", 1]]));
+
+		const events: { changedProperties?: ReadonlySet<string>; delta?: unknown }[] = [];
+		TreeBeta.on(map, "nodeChanged", (data) => events.push(data));
+
+		map.set("a", 2);
+
+		assert.equal(events.length, 1);
+		assert.deepEqual(events[0], {
+			changedProperties: new Set(["a"]),
+		});
+	});
+
+	it("record node nodeChanged does not include delta", () => {
+		const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
+		const MyRecord = schemaFactoryAlpha.record("deltaTestRecord", schemaFactoryAlpha.number);
+		const record = hydrate(MyRecord, { a: 1 });
+
+		const events: { changedProperties?: ReadonlySet<string>; delta?: unknown }[] = [];
+		TreeBeta.on(record, "nodeChanged", (data) => events.push(data));
+
+		record.a = 2;
+
+		assert.equal(events.length, 1);
+		assert.deepEqual(events[0], {
+			changedProperties: new Set(["a"]),
+		});
+	});
+
+	// Note: the `attach+detach` replacement branch in `deltaMarksToArrayOps` (both attach and
+	// detach set on the same DeltaMark) is not covered here because the sequence-field encoder
+	// never emits such marks for array (EmptyKey) fields in the current implementation.
+	// It is handled defensively in the conversion function but is not reachable via the public API.
 
 	it("delta is defined when two different arrays are modified within the same buffered events", () => {
 		// Modifying two *different* arrays within one buffer window should not invalidate either
@@ -299,8 +429,8 @@ describe("array node delta in nodeChanged", () => {
 		});
 		const parent = hydrate(Parent, { array1: [1, 2], array2: [3, 4] });
 
-		const delta1: (readonly { type: string }[] | undefined)[] = [];
-		const delta2: (readonly { type: string }[] | undefined)[] = [];
+		const delta1: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		const delta2: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		TreeBeta.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
 		TreeBeta.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
 
@@ -310,9 +440,15 @@ describe("array node delta in nodeChanged", () => {
 		});
 
 		assert.equal(delta1.length, 1);
-		assert.notEqual(delta1[0], undefined, "array1 delta should be defined");
+		assert.deepEqual(delta1[0], [
+			{ type: "retain", count: 2 },
+			{ type: "insert", count: 1 },
+		]);
 		assert.equal(delta2.length, 1);
-		assert.notEqual(delta2[0], undefined, "array2 delta should be defined");
+		assert.deepEqual(delta2[0], [
+			{ type: "retain", count: 2 },
+			{ type: "insert", count: 1 },
+		]);
 	});
 });
 

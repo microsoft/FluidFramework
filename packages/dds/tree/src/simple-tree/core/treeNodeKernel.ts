@@ -365,7 +365,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 	/**
 	 * Buffer of field marks accumulated since events were paused.
-	 * Emitted alongside {@link #childrenChangedBuffer} when flushed.
+	 * Emitted alongside the buffered changed-fields set when flushed.
 	 */
 	readonly #fieldMarksBuffer: Map<FieldKey, readonly DeltaMark[]> = new Map();
 
@@ -458,16 +458,20 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	#emit(
-		eventName: keyof KernelEvents,
-		arg?: {
-			changedFields: ReadonlySet<FieldKey>;
-			fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
-		},
+		...args:
+			| [
+					eventName: "childrenChangedAfterBatch",
+					arg: {
+						changedFields: ReadonlySet<FieldKey>;
+						fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
+					},
+			  ]
+			| [eventName: "subtreeChangedAfterBatch"]
 	): void {
 		this.#assertNotDisposed();
+		const [eventName, arg] = args;
 		switch (eventName) {
 			case "childrenChangedAfterBatch": {
-				assert(arg !== undefined, 0xc50 /* childrenChangedAfterBatch should have arg */);
 				return this.#handleChildrenChangedAfterBatch(arg.changedFields, arg.fieldMarks);
 			}
 			case "subtreeChangedAfterBatch": {
@@ -492,7 +496,9 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 					// Already permanently invalidated by an earlier collision; ignore this batch too.
 					// TODO: Once the eventing stack is rewritten to walk the composed delta at flush
 					// time, this collision path will be unreachable and can be removed entirely.
-				} else if (this.#fieldMarksBuffer.has(key)) {
+					continue;
+				}
+				if (this.#fieldMarksBuffer.has(key)) {
 					// A second batch of marks arrived for the same field before the buffer was flushed.
 					// We have no delta composition logic, so permanently invalidate this field so that
 					// any further batches are also discarded rather than incorrectly surfaced.

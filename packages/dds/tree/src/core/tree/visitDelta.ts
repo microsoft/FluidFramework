@@ -322,11 +322,14 @@ export interface DeltaVisitor {
 	exitField(key: FieldKey): void;
 
 	/**
-	 * Called once per field per delta (during the first/detach pass) with the full sequential mark list for that field.
-	 * Invoked after `enterField` but before any `attach`, `detach`, or `enterNode` calls for the field.
+	 * Optional hook for obtaining the complete ordered change description for a field, suitable
+	 * for producing positional deltas for external representations (e.g. a text editor or virtual
+	 * list) without needing to diff the old and new states.
 	 * @remarks
-	 * This optional hook allows visitors to capture the complete ordered change description for a field
-	 * (e.g. for constructing a Quill-style delta) without needing to reconstruct it from the two-pass attach/detach calls.
+	 * Called once per field per delta, during the first (detach) pass only, after `enterField` but
+	 * before any `attach`, `detach`, or `enterNode` calls for the field. Firing only during the
+	 * detach pass ensures marks are always relative to the original array positions rather than an
+	 * intermediate partially-transformed state.
 	 */
 	fieldMarks?(key: FieldKey, marks: readonly Delta.Mark[]): void;
 }

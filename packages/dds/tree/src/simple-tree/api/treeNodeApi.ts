@@ -45,7 +45,11 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
  * Operations are applied in order and are relative to the original array state before the change.
  *
  * @remarks
- * Maps directly to Quill delta semantics:
+ * Use this to efficiently sync an external representation of the array (e.g. a text editor or
+ * virtual list) with the tree's changes, without needing to snapshot the old state or diff the
+ * entire array. The delta tells you which positions changed; for inserts, read the new element
+ * values from the current tree at those positions.
+ *
  * - `"retain"` — elements that were not added or removed (may have nested changes).
  * - `"insert"` — elements added to the array.
  * - `"remove"` — elements removed from the array (includes moves, represented as remove + insert).
@@ -270,21 +274,26 @@ export const treeNodeApi: TreeNodeApi = {
  * - A mark with only `attach` → `"insert"` (new elements added)
  * - A mark with only `detach` → `"remove"` (elements removed)
  * - A mark with both `attach` and `detach` → `"remove"` + `"insert"` (replacement)
+ *
+ * @privateRemarks
+ * The `attach && detach` branch is defensive: the sequence-field encoder does not currently emit
+ * marks with both set for array (EmptyKey) fields, so this path is unreachable in practice today.
+ * It is retained in case future encoder changes produce such marks.
  */
 function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDeltaOp[] {
 	const ops: ArrayNodeDeltaOp[] = [];
 	for (const mark of marks) {
-		if (mark.attach !== undefined && mark.detach === undefined) {
-			ops.push({ type: "insert", count: mark.count });
-		} else if (mark.detach !== undefined && mark.attach === undefined) {
-			ops.push({ type: "remove", count: mark.count });
-		} else if (mark.attach !== undefined && mark.detach !== undefined) {
+		if (mark.attach !== undefined && mark.detach !== undefined) {
 			// Replacement: content removed and new content attached in the same position.
 			// The `Delta.Mark` format allows both to be set simultaneously (e.g. when a slot's
 			// content is atomically swapped), even though the sequence-field encoder does not
 			// currently emit such marks for array (EmptyKey) fields.  Handle it defensively.
 			ops.push({ type: "remove", count: mark.count });
 			ops.push({ type: "insert", count: mark.count });
+		} else if (mark.attach !== undefined) {
+			ops.push({ type: "insert", count: mark.count });
+		} else if (mark.detach !== undefined) {
+			ops.push({ type: "remove", count: mark.count });
 		} else {
 			// Neither attach nor detach: elements retained (may have nested changes in mark.fields).
 			ops.push({ type: "retain", count: mark.count });
