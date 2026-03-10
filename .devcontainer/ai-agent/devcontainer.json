@@ -26,7 +26,9 @@
 	"postCreateCommand": "bash -lc \"scripts/codespace-setup/post-create.sh && . scripts/codespace-setup/ai-setup.sh\"",
 	"remoteUser": "node",
 	"features": {
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+			"moby": false
+		},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/git-lfs:1": {}
 	},
