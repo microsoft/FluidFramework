@@ -5305,6 +5305,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-example/typescript-versions-host':
+        specifier: workspace:~
+        version: link:../typescript-versions-host
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -5344,24 +5347,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-      typescript-5.4:
-        specifier: npm:typescript@~5.4.5
-        version: typescript@5.4.5
-      typescript-5.5:
-        specifier: npm:typescript@~5.5.4
-        version: typescript@5.5.4
-      typescript-5.6:
-        specifier: npm:typescript@~5.6.3
-        version: typescript@5.6.3
-      typescript-5.7:
-        specifier: npm:typescript@~5.7.3
-        version: typescript@5.7.3
-      typescript-5.8:
-        specifier: npm:typescript@~5.8.3
-        version: typescript@5.8.3
-      typescript-5.9:
-        specifier: npm:typescript@~5.9.2
-        version: typescript@5.9.3
 
   examples/utils/migration-tools:
     dependencies:
@@ -5459,6 +5444,27 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+
+  examples/utils/typescript-versions-host:
+    devDependencies:
+      typescript-5.4:
+        specifier: npm:typescript@~5.4.5
+        version: typescript@5.4.5
+      typescript-5.5:
+        specifier: npm:typescript@~5.5.4
+        version: typescript@5.5.4
+      typescript-5.6:
+        specifier: npm:typescript@~5.6.3
+        version: typescript@5.6.3
+      typescript-5.7:
+        specifier: npm:typescript@~5.7.3
+        version: typescript@5.7.3
+      typescript-5.8:
+        specifier: npm:typescript@~5.8.3
+        version: typescript@5.8.3
+      typescript-5.9:
+        specifier: npm:typescript@~5.9.2
+        version: typescript@5.9.3
 
   examples/utils/webpack-fluid-loader:
     dependencies:
