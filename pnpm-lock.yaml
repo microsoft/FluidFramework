@@ -4,6 +4,21 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  buildTools:
+    '@fluid-tools/build-cli':
+      specifier: ^0.63.0
+      version: 0.63.0
+    '@fluid-tools/version-tools':
+      specifier: ^0.63.0
+      version: 0.63.0
+    '@fluidframework/build-tools':
+      specifier: ^0.63.0
+      version: 0.63.0
+    '@fluidframework/bundle-size-tools':
+      specifier: ^0.63.0
+      version: 0.63.0
+
 overrides:
   '@types/node': ~20.19.30
   good-fences>nodegit: npm:empty-npm-package@1.0.0
@@ -37,7 +52,7 @@ importers:
         specifier: workspace:~
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
@@ -46,7 +61,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:^
@@ -100,8 +115,8 @@ importers:
         specifier: ^1.1.6
         version: 1.1.6
       syncpack:
-        specifier: ^13.0.4
-        version: 13.0.4(typescript@5.4.5)
+        specifier: ^14.0.2
+        version: 14.0.2
       type-fest:
         specifier: ^2.19.0
         version: 2.19.0
@@ -122,7 +137,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -162,7 +177,7 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/azure-service-utils-previous':
         specifier: npm:@fluidframework/azure-service-utils@2.83.0
@@ -171,7 +186,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -365,13 +380,13 @@ importers:
         specifier: workspace:~
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -492,13 +507,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -619,13 +634,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -779,13 +794,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -915,13 +930,13 @@ importers:
         specifier: workspace:~
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1054,13 +1069,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1202,13 +1217,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1335,13 +1350,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1438,7 +1453,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1538,13 +1553,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1665,7 +1680,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1771,13 +1786,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1841,7 +1856,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -1956,7 +1971,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2062,7 +2077,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2174,13 +2189,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2289,7 +2304,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2392,7 +2407,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2513,7 +2528,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2631,7 +2646,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2761,7 +2776,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2843,7 +2858,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -2943,7 +2958,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3031,7 +3046,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3068,7 +3083,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3150,7 +3165,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3250,7 +3265,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3278,13 +3293,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3318,7 +3333,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3358,7 +3373,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3398,7 +3413,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3510,7 +3525,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3588,7 +3603,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -3721,13 +3736,13 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3836,7 +3851,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -3963,7 +3978,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/devtools':
         specifier: workspace:~
@@ -4093,7 +4108,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -4232,7 +4247,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -4425,7 +4440,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -4573,7 +4588,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -4727,7 +4742,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -4875,13 +4890,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -4984,16 +4999,16 @@ importers:
         specifier: ~2.3.0
         version: 2.3.0(webpack@5.103.0)
       '@fluid-tools/version-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/bundle-size-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5081,13 +5096,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5199,13 +5214,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5254,13 +5269,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5312,7 +5327,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5412,13 +5427,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5557,13 +5572,13 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5669,13 +5684,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5820,13 +5835,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -5998,13 +6013,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -6158,13 +6173,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -6297,13 +6312,13 @@ importers:
         specifier: workspace:~
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -6430,13 +6445,13 @@ importers:
         specifier: workspace:~
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -6548,13 +6563,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -6669,7 +6684,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@types/lodash':
         specifier: ^4.14.118
@@ -6763,7 +6778,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -6902,13 +6917,13 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/test/test-drivers
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-loader':
         specifier: workspace:~
@@ -7014,7 +7029,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@types/mocha':
         specifier: ^10.0.10
@@ -7096,13 +7111,13 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -7190,13 +7205,13 @@ importers:
         specifier: workspace:~
         version: link:../../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -7281,13 +7296,13 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -7417,7 +7432,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-loader':
         specifier: workspace:~
@@ -7526,13 +7541,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -7596,13 +7611,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -7669,13 +7684,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -7784,13 +7799,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions-previous':
         specifier: npm:@fluidframework/container-definitions@2.83.0
@@ -7829,13 +7844,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/core-interfaces-previous':
         specifier: npm:@fluidframework/core-interfaces@2.83.0
@@ -7898,13 +7913,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/core-utils-previous':
         specifier: npm:@fluidframework/core-utils@2.83.0
@@ -7974,13 +7989,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/driver-definitions-previous':
         specifier: npm:@fluidframework/driver-definitions@2.83.0
@@ -8047,13 +8062,13 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/cell-previous':
         specifier: npm:@fluidframework/cell@2.83.0
@@ -8147,13 +8162,13 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -8241,13 +8256,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -8347,13 +8362,13 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -8462,13 +8477,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -8589,13 +8604,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -8716,13 +8731,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -8828,13 +8843,13 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -8925,13 +8940,13 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -9022,13 +9037,13 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -9137,13 +9152,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -9261,13 +9276,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -9364,13 +9379,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -9479,13 +9494,13 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -9591,13 +9606,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -9718,13 +9733,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -9833,13 +9848,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/debugger-previous':
         specifier: npm:@fluidframework/debugger@2.83.0
@@ -9903,13 +9918,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.83.0
@@ -9988,13 +10003,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/driver-web-cache-previous':
         specifier: npm:@fluidframework/driver-web-cache@2.83.0
@@ -10064,13 +10079,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10161,13 +10176,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10267,13 +10282,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10340,13 +10355,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10410,13 +10425,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10489,13 +10504,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10580,13 +10595,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10674,13 +10689,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10762,13 +10777,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10859,7 +10874,7 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/agent-scheduler-previous':
         specifier: npm:@fluidframework/agent-scheduler@2.83.0
@@ -10868,7 +10883,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -10959,7 +10974,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct-previous':
         specifier: npm:@fluidframework/aqueduct@2.83.0
@@ -10968,7 +10983,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -11068,13 +11083,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -11150,7 +11165,7 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/app-insights-logger-previous':
         specifier: npm:@fluidframework/app-insights-logger@2.83.0
@@ -11159,7 +11174,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@microsoft/api-extractor':
         specifier: 7.52.11
@@ -11250,10 +11265,10 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/test-utils':
         specifier: workspace:~
@@ -11359,13 +11374,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -11423,13 +11438,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -11526,13 +11541,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -11623,13 +11638,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -11711,13 +11726,13 @@ importers:
         specifier: workspace:~
         version: link:../../dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -11790,13 +11805,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
@@ -11905,13 +11920,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -12005,13 +12020,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -12081,13 +12096,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/core-interfaces':
         specifier: workspace:~
@@ -12175,13 +12190,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -12278,13 +12293,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/core-utils':
         specifier: workspace:~
@@ -12372,13 +12387,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -12460,13 +12475,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -12578,13 +12593,13 @@ importers:
         specifier: workspace:~
         version: link:../test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-loader-previous':
         specifier: npm:@fluidframework/container-loader@2.83.0
@@ -12681,13 +12696,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.83.0
@@ -12766,13 +12781,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -12872,13 +12887,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.83.0
@@ -12966,13 +12981,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-runtime-definitions-previous':
         specifier: npm:@fluidframework/container-runtime-definitions@2.83.0
@@ -13051,13 +13066,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.83.0
@@ -13142,13 +13157,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/datastore-definitions-previous':
         specifier: npm:@fluidframework/datastore-definitions@2.83.0
@@ -13215,13 +13230,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -13297,13 +13312,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -13379,13 +13394,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -13500,13 +13515,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -13591,7 +13606,7 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/azure-client-previous':
         specifier: npm:@fluidframework/azure-client@2.83.0
@@ -13603,7 +13618,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-runtime':
         specifier: workspace:~
@@ -13763,7 +13778,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
@@ -13875,7 +13890,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -13963,13 +13978,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -14060,7 +14075,7 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct':
         specifier: workspace:~
@@ -14069,7 +14084,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-runtime':
         specifier: workspace:~
@@ -14141,13 +14156,13 @@ importers:
         specifier: workspace:~
         version: link:../../loader/test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/cell':
         specifier: workspace:~
@@ -14282,7 +14297,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -14433,7 +14448,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -14560,13 +14575,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -14675,13 +14690,13 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -14742,13 +14757,13 @@ importers:
         specifier: ^0.52.0
         version: 0.52.0
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -14815,13 +14830,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -14915,13 +14930,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -15123,13 +15138,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -15184,13 +15199,13 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -15320,13 +15335,13 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -15444,13 +15459,13 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -15522,7 +15537,7 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/version-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
@@ -15616,13 +15631,13 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -15694,7 +15709,7 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       jest-environment-puppeteer:
         specifier: ^10.1.3
@@ -15768,13 +15783,13 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/devtools-previous':
         specifier: npm:@fluidframework/devtools@2.83.0
@@ -15874,7 +15889,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/container-definitions':
         specifier: workspace:~
@@ -16094,13 +16109,13 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/devtools-core-previous':
         specifier: npm:@fluidframework/devtools-core@2.83.0
@@ -16260,7 +16275,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -16426,13 +16441,13 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -16598,7 +16613,7 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluid-tools/fetch-tool-previous':
         specifier: npm:@fluid-tools/fetch-tool@2.83.0
@@ -16607,7 +16622,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -16674,13 +16689,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -16825,13 +16840,13 @@ importers:
         specifier: ~2.4.5
         version: 2.4.5
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -16895,13 +16910,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -16983,13 +16998,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -17080,13 +17095,13 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
+        specifier: catalog:buildTools
         version: 0.63.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
@@ -19888,9 +19903,6 @@ packages:
   '@socket.io/sticky@1.0.4':
     resolution: {integrity: sha512-VuauT5CJLvzYtKIgouFSQ8rUaygseR+zRutnwh6ZA2QYcXx+8g52EoJ8V2SLxfo+Tfs3ELUDy08oEXxlWNrxaw==}
 
-  '@standard-schema/spec@1.0.0':
-    resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
-
   '@streamparser/json@0.0.20':
     resolution: {integrity: sha512-VqAAkydywPpkw63WQhPVKCD3SdwXuihCUVZbbiY3SfSTGQyHmwRoq27y4dmJdZuJwd5JIlQoMPyGvMbUPY0RKQ==}
 
@@ -21378,10 +21390,6 @@ packages:
   chainsaw@0.1.0:
     resolution: {integrity: sha512-75kWfWt6MEKNC8xYXIdRpDehRYY/tNSgwKaJq+dbbDcxORuVrrQ+SEHoWsniVn9XPYfP4gmdWIeDk/4YNp1rNQ==}
 
-  chalk-template@1.1.2:
-    resolution: {integrity: sha512-2bxTP2yUH7AJj/VAXfcA+4IcWGdQ87HwBANLt5XxGTeomo8yG0y95N1um9i5StvhT/Bl0/2cARA5v1PpPXUxUA==}
-    engines: {node: '>=14.16'}
-
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
     engines: {node: '>=4'}
@@ -21517,10 +21525,6 @@ packages:
     resolution: {integrity: sha512-VGtlMu3x/4DOtIUwEkRezxUZ2lBacNJCHash0N0WeZDBS+7Ux1dm3XWAgWYxLJFMMdOeXMHXorshEFhbMSGelg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  cli-cursor@5.0.0:
-    resolution: {integrity: sha512-aCj4O5wKyszjMmDT4tZj93kxyydN/K5zPWSCe6/0AV/AA1pqe5ZBIw0a2ZfPQV7lL5/yb5HsUreJ6UFAF1tEQw==}
-    engines: {node: '>=18'}
-
   cli-highlight@2.1.11:
     resolution: {integrity: sha512-9KDcoEVwyUXrjcJNvHD0NFc/hiwe/WPVYIleQh2O1N2Zro5gWJZ/K+3DGn8w8P/F6FxOgzyC5bxDyHIgCSPhGg==}
     engines: {node: '>=8.0.0', npm: '>=5.0.0'}
@@ -21645,10 +21649,6 @@ packages:
   commander@10.0.1:
     resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
     engines: {node: '>=14'}
-
-  commander@13.1.0:
-    resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
-    engines: {node: '>=18'}
 
   commander@14.0.2:
     resolution: {integrity: sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ==}
@@ -22321,9 +22321,6 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  effect@3.19.11:
-    resolution: {integrity: sha512-UTEj3c1s41Ha3uzSPKKvFBZaDjZ8ez00Q2NYWVm2mKh2LXeX8j6LTg1HcQHnmdUhOjr79KHmhVWYB/zbegLO1A==}
-
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
     engines: {node: '>=0.10.0'}
@@ -22790,10 +22787,6 @@ packages:
 
   fake-indexeddb@3.1.4:
     resolution: {integrity: sha512-kweAGUKgo/NLHZpyMcgYk2ihDrWQcpzwZ3Y2Ag6/Wo3h8F/ts0onw0nTEth8YjWzzBY+sxSSKFn69vc7xcK0Qg==}
-
-  fast-check@3.23.2:
-    resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
-    engines: {node: '>=8.0.0'}
 
   fast-content-type-parse@3.0.0:
     resolution: {integrity: sha512-ZvLdcY8P+N8mGQJahJV5G4U88CSvT1rP8ApL6uETe88MBXrBHAkZlSEySdUlyztF7ccb+Znos3TFqaepHxdhBg==}
@@ -23384,10 +23377,6 @@ packages:
     resolution: {integrity: sha512-puUZAUKT5m8Zzvs72XWy3HtvVbTWljRE66cP60bxJzAqf2DgICo7lYTY2IHUmLnNpjYvw5bvmoHvPc0QO2a62w==}
     engines: {node: ^16.14.0 || >=18.0.0}
 
-  hosted-git-info@8.1.0:
-    resolution: {integrity: sha512-Rw/B2DNQaPBICNXEm8balFz9a6WpZrkCGpcWFpy7nCj+NyhSdqXipmfvtmWt9xGfp0wZnBxB+iVpLmQMYt47Tw==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
   hotloop@1.2.0:
     resolution: {integrity: sha512-8lH8RzRJA+hkF6/wBR6pqMbUCN/xxnrYvOlPl1fIzgbwm6z+/m1iFmHeOjHUY8vB9DMj2iXitC6YXH1+c3XlJA==}
 
@@ -23812,10 +23801,6 @@ packages:
     resolution: {integrity: sha512-K55T22lfpQ63N4KEN57jZUAaAYqYHEe8veb/TycJRk9DdSCLLcovXz/mL6mOnhQaZsQGwPhuFopdQIlqGSEjiQ==}
     engines: {node: '>=18'}
 
-  is-interactive@2.0.0:
-    resolution: {integrity: sha512-qP1vozQRI+BMOPcjFzrjXuQvdak2pHNUMZoeG2eRbiSqyvbEf/wQtEOTOX1guk6E3t36RkaqiSt8A/6YElNxLQ==}
-    engines: {node: '>=12'}
-
   is-lambda@1.0.1:
     resolution: {integrity: sha512-z7CMFGNrENq5iFB9Bqo64Xk6Y9sg+epq1myIcdHaGnbMTYOxvzsEtdYqQUylB7LxfkvgrrjP32T6Ywciio9UIQ==}
 
@@ -23915,14 +23900,6 @@ packages:
   is-unicode-supported@0.1.0:
     resolution: {integrity: sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==}
     engines: {node: '>=10'}
-
-  is-unicode-supported@1.3.0:
-    resolution: {integrity: sha512-43r2mRvz+8JRIKnWJ+3j8JtjRKZ6GmjzfaE/qiBJnikNnYv/6bagRJ1kUhNk8R5EX/GkobD+r+sfxCPJsiKBLQ==}
-    engines: {node: '>=12'}
-
-  is-unicode-supported@2.1.0:
-    resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==}
-    engines: {node: '>=18'}
 
   is-weakmap@2.0.2:
     resolution: {integrity: sha512-K5pXYOm9wqY1RgjpL3YTkF39tni1XajUIkawTLUo9EZEVUFga5gSQJF8nNS7ZwJQ02y+1YCNYcMh+HIf1ZqE+w==}
@@ -24288,9 +24265,6 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  jsonc-parser@3.3.1:
-    resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
-
   jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
 
@@ -24600,10 +24574,6 @@ packages:
   log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
     engines: {node: '>=10'}
-
-  log-symbols@6.0.0:
-    resolution: {integrity: sha512-i24m8rpwhmPIS4zscNzK6MSEhk0DUWa/8iYQWxhffV8jkI4Phvs3F+quL5xvS0gdQR0FyTCMMH33Y78dDTzzIw==}
-    engines: {node: '>=18'}
 
   logform@2.7.0:
     resolution: {integrity: sha512-TFYA4jnP7PVbmlBIfhlSe+WKxs9dklXMTEGcBCIvLhE/Tn3H6Gk1norupVW7m5Cnd4bLcr08AytbyV/xj7f/kQ==}
@@ -25371,10 +25341,6 @@ packages:
     resolution: {integrity: sha512-uFyyCEmgBfZTtrKk/5xDfHp6+MdrqGotX/VoOyEEl3mBwiEE5FlBaePanazJSVMPT7vKepcjYBY2ztg9A3yPIA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  npm-package-arg@12.0.2:
-    resolution: {integrity: sha512-f1NpFjNI9O4VbKMOlA5QoBq/vSQPORHcTZ2feJpFkTHJ9eQkdlmZEKSjcAhxTGInC7RlEyScT9ui67NaOsjFWA==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
   npm-packlist@7.0.4:
     resolution: {integrity: sha512-d6RGEuRrNS5/N84iglPivjaJPxhDbZmlbTwTDX2IbcRHG5bZCdtysYMhwiPvcF4GisXHGn7xsxv+GQ7T/02M5Q==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -25484,10 +25450,6 @@ packages:
     resolution: {integrity: sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==}
     engines: {node: '>=6'}
 
-  onetime@7.0.0:
-    resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
-    engines: {node: '>=18'}
-
   open@7.4.2:
     resolution: {integrity: sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==}
     engines: {node: '>=8'}
@@ -25519,10 +25481,6 @@ packages:
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
-
-  ora@8.2.0:
-    resolution: {integrity: sha512-weP+BZ8MVNnlCm8c0Qdc1WSWq4Qn7I+9CJGm7Qali6g44e/PUzbjNqJX5NJ9ljlNMosfJvg1fKEGILklK9cwnw==}
-    engines: {node: '>=18'}
 
   orderedmap@2.1.1:
     resolution: {integrity: sha512-TvAWxi0nDe1j/rtMcWcIj94+Ffe6n7zhow33h40SKxmsmozs6dz/e+EajymfoFcHd7sxNn8yHM8839uixMOV6g==}
@@ -25995,10 +25953,6 @@ packages:
     resolution: {integrity: sha512-++Vn7NS4Xf9NacaU9Xq3URUuqZETPsf8L4j5/ckhaRYsfPeRyzGw+iDjFhV/Jr3uNmTvvddEJFWh5R1gRgUH8A==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  proc-log@5.0.0:
-    resolution: {integrity: sha512-Azwzvl90HaF0aCz1JrDdXQykFakSSNPaPoiZ9fm5qJIMHioDZEi7OAdRwSm6rSoPtY3Qutnm3L7ogmg3dc+wbQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
-
   process-nextick-args@2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
 
@@ -26327,10 +26281,6 @@ packages:
     resolution: {integrity: sha512-VIMnQi/Z4HT2Fxuwg5KrY174U1VdUIASQVWXXyqtNRtxSr9IYkn1rsI6Tb6HsrHCmB7gVpNwX6JxPTHcH6IoTA==}
     engines: {node: '>=6'}
 
-  read-yaml-file@2.1.0:
-    resolution: {integrity: sha512-UkRNRIwnhG+y7hpqnycCL/xbTk7+ia9VuVTC0S+zVbwd65DI9eUpRMfsWIGrCWxTU/mi+JW8cHQCrv+zfCbEPQ==}
-    engines: {node: '>=10.13'}
-
   read@1.0.7:
     resolution: {integrity: sha512-rSOKNYUmaxy0om1BNjMN4ezNT6VKK+2xF4GBhc81mkH7L60i6dp8qPYrkndNLT3QPphoII3maL9PVC9XmhHwVQ==}
     engines: {node: '>=0.8'}
@@ -26533,10 +26483,6 @@ packages:
   restore-cursor@4.0.0:
     resolution: {integrity: sha512-I9fPXU9geO9bHOt9pHHOhOkYerIMsmVaWB0rA2AI9ERh/+x/i7MV5HKBNrg+ljO5eoPVgCcnFuRjJ9uH6I/3eg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
-  restore-cursor@5.1.0:
-    resolution: {integrity: sha512-oMA2dcrw6u0YfxJQXm342bFKX/E4sG9rbTzO9ptUcR/e8A33cHuvStiYOwH7fszkZlZ1z/ta9AAoPk2F4qIOHA==}
-    engines: {node: '>=18'}
 
   retry@0.12.0:
     resolution: {integrity: sha512-9LkiTwjUh6rT555DtE9rTX+BKByPfrMzEAtnlEtdEwr3Nkffwiihqe2bWADg+OQRjt9gl6ICdmB/ZFDCGAtSow==}
@@ -27065,10 +27011,6 @@ packages:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
     engines: {node: '>= 0.8'}
 
-  stdin-discarder@0.2.2:
-    resolution: {integrity: sha512-UhDfHmA92YAlNnCfhmq0VeNL5bDbiZGg7sZ2IvPsXubGkiNa9EC+tUTsjBRsYUAz87btI6/1wf4XoVvQ3uRnmQ==}
-    engines: {node: '>=18'}
-
   stoppable@1.1.0:
     resolution: {integrity: sha512-KXDYZ9dszj6bzvnEMRYvxgeTHU74QBFL54XKtP3nyMuJ81CFYtABZ3bAzL2EdFUaEwJOBOgENyFj3R7oTzDyyw==}
     engines: {node: '>=4', npm: '>=6'}
@@ -27243,9 +27185,49 @@ packages:
   sync-rpc@1.3.6:
     resolution: {integrity: sha512-J8jTXuZzRlvU7HemDgHi3pGnh/rkoqR/OZSjhTyyZrEkkYQbk7Z33AXp37mkPfPpfdOuj7Ex3H/TJM1z48uPQw==}
 
-  syncpack@13.0.4:
-    resolution: {integrity: sha512-kJ9VlRxNCsBD5pJAE29oXeBYbPLhEySQmK4HdpsLv81I6fcDDW17xeJqMwiU3H7/woAVsbgq25DJNS8BeiN5+w==}
-    engines: {node: '>=18.18.0'}
+  syncpack-darwin-arm64@14.0.2:
+    resolution: {integrity: sha512-qVTB7VQHpXfKMOyPzRoX+gsh+2rPw9631kbt/DfTthyfOrXUbp0QOZF0F0XtSYCYcG7IQehhMER3MLLvCwRTlA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  syncpack-darwin-x64@14.0.2:
+    resolution: {integrity: sha512-KtB44JzPafpjEyA58GhoY+0jdfHuEEMsny0/T9tqkmgJBjgygssSsdN5quBrVB7QOQcJoRJoM+TsEQx3o63lww==}
+    cpu: [x64]
+    os: [darwin]
+
+  syncpack-linux-arm64-musl@14.0.2:
+    resolution: {integrity: sha512-kyO9jjIfFpVsETcHzzG+TzNE82TNqE4Pz8ZMKMc/cLnk7XcN9LbvrdqRjxmGoW5ZSJGTOjQtZsp6owtM9ODrfA==}
+    cpu: [arm64]
+    os: [linux]
+
+  syncpack-linux-arm64@14.0.2:
+    resolution: {integrity: sha512-7erMuE/dm2yvdZ1Kr5aq81g3dE9ap7AG+EehonI9Det23gxlr7tXRpBbl3EYzAQr97ifrLGJpnQ6jtRQRAneTA==}
+    cpu: [arm64]
+    os: [linux]
+
+  syncpack-linux-x64-musl@14.0.2:
+    resolution: {integrity: sha512-kXlsvH4V7sBR8vWku+lnrdh+xQCmlRedk1RQDH/c+MpZ/PJy0UCIEovlrSgXcUFG0IVVrXbDGAxWJM4RB5oWeA==}
+    cpu: [x64]
+    os: [linux]
+
+  syncpack-linux-x64@14.0.2:
+    resolution: {integrity: sha512-FGO9AsGakTPhfX+DW1Jmy2oaVeXhD7o1A+MmIMhcn9ArJThbBDmgkcTkU5Ek0E0tty4ZaNJgh1uhwwliPDHCeA==}
+    cpu: [x64]
+    os: [linux]
+
+  syncpack-windows-arm64@14.0.2:
+    resolution: {integrity: sha512-Vmh6hmPXL2/DtppVYS1/zkr/RKKiJql6LqklqdPovB8F1TiTxulfv6RaGxR2d0r7Y9vDpoOSXxnONT4BoyCyUA==}
+    cpu: [arm64]
+    os: [win32]
+
+  syncpack-windows-x64@14.0.2:
+    resolution: {integrity: sha512-lndo5gWCmsoYVxgOdQ1R4rFeiJWN4N4YLWqdWrun5V+LTuh6C7SyajJSlCxpLeRm2GDdZ+7oAjbJUDDHwF+IZA==}
+    cpu: [x64]
+    os: [win32]
+
+  syncpack@14.0.2:
+    resolution: {integrity: sha512-Dv6If5o/kV8hhDA6pcqFfU0XHH3DuIYWr0zJbYDUfPQXyCET6K1dxnfHBlSNW+UZ2UAYRKlit99x28gWYqlt7A==}
+    engines: {node: '>=14.17.0'}
     hasBin: true
 
   systeminformation@5.30.7:
@@ -27358,10 +27340,6 @@ packages:
 
   thunky@1.1.0:
     resolution: {integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==}
-
-  tightrope@0.2.0:
-    resolution: {integrity: sha512-Kw36UHxJEELq2VUqdaSGR2/8cAsPgMtvX8uGVU6Jk26O66PhXec0A5ZnRYs47btbtwPDpXXF66+Fo3vimCM9aQ==}
-    engines: {node: '>=16'}
 
   tiny-invariant@1.3.3:
     resolution: {integrity: sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==}
@@ -27534,9 +27512,6 @@ packages:
         optional: true
       '@swc/wasm':
         optional: true
-
-  ts-toolbelt@9.6.0:
-    resolution: {integrity: sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==}
 
   tsconfig-paths-webpack-plugin@4.2.0:
     resolution: {integrity: sha512-zbem3rfRS8BgeNK50Zz5SIQgXzLafiHjOwUAvk/38/o1jHn/V5QAgVUcz884or7WYcPaH3N2CIfUc2u0ul7UcA==}
@@ -27954,10 +27929,6 @@ packages:
   validate-npm-package-name@5.0.1:
     resolution: {integrity: sha512-OljLrQ9SQdOUqTaQxqL5dEfZWrXExyyWsozYlAWFawPVNuD83igl7uJD2RTkNMbniIYgt8l81eCJGIdQF7avLQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-
-  validate-npm-package-name@6.0.2:
-    resolution: {integrity: sha512-IUoow1YUtvoBBC06dXs8bR8B9vuA3aJfmQNKMoaPG/OFsPmoQvw8xh+6Ye25Gx9DQhoEom3Pcu9MKHerm/NpUQ==}
-    engines: {node: ^18.17.0 || >=20.5.0}
 
   validator@13.15.26:
     resolution: {integrity: sha512-spH26xU080ydGggxRyR1Yhcbgx+j3y5jbNXk/8L+iRvdIEQ4uTRH2Sgf2dokud6Q4oAtsbNvJ1Ft+9xmm6IZcA==}
@@ -33453,8 +33424,6 @@ snapshots:
 
   '@socket.io/sticky@1.0.4': {}
 
-  '@standard-schema/spec@1.0.0': {}
-
   '@streamparser/json@0.0.20': {}
 
   '@swc/helpers@0.5.15':
@@ -35177,10 +35146,6 @@ snapshots:
     dependencies:
       traverse: 0.3.9
 
-  chalk-template@1.1.2:
-    dependencies:
-      chalk: 5.6.2
-
   chalk@2.4.2:
     dependencies:
       ansi-styles: 3.2.1
@@ -35317,10 +35282,6 @@ snapshots:
     dependencies:
       restore-cursor: 4.0.0
 
-  cli-cursor@5.0.0:
-    dependencies:
-      restore-cursor: 5.1.0
-
   cli-highlight@2.1.11:
     dependencies:
       chalk: 4.1.2
@@ -35438,8 +35399,6 @@ snapshots:
       delayed-stream: 1.0.0
 
   commander@10.0.1: {}
-
-  commander@13.1.0: {}
 
   commander@14.0.2: {}
 
@@ -36130,11 +36089,6 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  effect@3.19.11:
-    dependencies:
-      '@standard-schema/spec': 1.0.0
-      fast-check: 3.23.2
-
   ejs@3.1.10:
     dependencies:
       jake: 10.9.2
@@ -36792,10 +36746,6 @@ snapshots:
     dependencies:
       realistic-structured-clone: 2.0.4
 
-  fast-check@3.23.2:
-    dependencies:
-      pure-rand: 6.1.0
-
   fast-content-type-parse@3.0.0: {}
 
   fast-deep-equal@3.1.3: {}
@@ -37437,10 +37387,6 @@ snapshots:
     dependencies:
       lru-cache: 10.4.3
 
-  hosted-git-info@8.1.0:
-    dependencies:
-      lru-cache: 10.4.3
-
   hotloop@1.2.0:
     dependencies:
       benchmark: 2.1.4
@@ -37905,8 +37851,6 @@ snapshots:
       global-directory: 4.0.1
       is-path-inside: 4.0.0
 
-  is-interactive@2.0.0: {}
-
   is-lambda@1.0.1: {}
 
   is-local-path@0.1.6: {}
@@ -37984,10 +37928,6 @@ snapshots:
   is-typedarray@1.0.0: {}
 
   is-unicode-supported@0.1.0: {}
-
-  is-unicode-supported@1.3.0: {}
-
-  is-unicode-supported@2.1.0: {}
 
   is-weakmap@2.0.2: {}
 
@@ -38638,8 +38578,6 @@ snapshots:
 
   json5@2.2.3: {}
 
-  jsonc-parser@3.3.1: {}
-
   jsonfile@4.0.0:
     optionalDependencies:
       graceful-fs: 4.2.11
@@ -38945,11 +38883,6 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       is-unicode-supported: 0.1.0
-
-  log-symbols@6.0.0:
-    dependencies:
-      chalk: 5.6.2
-      is-unicode-supported: 1.3.0
 
   logform@2.7.0:
     dependencies:
@@ -40073,13 +40006,6 @@ snapshots:
       semver: 7.7.3
       validate-npm-package-name: 5.0.1
 
-  npm-package-arg@12.0.2:
-    dependencies:
-      hosted-git-info: 8.1.0
-      proc-log: 5.0.0
-      semver: 7.7.3
-      validate-npm-package-name: 6.0.2
-
   npm-packlist@7.0.4:
     dependencies:
       ignore-walk: 6.0.5
@@ -40236,10 +40162,6 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  onetime@7.0.0:
-    dependencies:
-      mimic-function: 5.0.1
-
   open@7.4.2:
     dependencies:
       is-docker: 2.2.1
@@ -40268,18 +40190,6 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
       word-wrap: 1.2.5
-
-  ora@8.2.0:
-    dependencies:
-      chalk: 5.6.2
-      cli-cursor: 5.0.0
-      cli-spinners: 2.9.2
-      is-interactive: 2.0.0
-      is-unicode-supported: 2.1.0
-      log-symbols: 6.0.0
-      stdin-discarder: 0.2.2
-      string-width: 7.2.0
-      strip-ansi: 7.1.2
 
   orderedmap@2.1.1: {}
 
@@ -40784,8 +40694,6 @@ snapshots:
 
   proc-log@3.0.0: {}
 
-  proc-log@5.0.0: {}
-
   process-nextick-args@2.0.1: {}
 
   process@0.11.10: {}
@@ -41229,11 +41137,6 @@ snapshots:
       pify: 4.0.1
       strip-bom: 3.0.0
 
-  read-yaml-file@2.1.0:
-    dependencies:
-      js-yaml: 4.1.1
-      strip-bom: 4.0.0
-
   read@1.0.7:
     dependencies:
       mute-stream: 0.0.8
@@ -41501,11 +41404,6 @@ snapshots:
     dependencies:
       onetime: 5.1.2
       signal-exit: 3.0.7
-
-  restore-cursor@5.1.0:
-    dependencies:
-      onetime: 7.0.0
-      signal-exit: 4.1.0
 
   retry@0.12.0: {}
 
@@ -42167,8 +42065,6 @@ snapshots:
 
   statuses@2.0.1: {}
 
-  stdin-discarder@0.2.2: {}
-
   stoppable@1.1.0: {}
 
   stream-combiner@0.0.4:
@@ -42384,27 +42280,40 @@ snapshots:
     dependencies:
       get-port: 3.2.0
 
-  syncpack@13.0.4(typescript@5.4.5):
-    dependencies:
-      chalk: 5.6.2
-      chalk-template: 1.1.2
-      commander: 13.1.0
-      cosmiconfig: 9.0.0(typescript@5.4.5)
-      effect: 3.19.11
-      enquirer: 2.4.1
-      fast-check: 3.23.2
-      globby: 14.1.0
-      jsonc-parser: 3.3.1
-      minimatch: 9.0.5
-      npm-package-arg: 12.0.2
-      ora: 8.2.0
-      prompts: 2.4.2
-      read-yaml-file: 2.1.0
-      semver: 7.7.3
-      tightrope: 0.2.0
-      ts-toolbelt: 9.6.0
-    transitivePeerDependencies:
-      - typescript
+  syncpack-darwin-arm64@14.0.2:
+    optional: true
+
+  syncpack-darwin-x64@14.0.2:
+    optional: true
+
+  syncpack-linux-arm64-musl@14.0.2:
+    optional: true
+
+  syncpack-linux-arm64@14.0.2:
+    optional: true
+
+  syncpack-linux-x64-musl@14.0.2:
+    optional: true
+
+  syncpack-linux-x64@14.0.2:
+    optional: true
+
+  syncpack-windows-arm64@14.0.2:
+    optional: true
+
+  syncpack-windows-x64@14.0.2:
+    optional: true
+
+  syncpack@14.0.2:
+    optionalDependencies:
+      syncpack-darwin-arm64: 14.0.2
+      syncpack-darwin-x64: 14.0.2
+      syncpack-linux-arm64: 14.0.2
+      syncpack-linux-arm64-musl: 14.0.2
+      syncpack-linux-x64: 14.0.2
+      syncpack-linux-x64-musl: 14.0.2
+      syncpack-windows-arm64: 14.0.2
+      syncpack-windows-x64: 14.0.2
 
   systeminformation@5.30.7:
     optional: true
@@ -42569,8 +42478,6 @@ snapshots:
   through@2.3.8: {}
 
   thunky@1.1.0: {}
-
-  tightrope@0.2.0: {}
 
   tiny-invariant@1.3.3: {}
 
@@ -42767,8 +42674,6 @@ snapshots:
       typescript: 5.4.5
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
-
-  ts-toolbelt@9.6.0: {}
 
   tsconfig-paths-webpack-plugin@4.2.0:
     dependencies:
@@ -43221,8 +43126,6 @@ snapshots:
       spdx-expression-parse: 3.0.1
 
   validate-npm-package-name@5.0.1: {}
-
-  validate-npm-package-name@6.0.2: {}
 
   validator@13.15.26: {}
 
