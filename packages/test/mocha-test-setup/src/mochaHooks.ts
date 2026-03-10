@@ -16,6 +16,29 @@ import { pkgName } from "./packageVersion.js";
 // https://v8.dev/docs/stack-trace-api
 Error.stackTraceLimit = Number.POSITIVE_INFINITY;
 
+// Patch global.setTimeout to automatically unref() timers with delay > 10 seconds.
+// This prevents long-running timers from keeping the process alive after tests complete.
+// Specifically needed for N-1 compat packages (e.g. @fluidframework/container-runtime@2.83.0)
+// which create 2-minute setTimeout timers inside Summarizer.runCore() Promise.race() calls
+// that cannot be cancelled externally. unref() marks a timer as non-blocking for the event loop,
+// so the process can exit naturally without waiting for those timers to fire.
+{
+	const origSetTimeout = globalThis.setTimeout;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(globalThis as any).setTimeout = function (
+		fn: (...args: unknown[]) => void,
+		delay?: number,
+		...args: unknown[]
+	) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		const timer = origSetTimeout(fn, delay, ...args);
+		if (typeof delay === "number" && delay > 10_000) {
+			(timer as NodeJS.Timeout).unref?.();
+		}
+		return timer;
+	};
+}
+
 const testVariant = process.env.FLUID_TEST_VARIANT;
 const envLoggerProps =
 	process.env.FLUID_LOGGER_PROPS != null

@@ -20,6 +20,12 @@
 
 [x] Fix packages/service-clients/odsp-client - already clean
 
+[x] Fix packages/test/test-end-to-end-tests: two-part fix:
+    1. patch global.setTimeout in mocha-test-setup/mochaHooks.ts to unref() timers >10s
+       (handles N-1 compat timer hangs from Summarizer.runCore() Promise.race() timers)
+    2. fix compression.spec.ts describeInstallVersions block: create versionedProvider ONCE
+       in before/after hooks instead of per-test in beforeEach/afterEach (fixes socket leak)
+
 ## Remaining
 
 - tools/test-tools/.mocharc.cjs: Standalone package (own pnpm-workspace.yaml, not part of main
