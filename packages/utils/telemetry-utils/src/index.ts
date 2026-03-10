@@ -61,6 +61,8 @@ export {
 	type IPerformanceEventMarkers,
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
+	type LogLevelValueType,
+	LogLevelValue,
 	type MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
@@ -69,7 +71,6 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	type TelemetryEventPropertyTypes,
-	LogLevelValue,
 } from "./logger.js";
 export {
 	createMockLoggerExt,

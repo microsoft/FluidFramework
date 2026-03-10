@@ -11,8 +11,7 @@ import {
 	type Tagged,
 	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { BrandedType } from "@fluidframework/core-interfaces/legacy";
+import type { BrandedType } from "@fluidframework/core-interfaces/internal";
 
 import {
 	CachedConfigProvider,
@@ -1008,28 +1007,28 @@ export const tagCodeArtifacts = <
  *
  * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
  *
- * @beta
+ * @internal
  */
 export const LogLevelValue = {
 	/**
 	 * Chatty logs useful for local debugging.
 	 * They need not be collected in production.
 	 */
-	verbose: 10 as 10 & BrandedType<"LogLevelValue">,
+	verbose: 10 as 10 & BrandedType<"LogLevelValueType">,
 
 	/**
 	 * Information about the session. These logs could be omitted in some sessions
 	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
 	 * from a particular session, all should be.
 	 */
-	info: 20 as 20 & BrandedType<"LogLevelValue">,
+	info: 20 as 20 & BrandedType<"LogLevelValueType">,
 
 	/**
 	 * Essential information about the operation of Fluid. It is recommended that
 	 * these should always be collected, even in production, for diagnostic purposes.
 	 */
-	essential: 25 as 25 & BrandedType<"LogLevelValue">,
-} as const satisfies Record<string, LogLevelValue>;
+	essential: 25 as 25 & BrandedType<"LogLevelValueType">,
+} as const satisfies Record<string, LogLevelValueType>;
 
 /**
  * LogLevelValue is a numeric value that indicates the importance of a telemetry event for diagnostics,
@@ -1038,4 +1037,4 @@ export const LogLevelValue = {
  * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
  * @beta
  */
-export type LogLevelValue = number & BrandedType<"LogLevelValue">;
+export type LogLevelValueType = number & BrandedType<"LogLevelValueType">;
