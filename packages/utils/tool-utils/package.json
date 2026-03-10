@@ -132,7 +132,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAlias_OdspTokenConfig": {"forwardCompat": false, "backCompat": false}
+			"TypeAlias_OdspTokenConfig": {
+				"forwardCompat": false
+			}
 		},
 		"entrypoint": "internal"
 	}
