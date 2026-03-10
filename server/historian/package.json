@@ -69,16 +69,18 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
+			"mongodb>@aws-sdk/credential-providers: not needed and brings in a large transitive dependency tree (including fast-xml-parser). Dropped with '-'.",
+			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies with '-'. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint is overridden to v9 for flat config support across all packages"
 		],
 		"overrides": {
 			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
 			"@types/node": "^18.17.1",
 			"eslint": "~9.39.2",
+			"mongodb>@aws-sdk/credential-providers": "-",
 			"nanoid": "^3.3.9",
-			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
-			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-cloudfront": "-",
+			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.4",
 			"sharp": "^0.33.2"
