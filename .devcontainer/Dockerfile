@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-ARG NODE_VERSION=18
+ARG NODE_VERSION=24
 FROM mcr.microsoft.com/devcontainers/javascript-node:${NODE_VERSION}
 
 # Install Chromium to get .so libraries required for Puppeteer tests.
