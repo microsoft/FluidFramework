@@ -10,7 +10,7 @@ import type { CollectedData } from "../../reportTypes.js";
 import { ValueType } from "../../reportTypes.js";
 import { benchmarkIt } from "../../mocha/index.js";
 import { argv } from "node:process";
-import chalk from "chalk/index.js";
+import chalk from "chalk";
 
 const sampleResult: CollectedData = [
 	{
