@@ -53,6 +53,18 @@ export interface EditResult {
 }
 
 // @alpha
+export function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditOptions<TSchema>): Promise<SemanticEditResult>;
+
+// @alpha
+export interface ExecuteSemanticEditOptions<TSchema extends ImplicitFieldSchema> {
+    domainHints?: string;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+    logger?: Logger;
+    maximumSequentialEdits?: number;
+    startingHistoryWithSystemPrompt?: TreeAgentChatMessage[];
+}
+
+// @alpha
 export interface ExposedMethods {
     expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(schema: S, methodName: K, tfFunction: Z): void;
 }
@@ -126,6 +138,13 @@ export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
     editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
     logger?: Logger;
     maximumSequentialEdits?: number;
+}
+
+// @alpha
+export interface SemanticEditResult {
+    readonly history: TreeAgentChatMessage[];
+    readonly lastEditFailed: boolean;
+    readonly response: string;
 }
 
 // @alpha

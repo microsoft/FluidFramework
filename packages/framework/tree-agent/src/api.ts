@@ -369,6 +369,57 @@ export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
 	maximumSequentialEdits?: number;
 }
 
+/**
+ * Options for {@link executeSemanticEdit}.
+ * @alpha
+ */
+export interface ExecuteSemanticEditOptions<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * Executes any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * @remarks If not provided, the generated code will be executed using a simple JavaScript eval.
+	 */
+	editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+	/**
+	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
+	 */
+	maximumSequentialEdits?: number;
+	/**
+	 * An optional starting conversation history (including a system prompt) to use instead of generating one from the tree.
+	 * @remarks If provided, the history is cloned and used as-is. If not provided, a system prompt is generated from the tree schema.
+	 */
+	startingHistoryWithSystemPrompt?: TreeAgentChatMessage[];
+	/**
+	 * Additional information about the application domain that will be included in the generated system prompt.
+	 * @remarks Only used when {@link ExecuteSemanticEditOptions.startingHistoryWithSystemPrompt} is not provided.
+	 */
+	domainHints?: string;
+	/**
+	 * If supplied, generates human-readable markdown text describing the actions taken during execution.
+	 */
+	logger?: Logger;
+}
+
+/**
+ * The result of executing a semantic edit via {@link executeSemanticEdit}.
+ * @alpha
+ */
+export interface SemanticEditResult {
+	/**
+	 * The model's final text response.
+	 */
+	readonly response: string;
+	/**
+	 * The full conversation history including system prompt, user message, tool calls, and the final assistant response.
+	 */
+	readonly history: TreeAgentChatMessage[];
+	/**
+	 * Whether the last edit attempt failed.
+	 * @remarks When using {@link executeSemanticEdit} directly, edits are applied to the input tree and this flag is informational.
+	 * When used internally by {@link TreeAgent.message}, this flag drives branch merge/dispose decisions.
+	 */
+	readonly lastEditFailed: boolean;
+}
+
 // #endregion
 
 /**

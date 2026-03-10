@@ -16,7 +16,12 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { createContext, SharedTreeSemanticAgent, createTreeAgent } from "../agent.js";
+import {
+	createContext,
+	SharedTreeSemanticAgent,
+	createTreeAgent,
+	executeSemanticEdit,
+} from "../agent.js";
 import type {
 	EditResult,
 	SharedTreeChatModel,
@@ -923,6 +928,231 @@ describe("createTreeAgent", () => {
 			"toolCallId should be undefined",
 		);
 		agent.dispose();
+	});
+});
+
+// #endregion
+
+// #region executeSemanticEdit tests
+
+describe("executeSemanticEdit", () => {
+	it("can apply a single edit and returns result with history", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Edited";` },
+			},
+			{ role: "assistant", content: "Done editing" },
+		]);
+		const result = await executeSemanticEdit(model, view, "Edit it");
+		assert.equal(result.response, "Done editing");
+		assert.equal(view.root, "Edited");
+		assert.equal(result.lastEditFailed, false);
+		// History should contain: system, user, tool_call, tool_result, assistant
+		assert.equal(result.history.length, 5);
+		assert.equal(result.history[0]?.role, "system");
+		assert.equal(result.history[1]?.role, "user");
+		assert.equal(result.history[2]?.role, "tool_call");
+		assert.equal(result.history[3]?.role, "tool_result");
+		assert.equal(result.history[4]?.role, "assistant");
+	});
+
+	it("can apply multiple sequential edits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "First";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Second";` },
+			},
+			{ role: "assistant", content: "All done" },
+		]);
+		const result = await executeSemanticEdit(model, view, "Edit twice");
+		assert.equal(result.response, "All done");
+		assert.equal(view.root, "Second");
+		assert.equal(result.lastEditFailed, false);
+	});
+
+	it("keeps successful edits when a later edit fails (no rollback)", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Good";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `throw new Error("boom");` },
+			},
+			{ role: "assistant", content: "Oops" },
+		]);
+		const result = await executeSemanticEdit(model, view, "Edit");
+		assert.equal(result.response, "Oops");
+		assert.equal(result.lastEditFailed, true);
+		// Key difference from createTreeAgent: successful edit persists despite later failure
+		assert.equal(view.root, "Good");
+	});
+
+	it("uses startingHistoryWithSystemPrompt when provided", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const customHistory: TreeAgentChatMessage[] = [
+			{ role: "system", content: "Custom system prompt" },
+			{ role: "user", content: "Previous question" },
+			{ role: "assistant", content: "Previous answer" },
+		];
+		const model = createMockInvokeModel([{ role: "assistant", content: "Response" }]);
+		const result = await executeSemanticEdit(model, view, "New question", {
+			startingHistoryWithSystemPrompt: customHistory,
+		});
+		assert.equal(result.response, "Response");
+		// History should start with custom history + new user message + assistant response
+		assert.equal(result.history.length, 5);
+		assert.equal(result.history[0]?.role, "system");
+		assert.equal((result.history[0] as { content: string }).content, "Custom system prompt");
+		assert.equal(result.history[1]?.role, "user");
+		assert.equal(result.history[2]?.role, "assistant");
+		assert.equal(result.history[3]?.role, "user");
+		assert.equal(result.history[4]?.role, "assistant");
+		// Original array should not be mutated
+		assert.equal(customHistory.length, 3);
+	});
+
+	it("enforces maximumSequentialEdits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "One";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Two";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c3",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Three";` },
+			},
+			{ role: "assistant", content: "Gave up" },
+		]);
+		const result = await executeSemanticEdit(model, view, "Edit a lot", {
+			maximumSequentialEdits: 2,
+		});
+		assert.equal(result.response, "Gave up");
+		assert.equal(result.lastEditFailed, true);
+		// Edits 1 and 2 applied directly (no query-level branch), edit 3 was blocked
+		assert.equal(view.root, "Two");
+		// Check that the max-edits error message was in history
+		const errorMsg = result.history.find(
+			(m) => m.role === "tool_result" && m.content.includes("maximum number of edits"),
+		);
+		assert.ok(errorMsg !== undefined, "Expected max-edits error in history");
+	});
+
+	it("handles bad tool args gracefully", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { a: 1, b: 2 },
+			},
+			{ role: "assistant", content: "Gave up" },
+		]);
+		const result = await executeSemanticEdit(model, view, "Edit");
+		assert.equal(result.response, "Gave up");
+		assert.equal(result.lastEditFailed, true);
+		assert.equal(view.root, "Initial");
+		const errorMsg = result.history.find(
+			(m) =>
+				m.role === "tool_result" && m.content.includes("Expected a single string argument"),
+		);
+		assert.ok(errorMsg !== undefined, "Expected error message in history");
+	});
+
+	it("rejects models without invoke()", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query() {
+				return "nope";
+			},
+		};
+		await assert.rejects(async () => executeSemanticEdit(model, view, "Edit"), /invoke/);
+	});
+
+	it("rejects models without editToolName", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			async invoke() {
+				return { role: "assistant", content: "nope" };
+			},
+		};
+		await assert.rejects(async () => executeSemanticEdit(model, view, "Edit"), /editToolName/);
+	});
+
+	it("recovery after failed edit preserves all successful edits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `throw new Error("boom");` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Recovered";` },
+			},
+			{ role: "assistant", content: "Fixed" },
+		]);
+		const result = await executeSemanticEdit(model, view, "Edit");
+		assert.equal(result.response, "Fixed");
+		assert.equal(result.lastEditFailed, false);
+		assert.equal(view.root, "Recovered");
+	});
+
+	it("works with a simple assistant-only response (no edits)", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([{ role: "assistant", content: "Just a response" }]);
+		const result = await executeSemanticEdit(model, view, "Question");
+		assert.equal(result.response, "Just a response");
+		assert.equal(result.lastEditFailed, false);
+		assert.equal(view.root, "Content");
+		// History: system + user + assistant
+		assert.equal(result.history.length, 3);
 	});
 });
 
