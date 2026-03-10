@@ -404,14 +404,18 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 		const queryTree = this.#outerTree.fork();
 		let editCount = 0;
 		let rollbackEdits = false;
-		const maxModelCalls = this.#maxEditCount + 2;
+		// Allow for one extra call to allow for a final assistant response after the last edit.
+		const maxModelCalls = this.#maxEditCount + 1;
 		let modelCalls = 0;
 
 		try {
 			while (true) {
-				if (++modelCalls > maxModelCalls) {
+				if (++modelCalls >= maxModelCalls) {
+					const cutoffMessage = `The model failed to produce a response within ${maxModelCalls} calls.`;
+					this.#history.push({ role: "assistant", content: cutoffMessage });
+					this.#options?.logger?.log(`## Cancel\n\n${cutoffMessage}\n\n`);
 					queryTree.branch.dispose();
-					return `The model failed to produce a response within ${maxModelCalls} calls.`;
+					return cutoffMessage;
 				}
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const response = await this.#model.invoke!(this.#history);
