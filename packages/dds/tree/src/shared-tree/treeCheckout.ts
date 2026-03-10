@@ -785,6 +785,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
 		const { revision, originatorId, change } = serializedChange;
+		assert(revision === "root", `Malformed serialized change, revision should be "root"`);
 		const context: ChangeEncodingContext = {
 			idCompressor: this.idCompressor,
 			originatorId,
