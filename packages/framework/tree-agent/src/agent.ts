@@ -408,9 +408,9 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 		try {
 			while (true) {
 				editLoopTurns++;
-				// Allow for one extra turn to allow for a final assistant response after the last edit.
-				if (editLoopTurns > this.#maxEditCount + 1) {
-					const cutoffMessage = `The model failed to produce a response within ${editLoopTurns} turns.`;
+				// Allow for two extra turns: one for a last tool error message, and one for a final response from the llm.
+				if (editLoopTurns > this.#maxEditCount + 2) {
+					const cutoffMessage = `The model failed to produce a response within ${this.#maxEditCount} edits.`;
 					this.#history.push({ role: "assistant", content: cutoffMessage });
 					this.#options?.logger?.log(`## Cancel\n\n${cutoffMessage}\n\n`);
 					queryTree.branch.dispose();
@@ -448,7 +448,7 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 					continue;
 				}
 
-				// It's fair to assume that every loop turn corresponds to one edit attempt, since the only way for the model to take multiple turns without making progress on the task is to make multiple attempts at editing the tree.
+				// Every loop turn roughly corresponds to one edit attempt, since the loop terminates when the llm produces a non-tool response.
 				if (editLoopTurns > this.#maxEditCount) {
 					rollbackEdits = true;
 					const errorMessage = `The maximum number of edits (${this.#maxEditCount}) for this query has been exceeded.`;

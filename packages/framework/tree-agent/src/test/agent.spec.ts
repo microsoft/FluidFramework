@@ -717,13 +717,12 @@ describe("createTreeAgent", () => {
 	it("terminates if the model never returns an assistant response", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
-		// Create many tool_call responses with malformed args (no string property).
-		// With maximumSequentialEdits: 2, maxModelCalls = 4. The model should be cut off.
+		// Create many valid tool_call responses. The agent should terminate after exceeding the edit limit.
 		const badResponses = Array.from({ length: 20 }, (_, i) => ({
 			role: "tool_call" as const,
 			toolCallId: `c${i}`,
 			toolName: editToolName,
-			toolArgs: {},
+			toolArgs: { js: `context.root = "Edit ${i}";` },
 		}));
 		const model = createMockInvokeModel(badResponses);
 		const agent = createTreeAgent(model, view, { maximumSequentialEdits: 2 });
