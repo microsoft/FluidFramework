@@ -22,8 +22,9 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"start": "node index.js",
+		"start": "pm2 start -n azure-local-service index.js",
 		"start:debug": "node --inspect=0.0.0.0:9229 index.js",
+		"stop": "pm2 stop azure-local-service",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
@@ -37,6 +38,7 @@
 		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"jiti": "^2.6.1",
+		"pm2": "^5.4.2",
 		"rimraf": "^6.1.3"
 	},
 	"typeValidation": {
