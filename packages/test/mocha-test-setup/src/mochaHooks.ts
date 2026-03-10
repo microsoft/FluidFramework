@@ -30,10 +30,9 @@ Error.stackTraceLimit = Number.POSITIVE_INFINITY;
 		delay?: number,
 		...args: unknown[]
 	) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		const timer = origSetTimeout(fn, delay, ...args);
 		if (typeof delay === "number" && delay > 10_000) {
-			(timer as NodeJS.Timeout).unref?.();
+			timer.unref?.();
 		}
 		return timer;
 	};
