@@ -320,7 +320,9 @@ export class OrderedClientElection
 				if (this._electedParent?.clientId === clientId) {
 					// 1. The _electedClient is an interactive client that has left the quorum.
 					// Automatically shift to next oldest client.
-					const nextClient = this.findOldestEligibleParent();
+					const nextClient =
+						this.findNextEligibleParentAfter(this._electedParent?.sequenceNumber ?? -1) ??
+						this.findOldestEligibleParent();
 					this.tryElectingClient(nextClient, sequenceNumber, "RemoveClient");
 				} else {
 					// 2. The _electedClient is a summarizer that we've been allowing to finish its work.
@@ -335,7 +337,9 @@ export class OrderedClientElection
 				// Removing the _electedParent (but not _electedClient).
 				// Shift to the next oldest parent, but do not replace the _electedClient,
 				// which is a summarizer that is still doing work.
-				const nextParent = this.findOldestEligibleParent();
+				const nextParent =
+					this.findNextEligibleParentAfter(this._electedParent?.sequenceNumber ?? -1) ??
+					this.findOldestEligibleParent();
 				this.tryElectingParent(nextParent, sequenceNumber, "RemoveClient");
 			}
 		});
