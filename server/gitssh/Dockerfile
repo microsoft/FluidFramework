@@ -3,6 +3,7 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
+# Trigger CG re-scan to clear stale alerts.
 # Use the manifest digest's sha256 hash to ensure we are always using the same version of the base image.
 # That version of the base image must also be baked into the CI build agent by a repo maintainer.
 # This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
