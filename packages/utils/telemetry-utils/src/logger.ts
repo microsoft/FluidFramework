@@ -1022,7 +1022,7 @@ export const LogLevelValue = {
 	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
 	 * from a particular session, all should be.
 	 */
-	info: 15 as 15 & BrandedType<"LogLevelValue">,
+	info: 20 as 20 & BrandedType<"LogLevelValue">,
 
 	/**
 	 * Essential information about the operation of Fluid. It is recommended that

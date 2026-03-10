@@ -52,7 +52,7 @@ class TestLogger implements ITelemetryLoggerExt {
 	public supportsTags?: true | undefined;
 }
 
-const standardEventProperties = ["eventName", "duration", "count"];
+const standardEventProperties = ["eventName", "duration", "count", "logLevel"];
 const aggregateProperties = ["totalDuration", "minDuration", "maxDuration", "averageDuration"];
 
 describe("SampledTelemetryHelper", () => {
@@ -91,7 +91,7 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(event.count, 1);
 	});
 
-	it.only("includes aggregate properties when it should", () => {
+	it("includes aggregate properties when it should", () => {
 		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, true);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
