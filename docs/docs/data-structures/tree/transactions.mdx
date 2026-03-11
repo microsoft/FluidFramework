@@ -11,11 +11,12 @@ However, using a transaction has the following additional implications:
 -   It is also more efficient for SharedTree to process and transmit a large number of changes as a transaction rather than as changes submitted separately.
 -   It is possible to specify constraints on a transaction so that the transaction will be ignored if one or more of these constraints are not met.
 
-To create a transaction use [Tree.runTransaction](../../api/fluid-framework/tree-interface#runTransaction-propertysignature).
+To create a transaction use [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature).
 You can cancel a transaction from within the callback function by returning the special "rollback object", available via `Tree.runTransaction.rollback`.
 If an error occurs within the callback, the transaction will be canceled automatically before propagating the error.
 
-In this example, myNode can be any node in the SharedTree. It will be optionally passed into the callback function.
+In this example, myNode can be any node in the SharedTree.
+It will be optionally passed into the callback function.
 
 ```typescript
 Tree.runTransaction(myNode, (node) => {
@@ -43,7 +44,7 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 The APIs described in this section are currently `@alpha` and may change in future releases.
 
-Unlike [Tree.runTransaction](../../api/fluid-framework/tree-interface#runTransaction-propertysignature), the Alpha [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) does **not** automatically roll back the transaction if the callback throws an error.
+Unlike [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature), the Alpha [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
@@ -224,7 +225,8 @@ If `importantNode` is removed by a concurrent edit that is sequenced before this
 
 :::note
 
-The `nodeInDocument` constraint is also available for use in the old transaction API via `Tree.runTransaction`. This is the only constraint which can be applied via `Tree.runTransaction`.
+The `nodeInDocument` constraint is also available for use in the old transaction API via `Tree.runTransaction`.
+This is the only constraint which can be applied via `Tree.runTransaction`.
 
 :::
 
