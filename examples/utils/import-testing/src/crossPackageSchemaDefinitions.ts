@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/*
+Schema definitions that import the factory from a separate file (crossPackageSchemaUtils.ts).
+This separation is critical: it forces the .d.ts to resolve tree/alpha types through a deeper
+chain, which triggers TypeScript's type resolution bug when tree's export tiers share a JS module.
+*/
+
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { sf } from "./crossPackageSchemaUtils.js";

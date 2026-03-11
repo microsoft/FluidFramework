@@ -19,7 +19,10 @@
 		"incremental": false,
 	},
 	"include": ["./**/*"],
-	// Cross-package importers are compiled by tsconfig.crossPackageConsumer.json (no project references).
+	// Cross-package importers must be compiled WITHOUT project references so TypeScript
+	// resolves types through the package export map (where the bug manifests).
+	// Project references bypass the export map, making @ts-expect-error directives unused.
+	// These files are compiled separately by tsconfig.crossPackageConsumer.json.
 	"exclude": ["./crossPackageImporter.ts", "./crossPackageBundlerImporter.ts"],
 	"references": [
 		{

@@ -13,10 +13,10 @@
 	"author": "Microsoft and contributors",
 	"type": "module",
 	"exports": {
-		"./crossPackageSchema": {
+		"./crossPackageSchema/node16": {
 			"import": "./lib/crossPackageSchemaExports.js"
 		},
-		"./crossPackageSchemaBundler": {
+		"./crossPackageSchema/bundler": {
 			"import": "./lib/bundler/crossPackageSchemaExports.js"
 		}
 	},
@@ -24,14 +24,15 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "npm run build:esnext:main && npm run build:esnext:crossPackage && npm run build:esnext:bundler",
-		"build:esnext:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
-		"build:esnext:crossPackage": "tsc --project ./tsconfig.crossPackage.json",
+		"build:esnext": "npm run build:esnext:main && npm run build:esnext:crossPackage:node16 && npm run build:esnext:crossPackage:bundler",
+		"build:esnext:crossPackage:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
+		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json && npm run build:test:esm:crossPackage",
+		"build:test:esm": "npm run build:test:esm:main && npm run build:test:esm:crossPackage",
 		"build:test:esm:crossPackage": "tsc --project ./tsconfig.crossPackageConsumer.json",
+		"build:test:esm:main": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -80,18 +81,19 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:esnext:main": [
+				"^api-extractor:esnext",
 				"^build:esnext"
 			],
-			"build:esnext:crossPackage": [
+			"build:esnext:crossPackage:node16": [
 				"build:esnext:main"
 			],
-			"build:esnext:bundler": [
+			"build:esnext:crossPackage:bundler": [
 				"build:esnext:main"
 			],
-			"build:test:esm:crossPackage": [
+			"build:test:esm:main": [
 				"build:esnext"
 			],
-			"build:test:esm": [
+			"build:test:esm:crossPackage": [
 				"build:esnext"
 			]
 		}
