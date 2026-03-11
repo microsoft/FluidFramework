@@ -307,6 +307,15 @@ export abstract class ErasedBaseType<out Name = unknown> {
     protected abstract brand(dummy: never): Name;
 }
 
+// @alpha
+export type ErasedNode<TExtra, Identifier extends string> = TExtra & TreeNode & WithType<Identifier>;
+
+// @alpha
+export type ErasedSchema<NodeType extends TreeNode> = TreeNodeSchema<NodeType extends WithType<infer Identifier> ? Identifier : string, NodeKind, NodeType, never, false>;
+
+// @alpha
+export type ErasedSchemaSubclassable<TExtra, Identifier extends string> = TreeNodeSchemaClass<Identifier, NodeKind, ErasedNode<TExtra, Identifier>, never, false>;
+
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
@@ -1239,6 +1248,11 @@ export const ObjectNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ObjectNodeSchema<string, RestrictiveStringRecord<ImplicitFieldSchema>, boolean, unknown>;
 };
 
+// @alpha @sealed
+export type ObjectNodeSchemaWorkaround<TName extends string = string, T extends RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean, TCustomMetadata = unknown> = ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> & {
+    readonly createFromInsertable: unknown;
+};
+
 // @beta @input
 export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly allowUnknownOptionalFields?: boolean;
@@ -1429,9 +1443,7 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     readonly leaves: readonly [LeafSchema<"string", string> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle_2<unknown>> & SimpleLeafNodeSchema<SchemaType>];
     mapAlpha<Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
-    objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
-        readonly createFromInsertable: unknown;
-    };
+    objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata> & SimpleObjectNodeSchema<SchemaType.View, TCustomMetadata> & Pick<ObjectNodeSchema, "fields">;
     objectRecursiveAlpha<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordAlphaUnsafe<T>, false, T, never, TCustomMetadata> & SimpleObjectNodeSchema<SchemaType.View, TCustomMetadata> & Pick<ObjectNodeSchema, "fields">;
     static readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
