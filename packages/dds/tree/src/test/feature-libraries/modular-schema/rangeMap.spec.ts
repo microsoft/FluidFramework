@@ -397,7 +397,13 @@ describe("RangeMap", () => {
 			map2.set(1, 10, "c");
 
 			const result = RangeMap.union(map1, map2);
-			assert.deepEqual(result.entries(), [{ start: 1, length: 10, value: "c" }]);
+			assert.deepEqual(result.entries(), [
+				{ start: 1, length: 1, value: "c" },
+				{ start: 2, length: 2, value: "c" },
+				{ start: 4, length: 2, value: "c" },
+				{ start: 6, length: 2, value: "c" },
+				{ start: 8, length: 3, value: "c" },
+			]);
 		});
 	});
 });
