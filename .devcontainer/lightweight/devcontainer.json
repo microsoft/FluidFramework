@@ -8,7 +8,6 @@
 		}
 	},
 	"runArgs": ["--init"],
-	"overrideCommand": false,
 	"customizations": {
 		"vscode": {
 			"extensions": [
