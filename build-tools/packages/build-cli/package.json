@@ -137,7 +137,7 @@
 		"replace-in-file": "^7.2.0",
 		"resolve.exports": "^2.0.3",
 		"semver": "^7.7.3",
-		"simple-git": "^3.30.0",
+		"simple-git": "^3.32.3",
 		"sort-json": "^2.0.1",
 		"sort-package-json": "1.57.0",
 		"strip-ansi": "^7.1.2",
