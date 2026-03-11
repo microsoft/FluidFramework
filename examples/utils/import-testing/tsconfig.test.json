@@ -1,6 +1,12 @@
 {
 	"include": ["src/**/*"],
-	// "exclude": ["src/test/**/*"],
+	"exclude": [
+		"src/crossPackageSchemaExports.ts",
+		"src/crossPackageSchemaDefinitions.ts",
+		"src/crossPackageSchemaUtils.ts",
+		"src/test/crossPackageImporter.ts",
+		"src/test/crossPackageBundlerImporter.ts",
+	],
 	"compilerOptions": {
 		"target": "es2022",
 		"module": "Node16",
