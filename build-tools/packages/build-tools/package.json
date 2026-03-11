@@ -68,7 +68,7 @@
 		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.4",
+		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.63.0",
 		"@types/async": "^3.2.25",

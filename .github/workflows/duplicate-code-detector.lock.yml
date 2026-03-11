@@ -23,7 +23,7 @@
 #
 # Source: github/gh-aw/.github/workflows/duplicate-code-detector.md@94662b1dee8ce96c876ba9f33b3ab8be32de82a4
 #
-# frontmatter-hash: f9409ba23533a82d6178b22f9df87faa1174e9d90eb9b127e3eaa275bd872d67
+# frontmatter-hash: e9e6951abfddfd2a7cf20afd8221f412aa279443bca94c7cc991dccc3f0b5961
 
 name: "Duplicate Code Detector"
 "on":

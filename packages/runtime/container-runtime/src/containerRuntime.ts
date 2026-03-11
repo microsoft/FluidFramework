@@ -107,7 +107,6 @@ import {
 } from "@fluidframework/id-compressor/internal";
 import {
 	FlushMode,
-	FlushModeExperimental,
 	channelsTreeName,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
@@ -1598,7 +1597,6 @@ export class ContainerRuntime
 			audience,
 			signalAudience,
 			pendingLocalState,
-			supportedFeatures,
 			snapshotWithContents,
 			getConnectionState,
 		} = context;
@@ -1833,21 +1831,14 @@ export class ContainerRuntime
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
 
-		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
-		// predates ILayerCompatDetails.
-		const referenceSequenceNumbersSupported =
-			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
-				? supportedFeatures?.get("referenceSequenceNumbers") === true
-				: true;
-		if (
-			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
-			!referenceSequenceNumbersSupported
-		) {
-			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
-			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
-			this._flushMode = FlushMode.TurnBased;
-		} else {
-			this._flushMode = runtimeOptions.flushMode;
+		this._flushMode = runtimeOptions.flushMode;
+		// TODO: Added in 2.90.0 - Remove this validation once we've released and confirmed no consumer passes an invalid flushMode value.
+		if (this._flushMode !== FlushMode.Immediate && this._flushMode !== FlushMode.TurnBased) {
+			const error = new UsageError(
+				"Invalid flushMode runtime option. Expected FlushMode.Immediate or FlushMode.TurnBased.",
+			);
+			this.closeFn(error);
+			throw error;
 		}
 		this.batchIdTrackingEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
@@ -4827,15 +4818,6 @@ export class ContainerRuntime
 				// batch at the end of the turn
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises -- Container will close if flush throws
 				Promise.resolve().then(() => this.flush());
-				break;
-			}
-
-			// FlushModeExperimental is experimental and not exposed directly in the runtime APIs
-			case FlushModeExperimental.Async as unknown as FlushMode: {
-				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
-				// batch when all micro-tasks are complete.
-				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
-				setTimeout(() => this.flush(), 0);
 				break;
 			}
 

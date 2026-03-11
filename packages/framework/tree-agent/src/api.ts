@@ -220,6 +220,7 @@ export function isEditResult(value: unknown): value is EditResult {
 /**
  * A query from a user to a {@link SharedTreeSemanticAgent}.
  * @remarks Processing a query may involve editing the SharedTree via the provided {@link SharedTreeChatQuery.edit} function.
+ * @deprecated Use {@link SharedTreeChatModel.invoke} with {@link TreeAgentChatMessage} instead.
  * @alpha
  */
 export interface SharedTreeChatQuery {
@@ -236,6 +237,139 @@ export interface SharedTreeChatQuery {
 	 */
 	edit(js: string): Promise<EditResult>;
 }
+
+// #region New message and response types
+
+/**
+ * A system message providing context to the model.
+ * @alpha
+ */
+export interface TreeAgentSystemMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
+	readonly role: "system";
+	/** The text content of the message. */
+	readonly content: string;
+}
+
+/**
+ * A user message containing a query or instruction.
+ * @alpha
+ */
+export interface TreeAgentUserMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
+	readonly role: "user";
+	/** The text content of the message. */
+	readonly content: string;
+}
+
+/**
+ * An assistant message containing the model's text response (when no tool call is made).
+ * @alpha
+ */
+export interface TreeAgentAssistantMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
+	readonly role: "assistant";
+	/** The text content of the message. */
+	readonly content: string;
+}
+
+/**
+ * An assistant message requesting a tool call (e.g. to edit the tree).
+ * @alpha
+ */
+export interface TreeAgentToolCallMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
+	readonly role: "tool_call";
+	/** An optional identifier for this tool invocation, used to correlate with the result. */
+	readonly toolCallId?: string;
+	/** The name of the tool being called. */
+	readonly toolName: string;
+	/** The arguments to the tool call, as returned by the LLM. */
+	readonly toolArgs: Record<string, unknown>;
+}
+
+/**
+ * A tool result message containing the outcome of a tool invocation.
+ * @alpha
+ */
+export interface TreeAgentToolResultMessage {
+	/** Identifies the message type within a {@link TreeAgentChatMessage} array. */
+	readonly role: "tool_result";
+	/** The identifier of the tool call this result corresponds to, if one was provided. */
+	readonly toolCallId?: string;
+	/** The result content (e.g. the EditResult serialized as text, or the new tree state). */
+	readonly content: string;
+}
+
+/**
+ * A role-tagged message in a tree agent conversation.
+ * @remarks The agent owns the conversation history as an array of these messages and passes them to {@link SharedTreeChatModel.invoke}.
+ * @alpha
+ */
+export type TreeAgentChatMessage =
+	| TreeAgentSystemMessage
+	| TreeAgentUserMessage
+	| TreeAgentAssistantMessage
+	| TreeAgentToolCallMessage
+	| TreeAgentToolResultMessage;
+
+/**
+ * A response from a {@link SharedTreeChatModel} after invoking it with a message history.
+ * @alpha
+ */
+export type TreeAgentChatResponse = TreeAgentToolCallMessage | TreeAgentAssistantMessage;
+
+// #endregion
+
+// #region Agent interface and options
+
+/**
+ * An agent that can analyze and edit a SharedTree.
+ * @remarks Created via {@link createTreeAgent}.
+ * @alpha
+ */
+export interface TreeAgent {
+	/**
+	 * Process the user's prompt, potentially editing the tree in a multi-turn conversation, and return a response.
+	 * @param prompt - The user's question or edit instruction.
+	 * @returns The model's text response.
+	 */
+	message(prompt: string): Promise<string>;
+
+	/**
+	 * Unsubscribes from tree change events and releases resources held by the agent.
+	 * @remarks After calling this method, the agent should not be used again.
+	 */
+	dispose(): void;
+}
+
+/**
+ * Options for creating a tree agent via {@link createTreeAgent}.
+ * @alpha
+ */
+export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * Additional information about the application domain that will be included in the context provided to the {@link SharedTreeChatModel | model}.
+	 */
+	domainHints?: string;
+	/**
+	 * If supplied, generates human-readable markdown text describing the actions taken by the agent.
+	 */
+	logger?: Logger;
+	/**
+	 * Executes any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * @remarks If an error is thrown while executing the code, it will be caught and the message will be forwarded to the {@link SharedTreeChatModel | model} for debugging.
+	 * If this function is not provided, the generated code will be executed using a simple JavaScript eval which may not provide sufficient security guarantees for some environments.
+	 * Run the code in a sandboxed environment or use a library such as SES to provide a more secure implementation — see `@fluidframework/tree-agent-ses` for a drop-in implementation.
+	 */
+	editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+	/**
+	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
+	 */
+	maximumSequentialEdits?: number;
+}
+
+// #endregion
 
 /**
  * A plugin interface that handles queries from a {@link SharedTreeSemanticAgent}.
@@ -264,11 +398,22 @@ export interface SharedTreeChatModel {
 	 * @remarks In practice, this may be implemented by e.g. appending a "system" message to an LLM's chat/message history.
 	 * This context must be present in the context window of every {@link SharedTreeChatModel.query | query} for e.g. {@link SharedTreeChatModel.editToolName | editing} to work.
 	 * @param text - The message or context to append.
+	 * @deprecated Use {@link SharedTreeChatModel.invoke} instead. Context is provided via system messages in the history.
 	 */
 	appendContext?(text: string): void;
 	/**
 	 * Queries the chat model with a request from the user.
 	 * @remarks This model may simply return a text response to the query, or it may first call the {@link SharedTreeChatQuery.edit} function (potentially multiple times) to modify the tree in response to the query.
+	 * @deprecated Use {@link SharedTreeChatModel.invoke} instead. The edit loop is now managed by the agent via {@link createTreeAgent}.
 	 */
-	query(message: SharedTreeChatQuery): Promise<string>;
+	query?(message: SharedTreeChatQuery): Promise<string>;
+	/**
+	 * Invoke the model with the given message history and return a single response.
+	 * @remarks This is the stateless API. The model should not maintain any internal message history;
+	 * all context is provided via the `history` parameter.
+	 * Implementations should convert the {@link TreeAgentChatMessage} array to the underlying LLM's
+	 * message format, invoke the LLM, and return either a {@link TreeAgentToolCallMessage} (if the model
+	 * wants to call a tool) or a {@link TreeAgentAssistantMessage} (if the model is done).
+	 */
+	invoke?(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
 }
