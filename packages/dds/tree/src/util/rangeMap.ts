@@ -200,7 +200,8 @@ export class RangeMap<K, V> {
 
 	/**
 	 * Returns a new map which contains the entries from both input maps.
-	 * Whenever both maps contain entires for the same keys, the value from map `b` is used in the returned map.
+	 * Whenever both maps contain entries for the same keys, the value is determined by calling `mergeFunc`.
+	 * By default, `mergeFunc` chooses the value from `b`.
 	 */
 	public static union<K, V>(
 		a: RangeMap<K, V>,
