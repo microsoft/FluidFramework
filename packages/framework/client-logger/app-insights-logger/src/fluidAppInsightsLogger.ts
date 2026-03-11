@@ -181,7 +181,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 * This method also uses the provided {@link FluidAppInsightsLoggerConfig} to
 	 * determine whether an event should be sent or not.
 	 */
-	public send(event: ITelemetryBaseEvent): void {
+	public sendX(event: ITelemetryBaseEvent): void {
 		if (this.shouldSendEvent(event)) {
 			this.baseLoggingClient.trackEvent({
 				name: event.eventName,
