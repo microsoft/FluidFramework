@@ -165,7 +165,7 @@
 				"build:esnext:main"
 			],
 			"build:esnext:main": [
-				"^api",
+				"^api-extractor:esnext",
 				"^build:esnext",
 				"build:genver"
 			],
@@ -177,7 +177,7 @@
 				"tsc:main"
 			],
 			"tsc:main": [
-				"^api",
+				"^api-extractor:commonjs",
 				"^tsc",
 				"build:genver"
 			]
