@@ -8,6 +8,7 @@ import { delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	isFluidError,
+	wrapError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -45,6 +46,12 @@ export interface IProgress {
 	 * @param error - error object returned from the call.
 	 */
 	onRetry?(delayInMs: number, error: unknown): void;
+
+	/**
+	 * Maximum number of retries before giving up on a retriable error.
+	 * If undefined, retries will continue indefinitely (default behavior).
+	 */
+	maxRetries?: number;
 }
 
 /**
@@ -122,6 +129,35 @@ export async function runWithRetry<T>(
 			}
 
 			numRetries++;
+
+			// Check if max retries limit has been reached
+			if (progress.maxRetries !== undefined && numRetries > progress.maxRetries) {
+				logger.sendTelemetryEvent(
+					{
+						eventName: `${fetchCallName}_maxRetriesExceeded`,
+						retry: numRetries - 1,
+						maxRetries: progress.maxRetries,
+						duration: performanceNow() - startTime,
+						fetchCallName,
+					},
+					error,
+				);
+				// Wrap the original error to preserve its details while marking it non-retriable
+				throw wrapError(
+					error,
+					(message) =>
+						new NonRetryableError(
+							`runWithRetry failed after max retries: ${message}`,
+							DriverErrorTypes.genericError,
+							{
+								driverVersion: pkgVersion,
+								fetchCallName,
+								maxRetries: progress.maxRetries,
+							},
+						),
+				);
+			}
+
 			lastError = error;
 			// Wait for the calculated time before retrying.
 			retryAfterMs = calculateMaxWaitTime(retryAfterMs, error);
