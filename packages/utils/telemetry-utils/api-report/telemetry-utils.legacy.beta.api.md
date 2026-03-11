@@ -27,6 +27,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     category?: TelemetryEventCategory;
     eventName: string;
+    logLevel?: LogLevelValueType;
 }
 
 // @beta @legacy

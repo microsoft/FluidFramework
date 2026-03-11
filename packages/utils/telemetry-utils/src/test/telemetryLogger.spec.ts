@@ -5,11 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
+  import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
 
 import {
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
+	LogLevelValue,
 	TelemetryLogger,
 	convertToBasePropertyType,
 } from "../logger.js";
@@ -428,5 +429,88 @@ describe("convertToBasePropertyType", () => {
 			const expected = "INVALID PROPERTY (typed as symbol)";
 			assert.deepStrictEqual(converted, expected);
 		});
+	});
+});
+
+describe("LogLevelValue-based sampling", () => {
+	it("marks event as sampleEvent when logLevel value is verbose", () => {
+		const logger = new TestTelemetryLogger();
+
+		logger.sendTelemetryEvent({
+			eventName: "VerboseMetric",
+			logLevel: LogLevelValue.verbose,
+		});
+
+		assert.strictEqual(logger.events.length, 1, "One event should be logged");
+		const event = logger.events[0];
+
+		// Simulate what a consumer's send() would do:
+		// if the event's logLevel value is below essential, mark as sampleEvent
+		const eventLogLevel = event.logLevel as number;
+		if (eventLogLevel < LogLevelValue.essential) {
+			event.sampleEvent = true;
+		}
+
+		assert.strictEqual(
+			event.sampleEvent,
+			true,
+			"Verbose event should be marked as sampleEvent",
+		);
+	});
+
+	it("marks event as sampleEvent when logLevel value is info", () => {
+		const logger = new TestTelemetryLogger();
+
+		logger.sendTelemetryEvent({
+			eventName: "InfoMetric",
+			logLevel: LogLevelValue.info,
+		});
+
+		assert.strictEqual(logger.events.length, 1, "One event should be logged");
+		const event = logger.events[0];
+
+		const eventLogLevel = event.logLevel as number;
+		if (eventLogLevel < LogLevelValue.essential) {
+			event.sampleEvent = true;
+		}
+
+		assert.strictEqual(event.sampleEvent, true, "Info event should be marked as sampleEvent");
+	});
+
+	it("does not mark event as sampleEvent when logLevel value is essential", () => {
+		const logger = new TestTelemetryLogger();
+
+		logger.sendTelemetryEvent({
+			eventName: "EssentialMetric",
+			logLevel: LogLevelValue.essential,
+		});
+
+		assert.strictEqual(logger.events.length, 1, "One event should be logged");
+		const event = logger.events[0];
+
+		// Essential events should not be sampled
+		const eventLogLevel = event.logLevel as number;
+		if (eventLogLevel < LogLevelValue.essential) {
+			event.sampleEvent = true;
+		}
+
+		assert.strictEqual(
+			event.sampleEvent,
+			undefined,
+			"Essential event should not be marked as sampleEvent",
+		);
+	});
+
+	it("defaults to 'essential' logLevel value on the event when none is specified", () => {
+		const logger = new TestTelemetryLogger();
+
+		logger.sendTelemetryEvent({ eventName: "DefaultLevelEvent" });
+
+		assert.strictEqual(logger.events.length, 1, "One event should be logged");
+		assert.strictEqual(
+			logger.events[0].logLevel,
+			LogLevelValue.essential,
+			"Default logLevel on event should be essential",
+		);
 	});
 });
