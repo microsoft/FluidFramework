@@ -11,6 +11,7 @@ overrides:
   oclif>@aws-sdk/client-cloudfront: '-'
   oclif>@aws-sdk/client-s3: '-'
   qs: ^6.15.0
+  simple-git: ^3.32.3
   sharp: ^0.33.2
 
 patchedDependencies:
@@ -5097,8 +5098,8 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
 
-  simple-git@3.30.0:
-    resolution: {integrity: sha512-q6lxyDsCmEal/MEGhP1aVyQ3oxnagGlBDOVSIB4XUVLl1iZh0Pah6ebC9V4xBap/RfgP2WlI8EKs0WS0rMEJHg==}
+  simple-git@3.32.3:
+    resolution: {integrity: sha512-56a5oxFdWlsGygOXHWrG+xjj5w9ZIt2uQbzqiIGdR/6i5iococ7WQ/bNPzWxCJdEUGUCmyMH0t9zMpRJTaKxmw==}
 
   sinon@18.0.1:
     resolution: {integrity: sha512-a2N2TDY1uGviajJ6r4D1CyRAkzE9NNVlYOV1wX5xQDuAk0ONgzgRl0EjCQuRCPxOwp13ghsMwt9Gdldujs39qw==}
@@ -6234,7 +6235,7 @@ snapshots:
       replace-in-file: 7.2.0
       resolve.exports: 2.0.3
       semver: 7.7.3
-      simple-git: 3.30.0
+      simple-git: 3.32.3
       sort-json: 2.0.1
       sort-package-json: 1.57.0
       strip-ansi: 7.1.2
@@ -6270,7 +6271,7 @@ snapshots:
       picocolors: 1.1.1
       read-pkg-up: 7.0.1
       semver: 7.7.3
-      simple-git: 3.30.0
+      simple-git: 3.32.3
       sort-package-json: 1.57.0
       type-fest: 2.19.0
       typescript: 5.4.5
@@ -12243,7 +12244,7 @@ snapshots:
       - bluebird
       - supports-color
 
-  simple-git@3.30.0:
+  simple-git@3.32.3:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1

@@ -15,6 +15,7 @@ overrides:
   js-yaml@<4: ^3.14.2
   js-yaml@>=4: ^4.1.1
   qs: ^6.15.0
+  simple-git: ^3.32.3
   sharp: ^0.33.2
 
 importers:
@@ -4310,8 +4311,8 @@ packages:
   simple-get@4.0.1:
     resolution: {integrity: sha512-brv7p5WgH0jmQJr1ZDDfKDOSeWWg+OVypG99A/5vYGPqJ6pxiaHLy8nxtFjBA7oMa01ebA9gfh1uMCFqOuXxvA==}
 
-  simple-git@3.30.0:
-    resolution: {integrity: sha512-q6lxyDsCmEal/MEGhP1aVyQ3oxnagGlBDOVSIB4XUVLl1iZh0Pah6ebC9V4xBap/RfgP2WlI8EKs0WS0rMEJHg==}
+  simple-git@3.32.3:
+    resolution: {integrity: sha512-56a5oxFdWlsGygOXHWrG+xjj5w9ZIt2uQbzqiIGdR/6i5iococ7WQ/bNPzWxCJdEUGUCmyMH0t9zMpRJTaKxmw==}
 
   simple-swizzle@0.2.2:
     resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
@@ -5135,7 +5136,7 @@ snapshots:
       replace-in-file: 7.2.0
       resolve.exports: 2.0.3
       semver: 7.7.3
-      simple-git: 3.30.0
+      simple-git: 3.32.3
       sort-json: 2.0.1
       sort-package-json: 1.57.0
       strip-ansi: 7.1.2
@@ -5171,7 +5172,7 @@ snapshots:
       picocolors: 1.1.1
       read-pkg-up: 7.0.1
       semver: 7.7.4
-      simple-git: 3.30.0
+      simple-git: 3.32.3
       sort-package-json: 1.57.0
       type-fest: 2.19.0
       typescript: 5.4.5
@@ -9772,7 +9773,7 @@ snapshots:
       once: 1.4.0
       simple-concat: 1.0.1
 
-  simple-git@3.30.0:
+  simple-git@3.32.3:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
