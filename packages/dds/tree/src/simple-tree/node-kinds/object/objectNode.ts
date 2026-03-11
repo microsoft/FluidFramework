@@ -180,11 +180,14 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
  */
 export type FieldHasDefaultAlpha<T extends ImplicitFieldSchema> =
 	// Extract Kind and TProps from FieldSchemaAlpha and compute whether it has a default
-	[T] extends [FieldSchemaAlpha<infer _Kind, infer _Types, infer _Meta, infer TProps>]
-		? // Check if props has defaultProvider
-			TProps extends { defaultProvider: DefaultProvider }
+	[T] extends [FieldSchemaAlpha<infer Kind, infer _Types, infer _Meta, infer TProps>]
+		? // Optional and Identifier kinds always have defaults
+			Kind extends FieldKind.Optional | FieldKind.Identifier
 			? true
-			: false
+			: // Check if props has defaultProvider
+				TProps extends { defaultProvider: DefaultProvider }
+				? true
+				: false
 		: // Fallback to base FieldHasDefault for non-Alpha schemas
 			FieldHasDefault<T>;
 
