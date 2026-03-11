@@ -222,6 +222,12 @@ view.runTransaction(
 
 If `importantNode` is removed by a concurrent edit that is sequenced before this transaction, the transaction will be rolled back.
 
+:::note
+
+The `nodeInDocument` constraint is also available for use in the old transaction API via `Tree.runTransaction`. This is the only constraint which can be applied via `Tree.runTransaction`.
+
+:::
+
 #### `noChange` (Alpha)
 
 Requires that the document is in the exact same state when the transaction is applied as it was when the transaction was created.
