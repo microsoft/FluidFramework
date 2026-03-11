@@ -6,7 +6,7 @@
 import { CollaborativeInput } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/alpha";
 import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
-import React, { useEffect, useRef, useState } from "react";
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
@@ -20,7 +20,7 @@ export interface TodoListProps {
 	readonly getDirectLink: (itemId: string) => string;
 }
 
-export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
+export const TodoListView: FC<TodoListProps> = (props: TodoListProps) => {
 	const { todoModel, getDirectLink } = props;
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
@@ -42,7 +42,7 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 	if (titleString === undefined) {
 		return <div>Loading...</div>;
 	}
-	const handleCreateClick = (ev: React.FormEvent<HTMLFormElement>): void => {
+	const handleCreateClick = (ev: FormEvent<HTMLFormElement>): void => {
 		ev.preventDefault();
 
 		const input = newItemTextInputRef.current;

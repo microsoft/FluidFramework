@@ -4,7 +4,7 @@
  */
 
 import type {
-	InternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 
@@ -86,13 +86,13 @@ export type ValidatableValueStructure<
 		| InternalTypes.ValueOptionalState<unknown>,
 > =
 	T extends InternalTypes.ValueDirectory<infer TValue>
-		? InternalUtilityTypes.IfSameType<
+		? InternalCoreInterfacesUtilityTypes.IfSameType<
 				T,
 				InternalTypes.ValueDirectory<T>,
 				// Use canonical type for exact match
 				ValidatableValueDirectory<TValue>,
 				// Inexact match => recurse
-				InternalUtilityTypes.FlattenIntersection<
+				InternalCoreInterfacesUtilityTypes.FlattenIntersection<
 					Omit<T, "items"> & {
 						items: {
 							[KItems in keyof T["items"]]: ValidatableValueStructure<T["items"][KItems]>;
@@ -103,7 +103,7 @@ export type ValidatableValueStructure<
 		: T extends
 					| InternalTypes.ValueRequiredState<infer TValue>
 					| InternalTypes.ValueOptionalState<infer TValue>
-			? InternalUtilityTypes.FlattenIntersection<
+			? InternalCoreInterfacesUtilityTypes.FlattenIntersection<
 					Omit<T, keyof ValidatableMetadata<TValue>> & ValidatableMetadata<TValue>
 				>
 			: never;

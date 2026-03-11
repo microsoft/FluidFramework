@@ -36,9 +36,11 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common
     - tools/benchmark
     - tools/pipelines/build-benchmark-tool.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -61,9 +63,11 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common
     - tools/benchmark
     - tools/pipelines/build-benchmark-tool.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -89,7 +93,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     testCoverage: ${{ variables.testCoverage }}
     packageManager: pnpm
-    buildDirectory: tools/benchmark
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/tools/benchmark
     tagName: benchmark
     taskBuild: build
     taskBuildDocs: true

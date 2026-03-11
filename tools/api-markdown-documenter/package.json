@@ -83,7 +83,7 @@
 		"mdast-util-from-markdown": "^2.0.2",
 		"mdast-util-gfm": "^3.1.0",
 		"mdast-util-phrasing": "^4.1.0",
-		"mdast-util-to-hast": "^13.2.0",
+		"mdast-util-to-hast": "^13.2.1",
 		"mdast-util-to-markdown": "^2.1.2",
 		"unist-util-remove-position": "^5.0.0",
 		"unist-util-visit": "^5.0.0"
@@ -112,7 +112,7 @@
 		"eslint-plugin-chai-friendly": "^1.1.0",
 		"mocha": "^11.7.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.0.1",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.9.2"
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
@@ -125,6 +125,14 @@
 		}
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys)."
+		],
+		"overrides": {
+			"js-yaml": "^4.1.1",
+			"qs": "^6.15.0"
+		},
 		"onlyBuiltDependencies": [
 			"@biomejs/biome",
 			"unrs-resolver"

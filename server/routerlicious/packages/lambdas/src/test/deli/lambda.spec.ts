@@ -712,6 +712,78 @@ describe("Routerlicious", () => {
 				it("Should remove clients after a disconnect while maintaining batches", async () => {
 					return removeClientsAfterDisconnectTest(lambdaWithBatching);
 				});
+
+				it("Should silently drop retransmitted ClientJoin and ops from Kafka producer retry", async () => {
+					// Client joins and sends 3 ops
+					const join = messageFactory.createJoin();
+					const op1 = messageFactory.create(MessageType.Operation, 1);
+					const op2 = messageFactory.create(MessageType.Operation, 2);
+					const op3 = messageFactory.create(MessageType.Operation, 3);
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(join, testId));
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op1, testId));
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op2, testId));
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op3, testId));
+					await quiesceWithClientsConnected();
+
+					// join (seq 1), op1 (seq 2), op2 (seq 3), op3 (seq 4)
+					const messageCountBefore = testKafka.getRawMessages().length;
+					assert.equal(messageCountBefore, 4);
+					assert.equal(testKafka.getLastMessage().operation.sequenceNumber, 4);
+
+					// Simulate Kafka producer retry: resend the join and first 2 ops
+					// at new Kafka offsets (as would happen with producer retransmission)
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(join, testId));
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op1, testId));
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op2, testId));
+
+					// Send a genuinely new op (CSN=4) - should be sequenced normally
+					const op4 = messageFactory.create(MessageType.Operation, 4);
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op4, testId));
+					await quiesceWithClientsConnected();
+
+					// The duplicate join and ops should be silently dropped.
+					// Only op4 should be newly sequenced (seq 5).
+					const messageCountAfter = testKafka.getRawMessages().length;
+					assert.equal(messageCountAfter, messageCountBefore + 1);
+					const lastMessage = testKafka.getLastMessage();
+					assert.equal(lastMessage.type, SequencedOperationType);
+					assert.equal(lastMessage.operation.sequenceNumber, 5);
+					assert.equal(lastMessage.operation.clientSequenceNumber, 4);
+				});
+
+				it("Should not reset client sequence number on duplicate ClientJoin", async () => {
+					// Client joins and sends several ops
+					const join = messageFactory.createJoin();
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(join, testId));
+					const op1 = messageFactory.create(MessageType.Operation, 1);
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op1, testId));
+					const op2 = messageFactory.create(MessageType.Operation, 2);
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op2, testId));
+					await quiesceWithClientsConnected();
+
+					// join (seq 1), op1 (seq 2), op2 (seq 3)
+					const msg2 = testKafka.getMessage(2);
+					assert.equal(msg2.type, SequencedOperationType);
+					assert.equal(msg2.operation.sequenceNumber, 3);
+
+					// Send a duplicate ClientJoin for the same client
+					const duplicateJoin = messageFactory.createJoin();
+					await lambda.handler(
+						kafkaMessageFactory.sequenceMessage(duplicateJoin, testId),
+					);
+
+					// Send the next op (CSN=3) - should be sequenced normally
+					const op3 = messageFactory.create(MessageType.Operation, 3);
+					await lambda.handler(kafkaMessageFactory.sequenceMessage(op3, testId));
+					await quiesceWithClientsConnected();
+
+					// The duplicate join should be silently dropped (not sequenced).
+					// op3 should be sequenced as seq 4 (not nacked as a gap).
+					const lastMessage = testKafka.getLastMessage();
+					assert.equal(lastMessage.type, SequencedOperationType);
+					assert.equal(lastMessage.operation.sequenceNumber, 4);
+					assert.equal(lastMessage.operation.clientSequenceNumber, 3);
+				});
 			});
 		});
 	});
