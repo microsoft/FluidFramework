@@ -637,7 +637,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
-		this.logger.send({
+		this.logger.sendX?.({
 			category: "generic",
 			eventName: "DocumentIdUpdated",
 			...getUrlTelemetryProps(resolvedUrl),
@@ -1025,7 +1025,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
-		this.logger.send({
+		this.logger.sendX?.({
 			category: "generic",
 			eventName: "DocumentIdUpdated",
 			...getUrlTelemetryProps(resolvedUrl),

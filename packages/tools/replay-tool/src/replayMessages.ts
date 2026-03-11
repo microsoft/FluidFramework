@@ -161,7 +161,7 @@ class Logger implements ITelemetryBaseLogger {
 	) {}
 
 	// ITelemetryBaseLogger implementation
-	public send(event: ITelemetryBaseEvent): void {
+	public sendX(event: ITelemetryBaseEvent): void {
 		if (event.category === "error" && this.errorHandler(event)) {
 			// Stack is not output properly (with newlines), if done as part of event
 			const stack: string | undefined = event.stack as string | undefined;

@@ -74,7 +74,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 	 *
 	 * @param event - the event to send
 	 */
-	public send(event: ITelemetryBaseEvent): void {
+	public sendX(event: ITelemetryBaseEvent): void {
 		const newEvent: ITelemetryBaseProperties = { ...event };
 		const isError = newEvent.category === "error";
 		let logger = isError ? this.debugErr : this.debug;

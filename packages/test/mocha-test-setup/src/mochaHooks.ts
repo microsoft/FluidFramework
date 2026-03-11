@@ -42,6 +42,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 			event.testName = this.currentTestName;
 		}
 		event.testVariant = testVariant;
+		// @ts-expect-error - remove
 		this.parentLogger.send({
 			...event,
 			// Setting hostname to pkgName is the behavior we had for a long time, so keeping it just in case.
@@ -74,7 +75,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	}
 }
 const nullLogger: ITelemetryBufferedLogger = {
-	send: (): void => {},
+	sendX: (): void => {},
 	flush: async (): Promise<void> => {},
 };
 

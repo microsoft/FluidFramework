@@ -246,6 +246,7 @@ export class CachedConfigProvider implements IConfigProvider {
 				const parsed = stronglyTypedParse(provider?.getRawConfig(name));
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
+					// @ts-expect-error - fix me?
 					this.logger?.send({
 						category: "generic",
 						eventName: "ConfigRead",

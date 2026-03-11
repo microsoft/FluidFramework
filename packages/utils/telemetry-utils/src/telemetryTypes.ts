@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	LogLevel,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 
 /**
  * The categories FF uses when instrumenting the code.
@@ -113,6 +118,9 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
  * @legacy @beta
  */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+	// !!! Remove this to reveal ITelemetryLoggerExt users calling send
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+
 	/**
 	 * Send an information telemetry event.
 	 * @param event - Event to send.

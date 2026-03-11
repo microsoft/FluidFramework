@@ -63,7 +63,7 @@ export class EventAndErrorTrackingLogger
 		);
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	sendX(event: ITelemetryBaseEvent): void {
 		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {
@@ -100,7 +100,7 @@ export class EventAndErrorTrackingLogger
 			}
 		}
 
-		this.baseLogger?.send(event);
+		this.baseLogger?.sendX?.(event);
 	}
 
 	public reportAndClearTrackedEvents(): {

@@ -57,6 +57,7 @@ export abstract class DataObject<
 			// DataObject which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
 			// SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
 			if (this.internalRoot.attributes.type === MapFactory.Type) {
+				// @ts-expect-error - fix me?
 				this.runtime.logger.send({
 					category: "generic",
 					eventName: "MapDataObject",

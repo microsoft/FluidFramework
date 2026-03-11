@@ -320,7 +320,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
-	public send(eventWithTagsMaybe: ITelemetryBaseEvent): void {
+	public sendX(eventWithTagsMaybe: ITelemetryBaseEvent): void {
 		const newEvent: ITelemetryBaseEvent = {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
@@ -357,7 +357,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 				}
 			}
 		}
-		this.logger.send(newEvent);
+		this.logger.sendX?.(newEvent);
 	}
 }
 
@@ -438,7 +438,7 @@ export class ChildLogger extends TelemetryLogger {
 			return child;
 		}
 
-		return new ChildLogger(baseLogger ?? { send(): void {} }, namespace, properties);
+		return new ChildLogger(baseLogger ?? { sendX(): void {} }, namespace, properties);
 	}
 
 	private constructor(
@@ -474,7 +474,7 @@ export class ChildLogger extends TelemetryLogger {
 		if (this.shouldFilterOutEvent(event, logLevel)) {
 			return;
 		}
-		this.baseLogger.send(this.prepareEvent(event), logLevel);
+		this.baseLogger.sendX?.(this.prepareEvent(event), logLevel);
 	}
 }
 
@@ -597,7 +597,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 	public send(event: ITelemetryBaseEvent): void {
 		const newEvent = this.prepareEvent(event);
 		for (const logger of this.loggers) {
-			logger.send(newEvent);
+			logger.sendX?.(newEvent);
 		}
 	}
 }

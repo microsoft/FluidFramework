@@ -72,7 +72,7 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.send(event);
+				logger.sendX?.(event);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {

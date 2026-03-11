@@ -77,7 +77,7 @@ export interface ITelemetryBaseLogger {
 	 * @param event - The event to log.
 	 * @param logLevel - The log level of the event. Default: {@link (LogLevel:variable).default}.
 	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	sendX?(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
 	/**
 	 * Minimum log level to be logged.

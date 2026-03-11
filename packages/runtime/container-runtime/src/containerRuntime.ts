@@ -2080,6 +2080,7 @@ export class ContainerRuntime
 		}
 
 		// logging hardware telemetry
+		// @ts-expect-error - fix me?
 		this.baseLogger.send({
 			category: "generic",
 			eventName: "DeviceSpec",
