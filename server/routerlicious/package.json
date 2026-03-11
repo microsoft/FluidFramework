@@ -152,7 +152,8 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"tar: overridden to >=7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport)."
 		],
 		"overrides": {
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
@@ -181,6 +182,7 @@
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
 			"systeminformation": "^5.31.0",
+			"tar": ">=7.5.11",
 			"socket.io-parser": "^4.2.4",
 			"zookeeper": "^7.2.0"
 		},
