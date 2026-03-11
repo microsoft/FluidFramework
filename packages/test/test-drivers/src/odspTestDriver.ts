@@ -335,7 +335,7 @@ export class OdspTestDriver implements ITestDriver {
 		const testTenantClient = await import(process.env.token__package__import__location) as TestTenantCheckoutClient;
 		if (typeof testTenantClient.releaseTestAccounts !== "function" || typeof testTenantClient.reserveApmAccounts !== "function") {
 			throw new TypeError(
-				`Expected package '${process.env.token__package__specifier}' to export a valid implementation of TestTenantCheckoutClient'.`,
+				`Expected package at location '${process.env.token__package__import__location}' to export a valid implementation of TestTenantCheckoutClient'.`,
 			);
 		}
 
