@@ -21,6 +21,7 @@ import type {
 import {
 	type ITelemetryLoggerExt,
 	LogLevelValue,
+	type LogLevelValueType,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
@@ -691,7 +692,7 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		forceSend: boolean = false,
 		reason?: string,
-		logLevel?: (typeof LogLevelValue)[keyof typeof LogLevelValue],
+		logLevel?: LogLevelValueType,
 	): void {
 		if (this.recordPerformanceEvents || forceSend) {
 			this.logger.sendPerformanceEvent({
