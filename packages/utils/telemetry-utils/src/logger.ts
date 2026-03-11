@@ -1026,20 +1026,20 @@ export const LogLevelValue = {
 	 * Chatty logs useful for local debugging.
 	 * They need not be collected in production.
 	 */
-	verbose: 100 as 100 & BrandedType<"LogLevelValueType">,
+	verbose: 10 as 10 & BrandedType<"LogLevelValueType">,
 
 	/**
 	 * Information about the session. These logs could be omitted in some sessions
 	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
 	 * from a particular session, all should be.
 	 */
-	info: 200 as 200 & BrandedType<"LogLevelValueType">,
+	info: 20 as 20 & BrandedType<"LogLevelValueType">,
 
 	/**
 	 * Essential information about the operation of Fluid. It is recommended that
 	 * these should always be collected, even in production, for diagnostic purposes.
 	 */
-	essential: 300 as 300 & BrandedType<"LogLevelValueType">,
+	essential: 30 as 30 & BrandedType<"LogLevelValueType">,
 } as const satisfies Record<string, LogLevelValueType>;
 
 /**
