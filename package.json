@@ -377,7 +377,7 @@
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
 			"axios@<0.30.0": "^0.30.0",
-			"tar": ">=7.5.11"
+			"tar": "^7.5.11"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
