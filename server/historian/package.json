@@ -72,7 +72,9 @@
 			"mongodb>@aws-sdk/credential-providers: not needed and brings in a large transitive dependency tree (including fast-xml-parser). Dropped with '-'.",
 			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies with '-'. This helps reduce lockfile churn since the deps release very frequently.",
 			"eslint is overridden to v9 for flat config support across all packages",
-			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions."
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
 		],
 		"overrides": {
 			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
@@ -83,7 +85,10 @@
 			"nanoid": "^3.3.9",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
+			"js-yaml@<4": "^3.14.2",
+			"js-yaml@>=4": "^4.1.1",
 			"qs": "^6.15.0",
+			"simple-git": "^3.32.3",
 			"socket.io-parser": "^4.2.4",
 			"sharp": "^0.33.2"
 		},
