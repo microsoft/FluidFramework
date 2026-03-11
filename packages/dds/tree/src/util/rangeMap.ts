@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 /**
@@ -29,7 +29,7 @@ export class RangeMap<K, V> {
 	 * When writing to a range of keys starting with `start`, the value of the nth key is interpreted to be
 	 * `offsetValue(firstValue, n - 1)`.
 	 * The same logic should be used when interpreting the values for keys after the first in a
-	 * `RangeQueryResult` or `RangeQueryEntry`.
+	 * `RangeQueryResult` or `RangeMapEntry`.
 	 *
 	 * If `offsetValue` is left unspecified, all keys in a block will be given the same value.
 	 */
@@ -44,8 +44,8 @@ export class RangeMap<K, V> {
 	/**
 	 * Retrieves all entries from the RangeMap.
 	 */
-	public entries(): RangeQueryEntry<K, V>[] {
-		const entries: RangeQueryEntry<K, V>[] = [];
+	public entries(): RangeMapEntry<K, V>[] {
+		const entries: RangeMapEntry<K, V>[] = [];
 		for (const [start, entry] of this.tree.entries()) {
 			entries.push({ start, length: entry.length, value: entry.value });
 		}
@@ -237,8 +237,8 @@ export class RangeMap<K, V> {
 		return merged;
 	}
 
-	private getIntersectingEntries(start: K, length: number): RangeQueryEntry<K, V>[] {
-		const entries: RangeQueryEntry<K, V>[] = [];
+	private getIntersectingEntries(start: K, length: number): RangeMapEntry<K, V>[] {
+		const entries: RangeMapEntry<K, V>[] = [];
 		const lastQueryKey = this.offsetKey(start, length - 1);
 		{
 			const entry = this.tree.getPairOrNextLower(start);
@@ -329,7 +329,7 @@ export interface RangeQueryResultFragment<V> extends RangeQueryResult<V> {
 	readonly offset: number;
 }
 
-export interface RangeQueryEntry<K, V> {
+export interface RangeMapEntry<K, V> {
 	readonly start: K;
 	readonly value: V;
 	readonly length: number;
