@@ -19,7 +19,18 @@ import {
  * The format version for the field batch.
  */
 export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
+	/**
+	 * Initial version.
+	 * @remarks
+	 * For simplicity of implementation the format for this version allows the same chunk shapes as v2, but must not use {@link EncodedIncrementalChunkShape}
+	 * as older clients will not know how to handle that shape but think they can handle this format.
+	 */
 	v1: 1,
+	/**
+	 * Adds support for incremental encoding of chunks.
+	 * @remarks
+	 * {@link EncodedIncrementalChunkShape} was added in this version.
+	 */
 	v2: 2,
 });
 export type FieldBatchFormatVersion = Values<typeof FieldBatchFormatVersion>;
