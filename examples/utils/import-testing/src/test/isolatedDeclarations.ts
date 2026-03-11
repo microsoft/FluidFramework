@@ -50,15 +50,16 @@ import type {
 // eslint-disable-next-line import-x/no-internal-modules
 import type { requireAssignableTo } from "@fluidframework/tree/internal";
 
-// -------------------------------------- //
-// Show schema factories can be exported
+// #region Show schema factories can be exported
+
 export const schema: SchemaFactory<"com.example"> = new SchemaFactory("com.example");
 export const schemaAlpha: SchemaFactoryAlpha<"com.example"> = new SchemaFactoryAlpha(
 	"com.example",
 );
 
-// -------------------------------------- //
-// A Basic Object schema:
+// #endregion
+
+// #region A Basic Object schema
 
 // Field types must be stated explicitly — isolatedDeclarations prevents inferring output types from runtime values.
 // Tree schema was designed to avoid this duplication, so it's a minor limitation, but manageable in practice.
@@ -83,8 +84,9 @@ export const basic: BasicObject = new BasicObject({ x: 0 });
 // Because of that known issue, we are doing a sanity check here to make sure ObjectNodeSchemaWorkaround's workaround is working.
 allowUnused<requireAssignableTo<typeof BasicObject_Base, ObjectNodeSchema>>();
 
-// -------------------------------------- //
-// An optional field:
+// #endregion
+
+// #region An optional field
 
 const optionalDemo_fields: {
 	x: FieldSchema<FieldKind.Optional, SchemaFactory["number"]>;
@@ -101,8 +103,10 @@ export class OptionalDemo extends OptionalDemo_Base {}
 
 export const optionalDemo: OptionalDemo = new OptionalDemo({});
 
-// -------------------------------------- //
-// Schema Type erasure demo
+// #endregion
+
+// #region Schema Type erasure demo
+
 class PrivateSchema extends schema.object("Private", {}) {}
 class SquareInternal
 	extends schema.object("Demo", { hidden: schema.number, extra: PrivateSchema })
@@ -160,3 +164,5 @@ export const SquareSubclassable: SquareSchemaSubclassable &
 	Square,
 	SquareSchemaSubclassable
 >()(SquareInternal2);
+
+// #endregion

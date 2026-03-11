@@ -26,6 +26,7 @@ import {
 	type MapNodeCustomizableSchema,
 	mapSchema,
 	type ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	objectSchema,
 	type RecordNodeCustomizableSchema,
 	recordSchema,
@@ -79,19 +80,7 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		fields: T,
 		options?: ObjectSchemaOptionsAlpha<TCustomMetadata>,
-	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
-		/**
-		 * Typing checking workaround: not for for actual use.
-		 * @remarks
-		 * This API collides with {@link TreeNodeSchemaCore.createFromInsertable} to disable a type checking optimization which produces different and undesired results.
-		 * See {@link https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693} for more details.
-		 * @privateRemarks
-		 * The specific issue here is non-empty POJO mode object schema not being assignable to `ObjectNodeSchema`,
-		 * See the above link and the tests in objectNode.spec.ts which reference it.
-		 * @system
-		 */
-		readonly createFromInsertable: unknown;
-	} {
+	): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
 			...options,

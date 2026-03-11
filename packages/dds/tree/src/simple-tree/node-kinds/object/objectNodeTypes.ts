@@ -27,6 +27,9 @@ import type {
 /**
  * {@link (ObjectNodeSchema:interface)} with a workaround to avoid a specific known TypeScript issue which causes it to not be assignable to itself in some cases.
  * @remarks
+ * If dealing which a schema whose inferred type includes this workaround (because it was produced by a schema factory API which uses it),
+ * if you need to explicitly state that type (for example when using {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}), it is best to keep this workaround.
+ * No other case should need to refer to this workaround type directly.
  * See {@link ObjectNodeSchemaWorkaround.createFromInsertable} for details.
  * @sealed
  * @alpha
