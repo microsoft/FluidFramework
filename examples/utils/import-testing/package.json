@@ -48,7 +48,7 @@
 		"@fluid-example/typescript-versions-host": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "~9.0.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
 		"copyfiles": "^2.4.1",

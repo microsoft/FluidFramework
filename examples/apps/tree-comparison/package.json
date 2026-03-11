@@ -61,7 +61,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "~9.0.0",
 		"@fluidframework/test-tools": "^2.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",

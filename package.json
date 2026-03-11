@@ -80,6 +80,7 @@
 		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
 		"generate:packagesMd": "flub check layers --info layerInfo.json --md .",
 		"preinstall": "node scripts/only-pnpm.cjs",
+		"postinstall": "cd common/build/eslint-config-fluid && pnpm install",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",
 		"lint:fix": "fluid-build --task lint:fix",
@@ -170,7 +171,7 @@
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
+		"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
 		"@fluidframework/test-tools": "^2.0.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.12.0",
@@ -352,6 +353,8 @@
 	},
 	"pnpm": {
 		"comments": [
+			"eslint-config-fluid is an independent package in a separate workspace; the override resolves it to the local copy for all client packages.",
+			"biome is overridden to make review of the upgrade easier. This can be removed once merged.",
 			"node types are forced to a consistent version to avoid conflicts between globals.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details. Note that using '-' to completely drop it, results in build failures complaining about nodegit not being there.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
@@ -365,6 +368,8 @@
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
 		],
 		"overrides": {
+			"@biomejs/biome": "~2.4.5",
+			"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
 			"@types/node": "~20.19.30",
 			"fast-xml-parser": "^4.5.4",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
