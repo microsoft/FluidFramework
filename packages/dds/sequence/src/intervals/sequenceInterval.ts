@@ -307,15 +307,15 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 	 * Whether this interval overlaps the provided numerical positions.
 	 */
 	public overlapsPos(_bstart: number, _bend: number): boolean {
-		assert(false, "overlapsPos not supported on BaseSequenceInterval");
+		assert(false, 0xcd7 /* overlapsPos not supported on BaseSequenceInterval */);
 	}
 
 	public clone(): BaseSequenceInterval {
-		assert(false, "clone not supported on BaseSequenceInterval");
+		assert(false, 0xcd8 /* clone not supported on BaseSequenceInterval */);
 	}
 
 	public union(_b: BaseSequenceInterval): BaseSequenceInterval {
-		assert(false, "union not supported on BaseSequenceInterval");
+		assert(false, 0xcd9 /* union not supported on BaseSequenceInterval */);
 	}
 
 	protected verifyNotDispose(): void {
@@ -858,7 +858,7 @@ export function createTransientIntervalFromSequence(
 			endPos !== undefined &&
 			startSide !== undefined &&
 			endSide !== undefined,
-		"start and end cannot be undefined because they were not passed in as undefined",
+		0xcda /* start and end cannot be undefined because they were not passed in as undefined */,
 	);
 
 	const startSlidingPref = startReferenceSlidingPreference(

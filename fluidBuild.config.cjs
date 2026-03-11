@@ -9,6 +9,16 @@
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
+// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+// have packages at today. Once we can upgrade to a later version of
+// globby things might be faster.
+const releaseGroupPackageJsonGlobs = [
+	"{azure,examples,experimental,packages}/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+	"tools/markdown-magic/package.json",
+];
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -181,13 +191,7 @@ module.exports = {
 			inputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: ["package.json"],
 			gitignore: ["input", "output"],
@@ -228,24 +232,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},
@@ -254,24 +246,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},

@@ -188,70 +188,58 @@ export interface TreeBranch extends IDisposable {
  */
 export interface TreeContextAlpha {
 	/**
-	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * It may return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
-	 * @returns A {@link TransactionResultExt | result object}.
-	 * It includes the following:
-	 *
-	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by `transaction`.
-	 *
+	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
+	 * @param transaction - A callback run during the transaction to perform user-supplied operations.
+	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
+	 * @param params - Optional {@link RunTransactionParams | parameters} for the transaction.
+	 * @returns A {@link TransactionResultExt | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
 	 * @remarks
-	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 *
-	 * If `runTransaction` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
-	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
+	 * {@link (TreeBeta:interface).on | Change events } will be emitted for changed nodes on this client _as each edit happens_, just as they would be if the changes were made outside of a transaction.
+	 * Any other/future clients or contexts will process the transaction "squashed", i.e. they will apply its changes all at once, emitting only a single event per node (even if that node was edited multiple times in the transaction).
+	 * Edits to the tree are not permitted within these event callbacks, therefore no other local changes from this client will be interleaved with the changes in this transaction.
+	 *
+	 * Using a transaction has the following additional consequences:
+	 *
+	 * - If {@link Revertible | reverted } (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * Only the "outermost" transaction commits a change to the synchronized tree state and therefore only the outermost transaction can be reverted.
+	 * If a transaction is started and completed while another transaction is already in progress, then the inner transaction will be reverted together with the outer transaction.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TValue, TValue>;
 
-	/**
-	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * @remarks
-	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:2) | access to more transaction capabilities} if so.
-	 *
-	 * If `runTransaction` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
-	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
-	 */
-	runTransaction(transaction: () => void): TransactionResult;
+	/** An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value. */
+	runTransaction(transaction: () => void, params?: RunTransactionParams): TransactionResult;
 
 	/**
-	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * It may return a {@link WithValue | value }, which will be returned by the `runTransactionAsync` call.
-	 * @returns A promise that resolves to a {@link TransactionResultExt | result object}.
-	 * It includes the following:
-	 *
-	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by `transaction`.
-	 *
+	 * An asynchronous version of {@link TreeContextAlpha.(runTransaction:1) | runTransaction}.
 	 * @remarks
-	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:1) | access to more transaction capabilities} if so.
+	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
+	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
 	 *
-	 * If `runTransactionAsync` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
-	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
+	 * Unlike with synchronous transactions, it is possible that other changes (e.g. from a remote client) may be applied to the branch while this transaction is in progress.
+	 * Those other changes will be not be reflected on the branch until after this transaction completes, at which point the transaction changes will be applied after those other changes.
+	 *
+	 * An asynchronous transaction may not be started while any other transaction is in progress in this context.
 	 */
 	runTransactionAsync<TValue>(
 		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TValue, TValue>>;
 
-	/**
-	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * @remarks
-	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:2) | access to more transaction capabilities} if so.
-	 *
-	 * If `runTransactionAsync` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
-	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
-	 */
-	runTransactionAsync(transaction: () => Promise<void>): Promise<TransactionResult>;
+	/** An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value. */
+	runTransactionAsync(
+		transaction: () => Promise<void>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResult>;
 
 	/**
 	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
@@ -304,76 +292,18 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	fork(): TreeBranchAlpha;
 
 	/**
-	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a {@link TransactionCallbackStatus | status object }.
-	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
-	 * abort the transaction and discard any changes it made so far.
-	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A {@link TransactionResultExt | result object}. It includes the following:
-	 *
-	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by the transaction function.
-	 *
+	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.
+	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatus | value or rollback signal}.
 	 * @remarks
-	 * This API will throw an error if the constraints are not met or something unexpected happens.
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 *
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransaction` or `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
-	 * - If a label is provided in the params, only the label for the outermost transaction will be used. All other labels will be ignored.
+	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
+
 	/**
-	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction. It may return the following:
-	 *
-	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A {@link VoidTransactionCallbackStatus | status object }.
-	 * It includes a "rollback" property which
-	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
-	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 *
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A {@link TransactionResult | result object}. It includes a "success" flag indicating whether the
-	 * transaction was successful or not.
-	 *
-	 * @remarks
-	 * This API will throw an error if the constraints are not met or something unexpected happens.
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 *
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransaction` or `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
+	 * An overload of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction } which does not return a value.
 	 */
 	runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
@@ -381,80 +311,17 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): TransactionResult;
 
 	/**
-	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a promise that resolves to a {@link TransactionCallbackStatus | status object }.
-	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
-	 * abort the transaction and discard any changes it made so far.
-	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A promise that resolves to a {@link TransactionResultExt | result object}. It includes the following:
-	 *
-	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by the transaction function.
-	 *
-	 * The promise will reject if the constraints are not met or something unexpected happens.
-	 *
-	 * @remarks
-	 * As with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - All of the changes in the transaction are treated as a unit, therefore no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Unlike with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - It is possible that other changes (either from this client by merging a branch or from a remote client) may be applied to the branch while this transaction is in progress.
-	 * These other changes will be not be reflected on the branch until after this transaction completes,
-	 * at which point the transaction changes will be applied after these other changes.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
+	 * An asynchronous version of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction}.
+	 * @remarks See {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync} for additional information about asynchronous transactions.
 	 */
+
 	runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+
 	/**
-	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction. It must return a promise that can resolve to any of the following:
-	 *
-	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A {@link VoidTransactionCallbackStatus | status object }. It includes a "rollback" property which
-	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
-	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 *
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A promise that resolves to a {@link TransactionResult | result object}. It includes a "success" flag indicating whether the
-	 * transaction was successful or not. The promise will reject if the constraints are not met or something unexpected happens.
-	 *
-	 * @remarks
-	 * As with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - All of the changes in the transaction are treated as a unit, therefore no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Unlike with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - It is possible that other changes (either from this client by merging a branch or from a remote client) may be applied to the branch while this transaction is in progress.
-	 * These other changes will be not be reflected on the branch until after this transaction completes,
-	 * at which point the transaction changes will be applied after these other changes.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
+	 * An overload of {@link TreeBranchAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
 	 */
 	runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,

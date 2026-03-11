@@ -5,7 +5,7 @@
 
 import type {
 	DeepReadonly,
-	InternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 	OpaqueJsonDeserialized,
@@ -186,9 +186,10 @@ type PickRemainder<T> =
  * property. (This can be fixed, but might be best addressed by changing
  * T to be a tuple of types to be combined.)
  */
-export type FlattenUnionWithOptionals<T> = InternalUtilityTypes.FlattenIntersection<
-	Pick<T, keyof T> & UnionToIntersection<Partial<PickRemainder<T>>>
->;
+export type FlattenUnionWithOptionals<T> =
+	InternalCoreInterfacesUtilityTypes.FlattenIntersection<
+		Pick<T, keyof T> & UnionToIntersection<Partial<PickRemainder<T>>>
+	>;
 
 /**
  * Type guard to check if a state is a required state (has a value).

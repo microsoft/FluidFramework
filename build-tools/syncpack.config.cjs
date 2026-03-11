@@ -80,6 +80,8 @@ module.exports = {
 			label: "Ignore unsupported pnpm override entries",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: [
+				"js-yaml@<4",
+				"js-yaml@>=4",
 				"json5@<1.0.2",
 				"json5@>=2.0.0 <2.2.2",
 				"oclif>@aws-sdk/client*",
@@ -167,15 +169,6 @@ module.exports = {
 			isIgnored: true,
 			packages: ["**"],
 			dependencies: ["@fluidframework/eslint-config-fluid"],
-		},
-
-		{
-			// TODO: This can be removed once biome is fully upgraded to 2.x
-			label: "Ignore @biomejs/biome in pnpm overrides",
-			isIgnored: true,
-			packages: ["build-tools-release-group-root"],
-			dependencies: ["@biomejs/biome"],
-			dependencyTypes: ["pnpmOverrides"],
 		},
 
 		{
