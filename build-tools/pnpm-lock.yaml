@@ -20,7 +20,7 @@ overrides:
   qs: ^6.15.0
   simple-git: ^3.32.3
   sharp: ^0.34.5
-  tar: '>=7.5.11'
+  tar: ^7.5.11
 
 importers:
 

@@ -91,7 +91,7 @@
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
 			"socket.io-parser": "^4.2.4",
-			"tar": ">=7.5.11",
+			"tar": "^7.5.11",
 			"sharp": "^0.33.2"
 		},
 		"onlyBuiltDependencies": [

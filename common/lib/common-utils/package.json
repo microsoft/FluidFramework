@@ -172,7 +172,7 @@
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
 			"sharp": "^0.33.2",
-			"tar": ">=7.5.11"
+			"tar": "^7.5.11"
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.52.11": "../../../patches/@microsoft__api-extractor@7.52.11.patch"
