@@ -332,7 +332,7 @@ export class SchematizingSimpleTreeView<
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.ensureUndisposed();
 		const { checkout } = this;
-		if (isAsync && checkout.transaction.isInProgress()) {
+		if (isAsync && checkout.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
 			);

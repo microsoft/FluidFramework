@@ -39,7 +39,7 @@ import {
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
@@ -99,7 +99,7 @@ function createForestSummarizer(args: {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab,
 	};
-	const fieldBatchCodec = makeFieldBatchCodec(options);
+	const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 	const checkout = checkoutWithContent(initialContent, {
 		forestType,
 		shouldEncodeIncrementally,
