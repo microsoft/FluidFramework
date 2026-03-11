@@ -186,7 +186,9 @@ export abstract class LeafTask extends Task {
 			outcome,
 			isIncremental: this.isIncremental,
 			supportsRecheck: this.recheckLeafIsUpToDate,
-			execTimeSeconds: (startTime !== undefined ? (Date.now() - startTime) / 1000 : 0) as Seconds,
+			execTimeSeconds: (startTime !== undefined
+				? (Date.now() - startTime) / 1000
+				: 0) as Seconds,
 			queueWaitSeconds: this.lastQueueWaitTime as Seconds,
 			worker: worker ?? false,
 		});
