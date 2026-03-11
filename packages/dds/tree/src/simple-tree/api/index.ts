@@ -38,7 +38,11 @@ export {
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+} from "./schemaFactoryAlpha.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
@@ -105,6 +109,8 @@ export type {
 	AllowedTypesFullFromMixedUnsafe,
 	UnannotateAllowedTypesListUnsafe,
 	AnnotateAllowedTypesListUnsafe,
+	FieldHasDefaultAlphaUnsafe,
+	InsertableObjectFromSchemaRecordAlphaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
