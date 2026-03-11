@@ -48,4 +48,8 @@ steps:
       mkdir -p ${{ parameters.pathForTelemetryGeneratorInstall }}
       cd ${{ parameters.pathForTelemetryGeneratorInstall }}
 
+      # Seed a package.json with overrides to force patched transitive dependencies.
+      # This ensures CG won't flag known vulnerabilities in the installed tree.
+      echo '{"overrides":{"jws":"^3.2.3"}}' > package.json
+
       npm install @ff-internal/telemetry-generator@${{ parameters.versionToInstall }}
