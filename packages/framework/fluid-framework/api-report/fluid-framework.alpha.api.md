@@ -359,7 +359,7 @@ FieldSchema<FieldKind.Optional | FieldKind.Identifier>
 // @alpha @system
 export type FieldHasDefaultAlpha<T extends ImplicitFieldSchema> = [
 T
-] extends [FieldSchemaAlpha<infer _Kind, infer _Types, infer _Meta, infer TProps>] ? TProps extends {
+] extends [FieldSchemaAlpha<infer Kind, infer _Types, infer _Meta, infer TProps>] ? Kind extends FieldKind.Optional | FieldKind.Identifier ? true : TProps extends {
     defaultProvider: DefaultProvider;
 } ? true : false : FieldHasDefault<T>;
 
