@@ -3790,7 +3790,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns true if the container is dirty: not attached, or no pending user messages (could be some "non-dirtyable" ones though)
+	 * Returns true if the container is dirty: not attached, or has pending user messages (ignores "non-dirtyable" ones though)
 	 */
 	private computeCurrentDirtyState(): boolean {
 		return (
