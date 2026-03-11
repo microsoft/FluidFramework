@@ -296,7 +296,7 @@ export class ClientVersionDispatchingCodecBuilder<
 	TDecoded = unknown,
 	TContext = unknown,
 	TFormatVersion extends FormatVersion = FormatVersion,
-	Name extends CodecName = string,
+	TName extends CodecName = string,
 > {
 	public readonly registry: readonly NormalizedCodecVersion<
 		TDecoded,
@@ -317,7 +317,7 @@ export class ClientVersionDispatchingCodecBuilder<
 		/**
 		 * See {@link CodecName}.
 		 */
-		public readonly name: Name,
+		public readonly name: TName,
 		/**
 		 * The registry of codecs which this builder can use to encode and decode data.
 		 */
