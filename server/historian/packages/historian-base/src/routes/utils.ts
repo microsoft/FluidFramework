@@ -19,8 +19,12 @@ import {
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { validateTokenClaims } from "@fluidframework/server-services-utils";
+import {
+	type IThrottleMiddlewareOptions,
+	validateTokenClaims,
+} from "@fluidframework/server-services-utils";
 import type { RequestHandler } from "express";
+import { Router } from "express";
 import { decode } from "jsonwebtoken";
 import type * as nconf from "nconf";
 
@@ -30,8 +34,9 @@ import {
 	RestGitService,
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
+	type ICreateGitServiceArgs,
 } from "../services";
-import { containsPathTraversal, parseToken } from "../utils";
+import { Constants, containsPathTraversal, parseToken } from "../utils";
 
 const MAX_TOKEN_LENGTH = 1000; // Maximum allowed token length in characters
 
@@ -50,22 +55,6 @@ export type CommonRouteParams = [
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ];
-
-export interface ICreateGitServiceArgs {
-	config: nconf.Provider;
-	tenantId: string;
-	authorization: string | undefined;
-	tenantService: ITenantService;
-	storageNameRetriever?: IStorageNameRetriever;
-	documentManager: IDocumentManager;
-	cache?: ICache;
-	initialUpload?: boolean;
-	storageName?: string;
-	allowDisabledTenant?: boolean;
-	isEphemeralContainer?: boolean;
-	ephemeralDocumentTTLSec?: number; // 24 hours
-	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
-}
 
 function getEphemeralContainerCacheKey(documentId: string): string {
 	return `isEphemeralContainer:${documentId}`;
@@ -266,6 +255,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
+		postEphemeralContainerChecker,
 	} = { ...createArgs };
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
@@ -303,6 +293,16 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
+	let postIsEphemeral: boolean = isEphemeral;
+	if (postEphemeralContainerChecker !== undefined) {
+		postIsEphemeral = await postEphemeralContainerChecker.postEphemeralContainerCheck(
+			tenantId,
+			documentId,
+			isEphemeral,
+			createArgs,
+		);
+	}
+
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
@@ -315,7 +315,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		cache,
 		calculatedStorageName,
 		storageUrl,
-		isEphemeral,
+		postIsEphemeral,
 		maxCacheableSummarySize,
 		simplifiedCustomData,
 	);
@@ -343,6 +343,38 @@ export function queryParamToString(value: any): string | undefined {
 		return undefined;
 	}
 	return value;
+}
+
+/**
+ * Common context created once per route module's `create()` call,
+ * encapsulating the router instance and shared throttle/token configuration.
+ */
+export interface IHistorianRouteContext {
+	router: Router;
+	maxTokenLifetimeSec: number;
+	tenantThrottleOptions: Partial<IThrottleMiddlewareOptions>;
+	restTenantGeneralThrottler: IThrottler | undefined;
+}
+
+/**
+ * Creates common route context values shared by all Historian REST route modules.
+ * @param config - The application configuration provider.
+ * @param restTenantThrottlers - Map of per-tenant throttlers, keyed by throttle ID prefix.
+ */
+export function createRouteContext(
+	config: nconf.Provider,
+	restTenantThrottlers: Map<string, IThrottler>,
+): IHistorianRouteContext {
+	const router: Router = Router();
+	const maxTokenLifetimeSec = (config.get("maxTokenLifetimeSec") as number | null) ?? 0;
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => req.params.tenantId,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
+	return { router, maxTokenLifetimeSec, tenantThrottleOptions, restTenantGeneralThrottler };
 }
 
 export function verifyToken(

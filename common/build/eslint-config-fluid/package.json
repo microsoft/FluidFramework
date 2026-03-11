@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.90.0",
+	"version": "2.91.0",
 	"private": true,
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -54,7 +54,7 @@
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"sort-json": "^2.0.1",
 		"tsx": "^4.21.0",
 		"typescript": "~5.4.5"
@@ -78,9 +78,11 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"serialize-javascript - CVE-2024-11831 impacts version 6.0.0 which is pinned by mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)"
+			"serialize-javascript - CVE-2024-11831 impacts version 6.0.0 which is pinned by mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys)."
 		],
 		"overrides": {
+			"js-yaml": "^4.1.1",
 			"mocha>serialize-javascript@6.0.0": "^6.0.2"
 		},
 		"onlyBuiltDependencies": [

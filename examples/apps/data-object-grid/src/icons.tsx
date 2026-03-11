@@ -10,7 +10,6 @@ import {
 	DrawTextRegular,
 	NumberSymbolRegular,
 } from "@fluentui/react-icons";
-import React from "react";
 
 // Map icons names to their instantiated React element
 export const iconMap = {

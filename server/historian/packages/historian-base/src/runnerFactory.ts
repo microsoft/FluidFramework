@@ -41,6 +41,7 @@ export class HistorianResources implements core.IResources {
 		public readonly ephemeralDocumentTTLSec?: number,
 		public readonly readinessCheck?: core.IReadinessCheck,
 		public readonly simplifiedCustomDataRetriever?: historianServices.ISimplifiedCustomDataRetriever,
+		public readonly postEphemeralContainerChecker?: historianServices.IPostEphemeralContainerChecker,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -271,6 +272,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			setGlobalFetchFn(wrappedFetch);
 		}
 
+		const postEphemeralContainerChecker = customizations?.postEphemeralContainerChecker;
+
 		return new HistorianResources(
 			config,
 			port,
@@ -287,6 +290,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			ephemeralDocumentTTLSec,
 			customizations?.readinessCheck,
 			simplifiedCustomDataRetriever,
+			postEphemeralContainerChecker,
 		);
 	}
 }
@@ -309,6 +313,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.ephemeralDocumentTTLSec,
 			resources.readinessCheck,
 			resources.simplifiedCustomDataRetriever,
+			resources.postEphemeralContainerChecker,
 		);
 	}
 }

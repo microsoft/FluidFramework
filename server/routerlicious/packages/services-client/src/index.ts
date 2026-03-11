@@ -71,16 +71,19 @@ export {
 	generateServiceProtocolEntries,
 } from "./scribeHelper";
 export type {
+	GitManagerConfigDecorator,
 	ICreateRefParamsExternal,
 	IExternalWriterConfig,
 	IGetRefParamsExternal,
 	IGitCache,
 	IGitManager,
+	IGitManagerConfig,
 	IGitService,
 	IHistorian,
 	IPatchRefParamsExternal,
 	ISummaryUploadManager,
 } from "./storage";
+export { GitManagerConfigDecorators } from "./storage";
 export type {
 	ExtendedSummaryObject,
 	IEmbeddedSummaryHandle,
