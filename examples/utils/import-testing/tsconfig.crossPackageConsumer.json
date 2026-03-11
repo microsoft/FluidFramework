@@ -1,0 +1,11 @@
+{
+	"extends": "./tsconfig.json",
+	"include": ["src/test/crossPackageImporter.ts", "src/test/crossPackageBundlerImporter.ts"],
+	"exclude": [],
+	"compilerOptions": {
+		"outDir": "./lib/test/crossPackageConsumer",
+		"composite": false,
+		"skipLibCheck": true,
+		"noUnusedLocals": false,
+	},
+}

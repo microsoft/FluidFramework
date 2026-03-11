@@ -12,11 +12,23 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"type": "module",
+	"exports": {
+		"./crossPackageSchema": {
+			"import": "./lib/crossPackageSchemaExports.js",
+			"require": "./dist/crossPackageSchemaExports.js"
+		},
+		"./crossPackageSchemaBundler": {
+			"import": "./lib/bundler/crossPackageSchemaExports.js"
+		}
+	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esnext": "npm run build:esnext:main && npm run build:esnext:crossPackage && npm run build:esnext:bundler",
+		"build:esnext:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
+		"build:esnext:crossPackage": "tsc --project ./tsconfig.crossPackage.json",
+		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -64,6 +76,22 @@
 		"typescript-5.7": "npm:typescript@~5.7.3",
 		"typescript-5.8": "npm:typescript@~5.8.3",
 		"typescript-5.9": "npm:typescript@~5.9.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:esnext:main": [
+				"^build:esnext"
+			],
+			"build:esnext:crossPackage": [
+				"build:esnext:main"
+			],
+			"build:esnext:bundler": [
+				"build:esnext:main"
+			],
+			"build:test:esm": [
+				"build:esnext"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true

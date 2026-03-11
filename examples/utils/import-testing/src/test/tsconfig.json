@@ -23,5 +23,8 @@
 		{
 			"path": "../..",
 		},
+		{
+			"path": "../../tsconfig.crossPackage.json",
+		},
 	],
 }

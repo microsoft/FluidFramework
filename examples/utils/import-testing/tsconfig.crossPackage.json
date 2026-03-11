@@ -1,0 +1,9 @@
+{
+	"extends": "./tsconfig.json",
+	"include": [
+		"src/crossPackageSchemaExports.ts",
+		"src/crossPackageSchemaDefinitions.ts",
+		"src/crossPackageSchemaUtils.ts",
+	],
+	"exclude": [],
+}
