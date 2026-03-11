@@ -920,7 +920,7 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 			);
 			viewUpgrade.upgradeSchema();
-			tree.kernel.checkout.transaction.start(false);
+			tree.kernel.checkout.transaction.start();
 			viewUpgrade.root.insertAtStart("A");
 			viewUpgrade.root.insertAt(1, "C");
 			assert.deepEqual([...viewUpgrade.root], ["A", "C"]);

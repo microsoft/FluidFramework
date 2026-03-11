@@ -155,7 +155,7 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 			this.blobMap.set(blob, blobContent);
 		}
 	}
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			if (envelope.type === MessageType.Operation) {
@@ -374,7 +374,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 		return node;
 	}
 
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			if (envelope.type === MessageType.Operation) {

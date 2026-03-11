@@ -6,7 +6,7 @@
 import { Button, Checkbox, Input, TableCell, TableRow } from "@fluentui/react-components";
 import { Delete24Regular } from "@fluentui/react-icons";
 import { useTree } from "@fluidframework/react/alpha";
-import React, { type DragEvent } from "react";
+import type { DragEvent, FC } from "react";
 
 import type { Table } from "../schema.js";
 
@@ -37,7 +37,7 @@ export interface TableRowViewProps {
 	onRowDrop: (index: number) => void;
 }
 
-export const TableRowView: React.FC<TableRowViewProps> = ({
+export const TableRowView: FC<TableRowViewProps> = ({
 	table,
 	rowIndex,
 	onRowDragStart,
@@ -106,7 +106,7 @@ interface TableCellViewProps {
 	onUpdateCell: (newValue: string) => void;
 }
 
-const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpdateCell }) => {
+const TableCellView: FC<TableCellViewProps> = ({ cell, hint, onUpdateCell }) => {
 	// TODO: highlight cells in red when data is invalid
 	switch (hint) {
 		case "checkbox": {

@@ -9,7 +9,19 @@ export {
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "./containerUtils.js";
+export type { IEventAndErrorTrackingLogger } from "./eventAndErrorLogger.js";
+export {
+	EventAndErrorTrackingLogger,
+	getUnexpectedLogErrorException,
+} from "./eventAndErrorLogger.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
+// #region Exports with load side-effect
+// The below runtime (not "type") exports transitively or directly import
+// timeoutUtils.ts, which always executes on import and may patch Mocha's timeout
+// handling. That patching only takes effect when consumers use
+// @fluid-internal/mocha-test-setup that sets globalThis.getMochaModule.
+// @fluid-internal/mocha-test-setup is pervasive in our tests and thus patch
+// is usually in effect (when this package is used).
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
 	createDataStoreFactory,
@@ -26,11 +38,11 @@ export {
 } from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
 export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
+export type { SummaryInfo } from "./TestSummaryUtils.js";
 export {
 	createSummarizer,
 	createSummarizerCore,
 	createSummarizerFromFactory,
-	SummaryInfo,
 	summarizeNow,
 } from "./TestSummaryUtils.js";
 export {
@@ -38,27 +50,20 @@ export {
 	TestContainerRuntimeFactory,
 } from "./testContainerRuntimeFactory.js";
 export {
-	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
-export {
 	ChannelFactoryRegistry,
 	TestDataObjectKind,
 	TestFluidObject,
 	TestFluidObjectFactory,
 } from "./testFluidObject.js";
-export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";
-export {
-	createDocumentId,
-	DataObjectFactoryType,
-	EventAndErrorTrackingLogger,
-	getUnexpectedLogErrorException,
+export type {
 	IDocumentIdStrategy,
-	type IEventAndErrorTrackingLogger,
 	IOpProcessingController,
 	ITestContainerConfig,
 	ITestObjectProvider,
+} from "./testObjectProvider.js";
+export {
+	createDocumentId,
+	DataObjectFactoryType,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider.js";
@@ -69,3 +74,12 @@ export {
 	timeoutAwait,
 	timeoutPromise,
 } from "./timeoutUtils.js";
+
+// #endregion
+
+export {
+	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";

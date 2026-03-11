@@ -14,7 +14,7 @@ import {
 	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
@@ -33,13 +33,13 @@ export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectId,
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
-export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
+export function FluidHandleView(props: FluidHandleViewProps): ReactElement {
 	const { containerKey, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
 
-	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
+	const [visualTree, setVisualTree] = useState<FluidObjectNode | undefined>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound message related to Data View.
 		 */

@@ -10,7 +10,7 @@ export {
 export {
 	ForestFormatVersion,
 	ForestSummarizer,
-	getCodecTreeForForestFormat,
+	forestCodecBuilder,
 } from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
@@ -70,9 +70,8 @@ export {
 	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
-	getCodecTreeForFieldBatchFormat,
+	fieldBatchCodecBuilder,
 	type IncrementalEncodingPolicy,
-	makeFieldBatchCodec,
 	makeTreeChunker,
 	type TreeChunk,
 } from "./chunked-forest/index.js";

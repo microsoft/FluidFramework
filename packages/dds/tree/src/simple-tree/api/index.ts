@@ -33,6 +33,11 @@ export {
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 } from "./dirtyIndex.js";
+export type {
+	ErasedNode,
+	ErasedSchema,
+	ErasedSchemaSubclassable,
+} from "./eraseSchemaDetails.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
@@ -82,7 +87,11 @@ export {
 	type ScopedSchemaName,
 	scoped,
 } from "./schemaFactory.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	type NodeProvider,
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+} from "./schemaFactoryAlpha.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
 export type {
 	FixRecursiveArraySchema,
@@ -164,7 +173,9 @@ export type {
 	AnnotatedAllowedTypesUnsafe,
 	AnnotatedAllowedTypeUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
+	FieldHasDefaultAlphaUnsafe,
 	FieldSchemaAlphaUnsafe,
+	InsertableObjectFromSchemaRecordAlphaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,

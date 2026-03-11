@@ -47,6 +47,7 @@ export {
 	findCommonAncestor,
 	type GraphCommit,
 	isAncestor,
+	type LabelTree,
 	type LocalChangeMetadata,
 	makeAnonChange,
 	makeChangeAtomId,
@@ -72,6 +73,7 @@ export {
 	StableIdSchema,
 	subtractChangeAtomIds,
 	type TaggedChange,
+	type TransactionLabels,
 	tagChange,
 	taggedAtomId,
 	taggedOptAtomId,
@@ -117,11 +119,6 @@ export {
 	type TreeTypeSet,
 	ValueSchema,
 } from "./schema-stored/index.js";
-export {
-	AdaptedViewSchema,
-	type Adapters,
-	type TreeAdapter,
-} from "./schema-view/index.js";
 export {
 	type Anchor,
 	type AnchorEvents,

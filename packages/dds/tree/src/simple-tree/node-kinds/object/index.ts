@@ -5,7 +5,9 @@
 
 export {
 	type FieldHasDefault,
+	type FieldHasDefaultAlpha,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromSchemaRecordAlpha,
 	type ObjectFromSchemaRecord,
 	objectSchema,
 	type SimpleKeyMap,
@@ -16,4 +18,5 @@ export {
 	isObjectNodeSchema,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
+	type ObjectNodeSchemaWorkaround,
 } from "./objectNodeTypes.js";

@@ -12,4 +12,8 @@ const config = getFluidTestMochaConfig(__dirname);
 // AB#7856
 config.exit = true;
 
+// Set up JSDOM before Quill is imported (Quill requires document at import time)
+config["node-option"] ??= [];
+config["node-option"].push("import=./lib/test/mochaHooks.js");
+
 module.exports = config;

@@ -14,7 +14,7 @@ import {
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import CodeMirror from "codemirror";
-import React, { useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 
 /* eslint-disable import-x/no-unassigned-import, import-x/no-internal-modules */
 import "codemirror/lib/codemirror.css";
@@ -59,7 +59,7 @@ class CodeMirrorView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this.textArea) {
 			this.textArea = document.createElement("textarea");
 		}
@@ -191,7 +191,7 @@ export interface ICodeMirrorReactViewProps {
  *
  * @internal
  */
-export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
+export const CodeMirrorReactView: FC<ICodeMirrorReactViewProps> = (
 	props: ICodeMirrorReactViewProps,
 ) => {
 	const { text, presenceManager } = props;

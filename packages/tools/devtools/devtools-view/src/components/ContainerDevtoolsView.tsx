@@ -22,7 +22,7 @@ import {
 	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
 import { useMessageRelay } from "../MessageRelayContext.js";
@@ -83,17 +83,17 @@ const useStyles = makeStyles({
  * Container-level stats to display, including Container states and history, Audience state and history, and Container
  * data.
  */
-export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.ReactElement {
+export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): ReactElement {
 	const { containerKey } = props;
 
 	// Set of features supported by the corresponding Container-level devtools instance.
-	const [supportedFeatures, setSupportedFeatures] = React.useState<
+	const [supportedFeatures, setSupportedFeatures] = useState<
 		ContainerDevtoolsFeatureFlags | undefined
 	>();
 
 	const messageRelay = useMessageRelay();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
 		 */
@@ -151,20 +151,20 @@ interface _ContainerDevtoolsViewProps extends HasContainerKey {
 /**
  * Internal {@link ContainerDevtoolsView}, displayed after supported feature set has been acquired from the webpage.
  */
-function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.ReactElement {
+function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): ReactElement {
 	const { containerKey, supportedFeatures } = props;
 
 	const styles = useStyles();
 	const usageLogger = useLogger();
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
-	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
+	const [innerViewSelection, setInnerViewSelection] = useState<TabValue>(
 		supportedFeatures.containerDataVisualization === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
 	);
 
-	let innerView: React.ReactElement;
+	let innerView: ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData: {
 			innerView = (

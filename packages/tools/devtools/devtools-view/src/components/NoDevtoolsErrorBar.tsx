@@ -9,7 +9,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { initializeIcons, MessageBar, MessageBarType } from "@fluentui/react";
 import { Button, Link, makeStyles, Tooltip } from "@fluentui/react-components";
-import React from "react";
+import type { ReactElement } from "react";
 
 // NoDevtoolsErrorBar uses legacy @fluentui/react, which requires explicit icon initialization.
 initializeIcons();
@@ -63,7 +63,7 @@ export interface NoDevtoolsErrorBarProps {
 /**
  * TODO
  */
-export function NoDevtoolsErrorBar(props: NoDevtoolsErrorBarProps): React.ReactElement {
+export function NoDevtoolsErrorBar(props: NoDevtoolsErrorBarProps): ReactElement {
 	const { dismiss, retrySearch } = props;
 
 	const styles = useStyles();

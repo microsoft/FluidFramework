@@ -21,6 +21,8 @@ import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKi
 import {
 	DefaultEditBuilder,
 	DefaultRevisionReplacer,
+	type FieldBatchCodec,
+	FieldBatchFormatVersion,
 	fieldKinds,
 	intoDelta,
 	ModularChangeFamily,
@@ -51,9 +53,10 @@ const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
 	minVersionForCollab: currentVersion,
 };
-const fieldBatchCodec = {
+const fieldBatchCodec: FieldBatchCodec = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
+	writeVersion: FieldBatchFormatVersion.v2,
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);

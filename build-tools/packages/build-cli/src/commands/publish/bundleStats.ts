@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import { Flags } from "@oclif/core";
 
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

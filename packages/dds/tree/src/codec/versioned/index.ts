@@ -11,4 +11,4 @@ export {
 	makeVersionDispatchingCodec,
 	makeVersionedValidatedCodec,
 } from "./codec.js";
-export { Versioned } from "./format.js";
+export { Versioned, versionField } from "./format.js";

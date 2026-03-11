@@ -4,7 +4,7 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement, type ReactElement } from "react";
 
 export { FlowDocument } from "./document/index.js";
 export { Editor } from "./editor/index.js";
@@ -13,8 +13,8 @@ import { WebFlow, WebflowView } from "./host/index.js";
 
 export { htmlFormatter } from "./html/formatters.js";
 
-const webFlowViewCallback = (webFlow: WebFlow): React.ReactElement =>
-	React.createElement(WebflowView, { docP: webFlow.getFlowDocument() });
+const webFlowViewCallback = (webFlow: WebFlow): ReactElement =>
+	createElement(WebflowView, { docP: webFlow.getFlowDocument() });
 
 /**
  * @internal

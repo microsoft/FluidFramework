@@ -8,7 +8,6 @@ import "@testing-library/jest-dom";
 
 import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import React from "react";
 
 import { OpLatencyView } from "../components/index.js";
 import { MessageRelayContext } from "../MessageRelayContext.js";

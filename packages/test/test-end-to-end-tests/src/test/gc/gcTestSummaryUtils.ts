@@ -9,7 +9,6 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	concatGarbageCollectionStates,
 	IGarbageCollectionState,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	IFluidHandleContext,

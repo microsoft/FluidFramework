@@ -35,6 +35,7 @@ export {
 	type EncodedRevisionTag,
 	type EncodedStableId,
 	type GraphCommit,
+	type LabelTree,
 	type LocalChangeMetadata,
 	makeChangeAtomId,
 	mintCommit,
@@ -46,6 +47,7 @@ export {
 	SessionIdSchema,
 	StableIdSchema,
 	subtractChangeAtomIds,
+	type TransactionLabels,
 	taggedAtomId,
 	taggedOptAtomId,
 } from "./types.js";

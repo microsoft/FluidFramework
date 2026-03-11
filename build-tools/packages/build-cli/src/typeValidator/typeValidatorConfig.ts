@@ -5,8 +5,6 @@
 
 import type { PackageJson } from "@fluidframework/build-tools";
 
-import { ApiLevel } from "../library/index.js";
-
 /**
  * Metadata about known-broken types.
  */
@@ -29,11 +27,11 @@ export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
  */
 export interface ITypeValidationConfig {
 	/**
-	 * The entrypoint (API level) for which type tests should be generated.
+	 * The entrypoint (often API level) for which type tests should be generated.
 	 *
 	 * @defaultValue {@link defaultTypeValidationConfig.entryPoint}
 	 */
-	entrypoint?: ApiLevel;
+	entrypoint?: string;
 
 	/**
 	 * An optional record of types that are known to be broken.
@@ -54,7 +52,7 @@ export interface ITypeValidationConfig {
  * {@link ITypeValidationConfig} defaults.
  */
 export const defaultTypeValidationConfig = {
-	entrypoint: ApiLevel.legacyAlpha,
+	entrypoint: "legacy/alpha",
 	broken: {},
 	disabled: false,
 } as const satisfies Required<ITypeValidationConfig>;

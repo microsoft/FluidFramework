@@ -103,7 +103,6 @@ export function testForest(config: ForestTestConfiguration): void {
 
 	// Use Json Cursor to insert and extract some Json data
 	describe("insert and extract json", () => {
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		const testCases: [string, {} | number][] = [
 			["primitive", 5],
 			["array", [1, 2, 3]],

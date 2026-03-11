@@ -4,7 +4,6 @@
  */
 
 import { Link } from "@fluentui/react-components";
-import React from "react";
 
 /**
  * Description of "Client ID" for use in tooltips.

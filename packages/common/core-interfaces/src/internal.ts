@@ -97,7 +97,7 @@ export type OpaqueJsonSerializable<
  * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace InternalUtilityTypes {
+export namespace InternalCoreInterfacesUtilityTypes {
 	/* eslint-disable jsdoc/require-jsdoc */
 	export type FlattenIntersection<T extends ExposedInternalUtilityTypes.AnyRecord> =
 		ExposedInternalUtilityTypes.FlattenIntersection<T>;

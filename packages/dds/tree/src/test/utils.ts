@@ -1524,12 +1524,31 @@ export function moveWithin(
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	if (isInPerformanceTestingMode) {
+	emulateProductionBuildHooks(isInPerformanceTestingMode);
+}
+
+function emulateProductionBuildHooks(enable = true): void {
+	if (enable) {
 		before(() => {
 			emulateProductionBuild();
 		});
 		after(() => {
 			emulateProductionBuild(false);
+		});
+	}
+}
+
+/**
+ * Creates two describe blocks, one with production build emulation enabled and one without,
+ * and places the test suite in both contexts.
+ *
+ * Use this for testing code which has debugAsserts to confirm they don't break the desired behavior.
+ */
+export function suitesWithAndWithoutProduction(fn: (emulateProduction: boolean) => void) {
+	for (const emulateProduction of [true, false]) {
+		describe(`emulateProductionBuild: ${emulateProduction}`, () => {
+			emulateProductionBuildHooks(emulateProduction);
+			fn(emulateProduction);
 		});
 	}
 }

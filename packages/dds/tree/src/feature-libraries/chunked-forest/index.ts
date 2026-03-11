@@ -18,15 +18,14 @@ export {
 export {
 	type ChunkReferenceId,
 	defaultIncrementalEncodingPolicy,
-	EncodedFieldBatch,
+	type EncodedFieldBatch,
 	type FieldBatch,
 	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
-	getCodecTreeForFieldBatchFormat,
+	fieldBatchCodecBuilder,
 	type IncrementalEncoderDecoder,
 	type IncrementalEncodingPolicy,
-	makeFieldBatchCodec,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";
 export { ChunkShape, uniformChunk } from "./uniformChunk.js";

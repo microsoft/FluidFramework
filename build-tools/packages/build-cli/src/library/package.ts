@@ -24,13 +24,11 @@ import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
 import { readJsonSync } from "fs-extra/esm";
-import JSON5 from "json5";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
 import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
-import type { TsConfigJson } from "type-fest";
 
 import {
 	AllPackagesSelectionCriteria,
@@ -43,6 +41,11 @@ import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../relea
 import type { DependencyUpdateType } from "./bump.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";
+import {
+	type PnpmCatalogMap,
+	readPnpmCatalogs,
+	resolveCatalogVersion,
+} from "./pnpmCatalog.js";
 import { indentString } from "./text.js";
 
 /**
@@ -289,17 +292,32 @@ export async function getPreReleaseDependencies(
 		);
 	}
 
+	// Cache catalogs per workspace root to avoid re-reading the file for each package.
+	const catalogCache = new Map<string, PnpmCatalogMap>();
+
 	for (const pkg of packagesToCheck) {
+		const workspaceRoot = pkg.monoRepo?.repoPath ?? context.root;
+		let catalogs = catalogCache.get(workspaceRoot);
+		if (catalogs === undefined) {
+			catalogs = readPnpmCatalogs(workspaceRoot);
+			catalogCache.set(workspaceRoot, catalogs);
+		}
+
 		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
 			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
 			}
 
+			// Resolve catalog: references before passing to semver
+			const resolvedVersion = resolveCatalogVersion(depName, depVersion, catalogs);
+
 			// Convert the range into the minimum version
-			const minVer = semver.minVersion(depVersion);
+			const minVer = semver.minVersion(resolvedVersion);
 			if (minVer === null) {
-				throw new Error(`semver.minVersion was null: ${depVersion} (${depName})`);
+				throw new Error(
+					`semver.minVersion was null: ${resolvedVersion}${resolvedVersion !== depVersion ? ` (resolved from ${depVersion})` : ""} for ${depName}`,
+				);
 			}
 
 			// If the min version has a pre-release section, then it needs to be released.
@@ -310,9 +328,9 @@ export async function getPreReleaseDependencies(
 				}
 
 				if (depPkg.monoRepo === undefined) {
-					prereleasePackages.set(depPkg.name, depVersion);
+					prereleasePackages.set(depPkg.name, resolvedVersion);
 				} else {
-					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, depVersion);
+					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, resolvedVersion);
 				}
 			}
 		}
@@ -458,20 +476,35 @@ export function getFluidDependencies(
 		packagesToCheck = [independentPackage];
 	}
 
+	// Cache catalogs per workspace root to avoid re-reading the file for each package.
+	const catalogCache = new Map<string, PnpmCatalogMap>();
+
 	for (const p of packagesToCheck) {
+		const workspaceRoot = p.monoRepo?.repoPath ?? context.root;
+		let catalogs = catalogCache.get(workspaceRoot);
+		if (catalogs === undefined) {
+			catalogs = readPnpmCatalogs(workspaceRoot);
+			catalogCache.set(workspaceRoot, catalogs);
+		}
+
 		for (const dep of p.combinedDependencies) {
 			const pkg = context.fullPackageMap.get(dep.name);
 			if (pkg === undefined) {
 				continue;
 			}
 
+			// Resolve catalog: references before passing to semver
+			const resolvedVersion = resolveCatalogVersion(dep.name, dep.version, catalogs);
+
 			// If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
 			// range. Otherwise pick the minimum version the range represents.
-			const newVersion = dep.version.startsWith("workspace:")
+			const newVersion = resolvedVersion.startsWith("workspace:")
 				? semver.parse(pkg.version)
-				: semver.minVersion(dep.version);
+				: semver.minVersion(resolvedVersion);
 			if (newVersion === null) {
-				throw new Error(`Failed to parse depVersion: ${dep.version}`);
+				throw new Error(
+					`Failed to parse depVersion: ${resolvedVersion}${resolvedVersion !== dep.version ? ` (resolved from ${dep.version})` : ""}`,
+				);
 			}
 
 			if (pkg.monoRepo !== undefined) {
@@ -942,10 +975,4 @@ export function getFullTarballName(pkg: PackageJson): string {
 export async function readPackageJson(): Promise<PackageJson> {
 	const packageJson = await readFile("./package.json", { encoding: "utf8" });
 	return JSON.parse(packageJson) as PackageJson;
-}
-
-// Reads and parses the `tsconfig.json` file in the current directory.
-export async function readTsConfig(): Promise<TsConfigJson> {
-	const tsConfigContent = await readFile("./tsconfig.json", { encoding: "utf8" });
-	return JSON5.parse(tsConfigContent);
 }

@@ -11,7 +11,7 @@ import {
 	withTreeObservations,
 } from "@fluidframework/react/alpha";
 import { Tree } from "fluid-framework";
-import * as React from "react";
+import { type FC, type JSX, useCallback } from "react";
 
 import type { Inventory } from "../schema.js";
 import { Part } from "../schema.js";
@@ -28,11 +28,11 @@ import { Counter } from "./counter.js";
  * the type system will not allow this component to access any of the contents of the node that can change
  * and thus no custom invalidation is needed.
  */
-export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
+export const MainView: FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
 	return (
-		// <React.StrictMode>
+		// <StrictMode>
 		<InventoryView root={root} />
-		// </React.StrictMode>
+		// </StrictMode>
 	);
 };
 
@@ -41,15 +41,15 @@ export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) 
  *
  * @remarks This demonstrates how arrays can be handled efficiently and easily.
  */
-const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
-	withMemoizedTreeObservations(({ root }: { root: Inventory }) => {
+const InventoryView: FC<{ root: PropTreeNode<Inventory> }> = withMemoizedTreeObservations(
+	({ root }: { root: Inventory }) => {
 		const parts = root.parts;
 
 		// Callback to remove a part, passed down to the PartView.
 		// This callback is memoized to avoid unnecessary re-renders of the PartView.
 		// This approach is better than adding a remove method to the Part
 		// schema since it does not cause potential misbehavior if the part schema is reused with other parents.
-		const removeChild = React.useCallback(
+		const removeChild = useCallback(
 			(part: Part) => parts.removeAt(Tree.key(part) as number),
 			[parts],
 		);
@@ -72,7 +72,8 @@ const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
 				</button>
 			</div>
 		);
-	});
+	},
+);
 
 /**
  * A memoized auto-invalidated {@link Part}
@@ -128,9 +129,7 @@ export const InventoryViewMonolithic =
  *
  * This version uses usePropTreeNode. See InventoryView for a version using withMemoizedTreeObservations.
  */
-export const InventoryViewWithHook: React.FC<{ root: PropTreeNode<Inventory> }> = ({
-	root,
-}) => {
+export const InventoryViewWithHook: FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
 	const data: { nodes: readonly PropTreeNode<Part>[]; removeChild: (part: Part) => void } =
 		usePropTreeNode(root, (inventory: Inventory) => {
 			const partsList = inventory.parts;
@@ -141,7 +140,7 @@ export const InventoryViewWithHook: React.FC<{ root: PropTreeNode<Inventory> }> 
 
 			// React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
 			// eslint-disable-next-line react-hooks/rules-of-hooks
-			const removeChild = React.useCallback(
+			const removeChild = useCallback(
 				(part: Part) => partsList.removeAt(Tree.key(part) as number),
 				[partsList],
 			);
@@ -153,7 +152,7 @@ export const InventoryViewWithHook: React.FC<{ root: PropTreeNode<Inventory> }> 
 	// We can however use a component which uses the hook internally.
 	// Passing the node to the components as a PropTreeNode in its Props (as is done here)
 	// is the design pattern after which PropTreeNode was named.
-	const parts: readonly React.JSX.Element[] = data.nodes.map((part) => (
+	const parts: readonly JSX.Element[] = data.nodes.map((part) => (
 		<PartView key={objectIdNumber(part)} part={part} remove={data.removeChild} />
 	));
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { type FC, useEffect, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 
 import type { ISuggestionGroceryItem, ISuggestionGroceryList } from "../container/index.js";
 

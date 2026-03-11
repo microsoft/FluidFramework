@@ -20,9 +20,9 @@ import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/co
 import {
 	type ChunkReferenceId,
 	type FieldBatchEncodingContext,
+	fieldBatchCodecBuilder,
 	type IncrementalDecoder,
 	type IncrementalEncoder,
-	makeFieldBatchCodec,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
@@ -471,7 +471,7 @@ describe("schemaBasedEncoding", () => {
 						idCompressor,
 					};
 					idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-					const codec = makeFieldBatchCodec({
+					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,
 					});

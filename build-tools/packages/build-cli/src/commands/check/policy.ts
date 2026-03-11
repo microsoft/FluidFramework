@@ -11,13 +11,10 @@ import process from "node:process";
 
 import { Flags } from "@oclif/core";
 
-import {
-	BaseCommand,
-	type Context,
-	type Handler,
-	policyHandlers,
-	Repository,
-} from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import type { Context } from "../../library/context.js";
+import { Repository } from "../../library/git.js";
+import { type Handler, policyHandlers } from "../../library/repoPolicyCheck/index.js";
 
 type policyAction = "handle" | "resolve" | "final";
 

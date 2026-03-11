@@ -8,7 +8,7 @@ import path from "node:path";
 
 import { snapshotSchemaCompatibility } from "../../index.js";
 
-// import { snapshotSchemaCompatibility } from "@fluidframework/tree/alpha";
+// import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
 
 // The TreeViewConfiguration the application uses, which contains the application's schema.
 import { treeViewConfiguration } from "./schema.js";

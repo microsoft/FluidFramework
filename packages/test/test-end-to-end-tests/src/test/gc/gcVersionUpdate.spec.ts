@@ -14,7 +14,6 @@ import {
 import {
 	IGarbageCollector,
 	IGCMetadata,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";

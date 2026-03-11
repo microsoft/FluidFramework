@@ -42,4 +42,5 @@ export {
 	makeVersionDispatchingCodec,
 	makeVersionedValidatedCodec,
 	Versioned,
+	versionField,
 } from "./versioned/index.js";

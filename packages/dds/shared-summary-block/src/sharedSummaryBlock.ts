@@ -100,10 +100,7 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	 */
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		throw new Error("shared summary block should not generate any ops.");
 	}
 

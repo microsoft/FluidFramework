@@ -44,27 +44,14 @@ export enum TransactionResult {
 export interface Transactor {
 	/**
 	 * Start a new transaction.
+	 * @remarks
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
-	 * @param isAsync - Whether the transaction is asynchronous.
-	 * An error will be thrown if an asynchronous transaction is started while a synchronous transaction is in progress.
-	 *
-	 * @remarks Asynchronous transactions are not supported on the root checkout,
-	 * since it is always kept up-to-date with the latest remote edits and the results of this rebasing (which might invalidate
-	 * the transaction) is not visible to the application author.
-	 * Instead,
-	 *
-	 * 1. fork the root checkout
-	 * 2. run the transaction on the fork
-	 * 3. merge the fork back into the root checkout
-	 *
-	 * @privateRemarks There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
-	 * AB#6488 tracks adding some enforcement to make it more clear to application authors that this is not supported.
 	 */
-	start(isAsync: boolean): void;
+	start(): void;
 	/**
 	 * Close this transaction by squashing its edits and committing them as a single edit.
-	 * If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+	 * @remarks If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
 	 */
 	commit(): void;
 	/**
@@ -72,9 +59,10 @@ export interface Transactor {
 	 */
 	abort(): void;
 	/**
-	 * True if there is at least one transaction currently in progress on this view, otherwise false.
+	 * The number of transactions currently in progress, including any nested transactions.
+	 * @remarks This is 0 when no transaction is in progress, 1 when a single transaction is in progress, 2 when a transaction is nested inside another, etc.
 	 */
-	isInProgress(): boolean;
+	size: number;
 	/**
 	 * Provides events for changes in transaction progress.
 	 */
@@ -84,17 +72,17 @@ export interface Transactor {
 export interface TransactionEvents {
 	/**
 	 * Raised just after a transaction has begun.
-	 * @remarks When this event fires, {@link Transactor.isInProgress} will be true because the transaction has already begun.
+	 * @remarks When this event fires, {@link Transactor.size} will be greater than 0 because the transaction has already begun.
 	 */
 	started(): void;
 	/**
 	 * Raised just before a transaction is aborted.
-	 * @remarks When this event fires, {@link Transactor.isInProgress} will still be true because the transaction has not yet ended.
+	 * @remarks When this event fires, {@link Transactor.size} will still be greater than 0 because the transaction has not yet ended.
 	 */
 	aborting(): void;
 	/**
 	 * Raised just before a transaction is committed.
-	 * @remarks When this event fires, {@link Transactor.isInProgress} will still be true because the transaction has not yet ended.
+	 * @remarks When this event fires, {@link Transactor.size} will still be greater than 0 because the transaction has not yet ended.
 	 */
 	committing(): void;
 }
@@ -122,13 +110,13 @@ export interface Callbacks {
 /**
  * A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
  * @remarks This function may return other functions that will be called when the transaction is popped from the stack or a nested transaction is pushed onto the stack.
- * This function runs just before the transaction begins, so if this is the beginning of an outermost (not nested) transaction then {@link Transactor.isInProgress} will be false during its execution.
+ * This function runs just before the transaction begins, so if this is the beginning of an outermost (not nested) transaction then {@link Transactor.size} will be 0 during its execution.
  */
 export type OnPush = () => Callbacks | void;
 
 /**
  * A function that will be called when a transaction is popped from the {@link TransactionStack | stack}.
- * @remarks This function runs just after the transaction ends, so if this is the end of an outermost (not nested) transaction then {@link Transactor.isInProgress} will be false during its execution.
+ * @remarks This function runs just after the transaction ends, so if this is the end of an outermost (not nested) transaction then {@link Transactor.size} will be 0 during its execution.
  */
 export type OnPop = (result: TransactionResult) => void;
 
@@ -138,8 +126,6 @@ export type OnPop = (result: TransactionResult) => void;
 interface TransactionStackFrame {
 	/** The callbacks provided when this transaction frame was pushed onto the stack. */
 	readonly callbacks: Callbacks;
-	/** Whether this transaction frame is asynchronous. */
-	readonly isAsync: boolean;
 }
 
 /**
@@ -168,31 +154,25 @@ export class TransactionStack implements Transactor, IDisposable {
 		this.#onPush = onPush;
 	}
 
-	public isInProgress(): boolean {
+	public get size(): number {
 		this.ensureNotDisposed();
-		return this.#stack.length > 0;
+		return this.#stack.length;
 	}
 
-	public start(isAsync: boolean): void {
+	public start(): void {
 		this.ensureNotDisposed();
 		const last = getLast(this.#stack);
-		if (last !== undefined && !last.isAsync && isAsync) {
-			throw new UsageError(
-				"An asynchronous transaction cannot be started while a synchronous transaction is in progress.",
-			);
-		}
 		const onPushCurrent = last === undefined ? this.#onPush : last.callbacks.onPush;
 		const { onPush, onPop } = onPushCurrent?.() ?? {};
 		this.#stack.push({
 			callbacks: { onPop, onPush: onPush ?? onPushCurrent },
-			isAsync,
 		});
 		this.#events.emit("started");
 	}
 
 	public commit(): void {
 		this.ensureNotDisposed();
-		if (!this.isInProgress()) {
+		if (this.size === 0) {
 			throw new UsageError("No transaction to commit");
 		}
 		this.#events.emit("committing");
@@ -201,7 +181,7 @@ export class TransactionStack implements Transactor, IDisposable {
 
 	public abort(): void {
 		this.ensureNotDisposed();
-		if (!this.isInProgress()) {
+		if (this.size === 0) {
 			throw new UsageError("No transaction to abort");
 		}
 		this.#events.emit("aborting");
@@ -210,7 +190,7 @@ export class TransactionStack implements Transactor, IDisposable {
 
 	public dispose(): void {
 		this.ensureNotDisposed();
-		while (this.isInProgress()) {
+		while (this.size > 0) {
 			this.abort();
 		}
 		this.#disposed = true;
@@ -225,7 +205,7 @@ export class TransactionStack implements Transactor, IDisposable {
 
 /**
  * A function that will be called when a transaction is popped from the {@link SquashingTransactionStack | stack}.
- * @remarks This function runs just after the transaction ends, so if this is the end of an outermost (not nested) transaction then {@link Transactor.isInProgress} will be false during its execution.
+ * @remarks This function runs just after the transaction ends, so if this is the end of an outermost (not nested) transaction then {@link Transactor.size} will be 0 during its execution.
  * @param result - The result of the transaction.
  * @param viewUpdate - The change that needs to be applied to the view to keep it up-to-date with the branch after the transaction ends.
  * This is needed in asynchronous transactions where new commits have been added to the branch while the transaction was in progress.
@@ -328,7 +308,7 @@ export class SquashingTransactionStack<
 
 				// Invoked when an outer transaction ends
 				const onOuterTransactionPop: OnPop = (result) => {
-					assert(!this.isInProgress(), 0xcae /* The outer transaction should be ending */);
+					assert(this.size === 0, 0xcae /* The outer transaction should be ending */);
 					transactionBranch.editor.exitTransaction();
 
 					const sourcePath: GraphCommit<TChange>[] = [];

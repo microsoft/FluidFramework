@@ -36,6 +36,15 @@ export {
 	treeDataObjectInternal,
 } from "./reactSharedTreeView.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
+export {
+	type FormattedEditorHandle,
+	FormattedMainView,
+	type FormattedMainViewProps,
+	type PlainMainViewProps,
+	PlainQuillView,
+	PlainTextMainView,
+} from "./text/index.js";
+export { type UndoRedo, UndoRedoStacks } from "./undoRedo.js";
 export type { ObservationOptions } from "./useObservation.js";
 export {
 	usePropTreeNode,

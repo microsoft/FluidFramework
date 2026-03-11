@@ -9,7 +9,7 @@ import {
 	SameContainerMigrator,
 	SessionStorageModelLoader,
 } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
@@ -69,12 +69,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 		// view code loader to pull in the view dynamically based on the version we discover.
 		if (isIInventoryListAppModel(model)) {
-			ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+			ReactDOM.render(createElement(InventoryListAppView, { model }), appDiv);
 
 			// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 			ReactDOM.unmountComponentAtNode(debugDiv);
 			ReactDOM.render(
-				React.createElement(DebugView, {
+				createElement(DebugView, {
 					model,
 					summarizeOnDemand: model.DEBUG_summarizeOnDemand,
 					getUrlForContainerId,

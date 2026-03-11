@@ -17,10 +17,12 @@ export {
 	startReferenceSlidingPreference,
 } from "./intervalUtils.js";
 export {
+	BaseSequenceInterval,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
-	createTransientInterval,
+	createTransientIntervalFromSequence,
 	getSerializedProperties,
+	resolvePositionRef,
 	SequenceInterval,
 	SequenceIntervalClass,
 } from "./sequenceInterval.js";

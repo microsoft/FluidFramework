@@ -10,7 +10,7 @@ import {
 } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/alpha";
 import type { SharedString } from "@fluidframework/sequence/legacy";
-import React, { useEffect, useState } from "react";
+import { type ChangeEvent, type FC, useEffect, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
@@ -22,7 +22,7 @@ interface TodoItemViewProps {
 	readonly className?: string;
 }
 
-export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
+export const TodoItemView: FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItemModel, className } = props;
 
 	const [itemTitle, setItemTitle] = useState<SharedString | undefined>(undefined);
@@ -43,7 +43,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 		});
 	}, [todoItemModel.description]);
 
-	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const checkChangedHandler = (e: ChangeEvent<HTMLInputElement>): void => {
 		todoItemModel.completed = e.target.checked;
 	};
 

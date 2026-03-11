@@ -7,14 +7,14 @@ export {
 	type ChunkReferenceId,
 	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
-	getCodecTreeForFieldBatchFormat,
+	fieldBatchCodecBuilder,
 	type IncrementalDecoder,
 	type IncrementalEncoder,
 	type IncrementalEncoderDecoder,
-	makeFieldBatchCodec,
 } from "./codecs.js";
 export type { FieldBatch } from "./fieldBatch.js";
-export { EncodedFieldBatch, FieldBatchFormatVersion } from "./format.js";
+export type { EncodedFieldBatch } from "./format.js";
+export { FieldBatchFormatVersion } from "./format.js";
 export {
 	defaultIncrementalEncodingPolicy,
 	type IncrementalEncodingPolicy,

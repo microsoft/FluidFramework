@@ -13,9 +13,14 @@ import type {
 import type { Router } from "express";
 import type * as nconf from "nconf";
 
-import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import type {
+	ICache,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+	IPostEphemeralContainerChecker,
+} from "../services";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
@@ -26,7 +31,7 @@ import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
 import * as summaries from "./summaries";
 import type { CommonRouteParams } from "./utils";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 export interface IRoutes {
 	git: {
@@ -56,6 +61,7 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
 ): IRoutes {
 	const commonRouteParams: CommonRouteParams = [
 		config,
@@ -83,6 +89,6 @@ export function create(
 			contents: contents.create(...commonRouteParams),
 			headers: headers.create(...commonRouteParams),
 		},
-		summaries: summaries.create(...commonRouteParams),
+		summaries: summaries.create(...commonRouteParams, postEphemeralContainerChecker),
 	};
 }

@@ -29,7 +29,7 @@ export namespace InternalTypes {
 	 * And it includes standard metadata.
 	 *
 	 * @remarks
-	 * See {@link InternalTypes.ValueRequiredState}.
+	 * See {@link InternalPresenceTypes.ValueRequiredState}.
 	 *
 	 * @system
 	 */
@@ -53,7 +53,7 @@ export namespace InternalTypes {
 	 * need to specify some wrapper themselves.
 	 *
 	 * For known cases, construct a custom interface that extends
-	 * {@link InternalTypes.ValueStateMetadata}.
+	 * {@link InternalPresenceTypes.ValueStateMetadata}.
 	 *
 	 * @system
 	 */
@@ -139,6 +139,11 @@ export namespace InternalTypes {
 
 	/**
 	 * Package internal function declaration for state and notification instantiation.
+	 *
+	 * @remarks
+	 * Direct use of this type is discouraged. If in need, try to use the type
+	 * returned by the factory functions instead, as those are more specific and
+	 * stable.
 	 *
 	 * @system
 	 */

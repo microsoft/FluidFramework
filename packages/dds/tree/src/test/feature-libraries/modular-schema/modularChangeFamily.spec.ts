@@ -48,13 +48,13 @@ import {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	FlexFieldKind,
+	fieldBatchCodecBuilder,
 	fieldKindConfigurations,
 	genericFieldKind,
 	jsonableTreeFromFieldCursor,
 	ModularChangeFamily,
 	ModularChangeFormatVersion,
 	type ModularChangeset,
-	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 	type NodeId,
 	newChangeAtomIdBTree,
@@ -196,7 +196,7 @@ const codec = makeModularChangeCodecFamily(
 		[...fieldKindConfigurations.keys()].map((version) => [version, fieldKindConfiguration]),
 	),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	fieldBatchCodecBuilder.build(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);

@@ -25,12 +25,10 @@ import {
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
 	ISweepMessage,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	defaultMaxAttemptsForSubmitFailures,
 	RetriableSummaryError,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { IErrorBase } from "@fluidframework/core-interfaces";

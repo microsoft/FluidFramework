@@ -54,9 +54,9 @@ import {
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 	defaultSchemaPolicy,
+	fieldBatchCodecBuilder,
 	fieldKindConfigurations,
 	type ModularChangeFormatVersion,
-	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
@@ -160,7 +160,7 @@ export function makeTestDefaultChangeFamily(options?: {
 		makeModularChangeCodecFamily(
 			fieldKindConfigurations,
 			new RevisionTagCodec(options?.idCompressor ?? testIdCompressor),
-			makeFieldBatchCodec(codecOptions),
+			fieldBatchCodecBuilder.build(codecOptions),
 			codecOptions,
 			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
 		),

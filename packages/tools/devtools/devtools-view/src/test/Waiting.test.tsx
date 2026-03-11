@@ -4,7 +4,6 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import React from "react";
 
 import { defaultWaitingLabel, Waiting } from "../components/index.js";
 

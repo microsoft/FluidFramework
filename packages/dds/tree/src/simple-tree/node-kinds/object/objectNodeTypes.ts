@@ -19,10 +19,41 @@ import type {
 } from "../../simpleSchema.js";
 
 import type {
-	InsertableObjectFromSchemaRecord,
+	InsertableObjectFromSchemaRecordAlpha,
 	SimpleKeyMap,
 	TreeObjectNode,
 } from "./objectNode.js";
+
+/**
+ * {@link (ObjectNodeSchema:interface)} with a workaround to avoid a specific known TypeScript issue which causes it to not be assignable to itself in some cases.
+ * @remarks
+ * If dealing with a schema whose inferred type includes this workaround (because it was produced by a schema factory API which uses it),
+ * if you need to explicitly state that type (for example when using {@link https://www.typescriptlang.org/tsconfig/#isolatedDeclarations | isolatedDeclarations}), it is best to keep this workaround.
+ * No other case should need to refer to this workaround type directly.
+ * See {@link ObjectNodeSchemaWorkaround.createFromInsertable} for details.
+ * @sealed
+ * @alpha
+ */
+export type ObjectNodeSchemaWorkaround<
+	TName extends string = string,
+	T extends
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
+	ImplicitlyConstructable extends boolean = boolean,
+	TCustomMetadata = unknown,
+> = ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> & {
+	/**
+	 * Typing checking workaround: not for for actual use.
+	 * @remarks
+	 * This API collides with {@link TreeNodeSchemaCore.createFromInsertable} to disable a type checking optimization which produces different and undesired results.
+	 * See {@link https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693} for more details.
+	 *
+	 * The specific issue here is non-empty POJO mode object schema not being assignable to `ObjectNodeSchema`,
+	 * @privateRemarks
+	 * See the above link and the tests in objectNode.spec.ts which reference it.
+	 * @system
+	 */
+	readonly createFromInsertable: unknown;
+};
 
 /**
  * A schema for {@link TreeObjectNode}s.
@@ -39,7 +70,7 @@ export interface ObjectNodeSchema<
 			TName,
 			NodeKind.Object,
 			TreeObjectNode<T, TName>,
-			InsertableObjectFromSchemaRecord<T>,
+			object & InsertableObjectFromSchemaRecordAlpha<T>,
 			ImplicitlyConstructable,
 			T,
 			never,

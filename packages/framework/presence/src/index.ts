@@ -16,8 +16,8 @@ export type {
 	BroadcastControlSettings,
 	BroadcastControls,
 } from "./broadcastControlsTypes.js";
-export type { InternalTypes } from "./exposedInternalTypes.js";
-export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+export type { InternalTypes as InternalPresenceTypes } from "./exposedInternalTypes.js";
+export type { InternalUtilityTypes as InternalPresenceUtilityTypes } from "./exposedUtilityTypes.js";
 export {
 	getPresence,
 	getPresenceAlpha,
@@ -29,11 +29,13 @@ export type {
 	LatestMapArguments,
 	LatestMapArgumentsRaw,
 	LatestMapClientData,
+	LatestMapConfiguration,
 	LatestMapEvents,
 	LatestMapFactory,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
 	LatestMapRaw,
+	LatestMapRawConfiguration,
 	LatestMapRawEvents,
 	StateMap,
 } from "./latestMapTypes.js";
@@ -41,9 +43,11 @@ export type {
 	Latest,
 	LatestArguments,
 	LatestArgumentsRaw,
+	LatestConfiguration,
 	LatestEvents,
 	LatestFactory,
 	LatestRaw,
+	LatestRawConfiguration,
 	LatestRawEvents,
 } from "./latestTypes.js";
 export type {
@@ -61,8 +65,10 @@ export type {
 	NotificationEmitter,
 	NotificationListenable,
 	NotificationSubscriberSignatures,
+	NotificationsConfiguration,
 	NotificationsManager,
 	NotificationsManagerEvents,
+	NotificationsWithSubscriptionsConfiguration,
 } from "./notificationsManagerTypes.js";
 export {
 	type Attendee,

@@ -27,11 +27,14 @@ export {
 } from "./map/index.js";
 export {
 	type FieldHasDefault,
+	type FieldHasDefaultAlpha,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromSchemaRecordAlpha,
 	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
+	type ObjectNodeSchemaWorkaround,
 	objectSchema,
 	type SimpleKeyMap,
 	setField,

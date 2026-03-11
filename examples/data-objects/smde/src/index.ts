@@ -15,7 +15,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/legacy";
-import React from "react";
+import { createElement } from "react";
 
 import { SmdeDataObject, SmdeFactory } from "./smde.js";
 import { SmdeReactView } from "./smdeView.js";
@@ -51,7 +51,7 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 					defaultComponentId,
 				);
 
-				const view = React.createElement(SmdeReactView, {
+				const view = createElement(SmdeReactView, {
 					smdeDataObject,
 				}) as unknown as IFluidMountableView;
 				let getMountableDefaultView = async (): Promise<IFluidMountableView> => view;

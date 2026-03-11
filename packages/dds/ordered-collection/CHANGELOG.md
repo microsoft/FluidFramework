@@ -1,5 +1,16 @@
 # @fluidframework/ordered-collection
 
+## 2.90.0
+
+### Minor Changes
+
+- Deprecated DDS implementation classes ([#26501](https://github.com/microsoft/FluidFramework/pull/26501)) [583a96c3d44](https://github.com/microsoft/FluidFramework/commit/583a96c3d44fa47095a0858d7da981afc574f64e)
+
+  The following DDS implementation classes are now deprecated and will be removed in a future release:
+  - `ConsensusRegisterCollectionClass` — use `ConsensusRegisterCollectionFactory` to create instances and `IConsensusRegisterCollection` for typing
+  - `ConsensusOrderedCollection` — use `IConsensusOrderedCollection` for typing
+  - `ConsensusQueueClass` — use the `ConsensusQueue` singleton to create instances and `IConsensusOrderedCollection` for typing
+
 ## 2.83.0
 
 Dependency updates only.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import type { ReactElement } from "react";
 
 import { Banner } from "./banner";
 import { HowItWorksSection } from "./howItWorksSection";
@@ -16,7 +16,7 @@ import "@site/src/css/home/homepage.css";
 /**
  * Root homepage component.
  */
-export function Homepage(): React.ReactElement {
+export function Homepage(): ReactElement {
 	return (
 		<div className="ffcom-homepage">
 			<Banner />

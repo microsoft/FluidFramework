@@ -20,7 +20,7 @@ import type {
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
 import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
-import * as React from "react";
+import { type FC, type JSX, useCallback, useEffect, useState } from "react";
 
 import { type PropTreeValue, toPropTreeNode } from "./propNode.js";
 
@@ -138,7 +138,7 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * and thus making it a member avoids the user of this from having to explicitly provide the type parameter.
 	 * This is an arrow function not a method so it gets the correct this when not called as a member.
 	 */
-	readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React.JSX.Element;
+	readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => JSX.Element;
 }
 
 /**
@@ -149,7 +149,7 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Component to display the tree content.
 	 */
-	readonly viewComponent: React.FC<{
+	readonly viewComponent: FC<{
 		root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
 	}>;
 
@@ -159,7 +159,7 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	 *
 	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeViewConfiguration} if possible.
 	 */
-	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
+	readonly errorComponent?: FC<SchemaIncompatibleProps>;
 
 	// TODO: Once its possible to query the status of individual schema upgrades, provide more options here for handling such cases.
 }
@@ -203,11 +203,11 @@ export abstract class ReactTreeDataObject<
 function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
 ): SchemaCompatibilityStatus {
-	const [compatibility, setCompatibility] = React.useState<SchemaCompatibilityStatus>(
+	const [compatibility, setCompatibility] = useState<SchemaCompatibilityStatus>(
 		view.compatibility,
 	);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		const updateCompatibility = (): void => {
 			setCompatibility(view.compatibility);
 		};
@@ -222,11 +222,9 @@ function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
 function useViewRoot<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> | undefined {
-	const [root, setRoot] = React.useState<TreeFieldFromImplicitField<TSchema> | undefined>(
-		undefined,
-	);
+	const [root, setRoot] = useState<TreeFieldFromImplicitField<TSchema> | undefined>(undefined);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		const updateRoot = (): void => {
 			if (view.compatibility.canView) {
 				setRoot(view.root);
@@ -253,12 +251,12 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	errorComponent,
 }: TreeViewProps<TSchema> & {
 	tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
-}): React.JSX.Element {
+}): JSX.Element {
 	const view = tree.treeView;
 
 	const compatibility = useViewCompatibility(view);
 	const root = useViewRoot(view);
-	const upgradeSchema = React.useCallback((): void => view.upgradeSchema(), [view]);
+	const upgradeSchema = useCallback((): void => view.upgradeSchema(), [view]);
 
 	// Note: this policy is on the stricter side and ensures that clients will only be able to submit edits when their view schema
 	// supports exactly the same documents as the stored schema.
@@ -302,7 +300,7 @@ function TreeErrorComponent({
 }: {
 	compatibility: SchemaCompatibilityStatus;
 	upgradeSchema: () => void;
-}): React.JSX.Element {
+}): JSX.Element {
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (compatibility.canUpgrade) {
 		return (
