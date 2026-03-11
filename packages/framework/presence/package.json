@@ -124,16 +124,8 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:esnext": [
-				"^api",
-				"^build:esnext"
-			],
 			"eslint": [
 				"api-extractor:esnext"
-			],
-			"tsc": [
-				"^api",
-				"^tsc"
 			]
 		}
 	},
