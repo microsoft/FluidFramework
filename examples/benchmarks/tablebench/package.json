@@ -53,7 +53,7 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@tylerbu/levee-client": "^0.1.1",
+		"@tylerbu/levee-client": "^0.1.2",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/tree": "workspace:~"

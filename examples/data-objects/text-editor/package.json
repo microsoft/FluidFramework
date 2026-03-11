@@ -39,7 +39,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/react": "workspace:~",
-		"@tylerbu/levee-client": "^0.1.1",
+		"@tylerbu/levee-client": "^0.1.2",
 		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"quill": "^2.0.3",

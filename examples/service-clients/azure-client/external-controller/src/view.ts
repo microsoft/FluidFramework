@@ -4,7 +4,7 @@
  */
 
 import type { LatestRaw, Presence } from "@fluidframework/presence/beta";
-import type { ILeveeAudience, LeveeMember } from "@tylerbu/levee-client";
+import type { ILeveeAudience } from "@tylerbu/levee-client";
 
 import type { IDiceRollerController } from "./controller.js";
 import type { DiceValues } from "./presence.js";

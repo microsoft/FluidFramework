@@ -358,7 +358,8 @@
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
 			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies. This helps reduce lockfile churn since the deps release very frequently.",
 			"axios pre-1.0 needs an override to stay current on a version with no reported CVEs. Caret dependencies aren't enough on a pre-1.0 package.",
-			"Security overrides: tar is overridden to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w, GHSA-34x7-hfp2-rc4v). The existing axios@<0.30.0 override resolves to 0.30.2 which is also affected by GHSA-43fc-jf86-j433 (DoS via __proto__), but updating that pre-1.0 override is out of scope here."
+			"Security overrides: tar is overridden to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w, GHSA-34x7-hfp2-rc4v). The existing axios@<0.30.0 override resolves to 0.30.2 which is also affected by GHSA-43fc-jf86-j433 (DoS via __proto__), but updating that pre-1.0 override is out of scope here.",
+			"@tylerbu/levee-client and @tylerbu/levee-driver @fluidframework/* deps are widened to workspace:* via .pnpmfile.cjs to avoid duplicate types. See https://github.com/tylerbutler/levee/issues/55"
 		],
 		"overrides": {
 			"@types/node": "~20.19.30",
