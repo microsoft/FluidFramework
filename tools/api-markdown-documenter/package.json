@@ -83,7 +83,7 @@
 		"mdast-util-from-markdown": "^2.0.2",
 		"mdast-util-gfm": "^3.1.0",
 		"mdast-util-phrasing": "^4.1.0",
-		"mdast-util-to-hast": "^13.2.0",
+		"mdast-util-to-hast": "^13.2.1",
 		"mdast-util-to-markdown": "^2.1.2",
 		"unist-util-remove-position": "^5.0.0",
 		"unist-util-visit": "^5.0.0"
@@ -126,9 +126,11 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions."
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys)."
 		],
 		"overrides": {
+			"js-yaml": "^4.1.1",
 			"qs": "^6.15.0"
 		},
 		"onlyBuiltDependencies": [

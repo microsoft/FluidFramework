@@ -149,7 +149,9 @@
 			"@typescript-eslint/*: Pin to 8.52.0 to avoid 8.53.0 which may not be available in ADO package feed.",
 			"@babel/*: Pin to 7.27.x to avoid 7.28.x versions which may not be available in ADO package feed.",
 			"zookeeper: pinned to 7.x since earlier versions fail to compile and may be brought in transitively.",
-			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions."
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
+			"systeminformation: overridden to ^5.31.0 to resolve CVE-2025-68154, CVE-2026-26280, and CVE-2026-26318 (command injection vulnerabilities)."
 		],
 		"overrides": {
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
@@ -173,7 +175,10 @@
 			"mongodb>@aws-sdk/credential-providers": "-",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
+			"js-yaml@<4": "^3.14.2",
+			"js-yaml@>=4": "^4.1.1",
 			"qs": "^6.15.0",
+			"systeminformation": "^5.31.0",
 			"socket.io-parser": "^4.2.4",
 			"zookeeper": "^7.2.0"
 		},

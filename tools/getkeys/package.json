@@ -38,9 +38,11 @@
 	"pnpm": {
 		"onlyBuiltDependencies": ["unrs-resolver"],
 		"commentsOverrides": [
-			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions."
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys)."
 		],
 		"overrides": {
+			"js-yaml": "^4.1.1",
 			"qs": "^6.15.0"
 		}
 	}
