@@ -169,22 +169,32 @@ const root = new TreeNode({ value: 0, label: "root", child: leaf });
 // root.child.label === "untitled"
 ```
 
-> **Warning:** Do not use the recursive type itself as a default value — this causes infinite recursion at construction
-> time, since creating the default value would trigger the same default again.
-> Instead, use a primitive or a separate non-recursive node type as the default:
+> **Warning:** Be careful about using the recursive type itself as a default value — this is likely to cause
+> infinite recursion at construction time, since creating the default value would trigger the same default again.
+> Instead, use a primitive or a separate node type as the default:
 >
 > ```typescript
-> const DefaultTag = sf.objectAlpha("Tag", { id: sf.number });
+> const DefaultTag = sf.objectRecursiveAlpha("Tag", { id: sf.number, child: sf.optionalRecursive([() => TreeNode]) });
 >
 > class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
 > 	value: sf.number,
 > 	// ✅ Safe: default is a non-recursive node
-> 	tag: SchemaFactoryAlpha.withDefaultRecursive(sf.optional(DefaultTag), () => new DefaultTag({ id: 0 })),
+> 	tag: SchemaFactoryAlpha.withDefaultRecursive(sf.optional(DefaultTag), () => new DefaultTag({ id: 0, child: new DefaultTag({ id: 1 }) })),
 > 	child: sf.optionalRecursive([() => TreeNode]),
 > }) {}
+> ```
 >
-> // ❌ Unsafe: would cause infinite recursion at construction time
-> // child: SchemaFactoryAlpha.withDefaultRecursive(sf.optionalRecursive([() => TreeNode]), () => new TreeNode({ value: 0 }))
+> The following definition for child would cause infinite recursion at construction time:
+>
+> ```typescript
+> child: SchemaFactoryAlpha.withDefaultRecursive(sf.optionalRecursive([() => TreeNode]), () => new TreeNode({ value: 0 }))
+> ```
+
+> The infinite recursion can be solved by passing in undefined explicitly but it is
+> recommended to not use defaults in this case:
+>
+> ```typescript
+> child: SchemaFactoryAlpha.withDefaultRecursive(sf.optionalRecursive([() => TreeNode]), () => new TreeNode({ value: 0, child: undefined }))
 > ```
 
 #### Type safety
@@ -200,8 +210,8 @@ sf.withDefault(sf.optional(sf.number), 8080);
 sf.withDefault(sf.optional(sf.string), () => "localhost");
 
 // ❌ TypeScript error: string default for number field
-// sf.withDefault(sf.optional(sf.number), "8080");
+sf.withDefault(sf.optional(sf.number), "8080");
 
 // ❌ TypeScript error: generator returns number for string field
-// sf.withDefault(sf.optional(sf.string), () => 8080);
+sf.withDefault(sf.optional(sf.string), () => 8080);
 ```
