@@ -4,8 +4,7 @@
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
-			"NODE_VERSION": "24",
-			"AI_READY": "true"
+			"NODE_VERSION": "24"
 		}
 	},
 	"runArgs": ["--init"],
