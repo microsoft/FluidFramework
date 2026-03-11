@@ -402,15 +402,30 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 
 		// Fork a branch for this edit session
 		const queryTree = this.#outerTree.fork();
+		const maxEditCount = this.#maxEditCount;
+		const maxTurns = maxEditCount + 2;
 		let editLoopTurns = 0;
 		let rollbackEdits = false;
+
+		const pushToolResult = (toolCallId: string | undefined, content: string): void => {
+			this.#history.push({ role: "tool_result", toolCallId, content });
+		};
+
+		const finalizeEdits = (): void => {
+			if (rollbackEdits) {
+				queryTree.branch.dispose();
+				return;
+			}
+			this.#outerTree.branch.merge(queryTree.branch);
+			this.#isDirty = false;
+		};
 
 		try {
 			while (true) {
 				editLoopTurns++;
 				// Allow for two extra turns: one for a last tool error message, and one for a final response from the llm.
-				if (editLoopTurns > this.#maxEditCount + 2) {
-					const cutoffMessage = `The model failed to produce a response within ${this.#maxEditCount} edits.`;
+				if (editLoopTurns > maxTurns) {
+					const cutoffMessage = `The model failed to produce a response within ${maxEditCount} edits.`;
 					this.#history.push({ role: "assistant", content: cutoffMessage });
 					this.#options?.logger?.log(`## Cancel\n\n${cutoffMessage}\n\n`);
 					queryTree.branch.dispose();
@@ -421,12 +436,7 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 
 				if (response.role === "assistant") {
 					this.#history.push(response);
-					if (rollbackEdits) {
-						queryTree.branch.dispose();
-					} else {
-						this.#outerTree.branch.merge(queryTree.branch);
-						this.#isDirty = false;
-					}
+					finalizeEdits();
 					this.#options?.logger?.log(`## Response\n\n${response.content}\n\n`);
 					return response.content;
 				}
@@ -440,23 +450,15 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 				if (code === undefined) {
 					rollbackEdits = true;
 					const errorMessage = `Expected a single string argument in the tool call, but received: ${JSON.stringify(response.toolArgs)}`;
-					this.#history.push({
-						role: "tool_result",
-						toolCallId: response.toolCallId,
-						content: errorMessage,
-					});
+					pushToolResult(response.toolCallId, errorMessage);
 					continue;
 				}
 
 				// Every loop turn roughly corresponds to one edit attempt, since the loop terminates when the llm produces a non-tool response.
-				if (editLoopTurns > this.#maxEditCount) {
+				if (editLoopTurns > maxEditCount) {
 					rollbackEdits = true;
-					const errorMessage = `The maximum number of edits (${this.#maxEditCount}) for this query has been exceeded.`;
-					this.#history.push({
-						role: "tool_result",
-						toolCallId: response.toolCallId,
-						content: errorMessage,
-					});
+					const errorMessage = `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`;
+					pushToolResult(response.toolCallId, errorMessage);
 					continue;
 				}
 
@@ -468,11 +470,7 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 				);
 
 				rollbackEdits = editResult.type !== "success";
-				this.#history.push({
-					role: "tool_result",
-					toolCallId: response.toolCallId,
-					content: editResult.message,
-				});
+				pushToolResult(response.toolCallId, editResult.message);
 			}
 		} catch (error) {
 			queryTree.branch.dispose();
@@ -486,11 +484,17 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
  * @returns The single string value if args contains exactly one string-valued property, or `undefined` otherwise.
  */
 function extractCodeFromToolArgs(args: Record<string, unknown>): string | undefined {
-	const stringValues = Object.values(args).filter((v): v is string => typeof v === "string");
-	if (stringValues.length === 1) {
-		return stringValues[0];
+	let code: string | undefined;
+	for (const value of Object.values(args)) {
+		if (typeof value !== "string") {
+			continue;
+		}
+		if (code !== undefined) {
+			return undefined;
+		}
+		code = value;
 	}
-	return undefined;
+	return code;
 }
 
 /**
