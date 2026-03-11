@@ -198,14 +198,6 @@ export class RangeMap<K, V> {
 		return cloned;
 	}
 
-	public mapEntries(mapKey: (key: K) => K, mapValue: (value: V) => V): RangeMap<K, V> {
-		const result = new RangeMap<K, V>(this.offsetKey, this.subtractKeys, this.offsetValue);
-		for (const entry of this.entries()) {
-			result.set(mapKey(entry.start), entry.length, mapValue(entry.value));
-		}
-		return result;
-	}
-
 	/**
 	 * Returns a new map which contains the entries from both input maps.
 	 * Whenever both maps contain entires for the same keys, the value from map `b` is used in the returned map.
