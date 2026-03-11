@@ -24,6 +24,7 @@ overrides:
   fast-xml-parser: ^4.5.4
   good-fences>nodegit: npm:empty-npm-package@1.0.0
   qs: ^6.15.0
+  systeminformation: ^5.31.0
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
@@ -27231,8 +27232,8 @@ packages:
     engines: {node: '>=14.17.0'}
     hasBin: true
 
-  systeminformation@5.30.7:
-    resolution: {integrity: sha512-33B/cftpaWdpvH+Ho9U1b08ss8GQuLxrWHelbJT1yw4M48Taj8W3ezcPuaLoIHZz5V6tVHuQPr5BprEfnBLBMw==}
+  systeminformation@5.31.4:
+    resolution: {integrity: sha512-lZppDyQx91VdS5zJvAyGkmwe+Mq6xY978BDUG2wRkWE+jkmUF5ti8cvOovFQoN5bvSFKCXVkyKEaU5ec3SJiRg==}
     engines: {node: '>=8.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -40536,7 +40537,7 @@ snapshots:
       async: 3.2.6
       debug: 4.4.3(supports-color@8.1.1)
       pidusage: 2.0.21
-      systeminformation: 5.30.7
+      systeminformation: 5.31.4
       tx2: 1.0.5
     transitivePeerDependencies:
       - supports-color
@@ -42316,7 +42317,7 @@ snapshots:
       syncpack-windows-arm64: 14.0.2
       syncpack-windows-x64: 14.0.2
 
-  systeminformation@5.30.7:
+  systeminformation@5.31.4:
     optional: true
 
   table-parser@0.1.3:
