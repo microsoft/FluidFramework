@@ -12,9 +12,9 @@ import {
 	makeDetachedNodeId,
 	Multiplicity,
 	type FieldKindIdentifier,
+	type DeltaFieldChanges,
 } from "../../../core/index.js";
 import {
-	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
@@ -22,11 +22,7 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import {
-	brandConst,
-	JsonCompatibleReadOnlySchema,
-	type Mutable,
-} from "../../../util/index.js";
+import { brandConst, JsonCompatibleReadOnlySchema } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -99,23 +95,22 @@ export const valueHandler = {
 	},
 	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
-	intoDelta: (change): FieldChangeDelta => {
-		const delta: Mutable<FieldChangeDelta> = {};
+	intoDelta: (change): DeltaFieldChanges => {
 		if (change !== 0) {
 			// We use the new and old numbers as the node ids.
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			delta.local = { marks: [{ count: 1, attach, detach }] };
+			return { marks: [{ count: 1, attach, detach }] };
 		}
-		return delta;
+		return { marks: [] };
 	},
 
-	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
 	getNestedChanges: (change) => [],
 	createEmpty: () => 0,
 	getCrossFieldKeys: (_change) => [],
+	getDetachCellIds: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
 export const valueField = new FlexFieldKind(

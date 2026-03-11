@@ -7,27 +7,17 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type ChangeAtomId,
-	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	type DeltaDetachedNodeChanges,
-	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
 	type DeltaMark,
 	Multiplicity,
 	type RevisionReplacer,
 	type RevisionTag,
-	areEqualChangeAtomIds,
+	areEqualChangeAtomIdOpts,
 	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
-	taggedAtomId,
 } from "../../core/index.js";
-import {
-	type IdAllocator,
-	type Mutable,
-	SizedNestedMap,
-	deleteFromNestedMap,
-	setInNestedMap,
-	tryGetFromNestedMap,
-} from "../../util/index.js";
+import type { IdAllocator, Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
 	optionalIdentifier,
@@ -41,398 +31,172 @@ import {
 	type NodeChangeComposer,
 	type NodeChangePruner,
 	type NodeChangeRebaser,
-	NodeAttachState,
 	type NodeId,
-	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	type NestedChangesIndices,
-	type FieldChangeDelta,
+	type RebaseNodeManager,
+	type ComposeNodeManager,
+	type InvertNodeManager,
+	type CrossFieldKeyRange,
+	NodeMoveType,
+	type RebaseVersion,
+	type RebaseRevisionMetadata,
 	FlexFieldKind,
 } from "../modular-schema/index.js";
 
-import type {
-	ChildChange,
-	Move,
-	OptionalChangeset,
-	RegisterId,
-	Replace,
-} from "./optionalFieldChangeTypes.js";
+import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 
-export interface IRegisterMap<T> {
-	set(id: RegisterId, childChange: T): void;
-	get(id: RegisterId): T | undefined;
-	delete(id: RegisterId): boolean;
-	keys(): Iterable<RegisterId>;
-	values(): Iterable<T>;
-	entries(): Iterable<[RegisterId, T]>;
-	readonly size: number;
-}
-
-export class RegisterMap<T> implements IRegisterMap<T> {
-	private readonly nestedMapData = new SizedNestedMap<
-		ChangesetLocalId | "self",
-		RevisionTag | undefined,
-		T
-	>();
-
-	public clone(): RegisterMap<T> {
-		const clone = new RegisterMap<T>();
-		for (const [id, t] of this.entries()) {
-			clone.set(id, t);
-		}
-		return clone;
-	}
-
-	public set(id: RegisterId, childChange: T): void {
-		if (id === "self") {
-			this.nestedMapData.set("self", undefined, childChange);
-		} else {
-			this.nestedMapData.set(id.localId, id.revision, childChange);
-		}
-	}
-
-	public get(id: RegisterId): T | undefined {
-		return id === "self"
-			? this.nestedMapData.tryGet(id, undefined)
-			: this.nestedMapData.tryGet(id.localId, id.revision);
-	}
-
-	public has(id: RegisterId): boolean {
-		return this.get(id) !== undefined;
-	}
-
-	public delete(id: RegisterId): boolean {
-		return id === "self"
-			? this.nestedMapData.delete("self", undefined)
-			: this.nestedMapData.delete(id.localId, id.revision);
-	}
-
-	public keys(): Iterable<RegisterId> {
-		const changeIds: RegisterId[] = [];
-		for (const [localId, nestedMap] of this.nestedMapData) {
-			if (localId === "self") {
-				changeIds.push("self");
-			} else {
-				for (const [revisionTag, _] of nestedMap) {
-					changeIds.push(
-						revisionTag === undefined ? { localId } : { localId, revision: revisionTag },
-					);
-				}
-			}
-		}
-
-		return changeIds;
-	}
-	public values(): Iterable<T> {
-		return this.nestedMapData.values();
-	}
-	public entries(): Iterable<[RegisterId, T]> {
-		const entries: [RegisterId, T][] = [];
-		for (const changeId of this.keys()) {
-			if (changeId === "self") {
-				const entry = this.nestedMapData.tryGet("self", undefined);
-				assert(
-					entry !== undefined,
-					0x770 /* Entry should not be undefined when iterating keys. */,
-				);
-				entries.push(["self", entry]);
-			} else {
-				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
-				assert(
-					entry !== undefined,
-					0x771 /* Entry should not be undefined when iterating keys. */,
-				);
-				entries.push([changeId, entry]);
-			}
-		}
-
-		return entries;
-	}
-	public get size(): number {
-		return this.nestedMapData.size;
-	}
-}
-
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
-	compose: (
-		change1: OptionalChangeset,
-		change2: OptionalChangeset,
-		composeChild: NodeChangeComposer,
-	): OptionalChangeset => {
-		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves);
-		const change1FieldSrc = change1.valueReplace?.src;
-		const change1FieldDst = getEffectfulDst(change1.valueReplace);
-
-		const change2FieldSrc = change2.valueReplace?.src;
-		let composedFieldSrc: RegisterId | undefined;
-		if (change2FieldSrc !== undefined) {
-			if (change2FieldSrc === "self") {
-				composedFieldSrc = change1FieldSrc ?? change2FieldSrc;
-			} else if (
-				change1FieldDst !== undefined &&
-				areEqualRegisterIds(change1FieldDst, change2FieldSrc)
-			) {
-				composedFieldSrc = "self";
-			} else {
-				composedFieldSrc =
-					tryGetFromNestedMap(dstToSrc, change2FieldSrc.revision, change2FieldSrc.localId) ??
-					change2FieldSrc;
-			}
-		} else if (change1FieldSrc !== undefined && change2.valueReplace === undefined) {
-			composedFieldSrc = change1FieldSrc;
-		}
-
-		const childChanges2ByOriginalId = new RegisterMap<NodeId>();
-		for (const [id, change] of change2.childChanges) {
-			if (id === "self") {
-				if (change1FieldSrc === undefined) {
-					childChanges2ByOriginalId.set("self", change);
-				} else {
-					childChanges2ByOriginalId.set(change1FieldSrc, change);
-				}
-			} else {
-				if (change1FieldDst !== undefined && areEqualChangeAtomIds(change1FieldDst, id)) {
-					childChanges2ByOriginalId.set("self", change);
-				} else {
-					const originalId = tryGetFromNestedMap(dstToSrc, id.revision, id.localId);
-					childChanges2ByOriginalId.set(originalId ?? id, change);
-				}
-			}
-		}
-
-		const composedMoves: Move[] = [];
-		const composedChildChanges: ChildChange[] = [];
-		const composed: Mutable<OptionalChangeset> = {
-			moves: composedMoves,
-			childChanges: composedChildChanges,
-		};
-
-		for (const [id, childChange1] of change1.childChanges) {
-			const childChange2 = childChanges2ByOriginalId.get(id);
-			composedChildChanges.push([id, composeChild(childChange1, childChange2)]);
-			childChanges2ByOriginalId.delete(id);
-		}
-
-		for (const [id, childChange2] of childChanges2ByOriginalId.entries()) {
-			composedChildChanges.push([id, composeChild(undefined, childChange2)]);
-		}
-
-		for (const [leg2Src, leg2Dst] of change2.moves) {
-			const leg1Src = tryGetFromNestedMap(dstToSrc, leg2Src.revision, leg2Src.localId);
-			if (leg1Src !== undefined) {
-				composedMoves.push([leg1Src, leg2Dst]);
-				deleteFromNestedMap(srcToDst, leg1Src.revision, leg1Src.localId);
-				deleteFromNestedMap(dstToSrc, leg2Src.revision, leg2Src.localId);
-			} else if (
-				change1FieldDst === undefined ||
-				!areEqualChangeAtomIds(change1FieldDst, leg2Src)
-			) {
-				composedMoves.push([leg2Src, leg2Dst]);
-			}
-		}
-
-		for (const [revision, innerMap] of srcToDst.entries()) {
-			for (const [localId, dst] of innerMap.entries()) {
-				const src = makeChangeAtomId(localId, revision);
-				if (composedFieldSrc === undefined || !areEqualRegisterIds(src, composedFieldSrc)) {
-					composedMoves.push([src, dst]);
-				}
-			}
-		}
-
-		if (
-			change1FieldSrc !== undefined &&
-			change1FieldSrc !== "self" &&
-			change2.valueReplace !== undefined
-		) {
-			const change2FieldDst = change2.valueReplace.dst;
-			if (
-				isReplaceEffectful(change2.valueReplace) &&
-				!areEqualChangeAtomIds(change1FieldSrc, change2FieldDst)
-			) {
-				composedMoves.push([change1FieldSrc, change2FieldDst]);
-			}
-		}
-
-		const firstChange = change1.valueReplace ?? change2.valueReplace;
-		if (firstChange === undefined) {
-			return composed;
-		}
-
-		const replace: Mutable<Replace> = {
-			isEmpty: firstChange.isEmpty,
-			dst: getComposedReplaceDst(change1.valueReplace, change2),
-		};
-		if (composedFieldSrc !== undefined) {
-			replace.src = composedFieldSrc;
-		}
-		composed.valueReplace = replace;
-		return composed;
-	},
-
+	compose,
 	invert: (
 		change: OptionalChangeset,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
 		revision: RevisionTag | undefined,
+		nodeManager: InvertNodeManager,
 	): OptionalChangeset => {
-		const { moves, childChanges, valueReplace } = change;
+		const inverted: Mutable<OptionalChangeset> = {};
+		const detachId = getEffectiveDetachId(change);
 
-		const invertIdMap = new RegisterMap<RegisterId>();
-		const invertedMoves: Move[] = [];
-		for (const [src, dst] of moves) {
-			invertIdMap.set(src, dst);
-			invertedMoves.push([dst, src]);
-		}
-		if (valueReplace !== undefined) {
-			const effectfulDst = getEffectfulDst(valueReplace);
-			if (effectfulDst !== undefined) {
-				invertIdMap.set("self", valueReplace.dst);
-			}
-			if (valueReplace.src !== undefined) {
-				invertIdMap.set(valueReplace.src, "self");
-			}
+		if (detachId !== undefined) {
+			const attachIdForInverse = isRollback
+				? detachId
+				: makeChangeAtomId(detachId.localId, revision);
+
+			nodeManager.invertDetach(detachId, 1, change.childChange, attachIdForInverse);
+
+			inverted.valueReplace = {
+				isEmpty: change.valueReplace?.src === undefined,
+				dst: makeChangeAtomId(genId.allocate(), revision),
+				src: attachIdForInverse,
+			};
 		}
 
-		const inverted: Mutable<OptionalChangeset> = {
-			moves: invertedMoves,
-			childChanges: childChanges.map(([id, childChange]) => {
-				return [invertIdMap.get(id) ?? id, childChange];
-			}),
-		};
+		if (change.valueReplace?.src !== undefined) {
+			const attachEntry = nodeManager.invertAttach(change.valueReplace.src, 1);
+			const detachIdForInverse = invertAttachId(
+				change.valueReplace.src,
+				revision,
+				isRollback,
+				attachEntry.value?.detachId,
+			);
 
-		if (valueReplace !== undefined) {
-			if (isReplaceEffectful(valueReplace)) {
-				const replace: Mutable<Replace> =
-					valueReplace.src === undefined
-						? {
-								isEmpty: true,
-								dst: makeChangeAtomId(genId.allocate(), revision),
-							}
-						: {
-								isEmpty: false,
-								dst: isRollback
-									? valueReplace.src
-									: makeChangeAtomId(genId.allocate(), revision),
-							};
-				if (valueReplace.isEmpty === false) {
-					replace.src = valueReplace.dst;
-				}
-				inverted.valueReplace = replace;
-			} else if (!isRollback && valueReplace.src === "self") {
-				inverted.valueReplace = {
-					isEmpty: false,
-					src: "self",
-					dst: makeChangeAtomId(genId.allocate(), revision),
-				};
+			if (attachEntry.value?.nodeChange !== undefined) {
+				inverted.childChange = attachEntry.value.nodeChange;
 			}
+
+			// TODO: Always use nodeDetach instead of valueReplace if not supporting older client versions.
+			if (isPin(change)) {
+				inverted.nodeDetach = detachIdForInverse;
+			} else if (inverted.valueReplace === undefined) {
+				inverted.valueReplace = { isEmpty: false, dst: detachIdForInverse };
+			} else {
+				(inverted.valueReplace as Mutable<Replace>).dst = detachIdForInverse;
+			}
+		} else if (detachId === undefined && change.childChange !== undefined) {
+			// This change does not affect which node is in the field, so its child change should remain here.
+			inverted.childChange = change.childChange;
 		}
+
 		return inverted;
 	},
 
 	rebase: (
-		change: OptionalChangeset,
+		newChange: OptionalChangeset,
 		overChange: OptionalChangeset,
 		rebaseChild: NodeChangeRebaser,
+		_genId: IdAllocator,
+		nodeManager: RebaseNodeManager,
+		_metadata: RebaseRevisionMetadata,
+		rebaseVersion: RebaseVersion,
 	): OptionalChangeset => {
-		const { moves, childChanges, valueReplace: field } = change;
+		const rebased: Mutable<OptionalChangeset> = {};
 
-		// TODO: avoid computing the dstToSrc map if it's not needed.
-		// TODO: de-dupe overSrcToDst and forwardMap
-		const { srcToDst: overSrcToDst } = getBidirectionalMaps(overChange.moves);
+		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
+		const overDetach = getEffectiveDetachId(overChange);
 
-		const forwardMap = new RegisterMap<RegisterId>();
-		for (const [src, dst] of overChange.moves) {
-			forwardMap.set(src, dst);
-		}
-		if (overChange.valueReplace !== undefined) {
-			const effectfulDst = getEffectfulDst(overChange.valueReplace);
-			if (effectfulDst !== undefined) {
-				forwardMap.set("self", overChange.valueReplace.dst);
-			}
-			if (overChange.valueReplace.src !== undefined) {
-				forwardMap.set(overChange.valueReplace.src, "self");
-			}
+		// Note that composition ignores rebase version, and so will create node detaches even when we are supporting collaboration with older clients.
+		// Therefore, in rebase version 1 we must rebase node detach as if it were a clear, matching the behavior of older clients.
+		const hasNodeDetachTreatedAsClear =
+			newChange.nodeDetach !== undefined && rebaseVersion < 2 && !isPin(newChange);
+
+		if (overDetach !== undefined) {
+			const nodeDetach = hasNodeDetachTreatedAsClear ? undefined : newChange.nodeDetach;
+			nodeManager.rebaseOverDetach(overDetach, 1, nodeDetach, rebasedChild);
 		}
 
-		const rebasedMoves: Move[] = [];
-		for (const [src, dst] of moves) {
-			const newDst = tryGetFromNestedMap(overSrcToDst, src.revision, src.localId);
-			rebasedMoves.push([src, newDst ?? dst]);
-		}
+		const overAttach = overChange.valueReplace?.src;
+		if (overAttach !== undefined) {
+			const movedChangeEntry = nodeManager.getNewChangesForBaseAttach(overAttach, 1).value;
 
-		const overChildChangesBySrc = new RegisterMap<NodeId>();
-		for (const [id, childChange] of overChange.childChanges) {
-			overChildChangesBySrc.set(id, childChange);
-		}
-
-		const rebasedChildChanges: ChildChange[] = [];
-		for (const [id, childChange] of childChanges) {
-			const overChildChange = overChildChangesBySrc.get(id);
-			if (overChildChange !== undefined) {
-				overChildChangesBySrc.delete(id);
+			if (movedChangeEntry?.nodeChange !== undefined) {
+				rebased.childChange = movedChangeEntry.nodeChange;
 			}
 
-			const rebasedId = forwardMap.get(id) ?? id;
-			const rebasedChildChange = rebaseChild(
-				childChange,
-				overChildChange,
-				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
-			);
-			if (rebasedChildChange !== undefined) {
-				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
+			if (movedChangeEntry?.detachId !== undefined) {
+				rebased.nodeDetach = movedChangeEntry.detachId;
+				if (newChange.valueReplace !== undefined) {
+					// Now that the rebased change has a node detach,
+					// the detach from the value replace no longer takes effect.
+					nodeManager.removeDetach(newChange.valueReplace.dst, 1);
+				}
+			}
+		} else if (overDetach === undefined) {
+			// `overChange` did not change which node is in the field.
+			if (rebasedChild !== undefined) {
+				rebased.childChange = rebasedChild;
+			}
+
+			if (newChange.nodeDetach !== undefined) {
+				rebased.nodeDetach = newChange.nodeDetach;
 			}
 		}
 
-		for (const [id, overChildChange] of overChildChangesBySrc.entries()) {
-			const rebasedId = forwardMap.get(id) ?? id;
-			const rebasedChildChange = rebaseChild(
-				undefined,
-				overChildChange,
-				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
-			);
-			if (rebasedChildChange !== undefined) {
-				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
-			}
-		}
-
-		const rebased: Mutable<OptionalChangeset> = {
-			moves: rebasedMoves,
-			childChanges: rebasedChildChanges,
-		};
-
-		if (field !== undefined) {
-			const replace: Mutable<Replace> = {
-				isEmpty:
-					overChange.valueReplace === undefined
-						? field.isEmpty
-						: overChange.valueReplace.src === undefined,
-				dst: field.dst,
+		if (hasNodeDetachTreatedAsClear && overDetach !== undefined) {
+			// In order to emulate the rebasing behavior of older clients,
+			// we convert the node detach to a clear.
+			const valueReplace: Mutable<Replace> = {
+				dst: newChange.nodeDetach,
+				isEmpty: overAttach === undefined,
 			};
-			if (field.src !== undefined) {
-				replace.src = forwardMap.get(field.src) ?? field.src;
+
+			if (newChange.valueReplace?.src !== undefined) {
+				valueReplace.src = newChange.valueReplace.src;
 			}
-			rebased.valueReplace = replace;
+
+			rebased.valueReplace = valueReplace;
+		} else if (newChange.valueReplace !== undefined) {
+			const isEmpty =
+				overDetach !== undefined || overAttach !== undefined
+					? overAttach === undefined
+					: newChange.valueReplace.isEmpty;
+
+			rebased.valueReplace = { ...newChange.valueReplace, isEmpty };
 		}
 
+		const detachId = getEffectiveDetachId(newChange);
+		const rebasedDetachId = getEffectiveDetachId(rebased);
+
+		if (!areEqualChangeAtomIdOpts(detachId, rebasedDetachId)) {
+			if (detachId !== undefined) {
+				nodeManager.removeDetach(detachId, 1);
+			}
+			if (rebasedDetachId !== undefined) {
+				nodeManager.addDetach(rebasedDetachId, 1);
+			}
+		}
 		return rebased;
 	},
 
 	prune: (change: OptionalChangeset, pruneChild: NodeChangePruner): OptionalChangeset => {
-		const childChanges: ChildChange[] = [];
-		const prunedChange: Mutable<OptionalChangeset> = {
-			moves: change.moves,
-			childChanges,
-		};
-		if (change.valueReplace !== undefined) {
-			prunedChange.valueReplace = change.valueReplace;
-		}
+		const prunedChange: Mutable<OptionalChangeset> = { ...change };
 
-		for (const [id, childChange] of change.childChanges) {
-			const prunedChildChange = pruneChild(childChange);
-			if (prunedChildChange !== undefined) {
-				childChanges.push([id, prunedChildChange]);
+		delete prunedChange.childChange;
+		if (change.childChange !== undefined) {
+			const childChange = pruneChild(change.childChange);
+			if (childChange !== undefined) {
+				prunedChange.childChange = childChange;
 			}
 		}
 
@@ -443,33 +207,186 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		replacer: RevisionReplacer,
 	): OptionalChangeset => {
+		const updated: Mutable<OptionalChangeset> = {};
+
 		const valueReplace = replaceReplaceRevisions(change.valueReplace, replacer);
 
-		const childChanges: ChildChange[] = [];
-		for (const [id, childChange] of change.childChanges) {
-			childChanges.push([
-				replaceRegisterRevisions(id, replacer),
-				replacer.getUpdatedAtomId(childChange),
-			]);
+		if (change.childChange !== undefined) {
+			updated.childChange = replacer.getUpdatedAtomId(change.childChange);
 		}
 
-		const moves: Move[] = [];
-		for (const [src, dst] of change.moves) {
-			moves.push([replacer.getUpdatedAtomId(src), replacer.getUpdatedAtomId(dst)]);
-		}
-
-		const updated: Mutable<OptionalChangeset> = { childChanges, moves };
 		if (valueReplace !== undefined) {
 			updated.valueReplace = valueReplace;
+		}
+
+		if (change.nodeDetach !== undefined) {
+			updated.nodeDetach = replacer.getUpdatedAtomId(change.nodeDetach);
 		}
 
 		return updated;
 	},
 
 	mute: (change: OptionalChangeset): OptionalChangeset => {
-		return { childChanges: change.childChanges, moves: [] };
+		return { childChange: change.childChange };
 	},
 };
+
+function compose(
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
+	composeChild: NodeChangeComposer,
+	_genId: IdAllocator,
+	nodeManager: ComposeNodeManager,
+): OptionalChangeset {
+	const detachId2 = getEffectiveDetachId(change2);
+	if (change1.valueReplace?.src !== undefined && detachId2 !== undefined) {
+		nodeManager.composeAttachDetach(change1.valueReplace.src, detachId2, 1);
+	}
+
+	const composedDetach = composeNodeDetaches(change1, change2, nodeManager);
+	const composedReplace = composeReplaces(change1, change2);
+	const composedChildChange = getComposedChildChanges(
+		change1,
+		change2,
+		nodeManager,
+		composeChild,
+	);
+
+	sendNewChildChanges(change1, change2, nodeManager);
+
+	if (
+		change1.nodeDetach !== undefined &&
+		areEqualChangeAtomIdOpts(change1.nodeDetach, change2.valueReplace?.src)
+	) {
+		nodeManager.composeDetachAttach(change1.nodeDetach, change1.nodeDetach, 1, true);
+	}
+
+	return makeChangeset(composedReplace, composedDetach, composedChildChange);
+}
+
+function composeNodeDetaches(
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
+	nodeManager: ComposeNodeManager,
+): ChangeAtomId | undefined {
+	const detach1 = getEffectiveDetachId(change1);
+	if (detach1 !== undefined) {
+		const newDetachId = nodeManager.getNewChangesForBaseDetach(detach1, 1).value?.detachId;
+		if (newDetachId !== undefined) {
+			// change2 either renames or detaches this node (the latter case implying that change1 reattaches/moves it).
+			// In either case, the composition ends with the node detached by `newDetachId`.
+			// Note that even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear),
+			// the composition should still have a node-targeting detach.
+			// This is because change1 must attach the node in the location targeted by the detach,
+			// and rebasing does not affect attaches, although that could change if slice moves are implemented.
+			return newDetachId;
+		}
+	}
+
+	if (change1.nodeDetach !== undefined) {
+		return change1.nodeDetach;
+	}
+
+	return change1.valueReplace === undefined ? change2.nodeDetach : undefined;
+}
+
+function composeReplaces(
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
+): Replace | undefined {
+	const firstReplace = change1.valueReplace ?? change2.valueReplace;
+	if (firstReplace === undefined) {
+		return undefined;
+	}
+
+	const isEmpty = change1.nodeDetach === undefined ? firstReplace.isEmpty : false;
+	const replace: Mutable<Replace> = { isEmpty, dst: firstReplace.dst };
+	if (change2.valueReplace?.src !== undefined) {
+		replace.src = change2.valueReplace.src;
+	} else if (
+		getEffectiveDetachId(change2) === undefined &&
+		change1.valueReplace?.src !== undefined
+	) {
+		replace.src = change1.valueReplace.src;
+	}
+
+	return replace;
+}
+
+/**
+ * Informs the node manager of any child changes in `change2` that may need to be represented somewhere else in the input context of the composed changeset.
+ * See {@link ComposeNodeManager.sendNewChangesToBaseSourceLocation} for motivation.
+ * @param change1 - The first change to compose. Conceptually applies before `change2`.
+ * @param change2 - The second change to compose. Conceptually applies after `change1`.
+ * @param nodeManager - The node manager that needs to be informed of the child changes.
+ */
+function sendNewChildChanges(
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
+	nodeManager: ComposeNodeManager,
+): void {
+	if (change2.childChange !== undefined && change1.valueReplace?.src !== undefined) {
+		// The presence of new child implies that there is some node present in the field in the input context of change2.
+		// The fact that the change1 has a shallow effect implies that this node was attached by change1.
+		nodeManager.sendNewChangesToBaseSourceLocation(
+			change1.valueReplace.src,
+			change2.childChange,
+		);
+	}
+}
+
+/**
+ * Computes the child changes that should be included in the composed changeset.
+ * @param change1 - The first change to compose. Conceptually applies before `change2`.
+ * @param change2 - The second change to compose. Conceptually applies after `change1`.
+ * @param nodeManager - The node manager. Provides information about potential child changes from `change2`.
+ * @param composeChild - The delegate to compose child changes.
+ * @returns The composed child changes (if any) for the node (if any) present in the field in the input context of `change1`.
+ */
+function getComposedChildChanges(
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
+	nodeManager: ComposeNodeManager,
+	composeChild: NodeChangeComposer,
+): NodeId | undefined {
+	const detachId1 = getEffectiveDetachId(change1);
+
+	// We need to determine what the child changes are in change2 for the node (if any) that resides in the field in the input context of change1.
+	const childChangesFromChange2: NodeId | undefined =
+		// If such a node did exist, the changes for it in change2 would come from wherever change1 sends that node.
+		// Note: in both branches of this ternary, we are leveraging the fact querying for changes of a non-existent node safely yields undefined
+		detachId1 === undefined
+			? change1.valueReplace?.src === undefined
+				? change2.childChange
+				: undefined
+			: nodeManager.getNewChangesForBaseDetach(detachId1, 1).value?.nodeChange;
+
+	let composedChildChange: NodeId | undefined;
+	if (change1.childChange !== undefined || childChangesFromChange2 !== undefined) {
+		composedChildChange = composeChild(change1.childChange, childChangesFromChange2);
+	}
+	return composedChildChange;
+}
+
+function makeChangeset(
+	replace: Replace | undefined,
+	nodeDetach: ChangeAtomId | undefined,
+	childChange: NodeId | undefined,
+): OptionalChangeset {
+	const changeset: Mutable<OptionalChangeset> = {};
+	if (replace !== undefined) {
+		changeset.valueReplace = replace;
+	}
+
+	if (nodeDetach !== undefined) {
+		changeset.nodeDetach = nodeDetach;
+	}
+
+	if (childChange !== undefined) {
+		changeset.childChange = childChange;
+	}
+	return changeset;
+}
 
 function replaceReplaceRevisions(
 	replace: Replace | undefined,
@@ -485,112 +402,18 @@ function replaceReplaceRevisions(
 	};
 
 	if (replace.src !== undefined) {
-		updated.src = replaceRegisterRevisions(replace.src, replacer);
+		updated.src = replacer.getUpdatedAtomId(replace.src);
 	}
 
 	return updated;
 }
 
-function replaceRegisterRevisions(
-	register: RegisterId,
-	replacer: RevisionReplacer,
-): RegisterId {
-	return register === "self" ? register : replacer.getUpdatedAtomId(register);
-}
-
-function getComposedReplaceDst(
-	change1: Replace | undefined,
-	change2: OptionalChangeset,
-): ChangeAtomId {
-	const dst1 = change1?.dst;
-	if (change2.valueReplace === undefined) {
-		assert(dst1 !== undefined, 0x8ce /* Both replace replaces should not be undefined */);
-		return getIdAfterMoves(dst1, change2.moves);
+function getEffectiveDetachId(change: OptionalChangeset): ChangeAtomId | undefined {
+	if (change.nodeDetach !== undefined) {
+		return change.nodeDetach;
 	}
 
-	if (
-		dst1 === undefined ||
-		change1?.src === "self" ||
-		(change2.valueReplace.src !== undefined &&
-			areEqualRegisterIds(change2.valueReplace.src, dst1))
-	) {
-		assert(
-			change2.valueReplace !== undefined,
-			0x8cf /* Both replace replaces should not be undefined */,
-		);
-		return change2.valueReplace.dst;
-	} else {
-		return getIdAfterMoves(dst1, change2.moves);
-	}
-}
-
-function getIdAfterMoves(id: ChangeAtomId, moves: readonly Move[]): ChangeAtomId {
-	for (const [src, dst] of moves) {
-		if (areEqualChangeAtomIds(id, src)) {
-			return dst;
-		}
-	}
-	return id;
-}
-
-function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
-	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
-}
-
-function areEqualRegisterIdsOpt(
-	id1: RegisterId | undefined,
-	id2: RegisterId | undefined,
-): boolean {
-	if (id1 === undefined || id2 === undefined) {
-		return id1 === id2;
-	}
-	return areEqualRegisterIds(id1, id2);
-}
-
-function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
-	srcToDst: ChangeAtomIdMap<ChangeAtomId>;
-	dstToSrc: ChangeAtomIdMap<ChangeAtomId>;
-} {
-	const srcToDst: ChangeAtomIdMap<ChangeAtomId> = new Map();
-	const dstToSrc: ChangeAtomIdMap<ChangeAtomId> = new Map();
-	for (const [src, dst] of moves) {
-		setInNestedMap(srcToDst, src.revision, src.localId, dst);
-		setInNestedMap(dstToSrc, dst.revision, dst.localId, src);
-	}
-	return { srcToDst, dstToSrc };
-}
-
-type EffectfulReplace =
-	| {
-			isEmpty: true;
-			src?: ChangeAtomId;
-			dst: ChangeAtomId;
-	  }
-	| {
-			isEmpty: boolean;
-			src: ChangeAtomId;
-			dst: ChangeAtomId;
-	  };
-
-function isReplaceEffectful(replace: Replace): replace is EffectfulReplace {
-	if (replace.src === "self") {
-		return false;
-	}
-	return !replace.isEmpty || replace.src !== undefined;
-}
-
-function getEffectfulDst(replace: Replace | undefined): ChangeAtomId | undefined {
-	return replace === undefined || replace.isEmpty || replace.src === "self"
-		? undefined
-		: replace.dst;
-}
-
-export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
-	if (id === "self") {
-		return id;
-	}
-
-	return taggedAtomId(id, revision);
+	return change.valueReplace?.isEmpty === false ? change.valueReplace.dst : undefined;
 }
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
@@ -599,121 +422,89 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * with new content.
 	 * The content in the field will be moved to the `ids.detach` register.
 	 * The content in the `ids.detach` register will be moved to into the field.
-	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param ids - the "fill" and "detach" ids associated with the change.
+	 * @param isEmpty - whether the field is empty when creating this change
+	 * @param ids - the ids associated with the change.
 	 */
 	set(
-		wasEmpty: boolean,
+		isEmpty: boolean,
 		ids: {
+			/** The ID of the node to attach in the field. */
 			fill: ChangeAtomId;
+			/** The ID to assign to whichever node (if any) is detached from the field when the change applies. */
 			detach: ChangeAtomId;
 		},
 	): OptionalChangeset;
 
 	/**
 	 * Creates a change which clears the field's contents (if any).
-	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param detachId - the ID of the register that existing field content (if any) will be moved to.
+	 * @param isEmpty - whether the field is empty when creating this change
+	 * @param detachId - the ID to assign to whichever node (if any) is detached from the field when the change applies.
 	 */
-	clear(wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset;
+	clear(isEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
-		wasEmpty: boolean,
+		isEmpty: boolean,
 		ids: {
 			fill: ChangeAtomId;
-			// Should be interpreted as a set of an empty field if undefined.
 			detach: ChangeAtomId;
 		},
 	): OptionalChangeset => ({
-		moves: [],
-		childChanges: [],
 		valueReplace: {
-			isEmpty: wasEmpty,
+			isEmpty,
 			src: ids.fill,
 			dst: ids.detach,
 		},
 	}),
 
-	clear: (wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset => ({
-		moves: [],
-		childChanges: [],
+	clear: (isEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset => ({
 		valueReplace: {
-			isEmpty: wasEmpty,
+			isEmpty,
 			dst: detachId,
 		},
 	}),
 
 	buildChildChanges: (changes: Iterable<[number, NodeId]>): OptionalChangeset => {
-		const childChanges: ChildChange[] = Array.from(changes, ([index, childChange]) => {
+		const childChanges: NodeId[] = Array.from(changes, ([index, child]) => {
 			assert(index === 0, 0x404 /* Optional fields only support a single child node */);
-			return ["self", childChange];
+			return child;
 		});
 		assert(
 			childChanges.length <= 1,
 			0xabd /* Optional fields only support a single child node */,
 		);
-		return {
-			moves: [],
-			childChanges,
-		};
+
+		const childChange = childChanges[0];
+		return childChange === undefined ? {} : { childChange };
 	},
 };
 
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): FieldChangeDelta {
-	const delta: Mutable<FieldChangeDelta> = {};
-
+): DeltaFieldChanges {
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
+	const detachId = getEffectiveDetachId(change);
+	const attachId = change.valueReplace?.src;
+	if (!areEqualChangeAtomIdOpts(detachId, attachId)) {
+		markIsANoop = false;
 
-	if (change.valueReplace !== undefined && isReplaceEffectful(change.valueReplace)) {
-		if (!change.valueReplace.isEmpty) {
-			mark.detach = nodeIdFromChangeAtom(change.valueReplace.dst);
+		if (detachId !== undefined) {
+			mark.detach = nodeIdFromChangeAtom(detachId);
 		}
-		if (change.valueReplace.src !== undefined) {
-			mark.attach = nodeIdFromChangeAtom(change.valueReplace.src);
+		if (attachId !== undefined) {
+			mark.attach = nodeIdFromChangeAtom(attachId);
 		}
+	}
+
+	if (change.childChange !== undefined) {
+		mark.fields = deltaFromChild(change.childChange);
 		markIsANoop = false;
 	}
 
-	if (change.moves.length > 0) {
-		delta.rename = change.moves.map(([src, dst]) => ({
-			count: 1,
-			oldId: nodeIdFromChangeAtom(src),
-			newId: nodeIdFromChangeAtom(dst),
-		}));
-	}
-
-	if (change.childChanges.length > 0) {
-		const globals: DeltaDetachedNodeChanges[] = [];
-		for (const [id, childChange] of change.childChanges) {
-			const childDelta = deltaFromChild(childChange);
-			if (id === "self") {
-				mark.fields = childDelta;
-				markIsANoop = false;
-			} else {
-				const fields = childDelta;
-				globals.push({
-					id: { major: id.revision, minor: id.localId },
-					fields,
-				});
-			}
-		}
-
-		if (globals.length > 0) {
-			delta.global = globals;
-		}
-	}
-
-	if (!markIsANoop) {
-		delta.local = { marks: [mark] };
-	}
-
-	return delta;
+	return { marks: markIsANoop ? [] : [mark] };
 }
 
 export const optionalChangeHandler: FieldChangeHandler<
@@ -725,71 +516,63 @@ export const optionalChangeHandler: FieldChangeHandler<
 	editor: optionalFieldEditor,
 
 	intoDelta: optionalFieldIntoDelta,
-	relevantRemovedRoots,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges.length === 0 &&
-		change.moves.length === 0 &&
-		change.valueReplace === undefined,
+		change.childChange === undefined &&
+		change.valueReplace === undefined &&
+		change.nodeDetach === undefined,
 
 	getNestedChanges,
 
-	createEmpty: () => ({ moves: [], childChanges: [] }),
-	getCrossFieldKeys: (_change) => [],
+	createEmpty: () => ({}),
+	getCrossFieldKeys,
+	getDetachCellIds: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
-	// True iff the content of the field changes in some way
-	const isFieldContentChanged =
-		change.valueReplace !== undefined && change.valueReplace.src !== "self";
+function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
+	const keys: CrossFieldKeyRange[] = [];
+	if (change.valueReplace?.src !== undefined) {
+		keys.push({
+			key: { ...change.valueReplace.src, target: NodeMoveType.Attach },
+			count: 1,
+		});
+	}
 
-	// The node that is moved into the field (if any).
-	const nodeMovedIntoField = change.valueReplace?.src;
+	const detachId = getEffectiveDetachId(change);
 
-	return change.childChanges.map(([register, nodeId]) => {
-		// The node is removed in the input context iif register is not self.
-		const inputIndex = register === "self" ? 0 : undefined;
-		const outputIndex =
-			register === "self"
-				? // If the node starts out as not-removed, it is removed in the output context iff the field content is changed
-					isFieldContentChanged
-					? undefined
-					: 0
-				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
-					areEqualRegisterIdsOpt(register, nodeMovedIntoField)
-					? 0
-					: undefined;
-		return [nodeId, inputIndex, outputIndex];
-	});
+	if (detachId !== undefined) {
+		keys.push({ key: { ...detachId, target: NodeMoveType.Detach }, count: 1 });
+	}
+
+	return keys;
 }
 
-function* relevantRemovedRoots(
-	change: OptionalChangeset,
-	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<DeltaDetachedNodeId> {
-	const alreadyYielded = new RegisterMap<boolean>();
-
-	for (const [src] of change.moves) {
-		if (!alreadyYielded.has(src)) {
-			alreadyYielded.set(src, true);
-			yield nodeIdFromChangeAtom(src);
-		}
+function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+	if (change.childChange === undefined) {
+		return [];
 	}
 
-	for (const [id, childChange] of change.childChanges) {
-		// Child changes make the tree they apply to relevant unless that tree existed in the starting context of
-		// of this change.
-		if (id !== "self" && !alreadyYielded.has(id)) {
-			alreadyYielded.set(id, true);
-			yield nodeIdFromChangeAtom(id);
-		}
-		yield* relevantRemovedRootsFromChild(childChange);
+	return [[change.childChange, 0]];
+}
+
+function invertAttachId(
+	attachId: ChangeAtomId,
+	revision: RevisionTag | undefined,
+	isRollback: boolean,
+	detachId: ChangeAtomId | undefined,
+): ChangeAtomId {
+	if (!isRollback) {
+		return makeChangeAtomId(attachId.localId, revision);
 	}
 
-	const selfSrc = change.valueReplace?.src;
-	if (selfSrc !== undefined && selfSrc !== "self" && !alreadyYielded.has(selfSrc)) {
-		yield nodeIdFromChangeAtom(selfSrc);
-	}
+	return detachId ?? attachId;
+}
+
+function isPin(change: OptionalChangeset): boolean {
+	return (
+		change.nodeDetach !== undefined &&
+		areEqualChangeAtomIdOpts(change.nodeDetach, change.valueReplace?.src)
+	);
 }
 
 interface Optional

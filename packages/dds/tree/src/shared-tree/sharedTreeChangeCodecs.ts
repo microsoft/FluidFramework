@@ -99,6 +99,7 @@ export const SharedTreeChangeFormatVersion = strictEnum("SharedTreeChangeFormatV
 	 * Adds support for "no change" constraints.
 	 */
 	v5: 5,
+	vDetachedRoots: "detached-roots|v0.1",
 });
 export type SharedTreeChangeFormatVersion = Values<typeof SharedTreeChangeFormatVersion>;
 
@@ -123,6 +124,13 @@ export const dependenciesForChangeFormat = new Map<
 	[
 		SharedTreeChangeFormatVersion.v5,
 		{ modularChange: ModularChangeFormatVersion.v5, schemaChange: SchemaFormatVersion.v1 },
+	],
+	[
+		SharedTreeChangeFormatVersion.vDetachedRoots,
+		{
+			modularChange: ModularChangeFormatVersion.vDetachedRoots,
+			schemaChange: SchemaFormatVersion.v1,
+		},
 	],
 ]);
 

@@ -23,6 +23,7 @@ import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { makeModularChangeCodecV1 } from "./modularChangeCodecV1.js";
 import { makeModularChangeCodecV2 } from "./modularChangeCodecV2.js";
+import { makeModularChangeCodecV3 } from "./modularChangeCodecV3.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
 export function makeModularChangeCodecFamily(
@@ -65,6 +66,18 @@ export function makeModularChangeCodecFamily(
 						),
 					];
 				}
+				case ModularChangeFormatVersion.vDetachedRoots: {
+					return [
+						version,
+						makeModularChangeCodecV3(
+							fieldKinds,
+							revisionTagCodec,
+							fieldsCodec,
+							codecOptions,
+							chunkCompressionStrategy,
+						),
+					];
+				}
 				default: {
 					fail(0xcc5 /* Unsupported modular change codec version */);
 				}
@@ -97,5 +110,6 @@ export const ModularChangeFormatVersion = strictEnum("ModularChangeFormatVersion
 	 * Adds support for "no change" constraints.
 	 */
 	v5: 5,
+	vDetachedRoots: "detached-roots|v0.1",
 });
 export type ModularChangeFormatVersion = Values<typeof ModularChangeFormatVersion>;

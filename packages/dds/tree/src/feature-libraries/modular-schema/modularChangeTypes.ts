@@ -6,6 +6,7 @@
 import {
 	subtractChangeAtomIds,
 	type ChangeAtomId,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -15,9 +16,13 @@ import { brand, RangeMap, type Brand } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
-import type { CrossFieldTarget } from "./crossFieldQueries.js";
+import type { NodeMoveType } from "./crossFieldQueries.js";
+
+export type RebaseVersion = 1 | 2;
 
 export interface ModularChangeset extends HasFieldChanges {
+	readonly rebaseVersion: RebaseVersion;
+
 	/**
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
 	 * If undefined then this changeset contains no IDs.
@@ -35,12 +40,14 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * Maps from this changeset's canonical ID for a node (see comment on node aliases) to the changes for that node.
 	 */
 	readonly nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
+	readonly rootNodes: RootNodeTable;
 
 	/**
-	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
+	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node,
+	 * or the detach ID, if this node is detached.
 	 */
 	// TODO: Should this be merged with `nodeChanges`?
-	readonly nodeToParent: ChangeAtomIdBTree<FieldId>;
+	readonly nodeToParent: ChangeAtomIdBTree<NodeLocation>;
 
 	/**
 	 * Maps from a node ID to another ID for the same node.
@@ -74,10 +81,31 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
 
-export type CrossFieldKeyTable = RangeMap<CrossFieldKey, FieldId>;
+export interface RootNodeTable {
+	// TODO: Include builds, destroys, refreshers, and field changes
+	readonly oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
+	readonly newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
+	readonly nodeChanges: ChangeAtomIdBTree<NodeId>;
 
-export function newCrossFieldKeyTable(): CrossFieldKeyTable {
-	return new RangeMap(offsetCrossFieldKey, subtractCrossFieldKeys);
+	/**
+	 * Maps from input context detach ID to the field where the node was last attached.
+	 * There should be an entry for every detach ID referenced in `oldToNewId` or `nodeChanges`.
+	 */
+	readonly detachLocations: ChangeAtomIdRangeMap<FieldId>;
+
+	/**
+	 * Maps from the output root ID of a node to the output detach location of that node.
+	 * This is only guaranteed to contain entries for nodes which have an output detach location
+	 * which is different from their location in the input context.
+	 */
+	readonly outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
+}
+
+export type CrossFieldRangeTable<T> = RangeMap<CrossFieldKey, T>;
+export type CrossFieldKeyTable = CrossFieldRangeTable<FieldId>;
+
+export function newCrossFieldRangeTable<V>(): CrossFieldRangeTable<V> {
+	return new RangeMap<CrossFieldKey, V>(offsetCrossFieldKey, subtractCrossFieldKeys);
 }
 
 function offsetCrossFieldKey(key: CrossFieldKey, offset: number): CrossFieldKey {
@@ -97,7 +125,7 @@ function subtractCrossFieldKeys(a: CrossFieldKey, b: CrossFieldKey): number {
 }
 
 export interface CrossFieldKey extends ChangeAtomId {
-	readonly target: CrossFieldTarget;
+	readonly target: NodeMoveType;
 }
 
 export interface CrossFieldKeyRange {
@@ -110,6 +138,24 @@ export interface FieldId {
 	readonly field: FieldKey;
 }
 
+export interface FieldParent {
+	readonly field: FieldId;
+	readonly root?: undefined;
+}
+
+export interface RootParent {
+	readonly field?: undefined;
+	readonly root: ChangeAtomId;
+}
+
+export type NodeLocation = FieldParent | RootParent;
+export interface DetachLocation {
+	readonly field: FieldId;
+	readonly atomId: ChangeAtomId | undefined;
+}
+
+/**
+ */
 export interface NodeExistsConstraint {
 	violated: boolean;
 }
@@ -126,15 +172,16 @@ export interface NoChangeConstraint {
  */
 export interface NodeChangeset extends HasFieldChanges {
 	/** Keeps track of whether node exists constraint has been violated by this change */
-	nodeExistsConstraint?: NodeExistsConstraint;
+	readonly nodeExistsConstraint?: NodeExistsConstraint;
+
 	/** Keeps track of whether node exists constraint will be violated when this change is reverted */
-	nodeExistsConstraintOnRevert?: NodeExistsConstraint;
+	readonly nodeExistsConstraintOnRevert?: NodeExistsConstraint;
 }
 
 export type NodeId = ChangeAtomId;
 
 export interface HasFieldChanges {
-	fieldChanges?: FieldChangeMap;
+	readonly fieldChanges?: FieldChangeMap;
 }
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;

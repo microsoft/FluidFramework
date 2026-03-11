@@ -10,10 +10,10 @@ import type { RebaseRevisionMetadata } from "../feature-libraries/modular-schema
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
  */
-export function getSequentialEdits<TContent, TChangeset>(
-	initialState: FieldStateTree<TContent, TChangeset>,
-): NamedChangeset<TChangeset>[] {
-	const edits: NamedChangeset<TChangeset>[] = [];
+export function getSequentialEdits<TContent, TChangeset, TMeta = undefined>(
+	initialState: FieldStateTree<TContent, TChangeset, TMeta>,
+): NamedChangeset<TChangeset, TMeta>[] {
+	const edits: NamedChangeset<TChangeset, TMeta>[] = [];
 	for (const state of getSequentialStates(initialState)) {
 		if (state.mostRecentEdit !== undefined) {
 			edits.push(state.mostRecentEdit);
@@ -22,12 +22,12 @@ export function getSequentialEdits<TContent, TChangeset>(
 	return edits;
 }
 
-export function getSequentialStates<TContent, TChangeset>(
-	state: FieldStateTree<TContent, TChangeset>,
-): FieldStateTree<TContent, TChangeset>[] {
-	const states: FieldStateTree<TContent, TChangeset>[] = [];
+export function getSequentialStates<TContent, TChangeset, TMeta = undefined>(
+	state: FieldStateTree<TContent, TChangeset, TMeta>,
+): FieldStateTree<TContent, TChangeset, TMeta>[] {
+	const states: FieldStateTree<TContent, TChangeset, TMeta>[] = [];
 	for (
-		let current: FieldStateTree<TContent, TChangeset> | undefined = state;
+		let current: FieldStateTree<TContent, TChangeset, TMeta> | undefined = state;
 		current !== undefined;
 		current = current.parent
 	) {
@@ -85,7 +85,7 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 	): void;
 }
 
-export interface NamedChangeset<TChangeset> {
+export interface NamedChangeset<TChangeset, TMeta = undefined> {
 	changeset: TaggedChange<TChangeset>;
 
 	/**
@@ -98,6 +98,13 @@ export interface NamedChangeset<TChangeset> {
 	 * This is typically used to name test cases.
 	 */
 	description: string;
+
+	/**
+	 * Metadata associated with the changeset.
+	 * Ignored by the test utils.
+	 * Useful for storing extra information for use by the test author.
+	 */
+	meta?: TMeta;
 }
 
 /**
@@ -116,29 +123,29 @@ export interface NamedChangeset<TChangeset> {
  * This file largely contains helpers for selecting nodes of certain types in this tree.
  * In order to use them with a particular field, that field must have an implementation of {@link ChildStateGenerator}.
  */
-export interface FieldStateTree<TContent, TChangeset> {
+export interface FieldStateTree<TContent, TChangeset, TMeta = undefined> {
 	content: TContent;
-	mostRecentEdit?: NamedChangeset<TChangeset>;
-	parent?: FieldStateTree<TContent, TChangeset>;
+	mostRecentEdit?: NamedChangeset<TChangeset, TMeta>;
+	parent?: FieldStateTree<TContent, TChangeset, TMeta>;
 }
 
 /**
  * Given a particular state in a {@link FieldStateTree}, generates possible child states, i.e. states
  * which can be reached by applying a single valid change.
  */
-export type ChildStateGenerator<TContent, TChangeset> = (
-	state: FieldStateTree<TContent, TChangeset>,
+export type ChildStateGenerator<TContent, TChangeset, TMeta = undefined> = (
+	state: FieldStateTree<TContent, TChangeset, TMeta>,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
-) => Iterable<FieldStateTree<TContent, TChangeset>>;
+	mintIntention: (count?: number) => number,
+) => Iterable<FieldStateTree<TContent, TChangeset, TMeta>>;
 
-function* depthFirstWalk<TContent, TChangeset>(
-	initialState: FieldStateTree<TContent, TChangeset>,
-	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
+function* depthFirstWalk<TContent, TChangeset, TMeta>(
+	initialState: FieldStateTree<TContent, TChangeset, TMeta>,
+	generateChildStates: ChildStateGenerator<TContent, TChangeset, TMeta>,
 	depth: number,
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
-): Iterable<FieldStateTree<TContent, TChangeset>> {
+): Iterable<FieldStateTree<TContent, TChangeset, TMeta>> {
 	yield initialState;
 	if (depth > 0) {
 		for (const childState of generateChildStates(
@@ -157,22 +164,26 @@ function* depthFirstWalk<TContent, TChangeset>(
 	}
 }
 
-export function makeIntentionMinter(): () => number {
+export function makeIntentionMinter(): (count?: number) => number {
 	let intent = 0;
-	return () => intent++;
+	return (count: number = 1) => {
+		const result = intent;
+		intent += count;
+		return result;
+	};
 }
 
 /**
  * Generates all possible sequences of edits of a fixed length.
  * Revision tags will be prefixed with the provided `tagPrefix`.
  */
-export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
-	initialState: FieldStateTree<TContent, TChangeset>,
-	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
+export function* generatePossibleSequenceOfEdits<TContent, TChangeset, TMeta = undefined>(
+	initialState: FieldStateTree<TContent, TChangeset, TMeta>,
+	generateChildStates: ChildStateGenerator<TContent, TChangeset, TMeta>,
 	numberOfEdits: number,
 	tagPrefix: string,
-	intentionMinter?: () => number,
-): Iterable<NamedChangeset<TChangeset>[]> {
+	intentionMinter?: (count?: number) => number,
+): Iterable<NamedChangeset<TChangeset, TMeta>[]> {
 	for (const state of depthFirstWalk(
 		initialState,
 		generateChildStates,
@@ -180,9 +191,9 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 		(intention: number) => `${tagPrefix}${intention}` as unknown as RevisionTag,
 		intentionMinter ?? makeIntentionMinter(),
 	)) {
-		const edits: NamedChangeset<TChangeset>[] = [];
+		const edits: NamedChangeset<TChangeset, TMeta>[] = [];
 		for (
-			let current: FieldStateTree<TContent, TChangeset> | undefined = state;
+			let current: FieldStateTree<TContent, TChangeset, TMeta> | undefined = state;
 			current?.mostRecentEdit !== undefined;
 			current = current.parent
 		) {

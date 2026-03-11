@@ -3,42 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, hasSingle } from "../../util/index.js";
-import {
-	type CrossFieldManager,
-	CrossFieldTarget,
-	type NodeId,
-} from "../modular-schema/index.js";
+import type { ChangeAtomId, RevisionTag } from "../../core/index.js";
+import type { IdAllocator, Mutable } from "../../util/index.js";
+import type { DetachedNodeEntry, InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
+	type Attach,
 	type CellId,
 	type CellMark,
 	type Changeset,
 	type Detach,
 	type Mark,
-	type MarkEffect,
 	type MarkList,
-	type MoveIn,
-	type MoveOut,
 	type NoopMark,
 	NoopMarkType,
-	type Remove,
 	type Rename,
 } from "./types.js";
 import {
-	extractMarkEffect,
-	getDetachOutputCellId,
-	getEndpoint,
+	areEqualCellIds,
+	getAttachedRootId,
 	getInputCellId,
 	getOutputCellId,
-	isAttach,
-	isDetach,
 	isImpactful,
-	normalizeCellRename,
 	splitMark,
 	withNodeChange,
 } from "./utils.js";
@@ -60,20 +49,15 @@ export function invert(
 	isRollback: boolean,
 	genId: IdAllocator,
 	revision: RevisionTag | undefined,
-	crossFieldManager: CrossFieldManager,
+	crossFieldManager: InvertNodeManager,
 ): Changeset {
-	return invertMarkList(
-		change,
-		isRollback,
-		crossFieldManager as CrossFieldManager<NodeId>,
-		revision,
-	);
+	return invertMarkList(change, isRollback, crossFieldManager, revision);
 }
 
 function invertMarkList(
 	markList: MarkList,
 	isRollback: boolean,
-	crossFieldManager: CrossFieldManager<NodeId>,
+	crossFieldManager: InvertNodeManager,
 	revision: RevisionTag | undefined,
 ): MarkList {
 	const inverseMarkList = new MarkListFactory();
@@ -89,7 +73,7 @@ function invertMarkList(
 function invertMark(
 	mark: Mark,
 	isRollback: boolean,
-	crossFieldManager: CrossFieldManager<NodeId>,
+	crossFieldManager: InvertNodeManager,
 	revision: RevisionTag | undefined,
 ): Mark[] {
 	if (!isImpactful(mark)) {
@@ -104,204 +88,52 @@ function invertMark(
 		case "Rename": {
 			const inputId = getInputCellId(mark);
 			assert(inputId !== undefined, 0x9f5 /* Rename mark must have cell ID */);
-			const inverse: Mutable<CellMark<Rename>> = {
-				type: "Rename",
-				count: mark.count,
-				cellId: mark.idOverride,
-				// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
-				// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
-				// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
-				// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
-				idOverride: isRollback ? inputId : { localId: inputId.localId },
-			};
-			return [withNodeChange(inverse, mark.changes)];
+
+			// In older client versions, the ID of a detached root was the same as the ID of the cell it was last detached from.
+			// To preserve compatibility with those versions, we must make sure that we do not rename the cell if we are not also
+			// renaming the associated detached root, if there is one.
+			if (isRollback) {
+				// A rollback inverse inverts any associated root rename, so we should also invert the cell rename.
+				const inverse: Mutable<CellMark<Rename>> = {
+					type: "Rename",
+					count: mark.count,
+					cellId: mark.idOverride,
+					// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
+					// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
+					// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
+					// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
+					idOverride: inputId,
+				};
+				return [withNodeChange(inverse, mark.changes)];
+			} else {
+				// An undo does not invert root renames, so we should not invert cell renames.
+				return [invertNodeChangeOrSkip(mark.count, mark.changes, mark.idOverride)];
+			}
 		}
-		case "Remove": {
+		case "Detach": {
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const outputId = getOutputCellId(mark);
 			const inputId = getInputCellId(mark);
-			let inverse: Mutable<Mark>;
-			if (inputId === undefined) {
-				inverse = {
-					type: "Insert",
-					id: mark.id,
-					cellId: outputId,
-					count: mark.count,
-					revision,
-				};
-			} else {
-				inverse = {
-					type: "Remove",
-					id: mark.id,
-					cellId: outputId,
-					count: mark.count,
-					revision,
-				};
-				if (isRollback) {
-					inverse.idOverride = inputId;
-				}
-			}
-			return [withNodeChange(inverse, mark.changes)];
-		}
-		case "Insert": {
-			const inputId = getInputCellId(mark);
-			assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
-			const removeMark: Mutable<CellMark<Remove>> = {
-				type: "Remove",
-				count: mark.count,
-				id: inputId.localId,
-				revision,
-			};
-
-			if (isRollback) {
-				removeMark.idOverride = inputId;
-			}
-
-			const inverse = withNodeChange(removeMark, mark.changes);
-			return [inverse];
-		}
-		case "MoveOut": {
-			if (mark.changes !== undefined) {
-				assert(mark.count === 1, 0x6ed /* Mark with changes can only target a single cell */);
-
-				const endpoint = getEndpoint(mark);
-				crossFieldManager.set(
-					CrossFieldTarget.Destination,
-					endpoint.revision,
-					endpoint.localId,
-					mark.count,
-					mark.changes,
-					true,
-				);
-			}
-
-			const cellId = getDetachOutputCellId(mark) ?? {
-				revision: mark.revision ?? fail(0xb2a /* Revision must be defined */),
-				localId: mark.id,
-			};
-
-			const moveIn: MoveIn = {
-				type: "MoveIn",
-				id: mark.id,
-				revision,
-			};
-
-			if (mark.finalEndpoint !== undefined) {
-				moveIn.finalEndpoint = {
-					localId: mark.finalEndpoint.localId,
-					revision,
-				};
-			}
-			let effect: MarkEffect = moveIn;
-			const inputId = getInputCellId(mark);
-			if (inputId !== undefined) {
-				const detach: Mutable<Detach> = {
-					type: "Remove",
-					id: mark.id,
-					revision,
-				};
-				if (isRollback) {
-					detach.idOverride = inputId;
-				}
-				effect = {
-					type: "AttachAndDetach",
-					attach: moveIn,
-					detach,
-				};
-			}
-			return [{ ...effect, count: mark.count, cellId }];
-		}
-		case "MoveIn": {
-			const inputId = getInputCellId(mark);
-			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
-			const invertedMark: Mutable<CellMark<MoveOut>> = {
-				type: "MoveOut",
-				id: mark.id,
-				count: mark.count,
-				revision,
-			};
-
-			if (isRollback) {
-				invertedMark.idOverride = inputId;
-			}
-
-			if (mark.finalEndpoint) {
-				invertedMark.finalEndpoint = {
-					localId: mark.finalEndpoint.localId,
-					revision,
-				};
-			}
-			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
-		}
-		case "AttachAndDetach": {
-			const attach: Mark = {
-				count: mark.count,
-				cellId: mark.cellId,
-				...mark.attach,
-			};
-			const idAfterAttach = getOutputCellId(attach);
-
-			// We put `mark.changes` on the detach so that if it is a move source
-			// the changes can be sent to the endpoint.
-			const detach: Mark = {
-				count: mark.count,
-				cellId: idAfterAttach,
-				changes: mark.changes,
-				...mark.detach,
-			};
-			const attachInverses = invertMark(attach, isRollback, crossFieldManager, revision);
-			const detachInverses = invertMark(detach, isRollback, crossFieldManager, revision);
-
-			if (detachInverses.length === 0) {
-				return attachInverses;
-			}
-
-			assert(
-				hasSingle(detachInverses),
-				0x80d /* Only expected MoveIn marks to be split when inverting */,
+			assert(inputId === undefined, "Unexpected detach of detached node");
+			const attachId = { revision: isRollback ? mark.revision : revision, localId: mark.id };
+			crossFieldManager.invertDetach(
+				{ revision: mark.revision, localId: mark.id },
+				mark.count,
+				mark.changes,
+				attachId,
 			);
 
-			let detachInverse = detachInverses[0];
-			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
-
-			const inverses: Mark[] = [];
-			for (const attachInverse of attachInverses) {
-				let detachInverseCurr: Mark = detachInverse;
-				if (attachInverse.count !== detachInverse.count) {
-					[detachInverseCurr, detachInverse] = splitMark(detachInverse, attachInverse.count);
-				}
-
-				if (attachInverse.type === NoopMarkType) {
-					if (attachInverse.changes !== undefined) {
-						assert(
-							detachInverseCurr.changes === undefined,
-							0x80f /* Unexpected node changes */,
-						);
-						detachInverseCurr.changes = attachInverse.changes;
-					}
-					inverses.push(detachInverseCurr);
-					continue;
-				}
-				assert(isDetach(attachInverse), 0x810 /* Inverse of an attach should be a detach */);
-				assert(detachInverseCurr.cellId !== undefined, 0x9f6 /* Expected empty cell */);
-				const inverted = normalizeCellRename(
-					detachInverseCurr.cellId,
-					attachInverse.count,
-					extractMarkEffect(detachInverseCurr),
-					extractMarkEffect(attachInverse),
-				);
-				if (detachInverse.changes !== undefined) {
-					inverted.changes = detachInverse.changes;
-				}
-
-				if (attachInverse.changes !== undefined) {
-					assert(inverted.changes === undefined, 0x811 /* Unexpected node changes */);
-					inverted.changes = attachInverse.changes;
-				}
-				inverses.push(inverted);
-			}
-
-			return inverses;
+			const inverse: Mark = {
+				type: "Attach",
+				id: mark.id,
+				cellId: outputId,
+				count: mark.count,
+				revision: attachId.revision,
+			};
+			return [inverse];
+		}
+		case "Attach": {
+			return invertInsert(mark, revision, crossFieldManager, isRollback);
 		}
 		default: {
 			unreachableCase(type);
@@ -309,30 +141,72 @@ function invertMark(
 	}
 }
 
-function applyMovedChanges(
-	mark: CellMark<MoveOut>,
+function invertInsert(
+	mark: CellMark<Attach>,
 	revision: RevisionTag | undefined,
-	manager: CrossFieldManager<NodeId>,
+	manager: InvertNodeManager,
+	isRollback: boolean,
 ): Mark[] {
-	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
-	const entry = manager.get(CrossFieldTarget.Destination, revision, mark.id, mark.count, true);
+	const entry = manager.invertAttach(getAttachedRootId(mark), mark.count);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
-		const mark1WithChanges =
-			entry.value === undefined
-				? mark1
-				: withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value);
-
-		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
+		return [
+			invertInsertSegment(mark1, revision, isRollback, entry.value),
+			...invertInsert(mark2, revision, manager, isRollback),
+		];
 	}
 
-	if (entry.value !== undefined) {
-		manager.onMoveIn(entry.value);
-		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value)];
+	return [invertInsertSegment(mark, revision, isRollback, entry.value)];
+}
+
+function invertInsertSegment(
+	mark: CellMark<Attach>,
+	revision: RevisionTag | undefined,
+	isRollback: boolean,
+	detachEntry: DetachedNodeEntry | undefined,
+): Mark {
+	const inputId = getInputCellId(mark);
+	assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
+
+	const detachId = invertAttachId(getAttachedRootId(mark), revision, isRollback, detachEntry);
+
+	const removeMark: Mutable<CellMark<Detach>> = {
+		type: "Detach",
+		count: mark.count,
+		id: detachId.localId,
+		revision: detachId.revision,
+	};
+
+	if (isRollback && !areEqualCellIds(inputId, detachId)) {
+		removeMark.cellRename = inputId;
 	}
 
-	return [mark];
+	if (detachEntry?.nodeChange !== undefined) {
+		removeMark.changes = detachEntry.nodeChange;
+	}
+
+	return removeMark;
+}
+
+function invertAttachId(
+	attachId: ChangeAtomId,
+	revision: RevisionTag | undefined,
+	isRollback: boolean,
+	detachEntry: DetachedNodeEntry | undefined,
+): ChangeAtomId {
+	if (!isRollback) {
+		return {
+			revision,
+			localId: attachId.localId,
+		};
+	}
+
+	if (detachEntry?.detachId !== undefined) {
+		return detachEntry.detachId;
+	}
+
+	return attachId;
 }
 
 function invertNodeChangeOrSkip(

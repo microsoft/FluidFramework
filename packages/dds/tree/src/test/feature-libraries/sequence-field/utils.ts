@@ -13,6 +13,7 @@ import {
 	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
+	type DeltaFieldChanges,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -24,15 +25,18 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
+import type {
+	ComposeNodeManager,
+	DetachedNodeEntry,
+	RebaseNodeManager,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 import {
-	addCrossFieldQuery,
-	type CrossFieldManager,
-	type CrossFieldQuerySet,
-	CrossFieldTarget,
-	type FieldChangeDelta,
+	NodeMoveType,
+	setInCrossFieldMap,
+	type InvertNodeManager,
 	type NodeId,
 	type RebaseRevisionMetadata,
-	setInCrossFieldMap,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -62,11 +66,8 @@ import {
 	CellId,
 	Changeset,
 	HasMarkFields,
-	MoveId,
-	type Remove,
 	type Mark,
-	type MoveOut,
-	type MoveIn,
+	Detach,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 import {
@@ -86,6 +87,7 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
+	type RangeQueryResult,
 	brand,
 	fakeIdAllocator,
 	getOrAddEmptyToMap,
@@ -142,8 +144,8 @@ function normalizeMoveIds(change: Changeset): Changeset {
 	const normalSrcAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
 	const normalDstAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
 
-	function normalizeAtom(atom: ChangeAtomId, target: CrossFieldTarget): ChangeAtomId {
-		const normalAtoms = target === CrossFieldTarget.Source ? normalSrcAtoms : normalDstAtoms;
+	function normalizeAtom(atom: ChangeAtomId, target: NodeMoveType): ChangeAtomId {
+		const normalAtoms = target === NodeMoveType.Detach ? normalSrcAtoms : normalDstAtoms;
 		const normal = tryGetFromNestedMap(normalAtoms, atom.revision, atom.localId);
 		if (normal === undefined) {
 			const newId: ChangesetLocalId = brand(idAllocator.allocate());
@@ -169,17 +171,10 @@ function normalizeMoveIds(change: Changeset): Changeset {
 			case NoopMarkType: {
 				return effect;
 			}
-			case "AttachAndDetach": {
-				return {
-					...effect,
-					attach: normalizeEffect(effect.attach),
-					detach: normalizeEffect(effect.detach),
-				};
-			}
-			case "Insert": {
+			case "Attach": {
 				const atom = normalizeAtom(
 					{ revision: effect.revision, localId: effect.id },
-					CrossFieldTarget.Source,
+					NodeMoveType.Detach,
 				);
 				return {
 					...effect,
@@ -187,45 +182,14 @@ function normalizeMoveIds(change: Changeset): Changeset {
 					revision: atom.revision,
 				};
 			}
-			case "MoveIn": {
+			case "Detach": {
 				const effectId = { revision: effect.revision, localId: effect.id };
-				const atom = normalizeAtom(effectId, CrossFieldTarget.Source);
-				const normalized: Mutable<MoveIn> = { ...effect };
-				normalized.finalEndpoint =
-					normalized.finalEndpoint === undefined
-						? normalizeAtom(effectId, CrossFieldTarget.Destination)
-						: normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination);
-				normalized.id = atom.localId;
-				normalized.revision = atom.revision;
-				return normalized as TEffect;
-			}
-			case "MoveOut": {
-				const effectId = { revision: effect.revision, localId: effect.id };
-				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
-				const normalized: Mutable<MoveOut> = { ...effect };
-
+				const atom = normalizeAtom(effectId, NodeMoveType.Attach);
+				const normalized: Mutable<Detach> = { ...effect };
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- TODO: ADO#58522 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
-				if (normalized.idOverride === undefined) {
+				if (normalized.cellRename === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
-					normalized.idOverride = effectId;
-				}
-				normalized.finalEndpoint =
-					normalized.finalEndpoint === undefined
-						? normalizeAtom(effectId, CrossFieldTarget.Source)
-						: normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source);
-				normalized.id = atom.localId;
-				normalized.revision = atom.revision;
-				return normalized as TEffect;
-			}
-			case "Remove": {
-				const effectId = { revision: effect.revision, localId: effect.id };
-				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
-				const normalized: Mutable<Remove> = { ...effect };
-
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- TODO: ADO#58522 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
-				if (normalized.idOverride === undefined) {
-					// Use the idOverride so we don't normalize the output cell ID
-					normalized.idOverride = effectId;
+					normalized.cellRename = effectId;
 				}
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;
@@ -351,11 +315,10 @@ function composePair(
 	metadata: RevisionMetadataSource,
 	idAllocator: IdAllocator,
 ): Changeset {
-	const moveEffects = newCrossFieldTable();
+	const moveEffects = newComposeManager();
 	let composed = compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
-		resetCrossFieldTable(moveEffects);
 		composed = compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 	}
 	return composed;
@@ -387,7 +350,7 @@ export function testRebase(
 
 	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
-	const moveEffects = newCrossFieldTable();
+	const moveEffects = newRebaseManager();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change.change, base.change));
 	let rebasedChange = rebase(
 		change.change,
@@ -398,7 +361,6 @@ export function testRebase(
 		metadata,
 	);
 	if (moveEffects.isInvalidated) {
-		moveEffects.reset();
 		rebasedChange = rebase(
 			change.change,
 			base.change,
@@ -462,12 +424,6 @@ export function rebaseDeepTagged(
 	);
 }
 
-function resetCrossFieldTable(table: CrossFieldTable) {
-	table.isInvalidated = false;
-	table.srcQueries.clear();
-	table.dstQueries.clear();
-}
-
 export function invertDeep(
 	change: TaggedChange<WrappedChange>,
 	revision: RevisionTag | undefined,
@@ -481,7 +437,7 @@ export function testInvert(
 	isRollback = true,
 ): Changeset {
 	deepFreeze(change.change);
-	const table = newCrossFieldTable();
+	const table = newInvertManager();
 	let inverted = invert(
 		change.change,
 		isRollback,
@@ -492,9 +448,6 @@ export function testInvert(
 	);
 
 	if (table.isInvalidated) {
-		table.isInvalidated = false;
-		table.srcQueries.clear();
-		table.dstQueries.clear();
 		inverted = invert(
 			change.change,
 			isRollback,
@@ -512,12 +465,12 @@ export function checkDeltaEquality(actual: Changeset, expected: Changeset): void
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: Changeset): FieldChangeDelta {
+export function toDelta(change: Changeset): DeltaFieldChanges {
 	deepFreeze(change);
 	return sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
 
-export function toDeltaWrapped(change: WrappedChange): FieldChangeDelta {
+export function toDeltaWrapped(change: WrappedChange): DeltaFieldChanges {
 	return ChangesetWrapper.toDelta(change, (c, deltaFromChild) =>
 		sequenceFieldToDelta(c, deltaFromChild),
 	);
@@ -839,74 +792,116 @@ export function inlineRevision(change: Changeset, revision: RevisionTag): Change
 	return sequenceFieldChangeRebaser.replaceRevisions(change, replacer);
 }
 
-interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
-	srcQueries: CrossFieldQuerySet;
-	dstQueries: CrossFieldQuerySet;
-	isInvalidated: boolean;
-	mapSrc: ChangeAtomIdRangeMap<T>;
-	mapDst: ChangeAtomIdRangeMap<T>;
-	reset: () => void;
-}
+function newInvertManager(): TestInvertManager {
+	const manager: TestInvertManager = {
+		...newTestNodeManager(),
 
-function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
-	const dstQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
-	const mapSrc = newChangeAtomIdRangeMap<T>();
-	const mapDst = newChangeAtomIdRangeMap<T>();
-
-	const getMap = (target: CrossFieldTarget): ChangeAtomIdRangeMap<T> =>
-		target === CrossFieldTarget.Source ? mapSrc : mapDst;
-
-	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
-		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
-
-	const table = {
-		srcQueries,
-		dstQueries,
-		isInvalidated: false,
-		mapSrc,
-		mapDst,
-
-		get: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
+		invertDetach(
+			detachId: ChangeAtomId,
 			count: number,
-			addDependency: boolean,
-		) => {
-			if (addDependency) {
-				addCrossFieldQuery(getQueries(target), revision, id, count);
-			}
-			const rangeMap = getMap(target);
-			return rangeMap.getFirst({ revision, localId: id }, count);
-		},
-		set: (
-			target: CrossFieldTarget,
-			revision: RevisionTag | undefined,
-			id: MoveId,
-			count: number,
-			value: T,
-			invalidateDependents: boolean,
-		) => {
-			const queries = getQueries(target);
-			if (
-				invalidateDependents &&
-				queries.getFirst({ revision, localId: id }, count).value !== undefined
-			) {
-				table.isInvalidated = true;
-			}
-			setInCrossFieldMap(getMap(target), revision, id, count, value);
+			nodeChanges: NodeId | undefined,
+		): void {
+			this.isInvalidated = true;
 		},
 
-		onMoveIn: () => {},
-		moveKey: () => {},
-
-		reset: () => {
-			table.isInvalidated = false;
-			table.srcQueries.clear();
-			table.dstQueries.clear();
+		invertAttach(
+			attachId: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<DetachedNodeEntry | undefined> {
+			throw new Error("Function not implemented.");
 		},
 	};
 
-	return table;
+	return manager;
+}
+
+function newComposeManager(): TestComposeManager {
+	const manager: TestComposeManager = {
+		...newTestNodeManager(),
+
+		getNewChangesForBaseDetach(
+			baseDetachId: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<DetachedNodeEntry | undefined> {
+			throw new Error("Not implemented");
+		},
+
+		composeAttachDetach(
+			baseAttachId: ChangeAtomId,
+			newDetachId: ChangeAtomId | undefined,
+			count: number,
+		): void {},
+
+		sendNewChangesToBaseSourceLocation(baseAttachId: ChangeAtomId, newChanges: NodeId): void {
+			setInCrossFieldMap(this.nodeChangeTable, baseAttachId, 1, newChanges);
+			this.isInvalidated = true;
+		},
+
+		composeDetachAttach(baseDetachId, newAttachId, count, preserveRename): void {},
+	};
+
+	return manager;
+}
+
+function newRebaseManager(): TestRebaseManager {
+	const manager: TestRebaseManager = {
+		...newTestNodeManager(),
+
+		getNewChangesForBaseAttach(
+			baseAttachId: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<DetachedNodeEntry | undefined> {
+			throw new Error("Function not implemented.");
+		},
+
+		rebaseOverDetach(
+			baseDetachId: ChangeAtomId,
+			count: number,
+			nodeChange: NodeId | undefined,
+			fieldData: unknown,
+		): void {
+			this.isInvalidated = true;
+		},
+
+		addDetach(id: ChangeAtomId, count: number): void {
+			throw new Error("Function not implemented.");
+		},
+		removeDetach(id: ChangeAtomId, count: number): void {
+			throw new Error("Function not implemented.");
+		},
+
+		doesBaseAttachNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean> {
+			throw new Error("Function not implemented.");
+		},
+
+		getBaseRename(
+			id: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<ChangeAtomId | undefined> {
+			throw new Error("Function not implemented.");
+		},
+
+		getNewRenameForBaseRename(
+			baseRenameTo: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<ChangeAtomId | undefined> {
+			throw new Error("Function not implemented.");
+		},
+	};
+	return manager;
+}
+
+interface TestInvertManager extends InvertNodeManager, TestNodeManager {}
+
+interface TestComposeManager extends ComposeNodeManager, TestNodeManager {}
+
+interface TestRebaseManager extends RebaseNodeManager, TestNodeManager {}
+
+interface TestNodeManager {
+	isInvalidated: boolean;
+	nodeChangeTable: ChangeAtomIdRangeMap<NodeId>;
+}
+
+function newTestNodeManager(): TestNodeManager {
+	return { isInvalidated: false, nodeChangeTable: newChangeAtomIdRangeMap() };
 }

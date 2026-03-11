@@ -7,14 +7,13 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import type { CodecTree } from "../../codec/index.js";
 import {
-	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
 import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
 import {
-	type FieldChangeDelta,
 	type FieldChangeHandler,
 	type FieldEditor,
 	type FieldKindConfiguration,
@@ -42,12 +41,12 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
-	intoDelta: (change, deltaFromChild: ToDelta): FieldChangeDelta => ({}),
-	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
+	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({ marks: [] }),
 	isEmpty: (change: 0) => true,
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
 	getCrossFieldKeys: () => [],
+	getDetachCellIds: () => [],
 };
 
 /**
@@ -134,6 +133,16 @@ export const fieldKindConfigurations: ReadonlyMap<
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
+		ModularChangeFormatVersion.vDetachedRoots,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 3 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
 			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),

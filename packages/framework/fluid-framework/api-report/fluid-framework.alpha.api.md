@@ -1496,6 +1496,7 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
+    readonly enableDetachedRootEditing?: boolean;
     readonly enableSharedBranches?: boolean;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }

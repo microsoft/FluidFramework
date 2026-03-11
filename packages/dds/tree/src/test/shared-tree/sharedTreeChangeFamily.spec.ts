@@ -118,7 +118,8 @@ const sharedTreeFamily = new SharedTreeChangeFamily(
 );
 
 describe("SharedTreeChangeFamily", () => {
-	it("composition composes runs of data changes", () => {
+	// XXX: This test is composing a changeset with itself, which is not legal.
+	it.skip("composition composes runs of data changes", () => {
 		assert.deepEqual(
 			sharedTreeFamily.compose([
 				makeAnonChange(stDataChange1),

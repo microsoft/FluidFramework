@@ -6,7 +6,8 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { FieldKey } from "../../../core/index.js";
-import type { DownPath } from "../../../feature-libraries/index.js";
+
+import type { KeyDownPath } from "./fuzzEditGenerators.js";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -32,7 +33,7 @@ export interface Constraint {
 export interface NodeConstraint {
 	type: "nodeConstraint";
 	/** Undefined when it is the parent of a detached field. */
-	nodePath: DownPath | undefined;
+	nodePath: KeyDownPath | undefined;
 }
 export interface TransactionBoundary {
 	type: "transactionBoundary";
@@ -72,7 +73,7 @@ export interface MergeBranch {
 export interface FieldEdit {
 	type: "fieldEdit";
 	/** The field being edited */
-	parentNodePath: DownPath | undefined;
+	parentNodePath: KeyDownPath | undefined;
 	/** The edit performed on the field */
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 }
@@ -169,7 +170,7 @@ export interface CrossFieldMove extends Move {
 	 * The field to move the content to.
 	 * May be the same as the source field.
 	 */
-	dstParent: DownPath | undefined;
+	dstParent: KeyDownPath | undefined;
 }
 
 export interface SchemaOp {
@@ -184,7 +185,7 @@ export interface Synchronize {
 }
 
 export interface NodeRangePath {
-	firstNode: DownPath;
+	firstNode: KeyDownPath;
 	count: number;
 }
 
@@ -192,7 +193,7 @@ export interface FieldDownPath {
 	/**
 	 * The field's parent node. Undefined when targeting the root field.
 	 */
-	parent: DownPath | undefined;
+	parent: KeyDownPath | undefined;
 	/**
 	 * Key on the parent node corresponding to this field.
 	 */

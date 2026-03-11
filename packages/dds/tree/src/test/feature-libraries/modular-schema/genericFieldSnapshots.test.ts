@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { GenericChangeset } from "../../../feature-libraries/index.js";
+import { newChangeAtomIdTransform } from "../../../core/index.js";
+import {
+	newChangeAtomIdBTree,
+	type GenericChangeset,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -45,8 +49,32 @@ export function testSnapshots(): void {
 					it(name, () => {
 						const encoded = codec.encode(change, {
 							baseContext,
+							getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
+							isAttachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
+							isDetachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
+							getCellIdForMove: (id, count) => ({
+								start: id,
+								length: count,
+								value: undefined,
+							}),
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
+							rootNodeChanges: newChangeAtomIdBTree(),
+							rootRenames: newChangeAtomIdTransform(),
+							decodeRootNodeChange: () => {},
+							decodeRootRename: () => {},
+							decodeMoveAndDetach: () => {},
+							generateId: () => ({
+								localId: brand(0),
+							}),
 						});
 						takeJsonSnapshot(encoded);
 					});

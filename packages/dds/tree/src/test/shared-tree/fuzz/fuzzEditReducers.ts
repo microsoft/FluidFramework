@@ -12,7 +12,6 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import type { Revertible } from "../../../core/index.js";
-import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import { getInnerNode } from "../../../simple-tree/index.js";
 import {
@@ -32,6 +31,7 @@ import {
 	type FuzzTransactionView,
 	type FuzzView,
 	getAllowableNodeTypes,
+	type KeyDownPath,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
@@ -42,6 +42,8 @@ import {
 	nodeSchemaFromTreeSchema,
 	type GUIDNode,
 	convertToFuzzView,
+	getStaticsForTree,
+	type TreePackageStatics,
 } from "./fuzzUtils.js";
 import {
 	type FieldEdit,
@@ -70,7 +72,11 @@ const syncFuzzReducer = combineReducers<
 	treeEdit: (state, { edit, forkedViewIndex }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
-				applyFieldEdit(viewFromState(state, state.client, forkedViewIndex), edit);
+				applyFieldEdit(
+					viewFromState(state, state.client, forkedViewIndex),
+					edit,
+					getStaticsForTree(state.client.channel),
+				);
 				break;
 			}
 			default: {
@@ -173,7 +179,10 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): vo
 	const nodeTypes = getAllowableNodeTypes(state);
 	nodeTypes.push(operation.contents.type);
 	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
-	const newSchema = createTreeViewSchema(leafNodeSchemas);
+	const newSchema = createTreeViewSchema(
+		leafNodeSchemas,
+		getStaticsForTree(state.client.channel).newSchemaFactory,
+	);
 
 	// Because we need the view for a schema change, and we can only have one view at a time,
 	// we must dispose of the client's view early.
@@ -256,12 +265,16 @@ export function applyForkMergeOperation(
  * Assumes tree is using the fuzzSchema.
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
-export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
+export function applyFieldEdit(
+	tree: FuzzView,
+	fieldEdit: FieldEdit,
+	statics: TreePackageStatics,
+): void {
 	const parentNode = fieldEdit.parentNodePath
 		? (navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root)
 		: tree.root;
 
-	if (!Tree.is(parentNode, tree.currentSchema)) {
+	if (!statics.nodeApi.is(parentNode, tree.currentSchema)) {
 		assert(fieldEdit.change.type === "optional");
 		switch (fieldEdit.change.edit.type) {
 			case "set": {
@@ -278,7 +291,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 		}
 		return;
 	}
-	assert(Tree.is(parentNode, tree.currentSchema));
+	assert(statics.nodeApi.is(parentNode, tree.currentSchema));
 
 	switch (fieldEdit.change.type) {
 		case "sequence": {
@@ -464,22 +477,22 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint): v
 	}
 }
 
-function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
+function navigateToNode(tree: FuzzView, path: KeyDownPath): TreeNode {
 	let currentNode = tree.root as TreeNode;
 	for (const pathStep of path) {
-		switch (pathStep.field) {
+		if (typeof pathStep === "number") {
+			currentNode = (currentNode as ArrayChildren).at(pathStep) as TreeNode;
+			break;
+		}
+
+		switch (pathStep) {
 			case "rootFieldKey": {
-				break;
-			}
-			case "": {
-				assert(pathStep.index !== undefined);
-				currentNode = (currentNode as ArrayChildren).at(pathStep.index) as TreeNode;
 				break;
 			}
 			case "arrayChildren": {
 				const arrayChildren =
 					(currentNode as FuzzNode).arrayChildren ??
-					assert.fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep}`);
 
 				currentNode = arrayChildren;
 				break;
@@ -488,19 +501,19 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 			case "optionalChild": {
 				const optionalChild =
 					(currentNode as FuzzNode).optionalChild ??
-					assert.fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep}`);
 				currentNode = optionalChild as FuzzNode;
 				break;
 			}
 			case "requiredChild": {
 				const requiredChild =
 					(currentNode as FuzzNode).requiredChild ??
-					assert.fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep}`);
 				currentNode = requiredChild as FuzzNode;
 				break;
 			}
 			default: {
-				assert.fail(`Unexpected field type: ${pathStep.field}`);
+				assert.fail(`Unexpected field type: ${pathStep}`);
 			}
 		}
 	}
