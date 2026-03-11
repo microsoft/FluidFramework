@@ -80,6 +80,8 @@ It can optionally return a status object indicating success or failure, and incl
 const result = view.runTransaction(() => {
     view.root.name = "Alice";
     view.root.score = 100;
+    // If something goes wrong, we can roll back this transaction by returning an object with rollback: true
+    // return { rollback: true };
 });
 
 if (result.success) {
@@ -95,7 +97,7 @@ if (result.success) {
 const result = view.runTransaction(() => {
     const oldName = view.root.name;
     view.root.name = "Bob";
-    return { rollback: false, value: oldName };
+    return { value: oldName };
 });
 
 if (result.success) {
@@ -186,7 +188,6 @@ view.runTransaction(
 view.runTransaction(() => {
     view.root.content = "updated";
     return {
-        rollback: false,
         // preconditionsOnRevert only applies if the transaction is reverted (e.g. via an undo operation).
         // Here we add a `nodeInDocument` constraint which will ensure that the changes made by this transaction can only be reverted if view.root is still in the document at the time of revert.
         preconditionsOnRevert: [
