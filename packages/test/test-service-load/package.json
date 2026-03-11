@@ -40,7 +40,6 @@
 		"start:mini": "node ./dist/main.js  --profile mini",
 		"start:odsp": "node ./dist/main.js --driver odsp",
 		"start:odspdf": "node ./dist/main.js --driver odsp --driverEndpoint odsp-df",
-		"start:reauth": "node ./dist/main.js --profile mini --browserAuth",
 		"start:t9s": "start-server-and-test start:tinylicious:test 7070 start:t9s:run",
 		"start:t9s:run": "node ./dist/main.js --driver tinylicious ",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",

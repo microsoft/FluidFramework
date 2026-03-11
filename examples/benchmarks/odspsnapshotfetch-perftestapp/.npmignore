@@ -1,8 +1,0 @@
-nyc
-*.log
-**/*.tsbuildinfo
-src/test
-dist/test
-lib/test
-webpack
-**/_api-extractor-temp/**
