@@ -233,6 +233,60 @@ describe("withDefault", () => {
 				assert(obj2.item !== undefined);
 				assert.equal(obj2.item.id, 2);
 			});
+
+			it("insertable object literal can be used in place of a node instance", () => {
+				const NestedSchema = factory.objectAlpha("NestedInsertable", {
+					x: factory.number,
+					y: factory.number,
+				});
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					position: SchemaFactoryAlpha.withDefault(factory.optional(NestedSchema), () => ({
+						x: 0,
+						y: 0,
+					})),
+				});
+
+				const obj1 = new TestSchema({});
+				assert(obj1.position !== undefined);
+				assert.equal(obj1.position.x, 0);
+				assert.equal(obj1.position.y, 0);
+
+				// Node instances work too
+				const obj2 = new TestSchema({ position: new NestedSchema({ x: 5, y: 10 }) });
+				assert.equal(obj2.position?.x, 5);
+			});
+
+			it("insertable array literal can be used in place of an array node instance", () => {
+				const ArraySchema = factory.arrayAlpha("InsertableNumberArray", factory.number);
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					numbers: SchemaFactoryAlpha.withDefault(factory.optional(ArraySchema), () => [
+						1, 2, 3,
+					]),
+				});
+
+				const obj1 = new TestSchema({});
+				assert(obj1.numbers !== undefined);
+				assert.equal(obj1.numbers.length, 3);
+				assert.equal(obj1.numbers[0], 1);
+			});
+
+			it("insertable map object can be used in place of a map node instance", () => {
+				const MapSchema = factory.mapAlpha("InsertableStringMap", factory.string);
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					labels: SchemaFactoryAlpha.withDefault(factory.optional(MapSchema), () => ({
+						a: "alpha",
+						b: "beta",
+					})),
+				});
+
+				const obj1 = new TestSchema({});
+				assert(obj1.labels !== undefined);
+				assert.equal(obj1.labels.size, 2);
+				assert.equal(obj1.labels.get("a"), "alpha");
+			});
 		});
 	});
 
@@ -364,6 +418,57 @@ describe("withDefault", () => {
 				});
 				assert.equal(obj2.labels.size, 2);
 				assert.equal(obj2.labels.get("a"), "alpha");
+			});
+
+			it("insertable object literal can be used in place of a node instance", () => {
+				const NestedSchema = factory.objectAlpha("NestedInsertableReq", {
+					x: factory.number,
+					y: factory.number,
+				});
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					position: SchemaFactoryAlpha.withDefault(factory.required(NestedSchema), () => ({
+						x: 0,
+						y: 0,
+					})),
+				});
+
+				const obj1 = new TestSchema({ position: undefined });
+				assert.equal(obj1.position.x, 0);
+				assert.equal(obj1.position.y, 0);
+
+				// Node instances work too
+				const obj2 = new TestSchema({ position: new NestedSchema({ x: 5, y: 10 }) });
+				assert.equal(obj2.position.x, 5);
+			});
+
+			it("insertable array literal can be used in place of an array node instance", () => {
+				const ArraySchema = factory.arrayAlpha("InsertableNumberArrayReq", factory.number);
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					numbers: SchemaFactoryAlpha.withDefault(factory.required(ArraySchema), () => [
+						1, 2, 3,
+					]),
+				});
+
+				const obj1 = new TestSchema({ numbers: undefined });
+				assert.equal(obj1.numbers.length, 3);
+				assert.equal(obj1.numbers[0], 1);
+			});
+
+			it("insertable map object can be used in place of a map node instance", () => {
+				const MapSchema = factory.mapAlpha("InsertableStringMapReq", factory.string);
+
+				const TestSchema = factory.objectAlpha("TestObject", {
+					labels: SchemaFactoryAlpha.withDefault(factory.required(MapSchema), () => ({
+						a: "alpha",
+						b: "beta",
+					})),
+				});
+
+				const obj1 = new TestSchema({ labels: undefined });
+				assert.equal(obj1.labels.size, 2);
+				assert.equal(obj1.labels.get("a"), "alpha");
 			});
 		});
 	});

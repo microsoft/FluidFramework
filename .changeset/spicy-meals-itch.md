@@ -3,13 +3,11 @@
 "@fluidframework/tree": minor
 "__section": feature
 ---
-Adds `withDefault` API to allow defining default values for required and optional fields
+Adds withDefault API to allow defining default values for required and optional fields
 
 The `withDefault` API is now available on `SchemaFactoryAlpha`. It allows you to specify default values for fields,
 making them optional in constructors even when the field is marked as required in the schema.
 This provides a better developer experience by reducing boilerplate when creating objects.
-
-## Usage
 
 The `withDefault` API wraps a field schema and defines a default value to use when the field is not provided during
 construction. The default value must be of an allowed type of the field. You can provide defaults in two ways:
@@ -19,7 +17,7 @@ construction. The default value must be of an allowed type of the field. You can
 
 Defaults are evaluated eagerly during node construction.
 
-### Required fields with defaults
+#### Required fields with defaults
 
 ```typescript
 import { SchemaFactoryAlpha, TreeAlpha } from "@fluidframework/tree/alpha";
@@ -44,7 +42,7 @@ const person = new Person({ name: "Alice" });
 const admin = new Person({ name: "Bob", age: 30, role: "admin" });
 ```
 
-### Optional fields with custom defaults
+#### Optional fields with custom defaults
 
 Optional fields (`sf.optional`) already default to `undefined`, but `withDefault` allows you to specify a different
 default value:
@@ -65,7 +63,7 @@ const customConfig = new Config({ timeout: 10000 });
 // customConfig.retries === 3
 ```
 
-### Value defaults vs function defaults
+#### Value defaults vs function defaults
 
 When you provide a value directly, the data is copied for each use, ensuring each instance is independent:
 
@@ -106,13 +104,28 @@ class Article extends sf.object("Article", {
 }) {}
 ```
 
-#### Dynamic defaults
+Insertable object literals, arrays, and map objects can be used in place of node instances in both static defaults
+and generator functions:
+
+```typescript
+class Article extends sf.object("Article", {
+	title: sf.required(sf.string),
+
+	// plain object literal instead of new Metadata(...)
+	metadata: sf.withDefault(sf.optional(Metadata), () => ({ tags: [], version: 1 })),
+
+	// plain array instead of new ArrayNode(...)
+	authors: sf.withDefault(sf.optional(sf.array(sf.string)), () => ["anonymous"]),
+}) {}
+```
+
+##### Dynamic defaults
 
 Generator functions are called each time a new node is created, enabling dynamic defaults:
 
 ```typescript
 class Document extends sf.object("Document", {
-	id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),=
+	id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),
 	title: sf.required(sf.string),
 }) {}
 
@@ -133,7 +146,7 @@ class GameState extends sf.object("GameState", {
 }) {}
 ```
 
-### Recursive types
+#### Recursive types
 
 `withDefaultRecursive` is available for use inside recursive schemas. Use `objectRecursiveAlpha` (rather than
 `objectRecursive`) when defining recursive schemas with defaults, as it correctly makes defaulted fields optional in
@@ -158,7 +171,7 @@ const root = new TreeNode({ value: 0, label: "root", child: leaf });
 
 > **Warning:** Do not use the recursive type itself as a default value — this causes infinite recursion at construction
 > time, since creating the default value would trigger the same default again.
-> Instead, use a primitive or a separate node type as the default:
+> Instead, use a primitive or a separate non-recursive node type as the default:
 >
 > ```typescript
 > const DefaultTag = sf.objectAlpha("Tag", { id: sf.number });
@@ -174,17 +187,12 @@ const root = new TreeNode({ value: 0, label: "root", child: leaf });
 > // child: SchemaFactoryAlpha.withDefaultRecursive(sf.optionalRecursive([() => TreeNode]), () => new TreeNode({ value: 0 }))
 > ```
 
-### Type Safety
+#### Type safety
 
 The default value (or the value returned by a generator function) must be of an allowed type for the field. TypeScript
 enforces this at compile time:
 
 ```typescript
-class Config extends sf.object("Config", {
-	port: sf.optional(sf.number),
-	name: sf.optional(sf.string),
-}) {}
-
 // ✅ Valid: number default for number field
 sf.withDefault(sf.optional(sf.number), 8080);
 
