@@ -350,11 +350,3 @@ function subtractIntegers<K extends number>(a: K, b: K): number {
 function defaultValueOffsetFn<T>(value: T, offset: number): T {
 	return value;
 }
-
-export function areAdjacentIntegerRanges(
-	firstStart: number,
-	firstLength: number,
-	secondStart: number,
-): boolean {
-	return firstStart + firstLength === secondStart;
-}
