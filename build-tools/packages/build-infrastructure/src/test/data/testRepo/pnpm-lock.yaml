@@ -274,7 +274,7 @@ packages:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
   js-yaml@3.14.2:
-    resolution: {integrity: sha512-aSxBFh2VDgOBMOzcqVEGMGSjBGFDxAnAfSsEEuhGPOB24VUz7RRGXB18fUfKJGRe4Q9sXMIpOGKBsDYBM4bUXg==}
+    resolution: {integrity: sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==}
     hasBin: true
 
   jsonfile@4.0.0:
