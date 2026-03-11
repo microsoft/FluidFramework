@@ -150,7 +150,8 @@
 			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies. This helps reduce lockfile churn since the deps release very frequently.",
 			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version",
 			"@types/minimatch: @types/glob@7.x uses minimatch.IOptions and minimatch.IMinimatch interfaces. Force @types/minimatch@5 which includes these legacy type definitions.",
-			"mdast-util-gfm-footnote: mdast-util-gfm@3.1.0 has a type definition bug where it imports ToMarkdownOptions from mdast-util-gfm-footnote, but version 2.0.0 doesn't export it. Override to 2.1.0 which includes the missing export."
+			"mdast-util-gfm-footnote: mdast-util-gfm@3.1.0 has a type definition bug where it imports ToMarkdownOptions from mdast-util-gfm-footnote, but version 2.0.0 doesn't export it. Override to 2.1.0 which includes the missing export.",
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions."
 		],
 		"overrides": {
 			"@types/glob>@types/minimatch": "~5.1.2",
@@ -159,9 +160,10 @@
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"mdast-util-gfm-footnote": "^2.1.0",
+			"jws": "^3.2.3",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
-			"qs": "^6.14.0",
+			"qs": "^6.15.0",
 			"sharp": "^0.34.5"
 		},
 		"updateConfig": {

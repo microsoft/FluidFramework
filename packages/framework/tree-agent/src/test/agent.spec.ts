@@ -714,6 +714,24 @@ describe("createTreeAgent", () => {
 		agent.dispose();
 	});
 
+	it("terminates if the model never returns an assistant response", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		// Create many valid tool_call responses. The agent should terminate after exceeding the edit limit.
+		const badResponses = Array.from({ length: 20 }, (_, i) => ({
+			role: "tool_call" as const,
+			toolCallId: `c${i}`,
+			toolName: editToolName,
+			toolArgs: { js: `context.root = "Edit ${i}";` },
+		}));
+		const model = createMockInvokeModel(badResponses);
+		const agent = createTreeAgent(model, view, { maximumSequentialEdits: 2 });
+		const result = await agent.message("Do something");
+		assert(result.includes("failed to produce a response"));
+		assert.equal(view.root, "Initial");
+		agent.dispose();
+	});
+
 	it("merges on success, rolls back on failure", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
