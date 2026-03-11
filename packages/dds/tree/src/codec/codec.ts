@@ -366,6 +366,8 @@ export const unitCodec: IJsonCodec<
 /**
  * Wraps a codec with JSON schema validation for its encoded type.
  * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
+ * @remarks
+ * Eventually all codecs should use the same pattern implemented by ClientVersionDispatchingCodecBuilder, resulting in that having the only use of this API.
  */
 export function withSchemaValidation<
 	TInMemoryFormat,
@@ -386,16 +388,15 @@ export function withSchemaValidation<
 		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac0 /* Encoded schema should validate */);
+				fail(0xac0 /* Encoded data should validate */);
 			}
 			return encoded;
 		},
 		decode: (encoded: TValidate, context: TContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac1 /* Encoded schema should validate */);
+				fail(0xac1 /* Data being decoded should validate */);
 			}
-			// TODO: would be nice to provide a more specific validate type to the inner codec than the outer one gets.
-			return codec.decode(encoded, context) as unknown as TInMemoryFormat;
+			return codec.decode(encoded, context);
 		},
 	};
 }

@@ -4,7 +4,7 @@
  */
 
 import type { ContainerDevtoolsFeatureFlags } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { createContext, useContext } from "react";
 
 /**
  * Interface for {@link ContainerFeatureFlagContext} data
@@ -19,7 +19,7 @@ export interface ContainerFeatureFlagContextData {
 /**
  * Creates the context for container feature flags
  */
-export const ContainerFeatureFlagContext = React.createContext<
+export const ContainerFeatureFlagContext = createContext<
 	ContainerFeatureFlagContextData | undefined
 >(undefined);
 
@@ -27,7 +27,7 @@ export const ContainerFeatureFlagContext = React.createContext<
  * Used to get the context or throw an Error if not found
  */
 export function useContainerFeaturesContext(): ContainerFeatureFlagContextData {
-	const context = React.useContext(ContainerFeatureFlagContext);
+	const context = useContext(ContainerFeatureFlagContext);
 	if (context === undefined) {
 		throw new Error("ContainerFeatureFlagContext not found");
 	}

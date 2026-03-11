@@ -22,6 +22,7 @@ export type {
 	TreeBranch,
 	TreeBranchAlpha,
 	TreeBranchEvents,
+	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
@@ -37,10 +38,19 @@ export {
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+} from "./schemaFactoryAlpha.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
+export type {
+	ErasedSchema,
+	ErasedNode,
+	ErasedSchemaSubclassable,
 } from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
@@ -104,6 +114,8 @@ export type {
 	AllowedTypesFullFromMixedUnsafe,
 	UnannotateAllowedTypesListUnsafe,
 	AnnotateAllowedTypesListUnsafe,
+	FieldHasDefaultAlphaUnsafe,
+	InsertableObjectFromSchemaRecordAlphaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -141,7 +153,7 @@ export {
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
-export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
 	type IdentifierIndex,
@@ -164,6 +176,7 @@ export {
 	type TransactionResultExt,
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
+	type WithValue,
 	rollback,
 } from "./transactionTypes.js";
 

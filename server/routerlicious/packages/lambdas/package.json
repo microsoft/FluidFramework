@@ -88,19 +88,19 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^18.19.39",
+		"@types/node": "^22",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
-		"concurrently": "^8.2.1",
+		"concurrently": "^9.2.1",
 		"eslint": "~8.57.0",
 		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.1.6",
-		"webpack": "^5.94.0"
+		"webpack": "^5.105.2"
 	},
 	"typeValidation": {
 		"broken": {},

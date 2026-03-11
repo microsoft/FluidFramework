@@ -126,7 +126,6 @@ export async function createTestDriver(
 	endpointName: DriverEndpoint | undefined,
 	seed: number,
 	runId: number | undefined,
-	supportsBrowserAuth: boolean,
 ): Promise<
 	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
 > {
@@ -135,7 +134,6 @@ export async function createTestDriver(
 		odsp: {
 			directory: "stress",
 			options: options[(runId ?? seed) % options.length],
-			supportsBrowserAuth,
 			odspEndpointName: endpointName,
 		},
 		r11s: {

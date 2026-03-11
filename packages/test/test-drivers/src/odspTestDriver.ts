@@ -42,7 +42,6 @@ interface IOdspTestLoginInfo {
 	siteUrl: string;
 	username: string;
 	password: string;
-	supportsBrowserAuth?: boolean;
 }
 
 type TokenConfig = IOdspTestLoginInfo & IPublicClientConfig;
@@ -198,24 +197,10 @@ export class OdspTestDriver implements ITestDriver {
 	private static readonly legacyDriverUserRandomIndex = Math.random();
 	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
 		const siteUrl = tokenConfig.siteUrl;
-		try {
-			return await getDriveId(siteUrl, "", undefined, {
-				accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
-				refreshTokenFn: async () =>
-					this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
-			});
-		} catch (ex) {
-			if (tokenConfig.supportsBrowserAuth !== true) {
-				throw ex;
-			}
-		}
 		return getDriveId(siteUrl, "", undefined, {
-			accessToken: await this.getStorageToken(
-				{ siteUrl, refresh: false, useBrowserAuth: true },
-				tokenConfig,
-			),
+			accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
 			refreshTokenFn: async () =>
-				this.getStorageToken({ siteUrl, refresh: true, useBrowserAuth: true }, tokenConfig),
+				this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
 		});
 	}
 
@@ -224,7 +209,6 @@ export class OdspTestDriver implements ITestDriver {
 			directory?: string;
 			username?: string;
 			options?: HostStoragePolicy;
-			supportsBrowserAuth?: boolean;
 			tenantIndex?: number;
 			odspEndpointName?: string;
 		},
@@ -267,7 +251,6 @@ export class OdspTestDriver implements ITestDriver {
 				username,
 				password,
 				siteUrl,
-				supportsBrowserAuth: config?.supportsBrowserAuth,
 			},
 			config?.directory ?? "",
 			api,
@@ -329,31 +312,11 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	private static async getStorageToken(
-		options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
+		options: OdspResourceTokenFetchOptions,
 		config: IOdspTestLoginInfo & IPublicClientConfig,
 	): Promise<string> {
 		const host = new URL(options.siteUrl).host;
 
-		if (options.useBrowserAuth === true) {
-			const browserTokens = await this.odspTokenManager.getOdspTokens(
-				host,
-				config,
-				{
-					type: "browserLogin",
-					navigator: (openUrl) => {
-						console.log(
-							`Open the following url in a new private browser window, and login with user: ${config.username}`,
-						);
-						console.log(
-							`Additional account details may be available in the environment variable login__odsp__test__accounts`,
-						);
-						console.log(`"${openUrl}"`);
-					},
-				},
-				options.refresh,
-			);
-			return browserTokens.accessToken;
-		}
 		// This function can handle token request for any multiple sites.
 		// Where the test driver is for a specific site.
 		const tokens = await this.odspTokenManager.getOdspTokens(

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Tracks and subscriptions from the latests render of a given instance of the {@link useObservation} hook.
@@ -68,7 +68,7 @@ export function useObservation<TResult>(
 	options?: ObservationOptions,
 ): TResult {
 	// Use a React state hook to invalidate this component something tracked by `trackDuring` changes.
-	const [subscriptions, setSubscriptions] = React.useState<SubscriptionsWrapper>(
+	const [subscriptions, setSubscriptions] = useState<SubscriptionsWrapper>(
 		new SubscriptionsWrapper(),
 	);
 
@@ -115,7 +115,7 @@ export function useObservation<TResult>(
 	// Suppressing that invalidation bug with an extra call to setSubscriptions could work, but would produce incorrect warnings about leaks,
 	// and might cause infinite rerender depending on how StrictMode works.
 	// Such an Effect would look like this:
-	// React.useEffect(
+	// useEffect(
 	// 	() => () => {
 	// 		subscriptions.unsubscribe?.();
 	// 		subscriptions.unsubscribe = undefined;
@@ -179,11 +179,11 @@ function useObservationPure<TResult>(
 	options?: ObservationPureOptions,
 ): TResult {
 	// Dummy state used to trigger invalidations.
-	const [_subscriptions, setSubscriptions] = React.useState(0);
+	const [_subscriptions, setSubscriptions] = useState(0);
 
 	const { result, subscribe } = trackDuring();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		// Subscribe to events from the latest render
 
 		const invalidate = (): void => {
@@ -363,7 +363,7 @@ export function useObservationStrict<TResult>(
 ): TResult {
 	// Used to unsubscribe from the previous render's subscriptions.
 	// See `useObservation` for a more documented explanation of this pattern.
-	const [subscriptions] = React.useState<{
+	const [subscriptions] = useState<{
 		previousTracker: SubscriptionTracker | undefined;
 	}>({ previousTracker: undefined });
 

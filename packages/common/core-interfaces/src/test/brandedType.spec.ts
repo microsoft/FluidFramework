@@ -14,8 +14,6 @@ import {
 	brandedObjectWithString,
 } from "./testValues.js";
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.
-
 function parameterAcceptedAs<T>(_t: T): void {
 	// Do nothing.  Used to verify type compatibility.
 }

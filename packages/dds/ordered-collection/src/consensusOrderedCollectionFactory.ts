@@ -10,6 +10,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
+// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusQueueClass } from "./consensusQueue.js";
 import type {
 	IConsensusOrderedCollection,
@@ -48,12 +49,14 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusOrderedCollection> {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass(id, document, this.attributes);
 		collection.initializeLocal();
 		return collection;
