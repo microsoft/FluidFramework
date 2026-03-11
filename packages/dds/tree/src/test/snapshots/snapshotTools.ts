@@ -187,7 +187,7 @@ export function testSchemaCompatibilitySnapshots(
 }
 
 /**
- * Takes a snapshot (See {@link takeSnapshot}) of the provided codec's formats.
+ * Takes a snapshot (see {@link takeSnapshot}) of the provided codec's formats.
  * @param codec - The codec whose formats should be snapshotted.
  * @param options - The options to apply to the codec before snapshotting.
  */
