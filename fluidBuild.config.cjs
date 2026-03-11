@@ -86,7 +86,8 @@ module.exports = {
 		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
-		"build:esnext": [...tscDependsOn, "^build:esnext"],
+		"build:esnext": ["^build:esnext", "^api-extractor:esnext", "build:genver"],
+		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
@@ -151,8 +152,11 @@ module.exports = {
 		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
-		"webpack": ["^tsc", "^build:esnext"],
-		"webpack:profile": ["^tsc", "^build:esnext"],
+		// TODO: ensure webpack dependencies are correct and minimal, ideally just depending
+		// on "^api-extractor:esnext", "^build:esnext". Or distribute these setting to the
+		// individual packages that need them instead of having poor config in the root config.
+		"webpack": ["^api", "^tsc", "^build:esnext"],
+		"webpack:profile": ["^api", "^tsc", "^build:esnext"],
 		"clean": {
 			before: ["*"],
 		},
