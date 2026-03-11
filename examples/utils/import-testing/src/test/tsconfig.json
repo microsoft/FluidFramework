@@ -19,12 +19,11 @@
 		"incremental": false,
 	},
 	"include": ["./**/*"],
+	// Cross-package importers are compiled by tsconfig.crossPackageConsumer.json (no project references).
+	"exclude": ["./crossPackageImporter.ts", "./crossPackageBundlerImporter.ts"],
 	"references": [
 		{
 			"path": "../..",
-		},
-		{
-			"path": "../../tsconfig.crossPackage.json",
 		},
 	],
 }
