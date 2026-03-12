@@ -108,7 +108,6 @@ export function assertOdspEndpoint(
 /**
  * Get from the env a set of credentials to use from a single tenant
  * @param tenantIndex - integer to choose the tenant from array of options (if multiple tenants are available)
- * @param requestedUserName - specific user name to filter to
  * @internal
  */
 export function getOdspCredentials(
@@ -279,7 +278,7 @@ export class OdspTestDriver implements ITestDriver {
 
 			credentials = { type: "fic", username, fetchToken };
 		} else {
-			let creds = getOdspCredentials(endpointName, tenantIndex) as Exclude<LoginCredentials, { type: "browserLogin" }>[];
+			let creds = getOdspCredentials(endpointName, tenantIndex);
 			if (config?.username !== undefined) {
 				// If config requested a specific username, only use that.
 				creds = creds.filter((c) => c.username === config.username);
