@@ -88,7 +88,10 @@ interface TokenCredentials {
  * This package is expected to be able to provide tokens associated with test users.
  */
 interface TestTenantCheckoutClient {
-	fetchFicTokens(usernames: string[], tokenScope: "push" | "storage"): Promise<TokenCredentials[]>;
+	fetchFicTokens(
+		usernames: string[],
+		tokenScope: "push" | "storage",
+	): Promise<TokenCredentials[]>;
 }
 
 /**
@@ -134,7 +137,9 @@ export function getOdspCredentials(
 
 			// Return the set of accounts to choose from a single tenant
 
-			return output.map((account) => passwordTokenConfig(account.UserPrincipalName, account.Password));
+			return output.map((account) =>
+				passwordTokenConfig(account.UserPrincipalName, account.Password),
+			);
 		} else {
 			/**
 			 * Parse login credentials using the tenant format for stress tests.
@@ -204,12 +209,12 @@ export class OdspTestDriver implements ITestDriver {
 	// Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
 	private static readonly legacyDriverUserRandomIndex = Math.random();
 
-
 	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
 		const { siteUrl } = tokenConfig;
 		return await getDriveId(siteUrl, "", undefined, {
 			accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
-			refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+			refreshTokenFn: async () =>
+				this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
 		});
 	}
 
@@ -240,7 +245,7 @@ export class OdspTestDriver implements ITestDriver {
 		// at this location (token__package__import__location) which supports fetching tokens for those users.
 		const packageImportLocation = process.env.token__package__import__location;
 		if (packageImportLocation !== undefined) {
-			const pkg = await import(packageImportLocation) as TestTenantCheckoutClient;
+			const pkg = (await import(packageImportLocation)) as TestTenantCheckoutClient;
 			if (typeof pkg.fetchFicTokens !== "function") {
 				throw new TypeError(
 					`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
@@ -251,7 +256,10 @@ export class OdspTestDriver implements ITestDriver {
 			if (accountDataEnv === undefined) {
 				throw new Error("Missing 'login__odsp__test__users' environment variable.");
 			}
-			const { usernames } = JSON.parse(accountDataEnv) as { guid: string; usernames: string[] };
+			const { usernames } = JSON.parse(accountDataEnv) as {
+				guid: string;
+				usernames: string[];
+			};
 
 			if (usernames.length === 0) {
 				throw new Error("login__odsp__test__users does not have any valid usernames.");
@@ -267,11 +275,13 @@ export class OdspTestDriver implements ITestDriver {
 					// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
 					// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
 					// matches the typing of `fetchFicTokens` as defined in `TestTenantCheckoutClient`.
-					throw new TypeError('Expected fetchFicTokens to return an array of tokens.');
+					throw new TypeError("Expected fetchFicTokens to return an array of tokens.");
 				}
 				const token = tokens.find((a) => a.UserPrincipalName === username);
 				if (!token) {
-					throw new Error(`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`);
+					throw new Error(
+						`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`,
+					);
 				}
 				return token.Token;
 			};

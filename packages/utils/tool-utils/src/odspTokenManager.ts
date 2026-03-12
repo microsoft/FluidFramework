@@ -217,7 +217,7 @@ export class OdspTokenManager {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
 						if (credentials.type === "fic") {
-							const scopeEndpoint = isPush ? "push" : "storage" as const;
+							const scopeEndpoint = isPush ? "push" : ("storage" as const);
 							const newTokenData = await credentials.fetchToken(scopeEndpoint);
 							tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
 							await this.updateTokensCacheWithoutLock(cacheKey, tokens);
@@ -309,18 +309,19 @@ export class OdspTokenManager {
 		if (payloadSegment === undefined) {
 			throw new Error("Invalid JWT format");
 		}
-		const payload = JSON.parse(
-			Buffer.from(payloadSegment, "base64url").toString("utf8"),
-		) as { iat?: number; exp?: number };
+		const payload = JSON.parse(Buffer.from(payloadSegment, "base64url").toString("utf8")) as {
+			iat?: number;
+			exp?: number;
+		};
 		if (typeof payload.iat === "number") {
 			receivedAt = payload.iat;
 		} else {
-			throw new Error("JWT payload lacks valid iat claim.")
+			throw new Error("JWT payload lacks valid iat claim.");
 		}
 		if (typeof payload.exp === "number" && typeof payload.iat === "number") {
 			expiresIn = payload.exp - payload.iat;
 		} else {
-			throw new Error("JWT payload lacks valid exp claim.")
+			throw new Error("JWT payload lacks valid exp claim.");
 		}
 
 		return {
