@@ -9,6 +9,12 @@
 		},
 		"compile": {
 			"executor": "nx:noop"
+		},
+		"build:commonjs": {
+			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
 		}
 	}
 }

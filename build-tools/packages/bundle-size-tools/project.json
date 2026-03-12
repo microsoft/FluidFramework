@@ -9,6 +9,9 @@
 		},
 		"compile": {
 			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
 		}
 	}
 }
