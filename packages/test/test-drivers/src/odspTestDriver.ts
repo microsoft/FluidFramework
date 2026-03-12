@@ -228,6 +228,15 @@ export class OdspTestDriver implements ITestDriver {
 		const options = config?.options ?? {};
 		options.isolateSocketCache = true;
 
+		// Pick a random user (only random selection supported for >= 0.46)
+		const randomUserIndex =
+			compare(api.version, "0.46.0") >= 0
+				? Math.random()
+				: OdspTestDriver.legacyDriverUserRandomIndex;
+
+		let credentials: LoginCredentials;
+		let userIndex: number;
+
 		// An internal package checks out test tenants, populates user information in the environment, and makes an entrypoint available
 		// at this location (token__package__import__location) which supports fetching tokens for those users.
 		const packageImportLocation = process.env.token__package__import__location;
@@ -249,11 +258,7 @@ export class OdspTestDriver implements ITestDriver {
 				throw new Error("login__odsp__test__users does not have any valid usernames.");
 			}
 
-			const randomUserIndex =
-				compare(api.version, "0.46.0") >= 0
-					? Math.random()
-					: OdspTestDriver.legacyDriverUserRandomIndex;
-			const userIndex = Math.floor(randomUserIndex * usernames.length);
+			userIndex = Math.floor(randomUserIndex * usernames.length);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const username = usernames[userIndex]!;
 
@@ -272,49 +277,19 @@ export class OdspTestDriver implements ITestDriver {
 				return token.Token;
 			};
 
-			const credentials: LoginCredentials = {
-				type: "fic",
-				username: username,
-				fetchToken,
-			};
-
-			const emailServer = username.substr(username.indexOf("@") + 1);
-			let siteUrl: string;
-			let tenantName: string;
-			if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
-				tenantName = new URL(emailServer).hostname;
-				siteUrl = emailServer;
-			} else {
-				tenantName = emailServer.substr(0, emailServer.indexOf("."));
-				siteUrl = `https://${tenantName}.sharepoint.com`;
+			credentials = { type: "fic", username, fetchToken };
+		} else {
+			let creds = getOdspCredentials(endpointName, tenantIndex) as Exclude<LoginCredentials, { type: "browserLogin" }>[];
+			if (config?.username !== undefined) {
+				// If config requested a specific username, only use that.
+				creds = creds.filter((c) => c.username === config.username);
 			}
-
-			return this.create(
-				{ siteUrl, credentials },
-				config?.directory ?? "",
-				api,
-				options,
-				tenantName,
-				userIndex,
-				endpointName,
-			);
+			userIndex = Math.floor(randomUserIndex * creds.length);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			credentials = creds[userIndex]!;
 		}
 
-		let creds = getOdspCredentials(endpointName, tenantIndex) as Exclude<LoginCredentials, { type: "browserLogin" }>[];
-		if (config?.username !== undefined) {
-			// If config requested a specific username, only use that.
-			creds = creds.filter((c) => c.username === config.username);
-		}
-		// Pick a random one on the list (only supported for >= 0.46)
-		const randomUserIndex =
-			compare(api.version, "0.46.0") >= 0
-				? Math.random()
-				: OdspTestDriver.legacyDriverUserRandomIndex;
-		const userIndex = Math.floor(randomUserIndex * creds.length);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const credentials = creds[userIndex]!;
 		const { username } = credentials;
-
 		const emailServer = username.substr(username.indexOf("@") + 1);
 		let siteUrl: string;
 		let tenantName: string;
