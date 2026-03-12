@@ -265,15 +265,6 @@ async function getDriveResponse(
 	const getDriveUrl = `${getSiteUrl(server)}${accountPath}/_api/v2.1/${routeTail}`;
 	const response = await getAsync(getDriveUrl, authRequestInfo);
 	if (response.status !== 200) {
-		const responseText = await response
-			.clone()
-			.text()
-			.catch(() => "<unreadable>");
-		console.error(
-			`[DEBUG] Drive endpoint ${response.status} for ${getDriveUrl}:`,
-			responseText,
-			`\nAccess token: ${authRequestInfo.accessToken}`,
-		);
 		throwOdspNetworkError(
 			// pre-0.58 error message: failedToGetDriveResponse
 			`Failed to get response from /${routeTail} endpoint`,

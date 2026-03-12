@@ -58,7 +58,7 @@ async function initializeODSPCore(
 	const getStorageTokenStub = async (
 		options: OdspResourceTokenFetchOptions,
 	): Promise<string> => {
-		return await resolveWrapper(
+		return resolveWrapper(
 			async (authRequestInfo: IOdspAuthRequestInfo) => {
 				if (
 					(options.refresh || !authRequestInfo.accessToken) &&

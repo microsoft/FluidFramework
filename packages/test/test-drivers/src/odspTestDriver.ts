@@ -77,11 +77,16 @@ export interface UserPassCredentials {
 /**
  * Credentials containing a username and bearer token for FIC authentication scenarios.
  */
-export interface TokenCredentials {
+interface TokenCredentials {
 	UserPrincipalName: string;
 	Token: string;
 }
 
+/**
+ * Expected API for the package located at the contents of the environment variable `token__package__import__location`.
+ *
+ * This package is expected to be able to provide tokens associated with test users.
+ */
 interface TestTenantCheckoutClient {
 	fetchFicTokens(usernames: string[], tokenScope: "push" | "storage"): Promise<TokenCredentials[]>;
 }
@@ -122,7 +127,7 @@ export function getOdspCredentials(
 		 * For the expected format of loginTenants, see {@link UserPassCredentials}
 		 */
 		if (loginTenants.includes("UserPrincipalName")) {
-			// Password-based credentials (OAuth flow)
+			// Password-based credentials (ROPC OAuth flow)
 			const output: UserPassCredentials[] = JSON.parse(loginTenants);
 			if (output?.[tenantIndex] === undefined) {
 				throw new Error("No resources found in the login tenants");
@@ -223,11 +228,6 @@ export class OdspTestDriver implements ITestDriver {
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
 
-		// force isolateSocketCache because we are using different users in a single context
-		// and socket can't be shared between different users
-		const options = config?.options ?? {};
-		options.isolateSocketCache = true;
-
 		// Pick a random user (only random selection supported for >= 0.46)
 		const randomUserIndex =
 			compare(api.version, "0.46.0") >= 0
@@ -300,6 +300,11 @@ export class OdspTestDriver implements ITestDriver {
 			tenantName = emailServer.substr(0, emailServer.indexOf("."));
 			siteUrl = `https://${tenantName}.sharepoint.com`;
 		}
+
+		// force isolateSocketCache because we are using different users in a single context
+		// and socket can't be shared between different users
+		const options = config?.options ?? {};
+		options.isolateSocketCache = true;
 
 		return this.create(
 			{ siteUrl, credentials },

@@ -216,7 +216,6 @@ export class OdspTokenManager {
 			if (tokensFromCache) {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
-						// For bearer tokens, use getNewToken callback instead of OAuth refresh
 						if (credentials.type === "fic") {
 							const scopeEndpoint = isPush ? "push" : "storage" as const;
 							const newTokenData = await credentials.fetchToken(scopeEndpoint);
@@ -292,7 +291,7 @@ export class OdspTokenManager {
 			// Push tokens are not standard JWTs. With direct token exchange, the second leg includes information about expiry.
 			// This is not available in the FIC flow, but we request tokens with 1 hour expiry so default to that.
 			// At worst this should result in some higher latency when a token is returned from the cache when it should really be
-			// refreshed immediately (but attempting to use this token later will trigger a normal refresh flow).
+			// refreshed immediately (as attempting to use such a token will trigger a token refresh flow indirectly).
 			return {
 				accessToken: token,
 				receivedAt: Math.floor(Date.now() / 1000),

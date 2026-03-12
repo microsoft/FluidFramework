@@ -11,7 +11,7 @@ import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IPublicClientConfig } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	LoginConfig,
+	LoginCredentials,
 	OdspTokenManager,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
@@ -42,13 +42,14 @@ function getPublicClientConfig(): IPublicClientConfig {
 }
 
 function getTestTenantCredentials(mode: "spo" | "spo-df"): {
-	tokenConfig: LoginConfig;
+	credentials: LoginCredentials;
 	siteUrl: string;
 	server: string;
 } {
 	const credentials = getOdspCredentials(mode === "spo" ? "odsp" : "odsp-df", 0);
 	// If we wanted to allow some mechanism for user selection, we could add it here.
-	const { username, password } = credentials[0];
+	const selectedCredential = credentials[0];
+	const { username } = selectedCredential;
 
 	const emailServer = username.substr(username.indexOf("@") + 1);
 
@@ -63,11 +64,7 @@ function getTestTenantCredentials(mode: "spo" | "spo-df"): {
 	const { host } = new URL(siteUrl);
 
 	return {
-		tokenConfig: {
-			type: "password",
-			username,
-			password,
-		},
+		credentials: selectedCredential,
 		siteUrl,
 		server: host,
 	};
@@ -168,7 +165,7 @@ const makeAfterMiddlewares = (
 
 	let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
 	if (options.mode === "spo-df" || options.mode === "spo") {
-		const { tokenConfig, server } = getTestTenantCredentials(options.mode);
+		const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
 		options.server = server;
 		const clientConfig = getPublicClientConfig();
 
@@ -236,7 +233,7 @@ const makeAfterMiddlewares = (
 					return;
 				}
 
-				const { tokenConfig, server } = getTestTenantCredentials(options.mode);
+				const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
 				const tokens = await tokenManager.getOdspTokens(
 					server,
 					getPublicClientConfig(),
@@ -258,7 +255,7 @@ const makeAfterMiddlewares = (
 					return;
 				}
 
-				const { tokenConfig, server } = getTestTenantCredentials(options.mode);
+				const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
 				options.pushAccessToken = (
 					await tokenManager.getPushTokens(
 						server,

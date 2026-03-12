@@ -25,7 +25,7 @@ import {
 
 const stringId = "sharedStringKey";
 
-describeCompat.only("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
