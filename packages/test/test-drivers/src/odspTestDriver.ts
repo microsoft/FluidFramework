@@ -41,11 +41,6 @@ const passwordLoginCredentials = (username: string, password: string): LoginCred
 const ficLoginCredentials = (username: string): LoginCredentials => {
 	const fetchToken = async (scopeEndpoint: "storage" | "push"): Promise<string> => {
 		const testTenantCheckoutClient = await getTestTenantCheckoutClient();
-		if (testTenantCheckoutClient === undefined) {
-			throw new Error(
-				'The FIC credential flow relies on a test tenant checkout client, but no client was found. Ensure that the environment variable "token__package__import__location" is set to the location of a package that exports a compatible client.',
-			);
-		}
 		const tokens = await testTenantCheckoutClient.fetchFicTokens([username], scopeEndpoint);
 		if (!Array.isArray(tokens)) {
 			// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
@@ -55,7 +50,9 @@ const ficLoginCredentials = (username: string): LoginCredentials => {
 		}
 		const token = tokens.find((a) => a.UserPrincipalName === username);
 		if (!token) {
-			throw new Error(`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`);
+			throw new Error(
+				`Unable to fetch token for user '${username}' and scope '${scopeEndpoint}'`,
+			);
 		}
 		return token.Token;
 	};
@@ -125,24 +122,27 @@ interface TestTenantCheckoutClient {
 
 let testTenantCheckoutClientCached: TestTenantCheckoutClient | undefined;
 
-async function getTestTenantCheckoutClient(): Promise<TestTenantCheckoutClient | undefined> {
+async function getTestTenantCheckoutClient(): Promise<TestTenantCheckoutClient> {
 	if (testTenantCheckoutClientCached !== undefined) {
 		return testTenantCheckoutClientCached;
 	}
 	// An internal package checks out test tenants, populates user information in the environment, and makes an entrypoint available
 	// at this location (token__package__import__location) which supports fetching tokens for those users.
 	const packageImportLocation = process.env.token__package__import__location;
-	if (packageImportLocation !== undefined) {
-		const pkg = (await import(packageImportLocation)) as TestTenantCheckoutClient;
-		if (typeof pkg.fetchFicTokens !== "function") {
-			throw new TypeError(
-				`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
-			);
-		}
-		testTenantCheckoutClientCached = pkg;
-		return pkg;
+	if (packageImportLocation === undefined) {
+		throw new Error(
+			'The FIC credential flow relies on a test tenant checkout client, but no client was found. Ensure that the environment variable "token__package__import__location" is set to the location of a package that exports a compatible client.',
+		);
 	}
-	return undefined;
+
+	const pkg = (await import(packageImportLocation)) as TestTenantCheckoutClient;
+	if (typeof pkg.fetchFicTokens !== "function") {
+		throw new TypeError(
+			`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
+		);
+	}
+	testTenantCheckoutClientCached = pkg;
+	return pkg;
 }
 
 /**
@@ -180,13 +180,12 @@ export function getOdspCredentials(
 	const ficAccounts = process.env.login__odsp__fic__test__users;
 	if (ficAccounts !== undefined) {
 		const { usernames } = JSON.parse(ficAccounts) as {
-			guid: string;
 			usernames: string[];
 		};
 
 		if (usernames.length === 0) {
 			throw new Error(
-				"login__odsp__fic__test__users was defined does not have any valid usernames.",
+				"login__odsp__fic__test__users was defined but does not have any valid usernames.",
 			);
 		}
 		return usernames.map((username) => ficLoginCredentials(username));

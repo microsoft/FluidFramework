@@ -217,15 +217,16 @@ export class OdspTokenManager {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
 						if (credentials.type === "fic") {
-							const scopeEndpoint = isPush ? "push" : ("storage" as const);
+							const scopeEndpoint = isPush ? "push" : "storage";
 							const newTokenData = await credentials.fetchToken(scopeEndpoint);
 							tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
-							await this.updateTokensCacheWithoutLock(cacheKey, tokens);
-						} else if (tokensFromCache.refreshToken !== undefined) {
+						} else if (credentials.type === "password") {
 							// For OAuth flows, use refresh token
 							tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
-							await this.updateTokensCacheWithoutLock(cacheKey, tokens);
+						} else {
+							unreachableCase(credentials);
 						}
+						await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 					} catch (error) {
 						debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
 					}
@@ -290,7 +291,7 @@ export class OdspTokenManager {
 		// eslint-disable-next-line unicorn/prefer-ternary -- using if statement for clarity
 		if (isPush) {
 			// Push tokens are not standard JWTs. With direct token exchange, the second leg includes information about expiry.
-			// This is not available in the FIC flow, but we request tokens with 1 hour expiry so default to that.
+			// This is not available in the FIC flow, but in direct token exchange we request tokens with 1 hour expiry so default to that.
 			// At worst this should result in some higher latency when a token is returned from the cache when it should really be
 			// refreshed immediately (as attempting to use such a token will trigger a token refresh flow indirectly).
 			return {
