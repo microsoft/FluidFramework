@@ -1,5 +1,5 @@
 {
-	"extends": "./tsconfig.crossPackage.json",
+	"extends": "./tsconfig.crossPackage.node16.json",
 	"compilerOptions": {
 		"outDir": "./lib/crossPackage/bundler",
 		"moduleResolution": "bundler",

@@ -19,9 +19,8 @@ const config: Linter.Config[] = [
 				projectService: false,
 				project: [
 					"./tsconfig.json",
-					"./tsconfig.crossPackage.json",
+					"./tsconfig.crossPackage.node16.json",
 					"./tsconfig.crossPackageConsumer.json",
-					"./tsconfig.crossPackageConsumer.cjs.json",
 					"./src/test/tsconfig.json",
 				],
 			},

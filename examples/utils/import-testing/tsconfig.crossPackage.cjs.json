@@ -1,6 +1,6 @@
 {
 	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
-	"extends": "./tsconfig.crossPackage.json",
+	"extends": "./tsconfig.crossPackage.node16.json",
 	"compilerOptions": {
 		"outDir": "./dist/crossPackage/node16",
 	},

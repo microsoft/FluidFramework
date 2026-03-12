@@ -6,12 +6,7 @@
 	// Cross-package schema files produce .d.ts with intentionally broken import paths
 	// (documenting a known tree export bug). Exclude them so the multi-version build
 	// tests aren't affected.
-	"exclude": [
-		"src/crossPackage/**/*",
-		"src/test/crossPackageImporter.ts",
-		"src/test/crossPackageBundlerImporter.ts",
-		"src/test/crossPackageCjsImporter.ts",
-	],
+	"exclude": ["src/crossPackage/**/*", "src/test/crossPackage/**/*"],
 	"compilerOptions": {
 		"target": "es2022",
 		"module": "Node16",

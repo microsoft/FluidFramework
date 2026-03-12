@@ -25,9 +25,9 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "npm run build:esnext:main && npm run build:esnext:crossPackage:node16 && npm run build:esnext:crossPackage:bundler",
+		"build:esnext": "npm run build:esnext:main && concurrently \"npm:build:esnext:crossPackage:*\"",
 		"build:esnext:crossPackage:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
-		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.json",
+		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.node16.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "npm run build:test:cjs:main && npm run build:test:cjs:crossPackage",
@@ -45,12 +45,13 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist/crossPackage/node16",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
 		"tsc:crossPackage": "fluid-tsc commonjs --project ./tsconfig.crossPackage.cjs.json"
 	},
 	"dependencies": {
@@ -67,6 +68,7 @@
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
+		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",
@@ -89,10 +91,12 @@
 				"^build:esnext"
 			],
 			"build:esnext:crossPackage:node16": [
-				"build:esnext:main"
+				"^api-extractor:esnext",
+				"^build:esnext"
 			],
 			"build:esnext:crossPackage:bundler": [
-				"build:esnext:main"
+				"^api-extractor:esnext",
+				"^build:esnext"
 			],
 			"build:test:esm:main": [
 				"build:esnext"
@@ -101,13 +105,17 @@
 				"build:esnext"
 			],
 			"tsc:crossPackage": [
-				"tsc"
+				"^tsc"
 			],
+			"place:cjs:package-stub": [],
 			"build:test:cjs:main": [
-				"tsc"
+				"tsc",
+				"place:cjs:package-stub"
 			],
 			"build:test:cjs:crossPackage": [
-				"tsc:crossPackage"
+				"tsc:crossPackage",
+				"place:cjs:package-stub",
+				"^tsc"
 			]
 		}
 	},

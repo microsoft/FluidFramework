@@ -1,7 +1,7 @@
 {
 	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
 	"extends": "./tsconfig.crossPackageConsumer.json",
-	"include": ["src/test/crossPackageCjsImporter.ts"],
+	"include": ["src/test/crossPackage/node16Importer.ts"],
 	"compilerOptions": {
 		"outDir": "./dist/test/crossPackageConsumer",
 	},

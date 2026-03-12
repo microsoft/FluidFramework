@@ -86,6 +86,7 @@ module.exports = {
 		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
+		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
