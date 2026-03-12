@@ -5,13 +5,35 @@
 			"executor": "nx:noop"
 		},
 		"build:api-reports": {
-			"executor": "nx:noop"
+			"executor": "nx:noop",
+			"dependsOn": [
+				"build:api-reports:browser:current",
+				"build:api-reports:browser:legacy",
+				"build:api-reports:node:current",
+				"build:api-reports:node:legacy"
+			]
+		},
+		"build:api-reports:browser:current": {
+			"dependsOn": ["build:exports:browser"],
+			"cache": true
+		},
+		"build:api-reports:browser:legacy": {
+			"dependsOn": ["build:exports:browser"],
+			"cache": true
 		},
 		"build:api-reports:node:current": {
-			"executor": "nx:noop"
+			"executor": "nx:noop",
+			"dependsOn": [
+				"build:api-reports:browser:current",
+				"ci:build:api-reports:node:current"
+			]
 		},
 		"build:api-reports:node:legacy": {
-			"executor": "nx:noop"
+			"executor": "nx:noop",
+			"dependsOn": [
+				"build:api-reports:browser:legacy",
+				"ci:build:api-reports:node:legacy"
+			]
 		},
 		"build:commonjs": {
 			"executor": "nx:noop"
@@ -19,11 +41,48 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"build:exports:browser": {
+			"dependsOn": ["build:esnext"]
+		},
+		"build:exports:node": {
+			"dependsOn": ["build:esnext"]
+		},
+		"build:test": {
+			"dependsOn": ["typetests:gen", "tsc", "build:esnext"]
+		},
+		"check:exports": {
+			"dependsOn": ["tsc", "build:exports:browser", "build:exports:node"]
+		},
+		"check:exports:bundle-release-tags": {
+			"dependsOn": ["build:exports:browser"]
+		},
 		"check:format": {
 			"executor": "nx:noop"
 		},
 		"ci:build:api-reports": {
-			"executor": "nx:noop"
+			"executor": "nx:noop",
+			"dependsOn": [
+				"ci:build:api-reports:browser:current",
+				"ci:build:api-reports:browser:legacy",
+				"ci:build:api-reports:node:current",
+				"ci:build:api-reports:node:legacy"
+			]
+		},
+		"ci:build:api-reports:browser:current": {
+			"dependsOn": ["build:exports:browser"],
+			"cache": true
+		},
+		"ci:build:api-reports:browser:legacy": {
+			"dependsOn": ["build:exports:browser"],
+			"cache": true
+		},
+		"ci:build:api-reports:node:current": {
+			"dependsOn": ["build:exports:node"],
+			"cache": true
+		},
+		"ci:build:api-reports:node:legacy": {
+			"dependsOn": ["build:exports:node"],
+			"cache": true
 		},
 		"format": {
 			"executor": "nx:noop"
