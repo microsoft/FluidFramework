@@ -185,7 +185,7 @@ async function extractPackageJsonFromTarball(
 		gunzip.push(tarball, /* final */ true);
 	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const data = untar(unzipped!);
+	const data = untar(unzipped!.buffer as ArrayBuffer);
 	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
 	const prefix = data[0].filename.substring(0, data[0].filename.indexOf("/") + 1);
 	const packageJsonText = data.find((f) => f.filename === `${prefix}package.json`)?.fileData;
