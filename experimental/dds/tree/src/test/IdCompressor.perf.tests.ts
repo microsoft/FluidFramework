@@ -168,7 +168,7 @@ describe('IdCompressor Perf', () => {
 
 	benchmark({
 		type,
-		title: `takes a ID creation range'})`,
+		title: `takes a ID creation range`,
 		before: () => {
 			setupCompressors(defaultClusterCapacity, true, false);
 			perfCompressor = network.getCompressorUnsafeNoProxy(localClient);

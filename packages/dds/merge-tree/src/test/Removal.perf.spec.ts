@@ -70,7 +70,7 @@ describe("MergeTree remove", () => {
 	for (const length of [10, 100, 1000]) {
 		benchmark({
 			type: BenchmarkType.Measurement,
-			title: "remove large range of large tree with undo-redo",
+			title: `remove ${length} length range of large tree with undo-redo`,
 			category: "remove",
 			before: () => {
 				const str = new TestString("id", {});
