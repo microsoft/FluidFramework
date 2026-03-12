@@ -23,7 +23,11 @@
 	// resolves types through the package export map (where the bug manifests).
 	// Project references bypass the export map, making @ts-expect-error directives unused.
 	// These files are compiled separately by tsconfig.crossPackageConsumer.json.
-	"exclude": ["./crossPackageImporter.ts", "./crossPackageBundlerImporter.ts"],
+	"exclude": [
+		"./crossPackageImporter.ts",
+		"./crossPackageBundlerImporter.ts",
+		"./crossPackageCjsImporter.ts",
+	],
 	"references": [
 		{
 			"path": "../..",

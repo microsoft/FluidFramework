@@ -1,12 +1,7 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"include": ["src/**/*"],
-	"exclude": [
-		"src/test/**/*",
-		"src/crossPackageSchemaExports.ts",
-		"src/crossPackageSchemaDefinitions.ts",
-		"src/crossPackageSchemaUtils.ts",
-	],
+	"exclude": ["src/test/**/*", "src/crossPackage/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",

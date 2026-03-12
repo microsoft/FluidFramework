@@ -1,7 +1,7 @@
 {
 	"extends": "./tsconfig.crossPackage.json",
 	"compilerOptions": {
-		"outDir": "./lib/bundler",
+		"outDir": "./lib/crossPackage/bundler",
 		"moduleResolution": "bundler",
 		"module": "esnext",
 	},

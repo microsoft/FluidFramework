@@ -1,9 +1,9 @@
 {
 	"extends": "./tsconfig.json",
-	"include": [
-		"src/crossPackageSchemaExports.ts",
-		"src/crossPackageSchemaDefinitions.ts",
-		"src/crossPackageSchemaUtils.ts",
-	],
+	"include": ["src/crossPackage/**/*"],
 	"exclude": [],
+	"compilerOptions": {
+		"rootDir": "./src/crossPackage",
+		"outDir": "./lib/crossPackage/node16",
+	},
 }

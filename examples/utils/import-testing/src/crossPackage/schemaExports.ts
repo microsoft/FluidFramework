@@ -4,7 +4,7 @@
  */
 
 /*
-Re-exports from crossPackageSchemaDefinitions.ts.
+Re-exports from schemaDefinitions.ts.
 
 This three-file split (schemaUtils → schemaDefinitions → schemaExports) is required
 to trigger the type resolution bug under Node16. When the SchemaFactoryAlpha instance
@@ -17,4 +17,4 @@ export {
 	Container,
 	Dimensions,
 	Position,
-} from "./crossPackageSchemaDefinitions.js";
+} from "./schemaDefinitions.js";

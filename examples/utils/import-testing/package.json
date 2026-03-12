@@ -14,10 +14,11 @@
 	"type": "module",
 	"exports": {
 		"./crossPackageSchema/node16": {
-			"import": "./lib/crossPackageSchemaExports.js"
+			"import": "./lib/crossPackage/node16/schemaExports.js",
+			"require": "./dist/crossPackage/node16/schemaExports.js"
 		},
 		"./crossPackageSchema/bundler": {
-			"import": "./lib/bundler/crossPackageSchemaExports.js"
+			"import": "./lib/crossPackage/bundler/schemaExports.js"
 		}
 	},
 	"scripts": {
@@ -29,7 +30,9 @@
 		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:cjs": "npm run build:test:cjs:main && npm run build:test:cjs:crossPackage",
+		"build:test:cjs:crossPackage": "fluid-tsc commonjs --project ./tsconfig.crossPackageConsumer.cjs.json",
+		"build:test:cjs:main": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "npm run build:test:esm:main && npm run build:test:esm:crossPackage",
 		"build:test:esm:crossPackage": "tsc --project ./tsconfig.crossPackageConsumer.json",
 		"build:test:esm:main": "tsc --project ./src/test/tsconfig.json",
@@ -47,7 +50,8 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc:crossPackage": "fluid-tsc commonjs --project ./tsconfig.crossPackage.cjs.json"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -95,6 +99,15 @@
 			],
 			"build:test:esm:crossPackage": [
 				"build:esnext"
+			],
+			"tsc:crossPackage": [
+				"tsc"
+			],
+			"build:test:cjs:main": [
+				"tsc"
+			],
+			"build:test:cjs:crossPackage": [
+				"tsc:crossPackage"
 			]
 		}
 	},

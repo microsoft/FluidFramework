@@ -21,6 +21,7 @@ const config: Linter.Config[] = [
 					"./tsconfig.json",
 					"./tsconfig.crossPackage.json",
 					"./tsconfig.crossPackageConsumer.json",
+					"./tsconfig.crossPackageConsumer.cjs.json",
 					"./src/test/tsconfig.json",
 				],
 			},

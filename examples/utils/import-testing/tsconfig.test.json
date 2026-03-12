@@ -7,11 +7,10 @@
 	// (documenting a known tree export bug). Exclude them so the multi-version build
 	// tests aren't affected.
 	"exclude": [
-		"src/crossPackageSchemaExports.ts",
-		"src/crossPackageSchemaDefinitions.ts",
-		"src/crossPackageSchemaUtils.ts",
+		"src/crossPackage/**/*",
 		"src/test/crossPackageImporter.ts",
 		"src/test/crossPackageBundlerImporter.ts",
+		"src/test/crossPackageCjsImporter.ts",
 	],
 	"compilerOptions": {
 		"target": "es2022",
