@@ -299,14 +299,13 @@ export class OdspTestDriver implements ITestDriver {
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
 
-		// Pick a random user (only random selection supported for >= 0.46)
+		// Pick a random one on the list (only supported for >= 0.46)
 		const randomUserIndex =
 			compare(api.version, "0.46.0") >= 0
 				? Math.random()
 				: OdspTestDriver.legacyDriverUserRandomIndex;
 
 		let allCredentials = getOdspCredentials(endpointName, tenantIndex);
-
 		if (config?.username !== undefined) {
 			// If config requested a specific username, only use that.
 			allCredentials = allCredentials.filter((c) => c.username === config.username);
@@ -320,6 +319,7 @@ export class OdspTestDriver implements ITestDriver {
 			);
 		}
 		const userIndex = Math.floor(randomUserIndex * allCredentials.length);
+		// Bounds check above guarantees non-null (at least at compile time, assuming all types are respected)
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const credentials = allCredentials[userIndex]!;
 
@@ -328,6 +328,7 @@ export class OdspTestDriver implements ITestDriver {
 		let siteUrl: string;
 		let tenantName: string;
 		if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
+			// it's already a site url
 			tenantName = new URL(emailServer).hostname;
 			siteUrl = emailServer;
 		} else {
