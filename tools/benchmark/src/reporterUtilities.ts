@@ -239,6 +239,10 @@ export function formatOverallSummary(data: SuiteData): string {
 
 	visitSuitesArray(data, (innerData) => {
 		const stats = getShallowStats(innerData.content);
+		if (stats.countSuccessful + stats.countFailure === 0) {
+			// Don't include suites with no direct benchmarks in the table.
+			return;
+		}
 		sumRuntime += stats.sumRuntime;
 		countSuccessful += stats.countSuccessful;
 		countFailure += stats.countFailure;
