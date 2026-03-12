@@ -975,14 +975,12 @@ describe("textEditor", () => {
 				assert.ok(result, "Expected a line tag for bullet list");
 				assert.equal(result.value, "li", "Expected tag to be li)");
 			});
-			// Tests for unsupported parameters - should return undefined, not throw an error.
+			// Tests for unsupported parameters - should return default header ("h5"), not throw an error.
 			// Also used for when formatting is stripped from a newline and it becomes a default newline
 			it("returns undefined for unsupported parameter", () => {
-				assert.equal(
-					parseLineTag({ header: 7 }),
-					undefined,
-					"Expected undefined for unsupported lineTag",
-				);
+				const result = parseLineTag({ header: 7 });
+				assert.ok(result, "Expected a line tag for header 5");
+				assert.equal(result.value, "h5", "Expected tag to be h5 for unsupported header level");
 			});
 		});
 		// tests quillFormattedview conversion that feeds into quill delta generation,
