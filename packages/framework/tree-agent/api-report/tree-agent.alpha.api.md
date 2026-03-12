@@ -53,7 +53,7 @@ export interface EditResult {
 }
 
 // @alpha
-export function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditOptions<TSchema>): Promise<SemanticEditResult>;
+export function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditOptions<TSchema>): Promise<string>;
 
 // @alpha
 export interface ExecuteSemanticEditOptions<TSchema extends ImplicitFieldSchema> {
@@ -61,7 +61,6 @@ export interface ExecuteSemanticEditOptions<TSchema extends ImplicitFieldSchema>
     editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
     logger?: Logger;
     maximumSequentialEdits?: number;
-    startingHistoryWithSystemPrompt?: TreeAgentChatMessage[];
 }
 
 // @alpha
@@ -138,13 +137,6 @@ export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
     editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
     logger?: Logger;
     maximumSequentialEdits?: number;
-}
-
-// @alpha
-export interface SemanticEditResult {
-    readonly history: TreeAgentChatMessage[];
-    readonly lastEditFailed: boolean;
-    readonly response: string;
 }
 
 // @alpha

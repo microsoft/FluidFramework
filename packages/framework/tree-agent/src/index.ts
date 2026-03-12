@@ -27,7 +27,6 @@ export type {
 	TreeAgentChatResponse,
 	TreeAgentOptions,
 	ExecuteSemanticEditOptions,
-	SemanticEditResult,
 	// Existing API
 	EditResult,
 	SharedTreeChatModel,

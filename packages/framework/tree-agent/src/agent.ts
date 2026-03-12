@@ -24,7 +24,6 @@ import type {
 	TreeAgent,
 	TreeAgentOptions,
 	ExecuteSemanticEditOptions,
-	SemanticEditResult,
 	EditResult,
 	SemanticAgentOptions,
 	Logger,
@@ -390,7 +389,8 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 	}
 
 	public async message(prompt: string): Promise<string> {
-		// Handle external tree changes (stateful behavior not in executeSemanticEdit).
+		this.#options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
+
 		if (this.#isDirty) {
 			const stringified = stringifyTree(this.#outerTree.field);
 			const text = treeChangedText(stringified);
@@ -401,22 +401,18 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 			this.#isDirty = false;
 		}
 
-		// Fork a query branch for rollback isolation.
+		this.#history.push({ role: "user", content: prompt });
+
+		// Fork a branch for rollback isolation — all edits during this query happen on the fork.
 		const queryTree = this.#outerTree.fork();
 
 		try {
-			const result = await executeSemanticEdit(this.#model, queryTree.viewOrTree, prompt, {
-				startingHistoryWithSystemPrompt: this.#history,
+			const result = await runEditLoop(this.#model, queryTree, this.#history, {
 				editor: this.#editor,
-				maximumSequentialEdits: this.#maxEditCount,
+				maxEditCount: this.#maxEditCount,
 				logger: this.#options?.logger,
 			});
 
-			// Update persistent history from the returned history.
-			this.#history.length = 0;
-			this.#history.push(...result.history);
-
-			// Branch management based on rollback flag.
 			if (result.lastEditFailed) {
 				queryTree.branch.dispose();
 			} else {
@@ -424,6 +420,7 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 				this.#isDirty = false;
 			}
 
+			this.#options?.logger?.log(`## Response\n\n${result.response}\n\n`);
 			return result.response;
 		} catch (error) {
 			queryTree.branch.dispose();
@@ -461,18 +458,13 @@ export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * Executes a stateless semantic edit loop on a tree.
- * @remarks This function runs the same edit loop as {@link TreeAgent.message}, but without persistent state:
- * - No change listener or "tree has changed" notifications.
- * - Edits are applied directly to the input tree (no query-level branch isolation).
- * - Per-edit branches still provide error isolation for individual edits.
- * - Returns the full conversation history for chaining or debugging.
+ * Executes semantic editing on a tree.
  *
  * @param model - The chat model. Must implement {@link SharedTreeChatModel.invoke} and have {@link SharedTreeChatModel.editToolName} set.
- * @param tree - The tree or subtree to edit. Edits are applied directly to this tree.
+ * @param tree - The tree or subtree to edit.
  * @param prompt - The user's edit instruction.
  * @param options - Optional configuration.
- * @returns A {@link SemanticEditResult} containing the response, conversation history, and edit status.
+ * @returns The model's text response.
  * @alpha
  */
 export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
@@ -480,7 +472,7 @@ export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
 	tree: ViewOrTree<TSchema>,
 	prompt: string,
 	options?: ExecuteSemanticEditOptions<TSchema>,
-): Promise<SemanticEditResult> {
+): Promise<string> {
 	if (model.invoke === undefined) {
 		throw new UsageError(
 			"The provided SharedTreeChatModel does not implement invoke(). Provide a model that implements invoke(), such as the one returned by createLangchainChatModel from @fluidframework/tree-agent-langchain.",
@@ -498,41 +490,68 @@ export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
 	const editor = options?.editor ?? createDefaultEditor();
 	const maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 
-	// Build history: use provided history or generate a system prompt from the tree.
-	const history: TreeAgentChatMessage[] = options?.startingHistoryWithSystemPrompt
-		? [...options.startingHistoryWithSystemPrompt]
-		: [
-				{
-					role: "system",
-					content: getPrompt({
-						subtree,
-						editToolName,
-						domainHints: options?.domainHints,
-					}),
-				},
-			];
+	const history: TreeAgentChatMessage[] = [
+		{
+			role: "system",
+			content: getPrompt({
+				subtree,
+				editToolName,
+				domainHints: options?.domainHints,
+			}),
+		},
+	];
 
-	// Only log the agent header for standalone invocations (not when delegated from TreeAgentImpl.message).
-	if (options?.startingHistoryWithSystemPrompt === undefined) {
-		logAgentHeader(options?.logger, model.name);
-		options?.logger?.log(
-			`## System Prompt\n\n${(history[0] as { content: string }).content}\n\n`,
-		);
-	}
+	logAgentHeader(options?.logger, model.name);
+	options?.logger?.log(
+		`## System Prompt\n\n${(history[0] as { content: string }).content}\n\n`,
+	);
 
 	options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
 	history.push({ role: "user", content: prompt });
 
+	const result = await runEditLoop(model, subtree, history, {
+		editor,
+		maxEditCount,
+		logger: options?.logger,
+	});
+
+	options?.logger?.log(`## Response\n\n${result.response}\n\n`);
+	return result.response;
+}
+
+/**
+ * The result of the internal edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEdit}.
+ */
+interface EditLoopResult {
+	readonly response: string;
+	readonly lastEditFailed: boolean;
+}
+
+/**
+ * Core edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEdit}.
+ * @remarks Invokes the model in a loop, handling tool calls and applying edits, until the model
+ * produces an assistant response. The provided `history` array is mutated in place.
+ */
+async function runEditLoop<TSchema extends ImplicitFieldSchema>(
+	model: SharedTreeChatModel,
+	tree: Subtree<TSchema>,
+	history: TreeAgentChatMessage[],
+	options: {
+		editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+		maxEditCount: number;
+		logger?: Logger;
+	},
+): Promise<EditLoopResult> {
 	let editCount = 0;
 	let lastEditFailed = false;
 
 	while (true) {
-		const response = await model.invoke(history);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const response = await model.invoke!(history);
 
 		if (response.role === "assistant") {
 			history.push(response);
-			options?.logger?.log(`## Response\n\n${response.content}\n\n`);
-			return { response: response.content, history, lastEditFailed };
+			return { response: response.content, lastEditFailed };
 		}
 
 		// response.role === "tool_call"
@@ -552,9 +571,9 @@ export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
 		}
 
 		editCount++;
-		if (editCount > maxEditCount) {
+		if (editCount > options.maxEditCount) {
 			lastEditFailed = true;
-			const errorMessage = `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`;
+			const errorMessage = `The maximum number of edits (${options.maxEditCount}) for this query has been exceeded.`;
 			history.push({
 				role: "tool_result",
 				toolCallId: response.toolCallId,
@@ -563,7 +582,7 @@ export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
 			continue;
 		}
 
-		const editResult = await applyTreeFunction(subtree, code, editor, options?.logger);
+		const editResult = await applyTreeFunction(tree, code, options.editor, options.logger);
 
 		lastEditFailed = editResult.type !== "success";
 		history.push({
