@@ -21,6 +21,7 @@ import { unscopedPackageNameString } from "./constants.js";
 
 interface Options {
 	readonly mainEntrypoint: string;
+	readonly resolutionConditions: string[];
 	readonly outDir: string;
 	readonly outFilePrefix: string;
 
@@ -71,6 +72,7 @@ interface Options {
  */
 export const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
+	resolutionConditions: [],
 	outDir: "./lib",
 	outFilePrefix: "",
 	outFileAlpha: "alpha",
@@ -96,6 +98,11 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			description: "Main entrypoint file containing all untrimmed exports.",
 			default: optionDefaults.mainEntrypoint,
 			exists: true,
+		}),
+		resolutionConditions: Flags.string({
+			description: `Import resolution conditions used while resolving imports. If neither "import" nor "require" are specified, one of those will be inferred based on mainEntrypoint file extension and package.json "type" field.`,
+			multiple: true,
+			default: optionDefaults.resolutionConditions,
 		}),
 		outDir: Flags.directory({
 			description: "Directory to emit entrypoint declaration files.",
@@ -148,7 +155,7 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint, node10TypeCompat } = this.flags;
+		const { mainEntrypoint, resolutionConditions, node10TypeCompat } = this.flags;
 
 		const packageJson = await readPackageJson();
 
@@ -186,9 +193,32 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
+		const customConditions = [...resolutionConditions];
+		const conditionsPresent =
+			(customConditions.includes("import") ? 1 : 0) +
+			(customConditions.includes("require") ? 2 : 0);
+		if (conditionsPresent === 3) {
+			this.logger.warning(
+				'warning: both "import" and "require" --resolutionConditions flags given; results may be unstable',
+			);
+		} else if (conditionsPresent === 0) {
+			const inferredImportCondition = inferImportConditionFromFilePath(
+				mainEntrypoint,
+				packageJson,
+			);
+			this.logger.info(`Inferred import resolution condition "${inferredImportCondition}"`);
+			customConditions.push(inferredImportCondition);
+		}
+
 		const commandLine = `flub generate entrypoints${this.commandLineArgs()}`;
 		promises.push(
-			generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, commandLine, this.logger),
+			generateEntrypoints(
+				mainEntrypoint,
+				customConditions,
+				mapApiTagLevelToOutput,
+				commandLine,
+				this.logger,
+			),
 		);
 
 		if (node10TypeCompat) {
@@ -211,6 +241,21 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 async function readPackageJson(): Promise<PackageJson> {
 	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
 	return JSON.parse(packageJson) as PackageJson;
+}
+
+function inferImportConditionFromFilePath(
+	filePath: string,
+	packageJson: PackageJson,
+): "import" | "require" {
+	const ext = path.extname(filePath);
+	if (ext.match(/^\.m[jt]s/i) !== null) {
+		return "import";
+	}
+	if (ext.match(/^\.c[jt]s/i) !== null) {
+		return "require";
+	}
+
+	return packageJson.type === "module" ? "import" : "require";
 }
 
 /**
@@ -443,11 +488,16 @@ function generatedHeader(commandLine: string): string {
  * Generate "rollup" entrypoints for the given main entrypoint file.
  *
  * @param mainEntrypoint - path to main entrypoint file
+ * @param customConditions - custom conditions to use for import resolution.
+ * ts-morph doesn't configure TypeScript to use import conditions in module
+ * context (https://github.com/dsherret/ts-morph/issues/1667), so, set
+ * "import" or "require" conditions explicitly.
  * @param mapApiTagLevelToOutput - level oriented ApiTag to output file mapping
  * @param log - logger
  */
 async function generateEntrypoints(
 	mainEntrypoint: string,
+	customConditions: string[],
 	mapApiTagLevelToOutput: ReadonlyMap<ApiLevel, ExportData>,
 	commandLineForContentHeader: string,
 	log: CommandLogger,
@@ -468,14 +518,14 @@ async function generateEntrypoints(
 		// part of its setting may be confusing to document and keep tidy with dual-emit.
 		compilerOptions: {
 			module: ModuleKind.Node16,
-
 			// Without this, JSX files are not properly handled by ts-morph. "React" is the
 			// value we use in our base config, so it should be a safe value.
 			jsx: 2 /* JSXEmit.React */,
+			customConditions,
 		},
 	});
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
-	const exports = getApiExports(mainSourceFile);
+	const exports = getApiExports(mainSourceFile, "throwForMissing", log);
 
 	const packageDocumentationHeader = getPackageDocumentationText(mainSourceFile);
 	const newFileHeader = `${generatedHeader(commandLineForContentHeader)}${packageDocumentationHeader}`;
