@@ -152,7 +152,7 @@ describe("Summary benchmarks", () => {
 			[100, BenchmarkType.Measurement],
 		]) {
 			runSummaryBenchmark(
-				`a deep tree with ${nodeCount} nodes}`,
+				`a deep tree with ${nodeCount} nodes`,
 				{
 					// Types do not allow implicitly constructing recursive types, so cast is required.
 					// TODO: Find a better alternative.
@@ -168,7 +168,7 @@ describe("Summary benchmarks", () => {
 			[100, BenchmarkType.Measurement],
 		]) {
 			runSummaryBenchmark(
-				`a wide tree with ${nodeCount} nodes}`,
+				`a wide tree with ${nodeCount} nodes`,
 				{
 					initialTree: makeJsWideTreeWithEndValue(nodeCount, 1),
 					schema: WideRoot,

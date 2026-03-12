@@ -37,7 +37,7 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"bench": "mocha --recursive dist/test --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --fgrep @Duration --reporter @fluid-tools/benchmark/dist/mocha/Reporter.js",
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",

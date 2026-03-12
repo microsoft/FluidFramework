@@ -13,6 +13,7 @@
 	"sideEffects": false,
 	"type": "module",
 	"scripts": {
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
