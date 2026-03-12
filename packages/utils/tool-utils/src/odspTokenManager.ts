@@ -39,7 +39,7 @@ export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 /**
  * @internal
  */
-export type LoginConfig =
+export type LoginCredentials =
 	| {
 			type: "password";
 			username: string;
@@ -112,23 +112,23 @@ export class OdspTokenManager {
 	public async getOdspTokens(
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: LoginConfig,
+		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting odsp tokens");
-		return this.getTokens(false, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
+		return this.getTokens(false, server, clientConfig, credentials, forceRefresh, forceReauth);
 	}
 
 	public async getPushTokens(
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: LoginConfig,
+		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting push tokens");
-		return this.getTokens(true, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
+		return this.getTokens(true, server, clientConfig, credentials, forceRefresh, forceReauth);
 	}
 
 	private async getTokenFromCache(
@@ -150,11 +150,11 @@ export class OdspTokenManager {
 
 	private static getCacheKey(
 		isPush: boolean,
-		tokenConfig: LoginConfig,
+		credentials: LoginCredentials,
 	): IOdspTokenManagerCacheKey {
 		return {
 			isPush,
-			user: tokenConfig.username,
+			user: credentials.username,
 		};
 	}
 
@@ -162,7 +162,7 @@ export class OdspTokenManager {
 		isPush: boolean,
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: LoginConfig,
+		credentials: LoginCredentials,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
@@ -174,7 +174,7 @@ export class OdspTokenManager {
 					isPush,
 					server,
 					clientConfig,
-					tokenConfig,
+					credentials,
 					forceRefresh,
 					forceReauth,
 				);
@@ -182,7 +182,7 @@ export class OdspTokenManager {
 		};
 		if (!forceReauth && !forceRefresh) {
 			// check and return if it exists without lock
-			const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig);
+			const cacheKey = OdspTokenManager.getCacheKey(isPush, credentials);
 			const tokensFromCache = await this.getTokenFromCache(cacheKey);
 			if (tokensFromCache) {
 				if (isValidAndNotExpiredToken(tokensFromCache)) {
@@ -203,12 +203,12 @@ export class OdspTokenManager {
 		isPush: boolean,
 		server: string,
 		clientConfig: IPublicClientConfig,
-		loginConfig: LoginConfig,
+		credentials: LoginCredentials,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
 		const scope = isPush ? pushScope : getOdspScope(server);
-		const cacheKey = OdspTokenManager.getCacheKey(isPush, loginConfig);
+		const cacheKey = OdspTokenManager.getCacheKey(isPush, credentials);
 		let tokens: IOdspTokens | undefined;
 		if (!forceReauth) {
 			// check the cache again under the lock (if it is there)
@@ -217,9 +217,9 @@ export class OdspTokenManager {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
 						// For bearer tokens, use getNewToken callback instead of OAuth refresh
-						if (loginConfig.type === "fic") {
+						if (credentials.type === "fic") {
 							const scopeEndpoint = isPush ? "push" : "storage" as const;
-							const newTokenData = await loginConfig.fetchToken(scopeEndpoint);
+							const newTokenData = await credentials.fetchToken(scopeEndpoint);
 							tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
 							await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 						} else if (tokensFromCache.refreshToken !== undefined) {
@@ -240,24 +240,24 @@ export class OdspTokenManager {
 			}
 		}
 
-		switch (loginConfig.type) {
+		switch (credentials.type) {
 			case "password": {
 				tokens = await this.acquireTokensWithPassword(
 					server,
 					scope,
 					clientConfig,
-					loginConfig.username,
-					loginConfig.password,
+					credentials.username,
+					credentials.password,
 				);
 				break;
 			}
 			case "fic": {
-				const tokenData = await loginConfig.fetchToken(isPush ? "push" : "storage");
+				const tokenData = await credentials.fetchToken(isPush ? "push" : "storage");
 				tokens = this.ficTokenToIOdspTokens(tokenData, isPush);
 				break;
 			}
 			default: {
-				unreachableCase(loginConfig);
+				unreachableCase(credentials);
 			}
 		}
 

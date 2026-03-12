@@ -23,7 +23,7 @@ import type {
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	LoginConfig,
+	LoginCredentials,
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
@@ -32,7 +32,7 @@ import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
-const passwordTokenConfig = (username: string, password: string): LoginConfig => ({
+const passwordTokenConfig = (username: string, password: string): LoginCredentials => ({
 	type: "password",
 	username,
 	password,
@@ -40,7 +40,7 @@ const passwordTokenConfig = (username: string, password: string): LoginConfig =>
 
 interface IOdspTestLoginInfo {
 	siteUrl: string;
-	loginConfig: LoginConfig;
+	credentials: LoginCredentials;
 }
 
 type TokenConfig = IOdspTestLoginInfo & IPublicClientConfig;
@@ -109,7 +109,7 @@ export function assertOdspEndpoint(
 export function getOdspCredentials(
 	odspEndpointName: OdspEndpoint,
 	tenantIndex: number,
-): LoginConfig[] {
+): LoginCredentials[] {
 	const creds: { username: string; password: string }[] = [];
 	const loginTenants =
 		odspEndpointName === "odsp"
@@ -272,7 +272,7 @@ export class OdspTestDriver implements ITestDriver {
 				return token.Token;
 			};
 
-			const loginConfig: LoginConfig = {
+			const credentials: LoginCredentials = {
 				type: "fic",
 				username: username,
 				fetchToken,
@@ -290,7 +290,7 @@ export class OdspTestDriver implements ITestDriver {
 			}
 
 			return this.create(
-				{ siteUrl, loginConfig },
+				{ siteUrl, credentials },
 				config?.directory ?? "",
 				api,
 				options,
@@ -300,7 +300,7 @@ export class OdspTestDriver implements ITestDriver {
 			);
 		}
 
-		let creds = getOdspCredentials(endpointName, tenantIndex) as Exclude<LoginConfig, { type: "browserLogin" }>[];
+		let creds = getOdspCredentials(endpointName, tenantIndex) as Exclude<LoginCredentials, { type: "browserLogin" }>[];
 		if (config?.username !== undefined) {
 			// If config requested a specific username, only use that.
 			creds = creds.filter((c) => c.username === config.username);
@@ -312,8 +312,8 @@ export class OdspTestDriver implements ITestDriver {
 				: OdspTestDriver.legacyDriverUserRandomIndex;
 		const userIndex = Math.floor(randomUserIndex * creds.length);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const loginConfig = creds[userIndex]!;
-		const { username } = loginConfig;
+		const credentials = creds[userIndex]!;
+		const { username } = credentials;
 
 		const emailServer = username.substr(username.indexOf("@") + 1);
 		let siteUrl: string;
@@ -327,7 +327,7 @@ export class OdspTestDriver implements ITestDriver {
 		}
 
 		return this.create(
-			{ siteUrl, loginConfig },
+			{ siteUrl, credentials },
 			config?.directory ?? "",
 			api,
 			options,
@@ -354,7 +354,7 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	private static async create(
-		loginConfig: IOdspTestLoginInfo,
+		loginInfo: IOdspTestLoginInfo,
 		directory: string,
 		api = OdspDriverApi,
 		options?: HostStoragePolicy,
@@ -363,11 +363,11 @@ export class OdspTestDriver implements ITestDriver {
 		endpointName?: string,
 	): Promise<OdspTestDriver> {
 		const tokenConfig: TokenConfig = {
-			...loginConfig,
+			...loginInfo,
 			...getMicrosoftConfiguration(),
 		};
 
-		const driveId = await this.getDriveId(loginConfig.siteUrl, tokenConfig);
+		const driveId = await this.getDriveId(loginInfo.siteUrl, tokenConfig);
 		const directoryParts = [directory];
 
 		// if we are in a azure dev ops build use the build id in the dir path
@@ -395,7 +395,7 @@ export class OdspTestDriver implements ITestDriver {
 		const tokens = await this.odspTokenManager.getOdspTokens(
 			host,
 			config,
-			config.loginConfig,
+			config.credentials,
 			options.refresh,
 		);
 		return tokens.accessToken;
@@ -486,7 +486,7 @@ export class OdspTestDriver implements ITestDriver {
 		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
 			host,
 			this.config,
-			this.config.loginConfig,
+			this.config.credentials,
 			options.refresh,
 		);
 
