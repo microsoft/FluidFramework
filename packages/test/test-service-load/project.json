@@ -1,0 +1,41 @@
+{
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"build": {
+			"executor": "nx:noop"
+		},
+		"build:commonjs": {
+			"executor": "nx:noop"
+		},
+		"build:compile": {
+			"executor": "nx:noop"
+		},
+		"check:format": {
+			"executor": "nx:noop"
+		},
+		"format": {
+			"executor": "nx:noop"
+		},
+		"full": {
+			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
+		},
+		"lint:fix": {
+			"executor": "nx:noop"
+		},
+		"test": {
+			"executor": "nx:noop"
+		},
+		"test:stress": {
+			"executor": "nx:noop"
+		},
+		"test:stress:tinylicious:report": {
+			"executor": "nx:noop"
+		},
+		"test:stress:tinylicious:run": {
+			"executor": "nx:noop"
+		}
+	}
+}

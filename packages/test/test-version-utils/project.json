@@ -1,0 +1,29 @@
+{
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"build": {
+			"executor": "nx:noop"
+		},
+		"build:compile": {
+			"executor": "nx:noop"
+		},
+		"build:test": {
+			"executor": "nx:noop"
+		},
+		"check:format": {
+			"executor": "nx:noop"
+		},
+		"format": {
+			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
+		},
+		"lint:fix": {
+			"executor": "nx:noop"
+		},
+		"test": {
+			"executor": "nx:noop"
+		}
+	}
+}

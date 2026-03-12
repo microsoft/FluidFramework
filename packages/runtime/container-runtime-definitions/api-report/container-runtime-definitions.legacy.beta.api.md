@@ -79,11 +79,6 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizerStartupFailed", listener: (props: {
         reason: SummarizerStopReason;
     } & ISummarizerObservabilityProps) => void): any;
-    // (undocumented)
-    (event: "summarizeTimeout", listener: (props: {
-        timeoutCount: number;
-        currentSummarizeStep: string;
-    } & ISummarizerObservabilityProps) => void): any;
 }
 
 // @beta @sealed @legacy (undocumented)
