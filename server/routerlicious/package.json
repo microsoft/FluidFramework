@@ -152,7 +152,8 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges."
 		],
 		"overrides": {
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
@@ -182,7 +183,11 @@
 			"simple-git": "^3.32.3",
 			"systeminformation": "^5.31.0",
 			"socket.io-parser": "^4.2.4",
-			"zookeeper": "^7.2.0"
+			"zookeeper": "^7.2.0",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10": "^10.2.4"
 		},
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime.",
