@@ -7,17 +7,17 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
+	anchorSlot,
 	type DetachedField,
 	type FieldKindIdentifier,
 	type ForestEvents,
-	type SchemaPolicy,
-	type TreeStoredSchema,
-	anchorSlot,
 	moveToDetachedField,
 	rootField,
+	type SchemaPolicy,
+	type TreeStoredSchema,
 } from "../../core/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
-import { type IDisposable, disposeSymbol } from "../../util/index.js";
+import { disposeSymbol, type IDisposable } from "../../util/index.js";
 import type { NodeIdentifierManager } from "../node-identifier/index.js";
 
 import type { FlexTreeField } from "./flexTreeTypes.js";

@@ -7,9 +7,9 @@ import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
 import { type ChangesetLocalId, RevisionTagSchema, schemaFormatV1 } from "../../core/index.js";
 import {
+	brandedNumberType,
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
-	brandedNumberType,
 } from "../../util/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };

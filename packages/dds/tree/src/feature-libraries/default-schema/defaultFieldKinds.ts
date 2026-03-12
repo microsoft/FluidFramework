@@ -22,8 +22,8 @@ import {
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	ModularChangeFormatVersion,
-	type ToDelta,
 	referenceFreeFieldChangeRebaser,
+	type ToDelta,
 } from "../modular-schema/index.js";
 import { optional, required } from "../optional-field/index.js";
 import { sequence } from "../sequence-field/index.js";

@@ -27,8 +27,8 @@ import { EditorView } from "prosemirror-view";
 
 import {
 	IProseMirrorNode,
-	ProseMirrorTransactionBuilder,
 	nodeTypeKey,
+	ProseMirrorTransactionBuilder,
 	sliceToGroupOps,
 	stackTypeBegin,
 	stackTypeEnd,

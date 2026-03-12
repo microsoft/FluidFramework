@@ -4,7 +4,7 @@
  */
 
 import { Users } from "../domains/index.js";
-import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
+import { type LLMIntegrationTest, type ScorableVerboseTree, scoreSymbol } from "../utils.js";
 
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",

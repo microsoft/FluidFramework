@@ -8,11 +8,11 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	type ConfigMap,
+	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
 	validateConfigMapOverrides,
-	type ConfigMap,
-	type ConfigValidationMap,
 } from "@fluidframework/runtime-utils/internal";
 
 import {

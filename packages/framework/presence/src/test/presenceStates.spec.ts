@@ -9,7 +9,6 @@ import type {
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-
 import { StateFactory } from "@fluidframework/presence/beta";
 
 import type { InternalTypes } from "../exposedInternalTypes.js";

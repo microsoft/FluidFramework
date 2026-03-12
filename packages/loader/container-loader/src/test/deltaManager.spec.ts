@@ -14,15 +14,15 @@ import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaStorageService,
 	type IDocumentMessage,
-	MessageType,
 	type ISequencedDocumentMessage,
 	type IStream,
 	type IStreamResult,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createChildLogger,
 	type ITelemetryLoggerExt,
 	MockLogger,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 

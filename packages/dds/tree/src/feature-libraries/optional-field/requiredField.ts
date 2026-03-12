@@ -4,10 +4,10 @@
  */
 
 import { type ChangeAtomId, Multiplicity } from "../../core/index.js";
-import { requiredIdentifier, identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
+import { identifierFieldIdentifier, requiredIdentifier } from "../fieldKindIdentifiers.js";
 import {
-	type FieldEditor,
 	type FieldChangeHandler,
+	type FieldEditor,
 	FlexFieldKind,
 } from "../modular-schema/index.js";
 

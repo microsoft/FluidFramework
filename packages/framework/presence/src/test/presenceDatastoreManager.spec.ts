@@ -13,7 +13,7 @@ import type { JsonSerializable, TypedMessage } from "@fluidframework/core-interf
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers, spy } from "sinon";
+import { spy, useFakeTimers } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
 import { toOpaqueJson } from "../internalUtils.js";
@@ -27,11 +27,11 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
-	initialLocalClientConnectionId,
-	createSpecificAttendeeId,
-	prepareConnectedPresence,
 	attendeeId1,
+	createSpecificAttendeeId,
+	initialLocalClientConnectionId,
 	localAttendeeId,
+	prepareConnectedPresence,
 } from "./testUtils.js";
 
 const attendee0SystemWorkspaceDatastore = {

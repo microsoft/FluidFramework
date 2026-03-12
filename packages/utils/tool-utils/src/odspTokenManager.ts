@@ -4,8 +4,8 @@
  */
 
 import type {
-	IPublicClientConfig,
 	IOdspTokens,
+	IPublicClientConfig,
 	TokenRequestCredentials,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {

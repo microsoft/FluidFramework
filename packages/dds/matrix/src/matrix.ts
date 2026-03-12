@@ -5,15 +5,15 @@
 
 import type {
 	IEvent,
-	IEventThisPlaceHolder,
 	IEventProvider,
+	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannel,
+	IChannelAttributes,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -27,10 +27,10 @@ import {
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
@@ -63,7 +63,7 @@ import {
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 import { deserializeBlob } from "./serialization.js";
-import { SparseArray2D, type RecurArray } from "./sparsearray2d.js";
+import { type RecurArray, SparseArray2D } from "./sparsearray2d.js";
 import type { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
 

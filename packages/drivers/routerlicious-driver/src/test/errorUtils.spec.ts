@@ -9,10 +9,10 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { IThrottlingWarning } from "@fluidframework/driver-definitions/internal";
 
 import {
-	RouterliciousErrorTypes,
 	createR11sNetworkError,
 	errorObjectFromSocketError,
 	getUrlForTelemetry,
+	RouterliciousErrorTypes,
 	socketIoPath,
 	throwR11sNetworkError,
 } from "../errorUtils.js";

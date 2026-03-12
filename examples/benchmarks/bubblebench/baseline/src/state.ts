@@ -6,9 +6,9 @@
 import {
 	type IAppState,
 	type IBubble,
-	type SimpleClient,
 	makeBubble,
 	makeClient,
+	type SimpleClient,
 } from "@fluid-example/bubblebench-common";
 
 export class AppState implements IAppState {

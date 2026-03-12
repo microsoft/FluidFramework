@@ -6,10 +6,10 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	areEqualChangeAtomIds,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
 	type DeltaMark,
-	areEqualChangeAtomIds,
 } from "../../core/index.js";
 import { getLast, hasSome, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";

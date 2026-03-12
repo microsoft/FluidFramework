@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
-	TestDataObjectType,
 	describeCompat,
 	itExpects,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
@@ -22,12 +22,12 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
+	createSummarizer,
+	type ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-	type ITestContainerConfig,
 } from "@fluidframework/test-utils/internal";
 
 /**

@@ -19,7 +19,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
-import { TwoDiceApp, Dice } from "./schema.js";
+import { Dice, TwoDiceApp } from "./schema.js";
 
 export interface ICustomUserDetails {
 	gender: string;

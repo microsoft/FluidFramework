@@ -9,10 +9,10 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 // Allow importing from these specific files which are being tested:
 import {
-	type GraphCommit,
-	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
+	type GraphCommit,
+	type RevisionTag,
 	rebaseBranch,
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../core/rebase/index.js";

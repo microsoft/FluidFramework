@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type FieldKey, type UpPath, topDownPath } from "../core/index.js";
+import { type FieldKey, topDownPath, type UpPath } from "../core/index.js";
 
 /**
  * A step in a bind path

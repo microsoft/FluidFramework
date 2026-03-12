@@ -6,9 +6,15 @@
 import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import { EmptyKey, type ITreeCursorSynchronous, mapCursorField } from "../core/index.js";
 import { currentObserver } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
+import type {
+	InsertableTypedNode,
+	TreeNode,
+	TreeNodeFromImplicitAllowedTypes,
+	WithType,
+} from "../simple-tree/index.js";
 import {
 	enumFromStrings,
 	eraseSchemaDetails,
@@ -17,12 +23,6 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 	TreeBeta,
-} from "../simple-tree/index.js";
-import type {
-	InsertableTypedNode,
-	TreeNode,
-	TreeNodeFromImplicitAllowedTypes,
-	WithType,
 } from "../simple-tree/index.js";
 import { mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 

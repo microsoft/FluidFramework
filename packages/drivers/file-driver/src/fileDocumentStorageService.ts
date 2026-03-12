@@ -9,14 +9,14 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
-	ISummaryContext,
-	ISnapshotTree,
-	IVersion,
-	ITree,
 	FileMode,
-	TreeEntry,
 	IBlob,
+	IDocumentStorageService,
+	ISnapshotTree,
+	ISummaryContext,
+	ITree,
+	IVersion,
+	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,

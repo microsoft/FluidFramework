@@ -10,6 +10,7 @@ import { validateAssertionError } from '@fluidframework/test-runtime-utils/inter
 import { expect } from 'chai';
 
 import {
+	areRevisionViewsSemanticallyEqual,
 	Change,
 	Checkout,
 	CheckoutEvent,
@@ -20,7 +21,6 @@ import {
 	Side,
 	StablePlace,
 	StableRange,
-	areRevisionViewsSemanticallyEqual,
 	setTrait,
 } from '../index.js';
 

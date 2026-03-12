@@ -8,11 +8,11 @@ import { strict as assert } from "assert";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
-	IResolvedUrl,
 	type IAnyDriverError,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { stub, spy } from "sinon";
+import { spy, stub } from "sinon";
 import type { Socket } from "socket.io-client";
 
 import { R11sServiceClusterDrainingErrorCode } from "../contracts.js";

@@ -4,9 +4,9 @@
  */
 
 import {
+	type ImplicitFieldSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type ImplicitFieldSchema,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 

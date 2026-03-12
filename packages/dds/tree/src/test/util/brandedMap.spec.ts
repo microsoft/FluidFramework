@@ -4,10 +4,10 @@
  */
 
 import {
-	brandedSlot,
-	getOrCreateSlotContent,
 	type BrandedKey,
 	type BrandedMapSubset,
+	brandedSlot,
+	getOrCreateSlotContent,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/brandedMap.js";

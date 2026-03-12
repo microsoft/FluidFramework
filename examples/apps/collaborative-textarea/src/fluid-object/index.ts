@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedString, type ISharedString } from "@fluidframework/sequence/legacy";
+import { type ISharedString, SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * CollaborativeText uses the React CollaborativeTextArea to load a collaborative HTML <textarea>

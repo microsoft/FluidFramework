@@ -10,11 +10,11 @@ import type { SegmentGroup } from "../mergeTreeNodes.js";
 import { type IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
 	annotateRange,
 	doOverRange,
 	generateClientNames,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	insert,
 	removeRange,
 	runMergeTreeOperationRunner,

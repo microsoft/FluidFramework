@@ -6,12 +6,12 @@
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import {
-	toPropTreeNode,
 	FormattedMainView,
-	PlainTextMainView,
 	PlainQuillView,
-	UndoRedoStacks,
+	PlainTextMainView,
+	toPropTreeNode,
 	type UndoRedo,
+	UndoRedoStacks,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
 /**
@@ -20,13 +20,14 @@ import {
  */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { SchemaFactory, type TreeView, TreeViewConfiguration } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
+
 import { type FC, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";

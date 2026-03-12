@@ -7,10 +7,10 @@ import type { IAudienceOwner } from "@fluidframework/container-definitions/inter
 import {
 	type IDocumentAttributes,
 	type IProcessMessageResult,
-	type ISignalClient,
-	MessageType,
 	type ISequencedDocumentMessage,
+	type ISignalClient,
 	type ISignalMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 

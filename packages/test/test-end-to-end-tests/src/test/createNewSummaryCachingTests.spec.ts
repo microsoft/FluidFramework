@@ -17,8 +17,8 @@ import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";

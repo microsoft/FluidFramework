@@ -4,12 +4,12 @@
  */
 
 import {
+	makeStyles,
 	Table,
 	TableBody,
 	TableCell,
 	TableHeader,
 	TableRow,
-	makeStyles,
 	tokens,
 } from "@fluentui/react-components";
 import {

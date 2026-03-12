@@ -8,8 +8,8 @@ import { strict as assert } from "node:assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -21,9 +21,6 @@ import type {
 } from "../../messageTypes.js";
 import {
 	BatchManager,
-	type OutboundBatchMessage,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
 	type BatchStartInfo,
 	ensureContentsDeserialized,
 	type InboundMessageResult,
@@ -31,6 +28,9 @@ import {
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
+	type OutboundBatch,
+	type OutboundBatchMessage,
+	type OutboundSingletonBatch,
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
 

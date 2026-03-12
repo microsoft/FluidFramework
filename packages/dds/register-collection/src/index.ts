@@ -5,8 +5,8 @@
 
 export { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
 export {
-	ConsensusRegisterCollectionFactory,
 	ConsensusRegisterCollection,
+	ConsensusRegisterCollectionFactory,
 } from "./consensusRegisterCollectionFactory.js";
 export {
 	IConsensusRegisterCollection,

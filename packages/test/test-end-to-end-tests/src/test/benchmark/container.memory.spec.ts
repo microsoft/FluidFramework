@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import {
 	IContainer,
 	IFluidCodeDetails,

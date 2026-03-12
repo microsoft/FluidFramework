@@ -5,15 +5,15 @@
 
 import { PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { SequenceInterval, createTransientIntervalFromSequence } from "../intervals/index.js";
+import { createTransientIntervalFromSequence, SequenceInterval } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
 import {
-	HasComparisonOverride,
 	compareOverrideables,
 	forceCompare,
+	HasComparisonOverride,
 } from "./intervalIndexUtils.js";
 
 /**

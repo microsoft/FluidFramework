@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import {
-	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
+	DocumentMatrixPlainInfo,
 	isDocumentMatrixPlainInfo,
 } from "@fluid-private/test-version-utils";
 import {
@@ -35,8 +35,8 @@ import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	ITestContainerConfig,
 	createSummarizerFromFactory,
+	ITestContainerConfig,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 

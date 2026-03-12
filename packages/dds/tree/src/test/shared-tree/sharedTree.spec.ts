@@ -28,15 +28,15 @@ import {
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import {
-	CommitKind,
-	type Revertible,
-	type UpPath,
-	moveToDetachedField,
-	rootFieldKey,
-	storedEmptyFieldSchema,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	CommitKind,
 	EmptyKey,
+	moveToDetachedField,
+	type Revertible,
+	rootFieldKey,
+	storedEmptyFieldSchema,
+	type UpPath,
 	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
@@ -76,50 +76,52 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
+	FieldKind,
+	handleSchema,
+	type ITree,
+	NodeKind,
+	numberSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SimpleLeafNodeSchema,
+	type SimpleTreeSchema,
+	stringSchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
-	type ValidateRecursiveSchema,
-	SchemaFactoryAlpha,
-	type ITree,
 	toInitialSchema,
-	NodeKind,
-	type SimpleTreeSchema,
-	FieldKind,
-	type SimpleLeafNodeSchema,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
+	type ISharedTree,
 	resolveOptions,
 	SharedTree as SharedTreeKind,
-	type ISharedTree,
 } from "../../treeFactory.js";
 import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { TestAnchor } from "../testAnchor.js";
 import {
+	chunkFromJsonableTrees,
+	createSnapshotCompressor,
+	createTestUndoRedoStacks,
+	DefaultTestSharedTreeKind,
+	expectEqualPaths,
+	expectSchemaEqual,
+	getView,
 	type ITestTreeProvider,
+	NumberArray,
 	SharedTreeTestFactory,
+	type SharedTreeWithContainerRuntime,
+	StringArray,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
-	createTestUndoRedoStacks,
-	expectSchemaEqual,
+	type TreeMockContainerRuntime,
 	validateTreeConsistency,
 	validateTreeContent,
-	StringArray,
-	NumberArray,
 	validateViewConsistency,
-	chunkFromJsonableTrees,
-	expectEqualPaths,
-	type TreeMockContainerRuntime,
-	type SharedTreeWithContainerRuntime,
-	DefaultTestSharedTreeKind,
-	getView,
-	createSnapshotCompressor,
 } from "../utils.js";
 
 const enableSchemaValidation = true;

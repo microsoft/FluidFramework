@@ -5,6 +5,7 @@
 
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
+
 import { type Compilation, type Compiler, WebpackError } from "webpack";
 
 import type { BundleBuddyConfig } from "./BundleBuddyTypes";

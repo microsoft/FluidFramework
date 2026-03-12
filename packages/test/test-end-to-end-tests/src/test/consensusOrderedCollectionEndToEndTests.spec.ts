@@ -12,10 +12,10 @@ import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collec
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 const mapId = "mapKey";

@@ -5,9 +5,9 @@
 
 import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	createDataObjectKind,
 	DataObject,
 	DataObjectFactory,
-	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import { IErrorEvent, type IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";

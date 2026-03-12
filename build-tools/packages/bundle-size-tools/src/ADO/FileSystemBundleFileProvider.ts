@@ -4,10 +4,12 @@
  */
 
 import { promises as fsPromises } from "fs";
+
 import type { StatsCompilation } from "webpack";
 
 import type { BundleBuddyConfig } from "../BundleBuddyTypes";
 import { decompressStatsFile, getAllFilesInDirectory } from "../utilities";
+
 import {
 	type BundleFileData,
 	getBundleFilePathsFromFolder,

@@ -13,10 +13,10 @@ import { spy } from "sinon";
 
 import { startTelemetry } from "../factory/index.js";
 import {
-	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
+	ContainerTelemetryEventNames,
 	type IFluidTelemetry,
 	type ITelemetryConsumer,
 } from "../index.js";

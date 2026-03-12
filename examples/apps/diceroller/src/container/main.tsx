@@ -7,6 +7,7 @@ import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IValueChanged } from "@fluidframework/map/legacy";
 import { type FC, useEffect, useState } from "react";
+
 const diceValueKey = "diceValue";
 
 /**

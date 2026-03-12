@@ -4,9 +4,11 @@
  */
 
 import { EOL } from "node:os";
+
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
 import { describe, it } from "mocha";
+
 import { testRepoRoot } from "../../../init.js";
 
 /**

@@ -11,17 +11,17 @@ import { filterIterable, hasSingle, oneFromIterable } from "../util/index.js";
 
 import {
 	CompatibilityLevel,
+	contentSchemaSymbol,
 	getKernel,
 	getTreeNodeSchemaPrivateData,
 	isTreeNode,
 	type TreeNode,
 	type TreeNodeSchema,
-	contentSchemaSymbol,
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
-import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
+import { FieldKind, type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js";
 
 /**
  * Transforms an input {@link TypedNode} tree to an {@link UnhydratedFlexTreeNode}.

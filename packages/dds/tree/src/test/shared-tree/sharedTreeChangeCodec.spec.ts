@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
+import { type CodecWriteOptions, currentVersion } from "../../codec/index.js";
 import { TreeStoredSchemaRepository } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -19,13 +19,13 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/index.js";
 import {
+	defaultSchemaPolicy,
 	type FieldBatch,
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
 	FieldKinds,
-	type ModularChangeset,
-	defaultSchemaPolicy,
 	fieldKindConfigurations,
+	type ModularChangeset,
 	makeModularChangeCodecFamily,
 	newChangeAtomIdBTree,
 } from "../../feature-libraries/index.js";

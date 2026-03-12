@@ -11,7 +11,7 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import type { DDSFuzzTestState, DDSFuzzModel } from "@fluid-private/test-dds-utils";
+import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";

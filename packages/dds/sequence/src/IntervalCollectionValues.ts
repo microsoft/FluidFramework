@@ -5,8 +5,8 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	serializeHandles,
 	IFluidSerializer,
+	serializeHandles,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { IntervalCollection } from "./intervalCollection.js";

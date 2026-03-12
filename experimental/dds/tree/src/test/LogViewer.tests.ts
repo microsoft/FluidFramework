@@ -24,8 +24,6 @@ import {
 	SequencedEditResultCallback,
 } from '../LogViewer.js';
 import { NodeIdContext } from '../NodeIdUtilities.js';
-import { RevisionView } from '../RevisionView.js';
-import { TransactionInternal } from '../TransactionInternal.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -36,9 +34,11 @@ import {
 	SetValueInternal,
 	StablePlaceInternal,
 } from '../persisted-types/index.js';
+import { RevisionView } from '../RevisionView.js';
+import { TransactionInternal } from '../TransactionInternal.js';
 
 import { expectDefined } from './utilities/TestCommon.js';
-import { TestTree, buildLeaf } from './utilities/TestNode.js';
+import { buildLeaf, TestTree } from './utilities/TestNode.js';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities.js';
 
 /**

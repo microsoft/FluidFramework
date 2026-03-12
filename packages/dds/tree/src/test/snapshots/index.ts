@@ -4,9 +4,9 @@
  */
 
 export {
+	regenerateSnapshots,
 	takeJsonSnapshot,
 	takeSnapshot,
-	useSnapshotDirectory,
-	regenerateSnapshots,
 	testSchemaCompatibilitySnapshots,
+	useSnapshotDirectory,
 } from "./snapshotTools.js";

@@ -19,9 +19,9 @@ import type {
 	ISequencedClient,
 } from "@fluidframework/driver-definitions";
 import {
+	createChildLogger,
 	type ITelemetryLoggerExt,
 	UsageError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { summarizerClientType } from "./summarizerTypes.js";

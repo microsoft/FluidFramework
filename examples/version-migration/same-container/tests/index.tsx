@@ -9,7 +9,6 @@ import {
 	SameContainerMigrator,
 	SessionStorageModelLoader,
 } from "@fluid-example/example-utils";
-
 import { createElement } from "react";
 import ReactDOM from "react-dom";
 

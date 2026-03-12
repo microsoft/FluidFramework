@@ -9,9 +9,9 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { OdspClient, type OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
 import {
-	type MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
+	type MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";

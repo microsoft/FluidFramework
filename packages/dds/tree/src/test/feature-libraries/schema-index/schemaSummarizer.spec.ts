@@ -6,20 +6,20 @@
 import { strict as assert } from "node:assert";
 
 import {
-	SummaryType,
 	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { type CodecWriteOptions, FluidClientVersion } from "../../../codec/index.js";
 import {
 	SchemaFormatVersion,
 	storedEmptyFieldSchema,
-	TreeStoredSchemaRepository,
 	type TreeStoredSchema,
+	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -37,8 +37,8 @@ import {
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
-	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
+	summarizablesMetadataKey,
 } from "../../../shared-tree-core/index.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";

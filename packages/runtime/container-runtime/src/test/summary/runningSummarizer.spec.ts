@@ -20,11 +20,11 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
+	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryNack,
 	type ISummaryProposal,
 	MessageType,
-	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
@@ -32,22 +32,20 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
 import {
+	defaultMaxAttempts,
+	defaultMaxAttemptsForSubmitFailures,
+	getFailMessage,
 	type IGeneratedSummaryStats,
 	type ISummarizeHeuristicData,
 	type ISummarizerRuntime,
 	type ISummaryCancellationToken,
+	type ISummaryConfiguration,
+	neverCancelledSummaryToken,
 	RetriableSummaryError,
+	RunningSummarizer,
 	type SubmitSummaryResult,
 	SummarizeHeuristicData,
 	SummaryCollection,
-	getFailMessage,
-	neverCancelledSummaryToken,
-	type ISummaryConfiguration,
-} from "../../summary/index.js";
-import {
-	defaultMaxAttempts,
-	defaultMaxAttemptsForSubmitFailures,
-	RunningSummarizer,
 } from "../../summary/index.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {

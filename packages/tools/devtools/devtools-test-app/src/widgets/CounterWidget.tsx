@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Button, Text, Tooltip, makeStyles, shorthands } from "@fluentui/react-components";
+import { Button, makeStyles, shorthands, Text, Tooltip } from "@fluentui/react-components";
 import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-icons";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { type ReactElement, useEffect, useState } from "react";
+
 // TODOs:
 // - This seems like it might be worth sharing somewhere more general?
 //   Common, simple widget for interacting with SharedCounter_s.

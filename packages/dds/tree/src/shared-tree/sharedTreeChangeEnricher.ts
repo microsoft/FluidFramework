@@ -19,11 +19,11 @@ import {
 	visitDelta,
 } from "../core/index.js";
 import {
-	type TreeChunk,
 	chunkTree,
 	defaultChunkPolicy,
 	intoDelta,
 	relevantRemovedRoots,
+	type TreeChunk,
 	updateRefreshers as updateDataChangeRefreshers,
 } from "../feature-libraries/index.js";
 import { disposeSymbol } from "../util/index.js";

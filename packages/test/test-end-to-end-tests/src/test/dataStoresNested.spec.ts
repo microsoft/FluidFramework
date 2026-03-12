@@ -9,21 +9,21 @@ import { IContainer, IHostLoader } from "@fluidframework/container-definitions/i
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ChannelCollectionFactory,
+	type IContainerRuntimeOptionsInternal,
 	ISummarizer,
 	SummaryCollection,
-	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	createSummarizerCore,
 	ITestObjectProvider,
+	summarizeNow,
 	TestContainerRuntimeFactory,
 	TestFluidObject,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	createSummarizerCore,
-	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 /**

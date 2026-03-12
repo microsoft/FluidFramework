@@ -6,8 +6,8 @@
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
 import {
 	Component,
-	createRef,
 	type CSSProperties,
+	createRef,
 	type FormEvent,
 	type RefObject,
 } from "react";

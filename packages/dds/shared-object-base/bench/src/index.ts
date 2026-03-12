@@ -5,8 +5,10 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Suite } from "benchmark";
+
 import { FluidSerializer } from "../..";
 import { MockHandleContext, makeJson } from "../../src/test/utils";
+
 import { consume, runSuites } from "./util";
 
 const serializer = new FluidSerializer(new MockHandleContext(), (handle: IFluidHandle) => {});

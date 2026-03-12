@@ -13,10 +13,10 @@ import { revealOpaqueJson, toOpaqueJson } from "./internalUtils.js";
 import type {
 	NotificationEmitter,
 	NotificationListenable,
+	NotificationSubscriberSignatures,
 	NotificationsConfiguration,
 	NotificationsManager,
 	NotificationsManagerEvents,
-	NotificationSubscriberSignatures,
 	NotificationsWithSubscriptionsConfiguration,
 } from "./notificationsManagerTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";

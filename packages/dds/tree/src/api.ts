@@ -4,10 +4,10 @@
  */
 
 import type {
+	ImplicitFieldSchema,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewBeta,
-	ImplicitFieldSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "./simple-tree/index.js";

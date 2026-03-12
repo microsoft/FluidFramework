@@ -20,8 +20,8 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type {
-	AttendeesEvents,
 	AttendeeId,
+	AttendeesEvents,
 	PresenceWithNotifications as Presence,
 	PresenceEvents,
 } from "./presence.js";

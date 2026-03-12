@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { SequencePlace, endpointPosAndSide } from "@fluidframework/merge-tree/internal";
+import { endpointPosAndSide, SequencePlace } from "@fluidframework/merge-tree/internal";
 
-import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
-	SequenceInterval,
 	BaseSequenceInterval,
 	createTransientIntervalFromSequence,
+	SequenceInterval,
 } from "../intervals/index.js";
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 

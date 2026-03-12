@@ -10,7 +10,7 @@ import {
 	makeBubble,
 	randomColor,
 } from "@fluid-example/bubblebench-common";
-import { type TreeView, Tree } from "@fluidframework/tree";
+import { Tree, type TreeView } from "@fluidframework/tree";
 
 import { type App, Client } from "./schema.js";
 

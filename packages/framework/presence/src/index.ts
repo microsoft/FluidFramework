@@ -12,38 +12,17 @@
  */
 
 export type { ClientConnectionId } from "./baseTypes.js";
-
 export type {
-	NotificationsWorkspace,
-	NotificationsWorkspaceSchema,
-	StatesWorkspace,
-	StatesWorkspaceEntries,
-	StatesWorkspaceSchema,
-	StatesWorkspaceEntry,
-	WorkspaceAddress,
-} from "./types.js";
-
-export {
-	type Attendee,
-	type AttendeesEvents,
-	type AttendeeId,
-	AttendeeStatus,
-	type Presence,
-	type PresenceEvents,
-	type PresenceWithNotifications,
-} from "./presence.js";
-
-export type {
-	BroadcastControls,
 	BroadcastControlSettings,
+	BroadcastControls,
 } from "./broadcastControlsTypes.js";
-
+export type { InternalTypes as InternalPresenceTypes } from "./exposedInternalTypes.js";
+export type { InternalUtilityTypes as InternalPresenceUtilityTypes } from "./exposedUtilityTypes.js";
 export {
 	getPresence,
 	getPresenceAlpha,
 	getPresenceFromDataStoreContext,
 } from "./getPresence.js";
-
 export type {
 	KeySchemaValidator,
 	LatestMap,
@@ -81,19 +60,32 @@ export type {
 	StateSchemaValidator,
 	ValueAccessor,
 } from "./latestValueTypes.js";
-
 export { Notifications } from "./notificationsManager.js";
 export type {
 	NotificationEmitter,
 	NotificationListenable,
-	NotificationsConfiguration,
 	NotificationSubscriberSignatures,
+	NotificationsConfiguration,
 	NotificationsManager,
 	NotificationsManagerEvents,
 	NotificationsWithSubscriptionsConfiguration,
 } from "./notificationsManagerTypes.js";
-
+export {
+	type Attendee,
+	type AttendeeId,
+	AttendeeStatus,
+	type AttendeesEvents,
+	type Presence,
+	type PresenceEvents,
+	type PresenceWithNotifications,
+} from "./presence.js";
 export { StateFactory } from "./stateFactory.js";
-
-export type { InternalTypes as InternalPresenceTypes } from "./exposedInternalTypes.js";
-export type { InternalUtilityTypes as InternalPresenceUtilityTypes } from "./exposedUtilityTypes.js";
+export type {
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceEntries,
+	StatesWorkspaceEntry,
+	StatesWorkspaceSchema,
+	WorkspaceAddress,
+} from "./types.js";

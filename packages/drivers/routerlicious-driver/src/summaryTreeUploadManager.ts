@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
+import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
