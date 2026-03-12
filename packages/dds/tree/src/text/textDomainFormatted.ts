@@ -6,7 +6,13 @@
 import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import {
+	EmptyKey,
+	mapCursorField,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type Value,
+} from "../core/index.js";
 import { currentObserver } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
 import {
@@ -24,7 +30,7 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	WithType,
 } from "../simple-tree/index.js";
-import { mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
+import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
 import { charactersFromString, type TextAsTree } from "./textDomain.js";
 
@@ -172,6 +178,12 @@ class TextNode
 			});
 		}
 	}
+	public getUniformRun(startIndex: number, maxLength?: number): number {
+		return this.content.getUniformRun(startIndex, maxLength);
+	}
+	public textString(startIndex: number, length: number): string {
+		return this.content.textString(startIndex, length);
+	}
 }
 
 const defaultFormat = {
@@ -181,6 +193,13 @@ const defaultFormat = {
 	size: 12,
 	font: "Arial",
 } as const;
+
+const formatKey: FieldKey = brand("format");
+const boldKey: FieldKey = brand("bold");
+const italicKey: FieldKey = brand("italic");
+const underlineKey: FieldKey = brand("underline");
+const sizeKey: FieldKey = brand("size");
+const fontKey: FieldKey = brand("font");
 
 function textAtomsFromString(
 	value: string,
@@ -250,6 +269,92 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 
 	public fullString(): string {
 		return this.charactersCopy().join("");
+	}
+	public getUniformRun(startIndex: number, maxLength: number = this.length): number {
+		if (maxLength <= 0 || startIndex >= this.length) return 0;
+		const arrayLength = this.length;
+		return this.withBorrowedSequenceCursor((cursor) => {
+			const readLeaf = (key: FieldKey): Value => {
+				cursor.enterField(key);
+				cursor.enterNode(0);
+				const value = cursor.value;
+				cursor.exitNode();
+				cursor.exitField();
+				return value;
+			};
+
+			cursor.enterNode(startIndex);
+			cursor.enterField(formatKey);
+			cursor.enterNode(0);
+			const boldA = readLeaf(boldKey);
+			const italicA = readLeaf(italicKey);
+			const underlineA = readLeaf(underlineKey);
+			const sizeA = readLeaf(sizeKey);
+			const fontA = readLeaf(fontKey);
+			cursor.exitNode();
+			cursor.exitField();
+
+			let count = 1;
+			const limit = Math.min(maxLength, arrayLength - startIndex);
+
+			while (count < limit && cursor.nextNode()) {
+				cursor.enterField(formatKey);
+				cursor.enterNode(0);
+				const match =
+					boldA === readLeaf(boldKey) &&
+					italicA === readLeaf(italicKey) &&
+					underlineA === readLeaf(underlineKey) &&
+					sizeA === readLeaf(sizeKey) &&
+					fontA === readLeaf(fontKey);
+				cursor.exitNode();
+				cursor.exitField();
+				if (!match) {
+					break;
+				}
+				count++;
+			}
+			cursor.exitNode();
+			return count;
+		});
+	}
+	public textString(startIndex: number, length: number): string {
+		if (length <= 0 || startIndex >= this.length) return "";
+		const arrayLength = this.length;
+		return this.withBorrowedSequenceCursor((cursor) => {
+			const limit = Math.min(length, arrayLength - startIndex);
+			let result = "";
+
+			cursor.enterNode(startIndex);
+			for (let index = 0; index < limit; index++) {
+				if (index > 0 && !cursor.nextNode()) {
+					break;
+				}
+
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				switch (cursor.type) {
+					case FormattedTextAsTree.StringTextAtom.identifier: {
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+						result += cursor.value as string;
+						cursor.exitNode();
+						cursor.exitField();
+						break;
+					}
+					case FormattedTextAsTree.StringLineAtom.identifier: {
+						result += "\n";
+						break;
+					}
+					default: {
+						fail(0xcde, () => `${cursor.type}`);
+					}
+				}
+				cursor.exitNode();
+				cursor.exitField();
+			}
+			cursor.exitNode();
+			return result;
+		});
 	}
 }
 
@@ -427,6 +532,20 @@ export namespace FormattedTextAsTree {
 			endIndex: number | undefined,
 			format: Partial<CharacterFormat>,
 		): void;
+
+		/**
+		 * Returns the length of the run of characters starting as `startIndex` which have the same formatting, up to a maximum of `maxLength`.
+		 * @param startIndex - The starting index of the run.
+		 * @param maxLength - The maximum length of the run. Defaults to the length of the text.
+		 */
+		getUniformRun(startIndex: number, maxLength?: number): number;
+
+		/**
+		 * Returns a substring of the text starting at `startIndex` and spanning `length` characters.
+		 * @param startIndex - The starting index of the substring.
+		 * @param length - The number of characters to include in the substring.
+		 */
+		textString(startIndex: number, length: number): string;
 	}
 
 	/**

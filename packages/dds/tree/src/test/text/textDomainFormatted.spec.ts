@@ -86,6 +86,37 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
+	it("getUniformRun", () => {
+		const text = FormattedTextAsTree.Tree.fromString("abc");
+		text.defaultFormat.underline = true;
+		text.insertAt(3, "de");
+		text.defaultFormat.italic = true;
+		text.insertAt(5, "f");
+		assert.equal(text.getUniformRun(0, 5), 3);
+		assert.equal(text.getUniformRun(3, 5), 2);
+		assert.equal(text.getUniformRun(4, 5), 1);
+		assert.equal(text.getUniformRun(5, 5), 1);
+		assert.equal(text.getUniformRun(6, 6), 0);
+	});
+
+	it("textString with getUniformRun", () => {
+		const text = FormattedTextAsTree.Tree.fromString("abc");
+		text.defaultFormat.underline = true;
+		text.insertAt(3, "de");
+		text.defaultFormat.italic = true;
+		text.insertAt(5, "f");
+		let index = 0;
+		let currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.textString(index, currentRun), "abc");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.textString(index, currentRun), "de");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.textString(index, currentRun), "f");
+		assert.equal(text.getUniformRun(0), 3);
+	});
+
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
 	// Specifically unhydrated tree cursors do observation tracking while hydrated ones do not.
 	describeHydration("observation tracking", (init, hydrated) => {
