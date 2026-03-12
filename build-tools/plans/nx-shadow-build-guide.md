@@ -50,6 +50,15 @@ Orchestrator tasks only exist to fan out to other tasks via `dependsOn`. They do
    "build:commonjs": "npm run tsc && npm run build:test"  // ← just delegates → orchestrator
    ```
 
+4. **Scripts using `concurrently`** — A script that uses `concurrently` to fan out to sub-scripts is also an orchestrator. These are easy to miss because they look like they do real work, but they actually just delegate:
+   ```json
+   "check:exports": "concurrently \"npm:check:exports:*\"",   // ← fans out → orchestrator
+   "build:api-reports": "concurrently \"npm:build:api-reports:*\"",  // ← fans out → orchestrator
+   "build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types"  // ← fans out → orchestrator
+   ```
+
+   **Important:** When a `concurrently` script fans out to sub-scripts, those sub-scripts are the real executors. Each sub-script may have its own dependency requirements (defined in `fluidBuild.tasks`). If the sub-scripts are not defined as separate NX targets with their own `dependsOn`, their prerequisites may not be met. See "Per-package overrides" below.
+
 #### Executor tasks (leaf tasks)
 
 Executor tasks do actual work — they run tsc, eslint, mocha, api-extractor, copyfiles, etc. These are the tasks NX should run via the default `nx:run-script` executor.
@@ -150,9 +159,49 @@ From `fluidBuild.config.cjs`:
 | `test:mocha:cjs` | build:test:cjs | CJS Mocha tests |
 | `test:mocha:esm` | build:test:esm | ESM Mocha tests |
 
-#### Per-package overrides
+#### Per-package overrides (critical for correctness)
 
-Some packages have custom `fluidBuild.tasks` in their own `package.json` that add or modify tasks. Check for these — they may introduce additional orchestrators or change the dependency graph for specific packages.
+Some packages have custom `fluidBuild.tasks` in their own `package.json` that add or modify task dependencies. **These must be checked and reflected in each package's `project.json`**, otherwise NX will run tasks with missing prerequisites.
+
+**How to find them:** Search for `"fluidBuild"` in all package.json files:
+```bash
+grep -rl '"fluidBuild"' packages/*/package.json
+```
+
+**What to look for:** Per-package `fluidBuild.tasks` entries define custom `dependsOn` relationships that differ from the global `targetDefaults`. Common patterns:
+
+1. **Custom entrypoint generation scripts** — Some packages use non-standard scripts instead of (or in addition to) `api-extractor:esnext`. For example, `@fluid-internal/client-utils` uses `build:exports:node` and `build:exports:browser` instead of `api-extractor:esnext` to generate entrypoints. These custom dependencies must be added to the package's `project.json`:
+
+   fluid-build config in package.json:
+   ```json
+   "fluidBuild": {
+     "tasks": {
+       "check:exports:esm:node:current": ["build:exports:node"],
+       "check:exports:esm:browser:current": ["build:exports:browser"]
+     }
+   }
+   ```
+
+   Required project.json override:
+   ```json
+   {
+     "targets": {
+       "check:exports": {
+         "dependsOn": ["build:exports:node", "build:exports:browser"]
+       }
+     }
+   }
+   ```
+
+2. **Cross-package task dependencies** — Some packages depend on specific tasks in other packages (using `pkg#task` syntax):
+   ```json
+   "build:test:cjs": ["...", "@fluidframework/id-compressor#build:test:cjs"]
+   ```
+   These translate to NX cross-project dependencies.
+
+3. **Custom build step ordering** — Some packages override standard dependency chains (e.g., `ci:build:docs` depending on `build:esnext` directly instead of going through the standard `tsc → api-extractor → build:docs` chain).
+
+**Validation approach:** For each package with `fluidBuild.tasks`, compare the fluid-build task dependencies against the NX `targetDefaults` in nx.json. Any dependency in `fluidBuild.tasks` that isn't already covered by `targetDefaults` needs a `project.json` override.
 
 ### Step 2: Determine Cache Inputs and Outputs for Executor Tasks
 
