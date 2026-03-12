@@ -42,7 +42,9 @@ const ficLoginCredentials = (username: string): LoginCredentials => {
 	const fetchToken = async (scopeEndpoint: "storage" | "push"): Promise<string> => {
 		const testTenantCheckoutClient = await getTestTenantCheckoutClient();
 		if (testTenantCheckoutClient === undefined) {
-			throw new Error('The FIC credential flow relies on a test tenant checkout client, but no client was found. Ensure that the environment variable "token__package__import__location" is set to the location of a package that exports a compatible client.');
+			throw new Error(
+				'The FIC credential flow relies on a test tenant checkout client, but no client was found. Ensure that the environment variable "token__package__import__location" is set to the location of a package that exports a compatible client.',
+			);
 		}
 		const tokens = await testTenantCheckoutClient.fetchFicTokens([username], scopeEndpoint);
 		if (!Array.isArray(tokens)) {
@@ -53,9 +55,7 @@ const ficLoginCredentials = (username: string): LoginCredentials => {
 		}
 		const token = tokens.find((a) => a.UserPrincipalName === username);
 		if (!token) {
-			throw new Error(
-				`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`,
-			);
+			throw new Error(`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`);
 		}
 		return token.Token;
 	};
@@ -65,7 +65,7 @@ const ficLoginCredentials = (username: string): LoginCredentials => {
 		username,
 		fetchToken,
 	};
-}
+};
 
 interface IOdspTestLoginInfo {
 	siteUrl: string;
@@ -185,7 +185,9 @@ export function getOdspCredentials(
 		};
 
 		if (usernames.length === 0) {
-			throw new Error("login__odsp__fic__test__users was defined does not have any valid usernames.");
+			throw new Error(
+				"login__odsp__fic__test__users was defined does not have any valid usernames.",
+			);
 		}
 		return usernames.map((username) => ficLoginCredentials(username));
 	} else if (loginTenants !== undefined) {
