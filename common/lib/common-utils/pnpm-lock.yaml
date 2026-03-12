@@ -5,8 +5,13 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  js-yaml@<4: ^3.14.2
+  js-yaml@>=4: ^4.1.1
+  jws: ^3.2.3
   oclif>@aws-sdk/client-cloudfront: '-'
   oclif>@aws-sdk/client-s3: '-'
+  qs: ^6.15.0
+  simple-git: ^3.32.3
   sharp: ^0.33.2
 
 patchedDependencies:
@@ -3689,12 +3694,8 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  js-yaml@3.14.1:
-    resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
-    hasBin: true
-
-  js-yaml@4.1.0:
-    resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
+  js-yaml@3.14.2:
+    resolution: {integrity: sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==}
     hasBin: true
 
   js-yaml@4.1.1:
@@ -3779,11 +3780,11 @@ packages:
   just-extend@6.2.0:
     resolution: {integrity: sha512-cYofQu2Xpom82S6qD778jBDpwvvy39s1l/hrYij2u9AMdQcGRpaBu6kY4mVhuno5kJVi1DAz4aiphA2WI1/OAw==}
 
-  jwa@1.4.1:
-    resolution: {integrity: sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==}
+  jwa@1.4.2:
+    resolution: {integrity: sha512-eeH5JO+21J78qMvTIDdBXidBd6nG2kZjg5Ohz/1fpa28Z4CcsWUzJ1ZZyFq/3z3N17aZy+ZuBoHljASbL1WfOw==}
 
-  jws@3.2.2:
-    resolution: {integrity: sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==}
+  jws@3.2.3:
+    resolution: {integrity: sha512-byiJ0FLRdLdSVSReO/U4E7RoEyOCKnEnEPMjq3HxWtvzLsV08/i5RQKsFVNkCldrCaPr2vDNAOMsfs8T/Hze7g==}
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
@@ -4729,8 +4730,8 @@ packages:
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
-  qs@6.11.1:
-    resolution: {integrity: sha512-0wsrzgTz/kAVIeuxSjnpGC56rzYtr6JT/2BwEvMaPhFIoYa1aGO8LbzuU1R0uUYQkLpWBTOj0l/CLAJB64J6nQ==}
+  qs@6.15.0:
+    resolution: {integrity: sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==}
     engines: {node: '>=0.6'}
 
   queue-microtask@1.2.3:
@@ -5097,8 +5098,8 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
 
-  simple-git@3.30.0:
-    resolution: {integrity: sha512-q6lxyDsCmEal/MEGhP1aVyQ3oxnagGlBDOVSIB4XUVLl1iZh0Pah6ebC9V4xBap/RfgP2WlI8EKs0WS0rMEJHg==}
+  simple-git@3.32.3:
+    resolution: {integrity: sha512-56a5oxFdWlsGygOXHWrG+xjj5w9ZIt2uQbzqiIGdR/6i5iococ7WQ/bNPzWxCJdEUGUCmyMH0t9zMpRJTaKxmw==}
 
   sinon@18.0.1:
     resolution: {integrity: sha512-a2N2TDY1uGviajJ6r4D1CyRAkzE9NNVlYOV1wX5xQDuAk0ONgzgRl0EjCQuRCPxOwp13ghsMwt9Gdldujs39qw==}
@@ -6234,7 +6235,7 @@ snapshots:
       replace-in-file: 7.2.0
       resolve.exports: 2.0.3
       semver: 7.7.3
-      simple-git: 3.30.0
+      simple-git: 3.32.3
       sort-json: 2.0.1
       sort-package-json: 1.57.0
       strip-ansi: 7.1.2
@@ -6270,7 +6271,7 @@ snapshots:
       picocolors: 1.1.1
       read-pkg-up: 7.0.1
       semver: 7.7.3
-      simple-git: 3.30.0
+      simple-git: 3.32.3
       sort-package-json: 1.57.0
       type-fest: 2.19.0
       typescript: 5.4.5
@@ -6365,12 +6366,12 @@ snapshots:
   '@gitbeaker/core@38.12.1':
     dependencies:
       '@gitbeaker/requester-utils': 38.12.1
-      qs: 6.11.1
+      qs: 6.15.0
       xcase: 2.0.1
 
   '@gitbeaker/requester-utils@38.12.1':
     dependencies:
-      qs: 6.11.1
+      qs: 6.15.0
       xcase: 2.0.1
 
   '@gitbeaker/rest@38.12.1':
@@ -6697,7 +6698,7 @@ snapshots:
       camelcase: 5.3.1
       find-up: 4.1.0
       get-package-type: 0.1.0
-      js-yaml: 3.14.1
+      js-yaml: 3.14.2
       resolve-from: 5.0.0
 
   '@istanbuljs/schema@0.1.3': {}
@@ -8563,7 +8564,7 @@ snapshots:
   cosmiconfig@8.3.6(typescript@5.4.5):
     dependencies:
       import-fresh: 3.3.0
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       parse-json: 5.2.0
       path-type: 4.0.0
     optionalDependencies:
@@ -8573,7 +8574,7 @@ snapshots:
     dependencies:
       env-paths: 2.2.1
       import-fresh: 3.3.0
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.4.5
@@ -9063,7 +9064,7 @@ snapshots:
       imurmurhash: 0.1.4
       inquirer: 7.3.3
       is-glob: 4.0.3
-      js-yaml: 3.14.1
+      js-yaml: 3.14.2
       json-stable-stringify-without-jsonify: 1.0.1
       levn: 0.3.0
       lodash: 4.17.21
@@ -9598,7 +9599,7 @@ snapshots:
 
   gray-matter@4.0.3:
     dependencies:
-      js-yaml: 3.14.1
+      js-yaml: 3.14.2
       kind-of: 6.0.3
       section-matter: 1.0.0
       strip-bom-string: 1.0.0
@@ -10471,14 +10472,10 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  js-yaml@3.14.1:
+  js-yaml@3.14.2:
     dependencies:
       argparse: 1.0.10
       esprima: 4.0.1
-
-  js-yaml@4.1.0:
-    dependencies:
-      argparse: 2.0.1
 
   js-yaml@4.1.1:
     dependencies:
@@ -10532,7 +10529,7 @@ snapshots:
 
   jsonwebtoken@9.0.2:
     dependencies:
-      jws: 3.2.2
+      jws: 3.2.3
       lodash.includes: 4.3.0
       lodash.isboolean: 3.0.3
       lodash.isinteger: 4.0.4
@@ -10558,15 +10555,15 @@ snapshots:
 
   just-extend@6.2.0: {}
 
-  jwa@1.4.1:
+  jwa@1.4.2:
     dependencies:
       buffer-equal-constant-time: 1.0.1
       ecdsa-sig-formatter: 1.0.11
       safe-buffer: 5.2.1
 
-  jws@3.2.2:
+  jws@3.2.3:
     dependencies:
-      jwa: 1.4.1
+      jwa: 1.4.2
       safe-buffer: 5.2.1
 
   keyv@4.5.4:
@@ -11198,7 +11195,7 @@ snapshots:
       find-up: 5.0.0
       glob: 8.1.0
       he: 1.2.0
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       log-symbols: 4.1.0
       minimatch: 5.1.6
       ms: 2.1.3
@@ -11810,7 +11807,7 @@ snapshots:
 
   pure-rand@6.1.0: {}
 
-  qs@6.11.1:
+  qs@6.15.0:
     dependencies:
       side-channel: 1.1.0
 
@@ -12247,7 +12244,7 @@ snapshots:
       - bluebird
       - supports-color
 
-  simple-git@3.30.0:
+  simple-git@3.32.3:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
@@ -12768,7 +12765,7 @@ snapshots:
 
   typed-rest-client@1.8.9:
     dependencies:
-      qs: 6.11.1
+      qs: 6.15.0
       tunnel: 0.0.6
       underscore: 1.13.6
 

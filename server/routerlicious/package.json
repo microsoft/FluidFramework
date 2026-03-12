@@ -148,7 +148,11 @@
 			"eslint: Force ESLint 9.x to ensure consistent version across the workspace.",
 			"@typescript-eslint/*: Pin to 8.52.0 to avoid 8.53.0 which may not be available in ADO package feed.",
 			"@babel/*: Pin to 7.27.x to avoid 7.28.x versions which may not be available in ADO package feed.",
-			"zookeeper: pinned to 7.x since earlier versions fail to compile and may be brought in transitively."
+			"zookeeper: pinned to 7.x since earlier versions fail to compile and may be brought in transitively.",
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
+			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
 		],
 		"overrides": {
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
@@ -168,10 +172,15 @@
 			"@babel/types": "7.27.7",
 			"@babel/runtime": "7.27.6",
 			"eslint": "^9.39.2",
+			"jws": "^3.2.3",
 			"mongodb>@aws-sdk/credential-providers": "-",
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
-			"qs": "^6.11.0",
+			"js-yaml@<4": "^3.14.2",
+			"js-yaml@>=4": "^4.1.1",
+			"qs": "^6.15.0",
+			"simple-git": "^3.32.3",
+			"systeminformation": "^5.31.0",
 			"socket.io-parser": "^4.2.4",
 			"zookeeper": "^7.2.0"
 		},

@@ -542,10 +542,18 @@ async function runEditLoop<TSchema extends ImplicitFieldSchema>(
 		logger?: Logger;
 	},
 ): Promise<EditLoopResult> {
-	let editCount = 0;
+	let editLoopTurns = 0;
 	let lastEditFailed = false;
 
 	while (true) {
+		editLoopTurns++;
+		// Allow for two extra turns: one for a last tool error message, and one for a final response from the llm.
+		if (editLoopTurns > options.maxEditCount + 2) {
+			const cutoffMessage = `The model failed to produce a response within ${options.maxEditCount} edits.`;
+			history.push({ role: "assistant", content: cutoffMessage });
+			options.logger?.log(`## Cancel\n\n${cutoffMessage}\n\n`);
+			return { response: cutoffMessage, lastEditFailed: true };
+		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const response = await model.invoke!(history);
 
@@ -570,8 +578,8 @@ async function runEditLoop<TSchema extends ImplicitFieldSchema>(
 			continue;
 		}
 
-		editCount++;
-		if (editCount > options.maxEditCount) {
+		// Every loop turn roughly corresponds to one edit attempt, since the loop terminates when the llm produces a non-tool response.
+		if (editLoopTurns > options.maxEditCount) {
 			lastEditFailed = true;
 			const errorMessage = `The maximum number of edits (${options.maxEditCount}) for this query has been exceeded.`;
 			history.push({
