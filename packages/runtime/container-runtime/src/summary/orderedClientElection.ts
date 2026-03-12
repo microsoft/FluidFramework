@@ -234,7 +234,7 @@ export class OrderedClientElection
 			this._electedClient = this._electedParent;
 			// Check if a summarizer is already in quorum and should supersede
 			const summarizer = this.findSummarizerInQuorum();
-			if (summarizer !== undefined && this._electedClient !== undefined) {
+			if (summarizer !== undefined) {
 				this._electedClient = summarizer;
 			}
 		} else {
