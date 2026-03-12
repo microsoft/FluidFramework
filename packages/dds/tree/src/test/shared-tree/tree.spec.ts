@@ -8,17 +8,15 @@ import { strict as assert } from "node:assert";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../api.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { runTransaction, Tree } from "../../shared-tree/tree.js";
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
 /* eslint-disable import-x/no-internal-modules */
 import {
-	TreeAlpha,
 	RootParent,
 	DetachedParent,
 	UnhydratedParent,
-} from "../../shared-tree/treeAlpha.js";
+} from "../../shared-tree/parentObject.js";
+import { runTransaction, Tree } from "../../shared-tree/tree.js";
+import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
 /* eslint-enable import-x/no-internal-modules */
 import {
 	SchemaFactory,
@@ -421,892 +419,414 @@ describe("treeApi", () => {
 		assert.equal(TreeAlpha.branch(new ArrayNode([1, 2, 3])), undefined);
 	});
 
-	it("parent2", () => {
-		const schemaFactory = new SchemaFactory(undefined);
-		class ChildNode extends schemaFactory.object("ChildNode", {
-			value: schemaFactory.number,
-		}) {}
-		class ParentNode extends schemaFactory.object("ParentNode", {
-			child: ChildNode,
-		}) {}
+	// Shared schemas for parentObject API tests
+	const sf = new SchemaFactory(undefined);
+	class ChildNode extends sf.object("ChildNode", { value: sf.number }) {}
+	class ParentNode extends sf.object("ParentNode", { child: ChildNode }) {}
+	class Container extends sf.object("Container", { items: sf.array(ChildNode) }) {}
 
-		const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
-		view.initialize({ child: { value: 1 } });
+	describe("parent2", () => {
+		it("returns parent TreeNode for nested nodes and RootParent for root nodes", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
+			view.initialize({ child: { value: 1 } });
 
-		const root = view.root;
-		const child = root.child;
+			const root = view.root;
+			assert.equal(TreeAlpha.parent2(root.child), root);
+			assert(TreeAlpha.parent2(root) instanceof RootParent);
+		});
 
-		// For a non-root node, parent2 should return the parent TreeNode
-		const childParent = TreeAlpha.parent2(child);
-		assert.equal(childParent, root);
-		assert(Tree.is(childParent, ParentNode));
+		it("throws when accessing parent of a disposed node", () => {
+			const view = getView(new TreeViewConfiguration({ schema: Container }));
+			view.initialize({ items: [{ value: 1 }] });
 
-		// For the root node, parent2 should return a RootParent (not a TreeNode)
-		const rootParent = TreeAlpha.parent2(root);
-		assert.notEqual(rootParent, root, "rootParent should not be the root node");
-		assert(rootParent instanceof RootParent);
-	});
+			const item = view.root.items[0];
+			view.root.items.removeAt(0);
+			view.dispose();
 
-	it("parent2 throws on disposed node", () => {
-		const schemaFactory = new SchemaFactory(undefined);
-		class Item extends schemaFactory.object("Item", {
-			value: schemaFactory.number,
-		}) {}
-		class Container extends schemaFactory.object("Container", {
-			items: schemaFactory.array(Item),
-		}) {}
+			assert.throws(
+				() => TreeAlpha.parent2(item),
+				validateUsageError(/Cannot access a deleted node/),
+			);
+		});
 
-		const view = getView(new TreeViewConfiguration({ schema: Container }));
-		view.initialize({ items: [{ value: 1 }] });
-
-		const item = view.root.items[0];
-		assert.notEqual(item, undefined);
-
-		// Remove the item to make it detached
-		view.root.items.removeAt(0);
-		assert.equal(Tree.status(item), TreeStatus.Removed);
-
-		// Dispose the view, which disposes nodes
-		view.dispose();
-
-		// parent2 should throw for a disposed node
-		assert.throws(
-			() => TreeAlpha.parent2(item),
-			validateUsageError(/Cannot access a deleted node/),
-		);
+		it("returns parent TreeNode for nested unhydrated child", () => {
+			const parentNode = new ParentNode({ child: { value: 5 } });
+			const child = parentNode.child;
+			assert.equal(TreeAlpha.parent2(child), parentNode);
+		});
 	});
 
 	describe("on", () => {
-		it("works with both TreeNode and RootParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class ChildNode extends schemaFactory.object("ChildNode", {
-				value: schemaFactory.number,
-			}) {}
-			class ParentNode extends schemaFactory.object("ParentNode", {
-				child: ChildNode,
-			}) {}
-
+		it("fires content events on TreeNode and through RootParent", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 1 } });
 
 			const root = view.root;
 			const child = root.child;
 
-			// Get the RootParent for the root node
 			const rootParent = TreeAlpha.parent2(root);
-			assert(!Tree.is(rootParent, ParentNode), "rootParent should not be a TreeNode");
 			assert(rootParent instanceof RootParent);
 
-			// Set up event listeners.
-
-			// nodeChanged using a TreeNode
-			let childNodeChangedCount = 0;
-			const unsubscribeChildNodeChanged = TreeAlpha.on(child, "nodeChanged", () => {
-				childNodeChangedCount++;
-			});
-
-			// nodeChanged using a RootParent
-			let rootNodeChangedCount = 0;
-			const unsubscribeRootNodeChanged = TreeAlpha.on(rootParent, "nodeChanged", () => {
-				rootNodeChangedCount++;
-			});
-
-			// treeChanged using a RootParent
-			let rootTreeChangedCount = 0;
-			const unsubscribeRootTreeChanged = TreeAlpha.on(rootParent, "treeChanged", () => {
-				rootTreeChangedCount++;
-			});
+			const log: string[] = [];
+			TreeAlpha.on(child, "nodeChanged", () => log.push("child:nodeChanged"));
+			TreeAlpha.on(rootParent, "nodeChanged", () => log.push("root:nodeChanged"));
+			TreeAlpha.on(rootParent, "treeChanged", () => log.push("root:treeChanged"));
 
 			// Modify the child node's value (deep change)
 			child.value = 2;
-			assert.equal(childNodeChangedCount, 1, "childNodeChanged should have fired once");
-			assert.equal(
-				rootNodeChangedCount,
-				0,
-				"nodeChanged on root node should not fire for deep changes",
-			);
-			assert.equal(rootTreeChangedCount, 1, "rootTreeChanged should fire for deep changes");
+			assert.deepEqual(log, ["child:nodeChanged", "root:treeChanged"]);
 
-			// Unsubscribe and verify no more events are received
-			unsubscribeChildNodeChanged();
-			// Modify the child (still in document) to verify unsubscribe worked
-			child.value = 44;
-			assert.equal(
-				childNodeChangedCount,
-				1,
-				"childNodeChanged should not fire after unsubscribe",
-			);
-
-			// Modify the root node's child property (shallow change)
+			// Modify the root node's child property (shallow change).
+			// nodeChanged fires on root (whose property changed), not on the old child.
+			log.length = 0;
 			root.child = new ChildNode({ value: 3 });
-			assert.equal(
-				rootNodeChangedCount,
-				1,
-				"nodeChanged on root node should fire for shallow changes",
-			);
-			assert.equal(
-				rootTreeChangedCount,
-				3,
-				"rootTreeChanged should fire after root property change",
-			);
-
-			unsubscribeRootNodeChanged();
-			unsubscribeRootTreeChanged();
+			assert.deepEqual(log, ["root:nodeChanged", "root:treeChanged"]);
 		});
 
-		it("treeChanged on RootParent handles root node changes", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class ChildNode extends schemaFactory.object("ChildNode", {
-				value: schemaFactory.number,
-			}) {}
-
-			// Set up a TreeView with a required root field.
-			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
-			view.initialize({ value: 1 });
-
-			// Get the RootParent via parent2
-			const root = view.root;
-			const rootParent = TreeAlpha.parent2(root);
-			assert(!Tree.is(rootParent, ChildNode), "rootParent should not be a TreeNode");
-
-			// Listen to treeChanged on the RootParent
-			let treeChangedCount = 0;
-			const unsubscribeTreeChanged = TreeAlpha.on(rootParent, "treeChanged", () => {
-				treeChangedCount++;
-			});
-
-			// Modify the root node
-			root.value = 2;
-
-			// treeChanged should fire for changes within the root node
-			assert.equal(treeChangedCount, 1, "treeChanged should fire for changes in root");
-
-			// Clean up
-			unsubscribeTreeChanged();
-		});
-
-		it("on() method with nodeChanged/treeChanged works with RootParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Node extends schemaFactory.object("Node", {
-				value: schemaFactory.number,
-			}) {}
-
-			// Create a view with a specific schema
-			const view = getView(new TreeViewConfiguration({ schema: Node }));
-			view.initialize({ value: 42 });
-
-			// Get the RootParent via parent2
-			const root = view.root;
-			const rootParent = TreeAlpha.parent2(root);
-
-			// Verify the schema is compatible
-			assert.equal(
-				view.compatibility.canView,
-				true,
-				"Test setup: schema should be compatible",
-			);
-
-			// When the view schema is compatible, on() should succeed
-			let eventFired = false;
-			const unsubscribe = TreeAlpha.on(rootParent, "treeChanged", () => {
-				eventFired = true;
-			});
-
-			// Make a change to verify the listener works
-			root.value = 50;
-			assert.equal(eventFired, true, "listener should fire when schema is compatible");
-
-			// Clean up
-			unsubscribe();
-		});
-
-		it("treeChanged properly handles rebase operations", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class ChildNode extends schemaFactory.object("ChildNode", {
-				value: schemaFactory.number,
-			}) {}
-			class RootNode extends schemaFactory.object("RootNode", {
-				child: ChildNode,
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: RootNode }));
+		it("fires treeChanged on forked branch and survives rebase", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 1 } });
 
 			const forkedView = view.fork();
-
-			// Get the RootParent from the forked view's root
 			const forkRootParent = TreeAlpha.parent2(forkedView.root);
 
-			// Set up event listener on the forked branch before making changes
-			let forkTreeChangedCount = 0;
-			const unsubscribeForkTreeChanged = TreeAlpha.on(forkRootParent, "treeChanged", () => {
-				forkTreeChangedCount++;
-			});
+			const log: string[] = [];
+			TreeAlpha.on(forkRootParent, "treeChanged", () => log.push("fork:treeChanged"));
 
-			// Make a change on the forked branch
 			forkedView.root.child.value = 2;
-			assert.equal(forkTreeChangedCount, 1, "fork listener should fire for changes on fork");
+			assert.deepEqual(log, ["fork:treeChanged"]);
 
-			// Make changes on the main branch
+			// Main branch changes should not fire on fork listener
 			view.root.child.value = 3;
-			assert.equal(forkTreeChangedCount, 1, "fork should not receive main branch changes");
+			assert.deepEqual(log, ["fork:treeChanged"]);
 
-			// Rebase the fork onto the main branch
 			forkedView.rebaseOnto(view);
-			assert.equal(
-				forkedView.root.child.value,
-				2,
-				"fork should retain its changes after rebase",
-			);
+			assert.equal(forkedView.root.child.value, 2);
 
-			// Check that listener still works after rebase
+			// Listener still works after rebase
 			forkedView.root.child.value = 150;
-			assert.equal(forkTreeChangedCount, 2, "fork listener should still work after rebase");
-
-			unsubscribeForkTreeChanged();
+			assert.deepEqual(log, ["fork:treeChanged", "fork:treeChanged"]);
 		});
 
 		it("treeChanged fires when root is replaced during rebase", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class ChildNode extends schemaFactory.object("ChildNode", {
-				value: schemaFactory.number,
-			}) {}
-			class RootNode extends schemaFactory.object("RootNode", {
-				child: ChildNode,
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: RootNode }));
+			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 42 } });
 
 			const forkedView = view.fork();
-
-			// Get the RootParent from the forked view's root
 			const forkRootParent = TreeAlpha.parent2(forkedView.root);
 
-			// Set up event listener on the forked branch
-			let forkTreeChangedCount = 0;
-			const unsubscribeForkTreeChanged = TreeAlpha.on(forkRootParent, "treeChanged", () => {
-				forkTreeChangedCount++;
-			});
+			const log: string[] = [];
+			TreeAlpha.on(forkRootParent, "treeChanged", () => log.push("fork:treeChanged"));
 
-			// Make a change on the forked branch
 			forkedView.root.child.value = 50;
-			assert.equal(forkTreeChangedCount, 1, "listener fires for change on fork");
+			assert.deepEqual(log, ["fork:treeChanged"]);
 
-			// Replace root node on main branch
-			view.root = new RootNode({ child: { value: 100 } });
-			assert.equal(
-				forkTreeChangedCount,
-				1,
-				"listener does not fire for main branch root replacement",
-			);
+			// Main branch root replacement should not fire on fork listener
+			view.root = new ParentNode({ child: { value: 100 } });
+			assert.deepEqual(log, ["fork:treeChanged"]);
 
-			// Rebase the fork onto the main branch
+			// Rebase fires due to root replacement, and fork gets new root
 			forkedView.rebaseOnto(view);
-			// Check that listener fires due to root replacement during rebase, and has correct new root
-			assert.equal(
-				forkTreeChangedCount,
-				2,
-				"listener fires when root is replaced during rebase",
-			);
-			assert.equal(forkedView.root.child.value, 100, "fork has new root after rebase");
+			assert.deepEqual(log, ["fork:treeChanged", "fork:treeChanged"]);
+			assert.equal(forkedView.root.child.value, 100);
 
-			// Make another change to verify listener still works after rebase
+			// Listener still works after root replacement
 			forkedView.root.child.value = 200;
-			assert.equal(forkTreeChangedCount, 3, "listener still works after root replacement");
-
-			unsubscribeForkTreeChanged();
+			assert.deepEqual(log, ["fork:treeChanged", "fork:treeChanged", "fork:treeChanged"]);
 		});
 
 		describe("DetachedParent", () => {
-			it("returns DetachedParent for removed node", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-				class Container extends schemaFactory.object("Container", {
-					items: schemaFactory.array(Item),
-				}) {}
-
-				const view = getView(new TreeViewConfiguration({ schema: Container }));
-				view.initialize({ items: [{ value: 1 }, { value: 2 }] });
-
-				// Get a reference to the first item before removing it
-				const item = view.root.items[0];
-				assert.notEqual(item, undefined);
-				assert.equal(Tree.status(item), TreeStatus.InDocument);
-
-				// Remove the item from the array (this makes it detached)
-				view.root.items.removeAt(0);
-				assert.equal(Tree.status(item), TreeStatus.Removed);
-
-				// Get the parent2 which should now be DetachedParent
-				const parent = TreeAlpha.parent2(item);
-				assert.notEqual(parent, undefined);
-				assert(!Tree.is(parent, Item), "parent should not be a TreeNode");
-				assert(parent instanceof DetachedParent);
-			});
-
-			it("can subscribe to events on DetachedParent", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-				class Container extends schemaFactory.object("Container", {
-					items: schemaFactory.array(Item),
-				}) {}
-
-				const view = getView(new TreeViewConfiguration({ schema: Container }));
-				view.initialize({ items: [{ value: 10 }] });
-
-				const item = view.root.items[0];
-				assert.notEqual(item, undefined);
-
-				// Remove the item
-				view.root.items.removeAt(0);
-				assert.equal(Tree.status(item), TreeStatus.Removed);
-
-				// Get the DetachedParent
-				const parent = TreeAlpha.parent2(item);
-				assert(parent instanceof DetachedParent);
-
-				// Subscribe to events on the DetachedParent - this should not throw
-				const unsubscribeTc = TreeAlpha.on(parent, "treeChanged", () => {});
-				const unsubscribeNc = TreeAlpha.on(parent, "nodeChanged", () => {});
-
-				// Clean up
-				unsubscribeTc();
-				unsubscribeNc();
-			});
-
-			it("unsubscribe stops events from firing on DetachedParent", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-				class Container extends schemaFactory.object("Container", {
-					items: schemaFactory.array(Item),
-				}) {}
-
-				const view = getView(new TreeViewConfiguration({ schema: Container }));
-				view.initialize({ items: [{ value: 10 }, { value: 20 }] });
-
-				// Set up undo/redo stacks
-				const undoRedoStacks = createTestUndoRedoStacks(view.events);
-
-				// Remove the first item
-				const item = view.root.items[0];
-				assert.notEqual(item, undefined);
-				view.root.items.removeAt(0);
-				assert.equal(Tree.status(item), TreeStatus.Removed);
-
-				// Get the DetachedParent and subscribe
-				const parent = TreeAlpha.parent2(item);
-				assert(parent instanceof DetachedParent);
-
-				let eventCount = 0;
-				const unsubscribe = TreeAlpha.on(parent, "nodeChanged", () => {
-					eventCount++;
-				});
-
-				// Unsubscribe before undoing
-				unsubscribe();
-
-				// Undo the removal (re-attaches the node)
-				const revertible = undoRedoStacks.undoStack.pop();
-				assert.notEqual(revertible, undefined);
-				revertible?.revert();
-				assert.equal(Tree.status(item), TreeStatus.InDocument);
-
-				// Event should NOT have fired since we unsubscribed
-				assert.equal(
-					eventCount,
-					0,
-					"event should not fire after unsubscribe on DetachedParent",
-				);
-
-				undoRedoStacks.unsubscribe();
-			});
-
-			it("detects status change when node is re-attached via undo", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-				class Container extends schemaFactory.object("Container", {
-					items: schemaFactory.array(Item),
-				}) {}
-
+			it("fires status change on reattach and respects unsubscribe", () => {
 				const view = getView(new TreeViewConfiguration({ schema: Container }));
 				view.initialize({ items: [{ value: 42 }] });
 
-				// Set up undo/redo stacks
 				const undoRedoStacks = createTestUndoRedoStacks(view.events);
 
-				// Get a reference to the item before removing it
 				const item = view.root.items[0];
-				assert.notEqual(item, undefined);
-				assert.equal(Tree.status(item), TreeStatus.InDocument);
-
-				// Remove the item (this creates a revertible)
 				view.root.items.removeAt(0);
-				assert.equal(Tree.status(item), TreeStatus.Removed);
 
-				// Get the DetachedParent AFTER removal
 				const parent = TreeAlpha.parent2(item);
 				assert(parent instanceof DetachedParent);
 
-				// Subscribe to nodeChanged on the DetachedParent
-				let eventCount = 0;
-				const unsubscribe = TreeAlpha.on(parent, "nodeChanged", () => {
-					eventCount++;
-				});
-
-				// Undo the removal (this should re-attach the node)
-				const revertible = undoRedoStacks.undoStack.pop();
-				assert.notEqual(revertible, undefined);
-				revertible?.revert();
-
-				// Node should now be back in the document
-				assert.equal(Tree.status(item), TreeStatus.InDocument);
-
-				// Verify the event fired when the node was re-attached
-				assert.equal(eventCount, 1, "event should fire when node is re-attached via undo");
-
-				// Verify the parent2 now returns the array (a TreeNode), not DetachedParent
-				const newParent = TreeAlpha.parent2(item);
-				// After re-attachment, the parent should be the items array (a TreeNode)
-				assert.equal(newParent, view.root.items);
-
+				const log: string[] = [];
+				// Subscribe twice — unsubscribe one to verify unsubscribe works
+				const unsubscribe = TreeAlpha.on(parent, "nodeChanged", () =>
+					log.push("unsubscribed-listener"),
+				);
+				TreeAlpha.on(parent, "nodeChanged", () => log.push("nodeChanged"));
 				unsubscribe();
+
+				// Undo the removal (re-attaches the node)
+				undoRedoStacks.undoStack.pop()?.revert();
+
+				// Only the still-subscribed listener should have fired
+				assert.deepEqual(log, ["nodeChanged"]);
+				assert.equal(TreeAlpha.parent2(item), view.root.items);
+
 				undoRedoStacks.unsubscribe();
 			});
 		});
 
 		describe("UnhydratedParent", () => {
-			it("returns UnhydratedParent for new node", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-
-				// Create an unhydrated node
-				const item = new Item({ value: 42 });
-				assert.equal(Tree.status(item), TreeStatus.New);
-
-				// Get the parent2 which should be UnhydratedParent
-				const parent = TreeAlpha.parent2(item);
-				assert.notEqual(parent, undefined);
-				assert(!Tree.is(parent, Item), "parent should not be a TreeNode");
-				assert(parent instanceof UnhydratedParent);
-			});
-
-			it("can subscribe to events on UnhydratedParent", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-
-				// Create an unhydrated node
-				const item = new Item({ value: 100 });
-				assert.equal(Tree.status(item), TreeStatus.New);
-
-				// Get the UnhydratedParent
+			it("fires status change on hydration and respects unsubscribe", () => {
+				const item = new ChildNode({ value: 42 });
 				const parent = TreeAlpha.parent2(item);
 				assert(parent instanceof UnhydratedParent);
 
-				// Subscribe to events on the UnhydratedParent - this should not throw
-				const unsubscribeTc = TreeAlpha.on(parent, "treeChanged", () => {});
-				const unsubscribeNc = TreeAlpha.on(parent, "nodeChanged", () => {});
-
-				// Clean up
-				unsubscribeTc();
-				unsubscribeNc();
-			});
-
-			it("returns parent TreeNode for nested unhydrated child", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Child extends schemaFactory.object("Child", {
-					value: schemaFactory.number,
-				}) {}
-				class ParentNode extends schemaFactory.object("Parent", {
-					child: Child,
-				}) {}
-
-				// Create an unhydrated parent with an unhydrated child
-				const parentNode = new ParentNode({ child: { value: 5 } });
-				const child = parentNode.child;
-				assert.equal(Tree.status(child), TreeStatus.New);
-
-				// For a child of an unhydrated parent, parent2 should return the parent TreeNode
-				const childParent = TreeAlpha.parent2(child);
-				// The parent is another TreeNode, not a ParentObject
-				assert.equal(childParent, parentNode);
-			});
-
-			it("unsubscribe stops events from firing on UnhydratedParent", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-
-				// Create an unhydrated node
-				const item = new Item({ value: 42 });
-				assert.equal(Tree.status(item), TreeStatus.New);
-
-				// Get the UnhydratedParent and subscribe
-				const parent = TreeAlpha.parent2(item);
-				assert(parent instanceof UnhydratedParent);
-
-				let eventCount = 0;
-				const unsubscribe = TreeAlpha.on(parent, "treeChanged", () => {
-					eventCount++;
-				});
-
-				// Unsubscribe before hydrating
-				unsubscribe();
-
-				// Hydrate the node by inserting it into a view
-				const view = getView(new TreeViewConfiguration({ schema: Item }));
-				view.initialize(item);
-				assert.equal(Tree.status(item), TreeStatus.InDocument);
-
-				// Event should NOT have fired since we unsubscribed
-				assert.equal(
-					eventCount,
-					0,
-					"event should not fire after unsubscribe on UnhydratedParent",
+				const log: string[] = [];
+				const unsubscribe = TreeAlpha.on(parent, "treeChanged", () =>
+					log.push("unsubscribed-listener"),
 				);
-			});
+				TreeAlpha.on(parent, "treeChanged", () => log.push("treeChanged"));
+				unsubscribe();
 
-			it("fires status change event when unhydrated node becomes hydrated", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Item extends schemaFactory.object("Item", {
-					value: schemaFactory.number,
-				}) {}
-
-				// Create an unhydrated node
-				const item = new Item({ value: 42 });
-				assert.equal(Tree.status(item), TreeStatus.New);
-
-				// Get the UnhydratedParent
-				const parent = TreeAlpha.parent2(item);
-				assert(parent instanceof UnhydratedParent);
-
-				// Subscribe to treeChanged on the UnhydratedParent
-				let eventCount = 0;
-				const unsubscribe = TreeAlpha.on(parent, "treeChanged", () => {
-					eventCount++;
-				});
-
-				// Hydrate the node by inserting it into a view
-				const view = getView(new TreeViewConfiguration({ schema: Item }));
+				const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 				view.initialize(item);
 
-				// Node should now be in the document
-				assert.equal(Tree.status(item), TreeStatus.InDocument);
-
-				// The event should have fired synchronously during hydration
-				assert.equal(eventCount, 1, "event should fire when unhydrated node becomes hydrated");
-
-				unsubscribe();
+				assert.deepEqual(log, ["treeChanged"]);
 			});
 
 			it("fires status change event for nested unhydrated nodes", () => {
-				const schemaFactory = new SchemaFactory(undefined);
-				class Child extends schemaFactory.object("Child", {
-					value: schemaFactory.number,
-				}) {}
-				class ParentNode extends schemaFactory.object("Parent", {
-					child: Child,
-				}) {}
-
-				// Create an unhydrated parent with an unhydrated child
 				const parentNode = new ParentNode({ child: { value: 5 } });
-				const child = parentNode.child;
-				assert.equal(Tree.status(parentNode), TreeStatus.New);
-				assert.equal(Tree.status(child), TreeStatus.New);
 
-				// Get the UnhydratedParent for the root parent node
 				const rootParent = TreeAlpha.parent2(parentNode);
 				assert(rootParent instanceof UnhydratedParent);
 
-				// Subscribe to treeChanged on the root's UnhydratedParent
-				let eventCount = 0;
-				const unsubscribe = TreeAlpha.on(rootParent, "treeChanged", () => {
-					eventCount++;
-				});
+				const log: string[] = [];
+				TreeAlpha.on(rootParent, "treeChanged", () => log.push("treeChanged"));
 
-				// Hydrate by inserting the parent
 				const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 				view.initialize(parentNode);
 
-				// Both should be hydrated now
-				assert.equal(Tree.status(parentNode), TreeStatus.InDocument);
-				assert.equal(Tree.status(child), TreeStatus.InDocument);
-
-				// Event should have fired synchronously for the parent node's status change
-				assert.equal(eventCount, 1, "event should fire when parent node becomes hydrated");
-
-				unsubscribe();
+				assert.deepEqual(log, ["treeChanged"]);
 			});
+		});
+
+		it("nodeChanged on RootParent does not fire on root replacement but re-subscribes to new root", () => {
+			const view = getView(
+				new TreeViewConfigurationAlpha({ schema: sf.optional(ParentNode) }),
+			);
+			view.initialize({ child: { value: 1 } });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof RootParent);
+
+			const log: string[] = [];
+			TreeAlpha.on(rootParent, "nodeChanged", () => log.push("nodeChanged"));
+
+			// Replace the root entirely — nodeChanged should NOT fire
+			view.root = new ParentNode({ child: { value: 2 } });
+			assert.deepEqual(log, []);
+
+			// Modify a property on the new root — nodeChanged SHOULD fire
+			const newRoot = view.root;
+			assert(newRoot !== undefined);
+			newRoot.child = new ChildNode({ value: 3 });
+			assert.deepEqual(log, ["nodeChanged"]);
+		});
+
+		it("handles on() with RootParent when optional root is set to undefined", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof RootParent);
+
+			const log: string[] = [];
+			TreeAlpha.on(rootParent, "treeChanged", () => log.push("treeChanged"));
+
+			root.value = 2;
+			assert.deepEqual(log, ["treeChanged"]);
+
+			// Set root to undefined — listener should fire for treeChanged
+			log.length = 0;
+			view.root = undefined;
+			assert.deepEqual(log, ["treeChanged"]);
+
+			// Set root back to a node — listener should fire and re-subscribe
+			log.length = 0;
+			view.root = new ChildNode({ value: 3 });
+			assert.deepEqual(log, ["treeChanged"]);
+
+			// Modify the new root — listener should still work
+			log.length = 0;
+			const newRoot = view.root;
+			assert(newRoot !== undefined);
+			newRoot.value = 4;
+			assert.deepEqual(log, ["treeChanged"]);
+		});
+
+		it("cleans up RootParent listener when view is disposed", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof RootParent);
+
+			const log: string[] = [];
+			const unsubscribe = TreeAlpha.on(rootParent, "treeChanged", () =>
+				log.push("treeChanged"),
+			);
+
+			root.value = 2;
+			assert.deepEqual(log, ["treeChanged"]);
+
+			// Dispose the view — further mutations should not be possible
+			view.dispose();
+
+			// Listener should not fire after disposal (node is no longer accessible)
+			assert.throws(() => {
+				root.value = 3;
+			});
+			assert.deepEqual(log, ["treeChanged"]);
+
+			// Calling unsubscribe after disposal should not throw
+			assert.doesNotThrow(() => unsubscribe());
+		});
+
+		it("fires events through full lifecycle: New → InDocument → Removed → InDocument", () => {
+			const view = getView(new TreeViewConfiguration({ schema: Container }));
+			view.initialize({ items: [] });
+
+			const undoRedoStacks = createTestUndoRedoStacks(view.events);
+
+			// New → InDocument: create and insert a node
+			const item = new ChildNode({ value: 42 });
+			const unhydratedParent = TreeAlpha.parent2(item);
+
+			const log: string[] = [];
+			TreeAlpha.on(unhydratedParent, "treeChanged", () => log.push("hydrated"));
+
+			view.root.items.insertAtEnd(item);
+			assert.deepEqual(log, ["hydrated"]);
+
+			// InDocument → Removed: remove the node
+			view.root.items.removeAt(0);
+
+			const detachedParent = TreeAlpha.parent2(item);
+			TreeAlpha.on(detachedParent, "nodeChanged", () => log.push("reattached"));
+
+			// Removed → InDocument: undo the removal
+			undoRedoStacks.undoStack.pop()?.revert();
+
+			assert.deepEqual(log, ["hydrated", "reattached"]);
+
+			undoRedoStacks.unsubscribe();
 		});
 	});
 
-	describe("child", () => {
-		it("works with RootParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Node extends schemaFactory.object("Node", {
-				value: schemaFactory.number,
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: Node }));
+	describe("child and children", () => {
+		it("returns root node via RootParent", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 			view.initialize({ value: 42 });
 
 			const root = view.root;
 			const rootParent = TreeAlpha.parent2(root);
 			assert(rootParent instanceof RootParent);
 
-			// child with undefined key should return the root node
-			const child = TreeAlpha.child(rootParent, undefined);
-			assert.equal(child, root);
+			assert.equal(TreeAlpha.child(rootParent, undefined), root);
+			assert.equal(TreeAlpha.child(rootParent, "foo"), undefined);
 
-			// child with non-undefined key should return undefined
-			const invalidChild = TreeAlpha.child(rootParent, "foo");
-			assert.equal(invalidChild, undefined);
+			const childrenResult = [...TreeAlpha.children(rootParent)];
+			assert.equal(childrenResult.length, 1);
+			assert.deepEqual(childrenResult[0], [undefined, root]);
 		});
 
-		it("works with DetachedParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Item extends schemaFactory.object("Item", {
-				value: schemaFactory.number,
-			}) {}
-			class Container extends schemaFactory.object("Container", {
-				items: schemaFactory.array(Item),
-			}) {}
-
+		it("returns removed node via DetachedParent", () => {
 			const view = getView(new TreeViewConfiguration({ schema: Container }));
 			view.initialize({ items: [{ value: 1 }] });
 
-			// Remove the item to make it detached
 			const item = view.root.items[0];
-			assert.notEqual(item, undefined);
 			view.root.items.removeAt(0);
 
 			const detachedParent = TreeAlpha.parent2(item);
 			assert(detachedParent instanceof DetachedParent);
 
-			// child with undefined key should return the detached node
-			const child = TreeAlpha.child(detachedParent, undefined);
-			assert.equal(child, item);
+			assert.equal(TreeAlpha.child(detachedParent, undefined), item);
+
+			const childrenResult = [...TreeAlpha.children(detachedParent)];
+			assert.equal(childrenResult.length, 1);
+			assert.deepEqual(childrenResult[0], [undefined, item]);
 		});
 
-		it("works with UnhydratedParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Item extends schemaFactory.object("Item", {
-				value: schemaFactory.number,
-			}) {}
-
-			const item = new Item({ value: 42 });
+		it("returns unhydrated node via UnhydratedParent", () => {
+			const item = new ChildNode({ value: 42 });
 			const unhydratedParent = TreeAlpha.parent2(item);
 			assert(unhydratedParent instanceof UnhydratedParent);
 
-			// child with undefined key should return the unhydrated node
-			const child = TreeAlpha.child(unhydratedParent, undefined);
-			assert.equal(child, item);
+			assert.equal(TreeAlpha.child(unhydratedParent, undefined), item);
+
+			const childrenResult = [...TreeAlpha.children(unhydratedParent)];
+			assert.equal(childrenResult.length, 1);
+			assert.deepEqual(childrenResult[0], [undefined, item]);
 		});
 
-		it("returns undefined for RootParent with optional empty root", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Node extends schemaFactory.object("Node", {
-				value: schemaFactory.number,
-			}) {}
-
-			const view = getView(
-				new TreeViewConfigurationAlpha({ schema: schemaFactory.optional(Node) }),
-			);
-			view.initialize(undefined);
-
-			// Root is undefined, so we can't call parent2 on it directly.
-			// Instead, get a RootParent from a node that was once root, then check child().
-			// We need a different approach: initialize with a value, get the RootParent, then set root to undefined.
-			const view2 = getView(
-				new TreeViewConfigurationAlpha({ schema: schemaFactory.optional(Node) }),
-			);
-			view2.initialize({ value: 42 });
-			const root = view2.root;
+		it("returns empty results for RootParent with optional empty root", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 42 });
+			const root = view.root;
 			assert(root !== undefined);
 			const rootParent = TreeAlpha.parent2(root);
 			assert(rootParent instanceof RootParent);
 
-			// Set root to undefined
-			view2.root = undefined;
-
-			// child should now return undefined
-			const child = TreeAlpha.child(rootParent, undefined);
-			assert.equal(child, undefined, "child should be undefined when optional root is empty");
-		});
-	});
-
-	describe("children", () => {
-		it("works with RootParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Node extends schemaFactory.object("Node", {
-				value: schemaFactory.number,
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: Node }));
-			view.initialize({ value: 42 });
-
-			const root = view.root;
-			const rootParent = TreeAlpha.parent2(root);
-
-			const childrenResult = [...TreeAlpha.children(rootParent)];
-			assert.equal(childrenResult.length, 1);
-			assert.equal(childrenResult[0][0], undefined);
-			assert.equal(childrenResult[0][1], root);
-		});
-
-		it("works with DetachedParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Item extends schemaFactory.object("Item", {
-				value: schemaFactory.number,
-			}) {}
-			class Container extends schemaFactory.object("Container", {
-				items: schemaFactory.array(Item),
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: Container }));
-			view.initialize({ items: [{ value: 1 }] });
-
-			const item = view.root.items[0];
-			assert.notEqual(item, undefined);
-			view.root.items.removeAt(0);
-
-			const detachedParent = TreeAlpha.parent2(item);
-			const childrenResult = [...TreeAlpha.children(detachedParent)];
-			assert.equal(childrenResult.length, 1);
-			assert.equal(childrenResult[0][0], undefined);
-			assert.equal(childrenResult[0][1], item);
-		});
-
-		it("works with UnhydratedParent", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Item extends schemaFactory.object("Item", {
-				value: schemaFactory.number,
-			}) {}
-
-			const item = new Item({ value: 42 });
-			const unhydratedParent = TreeAlpha.parent2(item);
-
-			const childrenResult = [...TreeAlpha.children(unhydratedParent)];
-			assert.equal(childrenResult.length, 1);
-			assert.equal(childrenResult[0][0], undefined);
-			assert.equal(childrenResult[0][1], item);
-		});
-
-		it("returns empty array for RootParent with optional empty root", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Node extends schemaFactory.object("Node", {
-				value: schemaFactory.number,
-			}) {}
-
-			const view = getView(
-				new TreeViewConfigurationAlpha({ schema: schemaFactory.optional(Node) }),
-			);
-			view.initialize({ value: 42 });
-			const root = view.root;
-			assert(root !== undefined);
-			const rootParent = TreeAlpha.parent2(root);
-
-			// Set root to undefined
 			view.root = undefined;
 
-			const childrenResult = [...TreeAlpha.children(rootParent)];
-			assert.equal(
-				childrenResult.length,
-				0,
-				"children should be empty when optional root is empty",
-			);
+			assert.equal(TreeAlpha.child(rootParent, undefined), undefined);
+			assert.deepEqual([...TreeAlpha.children(rootParent)], []);
+		});
+
+		it("returns undefined when calling child on a TreeNode with undefined key", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
+			view.initialize({ child: { value: 42 } });
+
+			const root = view.root;
+			assert.equal(TreeAlpha.child(root, undefined), undefined);
 		});
 	});
 
 	describe("parent2/key2/child invariant", () => {
 		it("holds for root nodes", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Node extends schemaFactory.object("Node", {
-				value: schemaFactory.number,
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: Node }));
+			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 			view.initialize({ value: 42 });
 
 			const root = view.root;
 			const parent = TreeAlpha.parent2(root);
 			const key = TreeAlpha.key2(root);
 
-			assert.equal(key, undefined, "key2 should return undefined for root nodes");
-			assert.equal(
-				TreeAlpha.child(parent, key),
-				root,
-				"child(parent2(node), key2(node)) should equal node",
-			);
+			assert.equal(key, undefined);
+			assert.equal(TreeAlpha.child(parent, key), root);
 		});
 
 		it("holds for nested nodes", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Child extends schemaFactory.object("Child", {
-				value: schemaFactory.number,
-			}) {}
-			class Parent extends schemaFactory.object("Parent", {
-				child: Child,
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: Parent }));
+			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 42 } });
 
 			const child = view.root.child;
 			const parent = TreeAlpha.parent2(child);
 			const key = TreeAlpha.key2(child);
 
-			assert.equal(key, "child", "key2 should return the property key");
-			assert.equal(
-				TreeAlpha.child(parent, key),
-				child,
-				"child(parent2(node), key2(node)) should equal node",
-			);
+			assert.equal(key, "child");
+			assert.equal(TreeAlpha.child(parent, key), child);
 		});
 
 		it("holds for array elements", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Item extends schemaFactory.object("Item", {
-				value: schemaFactory.number,
-			}) {}
-
-			const view = getView(new TreeViewConfiguration({ schema: schemaFactory.array(Item) }));
+			const view = getView(new TreeViewConfiguration({ schema: sf.array(ChildNode) }));
 			view.initialize([{ value: 1 }, { value: 2 }, { value: 3 }]);
 
 			const item = view.root[1];
 			const parent = TreeAlpha.parent2(item);
 			const key = TreeAlpha.key2(item);
 
-			assert.equal(key, 1, "key2 should return the array index");
-			assert.equal(
-				TreeAlpha.child(parent, key),
-				item,
-				"child(parent2(node), key2(node)) should equal node",
-			);
+			assert.equal(key, 1);
+			assert.equal(TreeAlpha.child(parent, key), item);
 		});
 
 		it("holds for detached nodes", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Item extends schemaFactory.object("Item", {
-				value: schemaFactory.number,
-			}) {}
-			class Container extends schemaFactory.object("Container", {
-				items: schemaFactory.array(Item),
-			}) {}
-
 			const view = getView(new TreeViewConfiguration({ schema: Container }));
 			view.initialize({ items: [{ value: 42 }] });
 
@@ -1317,31 +837,18 @@ describe("treeApi", () => {
 			const parent = TreeAlpha.parent2(item);
 			const key = TreeAlpha.key2(item);
 
-			assert.equal(key, undefined, "key2 should return undefined for detached nodes");
-			assert.equal(
-				TreeAlpha.child(parent, key),
-				item,
-				"child(parent2(node), key2(node)) should equal node",
-			);
+			assert.equal(key, undefined);
+			assert.equal(TreeAlpha.child(parent, key), item);
 		});
 
 		it("holds for unhydrated nodes", () => {
-			const schemaFactory = new SchemaFactory(undefined);
-			class Item extends schemaFactory.object("Item", {
-				value: schemaFactory.number,
-			}) {}
-
-			const item = new Item({ value: 42 });
+			const item = new ChildNode({ value: 42 });
 
 			const parent = TreeAlpha.parent2(item);
 			const key = TreeAlpha.key2(item);
 
-			assert.equal(key, undefined, "key2 should return undefined for unhydrated nodes");
-			assert.equal(
-				TreeAlpha.child(parent, key),
-				item,
-				"child(parent2(node), key2(node)) should equal node",
-			);
+			assert.equal(key, undefined);
+			assert.equal(TreeAlpha.child(parent, key), item);
 		});
 	});
 

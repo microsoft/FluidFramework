@@ -5,10 +5,6 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	type ErasedBaseType,
-	ErasedTypeImplementation,
-} from "@fluidframework/core-interfaces/internal";
-import {
 	assert,
 	debugAssert,
 	fail,
@@ -29,7 +25,6 @@ import {
 	EmptyKey,
 	keyAsDetachedField,
 	rootFieldKey,
-	type DetachedField,
 	type FieldKey,
 	type ITreeCursorSynchronous,
 } from "../core/index.js";
@@ -47,7 +42,6 @@ import {
 	type FlexTreeNode,
 	type Observer,
 	withObservation,
-	type FlexTreeHydratedContext,
 } from "../feature-libraries/index.js";
 import {
 	asIndex,
@@ -97,12 +91,21 @@ import {
 	getUnhydratedContext,
 	type TreeBranchAlpha,
 	type TreeChangeEvents,
-	type UnhydratedFlexTreeNode,
+	UnhydratedFlexTreeNode,
 	SimpleContextSlot,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
+import {
+	RootParent,
+	DetachedParent,
+	UnhydratedParent,
+	getOrCreateRootParent,
+	getOrCreateDetachedParent,
+	getOrCreateUnhydratedParent,
+} from "./parentObject.js";
+import type { TreeNodeParent } from "./parentObject.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
@@ -143,194 +146,7 @@ identifier.create = (branch: TreeBranch): string => {
 
 Object.freeze(identifier);
 
-// #region ParentObject Types
-
-/**
- * Opaque object representing the parent of a node that is not a TreeNode.
- * Returned by {@link (TreeAlpha:interface).parent2} for nodes that have no TreeNode parent
- * (e.g., root nodes, removed nodes, or newly created nodes not yet inserted into a document).
- *
- * @remarks
- * This is a sealed type - external implementations are not allowed.
- *
- * This object can be passed to {@link (TreeAlpha:interface).child},
- * {@link (TreeAlpha:interface).children}, and {@link (TreeAlpha:interface).on}.
- *
- * @sealed
- * @alpha
- */
-export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.ParentObject"> {}
-
-/**
- * The parent of a {@link TreeNode} in the tree hierarchy.
- *
- * @remarks
- * Unlike {@link (TreeNodeApi:interface).parent} which returns `undefined` for root nodes,
- * {@link (TreeAlpha:interface).parent2} always returns a value of this type.
- * This enables the invariant:
- * `TreeAlpha.child(TreeAlpha.parent2(node), TreeAlpha.key2(node)) === node`
- *
- * - {@link TreeNode}: The node has a regular parent node in the tree hierarchy.
- * - {@link ParentObject}: The node has no TreeNode parent (e.g., it is a root node,
- * was removed from the tree, or was newly created and not yet inserted).
- *
- * @alpha
- */
-export type TreeNodeParent = TreeNode | ParentObject;
-
-/**
- * Represents a node that is at the root of a hydrated tree branch.
- * @internal
- */
-export class RootParent
-	extends ErasedTypeImplementation<ParentObject>
-	implements ParentObject
-{
-	public constructor(private readonly branch: TreeBranch) {
-		super();
-	}
-
-	/**
-	 * Gets the TreeBranch this root parent is associated with.
-	 */
-	public getBranch(): TreeBranch {
-		return this.branch;
-	}
-}
-
-/**
- * Represents a node that was removed from a hydrated tree but still exists in memory.
- * The node could potentially be re-inserted into the tree.
- * @internal
- */
-export class DetachedParent
-	extends ErasedTypeImplementation<ParentObject>
-	implements ParentObject
-{
-	public constructor(
-		private readonly context: FlexTreeHydratedContext,
-		private readonly detachedField: DetachedField,
-		private readonly detachedNode: TreeNode,
-	) {
-		super();
-	}
-
-	/**
-	 * Gets the FlexTreeHydratedContext this detached parent is associated with.
-	 */
-	public getContext(): FlexTreeHydratedContext {
-		return this.context;
-	}
-
-	/**
-	 * Gets the DetachedField identifier for this detached subtree.
-	 */
-	public getDetachedField(): DetachedField {
-		return this.detachedField;
-	}
-
-	/**
-	 * Gets the detached node.
-	 */
-	public getDetachedNode(): TreeNode {
-		return this.detachedNode;
-	}
-}
-
-/**
- * Represents a node that was created but never inserted into any document.
- * @internal
- */
-export class UnhydratedParent
-	extends ErasedTypeImplementation<ParentObject>
-	implements ParentObject
-{
-	public constructor(
-		private readonly context: UnhydratedFlexTreeNode["context"],
-		private readonly unhydratedRoot: UnhydratedFlexTreeNode,
-	) {
-		super();
-	}
-
-	/**
-	 * Gets the context for this unhydrated node.
-	 */
-	public getContext(): UnhydratedFlexTreeNode["context"] {
-		return this.context;
-	}
-
-	/**
-	 * Gets the unhydrated root node.
-	 */
-	public getUnhydratedRoot(): UnhydratedFlexTreeNode {
-		return this.unhydratedRoot;
-	}
-}
-
-/**
- * Cache for RootParent instances (one per branch).
- * @remarks
- * Each TreeBranch has exactly one RootParent, ensuring that `parent2()` returns
- * the same RootParent instance for all root nodes of the same branch.
- */
-const rootParentCache = new WeakMap<TreeBranch, RootParent>();
-
-function getOrCreateRootParent(branch: TreeBranch): RootParent {
-	let rootParent = rootParentCache.get(branch);
-	if (rootParent === undefined) {
-		rootParent = new RootParent(branch);
-		rootParentCache.set(branch, rootParent);
-	}
-	return rootParent;
-}
-
-/**
- * Cache for DetachedParent instances.
- * @remarks
- * Keyed by the detached TreeNode itself. A node can only be in one detached field
- * at a time, so keying by node is sufficient. Using WeakMap ensures entries are
- * cleaned up when the node is garbage collected.
- */
-const detachedParentCache = new WeakMap<TreeNode, DetachedParent>();
-
-function getOrCreateDetachedParent(
-	context: FlexTreeHydratedContext,
-	detachedField: DetachedField,
-	detachedNode: TreeNode,
-): DetachedParent {
-	const cached = detachedParentCache.get(detachedNode);
-	// If the node was re-inserted and removed again, it gets a new DetachedField,
-	// so we need to replace the stale cached entry.
-	if (cached?.getDetachedField() === detachedField) {
-		return cached;
-	}
-	const detachedParent = new DetachedParent(context, detachedField, detachedNode);
-	detachedParentCache.set(detachedNode, detachedParent);
-	return detachedParent;
-}
-
-/**
- * Cache for UnhydratedParent instances.
- * @remarks
- * Keyed by the UnhydratedFlexTreeNode itself. Using WeakMap ensures entries are
- * cleaned up when the unhydrated node is garbage collected (e.g., after hydration
- * when no external references remain).
- */
-const unhydratedParentCache = new WeakMap<UnhydratedFlexTreeNode, UnhydratedParent>();
-
-function getOrCreateUnhydratedParent(
-	context: UnhydratedFlexTreeNode["context"],
-	unhydratedRoot: UnhydratedFlexTreeNode,
-): UnhydratedParent {
-	let unhydratedParent = unhydratedParentCache.get(unhydratedRoot);
-	if (unhydratedParent === undefined) {
-		unhydratedParent = new UnhydratedParent(context, unhydratedRoot);
-		unhydratedParentCache.set(unhydratedRoot, unhydratedParent);
-	}
-	return unhydratedParent;
-}
-
-// #endregion
+export { type ParentObject, type TreeNodeParent } from "./parentObject.js";
 
 /**
  * A utility interface for manipulating node identifiers.
@@ -615,9 +431,17 @@ export interface TreeAlpha {
 	 *
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
+	 * @throws A usage error if the parent is a RootParent
+	 * with incompatible schema ({@link SchemaCompatibilityStatus.canView} is false).
+	 *
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
+	// TODO: Consider using overloads to preserve stricter types for TreeNode callers:
+	//   child(parent: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+	//   child(parent: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
+	// The current single signature widens `key` to `string | number | undefined` for all callers,
+	// even though `undefined` is only valid for ParentObject parents.
 	child(
 		parent: TreeNodeParent,
 		key: string | number | undefined,
@@ -627,7 +451,7 @@ export interface TreeAlpha {
 	 * Gets the children of the provided parent, paired with their property keys under the parent.
 	 *
 	 * @remarks
-	 * No guarantees are made regarding the order of the children in the returned array.
+	 * No guarantees are made regarding the order of the children in the returned iterable.
 	 *
 	 * Optional properties of Object nodes with no value are not included in the result.
 	 *
@@ -636,20 +460,26 @@ export interface TreeAlpha {
 	 * For TreeNode parents, the key will always be `string | number` (never `undefined`).
 	 *
 	 * For ParentObject parents (root, detached, unhydrated), returns a single child with key `undefined`.
-	 * Returns an empty array if no child exists (e.g., optional root with no value).
+	 * Returns empty results if no child exists (e.g., optional root with no value).
+	 *
+	 * @throws A usage error if the parent is a RootParent
+	 * with incompatible schema ({@link SchemaCompatibilityStatus.canView} is false).
 	 *
 	 * @param parent - The parent (TreeNode or ParentObject) whose children are being requested.
 	 *
 	 * @returns
-	 * An array of pairs of the form `[propertyKey, child]`.
+	 * An iterable of pairs of the form `[propertyKey, child]`.
 	 *
 	 * For Array nodes, the `propertyKey` is the index of the child in the array.
 	 *
 	 * For Object nodes, the returned `propertyKey`s are the developer-facing "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
+	 * @see {@link (TreeNodeApi:interface).parent}
 	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
+	// TODO: Consider using overloads to return `[string | number, ...]` for TreeNode parents
+	// and `[undefined, ...]` for ParentObject parents, so TreeNode callers keep the stricter key type.
 	children(
 		parent: TreeNodeParent,
 	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
@@ -813,18 +643,20 @@ export interface TreeAlpha {
 	 * When the parent is a {@link TreeNode}, the listener fires on content changes:
 	 * `nodeChanged` fires for direct property changes; `treeChanged` fires for any change in the subtree.
 	 *
-	 * When the parent is a {@link ParentObject}, the listener fires when the child node
-	 * returned by {@link (TreeAlpha:interface).child} changes or when that child's status
-	 * changes. Status changes include the node being re-inserted into the document,
-	 * removed from the document, replaced at the root, or hydrated (for newly created nodes
-	 * that are inserted for the first time).
+	 * When the parent is a {@link ParentObject}, the behavior depends on the kind of parent:
+	 *
+	 * - For root parents, the listener fires on content changes to the root node
+	 * (same semantics as subscribing directly on the root {@link TreeNode}).
+	 * `nodeChanged` tracks property changes of whichever node is currently at the root
+	 * and automatically re-subscribes when the root is replaced.
+	 * Root replacement itself only fires `treeChanged`, not `nodeChanged`.
+	 *
+	 * - For detached parents and unhydrated parents,
+	 * the listener fires on status transitions regardless of `eventName`.
+	 * This includes the node being re-inserted into the document or hydrated
+	 * (inserted for the first time).
 	 *
 	 * @privateRemarks
-	 * The internal behavior of `on()` differs by ParentObject kind:
-	 * - RootParent: subscribes to the root node's content events and re-subscribes on root replacement.
-	 * - DetachedParent: subscribes to status changes (re-attachment, deletion) via kernel status events.
-	 * - UnhydratedParent: subscribes to status changes (hydration) via kernel status events.
-	 *
 	 * TODO: Consider separating content events and status events into distinct APIs
 	 * (e.g., a dedicated `onStatusChange(parent, listener)` method) so that the same event name
 	 * doesn't have different semantics depending on the parent type. This would also eliminate
@@ -1244,7 +1076,7 @@ export const TreeAlpha: TreeAlpha = {
 			const branch = parent.getBranch();
 			assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 			if (!branch.compatibility.canView) {
-				return undefined;
+				throw new UsageError("Cannot access child of a RootParent with incompatible schema");
 			}
 			const root = branch.root;
 			if (root === undefined || isTreeNode(root)) {
@@ -1264,7 +1096,12 @@ export const TreeAlpha: TreeAlpha = {
 			if (propertyKey !== undefined) {
 				return undefined;
 			}
-			return parent.getUnhydratedRoot().treeNode;
+			const treeNode = parent.getUnhydratedRoot().treeNode;
+			// UnhydratedParent instances are only created by parent2(), which requires a TreeNode
+			// argument. That TreeNode's kernel sets the inner UnhydratedFlexTreeNode's treeNode
+			// field during construction, so it is always defined here.
+			assert(treeNode !== undefined, "Expected treeNode to be set on UnhydratedFlexTreeNode");
+			return treeNode;
 		}
 
 		if (!isTreeNode(parent)) {
@@ -1339,7 +1176,7 @@ export const TreeAlpha: TreeAlpha = {
 				return undefined;
 			}
 			case NodeKind.Leaf: {
-				fail("Leaf schema associated with non-leaf tree node.");
+				fail(0xbc3 /* Leaf schema associated with non-leaf tree node. */);
 			}
 			default: {
 				unreachableCase(schema.kind);
@@ -1355,10 +1192,15 @@ export const TreeAlpha: TreeAlpha = {
 			const branch = parent.getBranch();
 			assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 			if (!branch.compatibility.canView) {
-				return [];
+				throw new UsageError(
+					"Cannot access children of a RootParent with incompatible schema",
+				);
 			}
 			const root = branch.root;
-			return root === undefined ? [] : [[undefined, root as TreeNode | TreeLeafValue]];
+			if (root === undefined) {
+				return [];
+			}
+			return [[undefined, isTreeNode(root) ? root : (root as TreeLeafValue)]];
 		}
 
 		if (parent instanceof DetachedParent) {
@@ -1367,7 +1209,8 @@ export const TreeAlpha: TreeAlpha = {
 
 		if (parent instanceof UnhydratedParent) {
 			const treeNode = parent.getUnhydratedRoot().treeNode;
-			return treeNode === undefined ? [] : [[undefined, treeNode]];
+			assert(treeNode !== undefined, "Expected treeNode to be set on UnhydratedFlexTreeNode");
+			return [[undefined, treeNode]];
 		}
 
 		if (!isTreeNode(parent)) {
@@ -1426,7 +1269,7 @@ export const TreeAlpha: TreeAlpha = {
 				break;
 			}
 			case NodeKind.Leaf: {
-				fail("Leaf schema associated with non-leaf tree node.");
+				fail(0xbc7 /* Leaf schema associated with non-leaf tree node. */);
 			}
 			default: {
 				unreachableCase(schema.kind);
@@ -1461,7 +1304,11 @@ export const TreeAlpha: TreeAlpha = {
 
 		if (!kernel.isHydrated()) {
 			// Unhydrated node - return an UnhydratedParent
-			const innerNode = getInnerNode(node) as UnhydratedFlexTreeNode;
+			const innerNode = getInnerNode(node);
+			assert(
+				innerNode instanceof UnhydratedFlexTreeNode,
+				"Expected unhydrated inner node when kernel is not hydrated",
+			);
 			return getOrCreateUnhydratedParent(innerNode.context, innerNode);
 		}
 
@@ -1496,20 +1343,29 @@ export const TreeAlpha: TreeAlpha = {
 			const branch = parent.getBranch();
 			assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 
+			// Throw at call time if schema is already incompatible — this is a caller error.
+			if (!branch.compatibility.canView) {
+				throw new UsageError(
+					"Cannot subscribe to events on a RootParent with incompatible schema",
+				);
+			}
+
 			let isSubscribed = true;
 			let currentNodeUnsubscribe: (() => void) | undefined;
+			let lastRootNode: unknown;
 
 			// Helper function to subscribe and re-subscribe to the root node.
 			const subscribeToRoot = (): void => {
-				if (!isSubscribed) {
+				if (!isSubscribed || !branch.compatibility.canView) {
+					// If schema became incompatible after initial subscription (e.g., during
+					// rebase), gracefully skip re-subscribing rather than crashing inside
+					// the rootChanged event handler. The listener stops receiving events
+					// until schema becomes compatible again.
 					return;
 				}
 
-				assert(
-					branch.compatibility.canView,
-					"Cannot subscribe to node events on a branch with incompatible schema",
-				);
 				const rootNode = branch.root;
+				lastRootNode = rootNode;
 				// rootNode may be undefined if the root is optional.
 				currentNodeUnsubscribe = isTreeNode(rootNode)
 					? treeNodeApi.on(rootNode, eventName, listener)
@@ -1519,15 +1375,30 @@ export const TreeAlpha: TreeAlpha = {
 			// Initial subscription
 			subscribeToRoot();
 
-			// Subscribe to rootChanged to handle cases where the root is replaced
+			// Subscribe to rootChanged to handle cases where the root is replaced.
+			// Note: "rootChanged" fires for any batch that touches the tree, not just
+			// actual root replacements, so we track the root node identity ourselves.
 			const unsubscribeRootChanged = branch.events.on("rootChanged", () => {
-				(listener as (...args: unknown[]) => void)();
+				const newRootNode = branch.compatibility.canView ? branch.root : undefined;
+				if (newRootNode === lastRootNode) {
+					// Root identity didn't actually change — skip to avoid double-firing
+					// (the root node's own treeChanged subscription already covers this).
+					return;
+				}
 
 				// Unsubscribe from the old root's events
 				if (currentNodeUnsubscribe !== undefined) {
 					currentNodeUnsubscribe();
 					currentNodeUnsubscribe = undefined;
 				}
+
+				// Root replacement is a structural change, so fire for "treeChanged".
+				// "nodeChanged" tracks property changes of whichever node is currently
+				// at root, not root replacement itself.
+				if (eventName === "treeChanged") {
+					(listener as (...args: unknown[]) => void)();
+				}
+
 				// Subscribe to the new root's events
 				subscribeToRoot();
 			});
@@ -1556,22 +1427,34 @@ export const TreeAlpha: TreeAlpha = {
 			// go undetected.
 			kernel.checkAndEmitStatusChange();
 
+			// Also subscribe to afterBatch events to check for status changes
+			// after any tree modification (e.g., undo that re-attaches the node).
+			// This is needed because anchor events don't fire when a node's position changes.
+			let unsubscribeAfterBatch: (() => void) | undefined = context.checkout.events.on(
+				"afterBatch",
+				() => {
+					kernel.checkAndEmitStatusChange();
+				},
+			);
+
 			// Subscribe to status changes (re-attached, deleted, etc.)
 			const unsubscribeStatus = kernel.statusEvents.on("statusChanged", () => {
+				// Once a status transition is detected, stop polling afterBatch —
+				// the node is no longer in the detached state this listener was created for.
+				if (unsubscribeAfterBatch !== undefined) {
+					unsubscribeAfterBatch();
+					unsubscribeAfterBatch = undefined;
+				}
 				// Fire the listener when status changes
 				(listener as (...args: unknown[]) => void)();
 			});
 
-			// Also subscribe to afterBatch events to check for status changes
-			// after any tree modification (e.g., undo that re-attaches the node).
-			// This is needed because anchor events don't fire when a node's position changes.
-			const unsubscribeAfterBatch = context.checkout.events.on("afterBatch", () => {
-				kernel.checkAndEmitStatusChange();
-			});
-
 			return () => {
 				unsubscribeStatus();
-				unsubscribeAfterBatch();
+				if (unsubscribeAfterBatch !== undefined) {
+					unsubscribeAfterBatch();
+					unsubscribeAfterBatch = undefined;
+				}
 			};
 		}
 
@@ -1589,11 +1472,20 @@ export const TreeAlpha: TreeAlpha = {
 
 			const kernel = getKernel(treeNode);
 
-			// Subscribe to status changes (hydration)
-			return kernel.statusEvents.on("statusChanged", () => {
-				// Fire the listener when the node gets hydrated
+			// Subscribe to status changes (hydration). This is a one-shot subscription:
+			// once the node is hydrated, further status changes (e.g., Removed, re-inserted)
+			// are not the concern of the UnhydratedParent — those are handled by
+			// DetachedParent or RootParent.
+			let unsubscribe: (() => void) | undefined;
+			unsubscribe = kernel.statusEvents.on("statusChanged", () => {
+				unsubscribe?.();
+				unsubscribe = undefined;
 				(listener as (...args: unknown[]) => void)();
 			});
+			return () => {
+				unsubscribe?.();
+				unsubscribe = undefined;
+			};
 		}
 
 		if (isTreeNode(parent)) {
