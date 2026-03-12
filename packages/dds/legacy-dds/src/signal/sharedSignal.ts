@@ -163,7 +163,7 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 		this.emit("notify", op.metadata, isLocal);
 	}
 
-	// Nothing to roll back. Allowing other DDSs to handle rollback if necessary.
+	// Nothing to roll back. Allowing other DDSes to handle rollback if necessary.
 	public rollback(content: unknown, _localOpMetadata: unknown): void {
 		return;
 	}

@@ -235,7 +235,7 @@ export const thisWrap: unique symbol = Symbol("selfWrap");
  * for reading and writing data which are specific to this particular data structure.
  * @remarks
  * Output from {@link SharedKernelFactory}.
- * This is an alternative to defining DDSs by sub-classing {@link SharedObject}.
+ * This is an alternative to defining DDSes by sub-classing {@link SharedObject}.
  * @internal
  */
 export interface FactoryOut<T extends object> {
@@ -244,7 +244,7 @@ export interface FactoryOut<T extends object> {
 }
 
 /**
- * A factory for creating DDSs.
+ * A factory for creating DDSes.
  * @remarks
  * Outputs {@link FactoryOut}.
  * This is an alternative to directly implementing {@link @fluidframework/datastore-definitions#IChannelFactory}.

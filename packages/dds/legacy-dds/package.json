@@ -1,7 +1,7 @@
 {
 	"name": "@fluidframework/legacy-dds",
 	"version": "2.91.0",
-	"description": "Legacy DDSs for the Fluid Framework. These are not intended for use in new code.",
+	"description": "Legacy DDSes for the Fluid Framework. These are not intended for use in new code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
