@@ -509,14 +509,28 @@ export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
 	options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
 	history.push({ role: "user", content: prompt });
 
-	const result = await runEditLoop(model, subtree, history, {
-		editor,
-		maxEditCount,
-		logger: options?.logger,
-	});
+	// Fork a branch for rollback isolation — all edits during this call happen on the fork.
+	const editTree = subtree.fork();
 
-	options?.logger?.log(`## Response\n\n${result.response}\n\n`);
-	return result.response;
+	try {
+		const result = await runEditLoop(model, editTree, history, {
+			editor,
+			maxEditCount,
+			logger: options?.logger,
+		});
+
+		if (result.lastEditFailed) {
+			editTree.branch.dispose();
+		} else {
+			subtree.branch.merge(editTree.branch);
+		}
+
+		options?.logger?.log(`## Response\n\n${result.response}\n\n`);
+		return result.response;
+	} catch (error) {
+		editTree.branch.dispose();
+		throw error;
+	}
 }
 
 /**
