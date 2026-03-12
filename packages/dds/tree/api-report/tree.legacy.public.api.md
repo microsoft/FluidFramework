@@ -450,7 +450,7 @@ export namespace System_Unsafe {
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
-// @public @sealed @system
+// @public @sealed
 export interface Tree extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     readonly runTransaction: RunTransaction;

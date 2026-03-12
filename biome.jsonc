@@ -139,7 +139,9 @@
 	"formatter": {
 		"enabled": true,
 		"includes": ["**", "!**/dist/**", "!**/lib/**"],
-		"formatWithErrors": true,
+		// Enabling this will cause Biome to format code that is not valid, which can sometimes make the code even worse
+		// syntactically. This is especially annoying when using format-on-save, so we disable it by default.
+		"formatWithErrors": false,
 		"indentStyle": "tab",
 		"lineWidth": 95,
 		"lineEnding": "lf"

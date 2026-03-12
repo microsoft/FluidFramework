@@ -101,7 +101,7 @@ export function getMoveEffect(
 	id: MoveId,
 	count: number,
 	addDependency: boolean = true,
-): RangeQueryResult<ChangeAtomId, MoveEffect> {
+): RangeQueryResult<MoveEffect | undefined> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
 	return result.value === undefined
 		? result

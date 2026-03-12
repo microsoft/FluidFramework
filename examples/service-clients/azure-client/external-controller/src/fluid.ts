@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getTinyliciousEndpoint } from "@fluid-example/example-utils";
 import type {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
@@ -55,7 +56,7 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
 		: {
 				type: "local",
 				tokenProvider: new InsecureTokenProvider("fooBar", user),
-				endpoint: "http://localhost:7070",
+				endpoint: getTinyliciousEndpoint(),
 			};
 
 /**

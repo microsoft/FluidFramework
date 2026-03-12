@@ -1,0 +1,11 @@
+// See ./build.spec.ts for the test which uses this.
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"isolatedDeclarations": true,
+		"declaration": true,
+	},
+	"include": ["./isolatedDeclarations.ts"],
+}

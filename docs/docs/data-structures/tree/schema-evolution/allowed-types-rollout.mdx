@@ -10,6 +10,9 @@ This guide shows how to safely add a new [TreeNodeSchema](../../../api/fluid-fra
 Directly adding a new node type to an existing field would cause old clients to be unable to load documents whose schema contain the new type, breaking them immediately.
 The following process stages changes to introduce a new allowed type in a non-breaking way.
 
+Writing a test using [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) is recommended to help ensure this process is followed correctly,
+and that all required versions of the application or library can collaborate through the rollout.
+
 ## Step-by-Step Guide
 
 The example below walks through the process of adding string support to a field that previously only supported numbers.

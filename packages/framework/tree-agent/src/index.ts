@@ -12,8 +12,20 @@
 export {
 	SharedTreeSemanticAgent,
 	createContext,
+	createTreeAgent,
 } from "./agent.js";
 export type {
+	// New API
+	TreeAgent,
+	TreeAgentChatMessage,
+	TreeAgentSystemMessage,
+	TreeAgentUserMessage,
+	TreeAgentAssistantMessage,
+	TreeAgentToolCallMessage,
+	TreeAgentToolResultMessage,
+	TreeAgentChatResponse,
+	TreeAgentOptions,
+	// Existing API
 	EditResult,
 	SharedTreeChatModel,
 	SharedTreeChatQuery,
@@ -36,10 +48,6 @@ export {
 	type MethodKeys,
 	type BindableSchema,
 	type Ctor,
-	type Infer,
-	type InferZod,
-	type InferArgsZod,
-	type InferTypeFactory,
 	type IExposedMethods,
 } from "./methodBinding.js";
 export type {
@@ -47,17 +55,11 @@ export type {
 	PropertyDef,
 	ExposedProperties,
 	IExposedProperties,
-	ExposableKeys,
-	ReadOnlyRequirement,
-	ReadonlyKeys,
-	TypeMatchOrError,
-	IfEquals,
 } from "./propertyBinding.js";
 
 export {
 	typeFactory,
 	isTypeFactoryType,
-	instanceOfsTypeFactory,
 } from "./treeAgentTypes.js";
 
 export type {

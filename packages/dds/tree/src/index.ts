@@ -12,6 +12,8 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -53,7 +55,6 @@ export {
 	TreeStatus,
 	TreeCompressionStrategy,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
@@ -121,6 +122,7 @@ export {
 	NodeKind,
 	type TreeObjectNode,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -143,6 +145,8 @@ export {
 	type AllowedTypes,
 	type System_Unsafe,
 	type FieldSchemaAlphaUnsafe,
+	type FieldHasDefaultAlphaUnsafe,
+	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
@@ -160,13 +164,13 @@ export {
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
 	// Index APIs
-	type SimpleTreeIndex,
 	type IdentifierIndex,
-	createSimpleTreeIndex,
+	createTreeIndex,
 	createIdentifierIndex,
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 	type DirtyTreeMap,
+	type TreeIndexKey,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -191,6 +195,10 @@ export {
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
 	type SchemaType,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+	type InsertableObjectFromSchemaRecordAlpha,
+	type FieldHasDefaultAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -296,15 +304,20 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
-	type SchemaCompatibilitySnapshotsOptions,
+	type ErasedSchema,
+	type ErasedNode,
+	type ErasedSchemaSubclassable,
+	type SnapshotSchemaCompatibilityOptions,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
+	type WithValue,
+	type TreeContextAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -319,6 +332,7 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
@@ -370,3 +384,4 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export { ExtensibleUnionNode } from "./extensibleUnionNode.js";

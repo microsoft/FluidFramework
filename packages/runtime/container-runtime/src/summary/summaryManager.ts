@@ -103,6 +103,15 @@ export class SummaryManager
 	private state = SummaryManagerState.Off;
 	private summarizer?: ISummarizer;
 	private _disposed = false;
+	private summarizerStopTimeout?: ReturnType<typeof setTimeout>;
+	/**
+	 * Monotonically increasing counter that tracks summarizer lifecycle generations.
+	 * Incremented each time {@link cleanupAfterSummarizerStop} runs. Used by the
+	 * promise chain in {@link startSummarization} to detect that cleanup has already
+	 * been performed by another path (e.g. the stop timeout), so it can skip
+	 * redundant cleanup that would corrupt the state machine.
+	 */
+	private summarizerGeneration = 0;
 
 	public get disposed(): boolean {
 		return this._disposed;
@@ -244,6 +253,8 @@ export class SummaryManager
 
 		assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
+		const generation = this.summarizerGeneration;
+
 		this.delayBeforeCreatingSummarizer()
 			.then(async (startWithInitialDelay: boolean) => {
 				if (this.disposed) {
@@ -346,17 +357,38 @@ export class SummaryManager
 				}
 			})
 			.finally(() => {
-				assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
-				this.state = SummaryManagerState.Off;
-
-				this.cleanupForwardedEvents();
-				this.summarizer?.close();
-				this.summarizer = undefined;
-
-				if (this.getShouldSummarizeState().shouldSummarize) {
-					this.startSummarization();
+				if (generation !== this.summarizerGeneration) {
+					// Cleanup was already performed by another path (e.g. the stop timeout),
+					// and a new summarizer cycle may have started. Running cleanup again
+					// would corrupt the current state machine cycle.
+					this.logger.sendTelemetryEvent({
+						eventName: "SummarizerCleanupAlreadyDone",
+						currentState: this.state,
+					});
+					return;
 				}
+				assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
+				this.cleanupAfterSummarizerStop();
 			});
+	}
+
+	private cleanupAfterSummarizerStop(): void {
+		this.summarizerGeneration++;
+		this.state = SummaryManagerState.Off;
+
+		// Clear any pending stop timeout to avoid it firing for a different summarizer
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+			this.summarizerStopTimeout = undefined;
+		}
+
+		this.cleanupForwardedEvents();
+		this.summarizer?.close();
+		this.summarizer = undefined;
+
+		if (this.getShouldSummarizeState().shouldSummarize) {
+			this.startSummarization();
+		}
 	}
 
 	private stop(reason: SummarizerStopReason): void {
@@ -368,6 +400,23 @@ export class SummaryManager
 		// Stopping the running summarizer client should trigger a change
 		// in states when the running summarizer closes
 		this.summarizer?.stop(reason);
+
+		const summarizerCloseTimeoutMs = 2 * 60 * 1000; // 2 minutes
+		// Clear any existing timeout before setting a new one
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+		}
+		// Set a timeout to force cleanup if the summarizer doesn't close in time
+		this.summarizerStopTimeout = setTimeout(() => {
+			if (this.state === SummaryManagerState.Stopping && this.summarizer !== undefined) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SummarizerStopTimeout",
+					timeoutMs: summarizerCloseTimeoutMs,
+					stopReason: reason,
+				});
+				this.cleanupAfterSummarizerStop();
+			}
+		}, summarizerCloseTimeoutMs);
 	}
 
 	/**
@@ -453,6 +502,9 @@ export class SummaryManager
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
 		this.cleanupForwardedEvents();
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+		}
 		this._disposed = true;
 	}
 

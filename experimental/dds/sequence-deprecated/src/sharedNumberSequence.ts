@@ -40,7 +40,6 @@ export class SharedNumberSequenceClass extends SharedSequence<number> {
 		});
 	}
 
-	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.

@@ -17,6 +17,7 @@ import type {
 } from "../core/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 
 /*
  * This file does two things:
@@ -312,4 +313,34 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	}
 
 	return adaptEnum(factory, enumObject);
+}
+
+function createCustomizedScopedFactory<
+	TUserScope extends string,
+	TCreatorDomain extends string,
+>(
+	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+	creatorDomain: TCreatorDomain,
+): SchemaFactoryBeta<`${TCreatorDomain}<${TUserScope}>`> {
+	return new SchemaFactoryBeta(`${creatorDomain}<${inputSchemaFactory.scope}>`);
+}
+
+/**
+ * Declare a SchemaFactory for use in cases where the Fluid Framework's code creates the schema and owns its schema compatibility (and thus scope)
+ * but it is parameterized by user provided data, the `TUserScope`.
+ * @remarks
+ * This should allow future logic in {@link generateSchemaFromSimpleSchema} to recognize these schema as ones defined by Fluid Framework,
+ * and special case them to provide better APIs and maintain data invariants.
+ */
+export function createCustomizedFluidFrameworkScopedFactory<
+	TUserScope extends string,
+	TCreatorDomain extends string,
+>(
+	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+	fluidDomainSuffix: TCreatorDomain,
+): SchemaFactoryBeta<`com.fluidframework.${TCreatorDomain}<${TUserScope}>`> {
+	return createCustomizedScopedFactory(
+		inputSchemaFactory,
+		`com.fluidframework.${fluidDomainSuffix}` as const,
+	);
 }

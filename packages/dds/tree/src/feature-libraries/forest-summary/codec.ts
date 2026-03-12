@@ -4,88 +4,79 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-} from "@fluidframework/runtime-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	type CodecTree,
+	ClientVersionDispatchingCodecBuilder,
+	type CodecAndSchema,
 	type CodecWriteOptions,
 	FluidClientVersion,
-	type IJsonCodec,
-	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
-import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
-
 import {
-	ForestFormatVersion,
-	validVersions,
-	type Format,
-	FormatCommon,
-} from "./formatCommon.js";
+	fieldBatchCodecBuilder,
+	type FieldBatchEncodingContext,
+} from "../chunked-forest/index.js";
+
+import { ForestFormatVersion, FormatCommon } from "./formatCommon.js";
 
 /**
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = IJsonCodec<
-	FieldSet,
-	Format,
-	JsonCompatibleReadOnly,
-	FieldBatchEncodingContext
->;
+export type ForestCodec = ReturnType<typeof forestCodecBuilder.build>;
 
-/**
- * Convert a MinimumVersionForCollab to a ForestFormatVersion.
- * @param clientVersion - The MinimumVersionForCollab to convert.
- * @returns The ForestFormatVersion that corresponds to the provided MinimumVersionForCollab.
- */
-export function clientVersionToForestFormatVersion(
-	clientVersion: MinimumVersionForCollab,
-): ForestFormatVersion {
-	return brand(
-		getConfigForMinVersionForCollab(clientVersion, {
-			[lowestMinVersionForCollab]: ForestFormatVersion.v1,
-			[FluidClientVersion.v2_74]: ForestFormatVersion.v2,
-		}),
-	);
-}
-
-export function makeForestSummarizerCodec(
+function makeForestSummarizerCodec(
 	options: CodecWriteOptions,
-	fieldBatchCodec: FieldBatchCodec,
-): ForestCodec {
-	const inner = fieldBatchCodec;
-	const writeVersion = clientVersionToForestFormatVersion(options.minVersionForCollab);
-	const formatSchema = FormatCommon(writeVersion);
-	return makeVersionedValidatedCodec(options, validVersions, formatSchema, {
-		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
+	version: ForestFormatVersion,
+): CodecAndSchema<FieldSet, FieldBatchEncodingContext> {
+	// Performance: Since multiple places (including multiple versions of this codec) use the field batch codec,
+	// we may end up with multiple copies of it, including compiling its format validation multiple times.
+	// This is not ideal, but is not too bad as it is a small fixed number of copies and thus should not be too expensive.
+	// If this becomes problematic a cache could be added for options to codec instances somewhere.
+	const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
+	const formatSchema = FormatCommon;
+	return {
+		encode: (data: FieldSet, context: FieldBatchEncodingContext): FormatCommon => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
 			for (const [key, value] of data) {
 				keys.push(key);
 				fields.push(value);
 			}
-			return { keys, fields: inner.encode(fields, context), version: writeVersion };
+			return {
+				keys,
+				fields: fieldBatchCodec.encode(fields, context),
+				version,
+			};
 		},
-		decode: (data: Format, context: FieldBatchEncodingContext): FieldSet => {
+		decode: (data: FormatCommon, context: FieldBatchEncodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
-			const fields = inner.decode(data.fields, context);
+			const fields = fieldBatchCodec.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (const [index, field] of fields.entries()) {
 				out.set(data.keys[index] ?? oob(), field);
 			}
 			return out;
 		},
-	});
+		schema: formatSchema,
+	};
 }
 
-export function getCodecTreeForForestFormat(
-	clientVersion: MinimumVersionForCollab,
-): CodecTree {
-	return { name: "Forest", version: clientVersionToForestFormatVersion(clientVersion) };
-}
+/**
+ * {@link ClientVersionDispatchingCodecBuilder} for forest summarizer codecs.
+ */
+export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Forest", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
+		formatVersion: ForestFormatVersion.v1,
+		codec: (options: CodecWriteOptions) =>
+			makeForestSummarizerCodec(options, ForestFormatVersion.v1),
+	},
+	{
+		minVersionForCollab: FluidClientVersion.v2_74,
+		formatVersion: ForestFormatVersion.v2,
+		codec: (options: CodecWriteOptions) =>
+			makeForestSummarizerCodec(options, ForestFormatVersion.v2),
+	},
+]);

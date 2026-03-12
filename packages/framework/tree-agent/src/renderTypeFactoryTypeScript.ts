@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ObjectNodeSchema, TreeNodeSchema } from "@fluidframework/tree/alpha";
+import type { TreeNodeSchema } from "@fluidframework/tree/alpha";
 
 import type {
 	TypeFactoryType,
@@ -20,9 +20,8 @@ import type {
 	TypeFactoryUnion,
 	TypeFactoryIntersection,
 	TypeFactoryFunction,
+	TypeFactoryInstanceOf,
 } from "./treeAgentTypes.js";
-
-export { instanceOfsTypeFactory } from "./treeAgentTypes.js";
 
 /**
  * Converts type factory type definitions into TypeScript declaration text.
@@ -31,7 +30,6 @@ export { instanceOfsTypeFactory } from "./treeAgentTypes.js";
 export function renderTypeFactoryTypeScript(
 	typeFactoryType: TypeFactoryType,
 	getFriendlyName: (schema: TreeNodeSchema) => string,
-	instanceOfLookup: WeakMap<TypeFactoryType, ObjectNodeSchema>,
 	initialIndent: number = 0,
 ): string {
 	let result = "";
@@ -154,13 +152,7 @@ export function renderTypeFactoryTypeScript(
 				return;
 			}
 			case "instanceof": {
-				const schema = instanceOfLookup.get(type);
-				if (schema === undefined) {
-					throw new UsageError(
-						"instanceof type not found in lookup - this typically indicates the type was not created via typeFactory.instanceOf",
-					);
-				}
-				append(getFriendlyName(schema));
+				append(getFriendlyName((type as TypeFactoryInstanceOf).schema));
 				return;
 			}
 			default: {

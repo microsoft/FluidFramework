@@ -11,9 +11,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: containerRegistry
-  type: string
-
 - name: containerTag
   type: string
 
