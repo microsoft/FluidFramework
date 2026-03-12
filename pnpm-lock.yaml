@@ -108,6 +108,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      playwright:
+        specifier: ^1.55.1
+        version: 1.58.2
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -397,12 +400,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -418,42 +418,18 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
       process:
         specifier: ^0.11.10
         version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -527,12 +503,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -548,39 +521,15 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -651,12 +600,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -672,39 +618,15 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -811,12 +733,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -844,36 +763,15 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-loader:
         specifier: ^5.1.0
         version: 5.1.0(webpack@5.103.0)
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -947,12 +845,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -965,36 +860,12 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -1086,12 +957,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -1101,30 +969,9 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1137,9 +984,6 @@ importers:
       tinylicious:
         specifier: ^7.0.0
         version: 7.0.0
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -1234,12 +1078,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -1258,42 +1099,18 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -1367,12 +1184,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -1382,39 +1196,15 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -1570,12 +1360,9 @@ importers:
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@playwright/test':
+        specifier: ^1.55.1
+        version: 1.58.2
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -1594,42 +1381,18 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.103.0)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^16.0.0
-        version: 16.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       process:
         specifier: ^0.11.10
         version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -19718,6 +19481,11 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@playwright/test@1.58.2':
+    resolution: {integrity: sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@pm2/agent@2.0.4':
     resolution: {integrity: sha512-n7WYvvTJhHLS2oBb1PjOtgLpMhgImOq8sXkPBw6smeg9LJBWZjiEgPKOpR8mn9UJZsB5P3W4V/MyvNnp31LKeA==}
 
@@ -33158,6 +32926,10 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
+
+  '@playwright/test@1.58.2':
+    dependencies:
+      playwright: 1.58.2
 
   '@pm2/agent@2.0.4':
     dependencies:
