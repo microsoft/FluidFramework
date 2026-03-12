@@ -4,8 +4,8 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [...minimalDeprecated];
+const config: Linter.Config[] = [...recommended];
 
 export default config;

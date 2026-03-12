@@ -4,14 +4,14 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 import sharedConfig, {
 	importInternalModulesAllowed,
 	importInternalModulesAllowedForTest,
 } from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	...sharedConfig,
 	{
 		rules: {
