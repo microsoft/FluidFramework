@@ -24,6 +24,9 @@
 		},
 		"test:realsvc:odsp": {
 			"executor": "nx:noop"
+		},
+		"build:test": {
+			"dependsOn": ["^api-extractor:esnext", "^build:esnext", "^tsc"]
 		}
 	}
 }

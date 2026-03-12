@@ -10,6 +10,15 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"tsc": {
+			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm", "typetests:gen"]
+		},
+		"build:esnext": {
+			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm", "^build:esnext", "typetests:gen"]
+		},
+		"check:exports": {
+			"dependsOn": ["tsc", "build:esnext"]
+		},
 		"check:format": {
 			"executor": "nx:noop"
 		},

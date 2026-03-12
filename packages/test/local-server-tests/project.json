@@ -21,6 +21,9 @@
 		},
 		"test": {
 			"executor": "nx:noop"
+		},
+		"build:test": {
+			"dependsOn": ["^tsc", "^api-extractor:commonjs"]
 		}
 	}
 }

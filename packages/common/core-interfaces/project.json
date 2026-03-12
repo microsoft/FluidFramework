@@ -22,6 +22,9 @@
 		"ci:build:api-reports": {
 			"executor": "nx:noop"
 		},
+		"build:test:esm:no-exactOptionalPropertyTypes": {
+			"dependsOn": ["build:esnext"]
+		},
 		"format": {
 			"executor": "nx:noop"
 		},

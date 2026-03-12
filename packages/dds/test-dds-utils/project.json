@@ -7,6 +7,28 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"build:test:cjs": {
+			"dependsOn": [
+				"typetests:gen",
+				"tsc",
+				"api-extractor:commonjs",
+				{
+					"target": "build:test",
+					"projects": ["@fluid-private/stochastic-test-utils"]
+				}
+			]
+		},
+		"build:test:esm": {
+			"dependsOn": [
+				"typetests:gen",
+				"build:esnext",
+				"api-extractor:esnext",
+				{
+					"target": "build:test",
+					"projects": ["@fluid-private/stochastic-test-utils"]
+				}
+			]
+		},
 		"check:format": {
 			"executor": "nx:noop"
 		},

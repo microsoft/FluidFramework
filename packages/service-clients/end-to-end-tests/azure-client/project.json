@@ -30,6 +30,9 @@
 		},
 		"test:realsvc:tinylicious:run": {
 			"executor": "nx:noop"
+		},
+		"build:test": {
+			"dependsOn": ["^api-extractor:esnext", "^build:esnext", "^tsc"]
 		}
 	}
 }

@@ -24,6 +24,12 @@
 		},
 		"test": {
 			"executor": "nx:noop"
+		},
+		"check:exports": {
+			"dependsOn": ["build:esnext"]
+		},
+		"check:exports:index": {
+			"dependsOn": ["build:esnext"]
 		}
 	}
 }

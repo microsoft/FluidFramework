@@ -63,6 +63,9 @@
 		},
 		"test:realsvc:tinylicious:run": {
 			"executor": "nx:noop"
+		},
+		"build:test:esm": {
+			"dependsOn": ["^build:esnext", "build:genver", "^tsc"]
 		}
 	}
 }

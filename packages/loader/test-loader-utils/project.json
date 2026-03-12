@@ -18,6 +18,15 @@
 		},
 		"lint:fix": {
 			"executor": "nx:noop"
+		},
+		"check:exports": {
+			"dependsOn": ["tsc", "build:esnext"]
+		},
+		"check:exports:cjs:index": {
+			"dependsOn": ["tsc"]
+		},
+		"check:exports:esm:index": {
+			"dependsOn": ["build:esnext"]
 		}
 	}
 }

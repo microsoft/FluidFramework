@@ -24,6 +24,9 @@
 		},
 		"test:coverage": {
 			"executor": "nx:noop"
+		},
+		"check:exports": {
+			"dependsOn": ["build:esnext"]
 		}
 	}
 }

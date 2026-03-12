@@ -10,6 +10,9 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"build:esnext": {
+			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm", "^build:esnext", "webpack"]
+		},
 		"build:webpack": {
 			"executor": "nx:noop"
 		},

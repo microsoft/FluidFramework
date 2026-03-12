@@ -7,6 +7,52 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"build:test": {
+			"dependsOn": [
+				"^tsc",
+				"^api-extractor:commonjs",
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/id-compressor"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/sequence"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/map"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/matrix"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/tree"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/task-manager"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/legacy-dds"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/ordered-collection"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/counter"]
+				},
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/register-collection"]
+				}
+			]
+		},
 		"check:format": {
 			"executor": "nx:noop"
 		},

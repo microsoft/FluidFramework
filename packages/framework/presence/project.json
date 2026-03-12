@@ -16,6 +16,21 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"build:esnext:main": {
+			"dependsOn": ["^api", "^build:esnext", "build:genver"]
+		},
+		"build:esnext:experimental": {
+			"dependsOn": ["build:esnext:main"]
+		},
+		"tsc:main": {
+			"dependsOn": ["^api", "^tsc", "build:genver"]
+		},
+		"tsc:experimental": {
+			"dependsOn": ["tsc:main"]
+		},
+		"eslint": {
+			"dependsOn": ["api-extractor:esnext", "^build:test:esm"]
+		},
 		"check:format": {
 			"executor": "nx:noop"
 		},

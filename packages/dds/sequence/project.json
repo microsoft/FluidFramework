@@ -16,6 +16,18 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"build:test": {
+			"dependsOn": [
+				"typetests:gen",
+				"tsc",
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				{
+					"target": "build:test",
+					"projects": ["@fluidframework/merge-tree"]
+				}
+			]
+		},
 		"check:format": {
 			"executor": "nx:noop"
 		},

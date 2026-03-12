@@ -8,7 +8,20 @@
 			"executor": "nx:noop"
 		},
 		"build:test": {
-			"executor": "nx:noop"
+			"executor": "nx:noop",
+			"dependsOn": [
+				"typetests:gen",
+				"tsc",
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"webpack"
+			]
+		},
+		"webpack": {
+			"dependsOn": ["^build:esnext"]
+		},
+		"test:mocha:esm": {
+			"dependsOn": ["build:test:esm", "webpack"]
 		},
 		"check:format": {
 			"executor": "nx:noop"

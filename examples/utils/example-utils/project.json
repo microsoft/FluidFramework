@@ -18,6 +18,9 @@
 		},
 		"lint:fix": {
 			"executor": "nx:noop"
+		},
+		"check:exports": {
+			"dependsOn": ["build:esnext"]
 		}
 	}
 }
