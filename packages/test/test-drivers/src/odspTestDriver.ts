@@ -38,29 +38,6 @@ const passwordTokenConfig = (username: string, password: string): LoginConfig =>
 	password,
 });
 
-/**
- * Creates a token config for bearer token authentication (FIC flow).
- * @param username - The user principal name
- * @param token - The bearer token (JWT)
- * @param getNewToken - Callback to fetch a new token when the current one expires
- */
-const createBearerTokenConfig = (
-	username: string,
-	token: string,
-	getNewToken: (
-		bearerToken: string,
-		scopeEndpoint: string,
-		numAccounts?: number,
-	) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>,
-): LoginConfig => {
-	return {
-		type: "existingToken",
-		username,
-		token,
-		getNewToken,
-	};
-};
-
 interface IOdspTestLoginInfo {
 	siteUrl: string;
 	loginConfig: LoginConfig;
@@ -101,33 +78,12 @@ export interface UserPassCredentials {
  * Credentials containing a username and bearer token for FIC authentication scenarios.
  */
 export interface TokenCredentials {
-	GUID: string;
 	UserPrincipalName: string;
 	Token: string;
 }
 
-interface AccountReservation {
-	/** GUID for the storage (ODSP) account reservation, used to release accounts when done. */
-	odspGuid: string;
-	/** GUID for the push channel account reservation, used to release accounts when done. */
-	pushGuid: string;
-	/** Accounts with storage (ODSP) tokens. */
-	odspAccounts: TokenCredentials[];
-	/** Accounts with push channel tokens. */
-	pushAccounts: TokenCredentials[];
-}
-
 interface TestTenantCheckoutClient {
-	/**
-	 * Returns a reservation of accounts from the tenant pool for testing, including the necessary tokens for authentication.
-	 * If invoked multiple times without releasing accounts, it should return the same reservation to allow reuse of accounts across tests.
-	 */
-	reserveApmAccounts(): Promise<AccountReservation>;
-	/**
-	 * Return a reservation of accounts back to the tenant pool.
-	 * Subsequent calls to reserveApmAccounts may return different accounts once previous accounts have been released.
-	 */
-	releaseTestAccounts(odspGuid: string, pushGuid: string): Promise<void>;
+	fetchFicTokens(usernames: string[], tokenScope: "push" | "storage"): Promise<TokenCredentials[]>;
 }
 
 /**
@@ -163,22 +119,9 @@ export function getOdspCredentials(
 	if (loginTenants !== undefined) {
 		/**
 		 * Parse login credentials using the new tenant format for e2e tests.
-		 * For the expected format of loginTenants, see {@link UserPassCredentials} or {@link TokenCredentials}
+		 * For the expected format of loginTenants, see {@link UserPassCredentials}
 		 */
-		if (loginTenants.includes("GUID")) {
-			// Token-based credentials (FIC flow)
-			const output: TokenCredentials[] = JSON.parse(loginTenants);
-			if (output?.[tenantIndex] === undefined) {
-				throw new Error("No resources found in the login tenants");
-			}
-
-			// Return the set of accounts to choose from a single tenant
-			// Token is passed in the password field for compatibility
-			return output.map((account) => createBearerTokenConfig(account.UserPrincipalName, account.Token, async (bearerToken, scopeEndpoint, numAccounts) => {
-				// Main problem here is that if token refresh triggers mid-test, we don't necessarily have
-				throw new Error("TODO: Figure out how token refresh should work.");
-			}));
-		} else if (loginTenants.includes("UserPrincipalName")) {
+		if (loginTenants.includes("UserPrincipalName")) {
 			// Password-based credentials (OAuth flow)
 			const output: UserPassCredentials[] = JSON.parse(loginTenants);
 			if (output?.[tenantIndex] === undefined) {
@@ -259,15 +202,10 @@ export class OdspTestDriver implements ITestDriver {
 
 
 	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
-		const { siteUrl, loginConfig } = tokenConfig;
+		const { siteUrl } = tokenConfig;
 		return await getDriveId(siteUrl, "", undefined, {
 			accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
-			refreshTokenFn: loginConfig.type === "existingToken"
-				? async () => {
-					const result = await loginConfig.getNewToken(process.env.bearer__token as string, "storage");
-					return result.Token;
-				}
-				: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+			refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
 		});
 	}
 
@@ -278,21 +216,90 @@ export class OdspTestDriver implements ITestDriver {
 			options?: HostStoragePolicy;
 			tenantIndex?: number;
 			odspEndpointName?: string;
-			/**
-			 * Optional callback to fetch new bearer tokens when they expire.
-			 * Used for FIC authentication that doesn't support OAuth refresh tokens.
-			 */
-			getNewToken?: (
-				bearerToken: string,
-				scopeEndpoint: string,
-				numAccounts?: number,
-			) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
 		},
 		api: OdspDriverApiType = OdspDriverApi,
 	): Promise<OdspTestDriver> {
 		const tenantIndex = config?.tenantIndex ?? 0;
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
+
+		// force isolateSocketCache because we are using different users in a single context
+		// and socket can't be shared between different users
+		const options = config?.options ?? {};
+		options.isolateSocketCache = true;
+
+		// An internal package checks out test tenants, populates user information in the environment, and makes an entrypoint available
+		// at this location (token__package__import__location) which supports fetching tokens for those users.
+		const packageImportLocation = process.env.token__package__import__location;
+		if (packageImportLocation !== undefined) {
+			const pkg = await import(packageImportLocation) as TestTenantCheckoutClient;
+			if (typeof pkg.fetchFicTokens !== "function") {
+				throw new TypeError(
+					`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
+				);
+			}
+
+			const accountDataEnv = process.env["login__odsp__test__users"];
+			if (accountDataEnv === undefined) {
+				throw new Error("Missing 'login__odsp__test__users' environment variable.");
+			}
+			const { usernames } = JSON.parse(accountDataEnv) as { guid: string; usernames: string[] };
+
+			if (usernames.length === 0) {
+				throw new Error("login__odsp__test__users does not have any valid usernames.");
+			}
+
+			const randomUserIndex =
+				compare(api.version, "0.46.0") >= 0
+					? Math.random()
+					: OdspTestDriver.legacyDriverUserRandomIndex;
+			const userIndex = Math.floor(randomUserIndex * usernames.length);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const username = usernames[userIndex]!;
+
+			const fetchToken = async (scopeEndpoint: "storage" | "push") => {
+				const tokens = await pkg.fetchFicTokens([username], scopeEndpoint);
+				if (!Array.isArray(tokens)) {
+					// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
+					// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
+					// matches the typing of `fetchFicTokens` as defined in `TestTenantCheckoutClient`.
+					throw new TypeError('Expected fetchFicTokens to return an array of tokens.');
+				}
+				const token = tokens.find((a) => a.UserPrincipalName === username);
+				if (!token) {
+					throw new Error(`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`);
+				}
+				return token.Token;
+			};
+
+			const loginConfig: LoginConfig = {
+				type: "fic",
+				username: username,
+				fetchToken,
+			};
+
+			const emailServer = username.substr(username.indexOf("@") + 1);
+			let siteUrl: string;
+			let tenantName: string;
+			if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
+				tenantName = new URL(emailServer).hostname;
+				siteUrl = emailServer;
+			} else {
+				tenantName = emailServer.substr(0, emailServer.indexOf("."));
+				siteUrl = `https://${tenantName}.sharepoint.com`;
+			}
+
+			return this.create(
+				{ siteUrl, loginConfig },
+				config?.directory ?? "",
+				api,
+				options,
+				tenantName,
+				userIndex,
+				endpointName,
+			);
+		}
+
 		let creds = getOdspCredentials(endpointName, tenantIndex) as Exclude<LoginConfig, { type: "browserLogin" }>[];
 		if (config?.username !== undefined) {
 			// If config requested a specific username, only use that.
@@ -304,17 +311,14 @@ export class OdspTestDriver implements ITestDriver {
 				? Math.random()
 				: OdspTestDriver.legacyDriverUserRandomIndex;
 		const userIndex = Math.floor(randomUserIndex * creds.length);
-		// Bounds check above guarantees non-null (at least at compile time, assuming all types are respected)
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const loginConfig = creds[userIndex]!;
 		const { username } = loginConfig;
 
 		const emailServer = username.substr(username.indexOf("@") + 1);
-
 		let siteUrl: string;
 		let tenantName: string;
 		if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
-			// it's already a site url
 			tenantName = new URL(emailServer).hostname;
 			siteUrl = emailServer;
 		} else {
@@ -322,28 +326,8 @@ export class OdspTestDriver implements ITestDriver {
 			siteUrl = `https://${tenantName}.sharepoint.com`;
 		}
 
-		// force isolateSocketCache because we are using different users in a single context
-		// and socket can't be shared between different users
-		const options = config?.options ?? {};
-		options.isolateSocketCache = true;
-
-		if (process.env.token__package__import__location === undefined) {
-			throw new Error(
-				"Missing package specifier for token retrieval. Please set the environment variable token__package__import__location to the package that exports a TestTenantCheckoutClient.",
-			);
-		}
-		const testTenantClient = await import(process.env.token__package__import__location) as TestTenantCheckoutClient;
-		if (typeof testTenantClient.releaseTestAccounts !== "function" || typeof testTenantClient.reserveApmAccounts !== "function") {
-			throw new TypeError(
-				`Expected package at location '${process.env.token__package__import__location}' to export a valid implementation of TestTenantCheckoutClient'.`,
-			);
-		}
-
 		return this.create(
-			{
-				siteUrl,
-				loginConfig,
-			},
+			{ siteUrl, loginConfig },
 			config?.directory ?? "",
 			api,
 			options,
@@ -499,22 +483,6 @@ export class OdspTestDriver implements ITestDriver {
 
 	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
 		const host = new URL(options.siteUrl).host;
-
-		// // Check if this is a bearer token (FIC flow)
-		// if (this.config.password.startsWith("eyJ") && this.config.getNewToken) {
-		// 	const token = await OdspTestDriver.odspTokenManager.getPushTokens(
-		// 		host,
-		// 		this.config,
-		// 		createBearerTokenConfig(
-		// 			this.config.username,
-		// 			this.config.password,
-		// 			this.config.getNewToken,
-		// 		),
-		// 		options.refresh,
-		// 	);
-		// 	return token.accessToken;
-		// }
-
 		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
 			host,
 			this.config,

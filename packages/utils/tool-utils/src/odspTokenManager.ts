@@ -57,18 +57,9 @@ export type LoginConfig =
 			redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
 	  }
 	| {
-			type: "existingToken";
+			type: "fic";
 			username: string;
-			token: string;
-			/**
-			 * Callback to fetch a new token when the current one expires.
-			 * This is used for authentication flows that don't support OAuth refresh tokens (e.g., FIC tokens).
-			 */
-			getNewToken: (
-				bearerToken: string,
-				scopeEndpoint: string,
-				numAccounts?: number,
-			) => Promise<{ GUID: string; UserPrincipalName: string; Token: string }>;
+			fetchToken(scopeEndpoint: "push" | "storage"): Promise<string>;
 	  };
 
 /**
@@ -240,16 +231,11 @@ export class OdspTokenManager {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
 						// For bearer tokens, use getNewToken callback instead of OAuth refresh
-						if (loginConfig.type === "existingToken") {
-							const bearerToken = process.env.bearer__token;
-							const scopeEndpoint = isPush ? "push" : "storage";
-							if (bearerToken === undefined) {
-								throw new Error("Bearer token environment variable not set");
-							} else {
-								const newTokenData = await loginConfig.getNewToken(bearerToken, scopeEndpoint);
-								tokens = await this.acquireTokensWithBearerToken(newTokenData.Token);
-								await this.updateTokensCacheWithoutLock(cacheKey, tokens);
-							}
+						if (loginConfig.type === "fic") {
+							const scopeEndpoint = isPush ? "push" : "storage" as const;
+							const newTokenData = await loginConfig.fetchToken(scopeEndpoint);
+							tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
+							await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 						} else if (tokensFromCache.refreshToken !== undefined) {
 							// For OAuth flows, use refresh token
 							tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
@@ -292,8 +278,9 @@ export class OdspTokenManager {
 				);
 				break;
 			}
-			case "existingToken": {
-				tokens = await this.acquireTokensWithBearerToken(loginConfig.token);
+			case "fic": {
+				const tokenData = await loginConfig.fetchToken(isPush ? "push" : "storage");
+				tokens = this.ficTokenToIOdspTokens(tokenData, isPush);
 				break;
 			}
 			default: {
@@ -366,32 +353,45 @@ export class OdspTokenManager {
 		return odspTokens;
 	}
 
-	private async acquireTokensWithBearerToken(token: string): Promise<IOdspTokens> {
-		// Bearer tokens are already access tokens (no OAuth exchange needed)
-		// They don't have refresh tokens - use getNewToken callback when expired
-		let receivedAt = Math.floor(Date.now() / 1000);
-		let expiresIn = 3600; // fallback: 1 hour
-		try {
-			const payloadSegment = token.split(".")[1];
-			if (payloadSegment === undefined) {
-				throw new Error("Invalid JWT format");
-			}
-			const payload = JSON.parse(
-				Buffer.from(payloadSegment, "base64url").toString("utf8"),
-			) as { iat?: number; exp?: number };
-			if (typeof payload.iat === "number") {
-				receivedAt = payload.iat;
-			}
-			if (typeof payload.exp === "number" && typeof payload.iat === "number") {
-				expiresIn = payload.exp - payload.iat;
-			}
-		} catch {
-			throw new Error("Failed to parse bearer token as JWT");
+	private ficTokenToIOdspTokens(token: string, isPush: boolean): IOdspTokens {
+		if (isPush) {
+			// Push tokens are not standard JWTs. With direct token exchange, the second leg includes information about expiry.
+			// This is not available in the FIC flow, but we request tokens with 1 hour expiry so default to that.
+			// At worst this should result in some higher latency when a token is returned from the cache when it should really be
+			// refreshed immediately (but attempting to use this token later will trigger a normal refresh flow).
+			return {
+				accessToken: token,
+				receivedAt: Math.floor(Date.now() / 1000),
+				expiresIn: 3600,
+			};
+		} else {
+			return this.jwtToIOdspTokens(token);
+		}
+	}
+
+	private jwtToIOdspTokens(token: string): IOdspTokens {
+		let receivedAt: number;
+		let expiresIn: number;
+		const payloadSegment = token.split(".")[1];
+		if (payloadSegment === undefined) {
+			throw new Error("Invalid JWT format");
+		}
+		const payload = JSON.parse(
+			Buffer.from(payloadSegment, "base64url").toString("utf8"),
+		) as { iat?: number; exp?: number };
+		if (typeof payload.iat === "number") {
+			receivedAt = payload.iat;
+		} else {
+			throw new Error("JWT payload lacks valid iat claim.")
+		}
+		if (typeof payload.exp === "number" && typeof payload.iat === "number") {
+			expiresIn = payload.exp - payload.iat;
+		} else {
+			throw new Error("JWT payload lacks valid exp claim.")
 		}
 
 		return {
 			accessToken: token,
-			// No refreshToken - will use getNewToken callback instead
 			receivedAt,
 			expiresIn,
 		};

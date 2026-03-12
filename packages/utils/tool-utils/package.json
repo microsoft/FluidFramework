@@ -136,7 +136,8 @@
 				"backCompat": false
 			},
 			"TypeAlias_OdspTokenConfig": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "internal"
