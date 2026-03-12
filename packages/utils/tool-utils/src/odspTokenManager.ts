@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IPublicClientConfig,
 	IOdspTokens,
@@ -19,7 +20,6 @@ import { Mutex } from "async-mutex";
 import { debug } from "./debug.js";
 import type { IAsyncCache, IResources } from "./fluidToolRc.js";
 import { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 // TODO: Add documentation
 // eslint-disable-next-line jsdoc/require-description
@@ -287,6 +287,7 @@ export class OdspTokenManager {
 	}
 
 	private ficTokenToIOdspTokens(token: string, isPush: boolean): IOdspTokens {
+		// eslint-disable-next-line unicorn/prefer-ternary -- using if statement for clarity
 		if (isPush) {
 			// Push tokens are not standard JWTs. With direct token exchange, the second leg includes information about expiry.
 			// This is not available in the FIC flow, but we request tokens with 1 hour expiry so default to that.
@@ -316,12 +317,12 @@ export class OdspTokenManager {
 		if (typeof payload.iat === "number") {
 			receivedAt = payload.iat;
 		} else {
-			throw new Error("JWT payload lacks valid iat claim.");
+			throw new TypeError("JWT payload lacks valid iat claim.");
 		}
 		if (typeof payload.exp === "number" && typeof payload.iat === "number") {
 			expiresIn = payload.exp - payload.iat;
 		} else {
-			throw new Error("JWT payload lacks valid exp claim.");
+			throw new TypeError("JWT payload lacks valid exp claim.");
 		}
 
 		return {
