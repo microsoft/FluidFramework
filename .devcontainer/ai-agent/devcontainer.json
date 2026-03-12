@@ -22,7 +22,7 @@
 			]
 		}
 	},
-	"postCreateCommand": "bash -lc \"scripts/codespace-setup/post-create.sh && . scripts/codespace-setup/ai-setup.sh\"",
+	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh && bash scripts/codespace-setup/ai-setup.sh",
 	"remoteUser": "node",
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
