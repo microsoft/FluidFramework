@@ -14,11 +14,11 @@
 	"type": "module",
 	"exports": {
 		"./crossPackageSchema/node16": {
-			"import": "./lib/crossPackage/node16/schemaExports.js",
-			"require": "./dist/crossPackage/node16/schemaExports.js"
+			"import": "./lib/crossPackage/node16/schemaDefinitions.js",
+			"require": "./dist/crossPackage/node16/schemaDefinitions.js"
 		},
 		"./crossPackageSchema/bundler": {
-			"import": "./lib/crossPackage/bundler/schemaExports.js"
+			"import": "./lib/crossPackage/bundler/schemaDefinitions.js"
 		}
 	},
 	"scripts": {
