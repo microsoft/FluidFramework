@@ -6,7 +6,12 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverErrorTypes,
+	type ILocationRedirectionError,
+	type ISnapshot,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type DriverErrorTelemetryProps,
 	NonRetryableError,
@@ -54,6 +59,7 @@ import {
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
+	getOdspResolvedUrl,
 	getWithRetryForTokenRefreshRepeat,
 	isSnapshotFetchForLoadingGroup,
 	measure,
@@ -183,6 +189,13 @@ export async function fetchSnapshotWithRedeem(
 					putInCache,
 					loadingGroupIds,
 				);
+			} else if (isLocationRedirectionError(error)) {
+				const redirectedResolvedUrl: IOdspResolvedUrl = {
+					...getOdspResolvedUrl(error.redirectUrl),
+					shareLinkInfo: odspResolvedUrl.shareLinkInfo,
+				};
+				await redeemSharingLink(redirectedResolvedUrl, storageTokenFetcher, logger);
+				throw error;
 			} else {
 				throw error;
 			}
@@ -790,6 +803,15 @@ export const downloadSnapshot = mockify(
 		};
 	},
 );
+
+function isLocationRedirectionError(error: unknown): error is ILocationRedirectionError {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		(error as Partial<ILocationRedirectionError>).errorType ===
+			DriverErrorTypes.locationRedirection
+	);
+}
 
 function isRedeemSharingLinkError(
 	odspResolvedUrl: IOdspResolvedUrl,
