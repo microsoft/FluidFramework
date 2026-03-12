@@ -475,6 +475,12 @@ export interface ContainerRuntimeOptions {
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
 	readonly createBlobPayloadPending: true | undefined;
+
+	/**
+	 * When this property is set to true, the runtime will never send or accept DocumentSchemaChange ops.
+	 * This effectively freezes the document schema at whatever state it was in when the document was created.
+	 */
+	readonly disableSchemaUpgrade: boolean;
 }
 
 /**
@@ -961,6 +967,7 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
+			disableSchemaUpgrade: false,
 		};
 
 		const defaultConfigs = {
@@ -986,6 +993,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			disableSchemaUpgrade = false,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1184,6 +1192,7 @@ export class ContainerRuntime
 			},
 			{ minVersionForCollab },
 			logger,
+			disableSchemaUpgrade,
 		);
 
 		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
@@ -1214,6 +1223,7 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			disableSchemaUpgrade,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);

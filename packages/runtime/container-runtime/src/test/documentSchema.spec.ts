@@ -69,6 +69,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
+			false,
 		);
 	}
 
@@ -142,6 +143,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
+			false,
 		);
 
 		assert(controller.sessionSchema.runtime.disallowedVersions === undefined);
@@ -179,6 +181,7 @@ describe("Runtime", () => {
 			() => {},
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
+			false,
 		);
 		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
 		let message = controller.maybeGenerateSchemaMessage();
@@ -205,6 +208,8 @@ describe("Runtime", () => {
 			() => {},
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
+
+			false,
 		);
 		assert.deepEqual(controller2.sessionSchema.runtime.disallowedVersions, [
 			"aaa",
@@ -235,6 +240,7 @@ describe("Runtime", () => {
 			() => {},
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
+			false,
 		);
 		controller3.processDocumentSchemaMessages(
 			[message],
@@ -280,6 +286,7 @@ describe("Runtime", () => {
 			() => assert(false, "no schema changes!"), // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
+			false,
 		);
 
 		assert(controller.sessionSchema.refSeq === 0, "refSeq");
@@ -399,6 +406,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			schema.info ?? { minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
+			false,
 		);
 
 		controller.pendingOpNotAcked();
@@ -496,6 +504,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 
 		const message = controller.maybeGenerateSchemaMessage();
@@ -531,6 +540,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
@@ -590,6 +600,7 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 
 		assert(controller.maybeGenerateSchemaMessage() === undefined);
@@ -608,6 +619,7 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 
 		assert(controller2.maybeGenerateSchemaMessage() === undefined);
@@ -632,6 +644,7 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 
 		// setting is not on yet
@@ -672,6 +685,7 @@ describe("Runtime", () => {
 			() => (schemaChanged = true), // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 		controller4.processDocumentSchemaMessages(
 			[message],
@@ -701,6 +715,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 		const event = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
 		assert.strictEqual(event, undefined, "telemetry warning event should not be logged");
@@ -714,6 +729,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 		const event2 = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
 		assert.strictEqual(event2, undefined, "telemetry warning event should not be logged");
@@ -733,6 +749,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: documentMinVersionForCollab }, // info
 			logger,
+			false,
 		);
 		const expectedEvent = {
 			category: "generic",
@@ -741,6 +758,66 @@ describe("Runtime", () => {
 		};
 		const event = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
 		assert.deepStrictEqual(event, expectedEvent, "telemetry warning event should be logged");
+	});
+
+	describe("disableSchemaUpgrade = true", () => {
+		it("does not send schema change ops", () => {
+			const controller = new DocumentsSchemaController(
+				true, // existing
+				0, // snapshotSequenceNumber
+				{ ...validConfig, runtime: { ...validConfig.runtime, explicitSchemaControl: true } },
+				{ ...features, opGroupingEnabled: true },
+				() => {}, // onSchemaChange
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				true, // disableSchemaUpgrade
+			);
+
+			assert.strictEqual(
+				controller.maybeGenerateSchemaMessage(),
+				undefined,
+				"should not generate schema change message when disableSchemaUpgrade is true",
+			);
+		});
+
+		it("rejects incoming schema change ops and does not update sessionSchema", () => {
+			const controller = new DocumentsSchemaController(
+				true, // existing
+				0, // snapshotSequenceNumber
+				{
+					...validConfig,
+					runtime: {
+						...validConfig.runtime,
+						explicitSchemaControl: true,
+						opGroupingEnabled: undefined,
+					},
+				},
+				features,
+				() => {}, // onSchemaChange
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				true, // disableSchemaUpgrade
+			);
+
+			const sessionSchemaBefore = { ...controller.sessionSchema };
+
+			const result = controller.processDocumentSchemaMessages(
+				[{ ...validConfig, runtime: { ...validConfig.runtime, opGroupingEnabled: true } }],
+				false, // local
+				100, // sequenceNumber
+			);
+
+			assert.strictEqual(
+				result,
+				false,
+				"should reject schema change when disableSchemaUpgrade is true",
+			);
+			assert.deepStrictEqual(
+				controller.sessionSchema,
+				sessionSchemaBefore,
+				"sessionSchema should not change when schema changes are rejected",
+			);
+		});
 	});
 
 	/**
@@ -783,6 +860,7 @@ describe("Runtime", () => {
 			onSchemaChange,
 			{ minVersionForCollab: newMinVersionForCollab },
 			logger,
+			false,
 		);
 
 		const message = controller.maybeGenerateSchemaMessage();
