@@ -165,7 +165,7 @@ const makeAfterMiddlewares = (
 
 	let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
 	if (options.mode === "spo-df" || options.mode === "spo") {
-		const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
+		const { credentials, server } = getTestTenantCredentials(options.mode);
 		options.server = server;
 		const clientConfig = getPublicClientConfig();
 
@@ -179,14 +179,14 @@ const makeAfterMiddlewares = (
 				tokenManager.getOdspTokens(
 					server,
 					clientConfig,
-					tokenConfig,
+					credentials,
 					undefined /* forceRefresh */,
 					options.forceReauth,
 				),
 				tokenManager.getPushTokens(
 					server,
 					clientConfig,
-					tokenConfig,
+					credentials,
 					undefined /* forceRefresh */,
 					options.forceReauth,
 				),

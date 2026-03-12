@@ -32,11 +32,40 @@ import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
-const passwordTokenConfig = (username: string, password: string): LoginCredentials => ({
+const passwordLoginCredentials = (username: string, password: string): LoginCredentials => ({
 	type: "password",
 	username,
 	password,
 });
+
+const ficLoginCredentials = (username: string): LoginCredentials => {
+	const fetchToken = async (scopeEndpoint: "storage" | "push"): Promise<string> => {
+		const testTenantCheckoutClient = await getTestTenantCheckoutClient();
+		if (testTenantCheckoutClient === undefined) {
+			throw new Error('The FIC credential flow relies on a test tenant checkout client, but no client was found. Ensure that the environment variable "token__package__import__location" is set to the location of a package that exports a compatible client.');
+		}
+		const tokens = await testTenantCheckoutClient.fetchFicTokens([username], scopeEndpoint);
+		if (!Array.isArray(tokens)) {
+			// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
+			// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
+			// matches the typing of `fetchFicTokens` as defined in `TestTenantCheckoutClient`.
+			throw new TypeError("Expected fetchFicTokens to return an array of tokens.");
+		}
+		const token = tokens.find((a) => a.UserPrincipalName === username);
+		if (!token) {
+			throw new Error(
+				`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`,
+			);
+		}
+		return token.Token;
+	};
+
+	return {
+		type: "fic",
+		username,
+		fetchToken,
+	};
+}
 
 interface IOdspTestLoginInfo {
 	siteUrl: string;
@@ -94,6 +123,28 @@ interface TestTenantCheckoutClient {
 	): Promise<TokenCredentials[]>;
 }
 
+let testTenantCheckoutClientCached: TestTenantCheckoutClient | undefined;
+
+async function getTestTenantCheckoutClient(): Promise<TestTenantCheckoutClient | undefined> {
+	if (testTenantCheckoutClientCached !== undefined) {
+		return testTenantCheckoutClientCached;
+	}
+	// An internal package checks out test tenants, populates user information in the environment, and makes an entrypoint available
+	// at this location (token__package__import__location) which supports fetching tokens for those users.
+	const packageImportLocation = process.env.token__package__import__location;
+	if (packageImportLocation !== undefined) {
+		const pkg = (await import(packageImportLocation)) as TestTenantCheckoutClient;
+		if (typeof pkg.fetchFicTokens !== "function") {
+			throw new TypeError(
+				`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
+			);
+		}
+		testTenantCheckoutClientCached = pkg;
+		return pkg;
+	}
+	return undefined;
+}
+
 /**
  * Asserts that the endpoint is a valid ODSP endpoint or `undefined`.
  *
@@ -109,7 +160,10 @@ export function assertOdspEndpoint(
 }
 
 /**
- * Get from the env a set of credentials to use from a single tenant
+ * Get from the env a set of credentials to use from a single tenant.
+ *
+ * Credentials may be provided via a variety of methods. This function does not attempt to aggregate them, but instead loads only those credentials
+ * it finds evidence (i.e. defined environment variables) for, with precedence given to more modern approaches.
  * @param tenantIndex - integer to choose the tenant from array of options (if multiple tenants are available)
  * @internal
  */
@@ -123,7 +177,18 @@ export function getOdspCredentials(
 			? process.env.login__odsp__test__tenants
 			: process.env.login__odspdf__test__tenants;
 
-	if (loginTenants !== undefined) {
+	const ficAccounts = process.env.login__odsp__fic__test__users;
+	if (ficAccounts !== undefined) {
+		const { usernames } = JSON.parse(ficAccounts) as {
+			guid: string;
+			usernames: string[];
+		};
+
+		if (usernames.length === 0) {
+			throw new Error("login__odsp__fic__test__users was defined does not have any valid usernames.");
+		}
+		return usernames.map((username) => ficLoginCredentials(username));
+	} else if (loginTenants !== undefined) {
 		/**
 		 * Parse login credentials using the new tenant format for e2e tests.
 		 * For the expected format of loginTenants, see {@link UserPassCredentials}
@@ -138,7 +203,7 @@ export function getOdspCredentials(
 			// Return the set of accounts to choose from a single tenant
 
 			return output.map((account) =>
-				passwordTokenConfig(account.UserPrincipalName, account.Password),
+				passwordLoginCredentials(account.UserPrincipalName, account.Password),
 			);
 		} else {
 			/**
@@ -196,7 +261,7 @@ export function getOdspCredentials(
 		}
 		creds.push({ username, password: userPass });
 	}
-	return creds.map((c) => passwordTokenConfig(c.username, c.password));
+	return creds.map((c) => passwordLoginCredentials(c.username, c.password));
 }
 
 /**
@@ -211,7 +276,7 @@ export class OdspTestDriver implements ITestDriver {
 
 	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
 		const { siteUrl } = tokenConfig;
-		return await getDriveId(siteUrl, "", undefined, {
+		return getDriveId(siteUrl, "", undefined, {
 			accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
 			refreshTokenFn: async () =>
 				this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
@@ -238,65 +303,23 @@ export class OdspTestDriver implements ITestDriver {
 				? Math.random()
 				: OdspTestDriver.legacyDriverUserRandomIndex;
 
-		let credentials: LoginCredentials;
-		let userIndex: number;
+		let allCredentials = getOdspCredentials(endpointName, tenantIndex);
 
-		// An internal package checks out test tenants, populates user information in the environment, and makes an entrypoint available
-		// at this location (token__package__import__location) which supports fetching tokens for those users.
-		const packageImportLocation = process.env.token__package__import__location;
-		if (packageImportLocation !== undefined) {
-			const pkg = (await import(packageImportLocation)) as TestTenantCheckoutClient;
-			if (typeof pkg.fetchFicTokens !== "function") {
-				throw new TypeError(
-					`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
-				);
-			}
-
-			const accountDataEnv = process.env["login__odsp__test__users"];
-			if (accountDataEnv === undefined) {
-				throw new Error("Missing 'login__odsp__test__users' environment variable.");
-			}
-			const { usernames } = JSON.parse(accountDataEnv) as {
-				guid: string;
-				usernames: string[];
-			};
-
-			if (usernames.length === 0) {
-				throw new Error("login__odsp__test__users does not have any valid usernames.");
-			}
-
-			userIndex = Math.floor(randomUserIndex * usernames.length);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const username = usernames[userIndex]!;
-
-			const fetchToken = async (scopeEndpoint: "storage" | "push") => {
-				const tokens = await pkg.fetchFicTokens([username], scopeEndpoint);
-				if (!Array.isArray(tokens)) {
-					// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
-					// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
-					// matches the typing of `fetchFicTokens` as defined in `TestTenantCheckoutClient`.
-					throw new TypeError("Expected fetchFicTokens to return an array of tokens.");
-				}
-				const token = tokens.find((a) => a.UserPrincipalName === username);
-				if (!token) {
-					throw new Error(
-						`Unable to fetch token for user ${username} and scope ${scopeEndpoint}`,
-					);
-				}
-				return token.Token;
-			};
-
-			credentials = { type: "fic", username, fetchToken };
-		} else {
-			let creds = getOdspCredentials(endpointName, tenantIndex);
-			if (config?.username !== undefined) {
-				// If config requested a specific username, only use that.
-				creds = creds.filter((c) => c.username === config.username);
-			}
-			userIndex = Math.floor(randomUserIndex * creds.length);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			credentials = creds[userIndex]!;
+		if (config?.username !== undefined) {
+			// If config requested a specific username, only use that.
+			allCredentials = allCredentials.filter((c) => c.username === config.username);
 		}
+
+		if (allCredentials.length === 0) {
+			throw new Error(
+				config?.username !== undefined
+					? `No credentials available for requested username '${config.username}'.`
+					: "No credentials available for the specified endpoint and tenant.",
+			);
+		}
+		const userIndex = Math.floor(randomUserIndex * allCredentials.length);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const credentials = allCredentials[userIndex]!;
 
 		const { username } = credentials;
 		const emailServer = username.substr(username.indexOf("@") + 1);

@@ -167,7 +167,7 @@ export async function fetchTokens(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const refreshToken = parsedResponse.refresh_token;
 
-	if (accessToken === undefined) {
+	if (accessToken === undefined || refreshToken === undefined) {
 		try {
 			throwOdspNetworkError(
 				// pre-0.58 error message: unableToGetAccessToken
