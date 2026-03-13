@@ -7,7 +7,6 @@ Check commands are used to verify repo state, apply policy, etc.
 * [`flub check changeset`](#flub-check-changeset)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
-* [`flub check policy`](#flub-check-policy)
 * [`flub check prApproval`](#flub-check-prapproval)
 
 ## `flub check buildVersion`
@@ -144,34 +143,6 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/layers.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/layers.ts)_
-
-## `flub check policy`
-
-Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.
-
-```
-USAGE
-  $ flub check policy [-v | --quiet] [-D <value>... | -d <value>] [--listHandlers | --stdin | -p <value> | -f | ]
-
-FLAGS
-  -D, --excludeHandler=<value>...  Exclude policy handler by name. Can be specified multiple times to exclude multiple
-                                   handlers.
-  -d, --handler=<value>            Filter policy handler names by <regex>.
-  -f, --fix                        Fix errors if possible.
-  -p, --path=<value>               Filter file paths by <regex>.
-      --listHandlers               List all policy handlers by name.
-      --stdin                      Read list of files from stdin.
-
-LOGGING FLAGS
-  -v, --verbose  Enable verbose logging.
-      --quiet    Disable all logging.
-
-DESCRIPTION
-  Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
-  assert tagging, etc.
-```
-
-_See code: [src/commands/check/policy.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/policy.ts)_
 
 ## `flub check prApproval`
 

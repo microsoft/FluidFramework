@@ -25,6 +25,7 @@ packages:
 minimumReleaseAge: 1440
 # syncpack entries can be removed from this list once 24h have passed since v14.0.2 was published (2026-03-07)
 minimumReleaseAgeExclude:
+  - repopo
   - syncpack
   - syncpack-linux-x64
   - syncpack-linux-x64-musl
