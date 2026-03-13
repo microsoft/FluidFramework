@@ -30,7 +30,7 @@ const Delta = DeltaPackage.default;
 
 /**
  * Props for the FormattedMainView component.
- * @internal
+ * @input @internal
  */
 export interface FormattedMainViewProps {
 	readonly root: PropTreeNode<FormattedTextAsTree.Tree>;
@@ -40,7 +40,7 @@ export interface FormattedMainViewProps {
 
 /**
  * Ref handle exposing undo/redo methods for the formatted editor.
- * @internal
+ * @input @internal
  */
 export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 

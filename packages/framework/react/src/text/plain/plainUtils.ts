@@ -7,7 +7,7 @@ import type { TextAsTree } from "@fluidframework/tree/internal";
 
 /**
  * Sync `newText` into the provided `root` tree.
- * @internal
+ * @input @internal
  */
 export function syncTextToTree(root: TextAsTree.Tree, newText: string): void {
 	const sync = computeSync(root.charactersCopy(), [...newText]);
