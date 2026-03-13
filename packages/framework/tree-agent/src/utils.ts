@@ -6,11 +6,10 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ImplicitFieldSchema } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeNodeSchema } from "@fluidframework/tree";
 import type {
 	InsertableContent,
 	TreeNode,
-	TreeNodeSchema,
 	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
 import {
@@ -148,7 +147,7 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
  * @remarks If the schema is an inlined array, map, or record type, then it has no name and this function will return a string representation of the type (e.g., `"MyNode[]"` or `"Map<string, MyNode>"`).
  */
 export function getFriendlyName(schema: TreeNodeSchema): string {
-	if (schema.kind === NodeKind.Leaf || isNamedSchema(schema.identifier)) {
+	if (isNamedSchema(schema)) {
 		return unqualifySchema(schema.identifier);
 	}
 
@@ -170,19 +169,15 @@ export function getFriendlyName(schema: TreeNodeSchema): string {
 }
 
 /**
- * Returns true if the schema identifier represents a named schema (object, named array, named map, or named record).
- * @remarks This does not include primitive schemas or inlined array/map/record schemas.
+ * Returns true if the schema represents a named schema (object, named array, named map, or named record).
+ * @remarks This does not include primitive/leaf schemas or inlined array/map/record schemas.
  */
-export function isNamedSchema(schemaIdentifier: string): boolean {
-	if (
-		["string", "number", "boolean", "null", "handle"].includes(
-			unqualifySchema(schemaIdentifier),
-		)
-	) {
+export function isNamedSchema(schema: TreeNodeSchema): boolean {
+	if (schema.kind === NodeKind.Leaf) {
 		return false;
 	}
 
-	return /(?:Array|Map|Record)<\["(.*)"]>/.exec(schemaIdentifier) === null;
+	return /(?:Array|Map|Record)<\["(.*)"]>/.exec(schema.identifier) === null;
 }
 
 /**
@@ -227,6 +222,11 @@ export function unqualifySchema(schemaIdentifier: string): string {
  */
 export class IdentifierCollisionResolver {
 	/**
+	 * Names reserved by the system (e.g. built-in primitive type names) that schemas may not claim.
+	 */
+	private readonly reservedNames: ReadonlySet<string>;
+
+	/**
 	 * The set of all friendly names that have been assigned so far.
 	 */
 	private readonly assignedFriendlyNames = new Set<string>();
@@ -237,14 +237,23 @@ export class IdentifierCollisionResolver {
 	private readonly friendlyNameCache = new Map<string, string>();
 
 	/**
+	 * @param reservedNames - Names that are pre-claimed and cannot be used by schemas (e.g. built-in primitive type names like "string", "null").
+	 * Any schema whose short name collides with a reserved name will get a counter suffix starting at `_1` (e.g. "null_1").
+	 */
+	public constructor(reservedNames?: Iterable<string>) {
+		this.reservedNames = new Set(reservedNames);
+	}
+
+	/**
 	 * Resolves a schema to a unique friendly name.
 	 * The first schema to claim a short name keeps it; subsequent collisions get `_2`, `_3`, etc.
+	 * Collisions with reserved names start at `_1`.
 	 */
 	public resolve(schema: TreeNodeSchema): string {
 		return getOrCreate(this.friendlyNameCache, schema.identifier, () => {
 			let name = getFriendlyName(schema);
-			if (this.assignedFriendlyNames.has(name)) {
-				let counter = 2;
+			if (this.reservedNames.has(name) || this.assignedFriendlyNames.has(name)) {
+				let counter = this.reservedNames.has(name) ? 1 : 2;
 				while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {
 					counter++;
 				}
