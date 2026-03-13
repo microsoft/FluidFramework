@@ -3439,6 +3439,41 @@ describe("Editing", () => {
 				expectJsonTree(branch, ["A", "B"]);
 				unsubscribe();
 			});
+
+			it("Should not be violated when there are multiple reverts", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.branch();
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["Y"]));
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["Z"]));
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["W"]));
+				branch.transaction.commit();
+
+				undoStack.pop()?.revert();
+				undoStack.pop()?.revert();
+				undoStack.pop()?.revert();
+
+				expectJsonTree(branch, ["A", "X", "B"]);
+				unsubscribe();
+			});
 		});
 	});
 

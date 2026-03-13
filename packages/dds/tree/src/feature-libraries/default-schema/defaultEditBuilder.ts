@@ -68,6 +68,10 @@ export class DefaultChangeFamily
 		return this.modularFamily.codecs;
 	}
 
+	public unviolateNoChangeConstraint(change: DefaultChangeset): DefaultChangeset {
+		return this.modularFamily.unviolateNoChangeConstraint(change);
+	}
+
 	public buildEditor(
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,

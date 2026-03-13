@@ -344,6 +344,7 @@ export function testChangeFamilyFactory(
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		codecs: TestChange.codecs,
+		unviolateNoChangeConstraint: (change: TestChange): TestChange => change,
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),

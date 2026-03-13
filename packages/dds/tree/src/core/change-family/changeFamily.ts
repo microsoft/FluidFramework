@@ -16,6 +16,15 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 		changeReceiver: (change: TaggedChange<TChange>) => void,
 	): TEditor;
 
+	/**
+	 * Produces a change equivalent to `change`, but with any violated "no change" constraint cleared.
+	 *
+	 * @remarks
+	 * This is primarily intended for undo/redo flows where an inverse is rebased over newer commits which net to no effect.
+	 * In those cases, the document state is effectively unchanged, and so a no-change constraint should not remain violated.
+	 */
+	unviolateNoChangeConstraint(change: TChange): TChange;
+
 	readonly rebaser: ChangeRebaser<TChange>;
 	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;
 }

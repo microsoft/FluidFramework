@@ -39,6 +39,9 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 		): TEditor => {
 			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver);
 		},
+		unviolateNoChangeConstraint: (change: TChange): TChange => {
+			return unmitigatedChangeFamily.unviolateNoChangeConstraint(change);
+		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
 	};
