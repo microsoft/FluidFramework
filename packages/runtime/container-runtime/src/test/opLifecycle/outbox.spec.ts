@@ -478,6 +478,72 @@ describe("Outbox", () => {
 		);
 	});
 
+	it("Content-derived batchId is stamped on ID Allocation batch", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: false,
+			},
+		});
+		const idAllocBatchId = "idalloc_test-batch-id";
+
+		// Submit ID allocation with content-derived batchId
+		outbox.submitIdAllocation(
+			createMessage(ContainerMessageType.IdAllocation, "0"),
+			idAllocBatchId,
+		);
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
+		outbox.flush({ batchId: "batchId-A", staged: false });
+
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
+			[
+				[idAllocBatchId], // ID Allocation batch now has content-derived batchId
+				["batchId-A"], // Main batch
+			],
+			"Submitted batches have incorrect batch ID",
+		);
+
+		assert.deepEqual(
+			state.pendingOpContents.map(({ opMetadata }) => asBatchMetadata(opMetadata)?.batchId),
+			[
+				idAllocBatchId, // ID Allocation has content-derived batchId
+				"batchId-A", // Main batch
+			],
+			"Pending messages have incorrect batch ID",
+		);
+	});
+
+	it("pendingIdAllocBatchId is cleared after flush", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: false,
+			},
+		});
+		const idAllocBatchId = "idalloc_test-batch-id";
+
+		// Flush 1 - ID alloc with batchId
+		outbox.submitIdAllocation(
+			createMessage(ContainerMessageType.IdAllocation, "0"),
+			idAllocBatchId,
+		);
+		outbox.flush();
+
+		// Flush 2 - ID alloc without batchId
+		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "1"));
+		outbox.flush();
+
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
+			[
+				[idAllocBatchId], // First flush has batchId
+				[undefined], // Second flush has no batchId (cleared)
+			],
+			"pendingIdAllocBatchId should be cleared after flush",
+		);
+	});
+
 	it("Will send messages only when allowed, but will store them in the pending state", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [

@@ -28,9 +28,11 @@ export interface IBatchManagerOptions {
 	readonly canRebase: boolean;
 
 	/**
-	 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
+	 * If true, this batch type is not directly resubmitted during replay.
+	 * Instead, the runtime handles resubmission separately
+	 * (e.g. ID Allocation ops are regenerated fresh via submitIdAllocationOpIfNeeded).
 	 */
-	readonly ignoreBatchId?: boolean;
+	readonly skipResubmit?: boolean;
 }
 
 export interface BatchSequenceNumbers {
