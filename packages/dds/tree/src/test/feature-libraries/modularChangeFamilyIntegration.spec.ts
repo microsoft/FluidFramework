@@ -2241,6 +2241,69 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(composed, expected);
 		});
+
+		it("Renames with reused root ID", () => {
+			// This kind of change can be created from compositing the rebase path
+			// when rebasing an optional field clear (tag2) over a replace (tag1).
+			// The node detached by revision2 is reattached and then detached by revision1,
+			// and the node attached by revision1 is detached by revision2.
+			// This change has renames [`attachId1` -> `detachId2`] and [`detachId2` -> `detachId1`],
+			// but they represent renames of two different nodes, not consecutive renames of the same node.
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const detachId1: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const attachId1: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const detachId2: ChangeAtomId = { revision: tag2, localId: brand(1) };
+			const change1 = Change.build(
+				{
+					family,
+					renames: [
+						{ oldId: detachId2, newId: detachId1, count: 1, detachLocation: fieldAId },
+						{ oldId: attachId1, newId: detachId2, count: 1, detachLocation: fieldAId },
+					],
+					revisions: [
+						{ revision: tag0, rollbackOf: tag2 },
+						{ revision: tag1 },
+						{ revision: tag2 },
+					],
+					maxId: 1,
+				},
+				Change.field(fieldA, optionalIdentifier, {}),
+			);
+
+			// This change renames the node which was originally attached from `attachId1`,
+			// and was renamed by `change1` to `detachId2`.
+			const rootId3: ChangeAtomId = { revision: tag3, localId: brand(1) };
+			const change2 = Change.build(
+				{
+					family,
+					renames: [{ oldId: detachId2, newId: rootId3, count: 1, detachLocation: fieldAId }],
+					revisions: [{ revision: tag3 }],
+					maxId: 1,
+				},
+				Change.field(fieldA, optionalIdentifier, {}),
+			);
+
+			const composed = family.compose([makeAnonChange(change1), tagChange(change2, tag3)]);
+			const expected = Change.build(
+				{
+					family,
+					renames: [
+						{ oldId: detachId2, newId: detachId1, count: 1, detachLocation: fieldAId },
+						{ oldId: attachId1, newId: rootId3, count: 1, detachLocation: fieldAId },
+					],
+					revisions: [
+						{ revision: tag0, rollbackOf: tag2 },
+						{ revision: tag1 },
+						{ revision: tag2 },
+						{ revision: tag3 },
+					],
+					maxId: 1,
+				},
+				Change.field(fieldA, optionalIdentifier, {}),
+			);
+
+			assertEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {
