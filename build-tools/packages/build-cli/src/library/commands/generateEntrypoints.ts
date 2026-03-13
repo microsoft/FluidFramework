@@ -447,6 +447,7 @@ export function readArgValues(
 	argQuery: Options,
 ): Pick<
 	Options,
+	// This selects only "out" prefixed keys whose values are `string | undefined`.
 	`out${string}` & keyof Options extends infer Key
 		? Options[Key & keyof Options] extends string | undefined
 			? Key
@@ -455,7 +456,7 @@ export function readArgValues(
 > {
 	const args = commandLine.split(" ");
 
-	const argValues: Record<string, string | undefined> = {};
+	const argValues: Record<`out${string}`, string> = {};
 	for (const argName of Object.keys(argQuery).filter(
 		(key): key is `out${string}` =>
 			key.startsWith("out") &&

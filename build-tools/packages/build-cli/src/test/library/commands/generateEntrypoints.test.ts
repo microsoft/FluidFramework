@@ -34,12 +34,15 @@ describe("generateEntrypoints", () => {
 		// Does not support multi-args nor args that don't start
 		// with "out" (doesn't currently need to). Instead any
 		// such options passed in are preserved.
+		const argsReadFromUnsupportedCommandLine = readArgValues(
+			"--resolutionConditions first second --resolutionConditions third --mainEntrypoint xxx",
+			optionDefaults,
+		);
+		expect(argsReadFromUnsupportedCommandLine).to.deep.equal(optionDefaults);
 		expect(
-			readArgValues(
-				"--resolutionConditions first second --resolutionConditions third --mainEntrypoint xxx",
-				optionDefaults,
-			),
-		).to.deep.equal(optionDefaults);
+			// @ts-expect-error - mainEntrypoint is not supported by readArgValues, so not in return type (though it does exist at runtime)
+			argsReadFromUnsupportedCommandLine.mainEntrypoint,
+		).to.equal(optionDefaults.mainEntrypoint);
 	});
 
 	describe("generateNode10EntrypointFileContent", () => {
