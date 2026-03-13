@@ -14,7 +14,7 @@ import { type FC, useEffect, useRef } from "react";
 
 /**
  * Props for the MainView component.
- * @internal
+ * @input @internal
  */
 export interface MainViewProps {
 	root: PropTreeNode<TextAsTree.Tree>;
@@ -24,7 +24,7 @@ export interface MainViewProps {
  * A React component for plain text editing.
  * @remarks
  * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and Quill for the UI.
- * @input internal
+ * @internal
  */
 export const MainView: FC<MainViewProps> = ({ root }) => {
 	return <TextEditorView root={root} />;
