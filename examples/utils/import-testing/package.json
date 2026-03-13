@@ -109,14 +109,11 @@
 			],
 			"place:cjs:package-stub": [],
 			"build:test:cjs:main": [
-				"tsc",
-				"place:cjs:package-stub"
+				"tsc:main"
 			],
 			"build:test:cjs:crossPackage": [
-				"tsc:crossPackage",
-				"place:cjs:package-stub",
-				"^tsc"
-			]
+				"tsc:crossPackage:node16"
+			],
 		}
 	},
 	"typeValidation": {
