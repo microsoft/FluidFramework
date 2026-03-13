@@ -49,6 +49,7 @@ import {
 } from './EditUtilities.js';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
 import { revert } from './HistoryEditFactory.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { convertEditIds } from './IdConversion.js';
 import {
 	AttributionId,
@@ -297,7 +298,7 @@ export interface EditCommittedEventArguments {
 	/** Whether or not this is a local edit. */
 	readonly local: boolean;
 	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 }
 
 /**
@@ -310,7 +311,7 @@ export interface SequencedEditAppliedEventArguments {
 	/** Whether or not this was a local edit. */
 	readonly wasLocal: boolean;
 	/** The tree the edit was applied to. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 	/** The telemetry logger associated with sequenced edit application. */
 	readonly logger: ITelemetryLoggerExt;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
@@ -351,7 +352,7 @@ export type EditApplicationOutcome =
  */
 export interface ISharedTreeEvents extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler);
-	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler);
+	(event: 'sequencedEditApplied', listener: SequencedEditAppliedHandler);
 }
 
 /**
