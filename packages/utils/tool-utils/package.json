@@ -132,10 +132,15 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAlias_OdspTokenConfig": {
+			"Interface_IResources": {
+				"backCompat": false
+			},
+
+			"Interface_IOdspTokenManagerCacheKey": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
-			"Interface_IOdspTokenManagerCacheKey": {
+			"TypeAlias_OdspTokenConfig": {
 				"backCompat": false,
 				"forwardCompat": false
 			}
