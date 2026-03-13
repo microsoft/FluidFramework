@@ -7,10 +7,6 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 
 import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
 import { makeSchemaCodec, schemaCodecBuilder } from "../../feature-libraries/index.js";
-import type {
-	FormatV1,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
@@ -98,7 +94,7 @@ export function comparePersistedSchema(
 	options: ICodecOptions,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const stored = schemaCodec.decode(persisted);
 	const config = new TreeViewConfigurationAlpha({
 		schema: normalizeFieldSchema(view),
 	});

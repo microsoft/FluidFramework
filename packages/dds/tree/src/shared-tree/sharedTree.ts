@@ -64,8 +64,7 @@ import {
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -499,7 +498,7 @@ export function persistedToSimpleSchema(
 	options: ICodecOptions,
 ): SimpleTreeSchema {
 	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const stored = schemaCodec.decode(persisted);
 	return exportSimpleSchema(stored);
 }
 
