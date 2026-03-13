@@ -23,12 +23,12 @@
 #
 # Dispatches Fluid release workflows via safe outputs.
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"5893ca5100b5dcd9fbaed304a2860bbb437ca39d0ca5931fb93f70f65a300c21","compiler_version":"v0.53.2"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"d3ad9276391ec0b4bd8bd1eb2617cc33b2a7abd9bb499253a3f036da2c3a06f5","compiler_version":"v0.53.2"}
 
 name: "Fluid Release Skill Dispatcher"
 "on":
   schedule:
-  - cron: "57 16 * * 1-5"
+  - cron: "10 5 * * 1-5"
     # Friendly format: daily on weekdays (scattered)
   workflow_dispatch:
     inputs:
@@ -115,6 +115,7 @@ jobs:
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GH_AW_SAFE_OUTPUTS: ${{ env.GH_AW_SAFE_OUTPUTS }}
+          GH_AW_ENV_GH_AW_GITHUB_EVENT_NAME: ${{ env.GH_AW_GITHUB_EVENT_NAME }}
           GH_AW_GITHUB_ACTOR: ${{ github.actor }}
           GH_AW_GITHUB_EVENT_COMMENT_ID: ${{ github.event.comment.id }}
           GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
@@ -122,7 +123,6 @@ jobs:
           GH_AW_GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
           GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: ${{ github.event.inputs.workflow }}
           GH_AW_GITHUB_EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
-          GH_AW_GITHUB_EVENT_NAME: ${{ github.event_name }}
           GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
@@ -181,10 +181,10 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+          GH_AW_ENV_GH_AW_GITHUB_EVENT_NAME: ${{ env.GH_AW_GITHUB_EVENT_NAME }}
           GH_AW_GITHUB_EVENT_INPUTS_PR: ${{ github.event.inputs.pr }}
           GH_AW_GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
           GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: ${{ github.event.inputs.workflow }}
-          GH_AW_GITHUB_EVENT_NAME: ${{ github.event_name }}
         with:
           script: |
             const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
@@ -195,6 +195,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+          GH_AW_ENV_GH_AW_GITHUB_EVENT_NAME: ${{ env.GH_AW_GITHUB_EVENT_NAME }}
           GH_AW_GITHUB_ACTOR: ${{ github.actor }}
           GH_AW_GITHUB_EVENT_COMMENT_ID: ${{ github.event.comment.id }}
           GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
@@ -202,7 +203,6 @@ jobs:
           GH_AW_GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
           GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: ${{ github.event.inputs.workflow }}
           GH_AW_GITHUB_EVENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
-          GH_AW_GITHUB_EVENT_NAME: ${{ github.event_name }}
           GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
           GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
@@ -218,6 +218,7 @@ jobs:
             return await substitutePlaceholders({
               file: process.env.GH_AW_PROMPT,
               substitutions: {
+                GH_AW_ENV_GH_AW_GITHUB_EVENT_NAME: process.env.GH_AW_ENV_GH_AW_GITHUB_EVENT_NAME,
                 GH_AW_GITHUB_ACTOR: process.env.GH_AW_GITHUB_ACTOR,
                 GH_AW_GITHUB_EVENT_COMMENT_ID: process.env.GH_AW_GITHUB_EVENT_COMMENT_ID,
                 GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER: process.env.GH_AW_GITHUB_EVENT_DISCUSSION_NUMBER,
@@ -225,7 +226,6 @@ jobs:
                 GH_AW_GITHUB_EVENT_INPUTS_TAG: process.env.GH_AW_GITHUB_EVENT_INPUTS_TAG,
                 GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW: process.env.GH_AW_GITHUB_EVENT_INPUTS_WORKFLOW,
                 GH_AW_GITHUB_EVENT_ISSUE_NUMBER: process.env.GH_AW_GITHUB_EVENT_ISSUE_NUMBER,
-                GH_AW_GITHUB_EVENT_NAME: process.env.GH_AW_GITHUB_EVENT_NAME,
                 GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER: process.env.GH_AW_GITHUB_EVENT_PULL_REQUEST_NUMBER,
                 GH_AW_GITHUB_REPOSITORY: process.env.GH_AW_GITHUB_REPOSITORY,
                 GH_AW_GITHUB_RUN_ID: process.env.GH_AW_GITHUB_RUN_ID,
