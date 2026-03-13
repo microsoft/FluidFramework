@@ -31,17 +31,15 @@ describe("generateEntrypoints", () => {
 			outDir: "./lib",
 		});
 
-		// Does not support multi-args (doesn't currently need to)
-		// Takes the first arg of the first multi-arg set.
+		// Does not support multi-args nor args that don't start
+		// with "out" (doesn't currently need to). Instead any
+		// such options passed in are preserved.
 		expect(
 			readArgValues(
-				"--resolutionConditions first second --resolutionConditions third",
+				"--resolutionConditions first second --resolutionConditions third --mainEntrypoint xxx",
 				optionDefaults,
 			),
-		).to.deep.equal({
-			...optionDefaults,
-			resolutionConditions: "first",
-		});
+		).to.deep.equal(optionDefaults);
 	});
 
 	describe("generateNode10EntrypointFileContent", () => {

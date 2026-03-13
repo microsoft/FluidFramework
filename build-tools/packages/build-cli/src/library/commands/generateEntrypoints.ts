@@ -198,8 +198,11 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			(customConditions.includes("import") ? 1 : 0) +
 			(customConditions.includes("require") ? 2 : 0);
 		if (conditionsPresent === 3) {
+			// Someone could call using both "import" and "require" conditions,
+			// to say they just don't care and will take whatever is found.
+			// That is unlikely, so warn about this just in case.
 			this.logger.warning(
-				'warning: both "import" and "require" --resolutionConditions flags given; results may be unstable',
+				'both "import" and "require" --resolutionConditions flags given; results may be unstable',
 			);
 		} else if (conditionsPresent === 0) {
 			const inferredImportCondition = inferImportConditionFromFilePath(
@@ -248,7 +251,12 @@ function inferImportConditionFromFilePath(
 	packageJson: PackageJson,
 ): "import" | "require" {
 	const ext = path.extname(filePath);
-	if (ext.match(/^\.m[jt]s/i) !== null) {
+	// Following matches allow for the extension to be longer as in .mjsx.
+	// The import part is really the .m or .c for selecting one over the other
+	// and the [jt]s helps filter to expectations. Since this is an inference
+	// and best guess it is okay if the guess is wrong as the caller can be
+	// more prescriptive and avoid inference altogether.
+	if (ext.match(/^\.m[jt]s/) !== null) {
 		return "import";
 	}
 	if (ext.match(/^\.c[jt]s/i) !== null) {
@@ -335,7 +343,7 @@ const apiLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
 ] as const;
 
 function getOutputConfiguration(
-	flags: Options & { node10TypeCompat: boolean },
+	flags: Pick<Options, `out${string}` & keyof Options> & { node10TypeCompat: boolean },
 	packageJson: PackageJson,
 	logger?: CommandLogger,
 ): {
@@ -425,13 +433,34 @@ function getOutputConfiguration(
  * @param commandLine - command line to extract from
  * @param argQuery - record of arguments to read (keys) with default values
  * @returns record of argument values extracted or given default value
+ *
+ * @remarks
+ * This functionality only supports arguments that are "--flagName single-value" pairs.
+ * In practice, other values that come through argQuery are preserved (default values
+ * used), but no caller should rely on unsupported arguments. Thus the return type is
+ * trimmed to those and also only those named with "out" prefix.
+ *
  * @privateRemarks Exported for testing.
  */
-export function readArgValues(commandLine: string, argQuery: Options): Options {
+export function readArgValues(
+	commandLine: string,
+	argQuery: Options,
+): Pick<
+	Options,
+	`out${string}` & keyof Options extends infer Key
+		? Options[Key & keyof Options] extends string | undefined
+			? Key
+			: never
+		: never
+> {
 	const args = commandLine.split(" ");
 
 	const argValues: Record<string, string | undefined> = {};
-	for (const argName of Object.keys(argQuery)) {
+	for (const argName of Object.keys(argQuery).filter(
+		(key): key is `out${string}` =>
+			key.startsWith("out") &&
+			["string", "undefined"].includes(typeof argQuery[key as keyof Options]),
+	)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
 		if (0 < indexOfArgValue && indexOfArgValue < args.length) {
 			argValues[argName] = args[indexOfArgValue];
