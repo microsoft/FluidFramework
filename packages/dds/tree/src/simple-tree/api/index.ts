@@ -149,6 +149,7 @@ export {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
+	type ArrayNodeDeltaOp,
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,

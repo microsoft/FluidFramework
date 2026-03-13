@@ -91,6 +91,7 @@ export {
 	singletonSchema,
 	treeNodeApi,
 	type TreeNodeApi,
+	type ArrayNodeDeltaOp,
 	type NodeChangedData,
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
