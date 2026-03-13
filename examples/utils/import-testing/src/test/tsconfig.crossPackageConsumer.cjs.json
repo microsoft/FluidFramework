@@ -4,7 +4,7 @@
 	// Only node16Importer.ts is included because bundler resolution is not applicable in a CJS environment.
 	"include": ["./crossPackage/node16Importer.ts"],
 	"compilerOptions": {
-		"outDir": "../../dist/test/crossPackageConsumer",
+		"outDir": "../../dist/test",
 	},
 	"references": [
 		{
