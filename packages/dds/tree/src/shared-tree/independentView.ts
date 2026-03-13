@@ -26,8 +26,6 @@ import {
 	schemaCodecBuilder,
 } from "../feature-libraries/index.js";
 import { combineChunks } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
@@ -233,7 +231,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	if (options?.content !== undefined) {
 		const schemaCodec = schemaCodecBuilder.buildDecoder(options);
 		const fieldBatchCodec = fieldBatchCodecBuilder.buildDecoder(options);
-		const newSchema = schemaCodec.decode(options.content.schema as Format);
+		const newSchema = schemaCodec.decode(options.content.schema);
 
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
