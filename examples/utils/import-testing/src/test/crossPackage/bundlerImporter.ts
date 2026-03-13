@@ -4,11 +4,12 @@
  */
 
 /*
-Compile-time test for cross-package schema consumption via bundler resolution.
+Compile-time test for cross-package schema consumption where schemaDefinitions.d.ts
+was generated under Bundler module resolution.
 
 Currently a disabled test: @ts-expect-error documents known failures caused by a
 TypeScript type resolution bug that ignores tree's exports type override and generates
-invalid import paths. Bundler resolution (TS 5.6+) exacerbates the issue. Fixing tree's
+invalid import paths. Bundler module resolution in the exporter (TS 5.6+) exacerbates the issue. Fixing tree's
 exports (giving each tier its own JS entrypoint) will resolve these — at which point the
 @ts-expect-error lines should be removed.
 */

@@ -4,7 +4,8 @@
  */
 
 /*
-Compile-time test for cross-package schema consumption via Node16 resolution.
+Compile-time test for cross-package schema consumption where schemaDefinitions.d.ts
+was generated under Node16 module resolution.
 
 Currently a disabled test: @ts-expect-error documents known failures caused by a
 TypeScript type resolution bug that ignores tree's exports type override and generates
