@@ -41,12 +41,26 @@ export interface Context<TSchema extends ImplicitFieldSchema> {
 export function createContext<TSchema extends ImplicitFieldSchema>(tree: ViewOrTree<TSchema>): Context<TSchema>;
 
 // @alpha
+export function createTreeAgent<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: TreeAgentOptions<TSchema>): TreeAgent;
+
+// @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
 export interface EditResult {
     message: string;
     type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
+}
+
+// @alpha
+export function executeSemanticEditing<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditingOptions<TSchema>): Promise<string>;
+
+// @alpha
+export interface ExecuteSemanticEditingOptions<TSchema extends ImplicitFieldSchema> {
+    domainHints?: string;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+    logger?: Logger;
+    maximumSequentialEdits?: number;
 }
 
 // @alpha
@@ -127,13 +141,16 @@ export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
 
 // @alpha
 export interface SharedTreeChatModel {
+    // @deprecated
     appendContext?(text: string): void;
     editToolName?: string;
+    invoke?(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
     name?: string;
-    query(message: SharedTreeChatQuery): Promise<string>;
+    // @deprecated
+    query?(message: SharedTreeChatQuery): Promise<string>;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface SharedTreeChatQuery {
     edit(js: string): Promise<EditResult>;
     text: string;
@@ -147,6 +164,59 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 
 // @alpha
 export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: ViewOrTree<TSchema>, code: string) => void;
+
+// @alpha
+export interface TreeAgent {
+    dispose(): void;
+    message(prompt: string): Promise<string>;
+}
+
+// @alpha
+export interface TreeAgentAssistantMessage {
+    readonly content: string;
+    readonly role: "assistant";
+}
+
+// @alpha
+export type TreeAgentChatMessage = TreeAgentSystemMessage | TreeAgentUserMessage | TreeAgentAssistantMessage | TreeAgentToolCallMessage | TreeAgentToolResultMessage;
+
+// @alpha
+export type TreeAgentChatResponse = TreeAgentToolCallMessage | TreeAgentAssistantMessage;
+
+// @alpha
+export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
+    domainHints?: string;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+    logger?: Logger;
+    maximumSequentialEdits?: number;
+}
+
+// @alpha
+export interface TreeAgentSystemMessage {
+    readonly content: string;
+    readonly role: "system";
+}
+
+// @alpha
+export interface TreeAgentToolCallMessage {
+    readonly role: "tool_call";
+    readonly toolArgs: Record<string, unknown>;
+    readonly toolCallId?: string;
+    readonly toolName: string;
+}
+
+// @alpha
+export interface TreeAgentToolResultMessage {
+    readonly content: string;
+    readonly role: "tool_result";
+    readonly toolCallId?: string;
+}
+
+// @alpha
+export interface TreeAgentUserMessage {
+    readonly content: string;
+    readonly role: "user";
+}
 
 // @alpha
 export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
