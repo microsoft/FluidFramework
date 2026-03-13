@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type {
+	IErrorEvent,
+	IEventProvider,
+	IFluidLoadable,
+	ITelemetryBaseProperties,
+} from '@fluidframework/core-interfaces';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import type { ISharedObject, IFluidSerializer } from '@fluidframework/shared-object-base/internal';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 import type { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 import type { Change } from './ChangeTypes.js';
@@ -14,7 +19,10 @@ import type { AttributionId, EditId, NodeId, StableNodeId } from './Identifiers.
 import type { LogViewer } from './LogViewer.js';
 import type { NodeIdContext } from './NodeIdUtilities.js';
 import type { RevisionView } from './RevisionView.js';
-import type { ISharedTreeEvents } from './SharedTree.js';
+import type {
+	EditCommittedHandler,
+	SequencedEditAppliedHandler,
+} from './SharedTree.js';
 import type {
 	ChangeInternal,
 	Edit,
@@ -24,10 +32,27 @@ import type {
 } from './persisted-types/index.js';
 
 /**
+ * Events which may be emitted by {@link ISharedTree}.
+ *
+ * @remarks This is the public-facing events interface for ISharedTree. It does not extend
+ * ISharedObjectEvents to avoid exposing internal DDS infrastructure types in the alpha API surface.
+ * @alpha
+ */
+export interface ISharedTreeEvents extends IErrorEvent {
+	(event: 'committedEdit', listener: EditCommittedHandler): void;
+	(event: 'sequencedEditApplied', listener: SequencedEditAppliedHandler): void;
+}
+
+/**
  * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdContext {
+export interface ISharedTree extends IFluidLoadable, IEventProvider<ISharedTreeEvents>, NodeIdContext {
+	/**
+	 * A readonly identifier for the shared tree.
+	 */
+	readonly id: string;
+
 	/**
 	 * The UUID used for attribution of nodes created by this SharedTree.
 	 */
