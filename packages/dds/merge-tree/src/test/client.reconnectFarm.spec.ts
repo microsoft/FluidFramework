@@ -120,9 +120,7 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
 				testOpts,
 				applyMessagesWithReconnect,
 			);
-			// Matches the timeout convention used by other farm tests (conflictFarm, obliterateFarm,
-			// rollbackFarm). Tests complete in ~15-20s normally, but need headroom under parallel execution.
-		}).timeout(30 * 10000);
+		}).timeout(30 * 1000);
 	});
 }
 
