@@ -1214,7 +1214,10 @@ export class Container
 	public readonly attach = runSingle(
 		async (
 			request: IRequest,
-			attachProps?: { deltaConnection?: "none" | "delayed" },
+			attachProps?: {
+				deltaConnection?: "none" | "delayed";
+				maxCreateRetries?: number;
+			},
 		): Promise<void> => {
 			await PerformanceEvent.timedExecAsync(
 				this.mc.logger,
@@ -1286,6 +1289,7 @@ export class Container
 								this.service = await this.createDocumentService(createNewResolvedUrl, {
 									mode: "attach",
 									summary,
+									maxCreateRetries: attachProps?.maxCreateRetries,
 								});
 							}
 							this.storageAdapter.connectToService(this.service);
@@ -1533,7 +1537,9 @@ export class Container
 	 */
 	private async createDocumentService(
 		resolvedUrl: IResolvedUrl,
-		props: { mode: "load" } | { mode: "attach"; summary: ISummaryTree | undefined },
+		props:
+			| { mode: "load" }
+			| { mode: "attach"; summary: ISummaryTree | undefined; maxCreateRetries?: number },
 	): Promise<IDocumentService> {
 		let service: IDocumentService;
 		if (props.mode === "load") {
@@ -1547,6 +1553,10 @@ export class Container
 				service.on("metadataUpdate", this.metadataUpdateHandler);
 			}
 		} else {
+			// Feature flag takes precedence over the attach parameter.
+			const maxRetries =
+				this.mc.config.getNumber("Fluid.Container.CreateMaxRetries") ?? props.maxCreateRetries;
+
 			service = await runWithRetry(
 				async () =>
 					this.serviceFactory.createContainer(
@@ -1559,6 +1569,7 @@ export class Container
 				this.mc.logger,
 				{
 					cancel: this._deltaManager.closeAbortController.signal,
+					maxRetries,
 				}, // progress
 			);
 		}

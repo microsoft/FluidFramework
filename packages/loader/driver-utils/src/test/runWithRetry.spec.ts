@@ -221,4 +221,112 @@ describe("runWithRetry Tests", () => {
 			assert.strictEqual((error as any).reason, "Sample abort reason");
 		}
 	});
+
+	it("Should stop retrying after maxRetries is exceeded", async () => {
+		const maxRetries = 3;
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			const error = new Error("Throw error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+			(error as any).canRetry = true;
+			throw error;
+		};
+
+		try {
+			await runWithFastSetTimeout(async () =>
+				runWithRetry(api, "test", logger, {
+					maxRetries,
+				}),
+			);
+			assert.fail("Should not succeed");
+		} catch (error) {
+			// Verify the wrapped error includes the original error message
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const errorMessage = (error as any).message;
+			assert.strictEqual(errorMessage, "runWithRetry failed after max retries: Throw error");
+			// Verify the original error is preserved in the cause property
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const causeMessage = (error as any).cause?.message;
+			assert.strictEqual(causeMessage, "Throw error");
+		}
+		// Initial call + maxRetries attempts
+		assert.strictEqual(retryTimes, maxRetries + 1, "Should retry exactly maxRetries times");
+	});
+
+	it("Should succeed before maxRetries is exceeded", async () => {
+		const maxRetries = 5;
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			// Succeed on the 3rd attempt (after 2 failures)
+			if (retryTimes < 3) {
+				const error = new Error("Throw error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+				(error as any).canRetry = true;
+				throw error;
+			}
+			return true;
+		};
+
+		const success = await runWithFastSetTimeout(async () =>
+			runWithRetry(api, "test", logger, {
+				maxRetries,
+			}),
+		);
+		assert.strictEqual(success, true, "Should succeed");
+		assert.strictEqual(retryTimes, 3, "Should take 3 attempts to succeed");
+	});
+
+	it("Should retry infinitely when maxRetries is undefined", async () => {
+		const totalRetries = 10;
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			if (retryTimes <= totalRetries) {
+				const error = new Error("Throw error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+				(error as any).canRetry = true;
+				throw error;
+			}
+			return true;
+		};
+
+		const success = await runWithFastSetTimeout(async () =>
+			runWithRetry(api, "test", logger, {}),
+		);
+		assert.strictEqual(success, true, "Should succeed");
+		assert.strictEqual(retryTimes, totalRetries + 1, "Should retry until success");
+	});
+
+	it("Should fail immediately with maxRetries set to 0", async () => {
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			const error = new Error("Throw error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+			(error as any).canRetry = true;
+			throw error;
+		};
+
+		try {
+			await runWithFastSetTimeout(async () =>
+				runWithRetry(api, "test", logger, {
+					maxRetries: 0,
+				}),
+			);
+			assert.fail("Should not succeed");
+		} catch (error) {
+			// Verify the wrapped error includes the original error message
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const errorMessage = (error as any).message;
+			assert.strictEqual(errorMessage, "runWithRetry failed after max retries: Throw error");
+			// Verify the original error is preserved in the cause property
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const causeMessage = (error as any).cause?.message;
+			assert.strictEqual(causeMessage, "Throw error");
+		}
+		// Only the initial call, no retries
+		assert.strictEqual(retryTimes, 1, "Should not retry at all");
+	});
 });
