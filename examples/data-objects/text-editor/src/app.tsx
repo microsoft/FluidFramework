@@ -6,12 +6,14 @@
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import {
-	toPropTreeNode,
 	FormattedMainView,
-	PlainTextMainView,
-	PlainQuillView,
+	QuillMainView as PlainQuillView,
+} from "@fluidframework/quill-react";
+import {
+	toPropTreeNode,
 	UndoRedoStacks,
 	type UndoRedo,
+	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
 /**
