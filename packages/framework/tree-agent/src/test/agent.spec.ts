@@ -20,7 +20,7 @@ import {
 	createContext,
 	SharedTreeSemanticAgent,
 	createTreeAgent,
-	executeSemanticEdit,
+	executeSemanticEditing,
 } from "../agent.js";
 import type {
 	EditResult,
@@ -951,9 +951,9 @@ describe("createTreeAgent", () => {
 
 // #endregion
 
-// #region executeSemanticEdit tests
+// #region executeSemanticEditing tests
 
-describe("executeSemanticEdit", () => {
+describe("executeSemanticEditing", () => {
 	it("can apply a single edit and returns response string", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
@@ -966,7 +966,7 @@ describe("executeSemanticEdit", () => {
 			},
 			{ role: "assistant", content: "Done editing" },
 		]);
-		const response = await executeSemanticEdit(model, view, "Edit it");
+		const response = await executeSemanticEditing(model, view, "Edit it");
 		assert.equal(response, "Done editing");
 		assert.equal(view.root, "Edited");
 	});
@@ -989,7 +989,7 @@ describe("executeSemanticEdit", () => {
 			},
 			{ role: "assistant", content: "All done" },
 		]);
-		const response = await executeSemanticEdit(model, view, "Edit twice");
+		const response = await executeSemanticEditing(model, view, "Edit twice");
 		assert.equal(response, "All done");
 		assert.equal(view.root, "Second");
 	});
@@ -1012,7 +1012,7 @@ describe("executeSemanticEdit", () => {
 			},
 			{ role: "assistant", content: "Oops" },
 		]);
-		const response = await executeSemanticEdit(model, view, "Edit");
+		const response = await executeSemanticEditing(model, view, "Edit");
 		assert.equal(response, "Oops");
 		// Query-level fork means all edits are rolled back when the last edit fails
 		assert.equal(view.root, "Initial");
@@ -1042,7 +1042,7 @@ describe("executeSemanticEdit", () => {
 			},
 			{ role: "assistant", content: "Gave up" },
 		]);
-		const response = await executeSemanticEdit(model, view, "Edit a lot", {
+		const response = await executeSemanticEditing(model, view, "Edit a lot", {
 			maximumSequentialEdits: 2,
 		});
 		assert.equal(response, "Gave up");
@@ -1062,7 +1062,7 @@ describe("executeSemanticEdit", () => {
 			},
 			{ role: "assistant", content: "Gave up" },
 		]);
-		const response = await executeSemanticEdit(model, view, "Edit");
+		const response = await executeSemanticEditing(model, view, "Edit");
 		assert.equal(response, "Gave up");
 		assert.equal(view.root, "Initial");
 	});
@@ -1076,7 +1076,7 @@ describe("executeSemanticEdit", () => {
 				return "nope";
 			},
 		};
-		await assert.rejects(async () => executeSemanticEdit(model, view, "Edit"), /invoke/);
+		await assert.rejects(async () => executeSemanticEditing(model, view, "Edit"), /invoke/);
 	});
 
 	it("rejects models without editToolName", async () => {
@@ -1087,7 +1087,10 @@ describe("executeSemanticEdit", () => {
 				return { role: "assistant", content: "nope" };
 			},
 		};
-		await assert.rejects(async () => executeSemanticEdit(model, view, "Edit"), /editToolName/);
+		await assert.rejects(
+			async () => executeSemanticEditing(model, view, "Edit"),
+			/editToolName/,
+		);
 	});
 
 	it("recovery after failed edit preserves all successful edits", async () => {
@@ -1108,7 +1111,7 @@ describe("executeSemanticEdit", () => {
 			},
 			{ role: "assistant", content: "Fixed" },
 		]);
-		const response = await executeSemanticEdit(model, view, "Edit");
+		const response = await executeSemanticEditing(model, view, "Edit");
 		assert.equal(response, "Fixed");
 		assert.equal(view.root, "Recovered");
 	});
@@ -1117,7 +1120,7 @@ describe("executeSemanticEdit", () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model = createMockInvokeModel([{ role: "assistant", content: "Just a response" }]);
-		const response = await executeSemanticEdit(model, view, "Question");
+		const response = await executeSemanticEditing(model, view, "Question");
 		assert.equal(response, "Just a response");
 		assert.equal(view.root, "Content");
 	});

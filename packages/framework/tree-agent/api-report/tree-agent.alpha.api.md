@@ -53,10 +53,10 @@ export interface EditResult {
 }
 
 // @alpha
-export function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditOptions<TSchema>): Promise<string>;
+export function executeSemanticEditing<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditingOptions<TSchema>): Promise<string>;
 
 // @alpha
-export interface ExecuteSemanticEditOptions<TSchema extends ImplicitFieldSchema> {
+export interface ExecuteSemanticEditingOptions<TSchema extends ImplicitFieldSchema> {
     domainHints?: string;
     editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
     logger?: Logger;

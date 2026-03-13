@@ -23,7 +23,7 @@ import type {
 	TreeAgentChatMessage,
 	TreeAgent,
 	TreeAgentOptions,
-	ExecuteSemanticEditOptions,
+	ExecuteSemanticEditingOptions,
 	EditResult,
 	SemanticAgentOptions,
 	Logger,
@@ -467,11 +467,11 @@ export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
  * @returns The model's text response.
  * @alpha
  */
-export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
+export async function executeSemanticEditing<TSchema extends ImplicitFieldSchema>(
 	model: SharedTreeChatModel,
 	tree: ViewOrTree<TSchema>,
 	prompt: string,
-	options?: ExecuteSemanticEditOptions<TSchema>,
+	options?: ExecuteSemanticEditingOptions<TSchema>,
 ): Promise<string> {
 	if (model.invoke === undefined) {
 		throw new UsageError(
@@ -534,7 +534,7 @@ export async function executeSemanticEdit<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * The result of the internal edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEdit}.
+ * The result of the internal edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEditing}.
  */
 interface EditLoopResult {
 	readonly response: string;
@@ -542,7 +542,7 @@ interface EditLoopResult {
 }
 
 /**
- * Core edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEdit}.
+ * Core edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEditing}.
  * @remarks Invokes the model in a loop, handling tool calls and applying edits, until the model
  * produces an assistant response. The provided `history` array is mutated in place.
  */

@@ -24,7 +24,7 @@ import {
 import {
 	SharedTreeSemanticAgent,
 	createTreeAgent,
-	executeSemanticEdit,
+	executeSemanticEditing,
 	type TreeView,
 	type ViewOrTree,
 } from "@fluidframework/tree-agent/alpha";
@@ -152,7 +152,7 @@ async function queryDomain<TSchema extends ImplicitFieldSchema>(
 		await agent.query(prompt);
 	} else if (api === "freeFunction") {
 		const client = createLangchainChatModel(createLlmClient(provider));
-		await executeSemanticEdit(client, (subtree ?? view) as ViewOrTree<TSchema>, prompt, {
+		await executeSemanticEditing(client, (subtree ?? view) as ViewOrTree<TSchema>, prompt, {
 			logger,
 			domainHints: options?.domainHints,
 		});

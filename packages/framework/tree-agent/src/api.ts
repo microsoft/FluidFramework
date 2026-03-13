@@ -370,10 +370,10 @@ export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
 }
 
 /**
- * Options for {@link executeSemanticEdit}.
+ * Options for {@link executeSemanticEditing}.
  * @alpha
  */
-export interface ExecuteSemanticEditOptions<TSchema extends ImplicitFieldSchema> {
+export interface ExecuteSemanticEditingOptions<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Executes any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
 	 * @remarks If not provided, the generated code will be executed using a simple JavaScript eval.
