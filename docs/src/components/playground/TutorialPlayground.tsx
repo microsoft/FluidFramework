@@ -5,95 +5,173 @@
 
 import React from "react";
 
-import { ModuleSelector } from "./ModuleSelector";
 import { PlaygroundWorkspace } from "./PlaygroundWorkspace";
 import { StepGuide } from "./StepGuide";
 import { diceRollerTutorial } from "./data/diceRollerTutorial";
 import { sharedTreeTutorial } from "./data/sharedTreeTutorial";
-import type { TutorialModule } from "./data/types";
+import type { TutorialModule, ValidationPattern } from "./data/types";
 
 import "@site/src/css/playground.css";
 
-const modules: TutorialModule[] = [diceRollerTutorial, sharedTreeTutorial];
+const modulesById: Record<string, TutorialModule> = {
+	"dice-roller": diceRollerTutorial,
+	"shared-tree-todo": sharedTreeTutorial,
+};
 
 /**
- * Top-level interactive tutorial playground component.
+ * Runs validation patterns against code, stripping comments first.
+ */
+function runValidation(code: string, patterns: ValidationPattern[]): boolean[] {
+	const stripped = code
+		.replace(/\/\*[\s\S]*?\*\//g, "")
+		.replace(/\/\/.*$/gm, "");
+	return patterns.map((vp) => {
+		const regex = new RegExp(vp.pattern, vp.flags ?? "s");
+		return regex.test(stripped);
+	});
+}
+
+/**
+ * {@link TutorialPlayground} component props.
+ */
+export interface TutorialPlaygroundProps {
+	/**
+	 * The module to render (e.g. "dice-roller" or "shared-tree-todo").
+	 */
+	moduleId: string;
+}
+
+/**
+ * Interactive tutorial playground for a single module.
  *
  * @remarks
- * Manages module selection, step navigation, code validation, and solution display.
+ * Manages step navigation, code validation, and solution display for the
+ * given module. Module selection is handled at the page level via Docusaurus
+ * routing and the {@link ModuleSelector} component.
  */
-export function TutorialPlayground(): React.ReactElement {
-	const [selectedModuleId, setSelectedModuleId] = React.useState<string | undefined>(
-		undefined,
-	);
+export function TutorialPlayground({
+	moduleId,
+}: TutorialPlaygroundProps): React.ReactElement {
 	const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
 	const [validationResults, setValidationResults] = React.useState<boolean[]>([]);
 	const [showSolution, setShowSolution] = React.useState(false);
+	const [resetCounter, setResetCounter] = React.useState(0);
 
-	const selectedModule = modules.find((m) => m.id === selectedModuleId);
+	// Per-step saved code (user's own edits or last editor state)
+	const codeSnapshotsRef = React.useRef<Map<number, string>>(new Map());
+
+	// Saves user's code right before showing solution, for Hide Solution restore
+	const preSolutionCodeRef = React.useRef<string | undefined>(undefined);
+
+	// Track which steps have been completed (all validations passed)
+	const completedStepsRef = React.useRef<Set<number>>(new Set());
+
+	const selectedModule = modulesById[moduleId];
 	const currentStep = selectedModule?.steps[currentStepIndex];
+
+	// Always tracks the latest editor code so handleNavigate can snapshot it.
+	const latestCodeRef = React.useRef("");
 
 	const validateCode = React.useCallback(
 		(code: string) => {
 			if (currentStep === undefined) return;
-			// Strip comments so validation only matches actual code, not TODO hints.
-			const strippedCode = code
-				.replace(/\/\*[\s\S]*?\*\//g, "") // block comments (/* ... */ and {/* ... */})
-				.replace(/\/\/.*$/gm, ""); // single-line comments (// ...)
-			const results = currentStep.validationPatterns.map((vp) => {
-				const regex = new RegExp(vp.pattern, vp.flags ?? "s");
-				return regex.test(strippedCode);
-			});
+
+			latestCodeRef.current = code;
+
+			const results = runValidation(code, currentStep.validationPatterns);
 			setValidationResults(results);
+
+			if (results.length > 0 && results.every(Boolean)) {
+				completedStepsRef.current.add(currentStepIndex);
+			}
 		},
-		[currentStep],
+		[currentStep, currentStepIndex],
 	);
 
-	const handleModuleSelect = (moduleId: string): void => {
-		setSelectedModuleId(moduleId);
-		setCurrentStepIndex(0);
-		setValidationResults([]);
-		setShowSolution(false);
-	};
-
 	const handleNavigate = (stepIndex: number): void => {
+		// Save whatever is in the editor right now for this step.
+		codeSnapshotsRef.current.set(currentStepIndex, latestCodeRef.current);
+		// Clear pre-solution ref on navigation
+		preSolutionCodeRef.current = undefined;
+
+		// Pre-seed validation for the target step to avoid flash of unchecked items
+		const targetStep = selectedModule?.steps[stepIndex];
+		const targetSnapshot = codeSnapshotsRef.current.get(stepIndex);
+		if (targetStep !== undefined && targetSnapshot !== undefined) {
+			const preSeeded = runValidation(targetSnapshot, targetStep.validationPatterns);
+			setValidationResults(preSeeded);
+		} else {
+			setValidationResults([]);
+		}
+
 		setCurrentStepIndex(stepIndex);
-		setValidationResults([]);
 		setShowSolution(false);
 	};
 
 	const handleToggleSolution = (): void => {
-		setShowSolution((prev) => !prev);
+		if (!showSolution) {
+			// Showing solution: save current code for later restore
+			preSolutionCodeRef.current = latestCodeRef.current;
+			codeSnapshotsRef.current.set(currentStepIndex, latestCodeRef.current);
+			setShowSolution(true);
+		} else {
+			// Hiding solution: restore user's pre-solution code
+			if (preSolutionCodeRef.current !== undefined) {
+				codeSnapshotsRef.current.set(currentStepIndex, preSolutionCodeRef.current);
+			}
+			preSolutionCodeRef.current = undefined;
+			setShowSolution(false);
+		}
 	};
 
-	const handleBackToModules = (): void => {
-		setSelectedModuleId(undefined);
-		setCurrentStepIndex(0);
-		setValidationResults([]);
+	const handleResetStep = (): void => {
+		codeSnapshotsRef.current.delete(currentStepIndex);
+		preSolutionCodeRef.current = undefined;
+		completedStepsRef.current.delete(currentStepIndex);
 		setShowSolution(false);
+		setValidationResults([]);
+		setResetCounter((c: number) => c + 1);
 	};
+
+	// Build the file map for the current step.
+	// Priority: solution (if toggled) > saved snapshot > default template.
+	//
+	// IMPORTANT: The snapshot ref is intentionally read inside the memo function
+	// but NOT listed in the deps array. This ensures the memo only recomputes
+	// when the step or solution state changes (which are the only times we need
+	// new files). During normal typing, setValidationResults triggers re-renders
+	// but the memo returns its cached value, keeping the files reference stable
+	// so Sandpack doesn't reset.
+	const files = React.useMemo(
+		() => {
+			if (currentStep === undefined) {
+				return {};
+			}
+			if (showSolution && currentStep.solution !== undefined) {
+				return { ...currentStep.files, [currentStep.activeFile]: currentStep.solution };
+			}
+			const snapshot = codeSnapshotsRef.current.get(currentStepIndex);
+			if (snapshot !== undefined) {
+				return { ...currentStep.files, [currentStep.activeFile]: snapshot };
+			}
+			return currentStep.files;
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- codeSnapshotsRef read intentionally excluded; see comment above
+		[showSolution, currentStep, currentStepIndex, resetCounter],
+	);
 
 	if (selectedModule === undefined || currentStep === undefined) {
 		return (
 			<div className="ffcom-playground-container">
-				<p className="ffcom-playground-intro">
-					Choose a tutorial module to get started. Each module walks you through
-					building a real Fluid application step by step, right in your browser.
-				</p>
-				<ModuleSelector modules={modules} onSelect={handleModuleSelect} />
+				<p>Unknown tutorial module: {moduleId}</p>
 			</div>
 		);
 	}
 
-	// Build the file map, replacing the active file with the solution if shown
-	const files = showSolution && currentStep.solution !== undefined
-		? { ...currentStep.files, [currentStep.activeFile]: currentStep.solution }
-		: currentStep.files;
-
 	return (
 		<div className="ffcom-playground-container">
 			<PlaygroundWorkspace
-				key={`${selectedModule.id}-${currentStepIndex}-${showSolution}`}
+				key={`${moduleId}-${currentStepIndex}-${showSolution}-${resetCounter}`}
 				files={files}
 				activeFile={currentStep.activeFile}
 				dependencies={selectedModule.dependencies}
@@ -105,9 +183,10 @@ export function TutorialPlayground(): React.ReactElement {
 				totalSteps={selectedModule.steps.length}
 				validationResults={validationResults}
 				showSolution={showSolution}
+				completedSteps={completedStepsRef.current}
 				onNavigate={handleNavigate}
 				onToggleSolution={handleToggleSolution}
-				onBackToModules={handleBackToModules}
+				onResetStep={handleResetStep}
 			/>
 		</div>
 	);

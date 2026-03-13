@@ -18,6 +18,11 @@ export interface StepIndicatorProps {
 	 * Total number of steps.
 	 */
 	totalSteps: number;
+
+	/**
+	 * Set of step indices that have been completed.
+	 */
+	completedSteps?: Set<number>;
 }
 
 /**
@@ -26,6 +31,7 @@ export interface StepIndicatorProps {
 export function StepIndicator({
 	currentStep,
 	totalSteps,
+	completedSteps,
 }: StepIndicatorProps): React.ReactElement {
 	return (
 		<div className="ffcom-playground-step-indicator">
@@ -37,10 +43,10 @@ export function StepIndicator({
 					<div
 						key={i}
 						className={`ffcom-playground-step-dot ${
-							i < currentStep
-								? "ffcom-playground-step-done"
-								: i === currentStep
-									? "ffcom-playground-step-active"
+							i === currentStep
+								? "ffcom-playground-step-active"
+								: completedSteps?.has(i)
+									? "ffcom-playground-step-done"
 									: ""
 						}`}
 					/>

@@ -39,6 +39,11 @@ export interface StepGuideProps {
 	showSolution: boolean;
 
 	/**
+	 * Set of step indices that have been completed.
+	 */
+	completedSteps: Set<number>;
+
+	/**
 	 * Callback when user navigates to a step.
 	 */
 	onNavigate: (stepIndex: number) => void;
@@ -49,9 +54,27 @@ export interface StepGuideProps {
 	onToggleSolution: () => void;
 
 	/**
-	 * Callback to go back to module selection.
+	 * Callback to reset the current step to boilerplate.
 	 */
-	onBackToModules: () => void;
+	onResetStep: () => void;
+}
+
+/**
+ * Renders a string containing inline markdown (backtick code and **bold**)
+ * as React elements.
+ */
+function renderInlineMarkdown(text: string): React.ReactNode {
+	// Split on `code` and **bold** tokens, preserving delimiters
+	const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+	return parts.map((part, i) => {
+		if (part.startsWith("`") && part.endsWith("`")) {
+			return <code key={i}>{part.slice(1, -1)}</code>;
+		}
+		if (part.startsWith("**") && part.endsWith("**")) {
+			return <strong key={i}>{part.slice(2, -2)}</strong>;
+		}
+		return part;
+	});
 }
 
 /**
@@ -63,14 +86,15 @@ export function StepGuide({
 	totalSteps,
 	validationResults,
 	showSolution,
+	completedSteps,
 	onNavigate,
 	onToggleSolution,
-	onBackToModules,
+	onResetStep,
 }: StepGuideProps): React.ReactElement {
 	const [expandedHints, setExpandedHints] = React.useState<Set<number>>(new Set());
 
 	const toggleHint = (index: number): void => {
-		setExpandedHints((prev) => {
+		setExpandedHints((prev: Set<number>) => {
 			const next = new Set(prev);
 			if (next.has(index)) {
 				next.delete(index);
@@ -86,14 +110,20 @@ export function StepGuide({
 		setExpandedHints(new Set());
 	}, [step.id]);
 
-	const allPassed = validationResults.length > 0 && validationResults.every(Boolean);
+	const allPassed =
+		step.validationPatterns.length === 0 ||
+		(validationResults.length > 0 && validationResults.every(Boolean));
 
 	return (
 		<div className="ffcom-playground-guide">
-			<StepIndicator currentStep={currentStepIndex} totalSteps={totalSteps} />
+			<StepIndicator
+				currentStep={currentStepIndex}
+				totalSteps={totalSteps}
+				completedSteps={completedSteps}
+			/>
 
 			<h3 className="ffcom-playground-step-title">{step.title}</h3>
-			<p className="ffcom-playground-step-description">{step.description}</p>
+			<p className="ffcom-playground-step-description">{renderInlineMarkdown(step.description)}</p>
 
 			{step.hints.length > 0 && (
 				<div className="ffcom-playground-hints">
@@ -112,7 +142,7 @@ export function StepGuide({
 							</button>
 							{expandedHints.has(i) && (
 								<div className="ffcom-playground-hint-content">
-									<code>{hint}</code>
+									{renderInlineMarkdown(hint)}
 								</div>
 							)}
 						</div>
@@ -139,13 +169,6 @@ export function StepGuide({
 			)}
 
 			<div className="ffcom-playground-nav">
-				<button
-					className="ffcom-playground-nav-button ffcom-playground-nav-secondary"
-					onClick={onBackToModules}
-				>
-					Back to Modules
-				</button>
-
 				<div className="ffcom-playground-nav-group">
 					{currentStepIndex > 0 && (
 						<button
@@ -164,6 +187,13 @@ export function StepGuide({
 							{showSolution ? "Hide Solution" : "Show Solution"}
 						</button>
 					)}
+
+					<button
+						className="ffcom-playground-nav-button ffcom-playground-nav-secondary"
+						onClick={onResetStep}
+					>
+						Reset Step
+					</button>
 
 					{currentStepIndex < totalSteps - 1 && (
 						<button

@@ -21,8 +21,24 @@ const stylesCss = `body {
   background: #f5f5f5;
 }
 
+.todo-container {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.todo-container > h3 {
+  width: 100%;
+  text-align: center;
+  color: #666;
+  margin: 0 0 4px;
+}
+
 .todo-app {
   max-width: 500px;
+  flex: 1;
+  min-width: 260px;
   margin: 0 auto;
   background: white;
   border-radius: 12px;
@@ -144,10 +160,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				'Import: import { SchemaFactory } from "fluid-framework";',
-				'Create factory: const sf = new SchemaFactory("todo-app");',
-				'Define TodoItem: const TodoItem = sf.object("TodoItem", { title: sf.string, completed: sf.boolean });',
-				'Define TodoList: const TodoList = sf.object("TodoList", { title: sf.string, items: sf.array(TodoItem) });',
+				'Import: `import { SchemaFactory } from "fluid-framework";`',
+				'Create factory: `const sf = new SchemaFactory("todo-app");`',
+				'Define TodoItem: `const TodoItem = sf.object("TodoItem", { title: sf.string, completed: sf.boolean });`',
+				'Define TodoList: `const TodoList = sf.object("TodoList", { title: sf.string, items: sf.array(TodoItem) });`',
 			],
 			validationPatterns: [
 				{
@@ -243,10 +259,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				'Add to your import: import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";',
-				"Create tree: const tree = createIndependentTreeBeta();",
-				"Create view: const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));",
-				"Initialize with plain objects: view.initialize({ title: \"My Todos\", items: [...] })",
+				'Add to your import: `import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`',
+				"Create tree: `const tree = createIndependentTreeBeta();`",
+				"Create view: `const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));`",
+				"Initialize with plain objects: `view.initialize({ title: \"My Todos\", items: [...] })`",
 			],
 			validationPatterns: [
 				{
@@ -355,10 +371,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				"Use: <ul className=\"todo-list\">{todoList.items.map((item, i) => ...)}</ul>",
-				"Each list item: <li key={i} className={`todo-item ${item.completed ? \"completed\" : \"\"}`}>",
-				"Add checkbox: <input type=\"checkbox\" checked={item.completed} readOnly />",
-				"Add title: <span>{item.title}</span>",
+				"Use: `<ul className=\"todo-list\">{todoList.items.map((item, i) => ...)}</ul>`",
+				"Each list item: `<li key={i} className={...}>`",
+				"Add checkbox: `<input type=\"checkbox\" checked={item.completed} readOnly />`",
+				"Add title: `<span>{item.title}</span>`",
 			],
 			validationPatterns: [
 				{
@@ -491,10 +507,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				"Toggle: const handleToggle = (item) => { item.completed = !item.completed; };",
-				"On checkbox: onChange={() => handleToggle(item)} \u2014 and remove readOnly",
-				"Insert: todoList.items.insertAtEnd({ title: newTitle, completed: false });",
-				"Form: <div className=\"add-form\"><input value={newTitle} onChange={...} /><button onClick={handleAdd}>Add</button></div>",
+				"Toggle: `const handleToggle = (item) => { item.completed = !item.completed; };`",
+				"On checkbox: `onChange={() => handleToggle(item)}` \u2014 and remove `readOnly`",
+				"Insert: `todoList.items.insertAtEnd({ title: newTitle, completed: false });`",
+				"Form: `<div className=\"add-form\"><input value={newTitle} onChange={...} /><button onClick={handleAdd}>Add</button></div>`",
 			],
 			validationPatterns: [
 				{
@@ -593,9 +609,9 @@ export default function App() {
 		},
 		{
 			id: "reactive-updates",
-			title: "Step 5: Reactive Updates with Tree.on",
+			title: "Step 5: Two-Client Sync",
 			description:
-				'The UI currently doesn\'t re-render when the tree changes. Add `Tree.on(node, "treeChanged", callback)` to subscribe to changes and trigger React re-renders. This is how real Fluid apps stay in sync across clients.',
+				'Now for the magic of Fluid! Extract a `TodoPanel` component from your App, add `Tree.on(view.root, "treeChanged", callback)` to subscribe to changes, and render **two** panels side by side. Both share the same SharedTree, so when either client toggles or adds a todo, both update instantly. This simulates the multi-client experience.',
 			activeFile: "/App.tsx",
 			files: {
 				"/App.tsx": `import React from "react";
@@ -624,12 +640,84 @@ view.initialize({
   ],
 });
 
+// TODO: Extract a TodoPanel component that accepts a { title: string } prop.
+// Move the todo rendering logic here and add Tree.on for reactivity:
+//   1. Use React.useState + React.useEffect with Tree.on(view.root, "treeChanged", ...)
+//      to trigger re-renders when the tree changes
+//   2. Include the todo list, toggle, add form, and stats
+
 export default function App() {
+  return (
+    <div className="todo-container">
+      <h3>Both panels share the same SharedTree!</h3>
+      {/* TODO: Render TWO TodoPanel components with different titles */}
+      {/* e.g., "Client A" and "Client B" */}
+    </div>
+  );
+}
+`,
+				"/main.tsx": mainTsx,
+				"/styles.css": stylesCss,
+			},
+			hints: [
+				"Create `function TodoPanel({ title }: { title: string })` and move the todo UI into it",
+				'Subscribe: `const unsubscribe = Tree.on(view.root, "treeChanged", () => setTick((t) => t + 1));`',
+				"Cleanup: `return unsubscribe;` inside the useEffect",
+				'Render two panels: `<TodoPanel title="Client A" />` and `<TodoPanel title="Client B" />`',
+			],
+			validationPatterns: [
+				{
+					label: 'Tree.on subscription with "treeChanged"',
+					pattern: 'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']treeChanged["\']',
+				},
+				{
+					label: "useEffect for subscription",
+					pattern: "useEffect",
+				},
+				{
+					label: "TodoPanel component defined",
+					pattern: "function\\s+TodoPanel",
+				},
+				{
+					label: "Two TodoPanel instances rendered",
+					pattern: "<TodoPanel[^/]*/>.*<TodoPanel",
+				},
+			],
+			solution: `import React from "react";
+import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";
+
+const sf = new SchemaFactory("todo-app");
+
+const TodoItem = sf.object("TodoItem", {
+  title: sf.string,
+  completed: sf.boolean,
+});
+
+const TodoList = sf.object("TodoList", {
+  title: sf.string,
+  items: sf.array(TodoItem),
+});
+
+const tree = createIndependentTreeBeta();
+const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
+view.initialize({
+  title: "My Todos",
+  items: [
+    { title: "Learn SharedTree schema", completed: true },
+    { title: "Build a todo app", completed: false },
+    { title: "Add reactive updates", completed: false },
+  ],
+});
+
+function TodoPanel({ title }: { title: string }) {
   const [, setTick] = React.useState(0);
 
-  // TODO: Use React.useEffect to subscribe to tree changes:
-  // Tree.on(view.root, "treeChanged", () => setTick((t) => t + 1))
-  // Return the unsubscribe function for cleanup.
+  React.useEffect(() => {
+    const unsubscribe = Tree.on(view.root, "treeChanged", () => {
+      setTick((t) => t + 1);
+    });
+    return unsubscribe;
+  }, []);
 
   const todoList = view.root;
   const [newTitle, setNewTitle] = React.useState("");
@@ -648,7 +736,7 @@ export default function App() {
 
   return (
     <div className="todo-app">
-      <h2 className="todo-header">{todoList.title}</h2>
+      <h2 className="todo-header">{title}</h2>
       <ul className="todo-list">
         {todoList.items.map((item, i) => (
           <li
@@ -683,115 +771,13 @@ export default function App() {
     </div>
   );
 }
-`,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
-			},
-			hints: [
-				"Add useEffect at the top of your App component",
-				'Subscribe: const unsubscribe = Tree.on(view.root, "treeChanged", () => setTick((t) => t + 1));',
-				"Cleanup: return unsubscribe;",
-				"The setTick pattern forces a re-render whenever the tree changes",
-			],
-			validationPatterns: [
-				{
-					label: 'Tree.on subscription with "treeChanged"',
-					pattern: 'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']treeChanged["\']',
-				},
-				{
-					label: "useEffect for subscription",
-					pattern: "useEffect",
-				},
-				{
-					label: "Re-render trigger (setTick or similar state update)",
-					pattern: "setTick",
-				},
-			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
 
 export default function App() {
-  const [, setTick] = React.useState(0);
-
-  React.useEffect(() => {
-    const unsubscribe = Tree.on(view.root, "treeChanged", () => {
-      setTick((t) => t + 1);
-    });
-    return unsubscribe;
-  }, []);
-
-  const todoList = view.root;
-  const [newTitle, setNewTitle] = React.useState("");
-
-  const handleToggle = (item: any) => {
-    item.completed = !item.completed;
-  };
-
-  const handleAdd = () => {
-    if (newTitle.trim() === "") return;
-    todoList.items.insertAtEnd(
-      { title: newTitle.trim(), completed: false }
-    );
-    setNewTitle("");
-  };
-
   return (
-    <div className="todo-app">
-      <h2 className="todo-header">{todoList.title}</h2>
-      <ul className="todo-list">
-        {todoList.items.map((item, i) => (
-          <li
-            key={i}
-            className={\`todo-item \${item.completed ? "completed" : ""}\`}
-          >
-            <input
-              type="checkbox"
-              checked={item.completed}
-              onChange={() => handleToggle(item)}
-            />
-            <span>{item.title}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="add-form">
-        <input
-          type="text"
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          placeholder="Add a new todo..."
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-        />
-        <button className="add-button" onClick={handleAdd}>
-          Add
-        </button>
-      </div>
-      <div className="stats">
-        {todoList.items.filter((item) => item.completed).length} of{" "}
-        {todoList.items.length} completed
-      </div>
+    <div className="todo-container">
+      <h3>Both panels share the same SharedTree!</h3>
+      <TodoPanel title="Client A" />
+      <TodoPanel title="Client B" />
     </div>
   );
 }

@@ -112,9 +112,9 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				'Import SchemaFactory: import { SchemaFactory } from "fluid-framework";',
-				'Create a factory: const sf = new SchemaFactory("dice-roller");',
-				'Define the schema: const Dice = sf.object("Dice", { value: sf.number });',
+				'Import SchemaFactory: `import { SchemaFactory } from "fluid-framework";`',
+				'Create a factory: `const sf = new SchemaFactory("dice-roller");`',
+				'Define the schema: `const Dice = sf.object("Dice", { value: sf.number });`',
 			],
 			validationPatterns: [
 				{
@@ -184,10 +184,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				'Add to your import: import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";',
-				"Create tree: const tree = createIndependentTreeBeta();",
-				"Create view: const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));",
-				"Initialize: view.initialize({ value: 1 });",
+				'Add to your import: `import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`',
+				"Create tree: `const tree = createIndependentTreeBeta();`",
+				"Create view: `const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));`",
+				"Initialize: `view.initialize({ value: 1 });`",
 			],
 			validationPatterns: [
 				{
@@ -270,10 +270,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				"Create a function component: function DiceView() { ... }",
-				"Read the value: const value = view.root.value;",
-				"Show the face: <div className=\"dice-face\">{diceFaces[value - 1]}</div>",
-				"Render it: <DiceView /> inside the App return",
+				"Create a function component: `function DiceView() { ... }`",
+				"Read the value: `const value = view.root.value;`",
+				"Show the face: `<div className=\"dice-face\">{diceFaces[value - 1]}</div>`",
+				"Render it: `<DiceView />` inside the App return",
 			],
 			validationPatterns: [
 				{
@@ -282,7 +282,7 @@ export default function App() {
 				},
 				{
 					label: "Render dice face",
-					pattern: "diceFaces",
+					pattern: "diceFaces\\[",
 				},
 				{
 					label: "DiceView component used in JSX",
@@ -366,10 +366,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				"Add a <button> element with an onClick handler",
-				"Generate random 1-6: Math.floor(Math.random() * 6) + 1",
-				"Set the value: view.root.value = Math.floor(Math.random() * 6) + 1;",
-				"Use className=\"roll-button\" for styling",
+				"Add a `<button>` element with an `onClick` handler",
+				"Generate random 1-6: `Math.floor(Math.random() * 6) + 1`",
+				"Set the value: `view.root.value = Math.floor(Math.random() * 6) + 1;`",
+				"Use `className=\"roll-button\"` for styling",
 			],
 			validationPatterns: [
 				{
@@ -485,10 +485,10 @@ export default function App() {
 				"/styles.css": stylesCss,
 			},
 			hints: [
-				'Use React.useEffect(() => { ... }, []) to set up the subscription once',
-				'Subscribe: const unsubscribe = Tree.on(view.root, "nodeChanged", () => setValue(view.root.value));',
-				"Return cleanup: return unsubscribe;",
-				'Render two panels: <DiceView title="Client A" /> and <DiceView title="Client B" />',
+				'Use `React.useEffect(() => { ... }, [])` to set up the subscription once',
+				'Subscribe: `const unsubscribe = Tree.on(view.root, "nodeChanged", () => setValue(view.root.value));`',
+				"Return cleanup: `return unsubscribe;`",
+				'Render two panels: `<DiceView title="Client A" />` and `<DiceView title="Client B" />`',
 			],
 			validationPatterns: [
 				{

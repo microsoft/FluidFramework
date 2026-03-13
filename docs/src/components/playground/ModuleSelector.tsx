@@ -3,39 +3,37 @@
  * Licensed under the MIT License.
  */
 
+import Link from "@docusaurus/Link";
 import React from "react";
 
+import { diceRollerTutorial } from "./data/diceRollerTutorial";
+import { sharedTreeTutorial } from "./data/sharedTreeTutorial";
 import type { TutorialModule } from "./data/types";
 
-/**
- * {@link ModuleSelector} component props.
- */
-export interface ModuleSelectorProps {
-	/**
-	 * Available tutorial modules.
-	 */
-	modules: TutorialModule[];
+import "@site/src/css/playground.css";
 
-	/**
-	 * Callback when a module is selected.
-	 */
-	onSelect: (moduleId: string) => void;
-}
+/**
+ * Map from module id to its docs sub-page path (relative to the tutorial index).
+ */
+const modulePages: Record<string, string> = {
+	"dice-roller": "dice-roller",
+	"shared-tree-todo": "shared-tree-todo",
+};
+
+const modules: TutorialModule[] = [diceRollerTutorial, sharedTreeTutorial];
 
 /**
  * Renders a card grid for selecting a tutorial module.
+ * Each card links to the module's dedicated sub-page.
  */
-export function ModuleSelector({
-	modules,
-	onSelect,
-}: ModuleSelectorProps): React.ReactElement {
+export function ModuleSelector(): React.ReactElement {
 	return (
 		<div className="ffcom-playground-module-selector">
 			{modules.map((mod) => (
-				<button
+				<Link
 					key={mod.id}
 					className="ffcom-playground-module-card"
-					onClick={() => onSelect(mod.id)}
+					to={modulePages[mod.id] ?? mod.id}
 				>
 					<div className="ffcom-playground-module-card-header">
 						<h3 className="ffcom-playground-module-title">{mod.title}</h3>
@@ -49,7 +47,7 @@ export function ModuleSelector({
 					<div className="ffcom-playground-module-meta">
 						{mod.steps.length} steps
 					</div>
-				</button>
+				</Link>
 			))}
 		</div>
 	);

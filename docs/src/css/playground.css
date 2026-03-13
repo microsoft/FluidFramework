@@ -33,11 +33,14 @@
 	font-family: inherit;
 	font-size: inherit;
 	color: inherit;
+	text-decoration: none;
 }
 
 .ffcom-playground-module-card:hover {
 	border-color: var(--ifm-color-primary);
 	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+	color: inherit;
+	text-decoration: none;
 }
 
 .ffcom-playground-module-card-header {
@@ -301,9 +304,13 @@
 }
 
 .ffcom-playground-nav-active {
-	background: var(--ifm-color-primary-lightest);
-	color: var(--ifm-color-primary-dark);
+	background: var(--ifm-color-primary);
+	color: white;
 	border-color: var(--ifm-color-primary);
+}
+
+.ffcom-playground-nav-active:hover {
+	background: var(--ifm-color-primary-dark);
 }
 
 .ffcom-playground-nav-disabled {
@@ -358,14 +365,14 @@
 	}
 
 	.ffcom-playground-workspace {
-		flex: 3;
+		flex: 5;
 		min-width: 0;
 	}
 
 	.ffcom-playground-guide {
-		flex: 1;
-		min-width: 300px;
-		max-width: 400px;
+		flex: 2;
+		min-width: 260px;
+		max-width: 340px;
 		position: sticky;
 		top: calc(var(--ifm-navbar-height) + 16px);
 		max-height: calc(100vh - var(--ifm-navbar-height) - 32px);

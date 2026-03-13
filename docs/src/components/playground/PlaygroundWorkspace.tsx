@@ -112,13 +112,13 @@ export function PlaygroundWorkspace({
 				customSetup={customSetup}
 				options={options}
 			>
-				<SandpackLayout>
+				<SandpackLayout style={{ flexDirection: "column" }}>
 					<SandpackCodeEditor
 						showLineNumbers
 						showTabs={false}
-						style={{ minHeight: "600px", flex: 1 }}
+						style={{ minHeight: "400px", flex: "none" }}
 					/>
-					<SandpackPreview style={{ minHeight: "600px", flex: 1 }} />
+					<SandpackPreview style={{ minHeight: "300px", flex: "none" }} />
 				</SandpackLayout>
 				<CodeChangeListener activeFile={activeFile} onCodeChange={onCodeChange} />
 			</SandpackProvider>
