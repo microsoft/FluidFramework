@@ -51,8 +51,8 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
-		"tsc:crossPackage": "fluid-tsc commonjs --project ./tsconfig.crossPackage.cjs.json"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
+		"tsc:crossPackage": "fluid-tsc commonjs --project ./tsconfig.crossPackage.cjs.json && npm run place:cjs:package-stub"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
