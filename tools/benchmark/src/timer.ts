@@ -26,7 +26,6 @@ export interface Timer<T = unknown> {
 
 	/**
 	 * Converts a pair of raw timestamps into an elapsed duration in seconds.
-	 * @remarks
 	 * @param before - The timestamp captured before the measured operation.
 	 * @param after - The timestamp captured after the measured operation.
 	 * @returns The elapsed time in seconds as a floating-point number.
@@ -35,7 +34,7 @@ export interface Timer<T = unknown> {
 }
 
 /**
- * A place to collect all supported timer implementations for the current platform.
+ * Supported timer implementations for the current platform.
  */
 const timers: Timer[] = [];
 {
@@ -61,7 +60,7 @@ const timers: Timer[] = [];
 }
 
 // We could add more timer fallbacks, like a Date.now() based timer,
-// but all platforms we care about support one of the better ones so there is no need for now.
+// but all platforms we care about support one of the better options.
 
 if (timers.length === 0) {
 	throw new Error("Unable to find a working timer.");
@@ -76,12 +75,18 @@ const timersWithResolution = timers.map((timer) => ({
 timersWithResolution.sort((a, b) => a.resolution - b.resolution);
 
 /**
- * The best available high-resolution timer for the current environment.
+ * The best available high-resolution timer for the current environment, paired with its measured resolution.
  */
 export const timerWithResolution = timersWithResolution[0];
 
 /**
  * The best available high-resolution timer for the current environment.
+ * @remarks
+ * When timing repeatable durations, consider using the higher-level APIs; see {@link DurationBenchmark}.
+ *
+ * Using this timer via the `timer` parameter of {@link BenchmarkFunction.run} is recommended as it is more type safe,
+ * but this export can be used if needed for other purposes.
+ * @public
  */
 export const timer: Timer = timerWithResolution.timer;
 

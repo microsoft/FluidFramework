@@ -4,21 +4,23 @@
  */
 
 import { fail } from "./assert.js";
+import type { CollectedData } from "./reportTypes.js";
+import type { Timer } from "./timer.js";
 
 /**
  * Kinds of benchmarks.
  *
- * Example: if you have two tests on the same scenario,
- * one with and one without a feature so you can see the actual cost of that feature,
- * the test with the feature enabled should be Measurement, but the baseline you compare it to should be Perspective.
+ * Example: if you have two tests on the same scenario —
+ * one with a feature enabled and one without — the test with the feature should be `Measurement`,
+ * and the baseline should be `Perspective`.
  *
- * When comparing two versions looking for changes: run `Measurement` tests.
+ * When comparing two versions for regressions: run `Measurement` tests.
  *
- * When looking a a single version (ex: current master) and looking for places to optimize:
+ * When profiling a single version (e.g., the current main branch) for optimization opportunities:
  * run `Measurement` and `Perspective` tests.
  *
- * When looking into a specific issue (either with performance or the performance tests):
- * use `.only` to restrict to the relevant tests and run all tests (`Perspective`, `Measurement` and `Diagnostic`).
+ * When investigating a specific issue: use `.only` to restrict mocha to the relevant tests,
+ * then run without a type filter so all types (`Perspective`, `Measurement`, and `Diagnostic`) are included.
  *
  * @public
  */
@@ -30,26 +32,21 @@ export enum BenchmarkType {
 
 	/**
 	 * Tests that measure the actual performance of features.
-	 * These tests are the ones that should be optimized for to improve actual user experience, and thus
-	 * should be used to compare across versions to look for regressions and improvements.
+	 * These are the tests to optimize to improve user experience, and should be compared across versions
+	 * to detect regressions and improvements.
 	 */
 	Measurement,
 
 	/**
-	 * Tests that provide extra details which typically aren't useful unless looking into some specific area.
+	 * Tests that provide extra details not typically needed unless investigating a specific area.
 	 *
-	 * Diagnostic tests can be used for tests whose results are useful for manually determining that other tests are
-	 * measuring what they claim accurately.
-	 *
-	 * Diagnostic tests can also be used when a particular feature/area has enough Measurement tests to detect changes,
-	 * but some extra tests would be helpful for understanding the changes when they occur. Extra tests,
-	 * either Measurement or Perspective which are worth keeping to help with investigations, but are not worth running
-	 * generally, can be marked as Diagnostic to enable skipping them unless they are specifically needed.
+	 * Use `Diagnostic` for tests that help confirm other tests are measuring what they claim,
+	 * or for supplementary tests that are useful during investigations but not worth running routinely.
 	 */
 	Diagnostic,
 
 	/**
-	 * Tests which verify correctness of the `benchmark` helper library. Generally not useful for any other scenario.
+	 * Tests which verify correctness of this benchmarking library. Generally not useful for any other scenario.
 	 */
 	OwnCorrectness,
 }
@@ -72,190 +69,79 @@ export enum TestType {
 /**
  * Names of all BenchmarkTypes.
  */
-export const benchmarkTypes: string[] = [];
-
-for (const type of Object.values(BenchmarkType)) {
-	if (typeof type === "string") {
-		benchmarkTypes.push(type);
-	}
-}
+export const benchmarkTypes: readonly string[] = Object.values(BenchmarkType).filter(
+	(v): v is string => typeof v === "string",
+);
 
 /**
  * Names of all TestTypes.
  */
-export const testTypes: string[] = [];
-
-for (const type of Object.values(TestType)) {
-	if (typeof type === "string") {
-		testTypes.push(type);
-	}
-}
+export const testTypes: readonly string[] = Object.values(TestType).filter(
+	(v): v is string => typeof v === "string",
+);
 
 /**
- * Object with a "title".
+ * An object with a title.
  * @public
+ * @input
  */
 export interface Titled {
 	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+	 * The title of the benchmark. This will show up in the output file, as well as the mocha reporter.
 	 */
-	title: string;
+	readonly title: string;
 }
 
 /**
  * Set of options to describe a benchmark.
  * @public
+ * @input
  */
 export interface BenchmarkDescription {
 	/**
 	 * The kind of benchmark.
 	 */
-	type?: BenchmarkType;
+	readonly type?: BenchmarkType;
 
 	/**
 	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
-	 * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+	 * with `@` prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
 	 * only execute specific tests.
 	 */
-	category?: string;
+	readonly category?: string;
 }
 
 /**
- * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take in
- * an options object extending this interface should use the corresponding `it.only` or `describe.only` variants
+ * Options to configure a benchmark that reports custom measurements.
  * @public
+ * @input
+ */
+export interface BenchmarkFunction {
+	/**
+	 * Runs the benchmark and returns the collected measurements.
+	 * @param timer - A high-resolution timer that can be used to measure durations if needed.
+	 */
+	readonly run: <TimeStamp>(timer: Timer<TimeStamp>) => CollectedData | Promise<CollectedData>;
+}
+
+/**
+ * Interface representing the intent to support mocha `only`-type functionality. Mocha test utilities which take
+ * an options object extending this interface should use the corresponding `it.only` or `describe.only` variants.
+ * @public
+ * @input
  */
 export interface MochaExclusiveOptions {
 	/**
-	 * When true, `mocha`-provided functions should use their `.only` counterparts (so as to aid individual test runs)
+	 * When true, `mocha`-provided functions use their `.only` counterparts to restrict the run to this test.
 	 */
-	only?: boolean;
+	readonly only?: boolean;
 }
 
 /**
- * Convenience type for a hook function supported by `HookArguments`. Supports synchronous and asynchronous functions.
- * @public
- */
-export type HookFunction = () => void | Promise<unknown>;
-
-/**
- * Arguments that can be passed to `benchmark` for optional test setup/teardown.
- * Hooks--along with the benchmarked function--are run without additional error validation.
- * This means any exception thrown from either a hook or the benchmarked function will cause test failure,
- * and subsequent operations won't be run.
- * @remarks
- *
- * Be careful when writing non-pure benchmark functions!
- * This library is written with the assumption that each cycle it runs is an independent sample.
- * This can typically be achieved by using the `onCycle` hook to reset state, with some caveats.
- * For more details, read below.
- *
- * This library runs the benchmark function in two hierarchical groups: cycles and iterations.
- * One iteration consists of a single execution of `benchmarkFn`.
- * Since the time taken by a single iteration might be significantly smaller than the clock resolution, benchmark
- * dynamically decides to run a number of iterations per cycle.
- * After a warmup period, this number is fixed across cycles (i.e. if this library decides to run 10,000 iterations
- * per cycle, all statistical analysis will be performed on cycles which consist of 10,000 iterations)
- * This strategy also helps minimize noise from JITting code.
- *
- * Statistical analysis is performed at the cycle level: this library treats each cycle's timing information as a data
- * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshold or its max
- * time has been reached.
- * The statistical analysis it uses is invalid if cycles aren't independent trials: consider the test
- * ```typescript
- * const myList = [];
- * benchmark({
- *     title: "insert at start of a list",
- *     benchmarkFn: () => {
- *         myList.unshift(0);
- *     }
- * });
- * ```
- *
- * If each cycle has 10k iterations, the first cycle will time how long it takes to repeatedly insert elements 0 through 10k
- * into the start of `myList`.
- * The second cycle will time how long it takes to repeatedly insert elements 10k through 20k at the start, and so on.
- * As inserting an element at the start of the list is O(list size), it's clear that cycles will take longer and longer.
- * We can use the `onCycle` hook to alleviate this problem:
- * ```typescript
- * let myList = [];
- * benchmark({
- *     title: "insert at start of a list",
- *     onCycle: () => {
- *         myList = [];
- *     }
- *     benchmarkFn: () => {
- *         myList.unshift(0);
- *     }
- * });
- * ```
- *
- * With this change, it's more reasonable to model each cycle as an independent event.
- *
- * Note that this approach is slightly misleading in the data it measures: if this library chooses a cycle size of 10k,
- * the time reported per iteration is really an average of the time taken to insert 10k elements at the start, and not
- * the average time to insert an element to the start of the empty list as the test body might suggest at a glance.
- *
- * @example
- *
- * ```typescript
- * let iterations = 0;
- * let cycles = 0;
- * benchmark({
- *     title: "my sample performance test"
- *     before: () => {
- *         console.log("setup goes here")
- *     },
- *     onCycle: () => {
- *         cycles++;
- *     },
- *     after: () => {
- *         console.log("iterations", iterations);
- *         console.log("cycles", cycles);
- *         console.log("teardown goes here")
- *     }
- *     benchmarkFn: () => {
- *         iterations++;
- *     }
- * });
- *
- * // Sample console output in correctness mode:
- * //
- * // setup goes here
- * // iterations 1
- * // cycles 1
- * // teardown goes here
- * //
- * // Sample console output in perf mode, if benchmark dynamically chose to run 40 cycles of 14k iterations each:
- * //
- * // setup goes here
- * // iterations 560,000
- * // cycles 40
- * // teardown goes here
- * ```
- * @public
- */
-export interface HookArguments {
-	/**
-	 * Executes once, before the test body it's declared for.
-	 *
-	 * @remarks This does *not* execute on each iteration or cycle.
-	 */
-	before?: HookFunction | undefined;
-	/**
-	 * Executes once, after the test body it's declared for.
-	 *
-	 * @remarks This does *not* execute on each iteration or cycle.
-	 */
-	after?: HookFunction | undefined;
-}
-
-/**
- * Tags and formats the provided Title from the supplied {@link BenchmarkDescription} to create a
- * tagged and formatted Title for the Reporter.
+ * Formats and tags the title from the supplied {@link BenchmarkDescription} for use by the reporter.
  *
  * @param args - See {@link BenchmarkDescription} and {@link Titled}
- * @returns A formatted tagged title from the supplied `BenchmarkDescription`.
+ * @returns A tagged, formatted title.
  *
  * @public
  */
@@ -270,38 +156,43 @@ export function qualifiedTitle(
 		tags.push(`@${testTypeTag}`);
 	}
 
-	let qualifiedTitle = `${tags.join(" ")} ${args.title}`;
+	let title = `${tags.join(" ")} ${args.title}`;
 
 	if (args.category !== "" && args.category !== undefined) {
-		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
+		title = `${title} ${userCategoriesSplitter} @${args.category}`;
 	}
-	return qualifiedTitle;
+	return title;
 }
 
 /**
  * Determines if we are in a mode where we actually want to run benchmarks and output data.
+ * @remarks
+ * When not in performance testing mode, performance tests should be run as correctness tests, and should be
+ * adjusted to run quickly (e.g., smaller iteration counts or data sizes).
  *
- * When not in performanceTestingMode, performance tests should be run as correctness tests, and should be
- * adjusted to run quickly (ex: smaller iteration counts or data sizes).
+ * Use the `--perfMode` flag or set `FLUID_TEST_PERF_MODE` environment variable to either "1" or "true" (case insensitive) to enable.
+ * If the tests are run in a separate process and do not receive the arguments given to the parent,
+ * as is done with Mocha's parallel mode,
+ * the environment variable must be used instead of the flag.
  * @public
  */
-export const isInPerformanceTestingMode = process.argv.includes("--perfMode");
+export const isInPerformanceTestingMode =
+	process.argv.includes("--perfMode") || getEnvFlag("FLUID_TEST_PERF_MODE");
 
 /**
- * If specified, the current process should not have performance tests run directly within it.
- * Instead child process will be created to run each test.
- * This has some overhead, but can reduce noise and cross test effects
- * (ex: tests performing very differently based on which tests ran before them due to different jitting).
- * This does not (and can not) remove all causes for effects of earlier tests on later ones.
- * Ex: cpu temperature will still be an issue, and thus running with fixed CPU clock speeds is still recommend
- * for more precise data.
+ * Check for an environment variables flag.
+ * @remarks
+ * Defaults to `false` unless set to "1" or "true" (case insensitive) in the environment variables.
  */
-export const isParentProcess: boolean = process.argv.includes("--parentProcess");
+function getEnvFlag(name: string): boolean {
+	const envValue = process.env[name];
+	return envValue === "1" || envValue?.toLowerCase() === "true";
+}
 
 /**
- * --childProcess should only be used to indicate that a test run with parentProcess is running,
- * and the current process is a child process which it spawned to run a particular test.
- * This can be used to adjust how test results are reported such that the parent process can aggregate them correctly.
+ * Indicates that this process is a child process spawned by a `--parentProcess` run.
+ * Only the specific test assigned to this child process is run, and results are returned
+ * via stdout as JSON for the parent process to collect.
  */
 export const isChildProcess = process.argv.includes("--childProcess");
 
@@ -318,8 +209,38 @@ export const performanceTestSuiteTag = "@Benchmark";
 export const userCategoriesSplitter = ":ff-cat:";
 
 /**
- * Reporter output location
+ * Options to configure a benchmark test.
+ * @remarks
+ * See {@link benchmarkIt}.
+ * @public
+ * @input
  */
-export interface ReporterOptions {
-	reportDir?: string;
+export interface BenchmarkOptions
+	extends Titled,
+		BenchmarkDescription,
+		MochaExclusiveOptions,
+		BenchmarkFunction {}
+
+/**
+ * Tags used to mark tests.
+ */
+const tags = [
+	performanceTestSuiteTag,
+	...benchmarkTypes.map((x) => `@${x}`),
+	...testTypes.map((x) => `@${x}`),
+];
+
+/**
+ * Strip tags and user-specified category from the specified test/suite name.
+ */
+export function getName(name: string): string {
+	let s = name;
+	for (const tag of tags) {
+		s = s.replace(tag, "");
+	}
+	const indexOfSplitter = s.indexOf(userCategoriesSplitter);
+	if (indexOfSplitter >= 0) {
+		s = s.slice(0, indexOfSplitter);
+	}
+	return s.trim();
 }

@@ -1,186 +1,203 @@
 # @fluid-tools/benchmark
 
 This package contains benchmarking tools to profile runtime and memory usage.
-There's the pieces you can use to profile your own code (described below) and various utilities for customizing/configuring
-benchmark, as well as authoring alternative reporters and profiling functions (ex: to support test frameworks other than
+It provides the tools you need to profile your own code (described below) and various utilities for customizing and configuring
+benchmarks, as well as authoring alternative reporters and profiling functions (e.g. to support test frameworks other than
 mocha).
 
 ## General use
 
-This package exports a few functions that you'll use instead of mocha's `it()` to define profiling tests:
+This package exports `benchmarkIt` which is used instead of mocha's `it()` to define benchmark tests.
 
--   `benchmark()` for runtime tests
--   `benchmarkCustom()` for custom usage tests
--   `benchmarkMemory()` for memory usage tests
+Tests written with `benchmarkIt` double as correctness tests: without `--perfMode` they behave like any other mocha `it()` test.
 
-More details particular to each can be found in the sections below.
-
-The tests you write using these functions can also act as correctness tests. When you run mocha on a package that contains
-profiling tests, they'll behave like any other mocha test defined with `it()`.
-
-To run them as profiling tests, invoke `mocha` as you normally would for your package but pass some additional arguments,
+To run them as benchmark tests, invoke `mocha` as you normally would for your package but pass some additional arguments,
 like this:
 
 ```console
---v8-expose-gc --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js
+--v8-expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/mocha/Reporter.js
 ```
 
 ### `--perfMode` (required)
 
-Indicates that the tests should be run as profiling instead of just correctness tests.
-When run like this, many iterations will be run and measured, but when run as correctness tests only one iteration
-will be run and no measuring will take place.
+Enables performance-testing mode instead of correctness-test mode.
+In performance-testing mode, many iterations are run and measured for each test.
+In correctness-test mode, only one iteration is run and no measurement takes place.
+
+Can also be set using the `FLUID_TEST_PERF_MODE` environment variable.
+If using [Mocha's Parallel Mode](https://mochajs.org/features/parallel-mode/),
+then this must be set using the environment variable.
 
 ### `--v8-expose-gc` (required)
 
 This is necessary so the package can perform explicit garbage collection between tests to help reduce
-cross-test contamination.
+cross-test contamination and get accurate results for memory tests.
 
 ### `--fgrep @Benchmark`
 
-All tests created with the tools in this package get tagged with `@Benchmark` in their name by default, so most of the
-time you'll want to use `--fgrep @Benchmark` to only run tests that were defined with the tools provided here.
-You can change the `@Benchmark` tag to a few other values (like `@Measurement`, `@Perspective`, or `@Diagnostic`) with
-one of the arguments to the functions exposed in this package, and if you do, you can be more specific about which tests
-want to run by passing a different filter, e.g. `--fgrep @Measurement`.
-
-### `--fgrep @ExecutionTime` or `--fgrep @MemoryUsage`
-
-You'll also want to use one of these to only run execution-time/runtime or memory usage tests.
-You can technically run them both at the same time, but the custom mocha reporters (one for runtime tests, one for memory
-usage tests) expect to only see tests of their corresponding type, so in order to use those you'll have to use `--fgrep`
-as described here and do two separate test runs, one for each type of test.
+All tests created with the tools in this package are tagged with `@Benchmark`, so use `--fgrep @Benchmark` to run only
+benchmark tests.
+Each test is also tagged based on its `type` option: `@Measurement` (the default), `@Perspective`, or `@Diagnostic`.
+Use a more specific filter like `--fgrep @Measurement` to run only tests of a particular type.
 
 ### `--reporter <path>`
 
 Lets you specify the path to a custom reporter to output the tests' results.
-This package includes `dist/MochaReporter.js` for runtime tests, and `dist/MochaMemoryTestReporter.ts` for memory usage tests.
-If you don't specify one, the default mocha reporter will take over and you won't see profiling information.
+This package includes `dist/mocha/Reporter.js`.
+If you don't specify one, the default mocha reporter will take over and you won't see benchmark information.
 
-### `--reporterOptions reportDir=<output-path>`
+### `--reporterOptions reportFile=<output-path>`
 
-If you use a custom reporter from this package, you can configure its output directory with this.
+If you use the reporter from this package, you can set the output file path with this.
+All benchmark results are combined into a single JSON file using a hierarchical `ReportArray` structure.
+If omitted, no file is written (results are still printed to the console).
 
 ### `--parentProcess`
 
-If you pass this **optional** flag, child processes will be forked for each profiling test, where only that test will run.
+If you pass this **optional** flag when, each performance test is run in a forked child process.
+The forked process runs only that test and propagates the results back to the parent.
 This can have significant overhead (the child process reruns mocha test discovery which may incur significant startup cost,
-in addition to the overhead of forking NodeJS), but can be used to reduce influences of previous tests on the state of
+in addition to the overhead of forking Node.js), but reduces the influence of previous tests on the state of
 the JIT and heap.
-If you want to use this, you'll want to test it thoroughly in your scenario to make sure the tradeoffs make sense.
+Test this thoroughly in your scenario to make sure the tradeoffs are worthwhile.
 
-## Profiling runtime
+Using `--parentProcess` is currently unsupported with [Mocha's Parallel Mode](https://mochajs.org/features/parallel-mode/).
 
-To profile runtime, define tests using the `benchmark()` function.
-The `BenchmarkArguments` object you pass as argument lets you configure several things about the test, the most important
-ones being a title and the code that the test should run. It's important that you use the correct property to define your
-test code, depending on if it's fully synchronous (use `benchmarkFn`) or asynchronous (use `benchmarkFnAsync`).
+## Profiling durations
 
-Look at the documentation for `BenchmarkArguments` for more details on what the rest of its properties do.
+To profile runtime durations, use `benchmarkIt` together with `benchmarkDuration`:
 
-When run, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
-when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
+```typescript
+benchmarkIt({
+	title: "My sync test",
+	...benchmarkDuration({
+		benchmarkFn: () => {
+			// synchronous code to benchmark
+		},
+	}),
+});
 
-> **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
-> The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
-> The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
-> See documentation on `HookArguments` for more detail.
+benchmarkIt({
+	title: "My async test",
+	...benchmarkDuration({
+		benchmarkFnAsync: async () => {
+			// asynchronous code to benchmark
+		},
+	}),
+});
+```
 
-## Profiling custom usage
+`benchmarkDuration` accepts a `DurationBenchmark`, which must have exactly one of:
 
-To customize profiling, define tests using the `benchmarkCustom()` function. The run argument of this function
-includes a reporter that uses `addMeasurement()` to record custom data for reporting. Look at the documentation
-on `Titled`, `BenchmarkDescription`, `MochaExclusiveOptions` for more details on what the rest of its properties do.
+-   `benchmarkFn` — a synchronous function to benchmark.
+-   `benchmarkFnAsync` — an asynchronous function to benchmark.
+-   `benchmarkFnCustom` — an async function that manages the batching loop directly via a `BenchmarkTimer` argument,
+    for cases where you need full control over timing. Use `state.timeBatch(fn)` for the common case, or
+    `state.timer.now()` / `state.recordBatch()` when you need to exclude setup/teardown from the measured time.
+
+It also accepts optional `BenchmarkTimingOptions` to tune `maxBenchmarkDurationSeconds`, `minBatchCount`, and `minBatchDurationSeconds`.
+
+See the documentation for `DurationBenchmark` and `BenchmarkTimingOptions` for more details.
+
+> **NOTE**: Be aware of pitfalls when benchmarking impure functions.
+> The test execution strategy assumes each iteration of `benchmarkFn` is an independent event.
+> For full control over per-batch setup and teardown, use `benchmarkFnCustom`.
+> See `DurationBenchmarkCustom` for details.
+
+## Profiling custom measurements
+
+To report fully custom measurements, call `benchmarkIt` directly and provide a `run` function that returns a `CollectedData`:
+
+```typescript
+benchmarkIt({
+	title: "My custom measurement",
+	run: (): CollectedData => [
+		{
+			// The first element is the primary measurement (all fields required).
+			name: "My metric",
+			value: 42,
+			units: "things/op",
+			type: ValueType.SmallerIsBetter,
+			significance: "Primary",
+		},
+		// Additional measurements are optional.
+		{
+			name: "Sample count",
+			value: 100,
+			units: "count",
+		},
+	],
+});
+```
+
+`CollectedData` is a tuple `[PrimaryMeasurement, ...Measurement[]]`. The first element is the primary measurement (used for regression detection) and requires all fields: `name`, `value`, `units`, `type`, and `significance: "Primary"`. Additional measurements are optional; their `units`, `type`, and `significance` fields are also optional.
+
+`collectDurationData` and `collectMemoryUseData` can be called directly within the `run` function, which is more flexible than `benchmarkDuration` or `benchmarkMemoryUse` when you need to add custom measurements or run setup/teardown outside the timed region:
+
+```typescript
+benchmarkIt({
+	title: "My custom duration measurement",
+	run: async (): Promise<CollectedData> => {
+		// Optional setup can run here
+		const data = await collectDurationData({
+			benchmarkFn: () => {
+				// code to benchmark
+			},
+		});
+		// Extra measurements can be added:
+		return [...data, { name: "Extra metric", value: 1 }];
+	},
+});
+```
 
 ## Profiling memory usage
 
-To profile memory usage, define tests using the `benchmarkMemory()` function.
-The single argument to the function must be an **instance of a class** that implement `IMemoryTestObject`.
-This leads to some uncommon ways of writing tests and might feel strange, but it was done this way to try to ensure
-that these tests are written in a way in which they can obtain accurate measurements and not run into problems because
-of cross-test contamination, which are very easy to run into when trying to profile memory usage.
-
-A high-level explanation of how memory profiling tests execute might help make this clearer:
-
-For each test:
-
-1.  The `before()` method in the class instance is called.
-2.  The `beforeIteration()` method in the class instance is called.
-3.  Garbage Collection is triggered.
-4.  We collect a baseline "before" memory measurement.
-5.  The `run()` method in the class instance is called.
-6.  The `afterIteration()` method in the class instance is called.
-7.  Garbage Collection is triggered.
-8.  We collect an "after" memory measurement.
-9.  Repeat steps 2-9 until some conditions are met.
-10. The `after()` method in the class instance is called.
-
-In general terms, this means you should:
-
--   Put code that sets up the test but should _not_ be included in the baseline "before" memory measurement, in the
-    `beforeIteration()` method.
--   Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
-    are assigned to local variables declared _outside_ of the `run()` method, so they won't go out of scope as soon as
-    the method returns, and thus are not collected when GC runs in step 7 above.
-
-    Technically, those variables could be declared outside the class, but that is prone to cross-test contamination.
-    Private variables declared inside the class (which in a way "represents" the test), should make it clear that they are
-    only relevant for that test, and help avoid cross-contamination because the class instance will be out of scope (and
-    thus garbage-collectable) by the time the next test executes.
-
-The pattern most memory tests will want to follow is something like this (note the `()` after the test declaration
-to immediately instantiate it):
+To profile memory usage, use `benchmarkIt` together with `benchmarkMemoryUse`:
 
 ```typescript
-benchmarkMemory(
-	new (class implements IMemoryTestObject {
-		title = `My test title`;
-		private someLocalVariable: MyType | undefined;
-
-		beforeIteration() {
-			// Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
-			// For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
-		}
-
-		async run() {
-			// The actual code that you want to measure.
-			// For example, creating a new object and assigning it to someLocalVariable.
-			// Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
-			// the memory allocated into the variable will be "seen" by the "after" memory measurement.
-		}
-	})(),
-);
+benchmarkIt({
+	title: "My memory test",
+	...benchmarkMemoryUse({
+		benchmarkFn: async (state) => {
+			// If your test requires one-time setup, do it here:
+			const holder: { value: unknown } = { value: undefined };
+			while (state.continue()) {
+				// Release the previous allocation, then do any per-iteration setup.
+				holder.value = undefined;
+				// Collect a baseline "before" heap measurement.
+				await state.beforeAllocation();
+				// Allocate the memory you want to measure.
+				holder.value = createSomething();
+				// Collect an "after allocation" heap measurement.
+				await state.whileAllocated();
+				// To help confirm you are measuring the allocation you expect,
+				// you can optionally free it here then call afterDeallocation:
+				// holder.value = undefined;
+				// await state.afterDeallocation();
+			}
+		},
+	}),
+});
 ```
 
-When ran, tests for memory profiling will be tagged with `@Benchmark` (or whatever you pass in `IMemoryTestObject.type`
-when you define the test) and `@MemoryUsage` (as opposed to `@ExecutionTime` for runtime profiling tests).
+This measures the difference in the retained portion of the heap from `beforeAllocation` to `whileAllocated`.
+This does not include memory that was used during the operation but released before `whileAllocated` was called.
 
-For more details, look at the documentation for `IMemoryTestObject`.
+The argument to `benchmarkMemoryUse` must implement `MemoryUseBenchmark`, which requires a `benchmarkFn` property.
+That function receives a `MemoryUseCallbacks` object and must loop until `state.continue()` returns false, following
+this pattern each iteration:
 
-## Release Notes
+1.  Release references to any memory allocated in the previous iteration (so GC can reclaim it).
+2.  Set up anything needed to do the allocation under test that should not be included in the measurement.
+3.  `state.beforeAllocation()` — GC runs and a baseline "before" heap measurement is taken.
+4.  Do the operation whose memory allocation you want to measure.
+5.  `state.whileAllocated()` — GC runs and an "after allocation" heap measurement is taken.
+6.  _(Optional)_ Free memory, then call `state.afterDeallocation()` — if called, GC runs and an "after deallocation" heap measurement is taken as well.
 
-### 0.48
+The benchmark reports the mean heap difference between the "while allocated" and "before" readings across iterations.
+Memory must not accumulate across iterations (i.e., what you allocate in step 4 must be fully releasable).
 
-This release focuses on improving the ability to use this package in more environments.
-It should now be practical to run at least correctness mode tests in browsers and import whats needed to write simple test runners for other testing frameworks like Jest.
-
--   [Fix qualifiedTitle generation to not insert a seperator when the catagory is `undefined`](https://github.com/microsoft/FluidFramework/commit/81df3860477fa2c968049321b3faf1434e57618e#diff-5f5a68acdfe610a22efc6bf398106145e0002f517d5a01293d2a6c8c94bd5525)
--   [Remove Top Level Platform Specific Imports](https://github.com/microsoft/FluidFramework/commit/50bf0781cc977213a2b24510da76e0ebff816a09)
--   [Package export `qualifiedTitle` and `runBenchmark`](https://github.com/microsoft/FluidFramework/commit/32d2397be72ed737a4d151686021fb708cfb3271)
-
-### 0.47
-
-In this version the largest change was [Use custom benchmarking code instead of Benchmark.js](https://github.com/microsoft/FluidFramework/commit/a282e8d173b365d04bf950b860b1342ebcb1513e).
-This included using more modern timing APIs, a new measurement inner loop, removal of all code generation, non-callback based async support and much more.
-This change is likely to have slight impact on times reported from benchmarks:
-across a large suite of benchmarks the new version seems to be about 2% faster results (based on geometric mean), perhaps due to more efficient JITing of the much more modern JavaScript and lower timing overhead from the newer APIs.
-Another significant change was [Use Chalk](https://github.com/microsoft/FluidFramework/commit/996102fcf2bbbfb042c7a504d62708b7ca19f72c) which improved how formatting (mainly coloring) of console output was done.
-The reporter now auto detects support from the console and thus will avoid including formatting escape sequences when redirecting output to a file.
-
-Breaking Changes:
-
--   `onCycle` renamed to `beforeEachBatch`.
--   Many renames and a lot of refactoring unlikely to impact users of the mocha test APIs, but likely to break more integrated code, like custom reporters.
+For more details, see the documentation for `MemoryUseBenchmark` and `MemoryUseCallbacks`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
