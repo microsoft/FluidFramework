@@ -16,7 +16,6 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
 import {
 	ConsensusQueueFactory,
 	type ConsensusQueue,
@@ -104,10 +103,10 @@ describe("ConsensusOrderedCollection", () => {
 	function generate(
 		input: unknown[],
 		output: unknown[],
-		creator: () => ConsensusOrderedCollection,
+		creator: () => IConsensusOrderedCollection,
 		processMessages: () => void,
 	): void {
-		let testCollection: ConsensusOrderedCollection;
+		let testCollection: IConsensusOrderedCollection;
 
 		async function removeItem(): Promise<unknown> {
 			const resP = acquireAndComplete(testCollection);
@@ -154,9 +153,15 @@ describe("ConsensusOrderedCollection", () => {
 
 				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
 
-				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
-				const dataStore = (await handle.get()) as ConsensusQueue;
-				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
+				assert.strictEqual(
+					acquiredValue.absolutePath,
+					(handle as IFluidHandleInternal).absolutePath,
+				);
+				const dataStore = (await handle.get()) as IConsensusOrderedCollection;
+				assert.strictEqual(
+					(dataStore.handle as IFluidHandleInternal).absolutePath,
+					(testCollection.handle as IFluidHandleInternal).absolutePath,
+				);
 
 				assert.strictEqual(await removeItem(), undefined);
 			});
@@ -614,7 +619,7 @@ describe("ConsensusOrderedCollection", () => {
 					`subCollection-${++this.subCollectionCount}`,
 				);
 				await this.addItem(subCollection.handle);
-				this._expectedRoutes.push(subCollection.handle.absolutePath);
+				this._expectedRoutes.push((subCollection.handle as IFluidHandleInternal).absolutePath);
 			}
 
 			public async deleteOutboundRoutes(): Promise<void> {
@@ -641,8 +646,8 @@ describe("ConsensusOrderedCollection", () => {
 				};
 				await this.addItem(containingObject);
 				this._expectedRoutes.push(
-					subCollection1.handle.absolutePath,
-					subCollection2.handle.absolutePath,
+					(subCollection1.handle as IFluidHandleInternal).absolutePath,
+					(subCollection2.handle as IFluidHandleInternal).absolutePath,
 				);
 			}
 		}
