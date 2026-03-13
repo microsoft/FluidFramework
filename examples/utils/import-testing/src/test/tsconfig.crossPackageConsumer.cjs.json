@@ -6,4 +6,9 @@
 	"compilerOptions": {
 		"outDir": "../../dist/test/crossPackageConsumer",
 	},
+	"references": [
+		{
+			"path": "../../tsconfig.crossPackage.node16.cjs.json",
+		},
+	],
 }
