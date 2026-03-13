@@ -362,7 +362,8 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"fast-xml-parser: overridden to ^4.5.4 to resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow). Stays within @langchain/anthropic's declared ^4.4.1 range.",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"@tylerbu/levee-client and @tylerbu/levee-driver @fluidframework/* deps are widened to workspace:* via .pnpmfile.cjs to avoid duplicate types. See https://github.com/tylerbutler/levee/issues/55"
 		],
 		"overrides": {
 			"@types/node": "~20.19.30",

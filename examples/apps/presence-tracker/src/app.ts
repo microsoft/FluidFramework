@@ -8,7 +8,7 @@ import {
 	type AttendeeId,
 	type AttendeeStatus,
 } from "@fluidframework/presence/beta";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { LeveeClient } from "@tylerbu/levee-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
@@ -38,7 +38,14 @@ export type PresenceTrackerSchema = typeof containerSchema;
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start(): Promise<void> {
-	const client = new TinyliciousClient();
+	const userId = Math.random().toString(36).slice(2);
+	const client = new LeveeClient({
+		connection: {
+			httpUrl: "http://localhost:4000",
+			tenantKey: "dev-tenant-secret-key",
+			user: { id: userId, name: `User-${userId}` },
+		},
+	});
 	let container: IFluidContainer<PresenceTrackerSchema>;
 
 	let id: string;
