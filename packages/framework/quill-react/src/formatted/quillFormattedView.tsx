@@ -4,6 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import {
+	type PropTreeNode,
+	unwrapPropTreeNode,
+	type UndoRedo,
+} from "@fluidframework/react/internal";
 import { Tree, TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill";
@@ -18,9 +23,6 @@ import {
 } from "react";
 import * as ReactDOM from "react-dom";
 
-import { type PropTreeNode, unwrapPropTreeNode } from "../../propNode.js";
-import type { UndoRedo } from "../../undoRedo.js";
-
 // Workaround for quill-delta's export style not working well with node16 module resolution.
 type Delta = DeltaPackage.default;
 type QuillDeltaOp = DeltaPackage.Op;
@@ -28,7 +30,7 @@ const Delta = DeltaPackage.default;
 
 /**
  * Props for the FormattedMainView component.
- * @input @internal
+ * @internal
  */
 export interface FormattedMainViewProps {
 	readonly root: PropTreeNode<FormattedTextAsTree.Tree>;
@@ -38,7 +40,7 @@ export interface FormattedMainViewProps {
 
 /**
  * Ref handle exposing undo/redo methods for the formatted editor.
- * @input @internal
+ * @internal
  */
 export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 

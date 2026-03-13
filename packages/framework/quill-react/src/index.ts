@@ -3,15 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { type PropTreeNode } from "../propNode.js";
-export { type UndoRedo } from "../undoRedo.js";
+export { QuillMainView, type MainViewProps } from "./plain/index.js";
 export {
+	FormattedTextAsTree,
 	FormattedMainView,
 	type FormattedMainViewProps,
 	type FormattedEditorHandle,
 } from "./formatted/index.js";
-export {
-	PlainTextMainView,
-	QuillMainView as PlainQuillView,
-	type MainViewProps as PlainMainViewProps,
-} from "./plain/index.js";
