@@ -994,7 +994,7 @@ describe("executeSemanticEdit", () => {
 		assert.equal(view.root, "Second");
 	});
 
-	it("keeps successful edits when a later edit fails (no rollback)", async () => {
+	it("rolls back all edits when a later edit fails", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model = createMockInvokeModel([
@@ -1014,8 +1014,8 @@ describe("executeSemanticEdit", () => {
 		]);
 		const response = await executeSemanticEdit(model, view, "Edit");
 		assert.equal(response, "Oops");
-		// Key difference from createTreeAgent: successful edit persists despite later failure
-		assert.equal(view.root, "Good");
+		// Query-level fork means all edits are rolled back when the last edit fails
+		assert.equal(view.root, "Initial");
 	});
 
 	it("enforces maximumSequentialEdits", async () => {
@@ -1046,8 +1046,8 @@ describe("executeSemanticEdit", () => {
 			maximumSequentialEdits: 2,
 		});
 		assert.equal(response, "Gave up");
-		// Edits 1 and 2 applied directly (no query-level branch), edit 3 was blocked
-		assert.equal(view.root, "Two");
+		// Edit 3 was blocked, setting lastEditFailed — query-level fork rolls back all edits
+		assert.equal(view.root, "Initial");
 	});
 
 	it("handles bad tool args gracefully", async () => {
