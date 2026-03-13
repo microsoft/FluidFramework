@@ -11,6 +11,7 @@ import {
 	type Tagged,
 	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+import type { BrandedType } from "@fluidframework/core-interfaces/internal";
 
 import {
 	CachedConfigProvider,
@@ -174,7 +175,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 *
 	 * @param event - the event to send
 	 */
-	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	public abstract send(
+		event: ITelemetryBaseEvent & { logLevel: LogLevelValueType },
+		logLevel?: LogLevel,
+	): void;
 
 	/**
 	 * Send a telemetry event with the logger
@@ -190,7 +194,11 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		logLevel: typeof LogLevel.verbose | typeof LogLevel.default = LogLevel.default,
 	): void {
 		this.sendTelemetryEventCore(
-			{ ...event, category: event.category ?? "generic" },
+			{
+				...event,
+				category: event.category ?? "generic",
+				logLevel: event.logLevel ?? LogLevelValue.essential,
+			},
 			error,
 			event.category === "error" ? LogLevel.error : logLevel,
 		);
@@ -842,8 +850,12 @@ function convertToBaseEvent({
 	category,
 	eventName,
 	...props
-}: ITelemetryEventExt): ITelemetryBaseEvent {
-	const newEvent: ITelemetryBaseEvent = { category, eventName };
+}: ITelemetryEventExt): ITelemetryBaseEvent & { logLevel: LogLevelValueType } {
+	const newEvent: ITelemetryBaseEvent & { logLevel: LogLevelValueType } = {
+		category,
+		eventName,
+		logLevel: LogLevelValue.essential,
+	};
 	for (const key of Object.keys(props)) {
 		newEvent[key] = convertToBasePropertyType(props[key]);
 	}
@@ -999,3 +1011,42 @@ export const tagCodeArtifacts = <
 					})
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
+
+/**
+ * Numerical values that indicate the importance of a telemetry event for diagnostics,
+ * enabling consumers to make sampling or filtering decisions.
+ *
+ * @remarks
+ * If an event does not contain a `logLevel` property, it should be treated as an `essential`.
+ *
+ * @internal
+ */
+export const LogLevelValue = {
+	/**
+	 * Chatty logs useful for local debugging.
+	 * They need not be collected in production.
+	 */
+	verbose: 10 as 10 & BrandedType<"LogLevelValueType">,
+
+	/**
+	 * Information about the session. These logs could be omitted in some sessions
+	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
+	 * from a particular session, all should be.
+	 */
+	info: 20 as 20 & BrandedType<"LogLevelValueType">,
+
+	/**
+	 * Essential information about the operation of Fluid. It is recommended that
+	 * these should always be collected, even in production, for diagnostic purposes.
+	 */
+	essential: 30 as 30 & BrandedType<"LogLevelValueType">,
+} as const satisfies Record<string, LogLevelValueType>;
+
+/**
+ * LogLevelValue is a numeric value that indicates the importance of a telemetry event for diagnostics,
+ * enabling consumers to make sampling or filtering decisions.
+ *
+ * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
+ * @beta
+ */
+export type LogLevelValueType = number & BrandedType<"LogLevelValueType">;

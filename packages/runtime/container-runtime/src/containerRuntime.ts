@@ -171,6 +171,7 @@ import {
 	wrapError,
 	tagCodeArtifacts,
 	normalizeError,
+	LogLevelValue,
 } from "@fluidframework/telemetry-utils/internal";
 import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
@@ -1757,6 +1758,7 @@ export class ContainerRuntime
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
+			logLevel: LogLevelValue.info,
 		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();

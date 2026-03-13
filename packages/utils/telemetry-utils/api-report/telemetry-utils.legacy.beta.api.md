@@ -27,6 +27,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     category?: TelemetryEventCategory;
     eventName: string;
+    logLevel?: LogLevelValueType;
 }
 
 // @beta @legacy
@@ -54,6 +55,9 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 
 // @beta @legacy
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
+
+// @beta
+export type LogLevelValueType = number & BrandedType<"LogLevelValueType">;
 
 // @beta @legacy
 export type TelemetryEventCategory = "generic" | "error" | "performance";

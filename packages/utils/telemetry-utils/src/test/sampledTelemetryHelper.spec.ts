@@ -52,7 +52,7 @@ class TestLogger implements ITelemetryLoggerExt {
 	public supportsTags?: true | undefined;
 }
 
-const standardEventProperties = ["eventName", "duration", "count"];
+const standardEventProperties = ["eventName", "duration", "count", "logLevel"];
 const aggregateProperties = ["totalDuration", "minDuration", "maxDuration", "averageDuration"];
 
 describe("SampledTelemetryHelper", () => {

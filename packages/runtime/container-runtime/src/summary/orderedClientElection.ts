@@ -20,6 +20,8 @@ import type {
 } from "@fluidframework/driver-definitions";
 import {
 	type ITelemetryLoggerExt,
+	LogLevelValue,
+	type LogLevelValueType,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
@@ -504,6 +506,7 @@ export class OrderedClientElection
 				sequenceNumber,
 				true /* forceSend */,
 				reason,
+				LogLevelValue.info,
 			);
 			// Changing the elected client. Record the sequence number and note that we have to fire an event.
 			this._electionSequenceNumber = sequenceNumber;
@@ -517,6 +520,7 @@ export class OrderedClientElection
 				sequenceNumber,
 				true /* forceSend */,
 				reason,
+				LogLevelValue.info,
 			);
 			// Changing the elected parent as well.
 			this._electedParent = client;
@@ -688,6 +692,7 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		forceSend: boolean = false,
 		reason?: string,
+		logLevel?: LogLevelValueType,
 	): void {
 		if (this.recordPerformanceEvents || forceSend) {
 			this.logger.sendPerformanceEvent({
@@ -699,6 +704,7 @@ export class OrderedClientElection
 				isEligible: client === undefined ? false : this.isEligibleFn(client),
 				isSummarizerClient: client?.client.details.type === summarizerClientType,
 				reason,
+				logLevel,
 			});
 		}
 	}
