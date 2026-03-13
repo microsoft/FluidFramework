@@ -25,7 +25,7 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "npm run build:esnext:main && concurrently \"npm:build:esnext:crossPackage:*\"",
+		"build:esnext": "concurrently \"npm:build:esnext:*\"",
 		"build:esnext:crossPackage:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
 		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.node16.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
