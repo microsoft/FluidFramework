@@ -28,7 +28,7 @@
 name: "Fluid Release Skill Dispatcher"
 "on":
   schedule:
-  - cron: "10 5 * * 1-5"
+  - cron: "57 16 * * 1-5"
     # Friendly format: daily on weekdays (scattered)
   workflow_dispatch:
     inputs:
