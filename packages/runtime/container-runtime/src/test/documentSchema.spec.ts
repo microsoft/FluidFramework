@@ -780,7 +780,7 @@ describe("Runtime", () => {
 			);
 		});
 
-		it("rejects incoming schema change ops and does not update sessionSchema", () => {
+		it("throws on incoming schema change ops", () => {
 			const controller = new DocumentsSchemaController(
 				true, // existing
 				0, // snapshotSequenceNumber
@@ -799,23 +799,19 @@ describe("Runtime", () => {
 				true, // disableSchemaUpgrade
 			);
 
-			const sessionSchemaBefore = { ...controller.sessionSchema };
-
-			const result = controller.processDocumentSchemaMessages(
-				[{ ...validConfig, runtime: { ...validConfig.runtime, opGroupingEnabled: true } }],
-				false, // local
-				100, // sequenceNumber
-			);
-
-			assert.strictEqual(
-				result,
-				false,
-				"should reject schema change when disableSchemaUpgrade is true",
-			);
-			assert.deepStrictEqual(
-				controller.sessionSchema,
-				sessionSchemaBefore,
-				"sessionSchema should not change when schema changes are rejected",
+			assert.throws(
+				() =>
+					controller.processDocumentSchemaMessages(
+						[
+							{
+								...validConfig,
+								runtime: { ...validConfig.runtime, opGroupingEnabled: true },
+							},
+						],
+						false, // local
+						100, // sequenceNumber
+					),
+				"schema change op while disableSchemaUpgrade is enabled",
 			);
 		});
 	});

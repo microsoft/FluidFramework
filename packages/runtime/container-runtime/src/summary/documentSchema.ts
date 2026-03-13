@@ -524,7 +524,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  *    multiple reloads / new sessions to get there (depends on if code reacts to schema changes right away, or only consults
  *    schema on document load).
  * 3) Schema upgrade disabled mode (disableSchemaUpgrade = true). In this mode the controller will never send DocumentSchemaChange ops
- *    and will silently reject any incoming schema change ops. The document schema is effectively frozen at whatever
+ *    and will throw an error if any incoming schema change ops are received. The document schema is effectively frozen at whatever
  *    state it was in when the document was created.
  *
  * How schemas are changed (in non-legacy mode):
@@ -747,11 +747,11 @@ export class DocumentsSchemaController {
 	/**
 	 * Process document schema change messages
 	 * Called by ContainerRuntime whenever it sees document schema messages.
-	 * When disableSchemaUpgrade is true, all incoming schema changes are ignored (returns false).
+	 * When disableSchemaUpgrade is true, an error is thrown if any incoming schema change ops are received.
 	 * @param contents - contents of the messages
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
-	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS or disableSchemaUpgrade is enabled)
+	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],
@@ -759,7 +759,18 @@ export class DocumentsSchemaController {
 		sequenceNumber: number,
 	): boolean {
 		if (this.disableSchemaUpgrade) {
-			return false;
+			assert(
+				!local,
+				"local schema change messages should never be generated when disableSchemaUpgrade is enabled",
+			);
+			// Clients with disableSchemaUpgrade enabled should never generate schema change messages, but they
+			// may receive them from misconfigured clients. In such case, throw on any incoming schema change ops
+			// to prevent unexpected schema upgrades.
+			throw DataProcessingError.create(
+				"DocSchema: Received schema change op while disableSchemaUpgrade is enabled",
+				"processDocumentSchemaMessages",
+				undefined,
+			);
 		}
 		for (const content of contents) {
 			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");

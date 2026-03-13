@@ -477,7 +477,8 @@ export interface ContainerRuntimeOptions {
 	readonly createBlobPayloadPending: true | undefined;
 
 	/**
-	 * When this property is set to true, the runtime will never send or accept DocumentSchemaChange ops.
+	 * When this property is set to true, the runtime will never send DocumentSchemaChange ops
+	 * and will throw an error if any incoming DocumentSchemaChange ops are received.
 	 * This effectively freezes the document schema at whatever state it was in when the document was created.
 	 */
 	readonly disableSchemaUpgrade: boolean;
