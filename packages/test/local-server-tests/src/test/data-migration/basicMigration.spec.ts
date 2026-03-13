@@ -16,7 +16,7 @@ import {
 	type IContainer,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
@@ -172,7 +172,7 @@ describe.skip("basicMigration", () => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		const driver = new LocalServerTestDriver();
-		provider = new TestObjectProvider(Loader, driver, createFluidEntryPoint);
+		provider = new TestObjectProvider(createLoader, driver, createFluidEntryPoint);
 	});
 
 	for (const strategy of migrationStrategies) {

@@ -24,6 +24,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_Loader": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.Loader>, TypeOnly<current.Loader>>
 
 /*
@@ -33,6 +34,7 @@ declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Loader": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
 
 /*
@@ -42,6 +44,7 @@ declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "ClassStatics_Loader": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOnly<typeof current.Loader>, TypeOnly<typeof old.Loader>>
 
 /*

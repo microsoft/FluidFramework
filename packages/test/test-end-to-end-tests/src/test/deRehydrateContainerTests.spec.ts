@@ -8,8 +8,11 @@ import { strict as assert } from "assert";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -203,7 +206,7 @@ describeCompat(
 		const sharedCounterId = "sharedcounterKey";
 
 		let provider: ITestObjectProvider;
-		let loader: Loader;
+		let loader: IHostLoader;
 		let request: IRequest;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
@@ -221,7 +224,7 @@ describeCompat(
 			};
 		}
 
-		function createTestLoader(): Loader {
+		function createTestLoader(): IHostLoader {
 			// It's important to use data store runtime of the same version as DDSs!
 			const factory = new apis.dataRuntime.TestFluidObjectFactory([
 				[sharedStringId, SharedString.getFactory()],
@@ -249,7 +252,7 @@ describeCompat(
 			const codeLoader = new LocalCodeLoader([[codeDetails, defaultFactory]], {});
 
 			// Use Loader supplied by test framework.
-			const testLoader = new apis.loader.Loader({
+			const testLoader = apis.loader.createLoader({
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,
 				codeLoader,

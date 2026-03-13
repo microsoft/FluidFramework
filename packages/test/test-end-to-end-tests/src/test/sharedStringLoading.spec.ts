@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
@@ -63,14 +66,13 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-				const loader = new Loader({
+				const container = await createDetachedContainer({
 					urlResolver: provider.urlResolver,
 					documentServiceFactory: provider.documentServiceFactory,
 					codeLoader,
 					logger,
+					codeDetails,
 				});
-
-				const container = await loader.createDetachedContainer(codeDetails);
 				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
@@ -86,15 +88,14 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-				const loader = new Loader({
+				const container = await loadExistingContainer({
 					urlResolver: provider.urlResolver,
 					documentServiceFactory: provider.documentServiceFactory,
 					codeLoader,
 					logger,
-				});
-
-				const container = await loader.resolve({
-					url: await provider.driver.createContainerUrl(documentId, containerUrl),
+					request: {
+						url: await provider.driver.createContainerUrl(documentId, containerUrl),
+					},
 				});
 				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
@@ -135,15 +136,14 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				});
 
-				const loader = new Loader({
+				const container = await loadExistingContainer({
 					urlResolver: provider.urlResolver,
 					documentServiceFactory,
 					codeLoader,
 					logger,
-				});
-
-				const container = await loader.resolve({
-					url: await provider.driver.createContainerUrl(documentId, containerUrl),
+					request: {
+						url: await provider.driver.createContainerUrl(documentId, containerUrl),
+					},
 				});
 				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
@@ -170,14 +170,13 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			const codeDetails = { package: "no-dynamic-pkg" };
 			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-			const loader = new Loader({
+			const container = await createDetachedContainer({
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,
 				codeLoader,
 				logger,
+				codeDetails,
 			});
-
-			const container = await loader.createDetachedContainer(codeDetails);
 			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const sharedString = await dataObject.root
 				.get<IFluidHandle<SharedString>>(stringId)
@@ -214,15 +213,14 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			const codeDetails = { package: "no-dynamic-pkg" };
 			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-			const loader = new Loader({
+			const container = await loadExistingContainer({
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,
 				codeLoader,
 				logger,
-			});
-
-			const container = await loader.resolve({
-				url: await provider.driver.createContainerUrl(documentId, containerUrl),
+				request: {
+					url: await provider.driver.createContainerUrl(documentId, containerUrl),
+				},
 			});
 			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const sharedString = await dataObject.root

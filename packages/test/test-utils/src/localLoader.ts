@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	Loader,
+	createLoader as createContainerLoader,
 	type ICreateDetachedContainerProps,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
@@ -41,7 +41,7 @@ export function createLoader(
 ): IHostLoader {
 	const codeLoader: ICodeDetailsLoader = new LocalCodeLoader(packageEntries);
 
-	return new Loader({
+	return createContainerLoader({
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,

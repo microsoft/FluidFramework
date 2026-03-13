@@ -23,7 +23,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
-import { Loader } from "../loader.js";
+import { createLoader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
@@ -40,7 +40,7 @@ const documentServiceFactoryFailProxy = failSometimeProxy<
 
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
-		const loader = new Loader({
+		const loader = createLoader({
 			codeLoader: failProxy(),
 			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
@@ -60,7 +60,7 @@ describe("loader unit test", () => {
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
-		const loader = new Loader({
+		const loader = createLoader({
 			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
@@ -76,7 +76,7 @@ describe("loader unit test", () => {
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
-		const loader = new Loader({
+		const loader = createLoader({
 			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
 			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
@@ -92,7 +92,7 @@ describe("loader unit test", () => {
 	});
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
-		const loader = new Loader({
+		const loader = createLoader({
 			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
@@ -128,7 +128,7 @@ describe("loader unit test", () => {
 			type: "fluid",
 			url: "none",
 		};
-		const loader = new Loader({
+		const loader = createLoader({
 			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
 			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver: failSometimeProxy<IUrlResolver>({
@@ -202,7 +202,7 @@ describe("loader unit test", () => {
 		const urlResolver = failSometimeProxy<IUrlResolver>({
 			resolve: async () => resolvedUrl,
 		});
-		const loader = new Loader({
+		const loader = createLoader({
 			codeLoader: createTestCodeLoaderProxy({ runtimeWithout_setConnectionStatus: true }),
 			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver,
