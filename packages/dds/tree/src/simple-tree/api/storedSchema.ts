@@ -10,8 +10,7 @@ import {
 	FormatValidatorNoOp,
 	type ICodecOptions,
 } from "../../codec/index.js";
-import { SchemaFormatVersion } from "../../core/index.js";
-import { makeSchemaCodec } from "../../feature-libraries/index.js";
+import { schemaCodecBuilder } from "../../feature-libraries/index.js";
 import type {
 	FormatV1,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -63,7 +62,10 @@ export function extractPersistedSchema(
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, { includeStaged });
-	const codec = makeSchemaCodec({ minVersionForCollab, jsonValidator: FormatValidatorNoOp });
+	const codec = schemaCodecBuilder.build({
+		minVersionForCollab,
+		jsonValidator: FormatValidatorNoOp,
+	});
 	return codec.encode(stored) as JsonCompatible;
 }
 
@@ -104,10 +106,10 @@ export function comparePersistedSchema(
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	// Any version can be passed down to makeSchemaCodec here.
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec(
-		{ ...options, minVersionForCollab: FluidClientVersion.v2_0 },
-		SchemaFormatVersion.v1,
-	);
+	const schemaCodec = schemaCodecBuilder.build({
+		...options,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	const config = new TreeViewConfigurationAlpha({
 		schema: normalizeFieldSchema(view),

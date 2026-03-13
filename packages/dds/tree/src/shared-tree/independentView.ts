@@ -18,13 +18,12 @@ import {
 import {
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaFormatVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
 	createNodeIdentifierManager,
 	fieldBatchCodecBuilder,
-	makeSchemaCodec,
+	schemaCodecBuilder,
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,
@@ -242,7 +241,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 			...options,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
+		const schemaCodec = schemaCodecBuilder.build(writeOptions);
 		const fieldBatchCodec = fieldBatchCodecBuilder.build(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 

@@ -60,7 +60,6 @@ import {
 	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
-	makeSchemaCodec,
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
@@ -231,7 +230,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options,
 		);
-		const schemaCodec = makeSchemaCodec(options);
+		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
 			{
@@ -498,9 +497,9 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	// Any version can be passed down to makeSchemaCodec here.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec({
+	// Any version can be passed down as minVersionForCollab.
+	// We only use the decode part, which always dispatches to the correct codec based on the version in the data.
+	const schemaCodec = schemaCodecBuilder.build({
 		...options,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	});

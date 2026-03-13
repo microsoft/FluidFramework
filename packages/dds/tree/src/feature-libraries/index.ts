@@ -29,7 +29,6 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	makeSchemaCodec,
 	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
@@ -194,6 +193,7 @@ export {
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
 	getCodecTreeForSchemaChangeFormat,
+	SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

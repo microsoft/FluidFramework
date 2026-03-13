@@ -8,9 +8,7 @@ import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/interna
 
 import {
 	ClientVersionDispatchingCodecBuilder,
-	type CodecWriteOptions,
 	FluidClientVersion,
-	type IJsonCodec,
 } from "../../codec/index.js";
 import {
 	SchemaFormatVersion,
@@ -26,29 +24,6 @@ import { brand } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
-
-/**
- * Create a schema codec.
- * @param options - Specifies common codec options, including `minVersionForCollab` and which `validator` to use.
- * @param writeVersionOverride - The schema version to write. If not provided, the version will be derived from `minVersionForCollab`.
- * TODO: Currently this parameter is provided when it probably should not be. Users of it should probably allow the automatic selection to occur and this parameter can be removed.
- * Any case where an override is actually required can use `options` to do so.
- * @returns The composed codec.
- *
- * @privateRemarks We should consider using the Shared Tree format version instead as it may be more valuable for application authors than the schema version.
- *
- * TODO: replace use of this with schemaCodecBuilder.build(...).
- */
-export function makeSchemaCodec(
-	options: CodecWriteOptions,
-	writeVersionOverride?: SchemaFormatVersion,
-): IJsonCodec<TreeStoredSchema> {
-	const overrides = new Map(options.writeVersionOverrides ?? []);
-	if (writeVersionOverride !== undefined) {
-		overrides.set(schemaCodecBuilder.name, writeVersionOverride);
-	}
-	return schemaCodecBuilder.build({ ...options, writeVersionOverrides: overrides });
-}
 
 function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	const nodeSchema = encodeNodeSchema(repo, (schema) => schema.encodeV1());
