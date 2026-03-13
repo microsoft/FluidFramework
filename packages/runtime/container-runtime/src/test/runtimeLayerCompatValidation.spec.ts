@@ -119,7 +119,7 @@ async function createAndLoadRuntime(
 		ILayerCompatDetails: compatibilityDetails,
 	};
 
-	await ContainerRuntime.loadRuntime({
+	const runtime = await ContainerRuntime.loadRuntime({
 		context: mockContext as IContainerContext,
 		registryEntries: [],
 		existing: false,
@@ -127,6 +127,7 @@ async function createAndLoadRuntime(
 			myProp: "myValue",
 		}),
 	});
+	runtime.dispose();
 }
 
 async function createAndLoadDataStore(

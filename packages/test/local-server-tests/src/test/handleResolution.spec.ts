@@ -139,6 +139,9 @@ describe("Multi-level handle access", () => {
 		assert.strictEqual(dataObject2C2.root.get("key1"), "value1");
 		assert.strictEqual(dataObject3.root.get("key2"), "value2");
 		assert.strictEqual(dataObject3C2.root.get("key1"), "value1");
+
+		loaderContainerTracker.reset();
+		await deltaConnectionServer.close();
 	});
 
 	it("validates that handles in a non-root data store and its dependencies resolve correctly when initial container is attached", async () => {
@@ -214,6 +217,9 @@ describe("Multi-level handle access", () => {
 		assert.strictEqual(dataObject2C2.root.get("key1"), "value1");
 		assert.strictEqual(dataObject3.root.get("key2"), "value2");
 		assert.strictEqual(dataObject3C2.root.get("key1"), "value1");
+
+		loaderContainerTracker.reset();
+		await deltaConnectionServer.close();
 	});
 
 	it("validates that handles in a non-root data store and its dependencies resolve correctly after container close and rehydrate", async () => {
@@ -275,5 +281,8 @@ describe("Multi-level handle access", () => {
 			dataObject3C2.handle.get(),
 			"Must be able to access data object 3 handle in container 2 after rehydrate",
 		);
+
+		loaderContainerTracker.reset();
+		await deltaConnectionServer.close();
 	});
 });

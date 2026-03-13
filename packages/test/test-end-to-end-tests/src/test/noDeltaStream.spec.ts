@@ -139,6 +139,7 @@ describeCompat(
 					}
 					scenarioToSeqNum.set(scenario, initContainer.deltaManager.lastSequenceNumber);
 					initContainer.close();
+					initContainer.dispose?.();
 				}
 				const containerUrl = await provider.driver.createContainerUrl(
 					provider.documentId,
@@ -187,6 +188,7 @@ describeCompat(
 					});
 					scenarioToSeqNum.set(scenario, summaryContainer.deltaManager.lastSequenceNumber);
 					summaryContainer.close();
+					summaryContainer.dispose?.();
 				}
 			}
 			return {
@@ -234,105 +236,120 @@ describeCompat(
 						...validationLoaderProps,
 						request: { url: containerUrl },
 					});
-					const validationDataObject =
-						await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
+					try {
+						const validationDataObject =
+							await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
-					const storageOnlyDsF = wrapObjectAndOverride<IDocumentServiceFactory>(
-						provider.documentServiceFactory,
-						{
-							createDocumentService: {
-								policies: (ds) => {
-									const policies: IDocumentService["policies"] = {
-										...ds.policies,
-										storageOnly: true,
-									};
-									return policies;
-								},
-							},
-						},
-					);
-
-					const storageOnlyLoaderProps = createLoaderProps(
-						[
-							[
-								provider.defaultCodeDetails,
-								provider.createFluidEntryPoint(testContainerConfigDisabled),
-							],
-						],
-						storageOnlyDsF,
-						provider.urlResolver,
-					);
-
-					if (testConfig.opsUpToSeqNumber !== undefined) {
-						// Define sequenceNumber if opsUpToSeqNumber is set, otherwise leave undefined
-						const sequenceNumber = testConfig.opsUpToSeqNumber ? lastKnownSeqNum : undefined;
-						const storageOnlyContainer = await loadContainerPaused(
-							storageOnlyLoaderProps,
+						const storageOnlyDsF = wrapObjectAndOverride<IDocumentServiceFactory>(
+							provider.documentServiceFactory,
 							{
-								url: containerUrl,
-								headers: {
-									[LoaderHeader.loadMode]: testConfig.loadOptions,
+								createDocumentService: {
+									policies: (ds) => {
+										const policies: IDocumentService["policies"] = {
+											...ds.policies,
+											storageOnly: true,
+										};
+										return policies;
+									},
 								},
 							},
-							sequenceNumber,
 						);
 
-						const deltaManager = storageOnlyContainer.deltaManager;
-						const loadedSeqNum = deltaManager.lastSequenceNumber;
-
-						if (testConfig.opsUpToSeqNumber === true) {
-							// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
-							assert.strictEqual(
-								loadedSeqNum,
-								lastKnownSeqNum,
-								"loadedSeqNum === lastKnownSeqNum",
-							);
-						}
-						// The sequence number should still be the same as when we loaded.
-						assert.strictEqual(
-							deltaManager.lastSequenceNumber,
-							loadedSeqNum,
-							"deltaManager.lastSequenceNumber === loadedSeqNum",
+						const storageOnlyLoaderProps = createLoaderProps(
+							[
+								[
+									provider.defaultCodeDetails,
+									provider.createFluidEntryPoint(testContainerConfigDisabled),
+								],
+							],
+							storageOnlyDsF,
+							provider.urlResolver,
 						);
-					} else {
-						const storageOnlyContainer = await loadExistingContainer({
-							...storageOnlyLoaderProps,
-							request: {
-								url: containerUrl,
-								headers: {
-									[LoaderHeader.loadMode]: testConfig.loadOptions,
+
+						if (testConfig.opsUpToSeqNumber !== undefined) {
+							// Define sequenceNumber if opsUpToSeqNumber is set, otherwise leave undefined
+							const sequenceNumber = testConfig.opsUpToSeqNumber ? lastKnownSeqNum : undefined;
+							const storageOnlyContainer = await loadContainerPaused(
+								storageOnlyLoaderProps,
+								{
+									url: containerUrl,
+									headers: {
+										[LoaderHeader.loadMode]: testConfig.loadOptions,
+									},
 								},
-							},
-						});
-
-						const deltaManager = storageOnlyContainer.deltaManager;
-
-						storageOnlyContainer.connect();
-						assert.strictEqual(deltaManager.active, false, "deltaManager.active");
-						assert.ok(
-							deltaManager.readOnlyInfo.readonly,
-							"deltaManager.readOnlyInfo.readonly",
-						);
-						assert.ok(
-							deltaManager.readOnlyInfo.permissions,
-							"deltaManager.readOnlyInfo.permissions",
-						);
-						assert.ok(
-							deltaManager.readOnlyInfo.storageOnly,
-							"deltaManager.readOnlyInfo.storageOnly",
-						);
-
-						const storageOnlyDataObject =
-							await getContainerEntryPointBackCompat<ITestFluidObject>(storageOnlyContainer);
-						for (const key of validationDataObject.root.keys()) {
-							assert.strictEqual(
-								storageOnlyDataObject.root.get(key),
-								storageOnlyDataObject.root.get(key),
-								`${storageOnlyDataObject.root.get(key)} !== ${storageOnlyDataObject.root.get(
-									key,
-								)}`,
+								sequenceNumber,
 							);
+							try {
+								const deltaManager = storageOnlyContainer.deltaManager;
+								const loadedSeqNum = deltaManager.lastSequenceNumber;
+
+								if (testConfig.opsUpToSeqNumber === true) {
+									// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
+									assert.strictEqual(
+										loadedSeqNum,
+										lastKnownSeqNum,
+										"loadedSeqNum === lastKnownSeqNum",
+									);
+								}
+								// The sequence number should still be the same as when we loaded.
+								assert.strictEqual(
+									deltaManager.lastSequenceNumber,
+									loadedSeqNum,
+									"deltaManager.lastSequenceNumber === loadedSeqNum",
+								);
+							} finally {
+								storageOnlyContainer.close();
+								storageOnlyContainer.dispose?.();
+							}
+						} else {
+							const storageOnlyContainer = await loadExistingContainer({
+								...storageOnlyLoaderProps,
+								request: {
+									url: containerUrl,
+									headers: {
+										[LoaderHeader.loadMode]: testConfig.loadOptions,
+									},
+								},
+							});
+							try {
+								const deltaManager = storageOnlyContainer.deltaManager;
+
+								storageOnlyContainer.connect();
+								assert.strictEqual(deltaManager.active, false, "deltaManager.active");
+								assert.ok(
+									deltaManager.readOnlyInfo.readonly,
+									"deltaManager.readOnlyInfo.readonly",
+								);
+								assert.ok(
+									deltaManager.readOnlyInfo.permissions,
+									"deltaManager.readOnlyInfo.permissions",
+								);
+								assert.ok(
+									deltaManager.readOnlyInfo.storageOnly,
+									"deltaManager.readOnlyInfo.storageOnly",
+								);
+
+								const storageOnlyDataObject =
+									await getContainerEntryPointBackCompat<ITestFluidObject>(
+										storageOnlyContainer,
+									);
+								for (const key of validationDataObject.root.keys()) {
+									assert.strictEqual(
+										storageOnlyDataObject.root.get(key),
+										storageOnlyDataObject.root.get(key),
+										`${storageOnlyDataObject.root.get(key)} !== ${storageOnlyDataObject.root.get(
+											key,
+										)}`,
+									);
+								}
+							} finally {
+								storageOnlyContainer.close();
+								storageOnlyContainer.dispose?.();
+							}
 						}
+					} finally {
+						validationContainer.close();
+						validationContainer.dispose?.();
 					}
 				}
 			});

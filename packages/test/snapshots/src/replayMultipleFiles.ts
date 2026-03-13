@@ -406,7 +406,12 @@ async function processNode(
 
 				worker.on("message", (message: string) => {
 					if (message === "true") {
+						// Terminate the worker to release its resources (e.g. GC timers on loaded
+						// containers). Without this, the worker stays alive and its MessagePort
+						// keeps the parent event loop alive, preventing mocha from exiting.
+						void worker.terminate();
 						resolve();
+						return;
 					}
 					if (workerData.mode === Mode.Compare) {
 						const extra =

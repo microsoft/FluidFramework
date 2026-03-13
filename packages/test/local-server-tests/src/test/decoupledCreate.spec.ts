@@ -127,6 +127,10 @@ describe("Scenario Test", () => {
 			// ensure the newly loaded container has the data we expect.
 			const entryPoint: FluidObject<ITestFluidObject> = await container2.getEntryPoint();
 			assert.strictEqual(entryPoint.ITestFluidObject?.root.get("someKey"), "someValue");
+			container2.dispose();
 		}
+
+		container.dispose();
+		await deltaConnectionServer.close();
 	});
 });

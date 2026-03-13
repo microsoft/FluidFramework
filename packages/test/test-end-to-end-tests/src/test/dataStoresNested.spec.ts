@@ -38,6 +38,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { SharedMap } = apis.dds;
 
+	let driver: LocalServerTestDriver;
 	let provider: ITestObjectProvider;
 	let containers: IContainer[] = [];
 	let summaryCollection: SummaryCollection | undefined;
@@ -99,7 +100,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	}
 
 	beforeEach("getTestObjectProvider", async () => {
-		const driver = new LocalServerTestDriver();
+		driver = new LocalServerTestDriver();
 		const registry = [];
 		// ADO:7302 We need another test object provider
 		provider = new TestObjectProvider(
@@ -115,8 +116,9 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		provider.reset();
+		await driver.dispose();
 		for (const container of containers) {
 			container.close();
 		}

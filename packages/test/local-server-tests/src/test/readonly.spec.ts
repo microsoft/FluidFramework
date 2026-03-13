@@ -20,6 +20,7 @@ import type {
 import { SharedMap, ISharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
 
@@ -115,7 +116,11 @@ const runtimeFactory: IRuntimeFactory = {
 	},
 };
 
-async function createContainerAndGetLoadProps(): Promise<ILoadExistingContainerProps> {
+async function createContainerAndGetLoadProps(): Promise<
+	ILoadExistingContainerProps & {
+		deltaConnectionServer: ReturnType<typeof LocalDeltaConnectionServer.create>;
+	}
+> {
 	const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
 	const { loaderProps, codeDetails, urlResolver } = createLoader({
@@ -130,7 +135,7 @@ async function createContainerAndGetLoadProps(): Promise<ILoadExistingContainerP
 	const url = await container.getAbsoluteUrl("");
 	assert(url !== undefined, "container must have url");
 	container.dispose();
-	return { ...loaderProps, request: { url } };
+	return { ...loaderProps, request: { url }, deltaConnectionServer };
 }
 
 describe("readonly", () => {
@@ -164,12 +169,14 @@ describe("readonly", () => {
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
 		);
+
+		container.dispose();
+		await deltaConnectionServer.close();
 	});
 
 	it("Readonly is correct after container load", async () => {
-		const loadedContainer = await loadExistingContainer(
-			await createContainerAndGetLoadProps(),
-		);
+		const { deltaConnectionServer, ...loadProps } = await createContainerAndGetLoadProps();
+		const loadedContainer = await loadExistingContainer(loadProps);
 
 		const entrypoint: FluidObject<DefaultDataStore> = await loadedContainer.getEntryPoint();
 
@@ -183,12 +190,14 @@ describe("readonly", () => {
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
 		);
+
+		loadedContainer.dispose();
+		await deltaConnectionServer.close();
 	});
 
 	it("Readonly is correct after datastore load and forceReadonly", async () => {
-		const loadedContainer = await loadExistingContainer(
-			await createContainerAndGetLoadProps(),
-		);
+		const { deltaConnectionServer, ...loadProps } = await createContainerAndGetLoadProps();
+		const loadedContainer = await loadExistingContainer(loadProps);
 
 		const entrypoint: FluidObject<DefaultDataStore> = await loadedContainer.getEntryPoint();
 
@@ -199,17 +208,23 @@ describe("readonly", () => {
 
 		loadedContainer.forceReadonly?.(true);
 
+		// Wait for the reconnect triggered by forceReadonly to complete so the
+		// socketConnectionTimeout (62s) is cleared before we close the server.
+		await waitForContainerConnection(loadedContainer);
+
 		assert(entrypoint.DefaultDataStore.isReadOnly() === true, "should be readonly");
 		assert(
 			entrypoint.DefaultDataStore.readonlyEventCount === 1,
 			"should be any readonly events",
 		);
+
+		loadedContainer.dispose();
+		await deltaConnectionServer.close();
 	});
 
 	it("Readonly is correct after forceReadonly before datastore load", async () => {
-		const loadedContainer = await loadExistingContainer(
-			await createContainerAndGetLoadProps(),
-		);
+		const { deltaConnectionServer, ...loadProps } = await createContainerAndGetLoadProps();
+		const loadedContainer = await loadExistingContainer(loadProps);
 
 		loadedContainer.forceReadonly?.(true);
 
@@ -225,5 +240,8 @@ describe("readonly", () => {
 			entrypoint.DefaultDataStore.readonlyEventCount === 0,
 			"shouldn't be any readonly events",
 		);
+
+		loadedContainer.dispose();
+		await deltaConnectionServer.close();
 	});
 });

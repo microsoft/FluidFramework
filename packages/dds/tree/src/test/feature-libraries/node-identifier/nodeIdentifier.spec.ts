@@ -30,7 +30,10 @@ async function getIIDCompressor(): Promise<IIdCompressor> {
 			runtime: IFluidDataStoreRuntime;
 		}
 	).runtime;
-	return runtime.idCompressor ?? fail("Expected IIdCompressor to be present in runtime");
+	const compressor =
+		runtime.idCompressor ?? fail("Expected IIdCompressor to be present in runtime");
+	await provider.dispose();
+	return compressor;
 }
 
 describe("Node Identifier", () => {

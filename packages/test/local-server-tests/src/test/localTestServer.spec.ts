@@ -183,6 +183,6 @@ describe("LocalTestServer", () => {
 	});
 
 	afterEach(async () => {
-		await deltaConnectionServer.webSocketServer.close();
+		await deltaConnectionServer.close();
 	});
 });

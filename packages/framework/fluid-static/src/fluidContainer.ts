@@ -331,6 +331,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.acquireExtension = extensionStore.acquireExtension.bind(extensionStore);
 		container.on("connected", this.connectedHandler);
 		container.on("closed", this.disposedHandler);
+		container.on("disposed", this.disposedHandler);
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
@@ -390,9 +391,10 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	}
 
 	public dispose(): void {
-		this.container.close();
+		this.container.dispose();
 		this.container.off("connected", this.connectedHandler);
 		this.container.off("closed", this.disposedHandler);
+		this.container.off("disposed", this.disposedHandler);
 		this.container.off("disconnected", this.disconnectedHandler);
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);

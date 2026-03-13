@@ -323,6 +323,10 @@ describe("Runtime", () => {
 				extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 			});
 
+			afterEach(() => {
+				runtime.dispose();
+			});
+
 			describe("connection status", () => {
 				it("should return true when context is `Connected`", async () => {
 					updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
@@ -381,6 +385,10 @@ describe("Runtime", () => {
 							testExtensionId,
 							TestExtensionFactory,
 						);
+					});
+
+					afterEach(() => {
+						fallbackRuntime.dispose();
 					});
 
 					it("should fallback to canSendOps when context is `Connected`", async () => {
@@ -585,6 +593,7 @@ describe("Runtime", () => {
 						false,
 						"Extension should be disconnected after transition back to Disconnected",
 					);
+					readOnlyRuntime.dispose();
 				});
 
 				it("should handle connection type changes", async () => {
@@ -682,6 +691,7 @@ describe("Runtime", () => {
 						{ type: "disconnected" },
 						"Second event should be disconnected",
 					);
+					fallbackRuntime.dispose();
 				});
 			});
 		});

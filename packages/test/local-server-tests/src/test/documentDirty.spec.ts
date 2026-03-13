@@ -517,7 +517,7 @@ describe("Document Dirty", () => {
 		});
 
 		afterEach(async () => {
-			await deltaConnectionServer.webSocketServer.close();
+			await deltaConnectionServer.close();
 		});
 	});
 
@@ -666,8 +666,9 @@ describe("Document Dirty", () => {
 			return;
 		});
 
-		afterEach(() => {
+		afterEach(async () => {
 			loaderContainerTracker.reset();
+			await deltaConnectionServer.close();
 		});
 
 		it("clears the dirty flag after container is attached", async () => {
