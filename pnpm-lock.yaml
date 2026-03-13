@@ -5341,6 +5341,9 @@ importers:
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
+      concurrently:
+        specifier: ^9.2.1
+        version: 9.2.1
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
