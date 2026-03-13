@@ -1,8 +1,6 @@
 {
 	"$schema": "./node_modules/nx/schemas/nx-schema.json",
-	"affected": {
-		"defaultBase": "main"
-	},
+	"defaultBase": "main",
 	"namedInputs": {
 		"source": [
 			"{projectRoot}/src/**/*.ts",
@@ -67,13 +65,35 @@
 		"api-extractor:commonjs": {
 			"dependsOn": ["tsc"],
 			"inputs": ["production", "{projectRoot}/api-extractor*.json"],
-			"outputs": ["{projectRoot}/_api-extractor-temp"],
+			"outputs": [
+				"{projectRoot}/_api-extractor-temp",
+				"{projectRoot}/dist/public.d.ts",
+				"{projectRoot}/dist/beta.d.ts",
+				"{projectRoot}/dist/alpha.d.ts",
+				"{projectRoot}/dist/legacy.d.ts",
+				"{projectRoot}/dist/legacyAlpha.d.ts",
+				"{projectRoot}/dist/internal.d.ts"
+			],
 			"cache": true
 		},
 		"api-extractor:esnext": {
 			"dependsOn": ["build:esnext"],
 			"inputs": ["production", "{projectRoot}/api-extractor*.json"],
-			"outputs": ["{projectRoot}/_api-extractor-temp"],
+			"outputs": [
+				"{projectRoot}/_api-extractor-temp",
+				"{projectRoot}/lib/public.d.ts",
+				"{projectRoot}/lib/beta.d.ts",
+				"{projectRoot}/lib/alpha.d.ts",
+				"{projectRoot}/lib/legacy.d.ts",
+				"{projectRoot}/lib/legacyAlpha.d.ts",
+				"{projectRoot}/lib/internal.d.ts",
+				"{projectRoot}/public.d.ts",
+				"{projectRoot}/beta.d.ts",
+				"{projectRoot}/alpha.d.ts",
+				"{projectRoot}/legacy.d.ts",
+				"{projectRoot}/legacyAlpha.d.ts",
+				"{projectRoot}/internal.d.ts"
+			],
 			"cache": true
 		},
 		"build:api-reports:current": {
@@ -129,7 +149,7 @@
 			"cache": true
 		},
 		"eslint": {
-			"dependsOn": ["compile", "build:test:esm"],
+			"dependsOn": ["compile", "build:test:esm", "^tsc", "^build:esnext", "^api"],
 			"inputs": ["source"],
 			"cache": true
 		},
@@ -309,5 +329,5 @@
 		}
 	},
 	"cacheDirectory": ".nx/cache",
-	"parallel": 3
+	"parallel": 12
 }
