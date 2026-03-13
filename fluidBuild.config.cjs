@@ -311,6 +311,7 @@ module.exports = {
 			"common/build/build-common/src/esm/package.json",
 			"packages/common/core-interfaces/src/cjs/package.json",
 			"packages/framework/presence/src/cjs/package.json",
+			"examples/utils/import-testing/src/cjs/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
