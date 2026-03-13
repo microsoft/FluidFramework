@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { AxiosError } from "axios";
-
-import { isAxiosCanceledError } from "./utils";
-
 /**
  * Represents the internal error code in NetworkError
  * @internal
@@ -318,24 +314,17 @@ export function throwFluidServiceNetworkError(
 /**
  * @internal
  */
-export function convertAxiosErrorToNetorkError(error: AxiosError) {
-	const { response, request } = error ?? {};
-	if (response === undefined) {
-		if (request !== undefined) {
-			if (isAxiosCanceledError(error)) {
-				// Request was canceled.
-				return new NetworkError(499, "Client aborted the request.");
-			}
-			// Request was made but no response was received.
-			return new NetworkError(
-				502,
-				`Network Error: ${error?.message ?? "No response received."}`,
-			);
-		}
+export function convertRequestErrorToNetworkError(error: Error) {
+	if (error.name === "AbortError") {
+		// Request was canceled.
+		return new NetworkError(499, "Client aborted the request.");
 	}
-	if (response !== undefined) {
-		// response.data can have potential sensitive information, so we do not return that.
-		return new NetworkError(response.status, response.statusText);
+	if (error instanceof TypeError) {
+		// Network error (e.g., DNS failure, connection refused).
+		return new NetworkError(
+			502,
+			`Network Error: ${error.message ?? "No response received."}`,
+		);
 	}
 	return new NetworkError(500, "Unknown error.");
 }

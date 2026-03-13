@@ -63,7 +63,6 @@
 		"@types/semver": "^7.7.0",
 		"assert": "^2.0.0",
 		"async": "^3.2.2",
-		"axios": "^1.8.4",
 		"buffer": "^6.0.3",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",

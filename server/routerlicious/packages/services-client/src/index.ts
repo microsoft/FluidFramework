@@ -29,8 +29,16 @@ export {
 	isNetworkError,
 	NetworkError,
 	throwFluidServiceNetworkError,
-	convertAxiosErrorToNetorkError,
+	convertRequestErrorToNetworkError,
 } from "./error";
+export { getGlobalFetchFn, setGlobalFetchFn } from "./fetchContext";
+export { buildFetchUrl, createFetchWithAbortSignal } from "./fetchHelpers";
+export type {
+	FetchFn,
+	IRestWrapperMetricProps,
+	RawRequestHeaders,
+	RequestConfig,
+} from "./fetchTypes";
 export { choose, getRandomName } from "./generateNames";
 export { GitManager } from "./gitManager";
 export { Heap, type IHeapComparator } from "./heap";
@@ -46,8 +54,6 @@ export { RestLessClient, RestLessFieldNames } from "./restLessClient";
 export {
 	BasicRestWrapper,
 	RestWrapper,
-	type IBasicRestWrapperMetricProps,
-	setupAxiosInterceptorsForAbortSignals,
 } from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
 export {

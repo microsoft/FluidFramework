@@ -3,14 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	default as Axios,
-	type AxiosError,
-	type AxiosInstance,
-	type AxiosRequestConfig,
-	type RawAxiosRequestHeaders,
-	type AxiosResponse,
-} from "axios";
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 
@@ -21,38 +13,20 @@ import {
 } from "./constants";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, type INetworkErrorDetails } from "./error";
+import { getGlobalFetchFn } from "./fetchContext";
+import {
+	buildFetchUrl,
+	fetchWithTimeout,
+	parseFetchResponse,
+	toHeadersInit,
+} from "./fetchHelpers";
+import type {
+	FetchFn,
+	IRestWrapperMetricProps,
+	RawRequestHeaders,
+	RequestConfig,
+} from "./fetchTypes";
 import { getGlobalTimeoutContext } from "./timeoutContext";
-import { isAxiosCanceledError } from "./utils";
-
-/**
- * @internal
- */
-export function setupAxiosInterceptorsForAbortSignals(
-	getAbortController: () => AbortController | undefined,
-) {
-	// Set up an interceptor to add the abort signal to the request
-	Axios.interceptors.request.use((config) => {
-		const abortController = getAbortController();
-		if (abortController) {
-			config.signal = abortController.signal;
-		}
-		return config;
-	});
-}
-
-/**
- * @internal
- */
-export interface IBasicRestWrapperMetricProps {
-	axiosError: AxiosError<any>;
-	status: number | string;
-	method: string;
-	baseUrl: string;
-	url: string;
-	correlationId: string;
-	durationInMs: number;
-	timeoutInMs: number | string;
-}
 
 /**
  * @internal
@@ -70,7 +44,6 @@ export abstract class RestWrapper {
 		if (timeout && timeout > 0) {
 			return timeout;
 		}
-		// Fallback to the global timeout context if no timeout is set
 		return undefined;
 	}
 
@@ -81,20 +54,15 @@ export abstract class RestWrapper {
 	public async get<T>(
 		url: string,
 		queryString?: Record<string, string | number | boolean>,
-		headers?: RawAxiosRequestHeaders,
+		headers?: RawRequestHeaders,
 		additionalOptions?: Partial<
-			Omit<
-				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
-			>
+			Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">
 		>,
 	): Promise<T> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
-			maxBodyLength: this.maxBodyLength,
-			maxContentLength: this.maxContentLength,
 			method: "GET",
 			url: `${url}${this.generateQueryString(queryString)}`,
 			timeout: this.getTimeoutMs(),
@@ -107,21 +75,16 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: Record<string, string | number | boolean>,
-		headers?: RawAxiosRequestHeaders,
+		headers?: RawRequestHeaders,
 		additionalOptions?: Partial<
-			Omit<
-				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
-			>
+			Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">
 		>,
 	): Promise<T> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
-			maxBodyLength: this.maxBodyLength,
-			maxContentLength: this.maxContentLength,
 			method: "POST",
 			url: `${url}${this.generateQueryString(queryString)}`,
 			timeout: this.getTimeoutMs(),
@@ -133,20 +96,15 @@ export abstract class RestWrapper {
 	public async delete<T>(
 		url: string,
 		queryString?: Record<string, string | number | boolean>,
-		headers?: RawAxiosRequestHeaders,
+		headers?: RawRequestHeaders,
 		additionalOptions?: Partial<
-			Omit<
-				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
-			>
+			Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">
 		>,
 	): Promise<T> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
-			maxBodyLength: this.maxBodyLength,
-			maxContentLength: this.maxContentLength,
 			method: "DELETE",
 			url: `${url}${this.generateQueryString(queryString)}`,
 			timeout: this.getTimeoutMs(),
@@ -159,21 +117,16 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: Record<string, string | number | boolean>,
-		headers?: RawAxiosRequestHeaders,
+		headers?: RawRequestHeaders,
 		additionalOptions?: Partial<
-			Omit<
-				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
-			>
+			Omit<RequestConfig, "baseURL" | "headers" | "method" | "url">
 		>,
 	): Promise<T> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
-			maxBodyLength: this.maxBodyLength,
-			maxContentLength: this.maxContentLength,
 			method: "PATCH",
 			url: `${url}${this.generateQueryString(queryString)}`,
 			timeout: this.getTimeoutMs(),
@@ -182,7 +135,7 @@ export abstract class RestWrapper {
 		return this.request<T>(options, 200);
 	}
 
-	protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
+	protected abstract request<T>(options: RequestConfig, statusCode: number): Promise<T>;
 
 	protected generateQueryString(
 		queryStringValues: Record<string, string | number | boolean> | undefined,
@@ -215,28 +168,28 @@ export class BasicRestWrapper extends RestWrapper {
 		defaultQueryString: Record<string, string | number | boolean> = {},
 		maxBodyLength = 1000 * 1024 * 1024,
 		maxContentLength = 1000 * 1024 * 1024,
-		private defaultHeaders: RawAxiosRequestHeaders = {},
-		private readonly axios: AxiosInstance = Axios,
+		private defaultHeaders: RawRequestHeaders = {},
+		private readonly fetchFn: FetchFn = getGlobalFetchFn(),
 		private readonly refreshDefaultQueryString?: () => Record<
 			string,
 			string | number | boolean
 		>,
-		private readonly refreshDefaultHeaders?: () => RawAxiosRequestHeaders,
+		private readonly refreshDefaultHeaders?: () => RawRequestHeaders,
 		private readonly getCorrelationId?: () => string | undefined,
 		private readonly getTelemetryContextProperties?: () =>
 			| Record<string, string | number | boolean>
 			| undefined,
 		private readonly refreshTokenIfNeeded?: (
-			authorizationHeader: RawAxiosRequestHeaders,
-		) => Promise<RawAxiosRequestHeaders | undefined>,
-		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
+			authorizationHeader: RawRequestHeaders,
+		) => Promise<RawRequestHeaders | undefined>,
+		private readonly logHttpMetrics?: (requestProps: IRestWrapperMetricProps) => void,
 		private readonly getCallingServiceName?: () => string | undefined,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
 
 	protected async request<T>(
-		requestConfig: AxiosRequestConfig,
+		requestConfig: RequestConfig,
 		statusCode: number,
 		canRetry = true,
 	): Promise<T> {
@@ -265,145 +218,157 @@ export class BasicRestWrapper extends RestWrapper {
 			}
 		}
 
-		return new Promise<T>((resolve, reject) => {
-			const startTime = performance.now();
-			let axiosError: AxiosError;
-			let axiosResponse: AxiosResponse;
-			this.axios
-				.request<T>(options)
-				.then((response) => {
-					axiosResponse = response;
-					resolve(response.data);
-				})
-				.catch((error: AxiosError<any>) => {
-					if (error?.response?.status === statusCode) {
-						// Axios misinterpreted as error, return as successful response
-						resolve(error?.response?.data);
-					}
+		const fullUrl = buildFetchUrl(options.baseURL, options.url);
+		const method = (options.method ?? "GET").toUpperCase();
+		const fetchHeaders = toHeadersInit(options.headers ?? {});
 
-					if (error?.config) {
-						debug(
-							`[${error.config.method}] request to [${error.config.baseURL ?? ""}${
-								error.config.url ?? ""
-							}] failed with [${error.response?.status}] [${safeStringify(
-								error.response?.data,
-								undefined,
-								2,
-							)}]`,
-						);
-					} else {
-						debug(`request to ${options.url} failed ${error ? error.message : ""}`);
-					}
+		if (options.data !== undefined && method !== "GET" && method !== "HEAD") {
+			fetchHeaders["Content-Type"] = fetchHeaders["Content-Type"] ?? "application/json";
+		}
 
-					if (
-						error?.response?.status === 429 &&
-						error?.response?.data?.retryAfter > 0 &&
-						canRetry
-					) {
-						setTimeout(() => {
-							this.request<T>(options, statusCode).then(resolve).catch(reject);
-						}, error.response.data.retryAfter * 1000);
-					} else if (
-						error?.response?.status === 401 &&
-						canRetry &&
-						this.refreshOnAuthError()
-					) {
-						const retryConfig = { ...requestConfig };
-						retryConfig.headers = this.generateHeaders(
-							retryConfig.headers,
-							options.headers?.[CorrelationIdHeaderName],
-						);
+		const init: RequestInit = {
+			method,
+			headers: fetchHeaders,
+			body:
+				options.data !== undefined && method !== "GET" && method !== "HEAD"
+					? typeof options.data === "string"
+						? options.data
+						: JSON.stringify(options.data)
+					: undefined,
+		};
 
-						this.request<T>(retryConfig, statusCode, false).then(resolve).catch(reject);
-					} else {
-						axiosError = error;
-						const errorSourceMessage = `[${error?.config?.method ?? ""}] request to [${
-							error?.config?.baseURL ?? options.baseURL ?? ""
-						}] failed with [${error.response?.status}] status code`;
-						// From https://axios-http.com/docs/handling_errors
-						if (error?.response) {
-							// The request was made and the server responded with a status code
-							// that falls out of the range of 2xx
-							if (typeof error?.response?.data === "string") {
-								reject(
-									createFluidServiceNetworkError(error?.response?.status, {
-										message: error?.response?.data,
-										source: errorSourceMessage,
-									}),
-								);
-							} else {
-								reject(
-									createFluidServiceNetworkError(error?.response?.status, {
-										...error?.response?.data,
-										source: errorSourceMessage,
-									}),
-								);
-							}
-						} else if (error?.request) {
-							// The calling client aborted the request before a valid response was received
-							if (isAxiosCanceledError(error)) {
-								reject(
-									createFluidServiceNetworkError(499, {
-										message: error?.message ?? "Request Aborted by Client",
-										source: errorSourceMessage,
-									}),
-								);
-							}
-							// The request was made but no response was received. That can happen if a service is
-							// temporarily down or inaccessible due to network failures. We leverage that in here
-							// to detect network failures and transform them into a NetworkError with code 502,
-							// which can be retried and is not fatal.
-							reject(
-								createFluidServiceNetworkError(502, {
-									message: `Network Error: ${error?.message ?? "undefined"}`,
-									source: errorSourceMessage,
-								}),
-							);
-						} else {
-							// Something happened in setting up the request that triggered an Error
-							const details: INetworkErrorDetails = {
-								canRetry: false,
-								isFatal: false,
-								message: error?.message ?? "Unknown Error",
-								source: errorSourceMessage,
-							};
-							reject(createFluidServiceNetworkError(500, details));
-						}
-					}
-				})
-				.finally(() => {
-					if (this.logHttpMetrics) {
-						const status: string | number = axiosError
-							? axiosError?.response?.status ?? "STATUS_UNAVAILABLE"
-							: axiosResponse?.status ?? "STATUS_UNAVAILABLE";
-						const requestProps: IBasicRestWrapperMetricProps = {
-							axiosError,
-							status,
-							baseUrl:
-								options.baseURL ??
-								axiosError?.config?.baseURL ??
-								"BASE_URL_UNAVAILABLE",
-							method: options.method ?? "METHOD_UNAVAILABLE",
-							url: options.url ?? "URL_UNAVAILABLE",
-							correlationId,
-							durationInMs: performance.now() - startTime,
-							timeoutInMs:
-								options.timeout ??
-								this.axios.defaults.timeout ??
-								"TIMEOUT_UNAVAILABLE",
-						};
-						this.logHttpMetrics(requestProps);
-					}
+		const startTime = performance.now();
+		let requestError: Error | undefined;
+		let responseStatus: number | string = "STATUS_UNAVAILABLE";
+
+		try {
+			const response = await fetchWithTimeout(
+				this.fetchFn,
+				fullUrl,
+				init,
+				options.timeout,
+				options.timeoutErrorMessage,
+			);
+
+			responseStatus = response.status;
+
+			if (response.ok || response.status === statusCode) {
+				return await parseFetchResponse<T>(response);
+			}
+
+			// Non-ok response: parse error body
+			let errorData: any;
+			try {
+				errorData = await parseFetchResponse<any>(response);
+			} catch {
+				errorData = {};
+			}
+
+			debug(
+				`[${method}] request to [${fullUrl}] failed with [${response.status}] [${safeStringify(
+					errorData,
+					undefined,
+					2,
+				)}]`,
+			);
+
+			if (
+				response.status === 429 &&
+				errorData?.retryAfter > 0 &&
+				canRetry
+			) {
+				return new Promise<T>((resolve, reject) => {
+					setTimeout(() => {
+						this.request<T>(options, statusCode).then(resolve).catch(reject);
+					}, errorData.retryAfter * 1000);
 				});
-		});
+			} else if (
+				response.status === 401 &&
+				canRetry &&
+				this.refreshOnAuthError()
+			) {
+				const retryConfig = { ...requestConfig };
+				retryConfig.headers = this.generateHeaders(
+					retryConfig.headers,
+					options.headers?.[CorrelationIdHeaderName] as string | undefined,
+				);
+
+				return this.request<T>(retryConfig, statusCode, false);
+			}
+
+			const errorSourceMessage = `[${method}] request to [${fullUrl}] failed with [${response.status}] status code`;
+			if (typeof errorData === "string") {
+				throw createFluidServiceNetworkError(response.status, {
+					message: errorData,
+					source: errorSourceMessage,
+				});
+			} else {
+				throw createFluidServiceNetworkError(response.status, {
+					...errorData,
+					source: errorSourceMessage,
+				});
+			}
+		} catch (error: unknown) {
+			if (error instanceof Error && error.name === "NetworkError") {
+				// Already a NetworkError from the block above, rethrow
+				requestError = error;
+				throw error;
+			}
+
+			const errorSourceMessage = `[${method}] request to [${fullUrl}] failed`;
+
+			if (error instanceof DOMException && error.name === "AbortError") {
+				responseStatus = 499;
+				const networkError = createFluidServiceNetworkError(499, {
+					message: error.message ?? "Request Aborted by Client",
+					source: errorSourceMessage,
+				});
+				requestError = networkError;
+				throw networkError;
+			} else if (error instanceof TypeError) {
+				// TypeError is thrown by fetch for network errors (e.g., DNS failure, connection refused)
+				responseStatus = 502;
+				const networkError = createFluidServiceNetworkError(502, {
+					message: `Network Error: ${error.message ?? "undefined"}`,
+					source: errorSourceMessage,
+				});
+				requestError = networkError;
+				throw networkError;
+			} else {
+				responseStatus = 500;
+				const details: INetworkErrorDetails = {
+					canRetry: false,
+					isFatal: false,
+					message: error instanceof Error ? error.message : "Unknown Error",
+					source: errorSourceMessage,
+				};
+				const networkError = createFluidServiceNetworkError(500, details);
+				requestError = networkError;
+				throw networkError;
+			}
+		} finally {
+			if (this.logHttpMetrics) {
+				const requestProps: IRestWrapperMetricProps = {
+					requestError,
+					status: responseStatus,
+					baseUrl: options.baseURL ?? "BASE_URL_UNAVAILABLE",
+					method: options.method ?? "METHOD_UNAVAILABLE",
+					url: options.url ?? "URL_UNAVAILABLE",
+					correlationId,
+					durationInMs: performance.now() - startTime,
+					timeoutInMs: options.timeout ?? "TIMEOUT_UNAVAILABLE",
+				};
+				this.logHttpMetrics(requestProps);
+			}
+		}
 	}
 
 	private generateHeaders(
-		headers?: RawAxiosRequestHeaders,
+		headers?: RawRequestHeaders,
 		fallbackCorrelationId?: string,
 		telemetryContextProperties?: Record<string, string | number | boolean>,
 		callingServiceName?: string,
-	): RawAxiosRequestHeaders {
+	): RawRequestHeaders {
 		const result = {
 			...this.defaultHeaders,
 			...headers,

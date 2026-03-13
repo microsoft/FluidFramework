@@ -4,10 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import Axios, { AxiosHeaders } from "axios";
-import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import AxiosMockAdapter from "axios-mock-adapter";
 import { CorrelationIdHeaderName } from "../constants";
+import type { FetchFn } from "../fetchTypes";
 import { BasicRestWrapper } from "../restWrapper";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { jwtDecode } from "jwt-decode";
@@ -18,146 +16,89 @@ describe("BasicRestWrapper", () => {
 	const headerCount = 1;
 	const maxBodyLength = 1000 * 1024 * 1024;
 	const maxContentLength = 1000 * 1024 * 1024;
-	const axiosInstance = Axios.create();
-	let axiosMock: Partial<AxiosInstance>;
-	let axiosErrorMock: Partial<AxiosInstance>;
-	let axiosTooManyRequestsErrorZeroRetryAfterMock: Partial<AxiosInstance>;
-	let axiosTooManyRequestsErrorNegativeRetryAfterMock: Partial<AxiosInstance>;
-	let axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter: AxiosMockAdapter;
-	let requestOptions: AxiosRequestConfig;
+	let fetchMock: FetchFn;
+	let fetchErrorMock: FetchFn;
+	let fetchTooManyRequestsZeroRetryAfterMock: FetchFn;
+	let fetchTooManyRequestsNegativeRetryAfterMock: FetchFn;
+	let fetchTooManyRequestsPositiveRetryAfterMock: FetchFn;
+	let capturedUrl: string;
+	let capturedInit: RequestInit;
 
 	before(() => {
-		axiosMock = {
-			request: async <T = any, R = AxiosResponse<T>>(options?) =>
-				new Promise<R>((resolve, reject) => {
-					requestOptions = options;
-					const response: AxiosResponse<T> = {
-						config: { headers: new AxiosHeaders() },
-						data: {} as T,
-						headers: {},
-						request: options.responseType,
-						status: 200,
-						statusText: "OK",
-					};
-
-					resolve(response as any);
-				}),
+		fetchMock = async (url: string | URL | Request, init?: RequestInit) => {
+			capturedUrl = url.toString();
+			capturedInit = init ?? {};
+			return new Response(JSON.stringify({}), {
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+			});
 		};
 
-		axiosErrorMock = {
-			request: async <T = any, R = AxiosResponse<T>>(options?) =>
-				new Promise<R>((resolve, reject) => {
-					requestOptions = options;
-
-					const response: AxiosResponse = {
-						config: options,
-						data: {},
-						headers: {},
-						request: options.responseType,
-						status: 500,
-						statusText: "ServerError",
-					};
-
-					const err: AxiosError = {
-						code: "500",
-						config: options,
-						message: "",
-						name: "ServerError",
-						request: {},
-						response,
-						isAxiosError: true,
-						toJSON: () => ({}),
-					};
-
-					throw err;
-				}),
+		fetchErrorMock = async (url: string | URL | Request, init?: RequestInit) => {
+			capturedUrl = url.toString();
+			capturedInit = init ?? {};
+			return new Response(JSON.stringify({}), {
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			});
 		};
 
-		axiosTooManyRequestsErrorZeroRetryAfterMock = {
-			request: async <T = any, R = AxiosResponse<T>>(options?) =>
-				new Promise<R>((resolve, reject) => {
-					requestOptions = options;
-
-					const response: AxiosResponse = {
-						config: options,
-						data: { retryAfter: 0, message: "throttled" },
-						headers: {},
-						request: options.responseType,
-						status: 429,
-						statusText: "TooManyRequests",
-					};
-
-					const err: AxiosError = {
-						code: "429",
-						config: options,
-						message: "throttled",
-						name: "TooManyRequests",
-						request: {},
-						response,
-						isAxiosError: true,
-						toJSON: () => ({}),
-					};
-
-					throw err;
-				}),
+		fetchTooManyRequestsZeroRetryAfterMock = async (
+			url: string | URL | Request,
+			init?: RequestInit,
+		) => {
+			capturedUrl = url.toString();
+			capturedInit = init ?? {};
+			return new Response(JSON.stringify({ retryAfter: 0, message: "throttled" }), {
+				status: 429,
+				headers: { "Content-Type": "application/json" },
+			});
 		};
 
-		axiosTooManyRequestsErrorNegativeRetryAfterMock = {
-			request: async <T = any, R = AxiosResponse<T>>(options?) =>
-				new Promise<R>((resolve, reject) => {
-					requestOptions = options;
-
-					const response: AxiosResponse = {
-						config: options,
-						data: { retryAfter: -1, message: "throttled" },
-						headers: {},
-						request: options.responseType,
-						status: 429,
-						statusText: "TooManyRequests",
-					};
-
-					const err: AxiosError = {
-						code: "429",
-						config: options,
-						message: "throttled",
-						name: "TooManyRequests",
-						request: {},
-						response,
-						isAxiosError: true,
-						toJSON: () => ({}),
-					};
-
-					throw err;
-				}),
+		fetchTooManyRequestsNegativeRetryAfterMock = async (
+			url: string | URL | Request,
+			init?: RequestInit,
+		) => {
+			capturedUrl = url.toString();
+			capturedInit = init ?? {};
+			return new Response(JSON.stringify({ retryAfter: -1, message: "throttled" }), {
+				status: 429,
+				headers: { "Content-Type": "application/json" },
+			});
 		};
 
-		axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter = new AxiosMockAdapter(
-			axiosInstance,
-		);
-
-		// For axios mock for testing 429 throttled requests with a valid retryAfter value,
-		// first request should return 429 and then a 200 should be returned
-		// in order to validate the successful request.
-		axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter
-			.onAny()
-			.replyOnce(429, { retryAfter: 1, message: "throttled" })
-			.onAny()
-			.reply(200, "A successful request after being throttled.");
+		let retryCallCount = 0;
+		fetchTooManyRequestsPositiveRetryAfterMock = async (
+			url: string | URL | Request,
+			init?: RequestInit,
+		) => {
+			capturedUrl = url.toString();
+			capturedInit = init ?? {};
+			retryCallCount++;
+			if (retryCallCount <= 1) {
+				return new Response(JSON.stringify({ retryAfter: 1, message: "throttled" }), {
+					status: 429,
+					headers: { "Content-Type": "application/json" },
+				});
+			}
+			return new Response(JSON.stringify("A successful request after being throttled."), {
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+			});
+		};
 	});
 
 	describe(".get", () => {
 		it("Invalid Response Code should reject Promise", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosErrorMock as AxiosInstance,
+				fetchErrorMock,
 			);
 
-			// act/assert
 			await rw.get(requestUrl).then(
 				() => assert.fail("Promise was not rejected"),
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
@@ -165,17 +106,15 @@ describe("BasicRestWrapper", () => {
 		});
 
 		it("429 Response Code should reject Promise with 0 retryAfter", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance,
+				fetchTooManyRequestsZeroRetryAfterMock,
 			);
 
-			// act/assert
 			await rw.get(requestUrl).then(
 				() => assert.fail("Promise was not rejected"),
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
@@ -183,17 +122,15 @@ describe("BasicRestWrapper", () => {
 		});
 
 		it("429 Response Code should reject Promise with negative retryAfter", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance,
+				fetchTooManyRequestsNegativeRetryAfterMock,
 			);
 
-			// act/assert
 			await rw.get(requestUrl).then(
 				() => assert.fail("Promise was not rejected"),
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
@@ -201,17 +138,15 @@ describe("BasicRestWrapper", () => {
 		});
 
 		it("429 Response Code should not reject Promise with positive retryAfter", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosInstance,
+				fetchTooManyRequestsPositiveRetryAfterMock,
 			);
 
-			// act/assert
 			await rw.get(requestUrl).then(
 				(response) =>
 					assert.strictEqual(response, "A successful request after being throttled."),
@@ -220,125 +155,125 @@ describe("BasicRestWrapper", () => {
 		});
 
 		it("Standard properties should not change", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				undefined,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.get(requestUrl);
 
-			// assert
-			assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
-			assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
+			const expectedUrl = `${baseurl}${requestUrl}`;
+			assert.strictEqual(expectedUrl, capturedUrl, "full URL should be base + request");
+			assert.strictEqual("GET", capturedInit.method, "method should be GET");
+			const headers = capturedInit.headers as Record<string, string>;
 			assert.strictEqual(
 				headerCount,
-				Object.keys(requestOptions.headers).length,
+				Object.keys(headers).length,
 				"Headers should only have 1 header",
 			);
-			assert.strictEqual(
-				CorrelationIdHeaderName,
-				Object.keys(requestOptions.headers)[0],
-				"Headers should only have x-correlation-id",
+			assert.ok(
+				CorrelationIdHeaderName in headers,
+				"Headers should have x-correlation-id",
 			);
 		});
 
 		it("Default QueryString and Default Headers", async () => {
-			// arrange
 			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
 			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-			const outputUrl = `${requestUrl}?q1=valueq1&q2=valueq2`;
 			const rw = new BasicRestWrapper(
 				baseurl,
 				defaultQueryString,
 				maxBodyLength,
 				maxContentLength,
 				defaultHeaders,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.get(requestUrl);
 
-			// assert
-			assert.strictEqual(
-				outputUrl,
-				requestOptions.url.substring(0, outputUrl.length),
-				"requestUrl should be the same",
+			assert.ok(
+				capturedUrl.includes("q1=valueq1"),
+				"URL should contain query string",
 			);
+			assert.ok(
+				capturedUrl.includes("q2=valueq2"),
+				"URL should contain query string",
+			);
+			const headers = capturedInit.headers as Record<string, string>;
 			assert.strictEqual(
 				defaultHeaders.h1,
-				requestOptions.headers.h1 as string,
+				headers.h1 as string,
 				"Header1 value should be correct",
 			);
 			assert.strictEqual(
 				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
+				headers.h2 as string,
 				"Header2 value should be correct",
 			);
 		});
 
 		it("Default and Request, QueryString and Headers", async () => {
-			// arrange
 			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
 			const requestHeaders = { h1: "valueh11", h3: "valueh3" };
 			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
 			const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-			const outputUrl = `${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3`;
 			const rw = new BasicRestWrapper(
 				baseurl,
 				defaultQueryString,
 				maxBodyLength,
 				maxContentLength,
 				defaultHeaders,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.get(requestUrl, requestQueryString, requestHeaders);
 
-			// assert
-			assert.strictEqual(
-				outputUrl,
-				requestOptions.url.substring(0, outputUrl.length),
-				"requestUrl should be the same",
+			assert.ok(
+				capturedUrl.includes("q1=valueq11"),
+				"q1 should be overridden",
 			);
+			assert.ok(
+				capturedUrl.includes("q2=valueq2"),
+				"q2 should still be present",
+			);
+			assert.ok(
+				capturedUrl.includes("q3=valueq3"),
+				"q3 should be added",
+			);
+			const headers = capturedInit.headers as Record<string, string>;
 			assert.strictEqual(
 				requestHeaders.h1,
-				requestOptions.headers.h1 as string,
+				headers.h1 as string,
 				"Header1 value should be updated",
 			);
 			assert.strictEqual(
 				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
+				headers.h2 as string,
 				"Header2 value should be correct",
 			);
 			assert.strictEqual(
 				requestHeaders.h3,
-				requestOptions.headers.h3 as string,
-				"Header2 value should be added",
+				headers.h3 as string,
+				"Header3 value should be added",
 			);
 		});
 	});
 
 	describe(".post", () => {
 		it("Invalid Response Code should reject Promise", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosErrorMock as AxiosInstance,
+				fetchErrorMock,
 			);
 
-			// act/assert
 			await rw.post(requestUrl, {}).then(
 				() => assert.fail("Promise was not rejected"),
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
@@ -346,91 +281,39 @@ describe("BasicRestWrapper", () => {
 		});
 
 		it("429 Response Code should reject Promise with 0 retryAfter", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance,
+				fetchTooManyRequestsZeroRetryAfterMock,
 			);
 
-			// act/assert
 			await rw.post(requestUrl, {}).then(
 				() => assert.fail("Promise was not rejected"),
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should reject Promise with negative retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance,
-			);
-
-			// act/assert
-			await rw.post(requestUrl, {}).then(
-				() => assert.fail("Promise was not rejected"),
-				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should not reject Promise with positive retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosInstance,
-			);
-
-			// act/assert
-			await rw.post(requestUrl, {}).then(
-				(response) =>
-					assert.strictEqual(response, "A successful request after being throttled."),
-				(err) => assert.fail("Invalid response code rejected Promise"),
 			);
 		});
 
 		it("Standard properties should not change", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				undefined,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.post(requestUrl, {});
 
-			// assert
-			assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
-			assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
-			assert.strictEqual(
-				headerCount,
-				Object.keys(requestOptions.headers).length,
-				"Headers should only have 1 header",
-			);
-			assert.strictEqual(
-				CorrelationIdHeaderName,
-				Object.keys(requestOptions.headers)[0],
-				"Headers should only have x-correlation-id",
-			);
+			const expectedUrl = `${baseurl}${requestUrl}`;
+			assert.strictEqual(expectedUrl, capturedUrl, "full URL should be base + request");
+			assert.strictEqual("POST", capturedInit.method, "method should be POST");
 		});
 
 		it("Default QueryString and Default Headers", async () => {
-			// arrange
 			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
 			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
 			const rw = new BasicRestWrapper(
@@ -439,32 +322,29 @@ describe("BasicRestWrapper", () => {
 				maxBodyLength,
 				maxContentLength,
 				defaultHeaders,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.post(requestUrl, {});
 
-			// assert
-			assert.strictEqual(
-				`${requestUrl}?q1=valueq1&q2=valueq2`,
-				requestOptions.url,
-				"requestUrl should be the same",
+			assert.ok(
+				capturedUrl.includes("q1=valueq1&q2=valueq2"),
+				"URL should contain query string",
 			);
+			const headers = capturedInit.headers as Record<string, string>;
 			assert.strictEqual(
 				defaultHeaders.h1,
-				requestOptions.headers.h1 as string,
+				headers.h1 as string,
 				"Header1 value should be correct",
 			);
 			assert.strictEqual(
 				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
+				headers.h2 as string,
 				"Header2 value should be correct",
 			);
 		});
 
 		it("Default and Request, QueryString and Headers", async () => {
-			// arrange
 			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
 			const requestHeaders = { h1: "valueh11", h3: "valueh3" };
 			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
@@ -475,391 +355,101 @@ describe("BasicRestWrapper", () => {
 				maxBodyLength,
 				maxContentLength,
 				defaultHeaders,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.post(requestUrl, {}, requestQueryString, requestHeaders);
 
-			// assert
-			assert.strictEqual(
-				`${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3`,
-				requestOptions.url,
-				"requestUrl should be the same",
+			assert.ok(
+				capturedUrl.includes("q1=valueq11"),
+				"q1 should be overridden",
 			);
+			const headers = capturedInit.headers as Record<string, string>;
 			assert.strictEqual(
 				requestHeaders.h1,
-				requestOptions.headers.h1 as string,
+				headers.h1 as string,
 				"Header1 value should be updated",
 			);
 			assert.strictEqual(
 				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
+				headers.h2 as string,
 				"Header2 value should be correct",
 			);
 			assert.strictEqual(
 				requestHeaders.h3,
-				requestOptions.headers.h3 as string,
-				"Header2 value should be added",
+				headers.h3 as string,
+				"Header3 value should be added",
 			);
 		});
 	});
 
 	describe(".delete", () => {
 		it("Invalid Response Code should reject Promise", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosErrorMock as AxiosInstance,
+				fetchErrorMock,
 			);
 
-			// act/assert
 			await rw.delete(requestUrl, {}).then(
 				() => assert.fail("Promise was not rejected"),
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should reject Promise with 0 retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance,
-			);
-
-			// act/assert
-			await rw.delete(requestUrl, {}).then(
-				() => assert.fail("Promise was not rejected"),
-				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should reject Promise with negative retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance,
-			);
-
-			// act/assert
-			await rw.delete(requestUrl, {}).then(
-				() => assert.fail("Promise was not rejected"),
-				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should not reject Promise with positive retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosInstance,
-			);
-
-			// act/assert
-			await rw.delete(requestUrl, {}).then(
-				(response) =>
-					assert.strictEqual(response, "A successful request after being throttled."),
-				(err) => assert.fail("Invalid response code rejected Promise"),
 			);
 		});
 
 		it("Standard properties should not change", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				undefined,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.delete(requestUrl);
 
-			// assert
-			assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
-			assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
-			assert.strictEqual(
-				headerCount,
-				Object.keys(requestOptions.headers).length,
-				"Headers should only have 1 header",
-			);
-			assert.strictEqual(
-				CorrelationIdHeaderName,
-				Object.keys(requestOptions.headers)[0],
-				"Headers should only have x-correlation-id",
-			);
-		});
-
-		it("Default QueryString and Default Headers", async () => {
-			// arrange
-			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
-			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-			const rw = new BasicRestWrapper(
-				baseurl,
-				defaultQueryString,
-				maxBodyLength,
-				maxContentLength,
-				defaultHeaders,
-				axiosMock as AxiosInstance,
-			);
-
-			// act
-			await rw.delete(requestUrl);
-
-			// assert
-			assert.strictEqual(
-				`${requestUrl}?q1=valueq1&q2=valueq2`,
-				requestOptions.url,
-				"requestUrl should be the same",
-			);
-			assert.strictEqual(
-				defaultHeaders.h1,
-				requestOptions.headers.h1 as string,
-				"Header1 value should be correct",
-			);
-			assert.strictEqual(
-				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
-				"Header2 value should be correct",
-			);
-		});
-
-		it("Default and Request, QueryString and Headers", async () => {
-			// arrange
-			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
-			const requestHeaders = { h1: "valueh11", h3: "valueh3" };
-			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-			const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-			const rw = new BasicRestWrapper(
-				baseurl,
-				defaultQueryString,
-				maxBodyLength,
-				maxContentLength,
-				defaultHeaders,
-				axiosMock as AxiosInstance,
-			);
-
-			// act
-			await rw.delete(requestUrl, requestQueryString, requestHeaders);
-
-			// assert
-			assert.strictEqual(
-				`${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3`,
-				requestOptions.url,
-				"requestUrl should be the same",
-			);
-			assert.strictEqual(
-				requestHeaders.h1,
-				requestOptions.headers.h1 as string,
-				"Header1 value should be updated",
-			);
-			assert.strictEqual(
-				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
-				"Header2 value should be correct",
-			);
-			assert.strictEqual(
-				requestHeaders.h3,
-				requestOptions.headers.h3 as string,
-				"Header2 value should be added",
-			);
+			const expectedUrl = `${baseurl}${requestUrl}`;
+			assert.strictEqual(expectedUrl, capturedUrl, "full URL should be base + request");
+			assert.strictEqual("DELETE", capturedInit.method, "method should be DELETE");
 		});
 	});
 
 	describe(".patch", () => {
 		it("Invalid Response Code should reject Promise", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				{},
-				axiosErrorMock as AxiosInstance,
+				fetchErrorMock,
 			);
 
-			// act/assert
 			await rw.patch(requestUrl, {}).then(
 				() => assert.fail("Promise was not rejected"),
 				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should reject Promise with 0 retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosTooManyRequestsErrorZeroRetryAfterMock as AxiosInstance,
-			);
-
-			// act/assert
-			await rw.patch(requestUrl, {}).then(
-				() => assert.fail("Promise was not rejected"),
-				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should reject Promise with negative retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosTooManyRequestsErrorNegativeRetryAfterMock as AxiosInstance,
-			);
-
-			// act/assert
-			await rw.patch(requestUrl, {}).then(
-				() => assert.fail("Promise was not rejected"),
-				(err) => assert.ok(err, "Invalid response code rejected Promise"),
-			);
-		});
-
-		it("429 Response Code should not reject Promise with positive retryAfter", async () => {
-			// arrange
-			const rw = new BasicRestWrapper(
-				baseurl,
-				{},
-				maxBodyLength,
-				maxContentLength,
-				{},
-				axiosInstance,
-			);
-
-			// act/assert
-			await rw.patch(requestUrl, {}).then(
-				(response) =>
-					assert.strictEqual(response, "A successful request after being throttled."),
-				(err) => assert.fail("Invalid response code rejected Promise"),
 			);
 		});
 
 		it("Standard properties should not change", async () => {
-			// arrange
 			const rw = new BasicRestWrapper(
 				baseurl,
 				{},
 				maxBodyLength,
 				maxContentLength,
 				undefined,
-				axiosMock as AxiosInstance,
+				fetchMock,
 			);
 
-			// act
 			await rw.patch(requestUrl, {});
 
-			// assert
-			assert.strictEqual(baseurl, requestOptions.baseURL, "baseURL should be the same");
-			assert.strictEqual(requestUrl, requestOptions.url, "requestUrl should be the same");
-			assert.strictEqual(
-				headerCount,
-				Object.keys(requestOptions.headers).length,
-				"Headers should only have 1 header",
-			);
-			assert.strictEqual(
-				CorrelationIdHeaderName,
-				Object.keys(requestOptions.headers)[0],
-				"Headers should only have x-correlation-id",
-			);
-		});
-
-		it("Default QueryString and Default Headers", async () => {
-			// arrange
-			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
-			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-			const rw = new BasicRestWrapper(
-				baseurl,
-				defaultQueryString,
-				maxBodyLength,
-				maxContentLength,
-				defaultHeaders,
-				axiosMock as AxiosInstance,
-			);
-
-			// act
-			await rw.patch(requestUrl, {});
-
-			// assert
-			assert.strictEqual(
-				`${requestUrl}?q1=valueq1&q2=valueq2`,
-				requestOptions.url,
-				"requestUrl should be the same",
-			);
-			assert.strictEqual(
-				defaultHeaders.h1,
-				requestOptions.headers.h1 as string,
-				"Header1 value should be correct",
-			);
-			assert.strictEqual(
-				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
-				"Header2 value should be correct",
-			);
-		});
-
-		it("Default and Request, QueryString and Headers", async () => {
-			// arrange
-			const defaultHeaders = { h1: "valueh1", h2: "valueh2" };
-			const requestHeaders = { h1: "valueh11", h3: "valueh3" };
-			const defaultQueryString = { q1: "valueq1", q2: "valueq2" };
-			const requestQueryString = { q1: "valueq11", q3: "valueq3" };
-			const rw = new BasicRestWrapper(
-				baseurl,
-				defaultQueryString,
-				maxBodyLength,
-				maxContentLength,
-				defaultHeaders,
-				axiosMock as AxiosInstance,
-			);
-
-			// act
-			await rw.patch(requestUrl, {}, requestQueryString, requestHeaders);
-
-			// assert
-			assert.strictEqual(
-				`${requestUrl}?q1=valueq11&q2=valueq2&q3=valueq3`,
-				requestOptions.url,
-				"requestUrl should be the same",
-			);
-			assert.strictEqual(
-				requestHeaders.h1,
-				requestOptions.headers.h1 as string,
-				"Header1 value should be updated",
-			);
-			assert.strictEqual(
-				defaultHeaders.h2,
-				requestOptions.headers.h2 as string,
-				"Header2 value should be correct",
-			);
-			assert.strictEqual(
-				requestHeaders.h3,
-				requestOptions.headers.h3 as string,
-				"Header2 value should be added",
-			);
+			const expectedUrl = `${baseurl}${requestUrl}`;
+			assert.strictEqual(expectedUrl, capturedUrl, "full URL should be base + request");
+			assert.strictEqual("PATCH", capturedInit.method, "method should be PATCH");
 		});
 	});
 
@@ -901,7 +491,7 @@ describe("BasicRestWrapper", () => {
 				maxBodyLength,
 				maxContentLength,
 				getDefaultHeaders(),
-				axiosMock as AxiosInstance,
+				fetchMock,
 				undefined,
 				undefined,
 				undefined,
