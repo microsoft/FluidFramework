@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const path = require("path");
-const { Project } = require("ts-morph");
+import * as path from "path";
+import type { JSSyntaxElement, Rule } from "eslint";
+import type { TSESTree } from "@typescript-eslint/utils";
+import { Project } from "ts-morph";
 
 /**
  * Validates if a tag is correctly formatted.
@@ -12,7 +14,7 @@ const { Project } = require("ts-morph");
  * @param context - The context object provided by ESLint.
  * @returns true if valid tag, else false.
  */
-function isTagValid(tag, context) {
+function isTagValid(tag: string, context: Rule.RuleContext): boolean {
 	if (!tag.startsWith("@")) {
 		context.report({
 			loc: { line: 1, column: 0 },
@@ -32,7 +34,7 @@ function isTagValid(tag, context) {
  * @returns A set of validated tags.
  * Note: Invalid tags will be reported.
  */
-function processTags(tags, context) {
+function processTags(tags: string[], context: Rule.RuleContext): Set<string> {
 	return new Set(tags.filter((tag) => isTagValid(tag, context)));
 }
 
@@ -43,8 +45,11 @@ function processTags(tags, context) {
  * @returns An object with tags as keys and Sets of paths as values.
  * ex: { '@alpha': Set(2) { './exceptionFile.ts', './exceptionFile2.ts' } }
  */
-function processExceptions(exceptions, context) {
-	const processedExceptions = {};
+function processExceptions(
+	exceptions: Record<string, string[]>,
+	context: Rule.RuleContext,
+): Record<string, Set<string>> {
+	const processedExceptions: Record<string, Set<string>> = {};
 	Object.keys(exceptions).forEach((tag) => {
 		if (isTagValid(tag, context)) {
 			processedExceptions[tag] = new Set(exceptions[tag]);
@@ -60,13 +65,13 @@ function processExceptions(exceptions, context) {
  * @param currentFilePath - The absolute path of the current file.
  * @return - The absolute path of the imported module.
  */
-function resolveImportPath(importPath, currentFilePath) {
+function resolveImportPath(importPath: string, currentFilePath: string): string {
 	return path.isAbsolute(importPath)
 		? importPath
 		: path.resolve(path.dirname(currentFilePath), importPath);
 }
 
-module.exports = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -99,36 +104,41 @@ module.exports = {
 			importWithRestrictedTag: "Import with restricted tag found.",
 		},
 	},
-	create(context) {
-		const options = context.options[0] || {};
-		const restrictedTags = processTags(options.tags, context);
-		const exceptions = processExceptions(options.exceptions, context);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	create(context: Rule.RuleContext): any {
+		// Return type must be 'any' because ESLint's NodeListener type is incompatible with TSESTree node types
+		const options =
+			(context.options[0] as { tags?: string[]; exceptions?: Record<string, string[]> }) ||
+			{};
+		const restrictedTags = processTags(options.tags || [], context);
+		const exceptions = processExceptions(options.exceptions || {}, context);
 
-		let tsConfigPath;
-		if (context.parserOptions.project) {
+		let tsConfigPath: string;
+		if (context.parserOptions?.project) {
 			// Resolve the relative path to an absolute path
-			tsConfigPath = path.resolve(context.getCwd(), context.parserOptions.project);
+			tsConfigPath = path.resolve(context.getCwd(), context.parserOptions.project as string);
 		} else {
 			context.report({
-				node: null,
+				node: null as unknown as JSSyntaxElement, // ESLint requires a node but we're reporting a global configuration error
 				message:
 					"A 'tsconfig.json' file is required but was not found in the ESLint config under parserOptions.project.",
 			});
+			return {}; // Return early if no tsconfig is found
 		}
 		const project = new Project({ tsConfigFilePath: tsConfigPath });
 
 		return {
-			ImportDeclaration(node) {
+			ImportDeclaration(node: TSESTree.ImportDeclaration) {
 				const importSource = node.source.value;
 				const currentFilePath = context.getFilename();
 				// For each item being imported
 				node.specifiers.forEach((specifier) => {
 					if (specifier.type === "ImportSpecifier") {
-						// Name of imported item
-						const importedName = specifier.imported.name;
+						// Name of imported item - imported is always an Identifier in ImportSpecifier
+						const importedName = (specifier.imported as TSESTree.Identifier).name;
 
 						const importedFilePath = resolveImportPath(
-							specifier.parent.source.value,
+							(specifier.parent as TSESTree.ImportDeclaration).source.value,
 							currentFilePath,
 						);
 						// File it was imported from
@@ -145,12 +155,13 @@ module.exports = {
 									// Check if the tag is restricted
 									if (restrictedTags.has(tag)) {
 										// Check for any exceptions that allow the use of this tag
-										if (exceptions[tag] && exceptions[tag].has(importSource)) {
+										const exceptionSet = exceptions[tag];
+										if (exceptionSet && exceptionSet.has(importSource)) {
 											return;
 										}
 										// Report a violation if a restricted tag is used without an exception
 										context.report({
-											node: specifier,
+											node: specifier as unknown as Rule.Node,
 											message: `Importing ${tag} tagged items is not allowed: ${importedName}`,
 										});
 									}

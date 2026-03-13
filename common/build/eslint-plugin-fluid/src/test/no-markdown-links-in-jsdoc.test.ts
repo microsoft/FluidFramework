@@ -3,20 +3,27 @@
  * Licensed under the MIT License.
  */
 
-const assert = require("assert");
-const path = require("path");
-const { createESLintConfig, eslintVersion, ESLint } = require("./eslintConfigHelper.cjs");
+import assert from "node:assert";
+import * as path from "node:path";
+import type { ESLint } from "eslint";
+import {
+	createESLintConfig,
+	eslintVersion,
+	ESLint as ESLintClass,
+	getTestCasesDir,
+} from "./eslintConfigHelper.js";
 
 describe(`Do not allow Markdown links in JSDoc/TSDoc comments (eslint ${eslintVersion})`, function () {
-	async function lintFile(file) {
+	async function lintFile(file: string): Promise<ESLint.LintResult> {
 		const eslintOptions = createESLintConfig({
 			rules: {
 				"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
 			},
 		});
 
-		const eslint = new ESLint(eslintOptions);
-		const fileToLint = path.join(__dirname, "./test-cases/no-markdown-links-in-jsdoc", file);
+		// Cast to any because CompatESLintOptions is a union type that works for both ESLint 8 and 9
+		const eslint = new ESLintClass(eslintOptions as any);
+		const fileToLint = path.join(getTestCasesDir(), "no-markdown-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");
 		return results[0];
@@ -37,8 +44,8 @@ describe(`Do not allow Markdown links in JSDoc/TSDoc comments (eslint ${eslintVe
 
 		// Test auto-fix
 		assert.notEqual(error1.fix, undefined);
-		assert.deepEqual(error1.fix.range, [259, 283]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
-		assert.deepEqual(error1.fix.text, "{@link https://bing.com | bing}");
+		assert.deepEqual(error1.fix?.range, [259, 283]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error1.fix?.text, "{@link https://bing.com | bing}");
 
 		const error2 = result.messages[1];
 		assert.strictEqual(
@@ -51,7 +58,7 @@ describe(`Do not allow Markdown links in JSDoc/TSDoc comments (eslint ${eslintVe
 
 		// Test auto-fix
 		assert.notEqual(error2.fix, undefined);
-		assert.deepEqual(error2.fix.range, [307, 311]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
-		assert.deepEqual(error2.fix.text, "{@link }");
+		assert.deepEqual(error2.fix?.range, [307, 311]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
+		assert.deepEqual(error2.fix?.text, "{@link }");
 	});
 });

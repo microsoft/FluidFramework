@@ -1,0 +1,15 @@
+{
+	"extends": "../../../build-common/tsconfig.node16.json",
+	"compilerOptions": {
+		"rootDir": "..",
+		"outDir": "../../lib",
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"types": ["mocha", "node"],
+		"forceConsistentCasingInFileNames": true,
+		"strictNullChecks": false,
+		"exactOptionalPropertyTypes": false
+	},
+	"include": ["./**/*.ts"]
+}

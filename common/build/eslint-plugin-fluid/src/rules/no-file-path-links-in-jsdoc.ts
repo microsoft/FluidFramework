@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-//@ts-check
 /**
  * File path links are not portable in the context of JSDoc/TSDoc comments.
  * For this reason, we disallow them in favor of links to stable, user-accessible resources (like GitHub URLs).
@@ -12,46 +11,44 @@
  * @remarks
  * Our separate rule, `no-markdown-links-in-jsdoc`, disallows Markdown link syntax in JSDoc/TSDoc comments.
  * File path links are allowed in `@privateRemarks` blocks since those do not show up in public API documentation.
- *
- * @typedef {import('@microsoft/tsdoc').DocExcerpt} DocExcerpt
- * @typedef {import('@microsoft/tsdoc').DocInlineTag} DocInlineTag
- * @typedef {import('@microsoft/tsdoc').DocNode} DocNode
- * @typedef {import('@microsoft/tsdoc').DocPlainText} DocPlainText
- * @typedef {import("eslint").Rule.RuleModule} RuleModule
- *
- * @typedef {{
- * 	startIndex: number;
- * 	endIndex: number;
- * }} TextRange
  */
 
-const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
-const { getBlockComments } = require("./tsdoc-utils");
+import type { Rule } from "eslint";
+import type { DocExcerpt, DocInlineTag, DocNode } from "@microsoft/tsdoc";
+import { DocNodeKind, TSDocParser } from "@microsoft/tsdoc";
+import { getBlockComments } from "./tsdoc-utils.js";
+
+interface TextRange {
+	startIndex: number;
+	endIndex: number;
+}
 
 const parser = new TSDocParser();
 
 /**
  * Checks if a link target is a file path (starts with `/`, `./`, or `../`).
- * @param {string} linkTarget - The link target to check.
- * @returns {boolean} True if the link target is a file path.
+ * @param linkTarget - The link target to check.
+ * @returns True if the link target is a file path.
  */
-function isFilePath(linkTarget) {
+function isFilePath(linkTarget: string): boolean {
 	// Remove any pipe separator and text after it (e.g., "./path|text" -> "./path")
-	const target = linkTarget.split("|")[0].trim();
-	return target.startsWith("/") || target.startsWith("./") || target.startsWith("../");
+	const target = linkTarget.split("|")[0]?.trim();
+	return (
+		target !== undefined && (target.startsWith("/") || target.startsWith("./") || target.startsWith("../"))
+	);
 }
 
 /**
  * Recursively collects all Excerpt ranges from a DocNode tree.
  * @remarks Used to determine the full text range of an InlineTag node.
- * @param {DocNode} node - The node to collect ranges from.
- * @param {number} startIndex - The current minimum start position.
- * @param {number} endIndex - The current maximum end position.
- * @returns {TextRange} The updated start/end positions.
+ * @param node - The node to collect ranges from.
+ * @param startIndex - The current minimum start position.
+ * @param endIndex - The current maximum end position.
+ * @returns The updated start/end positions.
  */
-function collectExcerptRanges(node, startIndex, endIndex) {
+function collectExcerptRanges(node: DocNode, startIndex: number, endIndex: number): TextRange {
 	if (node.kind === DocNodeKind.Excerpt) {
-		const excerpt = /** @type {DocExcerpt} */ (node);
+		const excerpt = node as DocExcerpt;
 		if (excerpt.content) {
 			const range = excerpt.content.getContainingTextRange();
 			startIndex = Math.min(startIndex, range.pos);
@@ -72,10 +69,10 @@ function collectExcerptRanges(node, startIndex, endIndex) {
 
 /**
  * Gets the text range for an InlineTag node (which represents a {@link} tag).
- * @param {DocInlineTag} inlineTagNode - The inline tag node.
- * @returns {TextRange | undefined} The text range, or `undefined` if the tag has no content.
+ * @param inlineTagNode - The inline tag node.
+ * @returns The text range, or `undefined` if the tag has no content.
  */
-function getInlineTagRange(inlineTagNode) {
+function getInlineTagRange(inlineTagNode: DocInlineTag): TextRange | undefined {
 	const { startIndex, endIndex } = collectExcerptRanges(inlineTagNode, Infinity, -Infinity);
 
 	if (startIndex !== Infinity && endIndex !== -Infinity) {
@@ -87,16 +84,15 @@ function getInlineTagRange(inlineTagNode) {
 
 /**
  * Finds instances of file path links within the provided DocNode tree.
- * @param {DocNode} node - The doc node to search.
- * @returns {TextRange[]} The list of found file path links.
+ * @param node - The doc node to search.
+ * @returns The list of found file path links.
  */
-function findFilePathLinks(node) {
-	/** @type {TextRange[]} */
-	const links = [];
+function findFilePathLinks(node: DocNode): TextRange[] {
+	const links: TextRange[] = [];
 
 	// Check if this is an InlineTag (which represents a {@link} tag)
 	if (node.kind === DocNodeKind.InlineTag) {
-		const inlineTag = /** @type {DocInlineTag} */ (node);
+		const inlineTag = node as DocInlineTag;
 
 		// Check if this is a @link tag with a file path target
 		if (
@@ -127,10 +123,8 @@ function findFilePathLinks(node) {
 /**
  * Eslint rule to disallow file path link syntax in JSDoc/TSDoc comments.
  * File path links are allowed in `@privateRemarks` blocks.
- *
- * @type {RuleModule}
  */
-module.exports = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -145,7 +139,7 @@ module.exports = {
 		schema: [],
 	},
 
-	create(context) {
+	create(context: Rule.RuleContext) {
 		return {
 			Program() {
 				const sourceCode = context.getSourceCode();
@@ -169,7 +163,7 @@ module.exports = {
 					const parsedComment = parserContext.docComment;
 
 					// Collect nodes to check (all blocks except privateRemarks)
-					const nodesToCheck = [];
+					const nodesToCheck: DocNode[] = [];
 
 					// Check summary section
 					nodesToCheck.push(parsedComment.summarySection);
