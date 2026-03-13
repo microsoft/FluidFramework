@@ -28,7 +28,6 @@
 			"inputs": ["production"],
 			"outputs": [
 				"{projectRoot}/dist",
-				"{projectRoot}/lib",
 				"{projectRoot}/*.tsbuildinfo"
 			],
 			"cache": true
@@ -64,9 +63,8 @@
 		},
 		"api-extractor:commonjs": {
 			"dependsOn": ["tsc"],
-			"inputs": ["production", "{projectRoot}/api-extractor*.json"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
 			"outputs": [
-				"{projectRoot}/_api-extractor-temp",
 				"{projectRoot}/dist/public.d.ts",
 				"{projectRoot}/dist/beta.d.ts",
 				"{projectRoot}/dist/alpha.d.ts",
@@ -78,9 +76,8 @@
 		},
 		"api-extractor:esnext": {
 			"dependsOn": ["build:esnext"],
-			"inputs": ["production", "{projectRoot}/api-extractor*.json"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
 			"outputs": [
-				"{projectRoot}/_api-extractor-temp",
 				"{projectRoot}/lib/public.d.ts",
 				"{projectRoot}/lib/beta.d.ts",
 				"{projectRoot}/lib/alpha.d.ts",
@@ -98,26 +95,56 @@
 		},
 		"build:api-reports:current": {
 			"dependsOn": ["api-extractor:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/api-report/**",
+				"{projectRoot}/_api-extractor-temp/**"
+			],
 			"cache": true
 		},
 		"build:api-reports:legacy": {
 			"dependsOn": ["api-extractor:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/api-report/**",
+				"{projectRoot}/_api-extractor-temp/**"
+			],
 			"cache": true
 		},
 		"ci:build:api-reports:current": {
 			"dependsOn": ["api-extractor:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/api-report/**",
+				"{projectRoot}/_api-extractor-temp/**"
+			],
 			"cache": true
 		},
 		"ci:build:api-reports:legacy": {
 			"dependsOn": ["api-extractor:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/api-report/**",
+				"{projectRoot}/_api-extractor-temp/**"
+			],
 			"cache": true
 		},
 		"build:docs": {
 			"dependsOn": ["tsc", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/_api-extractor-temp/doc-models/**",
+				"{projectRoot}/lib/tsdoc-metadata.json"
+			],
 			"cache": true
 		},
 		"ci:build:docs": {
 			"dependsOn": ["tsc", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/_api-extractor-temp/doc-models/**",
+				"{projectRoot}/lib/tsdoc-metadata.json"
+			],
 			"cache": true
 		},
 		"build:readme": {
@@ -129,6 +156,8 @@
 			"cache": true
 		},
 		"build:copy": {
+			"inputs": ["{projectRoot}/src/**/*.css"],
+			"outputs": ["{projectRoot}/lib/**/*.css"],
 			"cache": true
 		},
 		"build:genver": {
@@ -146,6 +175,8 @@
 			"cache": true
 		},
 		"layerGeneration:gen": {
+			"inputs": ["{projectRoot}/package.json", "source"],
+			"outputs": ["{projectRoot}/src/layerGenerationState.ts"],
 			"cache": true
 		},
 		"eslint": {
