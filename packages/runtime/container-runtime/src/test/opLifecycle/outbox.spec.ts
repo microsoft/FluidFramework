@@ -478,6 +478,85 @@ describe("Outbox", () => {
 		);
 	});
 
+	it("ID Allocation batch gets derived batchId when setIdAllocationBatchId is called before flush", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: false,
+			},
+		});
+		// Set a derived batchId for the ID allocation batch (simulates PSM pre-scan)
+		outbox.setIdAllocationBatchId("idAlloc_[clientId_[2]]");
+		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0"));
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
+		outbox.flush({ batchId: "batchId-A", staged: false });
+
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
+			[
+				["idAlloc_[clientId_[2]]"], // ID Allocation batch now has the derived batchId
+				["batchId-A"], // Main batch
+			],
+			"ID Allocation batch should have the derived batchId",
+		);
+
+		assert.deepEqual(
+			state.pendingOpContents.map(({ opMetadata }) => asBatchMetadata(opMetadata)?.batchId),
+			[
+				"idAlloc_[clientId_[2]]", // ID Allocation batch has derived batchId
+				"batchId-A", // Main batch
+			],
+			"Pending messages should reflect the derived batchId for ID allocation",
+		);
+	});
+
+	it("ID Allocation batch has no batchId when setIdAllocationBatchId is not called (non-resubmit)", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: false,
+			},
+		});
+		// Do NOT call setIdAllocationBatchId — simulates normal (non-resubmit) flush
+		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0"));
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
+		outbox.flush();
+
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
+			[
+				[undefined], // ID Allocation batch — no batchId (not resubmit)
+				[undefined], // Main batch — no batchId (not resubmit)
+			],
+			"Neither batch should have a batchId on non-resubmit flush",
+		);
+	});
+
+	it("setIdAllocationBatchId is consumed (one-shot) — only first flush uses it", () => {
+		const outbox = getOutbox({
+			context: getMockContext(),
+			opGroupingConfig: {
+				groupedBatchingEnabled: false,
+			},
+		});
+		outbox.setIdAllocationBatchId("idAlloc_[derived]");
+		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0"));
+		outbox.flush({ batchId: "batchId-A", staged: false });
+
+		// Second flush — the derived batchId should have been consumed
+		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "1"));
+		outbox.flush();
+
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
+			[
+				["idAlloc_[derived]"], // First flush — has derived batchId
+				[undefined], // Second flush — consumed, no batchId
+			],
+			"Derived batchId should only be used for the first flush",
+		);
+	});
+
 	it("Will send messages only when allowed, but will store them in the pending state", () => {
 		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [

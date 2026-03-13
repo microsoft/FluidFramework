@@ -208,6 +208,17 @@ export class Outbox {
 	private readonly maxMismatchedOpsToReport = 3;
 	private mismatchedOpsReported = 0;
 
+	/**
+	 * Derived batchId to stamp on the next ID allocation batch flush (during resubmit).
+	 * Set by PendingStateManager's pre-scan phase before replay, consumed (one-shot) by flushAll.
+	 */
+	private idAllocationResubmitBatchId: string | undefined;
+
+	/** Set the derived batchId for the ID allocation batch before replay flushes it. */
+	public setIdAllocationBatchId(batchId: string): void {
+		this.idAllocationResubmitBatchId = batchId;
+	}
+
 	constructor(private readonly params: IOutboxParameters) {
 		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
 
@@ -397,12 +408,16 @@ export class Outbox {
 			return;
 		}
 
-		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
+		// Use the derived batchId for the ID allocation batch if one was set by PSM's pre-scan.
+		// This enables fork detection via DuplicateBatchDetector for ID allocation batches.
+		const idAllocResubmitInfo: BatchResubmitInfo | undefined =
+			this.idAllocationResubmitBatchId === undefined
+				? undefined
+				: { batchId: this.idAllocationResubmitBatchId, staged: false };
+		this.idAllocationResubmitBatchId = undefined; // Consume (one-shot)
 		this.flushInternal({
 			batchManager: this.idAllocationBatch,
-			// Note: For now, we will never stage ID Allocation messages.
-			// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
+			resubmitInfo: idAllocResubmitInfo,
 		});
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
