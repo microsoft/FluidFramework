@@ -171,7 +171,11 @@
 			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
-			"sharp": "^0.34.5"
+			"sharp": "^0.34.5",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10": "^10.2.4"
 		},
 		"updateConfig": {
 			"ignoreDependencies": [

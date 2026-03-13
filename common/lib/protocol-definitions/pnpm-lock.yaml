@@ -12,6 +12,10 @@ overrides:
   qs: ^6.15.0
   simple-git: ^3.32.3
   sharp: ^0.33.2
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10: ^10.2.4
 
 patchedDependencies:
   '@microsoft/api-extractor@7.52.11':
@@ -500,14 +504,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@isaacs/balanced-match@4.0.1':
-    resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
-    engines: {node: 20 || >=22}
-
-  '@isaacs/brace-expansion@5.0.0':
-    resolution: {integrity: sha512-ZT55BDLV0yv0RBm2czMiZ+SqCGO7AvmOM3G/w2xhVPH+te0aKgFjmBvGlL1dH+ql2tgGO3MVrbb3jCKyvpgnxA==}
-    engines: {node: 20 || >=22}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -2745,27 +2741,19 @@ packages:
     resolution: {integrity: sha512-e5ISH9xMYU0DzrT+jl8q2ze9D6eWBto+I8CNpe+VI+K2J/F/k3PdkdTdz4wvGVH4NTpo+NRYTVIuMQEMMcsLqg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  minimatch@10.0.3:
-    resolution: {integrity: sha512-IPZ167aShDZZUMdRk66cyQAW3qr0WzbHkPdMYa8bzZhlHhO3jALbKdxcaak7W9FfT2rZNpQuUu4Od7ILEpXSaw==}
-    engines: {node: 20 || >=22}
+  minimatch@10.2.4:
+    resolution: {integrity: sha512-oRjTw/97aTBN0RHbYCdtF1MQfvusSIBQM0IZEgzl6426+8jSC0nF1a/GmnVLpfB9yyr6g6FTqWqiZVbxrtaCIg==}
+    engines: {node: 18 || 20 || >=22}
 
-  minimatch@10.1.1:
-    resolution: {integrity: sha512-enIvLvRAFZYXJzkCYG5RKmPfrFArdLv+R+lbQ53BmIMLIry74bjKzX6iHAm8WYamJkhSSEabrWN5D97XnKObjQ==}
-    engines: {node: 20 || >=22}
+  minimatch@3.1.5:
+    resolution: {integrity: sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==}
 
-  minimatch@10.2.1:
-    resolution: {integrity: sha512-MClCe8IL5nRRmawL6ib/eT4oLyeKMGCghibcDWK+J0hh0Q8kqSdia6BvbRMVk6mPa6WqUa5uR2oxt6C5jd533A==}
-    engines: {node: 20 || >=22}
-
-  minimatch@3.1.2:
-    resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
-
-  minimatch@5.1.6:
-    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
+  minimatch@5.1.9:
+    resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
     engines: {node: '>=10'}
 
-  minimatch@9.0.5:
-    resolution: {integrity: sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==}
+  minimatch@9.0.9:
+    resolution: {integrity: sha512-OBwBN9AL4dqmETlpS2zasx+vTeWclWzkblfZk7KTA5j3jeOONz/tRCnZomUyvNg83wL5Zv9Ss6HMJXAgL8R2Yg==}
     engines: {node: '>=16 || 14 >=14.17'}
 
   minimist@1.2.8:
@@ -4114,7 +4102,7 @@ snapshots:
     dependencies:
       '@eslint/object-schema': 2.1.7
       debug: 4.4.3(supports-color@8.1.1)
-      minimatch: 3.1.2
+      minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
 
@@ -4135,7 +4123,7 @@ snapshots:
       ignore: 5.3.2
       import-fresh: 3.3.0
       js-yaml: 4.1.1
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -4188,7 +4176,7 @@ snapshots:
       mdast: 3.0.0
       mdast-util-heading-range: 4.0.0
       mdast-util-to-string: 4.0.0
-      minimatch: 10.1.1
+      minimatch: 10.2.4
       npm-check-updates: 16.14.20
       oclif: 4.22.54(@types/node@22.5.4)
       picocolors: 1.1.1
@@ -4630,12 +4618,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.5.4
 
-  '@isaacs/balanced-match@4.0.1': {}
-
-  '@isaacs/brace-expansion@5.0.0':
-    dependencies:
-      '@isaacs/balanced-match': 4.0.1
-
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -4716,7 +4698,7 @@ snapshots:
       '@rushstack/terminal': 0.15.4(@types/node@22.5.4)
       '@rushstack/ts-command-line': 5.0.2(@types/node@22.5.4)
       lodash: 4.17.21
-      minimatch: 10.0.3
+      minimatch: 10.2.4
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
@@ -4735,7 +4717,7 @@ snapshots:
       '@rushstack/ts-command-line': 5.1.5(@types/node@22.5.4)
       diff: 8.0.2
       lodash: 4.17.21
-      minimatch: 10.0.3
+      minimatch: 10.2.4
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
@@ -4834,7 +4816,7 @@ snapshots:
       indent-string: 4.0.0
       is-wsl: 2.2.0
       lilconfig: 3.1.3
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.3
       string-width: 4.2.3
       supports-color: 8.1.1
@@ -5142,7 +5124,7 @@ snapshots:
   '@ts-morph/common@0.23.0':
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       mkdirp: 3.0.1
       path-browserify: 1.0.1
 
@@ -5151,7 +5133,7 @@ snapshots:
   '@tufjs/models@1.0.4':
     dependencies:
       '@tufjs/canonical-json': 1.0.0
-      minimatch: 9.0.5
+      minimatch: 9.0.9
 
   '@types/argparse@1.0.38': {}
 
@@ -5304,7 +5286,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       fast-glob: 3.3.2
       is-glob: 4.0.3
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.3
       ts-api-utils: 2.4.0(typescript@5.1.6)
       typescript: 5.1.6
@@ -5318,7 +5300,7 @@ snapshots:
       '@typescript-eslint/types': 8.55.0
       '@typescript-eslint/visitor-keys': 8.55.0
       debug: 4.4.3(supports-color@8.1.1)
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.3
       tinyglobby: 0.2.15
       ts-api-utils: 2.4.0(typescript@5.1.6)
@@ -5887,7 +5869,7 @@ snapshots:
   copyfiles@2.4.1:
     dependencies:
       glob: 7.2.3
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       mkdirp: 1.0.4
       noms: 0.0.0
       through2: 2.0.5
@@ -6156,7 +6138,7 @@ snapshots:
       is-glob: 4.0.3
       json-stable-stringify-without-jsonify: 1.0.1
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       natural-compare: 1.4.0
       optionator: 0.9.3
     optionalDependencies:
@@ -6250,7 +6232,7 @@ snapshots:
 
   filelist@1.0.4:
     dependencies:
-      minimatch: 5.1.6
+      minimatch: 5.1.9
 
   fill-range@7.1.1:
     dependencies:
@@ -6384,13 +6366,13 @@ snapshots:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 3.1.2
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       minipass: 7.1.2
       path-scurry: 1.11.1
 
   glob@13.0.5:
     dependencies:
-      minimatch: 10.2.1
+      minimatch: 10.2.4
       minipass: 7.1.2
       path-scurry: 2.0.1
 
@@ -6399,7 +6381,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       once: 1.4.0
       path-is-absolute: 1.0.1
 
@@ -6408,7 +6390,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 5.1.6
+      minimatch: 5.1.9
       once: 1.4.0
 
   global-dirs@3.0.1:
@@ -6571,7 +6553,7 @@ snapshots:
 
   ignore-walk@6.0.3:
     dependencies:
-      minimatch: 9.0.5
+      minimatch: 9.0.9
 
   ignore@5.3.2: {}
 
@@ -6739,7 +6721,7 @@ snapshots:
       async: 3.2.6
       chalk: 4.1.2
       filelist: 1.0.4
-      minimatch: 3.1.2
+      minimatch: 3.1.5
 
   jest-worker@27.5.1:
     dependencies:
@@ -7336,27 +7318,19 @@ snapshots:
 
   mimic-response@4.0.0: {}
 
-  minimatch@10.0.3:
-    dependencies:
-      '@isaacs/brace-expansion': 5.0.0
-
-  minimatch@10.1.1:
-    dependencies:
-      '@isaacs/brace-expansion': 5.0.0
-
-  minimatch@10.2.1:
+  minimatch@10.2.4:
     dependencies:
       brace-expansion: 5.0.2
 
-  minimatch@3.1.2:
+  minimatch@3.1.5:
     dependencies:
       brace-expansion: 1.1.12
 
-  minimatch@5.1.6:
+  minimatch@5.1.9:
     dependencies:
       brace-expansion: 2.0.2
 
-  minimatch@9.0.5:
+  minimatch@9.0.9:
     dependencies:
       brace-expansion: 2.0.2
 
@@ -7431,7 +7405,7 @@ snapshots:
       array-differ: 3.0.0
       array-union: 2.1.0
       arrify: 2.0.1
-      minimatch: 3.1.2
+      minimatch: 3.1.5
 
   mute-stream@1.0.0: {}
 
@@ -7539,7 +7513,7 @@ snapshots:
       jsonlines: 0.1.1
       lodash: 4.17.21
       make-fetch-happen: 11.1.1
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       p-map: 4.0.0
       pacote: 15.2.0
       parse-github-url: 1.0.2

@@ -82,7 +82,8 @@
 			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies entirely via overrides. This helps reduce lockfile churn since the deps release very frequently.",
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges."
 		],
 		"overrides": {
 			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
@@ -96,7 +97,11 @@
 			"js-yaml@>=4": "^4.1.1",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
-			"sharp": "^0.33.2"
+			"sharp": "^0.33.2",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10": "^10.2.4"
 		},
 		"onlyBuiltDependencies": [
 			"core-js",
