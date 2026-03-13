@@ -3,7 +3,6 @@
 	"include": ["./crossPackage/**/*"],
 	"exclude": [],
 	"compilerOptions": {
-		"outDir": "../../lib/test/crossPackageConsumer",
 		"composite": false,
 		"skipLibCheck": true,
 		"noUnusedLocals": false,
