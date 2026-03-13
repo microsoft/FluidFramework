@@ -1,6 +1,7 @@
 {
 	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
 	"extends": "./tsconfig.crossPackageConsumer.json",
+	// Only node16Importer.ts is included because bundler resolution is not applicable in a CJS environment.
 	"include": ["src/test/crossPackage/node16Importer.ts"],
 	"compilerOptions": {
 		"outDir": "./dist/test/crossPackageConsumer",
