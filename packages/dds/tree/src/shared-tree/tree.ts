@@ -477,8 +477,13 @@ function runTransactionInCheckout<TResult>(
 		// If the transaction has an unhandled error, abort and rollback the transaction but continue to propagate the error.
 		// This might try and modify the tree or trigger events while things are in an inconsistent state.
 		// It is up to the user of runTransaction to ensure that does not cause problems (and they have no robust way to do that, which is why its deprecated).
-		checkout.transaction.abort();
-		throw error;
+		try {
+			checkout.transaction.abort();
+		} finally {
+			// Intentionally hide any errors thrown by abort: we know its not safe to abort here (Thats why this API is deprecated), so whatever error causes us to abort is the more relevant one.
+			// For this to be a reasonable approach, we must ensure that further use of the checkout is blocked: using its breaker.break accomplishes this, hopefully hiding the consequences of whatever caused abort to throw.
+			checkout.breaker.break(error as Error);
+		}
 	}
 
 	if (result === rollback) {

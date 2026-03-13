@@ -9,7 +9,10 @@ import {
 	type IMockLoggerExt,
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../api.js";
 import {
@@ -839,6 +842,26 @@ describe("sharedTreeView", () => {
 			});
 
 			assert.deepEqual(view.root, ["A", "B"]);
+		});
+
+		// Regression test for transactions erroneously double lock
+		itView("does not double-lock when event handler throws during transaction", ({ view }) => {
+			Tree.on(view.root, "nodeChanged", () => {
+				throw new Error("Event handler error");
+			});
+
+			// We should get the original error, not the double-lock error (0xaa7)
+			assert.throws(
+				() =>
+					Tree.runTransaction(view, () => {
+						view.root.insertAtStart("A"); // This triggers nodeChanged, which throws
+					}),
+				validateError("Event handler error"),
+			);
+
+			// The checkout should be broken after an exception in a transaction.
+			// Further use should throw a UsageError indicating the checkout is in an invalid state.
+			assert.throws(() => view.root.insertAtStart("B"), validateUsageError(/invalid state/));
 		});
 	});
 
