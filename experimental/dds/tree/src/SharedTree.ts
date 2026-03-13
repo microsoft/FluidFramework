@@ -346,12 +346,13 @@ export type EditApplicationOutcome =
 	  };
 
 /**
- * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
- * @alpha
+ * Internal events interface that extends ISharedObjectEvents for use by the SharedTree class.
+ * The public-facing events interface is {@link @fluid-experimental/tree#ISharedTreeEvents} in ISharedTree.ts.
+ * @internal
  */
-export interface ISharedTreeEvents extends ISharedObjectEvents {
+export interface ISharedTreeInternalEvents extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler);
-	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler);
+	(event: 'sequencedEditApplied', listener: SequencedEditAppliedHandler);
 }
 
 /**
@@ -388,7 +389,7 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
  * to reference tree instances instead. The class will be removed from the public API surface in a future release.
  * @alpha
  */
-export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
+export class SharedTree extends SharedObject<ISharedTreeInternalEvents> implements NodeIdContext {
 	/**
 	 * Create a new SharedTree. It will contain the default value (see initialTree).
 	 */
