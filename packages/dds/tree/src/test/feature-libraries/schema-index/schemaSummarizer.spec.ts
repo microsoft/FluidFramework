@@ -51,10 +51,7 @@ describe("schemaSummarizer", () => {
 		for (const schemaFormat of schemaCodecBuilder.registry) {
 			const encode = (schema: TreeStoredSchema): JsonCompatibleReadOnly => {
 				assert(schemaFormat.minVersionForCollab !== undefined);
-				const codec = schemaFormat.codec({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: schemaFormat.minVersionForCollab,
-				});
+				const codec = schemaFormat.codec({ jsonValidator: FormatValidatorBasic });
 				const result: JsonCompatibleReadOnly = codec.encode(schema);
 				return result;
 			};

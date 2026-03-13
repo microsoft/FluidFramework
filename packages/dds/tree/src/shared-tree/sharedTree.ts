@@ -498,12 +498,7 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	// Any version can be passed down to makeSchemaCodec here.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec({
-		...options,
-		minVersionForCollab: FluidClientVersion.v2_0,
-	});
+	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	return exportSimpleSchema(stored);
 }
