@@ -154,12 +154,12 @@ module.exports = {
 			range: "",
 		},
 
-		// @fluid-example/import-testing typescript versions should use ~
+		// @fluid-example/typescript-versions-host typescript versions should use ~
 		{
-			label: "@fluid-example/import-testing typescript versions should use ~",
+			label: "@fluid-example/typescript-versions-host typescript versions should use ~",
 			dependencies: ["typescript-*"],
 			dependencyTypes: ["dev"],
-			packages: ["@fluid-example/import-testing"],
+			packages: ["@fluid-example/typescript-versions-host"],
 			range: "~",
 		},
 

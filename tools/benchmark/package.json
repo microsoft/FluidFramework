@@ -66,7 +66,11 @@
 		"onlyBuiltDependencies": [
 			"unrs-resolver"
 		],
+		"commentsOverrides": [
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys)."
+		],
 		"overrides": {
+			"js-yaml": "^4.1.1",
 			"nanoid": "^3.3.9"
 		}
 	}

@@ -23,6 +23,7 @@ import type {
 	TreeAgentChatMessage,
 	TreeAgent,
 	TreeAgentOptions,
+	ExecuteSemanticEditingOptions,
 	EditResult,
 	SemanticAgentOptions,
 	Logger,
@@ -135,7 +136,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 		let active = true;
 		let editCount = 0;
-		let rollbackEdits = false;
+		let lastEditFailed = false;
 		const { editToolName } = this.client;
 		const edit = async (editCode: string): Promise<EditResult> => {
 			if (editToolName === undefined) {
@@ -152,7 +153,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 			}
 
 			if (++editCount > maxEditCount) {
-				rollbackEdits = true;
+				lastEditFailed = true;
 				return {
 					type: "tooManyEditsError",
 					message: `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`,
@@ -166,7 +167,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 				this.options?.logger,
 			);
 
-			rollbackEdits = editResult.type !== "success";
+			lastEditFailed = editResult.type !== "success";
 			return editResult;
 		};
 
@@ -181,7 +182,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		});
 		active = false;
 
-		if (rollbackEdits) {
+		if (lastEditFailed) {
 			queryTree.branch.dispose();
 		} else {
 			this.outerTree.branch.merge(queryTree.branch);
@@ -389,6 +390,7 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 
 	public async message(prompt: string): Promise<string> {
 		this.#options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
+
 		if (this.#isDirty) {
 			const stringified = stringifyTree(this.#outerTree.field);
 			const text = treeChangedText(stringified);
@@ -398,73 +400,28 @@ class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
 			);
 			this.#isDirty = false;
 		}
+
 		this.#history.push({ role: "user", content: prompt });
 
-		// Fork a branch for this edit session
+		// Fork a branch for rollback isolation — all edits during this query happen on the fork.
 		const queryTree = this.#outerTree.fork();
-		let editCount = 0;
-		let rollbackEdits = false;
 
 		try {
-			while (true) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const response = await this.#model.invoke!(this.#history);
+			const result = await runEditLoop(this.#model, queryTree, this.#history, {
+				editor: this.#editor,
+				maxEditCount: this.#maxEditCount,
+				logger: this.#options?.logger,
+			});
 
-				if (response.role === "assistant") {
-					this.#history.push(response);
-					if (rollbackEdits) {
-						queryTree.branch.dispose();
-					} else {
-						this.#outerTree.branch.merge(queryTree.branch);
-						this.#isDirty = false;
-					}
-					this.#options?.logger?.log(`## Response\n\n${response.content}\n\n`);
-					return response.content;
-				}
-
-				// response.role === "tool_call"
-				this.#history.push(response);
-
-				// Extract the code string from the tool call args.
-				// We expect exactly one string-valued argument (e.g. { js: "..." } or { code: "..." }).
-				const code = extractCodeFromToolArgs(response.toolArgs);
-				if (code === undefined) {
-					rollbackEdits = true;
-					const errorMessage = `Expected a single string argument in the tool call, but received: ${JSON.stringify(response.toolArgs)}`;
-					this.#history.push({
-						role: "tool_result",
-						toolCallId: response.toolCallId,
-						content: errorMessage,
-					});
-					continue;
-				}
-
-				editCount++;
-				if (editCount > this.#maxEditCount) {
-					rollbackEdits = true;
-					const errorMessage = `The maximum number of edits (${this.#maxEditCount}) for this query has been exceeded.`;
-					this.#history.push({
-						role: "tool_result",
-						toolCallId: response.toolCallId,
-						content: errorMessage,
-					});
-					continue;
-				}
-
-				const editResult = await applyTreeFunction(
-					queryTree,
-					code,
-					this.#editor,
-					this.#options?.logger,
-				);
-
-				rollbackEdits = editResult.type !== "success";
-				this.#history.push({
-					role: "tool_result",
-					toolCallId: response.toolCallId,
-					content: editResult.message,
-				});
+			if (result.lastEditFailed) {
+				queryTree.branch.dispose();
+			} else {
+				this.#outerTree.branch.merge(queryTree.branch);
+				this.#isDirty = false;
 			}
+
+			this.#options?.logger?.log(`## Response\n\n${result.response}\n\n`);
+			return result.response;
 		} catch (error) {
 			queryTree.branch.dispose();
 			throw error;
@@ -498,6 +455,164 @@ export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
 	options?: TreeAgentOptions<TSchema>,
 ): TreeAgent {
 	return new TreeAgentImpl(model, tree, options);
+}
+
+/**
+ * Executes semantic editing on a tree.
+ *
+ * @param model - The chat model. Must implement {@link SharedTreeChatModel.invoke} and have {@link SharedTreeChatModel.editToolName} set.
+ * @param tree - The tree or subtree to edit.
+ * @param prompt - The user's edit instruction.
+ * @param options - Optional configuration.
+ * @returns The model's text response.
+ * @alpha
+ */
+export async function executeSemanticEditing<TSchema extends ImplicitFieldSchema>(
+	model: SharedTreeChatModel,
+	tree: ViewOrTree<TSchema>,
+	prompt: string,
+	options?: ExecuteSemanticEditingOptions<TSchema>,
+): Promise<string> {
+	if (model.invoke === undefined) {
+		throw new UsageError(
+			"The provided SharedTreeChatModel does not implement invoke(). Provide a model that implements invoke(), such as the one returned by createLangchainChatModel from @fluidframework/tree-agent-langchain.",
+		);
+	}
+
+	const editToolName = model.editToolName;
+	if (editToolName === undefined) {
+		throw new UsageError(
+			"The provided SharedTreeChatModel does not have an editToolName. Editing requires a model with editToolName set.",
+		);
+	}
+
+	const subtree = new Subtree(tree);
+	const editor = options?.editor ?? createDefaultEditor();
+	const maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+
+	const history: TreeAgentChatMessage[] = [
+		{
+			role: "system",
+			content: getPrompt({
+				subtree,
+				editToolName,
+				domainHints: options?.domainHints,
+			}),
+		},
+	];
+
+	logAgentHeader(options?.logger, model.name);
+	options?.logger?.log(
+		`## System Prompt\n\n${(history[0] as { content: string }).content}\n\n`,
+	);
+
+	options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
+	history.push({ role: "user", content: prompt });
+
+	// Fork a branch for rollback isolation — all edits during this call happen on the fork.
+	const editTree = subtree.fork();
+
+	try {
+		const result = await runEditLoop(model, editTree, history, {
+			editor,
+			maxEditCount,
+			logger: options?.logger,
+		});
+
+		if (result.lastEditFailed) {
+			editTree.branch.dispose();
+		} else {
+			subtree.branch.merge(editTree.branch);
+		}
+
+		options?.logger?.log(`## Response\n\n${result.response}\n\n`);
+		return result.response;
+	} catch (error) {
+		editTree.branch.dispose();
+		throw error;
+	}
+}
+
+/**
+ * The result of the internal edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEditing}.
+ */
+interface EditLoopResult {
+	readonly response: string;
+	readonly lastEditFailed: boolean;
+}
+
+/**
+ * Core edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEditing}.
+ * @remarks Invokes the model in a loop, handling tool calls and applying edits, until the model
+ * produces an assistant response. The provided `history` array is mutated in place.
+ */
+async function runEditLoop<TSchema extends ImplicitFieldSchema>(
+	model: SharedTreeChatModel,
+	tree: Subtree<TSchema>,
+	history: TreeAgentChatMessage[],
+	options: {
+		editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+		maxEditCount: number;
+		logger?: Logger;
+	},
+): Promise<EditLoopResult> {
+	let editLoopTurns = 0;
+	let lastEditFailed = false;
+
+	while (true) {
+		editLoopTurns++;
+		// Allow for two extra turns: one for a last tool error message, and one for a final response from the llm.
+		if (editLoopTurns > options.maxEditCount + 2) {
+			const cutoffMessage = `The model failed to produce a response within ${options.maxEditCount} edits.`;
+			history.push({ role: "assistant", content: cutoffMessage });
+			options.logger?.log(`## Cancel\n\n${cutoffMessage}\n\n`);
+			return { response: cutoffMessage, lastEditFailed: true };
+		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const response = await model.invoke!(history);
+
+		if (response.role === "assistant") {
+			history.push(response);
+			return { response: response.content, lastEditFailed };
+		}
+
+		// response.role === "tool_call"
+		history.push(response);
+
+		// Extract the code string from the tool call args.
+		const code = extractCodeFromToolArgs(response.toolArgs);
+		if (code === undefined) {
+			lastEditFailed = true;
+			const errorMessage = `Expected a single string argument in the tool call, but received: ${JSON.stringify(response.toolArgs)}`;
+			history.push({
+				role: "tool_result",
+				toolCallId: response.toolCallId,
+				content: errorMessage,
+			});
+			continue;
+		}
+
+		// Every loop turn roughly corresponds to one edit attempt, since the loop terminates when the llm produces a non-tool response.
+		if (editLoopTurns > options.maxEditCount) {
+			lastEditFailed = true;
+			const errorMessage = `The maximum number of edits (${options.maxEditCount}) for this query has been exceeded.`;
+			history.push({
+				role: "tool_result",
+				toolCallId: response.toolCallId,
+				content: errorMessage,
+			});
+			continue;
+		}
+
+		const editResult = await applyTreeFunction(tree, code, options.editor, options.logger);
+
+		lastEditFailed = editResult.type !== "success";
+		history.push({
+			role: "tool_result",
+			toolCallId: response.toolCallId,
+			content: editResult.message,
+		});
+	}
 }
 
 // #endregion
