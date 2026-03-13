@@ -147,7 +147,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest, attachProps?: {
         deltaConnection?: "none" | "delayed";
     }): Promise<void>;
-    readonly attachState: AttachState;
+    readonly attachState: AttachState | undefined;
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
