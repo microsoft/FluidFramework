@@ -2387,7 +2387,7 @@ abstract class CrossFieldManagerI<T> implements CrossFieldManager {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeQueryResult<ChangeAtomId, unknown> {
+	): RangeQueryResult<unknown> {
 		if (addDependency) {
 			// We assume that if there is already an entry for this ID it is because
 			// a field handler has called compose on the same node multiple times.
@@ -3148,9 +3148,14 @@ function getFieldsForCrossFieldKey(
 	key: CrossFieldKey,
 	count: number,
 ): FieldId[] {
-	return changeset.crossFieldKeys
-		.getAll(key, count)
-		.map(({ value: fieldId }) => normalizeFieldId(fieldId, changeset.nodeAliases));
+	const fieldIds: FieldId[] = [];
+	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
+		if (fieldId !== undefined) {
+			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
+		}
+	}
+
+	return fieldIds;
 }
 
 // This is only exported for use in test utilities.

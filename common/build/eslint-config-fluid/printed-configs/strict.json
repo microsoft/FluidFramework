@@ -768,7 +768,10 @@
 			}
 		],
 		"@typescript-eslint/no-empty-object-type": [
-			"error"
+			"error",
+			{
+				"allowInterfaces": "with-single-extends"
+			}
 		],
 		"@typescript-eslint/no-explicit-any": [
 			"error",
