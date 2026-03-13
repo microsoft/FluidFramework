@@ -5,8 +5,10 @@
 
 /*
 Schema definitions that import the factory from a separate file (schemaUtils.ts).
-This separation is critical: it forces the .d.ts to resolve tree/alpha types through a deeper
-chain, which triggers TypeScript's type resolution bug when tree's export tiers share a JS module.
+This file must NOT import from @fluidframework/tree directly — the tree import is
+isolated in schemaUtils.ts. This separation forces the .d.ts to resolve tree/alpha
+types through a deeper chain, which triggers TypeScript's type resolution bug when
+tree's export tiers share a JS module.
 */
 
 /* eslint-disable jsdoc/require-jsdoc */
