@@ -104,7 +104,12 @@
 			"build:test:esm:crossPackage": [
 				"build:esnext"
 			],
-			"tsc:crossPackage": [
+			"tsc:crossPackage:node16": [
+				"^api-extractor:commonjs",
+				"^tsc"
+			],
+			"tsc:main": [
+				"^api-extractor:commonjs",
 				"^tsc"
 			],
 			"place:cjs:package-stub": [],
