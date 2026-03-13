@@ -8,4 +8,12 @@
 		"skipLibCheck": true,
 		"noUnusedLocals": false,
 	},
+	"references": [
+		{
+			"path": "../../tsconfig.crossPackage.bundler.json",
+		},
+		{
+			"path": "../../tsconfig.crossPackage.node16.json",
+		},
+	],
 }
