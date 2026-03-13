@@ -140,7 +140,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		// eslint-disable-next-line import-x/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({
 				type: "confirm",
 				name: "confirmed",
@@ -148,9 +147,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 					"next",
 				)} branch only. The current branch is ${branchName}. Are you sure you want to continue?`,
 				initial: false,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 				onState: (state: any) => {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
 					if (state.aborted) {
 						process.nextTick(() => this.exit(0));
 					}
@@ -247,7 +245,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
 						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];

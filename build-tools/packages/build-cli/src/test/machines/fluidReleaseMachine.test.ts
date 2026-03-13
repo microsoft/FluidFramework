@@ -129,9 +129,9 @@ describe("FluidReleaseMachine", () => {
 		const requiresBothActions = new Set(["DoBumpReleasedDependencies"]);
 
 		const states = new Set<string>();
-		// eslint-disable-next-line unicorn/no-array-for-each
+
 		machine.list_states_having_action("success").forEach((v) => states.add(v));
-		// eslint-disable-next-line unicorn/no-array-for-each
+
 		machine.list_states_having_action("failure").forEach((v) => states.add(v));
 
 		for (const state of states) {

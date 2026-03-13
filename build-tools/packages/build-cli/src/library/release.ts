@@ -245,7 +245,6 @@ export function getLegacyCompatRange(version: string, interval: number): string 
 		);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	const rangeString = `>=${version} <${higherVersion}`;
 	const range = semver.validRange(rangeString);
 	if (range === null) {

@@ -54,7 +54,7 @@ export const askForReleaseType: StateHandlerFunction = async (
 			message: `The current branch is '${currentBranch}'. The default bump type for that branch is '${bumpType}', but you can change it now if needed.`,
 		});
 		bumpType = selectedBumpType;
-		// eslint-disable-next-line require-atomic-updates
+
 		data.bumpType = selectedBumpType;
 	}
 
