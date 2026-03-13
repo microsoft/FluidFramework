@@ -113,13 +113,13 @@
 				"^api-extractor:commonjs",
 				"^tsc"
 			],
-			"place:cjs:package-stub": [],
 			"build:test:cjs:main": [
-				"tsc:main"
+				"tsc:main",
+				"tsc:crossPackage:node16"
 			],
 			"build:test:cjs:crossPackage": [
 				"tsc:crossPackage:node16"
-			],
+			]
 		}
 	},
 	"typeValidation": {
