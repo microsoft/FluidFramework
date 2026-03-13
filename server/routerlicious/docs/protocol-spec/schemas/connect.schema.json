@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/connect.schema.json",
+  "title": "IConnect",
+  "description": "Message sent by client to connect to a document",
+  "type": "object",
+  "properties": {
+    "tenantId": {
+      "type": "string",
+      "description": "Tenant identifier"
+    },
+    "id": {
+      "type": "string",
+      "description": "Document identifier"
+    },
+    "token": {
+      "type": ["string", "null"],
+      "description": "Authorization JWT token"
+    },
+    "client": {
+      "$ref": "#/$defs/IClient",
+      "description": "Client details"
+    },
+    "versions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Supported protocol versions (semver ranges)"
+    },
+    "driverVersion": {
+      "type": "string",
+      "description": "Client driver version"
+    },
+    "mode": {
+      "$ref": "#/$defs/ConnectionMode",
+      "description": "Requested connection mode"
+    },
+    "nonce": {
+      "type": "string",
+      "description": "Unique nonce for this connection attempt"
+    },
+    "epoch": {
+      "type": "string",
+      "description": "Expected document epoch"
+    },
+    "supportedFeatures": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Client-supported feature flags"
+    },
+    "relayUserAgent": {
+      "type": "string",
+      "description": "Client environment info (format: prop1:val1;prop2:val2)"
+    }
+  },
+  "required": ["tenantId", "id", "client", "versions", "mode"],
+  "$defs": {
+    "ConnectionMode": {
+      "type": "string",
+      "enum": ["write", "read"]
+    },
+    "IClient": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/ConnectionMode"
+        },
+        "details": {
+          "$ref": "#/$defs/IClientDetails"
+        },
+        "permission": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "user": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" }
+          },
+          "required": ["id"]
+        },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "timestamp": {
+          "type": "integer"
+        }
+      },
+      "required": ["mode", "details", "permission", "user", "scopes"]
+    },
+    "IClientDetails": {
+      "type": "object",
+      "properties": {
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "interactive": { "type": "boolean" }
+          },
+          "required": ["interactive"]
+        },
+        "type": { "type": "string" },
+        "environment": { "type": "string" },
+        "device": { "type": "string" }
+      },
+      "required": ["capabilities"]
+    }
+  }
+}
