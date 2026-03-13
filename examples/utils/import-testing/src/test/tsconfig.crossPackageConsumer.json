@@ -1,9 +1,9 @@
 {
 	"extends": "./tsconfig.json",
-	"include": ["src/test/crossPackage/**/*"],
+	"include": ["./crossPackage/**/*"],
 	"exclude": [],
 	"compilerOptions": {
-		"outDir": "./lib/test/crossPackageConsumer",
+		"outDir": "../../lib/test/crossPackageConsumer",
 		"composite": false,
 		"skipLibCheck": true,
 		"noUnusedLocals": false,
