@@ -38,6 +38,7 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
+		"@fluidframework/quill-react": "workspace:~",
 		"@fluidframework/react": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",

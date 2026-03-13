@@ -6,17 +6,16 @@
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import {
+	FormattedMainView,
+	QuillMainView as PlainQuillView,
+} from "@fluidframework/quill-react";
+import {
 	toPropTreeNode,
 	UndoRedoStacks,
 	type UndoRedo,
+	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-import {
-	FormattedMainView,
-	PlainTextMainView,
-	PlainQuillView,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/react/quill";
 /**
  * InsecureTokenProvider is used here for local development and demo purposes only.
  * Do not use in production - implement proper authentication for production scenarios.

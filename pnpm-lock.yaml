@@ -3928,6 +3928,9 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/azure-client
+      '@fluidframework/quill-react':
+        specifier: workspace:~
+        version: link:../../../packages/framework/quill-react
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
