@@ -17,7 +17,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-dynamic-delete": "off",
 			"@typescript-eslint/no-invalid-this": "off",
 			"@typescript-eslint/no-empty-interface": "off",
-			"@typescript-eslint/no-empty-object-type": "off",
 			"@typescript-eslint/no-non-null-assertion": "off",
 			"@typescript-eslint/no-require-imports": "off",
 			"@typescript-eslint/no-shadow": "off",

@@ -1,0 +1,40 @@
+// Codespaces profile optimized for AI-agent workflows with extra CLI tooling.
+{
+	"name": "AI-enabled",
+	"build": {
+		"dockerfile": "../Dockerfile",
+		"args": {
+			"NODE_VERSION": "24",
+			"AI_READY": "true"
+		}
+	},
+	"runArgs": ["--init"],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"biomejs.biome",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"MAI-EngineeringSystems.mai-ai-telemetry",
+				"ms-azure-devops.azure-pipelines",
+				"ms-azuretools.vscode-docker",
+				"mutantdino.resourcemonitor"
+			]
+		}
+	},
+	"postCreateCommand": "bash -lc \"scripts/codespace-setup/post-create.sh && . scripts/codespace-setup/ai-setup.sh\"",
+	"remoteUser": "node",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+			"moby": false
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/git-lfs:1": {}
+	},
+	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
+	// can be lengthy enough that it's convenient.
+	"hostRequirements": {
+		"cpus": 16,
+		"memory": "64gb"
+	}
+}
