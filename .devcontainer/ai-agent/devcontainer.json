@@ -4,7 +4,8 @@
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
-			"NODE_VERSION": "24"
+			"NODE_VERSION": "24",
+			"INSTALL_PLAYWRIGHT_CLI": "true"
 		}
 	},
 	"runArgs": ["--init"],
