@@ -22,6 +22,9 @@
 			]
 		}
 	},
+	"containerEnv": {
+		"NODE_VERSION_OVERRIDE": "24"
+	},
 	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh && bash scripts/codespace-setup/ai-setup.sh",
 	"remoteUser": "node",
 	"features": {
