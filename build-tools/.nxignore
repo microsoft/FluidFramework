@@ -1,0 +1,10 @@
+# Nx ignore file - exclude directories that should not be treated as projects
+node_modules
+dist
+lib
+nyc
+coverage
+.cache-loader
+_api-extractor-temp
+bundleAnalysis
+artifacts

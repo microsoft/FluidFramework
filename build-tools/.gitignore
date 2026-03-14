@@ -25,3 +25,6 @@ artifacts
 tsdoc-metadata.json
 
 packages/**/package-lock.json
+
+# Nx cache
+.nx/

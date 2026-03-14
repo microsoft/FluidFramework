@@ -1,0 +1,7 @@
+# Exclude sub-workspaces that have their own nx.json and pnpm-workspace.yaml.
+# Without these entries, `nx run-many` at the root discovers packages from these
+# directories even though they are not part of the root pnpm workspace.
+build-tools
+server/routerlicious
+server/gitrest
+server/historian

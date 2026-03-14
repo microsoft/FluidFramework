@@ -1,0 +1,63 @@
+{
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"api": {
+			"executor": "nx:noop"
+		},
+		"build": {
+			"executor": "nx:noop"
+		},
+		"build:api-reports": {
+			"executor": "nx:noop"
+		},
+		"build:commonjs": {
+			"executor": "nx:noop"
+		},
+		"build:compile": {
+			"executor": "nx:noop"
+		},
+		"build:test:cjs": {
+			"dependsOn": [
+				"typetests:gen",
+				"tsc",
+				"api-extractor:commonjs",
+				{
+					"target": "build:test:cjs",
+					"projects": ["@fluidframework/id-compressor"]
+				}
+			]
+		},
+		"build:test:esm": {
+			"dependsOn": [
+				"typetests:gen",
+				"build:esnext",
+				"api-extractor:esnext",
+				{
+					"target": "build:test:esm",
+					"projects": ["@fluidframework/id-compressor"]
+				}
+			]
+		},
+		"ci:build:docs": {
+			"dependsOn": ["build:esnext"]
+		},
+		"check:format": {
+			"executor": "nx:noop"
+		},
+		"ci:build:api-reports": {
+			"executor": "nx:noop"
+		},
+		"format": {
+			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
+		},
+		"lint:fix": {
+			"executor": "nx:noop"
+		},
+		"test": {
+			"executor": "nx:noop"
+		}
+	}
+}

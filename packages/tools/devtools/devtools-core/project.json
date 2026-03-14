@@ -1,0 +1,32 @@
+{
+	"$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"api": {
+			"executor": "nx:noop"
+		},
+		"build": {
+			"executor": "nx:noop"
+		},
+		"build:commonjs": {
+			"executor": "nx:noop"
+		},
+		"build:compile": {
+			"executor": "nx:noop"
+		},
+		"check:format": {
+			"executor": "nx:noop"
+		},
+		"format": {
+			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
+		},
+		"lint:fix": {
+			"executor": "nx:noop"
+		},
+		"test": {
+			"executor": "nx:noop"
+		}
+	}
+}

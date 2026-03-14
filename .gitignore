@@ -55,6 +55,9 @@ UPCOMING.md
 # artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
 build_output_archive
 
+# Nx cache
+.nx/
+
 # Claude Code
 # Local settings contain author-specific information and should not be shared.
 **/.claude/**/*.local.*

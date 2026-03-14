@@ -1,0 +1,71 @@
+{
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"build": {
+			"executor": "nx:noop"
+		},
+		"build:compile": {
+			"executor": "nx:noop"
+		},
+		"build:test": {
+			"executor": "nx:noop"
+		},
+		"check:format": {
+			"executor": "nx:noop"
+		},
+		"format": {
+			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
+		},
+		"lint:fix": {
+			"executor": "nx:noop"
+		},
+		"test": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:frs": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:frs:report": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:local": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:local:report": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:odsp": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:odsp-df": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:odsp:report": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:r11s": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:r11s:docker": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:routerlicious": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:routerlicious:report": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:tinylicious:report": {
+			"executor": "nx:noop"
+		},
+		"test:realsvc:tinylicious:run": {
+			"executor": "nx:noop"
+		},
+		"build:test:esm": {
+			"dependsOn": ["^build:esnext", "build:genver", "^tsc"]
+		}
+	}
+}
