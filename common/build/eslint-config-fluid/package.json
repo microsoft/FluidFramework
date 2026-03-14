@@ -79,9 +79,11 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"serialize-javascript - CVE-2024-11831 impacts version 6.0.0 which is pinned by mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)",
-			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys)."
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
+			"diff: overridden to patched version to resolve CVE-2026-24001 (ReDoS)."
 		],
 		"overrides": {
+			"diff@>=5 <6": "^5.2.2",
 			"js-yaml": "^4.1.1",
 			"mocha>serialize-javascript@6.0.0": "^6.0.2"
 		},

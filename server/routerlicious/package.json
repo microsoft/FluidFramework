@@ -152,10 +152,14 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched versions to resolve CVE-2026-24001 (ReDoS)."
 		],
 		"overrides": {
 			"@typescript-eslint/tsconfig-utils": "8.52.0",
+			"diff@>=4 <5": "^4.0.4",
+			"diff@>=5 <6": "^5.2.2",
+			"diff@>=8 <9": "^8.0.3",
 			"@typescript-eslint/project-service": "8.52.0",
 			"@babel/core": "7.27.7",
 			"@babel/parser": "7.27.7",

@@ -154,10 +154,14 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability (unsanitized class attribute injection).",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched versions to resolve CVE-2026-24001 (ReDoS). diff@7.x has no fix so it is bumped to 8.0.3."
 		],
 		"overrides": {
 			"@types/glob>@types/minimatch": "~5.1.2",
+			"diff@>=4 <5": "^4.0.4",
+			"diff@>=7 <8": "^8.0.3",
+			"diff@>=8 <9": "^8.0.3",
 			"@types/node": "^22.19.1",
 			"eslint": "~9.39.2",
 			"json5@<1.0.2": "^1.0.2",

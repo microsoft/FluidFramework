@@ -363,10 +363,16 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"fast-xml-parser: overridden to ^4.5.4 to resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow). Stays within @langchain/anthropic's declared ^4.4.1 range.",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched versions to resolve CVE-2026-24001 (ReDoS). diff@7.x has no fix so it is bumped to 8.0.3."
 		],
 		"overrides": {
 			"@types/node": "~20.19.30",
+			"diff@>=3 <4": "^4.0.4",
+			"diff@>=4 <5": "^4.0.4",
+			"diff@>=5 <6": "^5.2.2",
+			"diff@>=7 <8": "^8.0.3",
+			"diff@>=8 <9": "^8.0.3",
 			"fast-xml-parser": "^4.5.4",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.15.0",
