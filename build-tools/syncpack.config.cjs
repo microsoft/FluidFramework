@@ -80,6 +80,9 @@ module.exports = {
 			label: "Ignore unsupported pnpm override entries",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: [
+				"diff@>=4 <5",
+				"diff@>=7 <8",
+				"diff@>=8 <9",
 				"js-yaml@<4",
 				"js-yaml@>=4",
 				"json5@<1.0.2",
