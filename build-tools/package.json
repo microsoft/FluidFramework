@@ -155,7 +155,7 @@
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability (unsanitized class attribute injection).",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
-			"tar: overridden to >=7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport)."
+			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport). Can be removed after build-cli is published with npm-check-updates@17."
 		],
 		"overrides": {
 			"@types/glob>@types/minimatch": "~5.1.2",

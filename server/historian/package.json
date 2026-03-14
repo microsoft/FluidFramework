@@ -75,7 +75,7 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
-			"tar: overridden to >=7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport)."
+			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport). Can be removed after build-cli is published with npm-check-updates@17."
 		],
 		"overrides": {
 			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
