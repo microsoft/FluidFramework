@@ -37,10 +37,20 @@ const typescriptVersions = Object.entries(typescriptHostPackageJson.devDependenc
 
 const execFileAsync = promisify(execFile);
 
-async function compileTest(tscName: string, args: string[]): Promise<void> {
+/**
+ * Invokes the provided version of tsc to compile code, validating that it type checks with that version of TypeScript.
+ * @param tscName - The name of the TypeScript compiler package to use. Use the package aliases defined in `@fluid-example/typescript-versions-host/package.json`.
+ * @param args - Additional arguments to pass to the TypeScript compiler.
+ * @param project - The path to the tsconfig file to use for compilation. Defaults to ./tsconfig.test.json.
+ */
+async function compileTest(
+	tscName: string,
+	args: string[],
+	project: string = "./tsconfig.test.json",
+): Promise<void> {
 	const result = execFileAsync(
 		path.join(typescriptHostDir, "node_modules", tscName, "bin", "tsc"),
-		["--project", "./tsconfig.test.json", "--noEmit", ...args],
+		["--project", project, "--noEmit", ...args],
 		{},
 	);
 
@@ -81,6 +91,12 @@ describe("build tests", () => {
 		// Many of the errors are in types with no release tag which are intended to be package private: this might indicate an issue or limitation of how we do roll-ups?
 		it.skip("exactOptionalPropertyTypes", async () => {
 			await compileTest("typescript-5.4", ["--exactOptionalPropertyTypes"]);
+		});
+
+		// Ensure the isolatedDeclarations.ts file actually builds when isolatedDeclarations is enabled.
+		// Requires TypeScript 5.5 or newer.
+		it("isolatedDeclarations", async () => {
+			await compileTest("typescript-5.5", [], "./src/test/tsconfig.isolatedDeclarations.json");
 		});
 	}
 });
