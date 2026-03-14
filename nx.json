@@ -149,10 +149,13 @@
 		},
 		"build:readme": {
 			"dependsOn": ["compile"],
+			"inputs": ["production", "{projectRoot}/README.md"],
+			"outputs": ["{projectRoot}/README.md"],
 			"cache": true
 		},
 		"build:manifest": {
 			"dependsOn": ["compile"],
+			"inputs": ["production"],
 			"cache": true
 		},
 		"build:copy": {
@@ -199,18 +202,22 @@
 		},
 		"check:exports": {
 			"dependsOn": ["api"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
 			"cache": true
 		},
 		"check:exports:bundle-release-tags": {
 			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
 			"cache": true
 		},
 		"check:release-tags": {
 			"dependsOn": ["tsc", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
 			"cache": true
 		},
 		"check:are-the-types-wrong": {
 			"dependsOn": ["tsc", "build:esnext", "api"],
+			"inputs": ["production", "{projectRoot}/package.json"],
 			"cache": true
 		},
 		"check:format": {
