@@ -7,16 +7,10 @@ import React from "react";
 
 import { PlaygroundWorkspace } from "./PlaygroundWorkspace";
 import { StepGuide } from "./StepGuide";
-import { diceRollerTutorial } from "./data/diceRollerTutorial";
-import { sharedTreeTutorial } from "./data/sharedTreeTutorial";
-import type { TutorialModule, ValidationPattern } from "./data/types";
+import { modulesById } from "./data/modules";
+import type { ValidationPattern } from "./data/types";
 
 import "@site/src/css/playground.css";
-
-const modulesById: Record<string, TutorialModule> = {
-	"dice-roller": diceRollerTutorial,
-	"shared-tree-todo": sharedTreeTutorial,
-};
 
 /**
  * Runs validation patterns against code, stripping comments first.

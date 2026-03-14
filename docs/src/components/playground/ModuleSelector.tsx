@@ -6,21 +6,9 @@
 import Link from "@docusaurus/Link";
 import React from "react";
 
-import { diceRollerTutorial } from "./data/diceRollerTutorial";
-import { sharedTreeTutorial } from "./data/sharedTreeTutorial";
-import type { TutorialModule } from "./data/types";
+import { moduleList } from "./data/modules";
 
 import "@site/src/css/playground.css";
-
-/**
- * Map from module id to its docs sub-page path (relative to the tutorial index).
- */
-const modulePages: Record<string, string> = {
-	"dice-roller": "dice-roller",
-	"shared-tree-todo": "shared-tree-todo",
-};
-
-const modules: TutorialModule[] = [diceRollerTutorial, sharedTreeTutorial];
 
 /**
  * Renders a card grid for selecting a tutorial module.
@@ -29,11 +17,11 @@ const modules: TutorialModule[] = [diceRollerTutorial, sharedTreeTutorial];
 export function ModuleSelector(): React.ReactElement {
 	return (
 		<div className="ffcom-playground-module-selector">
-			{modules.map((mod) => (
+			{moduleList.map((mod) => (
 				<Link
 					key={mod.id}
 					className="ffcom-playground-module-card"
-					to={modulePages[mod.id] ?? mod.id}
+					to={`./${mod.id}`}
 				>
 					<div className="ffcom-playground-module-card-header">
 						<h3 className="ffcom-playground-module-title">{mod.title}</h3>

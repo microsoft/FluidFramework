@@ -3,16 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { mainTsx } from "./sharedFiles";
 import type { TutorialModule } from "./types";
-
-const mainTsx = `import React from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./styles.css";
-
-const root = createRoot(document.getElementById("root")!);
-root.render(<App />);
-`;
 
 const stylesCss = `body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -70,6 +62,58 @@ h3 {
 }
 `;
 
+// --- Reusable code fragments for composing step files ---
+
+const importsBase = `import React from "react";`;
+
+const importsWithSchema = `import React from "react";
+import { SchemaFactory } from "fluid-framework";`;
+
+const importsWithTree = `import React from "react";
+import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`;
+
+const importsWithTreeAndEvents = `import React from "react";
+import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";`;
+
+const schemaBlock = `
+const sf = new SchemaFactory("dice-roller");
+
+const Dice = sf.object("Dice", { value: sf.number });`;
+
+const treeSetupBlock = `
+const tree = createIndependentTreeBeta();
+const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
+view.initialize({ value: 1 });`;
+
+const diceFacesBlock = `
+const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];`;
+
+const diceViewWithRoll = `
+function DiceView() {
+  const value = view.root.value;
+
+  const roll = () => {
+    view.root.value = Math.floor(Math.random() * 6) + 1;
+  };
+
+  return (
+    <div className="dice-panel">
+      <div className="dice-face">{diceFaces[value - 1]}</div>
+      <p>Value: {value}</p>
+      <button className="roll-button" onClick={roll}>
+        Roll
+      </button>
+    </div>
+  );
+}`;
+
+// --- Shared scaffold files for every step ---
+
+const scaffoldFiles = {
+	"/main.tsx": mainTsx,
+	"/styles.css": stylesCss,
+};
+
 export const diceRollerTutorial: TutorialModule = {
 	id: "dice-roller",
 	title: "Dice Roller",
@@ -89,7 +133,7 @@ export const diceRollerTutorial: TutorialModule = {
 				"Every Fluid application starts with a schema. You'll use `SchemaFactory` to define a `Dice` object with a `value` field. The schema tells SharedTree the shape of your data and enables type-safe access.",
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
+				"/App.tsx": `${importsBase}
 
 // TODO: Import SchemaFactory from "fluid-framework"
 
@@ -108,8 +152,7 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				'Import SchemaFactory: `import { SchemaFactory } from "fluid-framework";`',
@@ -119,7 +162,8 @@ export default function App() {
 			validationPatterns: [
 				{
 					label: "Import SchemaFactory",
-					pattern: "import\\s*\\{[^}]*SchemaFactory[^}]*\\}\\s*from\\s*[\"']fluid-framework[\"']",
+					pattern:
+						"import\\s*\\{[^}]*SchemaFactory[^}]*\\}\\s*from\\s*[\"']fluid-framework[\"']",
 				},
 				{
 					label: "Create SchemaFactory instance",
@@ -130,12 +174,8 @@ export default function App() {
 					pattern: "sf\\.(object|objectRecursive)\\s*\\(\\s*[\"']Dice[\"']",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
+			solution: `${importsWithSchema}
+${schemaBlock}
 
 export default function App() {
   return (
@@ -154,12 +194,8 @@ export default function App() {
 				"Now create an in-memory SharedTree using `createIndependentTreeBeta()`. This gives you a fully functional SharedTree without any server. First call `createIndependentTreeBeta()` to get a tree, then call `tree.viewWith()` with your schema config to get a view. Finally, initialize the view with a starting value \u2014 pass a plain object like `{ value: 1 }` and SharedTree automatically matches it to your schema.",
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
-import { SchemaFactory } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
+				"/App.tsx": `${importsWithSchema}
+${schemaBlock}
 
 // TODO: Import createIndependentTreeBeta and TreeViewConfiguration
 // from "fluid-framework" (add them to the existing import)
@@ -180,8 +216,7 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				'Add to your import: `import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`',
@@ -192,7 +227,8 @@ export default function App() {
 			validationPatterns: [
 				{
 					label: "Import createIndependentTreeBeta",
-					pattern: "import\\s*\\{[^}]*createIndependentTreeBeta[^}]*\\}\\s*from\\s*[\"']fluid-framework",
+					pattern:
+						"import\\s*\\{[^}]*createIndependentTreeBeta[^}]*\\}\\s*from\\s*[\"']fluid-framework",
 				},
 				{
 					label: "Import TreeViewConfiguration",
@@ -211,16 +247,9 @@ export default function App() {
 					pattern: "view\\.initialize\\s*\\(",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
-view.initialize({ value: 1 });
+			solution: `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
 
 export default function App() {
   return (
@@ -239,18 +268,10 @@ export default function App() {
 				"Now render the dice value from your SharedTree. Read `view.root.value` and display it as a dice face emoji. The dice faces are: 1=\u2680, 2=\u2681, 3=\u2682, 4=\u2683, 5=\u2684, 6=\u2685.",
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
-view.initialize({ value: 1 });
-
-const diceFaces = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
+				"/App.tsx": `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
+${diceFacesBlock}
 
 // TODO: Create a DiceView component that:
 // 1. Reads the current value from view.root.value
@@ -266,13 +287,12 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				"Create a function component: `function DiceView() { ... }`",
 				"Read the value: `const value = view.root.value;`",
-				"Show the face: `<div className=\"dice-face\">{diceFaces[value - 1]}</div>`",
+				'Show the face: `<div className="dice-face">{diceFaces[value - 1]}</div>`',
 				"Render it: `<DiceView />` inside the App return",
 			],
 			validationPatterns: [
@@ -289,18 +309,10 @@ export default function App() {
 					pattern: "<DiceView",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
-view.initialize({ value: 1 });
-
-const diceFaces = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
+			solution: `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
+${diceFacesBlock}
 
 function DiceView() {
   const value = view.root.value;
@@ -329,18 +341,10 @@ export default function App() {
 				"Add a button that rolls the dice. When clicked, it should set `view.root.value` to a random number between 1 and 6. This directly mutates the SharedTree node \u2014 exactly how you'd do it in a real Fluid app.",
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
-view.initialize({ value: 1 });
-
-const diceFaces = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
+				"/App.tsx": `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
+${diceFacesBlock}
 
 function DiceView() {
   const value = view.root.value;
@@ -362,14 +366,13 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				"Add a `<button>` element with an `onClick` handler",
 				"Generate random 1-6: `Math.floor(Math.random() * 6) + 1`",
 				"Set the value: `view.root.value = Math.floor(Math.random() * 6) + 1;`",
-				"Use `className=\"roll-button\"` for styling",
+				'Use `className="roll-button"` for styling',
 			],
 			validationPatterns: [
 				{
@@ -385,36 +388,11 @@ export default function App() {
 					pattern: "view\\.root\\.value\\s*=",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
-view.initialize({ value: 1 });
-
-const diceFaces = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
-
-function DiceView() {
-  const value = view.root.value;
-
-  const roll = () => {
-    view.root.value = Math.floor(Math.random() * 6) + 1;
-  };
-
-  return (
-    <div className="dice-panel">
-      <div className="dice-face">{diceFaces[value - 1]}</div>
-      <p>Value: {value}</p>
-      <button className="roll-button" onClick={roll}>
-        Roll
-      </button>
-    </div>
-  );
-}
+			solution: `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
+${diceFacesBlock}
+${diceViewWithRoll}
 
 export default function App() {
   return (
@@ -433,18 +411,10 @@ export default function App() {
 				'Now for the magic of Fluid! Add `Tree.on(view.root, "nodeChanged", callback)` to listen for changes and use React state to trigger re-renders. Then render **two** DiceView panels side by side \u2014 both share the same SharedTree, so when either clicks "Roll", both update. This simulates the multi-client experience.',
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
-view.initialize({ value: 1 });
-
-const diceFaces = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
+				"/App.tsx": `${importsWithTreeAndEvents}
+${schemaBlock}
+${treeSetupBlock}
+${diceFacesBlock}
 
 function DiceView({ title }: { title: string }) {
   const [value, setValue] = React.useState(view.root.value);
@@ -481,8 +451,7 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				'Use `React.useEffect(() => { ... }, [])` to set up the subscription once',
@@ -493,7 +462,8 @@ export default function App() {
 			validationPatterns: [
 				{
 					label: 'Tree.on subscription with "nodeChanged"',
-					pattern: 'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']nodeChanged["\']',
+					pattern:
+						'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']nodeChanged["\']',
 				},
 				{
 					label: "useEffect for subscription",
@@ -504,18 +474,10 @@ export default function App() {
 					pattern: "<DiceView[^/]*/>.*<DiceView",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("dice-roller");
-
-const Dice = sf.object("Dice", { value: sf.number });
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: Dice }));
-view.initialize({ value: 1 });
-
-const diceFaces = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
+			solution: `${importsWithTreeAndEvents}
+${schemaBlock}
+${treeSetupBlock}
+${diceFacesBlock}
 
 function DiceView({ title }: { title: string }) {
   const [value, setValue] = React.useState(view.root.value);

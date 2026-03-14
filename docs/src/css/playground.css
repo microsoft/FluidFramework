@@ -33,14 +33,14 @@
 	font-family: inherit;
 	font-size: inherit;
 	color: inherit;
-	text-decoration: none;
+	text-decoration: none !important;
 }
 
 .ffcom-playground-module-card:hover {
 	border-color: var(--ifm-color-primary);
 	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 	color: inherit;
-	text-decoration: none;
+	text-decoration: none !important;
 }
 
 .ffcom-playground-module-card-header {
@@ -262,13 +262,49 @@
 	margin-top: 16px;
 	padding-top: 16px;
 	border-top: 1px solid var(--ifm-color-emphasis-200);
-	flex-wrap: wrap;
 	gap: 8px;
+}
+
+.ffcom-playground-nav-arrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	background: transparent;
+	font-size: 1.4rem;
+	line-height: 1;
+	cursor: pointer;
+	color: var(--ifm-color-content);
+	transition:
+		background 0.2s,
+		border-color 0.2s;
+}
+
+.ffcom-playground-nav-arrow:hover:not(:disabled) {
+	background: var(--ifm-color-emphasis-100);
+}
+
+.ffcom-playground-nav-arrow:disabled,
+.ffcom-playground-nav-arrow--disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+
+.ffcom-playground-nav-arrow--placeholder {
+	visibility: hidden;
 }
 
 .ffcom-playground-nav-group {
 	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
 	gap: 8px;
+	flex: 1;
+	min-width: 0;
 }
 
 .ffcom-playground-nav-button {
@@ -282,6 +318,7 @@
 		background 0.2s,
 		border-color 0.2s;
 	font-family: inherit;
+	text-decoration: none !important;
 }
 
 .ffcom-playground-nav-primary {
@@ -292,6 +329,8 @@
 
 .ffcom-playground-nav-primary:hover {
 	background: var(--ifm-color-primary-dark);
+	color: white;
+	text-decoration: none;
 }
 
 .ffcom-playground-nav-secondary {

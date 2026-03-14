@@ -3,16 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { mainTsx } from "./sharedFiles";
 import type { TutorialModule } from "./types";
-
-const mainTsx = `import React from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./styles.css";
-
-const root = createRoot(document.getElementById("root")!);
-root.render(<App />);
-`;
 
 const stylesCss = `body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -116,6 +108,69 @@ const stylesCss = `body {
 }
 `;
 
+// --- Reusable code fragments for composing step files ---
+
+const importsBase = `import React from "react";`;
+
+const importsWithSchema = `import React from "react";
+import { SchemaFactory } from "fluid-framework";`;
+
+const importsWithTree = `import React from "react";
+import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`;
+
+const importsWithTreeAndEvents = `import React from "react";
+import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";`;
+
+const schemaBlock = `
+const sf = new SchemaFactory("todo-app");
+
+const TodoItem = sf.object("TodoItem", {
+  title: sf.string,
+  completed: sf.boolean,
+});
+
+const TodoList = sf.object("TodoList", {
+  title: sf.string,
+  items: sf.array(TodoItem),
+});`;
+
+const treeSetupBlock = `
+const tree = createIndependentTreeBeta();
+const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
+view.initialize({
+  title: "My Todos",
+  items: [
+    { title: "Learn SharedTree schema", completed: true },
+    { title: "Build a todo app", completed: false },
+    { title: "Add reactive updates", completed: false },
+  ],
+});`;
+
+const todoListRendering = `
+  return (
+    <div className="todo-app">
+      <h2 className="todo-header">{todoList.title}</h2>
+      <ul className="todo-list">
+        {todoList.items.map((item, i) => (
+          <li
+            key={i}
+            className={\`todo-item \${item.completed ? "completed" : ""}\`}
+          >
+            <input type="checkbox" checked={item.completed} readOnly />
+            <span>{item.title}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );`;
+
+// --- Shared scaffold files for every step ---
+
+const scaffoldFiles = {
+	"/main.tsx": mainTsx,
+	"/styles.css": stylesCss,
+};
+
 export const sharedTreeTutorial: TutorialModule = {
 	id: "shared-tree-todo",
 	title: "SharedTree Todo App",
@@ -135,7 +190,7 @@ export const sharedTreeTutorial: TutorialModule = {
 				"Define a schema for a todo application. You need a `TodoItem` with `title` (string) and `completed` (boolean) fields, and a `TodoList` with `title` (string) and `items` (array of TodoItem).",
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
+				"/App.tsx": `${importsBase}
 
 // TODO: Import SchemaFactory from "fluid-framework"
 
@@ -156,8 +211,7 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				'Import: `import { SchemaFactory } from "fluid-framework";`',
@@ -168,7 +222,8 @@ export default function App() {
 			validationPatterns: [
 				{
 					label: "Import SchemaFactory",
-					pattern: "import\\s*\\{[^}]*SchemaFactory[^}]*\\}\\s*from\\s*[\"']fluid-framework[\"']",
+					pattern:
+						"import\\s*\\{[^}]*SchemaFactory[^}]*\\}\\s*from\\s*[\"']fluid-framework[\"']",
 				},
 				{
 					label: "Define TodoItem with title and completed",
@@ -183,20 +238,8 @@ export default function App() {
 					pattern: "sf\\.array\\s*\\(\\s*TodoItem\\s*\\)",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
+			solution: `${importsWithSchema}
+${schemaBlock}
 
 export default function App() {
   return (
@@ -217,18 +260,7 @@ export default function App() {
 			files: {
 				"/App.tsx": `import React from "react";
 import { SchemaFactory, TreeViewConfiguration } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
+${schemaBlock}
 
 // TODO: Add createIndependentTreeBeta to your import from "fluid-framework"
 
@@ -255,19 +287,19 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				'Add to your import: `import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`',
 				"Create tree: `const tree = createIndependentTreeBeta();`",
 				"Create view: `const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));`",
-				"Initialize with plain objects: `view.initialize({ title: \"My Todos\", items: [...] })`",
+				'Initialize with plain objects: `view.initialize({ title: "My Todos", items: [...] })`',
 			],
 			validationPatterns: [
 				{
 					label: "Import createIndependentTreeBeta",
-					pattern: "import\\s*\\{[^}]*createIndependentTreeBeta[^}]*\\}\\s*from\\s*[\"']fluid-framework",
+					pattern:
+						"import\\s*\\{[^}]*createIndependentTreeBeta[^}]*\\}\\s*from\\s*[\"']fluid-framework",
 				},
 				{
 					label: "Create tree",
@@ -282,31 +314,9 @@ export default function App() {
 					pattern: "view\\.initialize\\s*\\(",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
+			solution: `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
 
 export default function App() {
   return (
@@ -325,31 +335,9 @@ export default function App() {
 				"Read data from the SharedTree and display it. Iterate over `view.root.items` to render each todo item with its title and completion status.",
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
+				"/App.tsx": `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
 
 export default function App() {
   const todoList = view.root;
@@ -367,13 +355,12 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
-				"Use: `<ul className=\"todo-list\">{todoList.items.map((item, i) => ...)}</ul>`",
+				'Use: `<ul className="todo-list">{todoList.items.map((item, i) => ...)}</ul>`',
 				"Each list item: `<li key={i} className={...}>`",
-				"Add checkbox: `<input type=\"checkbox\" checked={item.completed} readOnly />`",
+				'Add checkbox: `<input type="checkbox" checked={item.completed} readOnly />`',
 				"Add title: `<span>{item.title}</span>`",
 			],
 			validationPatterns: [
@@ -390,51 +377,13 @@ export default function App() {
 					pattern: "item\\.completed",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
+			solution: `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
 
 export default function App() {
   const todoList = view.root;
-
-  return (
-    <div className="todo-app">
-      <h2 className="todo-header">{todoList.title}</h2>
-      <ul className="todo-list">
-        {todoList.items.map((item, i) => (
-          <li
-            key={i}
-            className={\`todo-item \${item.completed ? "completed" : ""}\`}
-          >
-            <input type="checkbox" checked={item.completed} readOnly />
-            <span>{item.title}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+${todoListRendering}
 }
 `,
 		},
@@ -445,31 +394,9 @@ export default function App() {
 				"Make the todos interactive! Toggle `item.completed` when a checkbox is clicked, and add a form to insert new items using `todoList.items.insertAtEnd()`. Pass a plain object to `insertAtEnd()` \u2014 SharedTree matches it to the TodoItem schema automatically.",
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
+				"/App.tsx": `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
 
 export default function App() {
   const todoList = view.root;
@@ -503,14 +430,13 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				"Toggle: `const handleToggle = (item) => { item.completed = !item.completed; };`",
 				"On checkbox: `onChange={() => handleToggle(item)}` \u2014 and remove `readOnly`",
 				"Insert: `todoList.items.insertAtEnd({ title: newTitle, completed: false });`",
-				"Form: `<div className=\"add-form\"><input value={newTitle} onChange={...} /><button onClick={handleAdd}>Add</button></div>`",
+				'Form: `<div className="add-form"><input value={newTitle} onChange={...} /><button onClick={handleAdd}>Add</button></div>`',
 			],
 			validationPatterns: [
 				{
@@ -526,37 +452,15 @@ export default function App() {
 					pattern: '<input[^>]*type\\s*=\\s*["\']text["\']',
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
+			solution: `${importsWithTree}
+${schemaBlock}
+${treeSetupBlock}
 
 export default function App() {
   const todoList = view.root;
   const [newTitle, setNewTitle] = React.useState("");
 
-  const handleToggle = (item: any) => {
+  const handleToggle = (item: typeof TodoItem.Type) => {
     item.completed = !item.completed;
   };
 
@@ -614,31 +518,9 @@ export default function App() {
 				'Now for the magic of Fluid! Extract a `TodoPanel` component from your App, add `Tree.on(view.root, "treeChanged", callback)` to subscribe to changes, and render **two** panels side by side. Both share the same SharedTree, so when either client toggles or adds a todo, both update instantly. This simulates the multi-client experience.',
 			activeFile: "/App.tsx",
 			files: {
-				"/App.tsx": `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
+				"/App.tsx": `${importsWithTreeAndEvents}
+${schemaBlock}
+${treeSetupBlock}
 
 // TODO: Extract a TodoPanel component that accepts a { title: string } prop.
 // Move the todo rendering logic here and add Tree.on for reactivity:
@@ -656,8 +538,7 @@ export default function App() {
   );
 }
 `,
-				"/main.tsx": mainTsx,
-				"/styles.css": stylesCss,
+				...scaffoldFiles,
 			},
 			hints: [
 				"Create `function TodoPanel({ title }: { title: string })` and move the todo UI into it",
@@ -668,7 +549,8 @@ export default function App() {
 			validationPatterns: [
 				{
 					label: 'Tree.on subscription with "treeChanged"',
-					pattern: 'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']treeChanged["\']',
+					pattern:
+						'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']treeChanged["\']',
 				},
 				{
 					label: "useEffect for subscription",
@@ -683,31 +565,9 @@ export default function App() {
 					pattern: "<TodoPanel[^/]*/>.*<TodoPanel",
 				},
 			],
-			solution: `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";
-
-const sf = new SchemaFactory("todo-app");
-
-const TodoItem = sf.object("TodoItem", {
-  title: sf.string,
-  completed: sf.boolean,
-});
-
-const TodoList = sf.object("TodoList", {
-  title: sf.string,
-  items: sf.array(TodoItem),
-});
-
-const tree = createIndependentTreeBeta();
-const view = tree.viewWith(new TreeViewConfiguration({ schema: TodoList }));
-view.initialize({
-  title: "My Todos",
-  items: [
-    { title: "Learn SharedTree schema", completed: true },
-    { title: "Build a todo app", completed: false },
-    { title: "Add reactive updates", completed: false },
-  ],
-});
+			solution: `${importsWithTreeAndEvents}
+${schemaBlock}
+${treeSetupBlock}
 
 function TodoPanel({ title }: { title: string }) {
   const [, setTick] = React.useState(0);
@@ -722,7 +582,7 @@ function TodoPanel({ title }: { title: string }) {
   const todoList = view.root;
   const [newTitle, setNewTitle] = React.useState("");
 
-  const handleToggle = (item: any) => {
+  const handleToggle = (item: typeof TodoItem.Type) => {
     item.completed = !item.completed;
   };
 

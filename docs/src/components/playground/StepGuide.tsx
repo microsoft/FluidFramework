@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import Link from "@docusaurus/Link";
 import React from "react";
 
 import { StepIndicator } from "./StepIndicator";
@@ -169,16 +170,16 @@ export function StepGuide({
 			)}
 
 			<div className="ffcom-playground-nav">
-				<div className="ffcom-playground-nav-group">
-					{currentStepIndex > 0 && (
-						<button
-							className="ffcom-playground-nav-button ffcom-playground-nav-secondary"
-							onClick={() => onNavigate(currentStepIndex - 1)}
-						>
-							Previous
-						</button>
-					)}
+				<button
+					className="ffcom-playground-nav-arrow"
+					onClick={() => onNavigate(currentStepIndex - 1)}
+					disabled={currentStepIndex === 0}
+					aria-label="Previous step"
+				>
+					&#x2039;
+				</button>
 
+				<div className="ffcom-playground-nav-group">
 					{step.solution !== undefined && (
 						<button
 							className={`ffcom-playground-nav-button ${showSolution ? "ffcom-playground-nav-active" : "ffcom-playground-nav-secondary"}`}
@@ -195,17 +196,29 @@ export function StepGuide({
 						Reset Step
 					</button>
 
-					{currentStepIndex < totalSteps - 1 && (
-						<button
-							className={`ffcom-playground-nav-button ${allPassed ? "ffcom-playground-nav-primary" : "ffcom-playground-nav-disabled"}`}
-							onClick={() => allPassed && onNavigate(currentStepIndex + 1)}
-							disabled={!allPassed}
-							title={allPassed ? undefined : "Complete all checklist items to continue"}
+					{currentStepIndex === totalSteps - 1 && allPassed && (
+						<Link
+							className="ffcom-playground-nav-button ffcom-playground-nav-primary"
+							to="/docs/start/interactive-tutorial/"
 						>
-							Next
-						</button>
+							Back to Tutorials
+						</Link>
 					)}
 				</div>
+
+				{currentStepIndex < totalSteps - 1 ? (
+					<button
+						className={`ffcom-playground-nav-arrow ${allPassed ? "" : "ffcom-playground-nav-arrow--disabled"}`}
+						onClick={() => onNavigate(currentStepIndex + 1)}
+						disabled={!allPassed}
+						aria-label="Next step"
+						title={allPassed ? undefined : "Complete all checklist items to continue"}
+					>
+						&#x203A;
+					</button>
+				) : (
+					<div className="ffcom-playground-nav-arrow ffcom-playground-nav-arrow--placeholder" />
+				)}
 			</div>
 		</div>
 	);
