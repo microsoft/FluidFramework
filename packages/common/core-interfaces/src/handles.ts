@@ -177,9 +177,7 @@ export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
  * Symbol which must only be used on an {@link (IFluidHandle:interface)}, and is used to identify such objects.
  *
  * @remarks
- * To narrow arbitrary objects to handles do not simply check for this symbol:
- * instead use {@link @fluidframework/runtime-utils#isFluidHandle} which has improved compatibility
- * with older implementations of handles that may exist due to dynamic code loading of older packages.
+ * To narrow arbitrary objects to handles one can check for this symbol or use {@link @fluidframework/runtime-utils#isFluidHandle}.
  *
  * @privateRemarks
  * Normally `Symbol` would be used here instead of `Symbol.for` since just using Symbol (and avoiding the global symbol registry) removes the risk of collision, which is the main point of using a symbol for this in the first place.
