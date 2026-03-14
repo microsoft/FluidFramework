@@ -18,6 +18,7 @@ import {
 	brand,
 	brandConst,
 	newIntegerRangeMap,
+	type IdAllocator,
 	type RangeMap,
 	type Mutable,
 } from "../../util/index.js";
@@ -40,10 +41,25 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 	 */
 	private maxSeen: ChangesetLocalId = brandConst(-1)();
 
+	/**
+	 * @param updatedRevision - The revision to assign to all replaced IDs.
+	 * @param obsoleteRevisions - The set of revisions that should be replaced.
+	 * @param idAllocator - If provided, IDs already allocated by this allocator will be reserved (avoided by the replacer),
+	 * and the allocator will be updated to account for any new IDs allocated during replacement.
+	 */
 	public constructor(
 		public readonly updatedRevision: RevisionTag,
 		private readonly obsoleteRevisions: Set<RevisionTag | undefined>,
-	) {}
+		private readonly idAllocator?: IdAllocator,
+	) {
+		if (idAllocator !== undefined) {
+			const reservedIdCount = idAllocator.getMaxId() + 1;
+			if (reservedIdCount > 0) {
+				this.localIds.set(brand(0), reservedIdCount, true);
+				this.maxSeen = brand(reservedIdCount - 1);
+			}
+		}
+	}
 
 	public isObsolete(revision: RevisionTag | undefined): boolean {
 		return this.obsoleteRevisions.has(revision);
@@ -88,6 +104,12 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 				remainderStart = offsetChangeAtomId(remainderStart, prior.length);
 				remainderCount -= prior.length;
 			}
+
+			// Keep the allocator in sync with any new IDs we've allocated
+			if (this.idAllocator !== undefined && this.maxSeen >= this.idAllocator.getMaxId() + 1) {
+				this.idAllocator.allocate(this.maxSeen - this.idAllocator.getMaxId());
+			}
+
 			return updated;
 		}
 		return id;

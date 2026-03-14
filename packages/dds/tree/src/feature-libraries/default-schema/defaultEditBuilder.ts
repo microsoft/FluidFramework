@@ -204,6 +204,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			fieldKinds,
 			changeReceiver,
 			codecOptions,
+			mintRevisionTag,
 		);
 	}
 
@@ -212,6 +213,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	}
 	public exitTransaction(): void {
 		this.modularBuilder.exitTransaction();
+	}
+
+	public applyExternalChange(change: DefaultChangeset): void {
+		this.modularBuilder.applyExternalChange(change);
 	}
 
 	public addNodeExistsConstraint(path: UpPath): void {
