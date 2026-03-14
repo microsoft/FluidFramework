@@ -3,7 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { mainTsx } from "./sharedFiles";
+import {
+	createTreeCallPattern,
+	createTreeImportPattern,
+	importsBase,
+	importsWithSchema,
+	importsWithTree,
+	importsWithTreeAndEvents,
+	initializePattern,
+	mainTsx,
+	schemaFactoryImportPattern,
+	treeViewConfigPattern,
+	useEffectPattern,
+	viewWithPattern,
+} from "./sharedFiles";
 import type { TutorialModule } from "./types";
 
 const stylesCss = `body {
@@ -62,18 +75,7 @@ h3 {
 }
 `;
 
-// --- Reusable code fragments for composing step files ---
-
-const importsBase = `import React from "react";`;
-
-const importsWithSchema = `import React from "react";
-import { SchemaFactory } from "fluid-framework";`;
-
-const importsWithTree = `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`;
-
-const importsWithTreeAndEvents = `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";`;
+// --- Tutorial-specific code fragments ---
 
 const schemaBlock = `
 const sf = new SchemaFactory("dice-roller");
@@ -160,11 +162,7 @@ export default function App() {
 				'Define the schema: `const Dice = sf.object("Dice", { value: sf.number });`',
 			],
 			validationPatterns: [
-				{
-					label: "Import SchemaFactory",
-					pattern:
-						"import\\s*\\{[^}]*SchemaFactory[^}]*\\}\\s*from\\s*[\"']fluid-framework[\"']",
-				},
+				schemaFactoryImportPattern,
 				{
 					label: "Create SchemaFactory instance",
 					pattern: "new\\s+SchemaFactory\\s*\\(",
@@ -225,27 +223,11 @@ export default function App() {
 				"Initialize: `view.initialize({ value: 1 });`",
 			],
 			validationPatterns: [
-				{
-					label: "Import createIndependentTreeBeta",
-					pattern:
-						"import\\s*\\{[^}]*createIndependentTreeBeta[^}]*\\}\\s*from\\s*[\"']fluid-framework",
-				},
-				{
-					label: "Import TreeViewConfiguration",
-					pattern: "TreeViewConfiguration",
-				},
-				{
-					label: "Create tree",
-					pattern: "createIndependentTreeBeta\\s*\\(",
-				},
-				{
-					label: "Create view with viewWith",
-					pattern: "\\.viewWith\\s*\\(",
-				},
-				{
-					label: "Initialize the tree",
-					pattern: "view\\.initialize\\s*\\(",
-				},
+				createTreeImportPattern,
+				treeViewConfigPattern,
+				createTreeCallPattern,
+				viewWithPattern,
+				initializePattern,
 			],
 			solution: `${importsWithTree}
 ${schemaBlock}
@@ -465,10 +447,7 @@ export default function App() {
 					pattern:
 						'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']nodeChanged["\']',
 				},
-				{
-					label: "useEffect for subscription",
-					pattern: "useEffect",
-				},
+				useEffectPattern,
 				{
 					label: "Two DiceView instances rendered",
 					pattern: "<DiceView[^/]*/>.*<DiceView",

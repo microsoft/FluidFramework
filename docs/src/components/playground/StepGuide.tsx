@@ -55,6 +55,11 @@ export interface StepGuideProps {
 	onToggleSolution: () => void;
 
 	/**
+	 * URL path to the tutorial module index page (for "Back to Tutorials" link).
+	 */
+	moduleIndexUrl: string;
+
+	/**
 	 * Callback to reset the current step to boilerplate.
 	 */
 	onResetStep: () => void;
@@ -88,6 +93,7 @@ export function StepGuide({
 	validationResults,
 	showSolution,
 	completedSteps,
+	moduleIndexUrl,
 	onNavigate,
 	onToggleSolution,
 	onResetStep,
@@ -199,7 +205,7 @@ export function StepGuide({
 					{currentStepIndex === totalSteps - 1 && allPassed && (
 						<Link
 							className="ffcom-playground-nav-button ffcom-playground-nav-primary"
-							to="/docs/start/interactive-tutorial/"
+							to={moduleIndexUrl}
 						>
 							Back to Tutorials
 						</Link>
@@ -208,7 +214,7 @@ export function StepGuide({
 
 				{currentStepIndex < totalSteps - 1 ? (
 					<button
-						className={`ffcom-playground-nav-arrow ${allPassed ? "" : "ffcom-playground-nav-arrow--disabled"}`}
+						className="ffcom-playground-nav-arrow"
 						onClick={() => onNavigate(currentStepIndex + 1)}
 						disabled={!allPassed}
 						aria-label="Next step"

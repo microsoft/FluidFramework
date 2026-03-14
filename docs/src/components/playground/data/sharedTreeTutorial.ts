@@ -3,7 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { mainTsx } from "./sharedFiles";
+import {
+	createTreeCallPattern,
+	createTreeImportPattern,
+	importsBase,
+	importsWithSchema,
+	importsWithTree,
+	importsWithTreeAndEvents,
+	initializePattern,
+	mainTsx,
+	schemaFactoryImportPattern,
+	useEffectPattern,
+	viewWithPattern,
+} from "./sharedFiles";
 import type { TutorialModule } from "./types";
 
 const stylesCss = `body {
@@ -108,18 +120,7 @@ const stylesCss = `body {
 }
 `;
 
-// --- Reusable code fragments for composing step files ---
-
-const importsBase = `import React from "react";`;
-
-const importsWithSchema = `import React from "react";
-import { SchemaFactory } from "fluid-framework";`;
-
-const importsWithTree = `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, createIndependentTreeBeta } from "fluid-framework";`;
-
-const importsWithTreeAndEvents = `import React from "react";
-import { SchemaFactory, TreeViewConfiguration, Tree, createIndependentTreeBeta } from "fluid-framework";`;
+// --- Tutorial-specific code fragments ---
 
 const schemaBlock = `
 const sf = new SchemaFactory("todo-app");
@@ -220,11 +221,7 @@ export default function App() {
 				'Define TodoList: `const TodoList = sf.object("TodoList", { title: sf.string, items: sf.array(TodoItem) });`',
 			],
 			validationPatterns: [
-				{
-					label: "Import SchemaFactory",
-					pattern:
-						"import\\s*\\{[^}]*SchemaFactory[^}]*\\}\\s*from\\s*[\"']fluid-framework[\"']",
-				},
+				schemaFactoryImportPattern,
 				{
 					label: "Define TodoItem with title and completed",
 					pattern: "sf\\.(object|objectRecursive)\\s*\\(\\s*[\"']TodoItem[\"']",
@@ -296,23 +293,10 @@ export default function App() {
 				'Initialize with plain objects: `view.initialize({ title: "My Todos", items: [...] })`',
 			],
 			validationPatterns: [
-				{
-					label: "Import createIndependentTreeBeta",
-					pattern:
-						"import\\s*\\{[^}]*createIndependentTreeBeta[^}]*\\}\\s*from\\s*[\"']fluid-framework",
-				},
-				{
-					label: "Create tree",
-					pattern: "createIndependentTreeBeta\\s*\\(",
-				},
-				{
-					label: "Create view with viewWith",
-					pattern: "\\.viewWith\\s*\\(",
-				},
-				{
-					label: "Initialize with sample data",
-					pattern: "view\\.initialize\\s*\\(",
-				},
+				createTreeImportPattern,
+				createTreeCallPattern,
+				viewWithPattern,
+				{ ...initializePattern, label: "Initialize with sample data" },
 			],
 			solution: `${importsWithTree}
 ${schemaBlock}
@@ -552,10 +536,7 @@ export default function App() {
 					pattern:
 						'Tree\\.on\\s*\\(\\s*view\\.root\\s*,\\s*["\']treeChanged["\']',
 				},
-				{
-					label: "useEffect for subscription",
-					pattern: "useEffect",
-				},
+				useEffectPattern,
 				{
 					label: "TodoPanel component defined",
 					pattern: "function\\s+TodoPanel",

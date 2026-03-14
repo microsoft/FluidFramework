@@ -13,15 +13,25 @@ import type { ValidationPattern } from "./data/types";
 import "@site/src/css/playground.css";
 
 /**
+ * Path to the tutorial module index page (used for "Back to Tutorials" link).
+ */
+const MODULE_INDEX_PATH = "/docs/start/interactive-tutorial/";
+
+/**
  * Runs validation patterns against code, stripping comments first.
+ * Returns false for any pattern that fails to compile as a regex.
  */
 function runValidation(code: string, patterns: ValidationPattern[]): boolean[] {
 	const stripped = code
 		.replace(/\/\*[\s\S]*?\*\//g, "")
 		.replace(/\/\/.*$/gm, "");
 	return patterns.map((vp) => {
-		const regex = new RegExp(vp.pattern, vp.flags ?? "s");
-		return regex.test(stripped);
+		try {
+			const regex = new RegExp(vp.pattern, vp.flags ?? "s");
+			return regex.test(stripped);
+		} catch {
+			return false;
+		}
 	});
 }
 
@@ -178,6 +188,7 @@ export function TutorialPlayground({
 				validationResults={validationResults}
 				showSolution={showSolution}
 				completedSteps={completedStepsRef.current}
+				moduleIndexUrl={MODULE_INDEX_PATH}
 				onNavigate={handleNavigate}
 				onToggleSolution={handleToggleSolution}
 				onResetStep={handleResetStep}

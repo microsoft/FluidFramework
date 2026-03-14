@@ -39,8 +39,6 @@
 .ffcom-playground-module-card:hover {
 	border-color: var(--ifm-color-primary);
 	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-	color: inherit;
-	text-decoration: none !important;
 }
 
 .ffcom-playground-module-card-header {
@@ -288,8 +286,7 @@
 	background: var(--ifm-color-emphasis-100);
 }
 
-.ffcom-playground-nav-arrow:disabled,
-.ffcom-playground-nav-arrow--disabled {
+.ffcom-playground-nav-arrow:disabled {
 	opacity: 0.35;
 	cursor: not-allowed;
 }
@@ -321,16 +318,17 @@
 	text-decoration: none !important;
 }
 
-.ffcom-playground-nav-primary {
+.ffcom-playground-nav-primary,
+.ffcom-playground-nav-active {
 	background: var(--ifm-color-primary);
 	color: white;
 	border-color: var(--ifm-color-primary);
 }
 
-.ffcom-playground-nav-primary:hover {
+.ffcom-playground-nav-primary:hover,
+.ffcom-playground-nav-active:hover {
 	background: var(--ifm-color-primary-dark);
 	color: white;
-	text-decoration: none;
 }
 
 .ffcom-playground-nav-secondary {
@@ -340,16 +338,6 @@
 
 .ffcom-playground-nav-secondary:hover {
 	background: var(--ifm-color-emphasis-100);
-}
-
-.ffcom-playground-nav-active {
-	background: var(--ifm-color-primary);
-	color: white;
-	border-color: var(--ifm-color-primary);
-}
-
-.ffcom-playground-nav-active:hover {
-	background: var(--ifm-color-primary-dark);
 }
 
 .ffcom-playground-nav-disabled {
