@@ -194,7 +194,7 @@ describe("Outbox", () => {
 		batchMarker: boolean | undefined = undefined,
 	): IBatchMessage => ({
 		contents:
-			message.runtimeOp === undefined ? message.contents : serializeOp(message.runtimeOp),
+			message.runtimeOp === undefined ? message.contents : serializeOp(message.runtimeOp).content,
 		metadata:
 			batchMarker === undefined
 				? message.metadata

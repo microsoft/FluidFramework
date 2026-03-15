@@ -9,6 +9,7 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type {
 	IContainer,
+	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -16,15 +17,15 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import {
-	IContainerRuntimeOptions,
-	loadContainerRuntime,
-} from "@fluidframework/container-runtime/internal";
+import type { ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { loadContainerRuntimeAlpha } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	IErrorBase,
+	IFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
@@ -82,9 +83,16 @@ class DataObjectWithStagingMode extends DataObject {
 		});
 	}
 
-	public addDDS(prefix: string): void {
+	public addDDS<T extends string>(prefix: T): `${typeof prefix}-${number}` {
+		const id: `${typeof prefix}-${number}` = `${prefix}-${this.instanceNumber}`;
 		const newMap = SharedMap.create(this.runtime);
-		this.root.set(`${prefix}-${this.instanceNumber}`, newMap.handle);
+		newMap.set("self", id);
+		this.root.set(id, newMap.handle);
+		return id;
+	}
+
+	public setHandle(key: string, handle: IFluidHandle): void {
+		this.root.set(key, handle);
 	}
 
 	/**
@@ -104,17 +112,36 @@ class DataObjectWithStagingMode extends DataObject {
 	 * Enumerate the data store's data, traversing handles to other DDSes and including their data as nested keys.
 	 */
 	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
-		const state: Record<string, unknown> = {};
-		const loadStateInt = async (map): Promise<void> => {
+		// Duck-typed interface for map-like objects (works with both ISharedDirectory and ISharedMap)
+		interface MapLike {
+			keys(): IterableIterator<string>;
+			get(key: string): unknown;
+		}
+		const isMapLike = (obj: unknown): obj is MapLike =>
+			typeof obj === "object" &&
+			obj !== null &&
+			typeof (obj as MapLike).keys === "function" &&
+			typeof (obj as MapLike).get === "function";
+
+		const loadStateInt = async (map: MapLike): Promise<Record<string, unknown>> => {
+			const state: Record<string, unknown> = {};
 			for (const key of map.keys()) {
 				const value = (state[key] = map.get(key));
 				if (isFluidHandle(value)) {
-					state[key] = await loadStateInt(await value.get());
+					const obj = await value.get();
+					if (obj instanceof DataObjectWithStagingMode) {
+						state[key] = await obj.enumerateDataWithHandlesResolved();
+					} else if (isMapLike(obj)) {
+						state[key] = await loadStateInt(obj);
+					} else {
+						// For other resolved handle types, just keep the resolved value
+						state[key] = obj;
+					}
 				}
 			}
+			return state;
 		};
-		await loadStateInt(this.root);
-		return state;
+		return loadStateInt(this.root);
 	}
 
 	public enterStagingMode(): StageControlsInternal {
@@ -137,11 +164,11 @@ const runtimeFactory: IRuntimeFactory = {
 	get IRuntimeFactory() {
 		return this;
 	},
-	instantiateRuntime: async (context, existing) => {
+	instantiateRuntime: async (context, existing): Promise<IRuntime> => {
 		const runtimeOptions: IContainerRuntimeOptions = {
 			enableRuntimeIdCompressor: "on",
 		};
-		return loadContainerRuntime({
+		const { runtime } = await loadContainerRuntimeAlpha({
 			context,
 			existing,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
@@ -154,9 +181,10 @@ const runtimeFactory: IRuntimeFactory = {
 				}
 				const root = await rt.getAliasedDataStoreEntryPoint("default");
 				assert(root !== undefined, "default must exist");
-				return root.get();
+				return root.get() as FluidObject;
 			},
 		});
+		return runtime;
 	},
 };
 
@@ -686,5 +714,116 @@ describe("Staging Mode", () => {
 			/Cannot set aliases while in staging mode/,
 			"Should not be able to set an alias in staging mode",
 		);
+	});
+
+	describe("Pending state rehydration", () => {
+		it("rehydrates pending DDS from pending state", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			// Enter staging mode and create a new DDS
+			clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.addDDS("pendingDDS");
+
+			// Get the pending local state before committing
+			const pendingState = await (
+				clients.original.container as ContainerAlpha
+			).getPendingLocalState();
+			assert(pendingState !== undefined, "Pending state should exist");
+			const originalData =
+				await clients.original.dataObject.enumerateDataWithHandlesResolved();
+
+			// Close the original container
+			clients.original.container.close();
+
+			// Create a new loader and rehydrate from pending state
+			const rehydrateLoader = createLoader({
+				deltaConnectionServer,
+				runtimeFactory,
+			});
+
+			const url = await clients.loaded.container.getAbsoluteUrl("");
+			assert(url !== undefined, "must have url");
+
+			const rehydratedContainer = await loadExistingContainer({
+				...rehydrateLoader.loaderProps,
+				request: { url },
+				pendingLocalState: pendingState,
+			});
+
+			const rehydratedDataObject = await getDataObject(rehydratedContainer);
+
+			// Verify the container is in staging mode
+			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
+			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
+
+			// The rehydrated container should have the pending DDS loaded
+			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
+			assert.deepEqual(
+				rehydratedData,
+				originalData,
+				"Rehydrated container should have pending DDS",
+			);
+		});
+
+		it("rehydrates pending datastore with DDS", async () => {
+			const deltaConnectionServer = LocalDeltaConnectionServer.create();
+			const clients = await createClients(deltaConnectionServer);
+
+			// Enter staging mode
+			clients.original.dataObject.enterStagingMode();
+
+			// Create a datastore with DDS
+			const newDataStore = await clients.original.dataObject.containerRuntime.createDataStore(
+				dataObjectFactory.type,
+			);
+			const newDataObject = (await newDataStore.entryPoint.get()) as DataObjectWithStagingMode;
+
+			// Create a DDS in the datastore and make an edit
+			newDataObject.addDDS("pendingDDS");
+			newDataObject.makeEdit("pendingEdit");
+
+			// Store handle to the new datastore in root so we can access it after rehydration
+			clients.original.dataObject.setHandle("pendingDatastore", newDataStore.entryPoint);
+
+			// Get the pending local state before committing
+			const pendingState = await (
+				clients.original.container as ContainerAlpha
+			).getPendingLocalState();
+			assert(pendingState !== undefined, "Pending state should exist");
+			const originalData =
+				await clients.original.dataObject.enumerateDataWithHandlesResolved();
+			// Close the original container
+			clients.original.container.close();
+
+			// Create a new loader and rehydrate from pending state
+			const rehydrateLoader = createLoader({
+				deltaConnectionServer,
+				runtimeFactory,
+			});
+
+			const url = await clients.loaded.container.getAbsoluteUrl("");
+			assert(url !== undefined, "must have url");
+
+			const rehydratedContainer = await loadExistingContainer({
+				...rehydrateLoader.loaderProps,
+				request: { url },
+				pendingLocalState: pendingState,
+			});
+
+			const rehydratedDataObject = await getDataObject(rehydratedContainer);
+
+			// Verify the container is in staging mode
+			const runtimeAlpha = asLegacyAlpha(rehydratedDataObject.containerRuntime);
+			assert(runtimeAlpha.inStagingMode, "Rehydrated container should be in staging mode");
+
+			// Verify the handle to the pending datastore was rehydrated
+			const rehydratedData = await rehydratedDataObject.enumerateDataWithHandlesResolved();
+			assert.deepEqual(
+				rehydratedData,
+				originalData,
+				"Rehydrated container should have handle to pending datastore",
+			);
+		});
 	});
 });

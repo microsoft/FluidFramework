@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	loadContainerRuntime,
+	loadContainerRuntimeAlpha,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
@@ -337,6 +337,15 @@ export class DefaultStressDataObject extends StressDataObject {
 
 	private stageControls: StageControlsAlpha | undefined;
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+
+	/**
+	 * Sets the stage controls. This is called by the runtime factory when loading
+	 * from pending state that was in staging mode.
+	 */
+	public setStageControls(controls: StageControlsAlpha | undefined): void {
+		this.stageControls = controls;
+	}
+
 	public enterStagingMode(): void {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
@@ -346,10 +355,6 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public inStagingMode(): boolean {
-		assert(
-			this.containerRuntimeExp.inStagingMode !== undefined,
-			"inStagingMode must be defined",
-		);
 		return this.containerRuntimeExp.inStagingMode;
 	}
 
@@ -397,7 +402,12 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			return this;
 		},
 		instantiateRuntime: async (context, existing) => {
-			const runtime = await loadContainerRuntime({
+			// Capture stageControls to pass to the entrypoint after loading.
+			// This must be inside instantiateRuntime so each container instance has its own variable.
+			// eslint-disable-next-line prefer-const -- reassigned after loadContainerRuntimeAlpha returns
+			let pendingStageControls: StageControlsAlpha | undefined;
+
+			const { runtime, stageControls } = await loadContainerRuntimeAlpha({
 				context,
 				existing,
 				runtimeOptions,
@@ -414,9 +424,25 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					);
 					assert(aliasedDefault !== undefined, "default must exist");
 
-					return aliasedDefault.get();
+					const entryPoint = await aliasedDefault.get();
+
+					// Pass the stageControls (if any) to the DefaultStressDataObject
+					// so it can properly exit staging mode when rehydrated from pending state
+					const maybe: FluidObject<DefaultStressDataObject> | undefined = entryPoint;
+					if (
+						maybe?.DefaultStressDataObject !== undefined &&
+						pendingStageControls !== undefined
+					) {
+						maybe.DefaultStressDataObject.setStageControls(pendingStageControls);
+					}
+
+					return entryPoint;
 				},
 			});
+
+			// Store stageControls so it can be passed to entrypoint when getEntryPoint() is called
+			pendingStageControls = stageControls;
+
 			// id compressor isn't made available via the interface right now.
 			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
 			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
