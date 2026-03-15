@@ -25,8 +25,6 @@ import execa from "execa";
 import { readJsonSync } from "fs-extra/esm";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
-import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
-import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
 import {
 	AllPackagesSelectionCriteria,
@@ -159,7 +157,7 @@ export async function npmCheckUpdates(
 			jsonUpgraded: true,
 			silent: true,
 			peer: true,
-		})) as Index<VersionSpec>;
+		})) as Record<string, string>;
 
 		if (typeof result !== "object") {
 			throw new TypeError(`Expected an object: ${typeof result}`);

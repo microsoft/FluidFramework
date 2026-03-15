@@ -215,8 +215,8 @@ importers:
         specifier: ^10.1.1
         version: 10.1.1
       npm-check-updates:
-        specifier: ^16.14.20
-        version: 16.14.20
+        specifier: ^17.1.18
+        version: 17.1.18
       oclif:
         specifier: ^4.22.50
         version: 4.22.50(@types/node@22.19.1)
@@ -4598,6 +4598,11 @@ packages:
   npm-check-updates@16.14.20:
     resolution: {integrity: sha512-sYbIhun4DrjO7NFOTdvs11nCar0etEhZTsEjL47eM0TuiGMhmYughRCxG2SpGRmGAQ7AkwN7bw2lWzoE7q6yOQ==}
     engines: {node: '>=14.14'}
+    hasBin: true
+
+  npm-check-updates@17.1.18:
+    resolution: {integrity: sha512-bkUy2g4v1i+3FeUf5fXMLbxmV95eG4/sS7lYE32GrUeVgQRfQEk39gpskksFunyaxQgTIdrvYbnuNbO/pSUSqw==}
+    engines: {node: ^18.18.0 || >=20.0.0, npm: '>=8.12.1'}
     hasBin: true
 
   npm-install-checks@6.1.1:
@@ -10573,6 +10578,8 @@ snapshots:
     transitivePeerDependencies:
       - bluebird
       - supports-color
+
+  npm-check-updates@17.1.18: {}
 
   npm-install-checks@6.1.1:
     dependencies:
