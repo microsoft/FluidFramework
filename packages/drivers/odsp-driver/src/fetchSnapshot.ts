@@ -189,12 +189,31 @@ export async function fetchSnapshotWithRedeem(
 					putInCache,
 					loadingGroupIds,
 				);
-			} else if (isLocationRedirectionError(error)) {
-				const redirectedResolvedUrl: IOdspResolvedUrl = {
-					...getOdspResolvedUrl(error.redirectUrl),
-					shareLinkInfo: odspResolvedUrl.shareLinkInfo,
-				};
-				await redeemSharingLink(redirectedResolvedUrl, storageTokenFetcher, logger);
+			} else if (
+				isLocationRedirectionError(error) &&
+				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
+			) {
+				try {
+					// The redirect itself is handled earlier, but we need to redeem the sharing link
+					// now against the redirected URL rather than waiting until the next API call retries
+					// with the redirect URL applied. After this point the sharing link is removed from
+					// the resolved URL, so we wouldn't be able to redeem during a later failure.
+					const redirectedResolvedUrl: IOdspResolvedUrl = {
+						...getOdspResolvedUrl(error.redirectUrl),
+						shareLinkInfo: odspResolvedUrl.shareLinkInfo,
+					};
+
+					await redeemSharingLink(redirectedResolvedUrl, storageTokenFetcher, logger);
+					logger.sendTelemetryEvent(
+						{
+							eventName: "RedirectRedeemFallback",
+							errorType: error.errorType,
+						},
+						error,
+					);
+				} catch (redeemError) {
+					logger.sendErrorEvent({ eventName: "RedirectRedeemFallbackError" }, redeemError);
+				}
 				throw error;
 			} else {
 				throw error;
@@ -808,8 +827,8 @@ function isLocationRedirectionError(error: unknown): error is ILocationRedirecti
 	return (
 		typeof error === "object" &&
 		error !== null &&
-		(error as Partial<ILocationRedirectionError>).errorType ===
-			DriverErrorTypes.locationRedirection
+		(error as Partial<IOdspError>).errorType === DriverErrorTypes.locationRedirection &&
+		(error as Partial<ILocationRedirectionError>).redirectUrl !== undefined
 	);
 }
 
