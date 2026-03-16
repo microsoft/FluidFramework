@@ -81,7 +81,7 @@ Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release 
 
 ### Announce merge freeze
 
-After opening the release notes PR, remind the user to post an announcement in the Fluid Framework **"General" Teams channel** telling the team to **avoid merging PRs to main until the version bump PR is merged**. Merges between the release notes PR and the version bump can cause conflicts or include unintended changes in the release. In autonomous mode, include this reminder in the phase completion report. Never auto-post to Teams.
+After opening the release notes PR, remind the user to post an announcement in the **"Fluid Framework All" Teams channel** telling the team to **avoid merging PRs to main until the version bump PR is merged**. Merges between the release notes PR and the version bump can cause conflicts or include unintended changes in the release. In autonomous mode, include this reminder in the phase completion report. Never auto-post to Teams.
 
 ### If changeset edits are needed after generation
 
