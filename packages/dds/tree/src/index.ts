@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// For the time being, if exports are changed, additional files under entrypoints
-// directory probably need updated. They can be manually adjusted or run
-// generate:entrypoint-sources script.
+// For the time being, if exports are changed, additional files under entrypoints need updated.
+// Run `pnpm generate:entrypoint-sources` to update them.
 
 export {
 	ValueSchema,
