@@ -5,7 +5,7 @@
 
 import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
 
-import type { LogLevelValueType } from "./logger.js";
+import type { LogLevelValue } from "./logger.js";
 
 /**
  * The categories FF uses when instrumenting the code.
@@ -83,9 +83,9 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 
 	/**
 	 * Optional log level of the event.
-	 * @defaultValue {@link LogLevelValue.essential}
+	 * @defaultValue {@link (LogLevelValue:variable).essential}
 	 */
-	logLevel?: LogLevelValueType;
+	logLevel?: LogLevelValue;
 }
 
 /**

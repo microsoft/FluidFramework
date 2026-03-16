@@ -27,7 +27,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     category?: TelemetryEventCategory;
     eventName: string;
-    logLevel?: LogLevelValueType;
+    logLevel?: LogLevelValue;
 }
 
 // @beta @legacy
@@ -58,13 +58,13 @@ export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeE
 
 // @beta
 export const LogLevelValue: {
-    readonly verbose: 10 & BrandedType<"LogLevelValueType">;
-    readonly info: 20 & BrandedType<"LogLevelValueType">;
-    readonly essential: 30 & BrandedType<"LogLevelValueType">;
+    readonly verbose: 10 & BrandedType<"LogLevelValue">;
+    readonly info: 20 & BrandedType<"LogLevelValue">;
+    readonly essential: 30 & BrandedType<"LogLevelValue">;
 };
 
 // @beta
-export type LogLevelValueType = number & BrandedType<"LogLevelValueType">;
+export type LogLevelValue = number & BrandedType<"LogLevelValue">;
 
 // @beta @legacy
 export type TelemetryEventCategory = "generic" | "error" | "performance";

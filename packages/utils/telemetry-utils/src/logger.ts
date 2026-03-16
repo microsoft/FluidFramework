@@ -176,7 +176,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param event - the event to send
 	 */
 	public abstract send(
-		event: ITelemetryBaseEvent & { logLevel: LogLevelValueType },
+		event: ITelemetryBaseEvent & { logLevel: LogLevelValue },
 		logLevel?: LogLevel,
 	): void;
 
@@ -243,6 +243,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 				error: event.eventName,
 				...event,
 				category: "error",
+				logLevel: LogLevelValue.essential,
 			},
 			error,
 			LogLevel.error,
@@ -850,8 +851,9 @@ function convertToBaseEvent({
 	category,
 	eventName,
 	...props
-}: ITelemetryEventExt): ITelemetryBaseEvent & { logLevel: LogLevelValueType } {
-	const newEvent: ITelemetryBaseEvent & { logLevel: LogLevelValueType } = {
+}: ITelemetryEventExt): ITelemetryBaseEvent & { logLevel: LogLevelValue } {
+	// Will be overwritten if props specifies different values for these fields. LogLevel is defaulted to essential.
+	const newEvent: ITelemetryBaseEvent & { logLevel: LogLevelValue } = {
 		category,
 		eventName,
 		logLevel: LogLevelValue.essential,
@@ -1014,7 +1016,7 @@ export const tagCodeArtifacts = <
 
 /**
  * Numerical values that indicate the importance of a telemetry event for diagnostics,
- * enabling consumers to make sampling or filtering decisions.
+ * enabling consumers to make filtering decisions.
  *
  * @remarks
  * If an event does not contain a `logLevel` property, it should be treated as an `essential`.
@@ -1024,12 +1026,12 @@ export const tagCodeArtifacts = <
  * ```typescript
  * // Each telemetry event carries a logLevel property whose value indicates
  * // how important that event is for diagnosing Fluid Framework behaviour.
- * // Use it in your logger's send() to decide which events to sample or drop:
+ * // Use it in your logger's send() to decide which events to drop:
  * public send(event: ITelemetryBaseEvent): void {
  *   const eventLogLevel = event.logLevel as number;
  *   if (eventLogLevel < LogLevelValue.essential) {
- *     // Non-essential events can be sampled to reduce telemetry volume
- *     event.sampleEvent = true;
+ *     // Non-essential events can be filtered to reduce telemetry volume
+ *     return;
  *   }
  *   // …forward the event to your telemetry back-end
  * }
@@ -1042,21 +1044,21 @@ export const LogLevelValue = {
 	 * Chatty logs useful for local debugging.
 	 * They need not be collected in production.
 	 */
-	verbose: 10 as 10 & BrandedType<"LogLevelValueType">,
+	verbose: 10 as 10 & BrandedType<"LogLevelValue">,
 
 	/**
 	 * Information about the session. These logs could be omitted in some sessions
 	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
 	 * from a particular session, all should be.
 	 */
-	info: 20 as 20 & BrandedType<"LogLevelValueType">,
+	info: 20 as 20 & BrandedType<"LogLevelValue">,
 
 	/**
 	 * Essential information about the operation of Fluid. It is recommended that
 	 * these should always be collected, even in production, for diagnostic purposes.
 	 */
-	essential: 30 as 30 & BrandedType<"LogLevelValueType">,
-} as const satisfies Record<string, LogLevelValueType>;
+	essential: 30 as 30 & BrandedType<"LogLevelValue">,
+} as const satisfies Record<string, LogLevelValue>;
 
 /**
  * LogLevelValue is a numeric value that indicates the importance of a telemetry event for diagnostics,
@@ -1065,8 +1067,6 @@ export const LogLevelValue = {
  * @remarks
  * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
  *
- * @see {@link LogLevelValue}
- *
  * @beta
  */
-export type LogLevelValueType = number & BrandedType<"LogLevelValueType">;
+export type LogLevelValue = number & BrandedType<"LogLevelValue">;

@@ -61,7 +61,6 @@ export {
 	type IPerformanceEventMarkers,
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
-	type LogLevelValueType,
 	LogLevelValue,
 	type MultiSinkLoggerProperties,
 	numberFromString,

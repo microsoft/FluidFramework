@@ -124,6 +124,8 @@ export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics e
  * The `duration` field in the telemetry event this class generates is the duration of the latest execution (sample)
  * of the specified code block.
  * See the documentation of the `includeAggregateMetrics` parameter for additional details that can be included.
+ * Telemetry events emitted by this class (both at the sample threshold and on dispose) are sent with
+ * {@link (LogLevelValue:variable).info}.
  *
  * @typeParam TMeasurementReturn - The return type (in a vacuum) of the code block that will be measured, ignoring
  * any custom metric data that might be required by this class. E.g., the code might just return a boolean.
