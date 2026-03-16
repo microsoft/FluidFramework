@@ -166,9 +166,9 @@ export interface TreeArrayNode<
 	/**
 	 * Removes existing item(s) and/or adds new item(s).
 	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
-	 * @param deleteCount - The number of elements to remove. If not provided, it defaults to the end of the array.
+	 * @param deleteCount - The number of item(s) to remove. If not provided, it defaults to the end of the array.
 	 * @param items - The elements to add to the array.
-	 * @returns An array containing the elements that were removed.
+	 * @returns An array containing the item(s) that were removed.
 	 */
 	splice(
 		start: number,
