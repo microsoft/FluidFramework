@@ -317,6 +317,12 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
 			index += runLength;
 		}
 	}
+	// Quill expects documents to end with a newline
+	// eslint-disable-next-line unicorn/prefer-at -- .at() not available in target
+	const last = ops[ops.length - 1];
+	if (typeof last?.insert !== "string" || !last.insert.endsWith("\n")) {
+		ops.push({ insert: "\n" });
+	}
 	return ops;
 }
 

@@ -550,7 +550,7 @@ export namespace FormattedTextAsTree {
 		): void;
 
 		/**
-		 * Returns the length of the run of characters starting as `startIndex` which have the same formatting, up to a maximum of `maxLength`.
+		 * Returns the length of the run of characters starting at `startIndex` which have the same formatting, up to a maximum of `maxLength`.
 		 * @param startIndex - The starting index of the run.
 		 * @param maxLength - The maximum length of the run. Defaults to the length of the text.
 		 */
