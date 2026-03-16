@@ -184,7 +184,7 @@ export function parseLineTag(
 	// Quill should never send both header and list attributes simultaneously.
 	assert(
 		!(typeof attributes.header === "number" && typeof attributes.list === "string"),
-		"expected at most one line tag (header or list), but received both",
+		0xce2 /* expected at most one line tag (header or list), but received both */,
 	);
 	if (typeof attributes.header === "number") {
 		const tag: LineTagValue =
