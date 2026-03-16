@@ -95,10 +95,10 @@ describe("TelemetryLogger", () => {
                          actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`,
 					);
 				}
-				// +2 for category and event name
+				// +3 for category, event name, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 2,
+					propsKeys.length + 3,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,
@@ -128,10 +128,10 @@ describe("TelemetryLogger", () => {
                          actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`,
 					);
 				}
-				// +2 for category and event name
+				// +3 for category, event name, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 2,
+					propsKeys.length + 3,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,
@@ -166,10 +166,10 @@ describe("TelemetryLogger", () => {
                          actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`,
 					);
 				}
-				// +4 for category, event name, message and stack
+				// +5 for category, event name, message, stack, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 4,
+					propsKeys.length + 5,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,
@@ -187,10 +187,10 @@ describe("TelemetryLogger", () => {
 				assert.strictEqual(event.eventName, "namespace:whatever");
 				const eventKeys = Object.keys(event);
 				const propsKeys = Object.keys(props?.all ?? {});
-				// +2 for category and event name
+				// +3 for category, event name, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 2,
+					propsKeys.length + 3,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,

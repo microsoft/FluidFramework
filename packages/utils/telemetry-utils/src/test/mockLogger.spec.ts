@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { LogLevelValue } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 
 describe("MockLogger", () => {
@@ -230,14 +231,14 @@ describe("MockLogger", () => {
 		});
 
 		it("Assertion exceptions", () => {
-			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", logLevel: LogLevelValue.essential, a: 1 });
 
 			try {
-				mockLogger.assertMatchStrict([{ eventName: "B", b: 2 }]);
+				mockLogger.assertMatchStrict([{ eventName: "B", logLevel: LogLevelValue.essential, b: 2 }]);
 			} catch (error: unknown) {
 				assert.equal(
 					(error as Error).message,
-					'Logs don\'t match\nexpected:\n[{"eventName":"B","b":2}]\n\nactual:\n[{"category":"generic","eventName":"A","a":1}]',
+					'Logs don\'t match\nexpected:\n[{"eventName":"B","logLevel":30,"b":2}]\n\nactual:\n[{"category":"generic","eventName":"A","logLevel":30,"a":1}]',
 				);
 				return;
 			}

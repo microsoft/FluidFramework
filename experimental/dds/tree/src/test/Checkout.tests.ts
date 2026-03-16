@@ -6,6 +6,7 @@
 import { strict as assert } from 'assert';
 
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { LogLevelValue } from '@fluidframework/telemetry-utils/internal';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
@@ -202,6 +203,7 @@ export function checkoutTests(
 				eventName: 'SharedTree:Checkout:FailedLocalEdit',
 				failureKind: 'BadRange',
 				isSharedTreeEvent: true,
+				logLevel: LogLevelValue.essential,
 				rangeFailure: 'BadPlace',
 				rangeEndpointFailure: 'Malformed',
 				status: 'Malformed',
