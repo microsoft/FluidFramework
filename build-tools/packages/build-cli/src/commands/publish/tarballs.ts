@@ -152,11 +152,9 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 				}
 
 				case "Error": {
-					this.error(
-						`Fatal error publishing ${toPublish.fileName}, total attempts: ${tryCount}`,
-					);
-					// this.error exits the process, but break is more explicit
-					break;
+this.error(
+`Fatal error publishing ${toPublish.fileName}, total attempts: ${tryCount}`, { exit: 1 }
+);
 				}
 
 				default: {
