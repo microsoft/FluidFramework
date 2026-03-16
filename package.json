@@ -80,6 +80,7 @@
 		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
 		"generate:packagesMd": "flub check layers --info layerInfo.json --md .",
 		"preinstall": "node scripts/only-pnpm.cjs",
+		"install:agency": "curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency",
 		"postinstall": "pnpm -C common/build/eslint-config-fluid install --frozen-lockfile",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",

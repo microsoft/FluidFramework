@@ -8,7 +8,6 @@
 			"NODE_VERSION": "24"
 		}
 	},
-	"overrideCommand": false,
 	"runArgs": ["--init"],
 
 	// Add the IDs of extensions you want installed when the container is created.
