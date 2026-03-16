@@ -100,6 +100,8 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly configs: IGarbageCollectorConfigs;
 
+	public readonly serializedConfigs: string;
+
 	public get shouldRunGC(): boolean {
 		return this.configs.gcAllowed;
 	}
@@ -182,6 +184,7 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 
 		this.configs = generateGCConfigs(this.mc, createParams);
+		this.serializedConfigs = JSON.stringify(this.configs);
 
 		// If session expiry is enabled, we need to close the container when the session expiry timeout expires.
 		if (this.configs.sessionExpiryTimeoutMs !== undefined) {
@@ -333,15 +336,6 @@ export class GarbageCollector implements IGarbageCollector {
 			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
 			return { gcData: { gcNodes }, usedRoutes };
-		});
-
-		// Log all the GC options and the state determined by the garbage collector.
-		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GarbageCollectorLoaded",
-			gcConfigs: JSON.stringify(this.configs),
-			gcOptions: JSON.stringify(createParams.gcOptions),
-			...createParams.createContainerMetadata,
 		});
 	}
 

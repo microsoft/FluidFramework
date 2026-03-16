@@ -219,7 +219,6 @@ import {
 	type IGCRuntimeOptions,
 	type IGCStats,
 	type IGarbageCollector,
-	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
@@ -2084,11 +2083,8 @@ export class ContainerRuntime
 			summaryNumber: loadSummaryNumber,
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
-			gcDetails: JSON.stringify({
-				gcFeature: metadata?.gcFeature,
-				gcFeatureMatrix: JSON.stringify(metadata?.gcFeatureMatrix),
-				gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
-			}),
+			// This is useful even for interactive clients since they track unreferenced nodes and log errors.
+			gcConfigs: this.garbageCollector.serializedConfigs,
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
