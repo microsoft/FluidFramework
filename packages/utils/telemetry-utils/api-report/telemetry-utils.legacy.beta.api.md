@@ -57,6 +57,13 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
 // @beta
+export const LogLevelValue: {
+    readonly verbose: 10 & BrandedType<"LogLevelValueType">;
+    readonly info: 20 & BrandedType<"LogLevelValueType">;
+    readonly essential: 30 & BrandedType<"LogLevelValueType">;
+};
+
+// @beta
 export type LogLevelValueType = number & BrandedType<"LogLevelValueType">;
 
 // @beta @legacy

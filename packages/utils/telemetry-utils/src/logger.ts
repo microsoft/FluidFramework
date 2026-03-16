@@ -1019,7 +1019,23 @@ export const tagCodeArtifacts = <
  * @remarks
  * If an event does not contain a `logLevel` property, it should be treated as an `essential`.
  *
- * @internal
+ * @example Sample usage
+ *
+ * ```typescript
+ * // Each telemetry event carries a logLevel property whose value indicates
+ * // how important that event is for diagnosing Fluid Framework behaviour.
+ * // Use it in your logger's send() to decide which events to sample or drop:
+ * public send(event: ITelemetryBaseEvent): void {
+ *   const eventLogLevel = event.logLevel as number;
+ *   if (eventLogLevel < LogLevelValue.essential) {
+ *     // Non-essential events can be sampled to reduce telemetry volume
+ *     event.sampleEvent = true;
+ *   }
+ *   // …forward the event to your telemetry back-end
+ * }
+ * ```
+ *
+ * @beta
  */
 export const LogLevelValue = {
 	/**
@@ -1046,7 +1062,11 @@ export const LogLevelValue = {
  * LogLevelValue is a numeric value that indicates the importance of a telemetry event for diagnostics,
  * enabling consumers to make sampling or filtering decisions.
  *
+ * @remarks
  * If an event does not contain a `logLevelValue` value, it should be treated as `essential`.
+ *
+ * @see {@link LogLevelValue}
+ *
  * @beta
  */
 export type LogLevelValueType = number & BrandedType<"LogLevelValueType">;

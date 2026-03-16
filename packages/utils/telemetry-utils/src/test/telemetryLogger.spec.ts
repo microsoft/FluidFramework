@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-  import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
 
 import {
 	type ITelemetryLoggerPropertyBag,
@@ -469,6 +469,8 @@ describe("LogLevelValue-based sampling", () => {
 		assert.strictEqual(logger.events.length, 1, "One event should be logged");
 		const event = logger.events[0];
 
+		// Simulate what a consumer's send() would do:
+		// if the event's logLevel value is below essential, mark as sampleEvent
 		const eventLogLevel = event.logLevel as number;
 		if (eventLogLevel < LogLevelValue.essential) {
 			event.sampleEvent = true;
@@ -488,7 +490,8 @@ describe("LogLevelValue-based sampling", () => {
 		assert.strictEqual(logger.events.length, 1, "One event should be logged");
 		const event = logger.events[0];
 
-		// Essential events should not be sampled
+		// Simulate what a consumer's send() would do:
+		// if the event's logLevel value is below essential, mark as sampleEvent
 		const eventLogLevel = event.logLevel as number;
 		if (eventLogLevel < LogLevelValue.essential) {
 			event.sampleEvent = true;
