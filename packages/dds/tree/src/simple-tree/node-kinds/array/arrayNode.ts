@@ -164,6 +164,18 @@ export interface TreeArrayNode<
 	removeRange(start?: number, end?: number): void;
 
 	/**
+	 * Removes existing item(s) and/or adds new item(s).
+	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
+	 * @param deleteCount - The number of elements to remove. If not provided, it defaults to the end of the array.
+	 * @param items - The elements to add to the array.
+	 * @returns An array containing the elements that were removed.
+	 */
+	splice(
+		start: number,
+		deleteCount?: number,
+		...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]
+	): T[];
+	/**
 	 * Moves the specified item to the start of the array.
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `array.length`).
@@ -997,6 +1009,46 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		editor.remove(removeStart, removeEnd - removeStart);
 	}
+	public splice(
+		start: number,
+		deleteCount?: number,
+		...items: Insertable<T>
+	): TreeNodeFromImplicitAllowedTypes<T>[] {
+		const length = this.length;
+		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
+		const actualDeleteCount =
+			deleteCount === undefined
+				? length - actualStart
+				: Math.min(Math.max(deleteCount, 0), length - actualStart);
+		const removed: TreeNodeFromImplicitAllowedTypes<T>[] = [];
+		for (let index = actualStart; index < actualStart + actualDeleteCount; index++) {
+			removed.push(this.at(index) ?? fail(0xadc /* Index is out of bounds */));
+		}
+
+		const innerNode = getInnerNode(this);
+		if (innerNode.isHydrated()) {
+			const { checkout } = innerNode.context;
+			checkout.transaction.start();
+			try {
+				this.removeRange(actualStart, actualStart + actualDeleteCount);
+				if (items.length > 0) {
+					this.insertAt(actualStart, ...items);
+				}
+				checkout.transaction.commit();
+			} catch (error) {
+				checkout.transaction.abort();
+				throw error;
+			}
+		} else {
+			this.removeRange(actualStart, actualStart + actualDeleteCount);
+			if (items.length > 0) {
+				this.insertAt(actualStart, ...items);
+			}
+		}
+
+		return removed;
+	}
+
 	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);

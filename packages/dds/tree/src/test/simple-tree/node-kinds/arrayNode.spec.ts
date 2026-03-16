@@ -340,6 +340,58 @@ describe("ArrayNode", () => {
 				});
 			});
 
+			describe("splice", () => {
+				it("splice first item", () => {
+					const list = init(schemaType, [0, 1, 2, 3]);
+					const removed = list.splice(0, 1, 4);
+					assert.deepEqual(removed, [0]);
+					assert.equal(list.length, 4);
+					assert.deepEqual([...list], [4, 1, 2, 3]);
+				});
+				it("splice last two", () => {
+					const list = init(schemaType, [0, 1, 2, 3]);
+					const removed = list.splice(2, 2, 4, 5, 6);
+					assert.deepEqual([...removed], [2, 3]);
+					assert.equal(list.length, 5);
+					assert.deepEqual([...list], [0, 1, 4, 5, 6]);
+				});
+				it("splice last two with negative start index", () => {
+					const list = init(schemaType, [0, 1, 2, 3]);
+					const removed = list.splice(-3);
+					assert.deepEqual([...removed], [1, 2, 3], `Expected [1,2,3] recieved ${removed}`);
+					assert.equal(list.length, 1);
+					assert.deepEqual([...list], [0]);
+				});
+				it("splice with invalid index", () => {
+					const list = init(schemaType, [0, 1, 2, 3]);
+					const removed = list.splice(5, 8);
+					assert.deepEqual(removed, []);
+					assert.equal(list.length, 4);
+					assert.deepEqual([...list], [0, 1, 2, 3]);
+				});
+				it("splice single element array", () => {
+					const list = init(schemaType, [0]);
+					const removed = list.splice(0, 1, 1, 2, 3);
+					assert.equal(removed.length, 1);
+					assert.equal(removed[0], 0);
+					assert.equal(list.length, 3);
+					assert.deepEqual([...list], [1, 2, 3]);
+				});
+				it("splice entire array", () => {
+					const list = init(schemaType, [0, 1, 2, 3]);
+					const removed = list.splice(0);
+					assert.deepEqual([...removed], [0, 1, 2, 3]);
+					assert.deepEqual([...list], []);
+				});
+				it("splice empty array", () => {
+					const list = init(schemaType, []);
+					const remove = list.splice(0, 1, 0, 1, 2, 3);
+					assert.equal(remove.length, 0);
+					assert.equal(list.length, 4);
+					assert.deepEqual([...list], [0, 1, 2, 3]);
+				});
+			});
+
 			describe("moveToStart", () => {
 				it("move element to start of empty array", () => {
 					const schema = schemaFactory.object("parent", {
