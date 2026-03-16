@@ -18,7 +18,7 @@ mkdir -p ./lib/entrypoints
 
 # 1. Generate entrypoint .d.ts files in lib/entrypoints.
 
-flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib/entrypoints
+pnpm flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib/entrypoints
 
 # 2. Copy generated .d.ts files to src/entrypoints as .ts files.
 # A bug in "flub generate entrypoints" requires "./index.js" to be replaced with
