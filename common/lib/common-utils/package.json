@@ -160,7 +160,8 @@
 			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies entirely via pnpm overrides. This helps reduce lockfile churn since the deps release very frequently.",
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport)."
 		],
 		"overrides": {
 			"js-yaml@<4": "^3.14.2",
@@ -170,7 +171,8 @@
 			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
-			"sharp": "^0.33.2"
+			"sharp": "^0.33.2",
+			"tar": "^7.5.11"
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.52.11": "../../../patches/@microsoft__api-extractor@7.52.11.patch"
