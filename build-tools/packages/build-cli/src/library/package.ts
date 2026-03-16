@@ -147,7 +147,7 @@ export async function npmCheckUpdates(
 		log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
 		// eslint-disable-next-line no-await-in-loop
-		const result = (await ncu.run({
+		const result: unknown = await ncu.run({
 			filter: depsToUpdate,
 			cwd: repoPath,
 			packageFile: glob === "" ? "package.json" : `${glob}/package.json`,
@@ -157,16 +157,18 @@ export async function npmCheckUpdates(
 			jsonUpgraded: true,
 			silent: true,
 			peer: true,
-		})) as Record<string, string>;
+		});
 
-		if (typeof result !== "object") {
+		if (typeof result !== "object" || result === null) {
 			throw new TypeError(`Expected an object: ${typeof result}`);
 		}
 
 		// npm-check-updates returns different data depending on how many packages were updated. This code detects the
 		// two main cases: a single package or multiple packages.
 		if (glob.endsWith("*")) {
-			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
+			// With glob patterns, result is Record<string, Record<string, string>> (path → upgraded deps)
+			const resultRecord = result as Record<string, Record<string, string>>;
+			for (const [pkgJsonPath, upgradedDeps] of Object.entries(resultRecord)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const { name } = readJsonSync(jsonPath);
@@ -186,6 +188,8 @@ export async function npmCheckUpdates(
 				}
 			}
 		} else {
+			// Without glob, result is Record<string, string> (dep → new range)
+			const resultRecord = result as Record<string, string>;
 			const jsonPath = path.join(repoPath, glob, "package.json");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { name } = readJsonSync(jsonPath);
@@ -195,12 +199,12 @@ export async function npmCheckUpdates(
 				continue;
 			}
 
-			for (const [dep, newRange] of Object.entries(result)) {
+			for (const [dep, newRange] of Object.entries(resultRecord)) {
 				upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
 				updatedDependencies[dep] = newRange;
 			}
 
-			if (Object.keys(result).length > 0) {
+			if (Object.keys(resultRecord).length > 0) {
 				updatedPackages.push(pkg);
 			}
 		}
