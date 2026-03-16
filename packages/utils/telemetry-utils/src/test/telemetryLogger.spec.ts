@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 
 import {
 	type ITelemetryLoggerPropertyBag,
@@ -13,6 +17,7 @@ import {
 	LogLevelValue,
 	TelemetryLogger,
 	convertToBasePropertyType,
+	createChildLogger,
 } from "../logger.js";
 import type { TelemetryEventPropertyTypeExt } from "../telemetryTypes.js";
 
@@ -432,88 +437,82 @@ describe("convertToBasePropertyType", () => {
 	});
 });
 
-describe("LogLevelValue-based sampling", () => {
-	it("marks event as sampleEvent when logLevel value is verbose", () => {
-		const logger = new TestTelemetryLogger();
+describe.only("LogLevelValue-based sampling", () => {
+	/**
+	 * Example implementation of ITelemetryBaseLogger that uses LogLevelValue
+	 * to filter events. Events with a logLevel below the configured sampling
+	 * threshold are dropped; the rest are kept.
+	 */
+	class ExampleSamplingLogger implements ITelemetryBaseLogger {
+		public events: ITelemetryBaseEvent[] = [];
 
-		logger.sendTelemetryEvent({
-			eventName: "VerboseMetric",
+		public constructor(
+			private readonly samplingThreshold: LogLevelValue = LogLevelValue.essential,
+		) {}
+
+		public send(event: ITelemetryBaseEvent): void {
+			const eventLogLevel = (event.logLevel as number) ?? LogLevelValue.essential;
+			if (eventLogLevel >= this.samplingThreshold) {
+				this.events.push(event);
+			}
+		}
+	}
+
+	it("filters events by logLevel when using the default (essential) threshold", () => {
+		const baseLogger = new ExampleSamplingLogger();
+		const childLogger = createChildLogger({ logger: baseLogger });
+
+		// Send events at each log level, plus one with no level specified
+		childLogger.sendTelemetryEvent({
+			eventName: "VerboseEvent",
 			logLevel: LogLevelValue.verbose,
 		});
-
-		assert.strictEqual(logger.events.length, 1, "One event should be logged");
-		const event = logger.events[0];
-
-		// Simulate what a consumer's send() would do:
-		// if the event's logLevel value is below essential, mark as sampleEvent
-		const eventLogLevel = event.logLevel as number;
-		if (eventLogLevel < LogLevelValue.essential) {
-			event.sampleEvent = true;
-		}
-
-		assert.strictEqual(
-			event.sampleEvent,
-			true,
-			"Verbose event should be marked as sampleEvent",
-		);
-	});
-
-	it("marks event as sampleEvent when logLevel value is info", () => {
-		const logger = new TestTelemetryLogger();
-
-		logger.sendTelemetryEvent({
-			eventName: "InfoMetric",
+		childLogger.sendTelemetryEvent({
+			eventName: "InfoEvent",
 			logLevel: LogLevelValue.info,
 		});
-
-		assert.strictEqual(logger.events.length, 1, "One event should be logged");
-		const event = logger.events[0];
-
-		// Simulate what a consumer's send() would do:
-		// if the event's logLevel value is below essential, mark as sampleEvent
-		const eventLogLevel = event.logLevel as number;
-		if (eventLogLevel < LogLevelValue.essential) {
-			event.sampleEvent = true;
-		}
-
-		assert.strictEqual(event.sampleEvent, true, "Info event should be marked as sampleEvent");
-	});
-
-	it("does not mark event as sampleEvent when logLevel value is essential", () => {
-		const logger = new TestTelemetryLogger();
-
-		logger.sendTelemetryEvent({
-			eventName: "EssentialMetric",
+		childLogger.sendTelemetryEvent({
+			eventName: "EssentialEvent",
 			logLevel: LogLevelValue.essential,
 		});
+		childLogger.sendTelemetryEvent({ eventName: "DefaultLevelEvent" });
 
-		assert.strictEqual(logger.events.length, 1, "One event should be logged");
-		const event = logger.events[0];
-
-		// Simulate what a consumer's send() would do:
-		// if the event's logLevel value is below essential, mark as sampleEvent
-		const eventLogLevel = event.logLevel as number;
-		if (eventLogLevel < LogLevelValue.essential) {
-			event.sampleEvent = true;
-		}
-
+		// With the default threshold (essential), only essential-and-above events are kept
 		assert.strictEqual(
-			event.sampleEvent,
-			undefined,
-			"Essential event should not be marked as sampleEvent",
+			baseLogger.events.length,
+			2,
+			"Only essential-level events should be logged",
 		);
+		assert.strictEqual(baseLogger.events[0].eventName, "EssentialEvent");
+		assert.strictEqual(baseLogger.events[1].eventName, "DefaultLevelEvent");
 	});
 
-	it("defaults to 'essential' logLevel value on the event when none is specified", () => {
-		const logger = new TestTelemetryLogger();
+	it("allows more events through with a lower sampling threshold", () => {
+		const baseLogger = new ExampleSamplingLogger(LogLevelValue.info);
+		const childLogger = createChildLogger({ logger: baseLogger });
 
-		logger.sendTelemetryEvent({ eventName: "DefaultLevelEvent" });
+		childLogger.sendTelemetryEvent({
+			eventName: "VerboseEvent",
+			logLevel: LogLevelValue.verbose,
+		});
+		childLogger.sendTelemetryEvent({
+			eventName: "InfoEvent",
+			logLevel: LogLevelValue.info,
+		});
+		childLogger.sendTelemetryEvent({
+			eventName: "EssentialEvent",
+			logLevel: LogLevelValue.essential,
+		});
+		childLogger.sendTelemetryEvent({ eventName: "DefaultLevelEvent" });
 
-		assert.strictEqual(logger.events.length, 1, "One event should be logged");
+		// With an info threshold, verbose is dropped but info and essential are kept
 		assert.strictEqual(
-			logger.events[0].logLevel,
-			LogLevelValue.essential,
-			"Default logLevel on event should be essential",
+			baseLogger.events.length,
+			3,
+			"Info-level and above events should be logged",
 		);
+		assert.strictEqual(baseLogger.events[0].eventName, "InfoEvent");
+		assert.strictEqual(baseLogger.events[1].eventName, "EssentialEvent");
+		assert.strictEqual(baseLogger.events[2].eventName, "DefaultLevelEvent");
 	});
 });
