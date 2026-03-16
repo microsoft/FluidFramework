@@ -413,7 +413,8 @@ export class Outbox {
 		const idAllocResubmitInfo: BatchResubmitInfo | undefined =
 			this.idAllocationResubmitBatchId === undefined
 				? undefined
-				: { batchId: this.idAllocationResubmitBatchId, staged: false };
+				: // Note: For now, we will never stage ID Allocation messages.
+					{ batchId: this.idAllocationResubmitBatchId, staged: false };
 		this.idAllocationResubmitBatchId = undefined; // Consume (one-shot)
 		this.flushInternal({
 			batchManager: this.idAllocationBatch,
