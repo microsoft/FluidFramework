@@ -37,8 +37,13 @@
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"pnpm": {
 		"onlyBuiltDependencies": ["unrs-resolver"],
+		"commentsOverrides": [
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys)."
+		],
 		"overrides": {
-			"qs": "^6.11.0"
+			"js-yaml": "^4.1.1",
+			"qs": "^6.15.0"
 		}
 	}
 }

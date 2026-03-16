@@ -668,7 +668,7 @@ class ApiLevelReader {
 		}
 		this.log.verbose(`Loading ${packageName} API data from ${internalSource.getFilePath()}`);
 
-		const exports = getApiExports(internalSource);
+		const exports = getApiExports(internalSource, "warnForMissing", this.log);
 		for (const name of exports.unknown.keys()) {
 			// Suppress any warning for EventEmitter as this export is currently a special case.
 			// See AB#7377 for replacement status upon which this can be removed.

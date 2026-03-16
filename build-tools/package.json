@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.64.0",
+	"version": "0.65.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,7 +72,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.4",
+		"@biomejs/biome": "~2.4.5",
 		"@commitlint/cli": "^20.1.0",
 		"@commitlint/config-conventional": "^20.0.0",
 		"@commitlint/cz-commitlint": "^20.1.0",
@@ -147,25 +147,31 @@
 			]
 		},
 		"overrideComments": [
-			"biome is overridden to make review of the upgrade easier. This can be removed once merged.",
 			"eslint: jssm-viz-cli brings in ESLint 8.x as a transitive dependency. Force ESLint 9.x to ensure consistent version across the workspace.",
-			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
+			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies. This helps reduce lockfile churn since the deps release very frequently.",
 			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version",
 			"@types/minimatch: @types/glob@7.x uses minimatch.IOptions and minimatch.IMinimatch interfaces. Force @types/minimatch@5 which includes these legacy type definitions.",
-			"mdast-util-gfm-footnote: mdast-util-gfm@3.1.0 has a type definition bug where it imports ToMarkdownOptions from mdast-util-gfm-footnote, but version 2.0.0 doesn't export it. Override to 2.1.0 which includes the missing export."
+			"mdast-util-gfm-footnote: mdast-util-gfm@3.1.0 has a type definition bug where it imports ToMarkdownOptions from mdast-util-gfm-footnote, but version 2.0.0 doesn't export it. Override to 2.1.0 which includes the missing export.",
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
+			"mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability (unsanitized class attribute injection).",
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
 		],
 		"overrides": {
-			"@biomejs/biome": "~2.3.11",
-			"eslint": "~9.39.2",
 			"@types/glob>@types/minimatch": "~5.1.2",
 			"@types/node": "^22.19.1",
 			"eslint": "~9.39.2",
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"mdast-util-gfm-footnote": "^2.1.0",
-			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
-			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
-			"qs": "^6.14.0",
+			"js-yaml@<4": "^3.14.2",
+			"js-yaml@>=4": "^4.1.1",
+			"jws": "^3.2.3",
+			"mdast-util-to-hast": "^13.2.1",
+			"oclif>@aws-sdk/client-cloudfront": "-",
+			"oclif>@aws-sdk/client-s3": "-",
+			"qs": "^6.15.0",
+			"simple-git": "^3.32.3",
 			"sharp": "^0.34.5"
 		},
 		"updateConfig": {

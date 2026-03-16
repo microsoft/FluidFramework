@@ -29,7 +29,7 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import React from "react";
+import { type ReactElement, useEffect, useMemo, useState } from "react";
 
 import {
 	type ContainerInfo,
@@ -63,15 +63,13 @@ function useContainerInfo(
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
 } {
-	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
-		ContainerInfo | undefined
-	>();
-	const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
+	const [sharedContainerInfo, setSharedContainerInfo] = useState<ContainerInfo | undefined>();
+	const [privateContainerInfo, setPrivateContainerInfo] = useState<
 		ContainerInfo | undefined
 	>();
 
 	// Get the Fluid Data data on app startup and store in the state
-	React.useEffect(() => {
+	useEffect(() => {
 		async function getSharedFluidData(): Promise<ContainerInfo> {
 			const containerId = getContainerIdFromLocation(window.location);
 			return containerId.length === 0
@@ -186,17 +184,17 @@ const useStyles = makeStyles({
  * Root application component.
  * Initializes the Fluid Container and displays app view once it is ready.
  */
-export function App(): React.ReactElement {
+export function App(): ReactElement {
 	// Initialize the Devtools logger
-	const logger = React.useMemo(() => createDevtoolsLogger(), []);
+	const logger = useMemo(() => createDevtoolsLogger(), []);
 
 	// Initialize the Fluid Container loader
-	const loader = React.useMemo(() => createLoader(logger), [logger]);
+	const loader = useMemo(() => createLoader(logger), [logger]);
 
 	// Initialize Devtools
-	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
+	const devtools = useMemo(() => initializeDevtools({ logger }), [logger]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.
 		// Note that this isn't strictly necessary, as the Devtools will dispose of themselves on
 		// window unload, but it is here for example completeness.
@@ -232,7 +230,7 @@ export function App(): React.ReactElement {
 
 type LoadingViewProps = HasContainerKey;
 
-function LoadingView(props: LoadingViewProps): React.ReactElement {
+function LoadingView(props: LoadingViewProps): ReactElement {
 	const { containerKey } = props;
 
 	const styles = useStyles();
@@ -260,7 +258,7 @@ interface AppViewProps extends HasContainerKey {
  *
  * @remarks Valid to display once the container has been created / loaded.
  */
-function AppView(props: AppViewProps): React.ReactElement {
+function AppView(props: AppViewProps): ReactElement {
 	const { appData, containerKey } = props;
 
 	const styles = useStyles();
@@ -280,7 +278,7 @@ interface TextViewProps {
 	sharedText: SharedString;
 }
 
-function TextView(props: TextViewProps): React.ReactElement {
+function TextView(props: TextViewProps): ReactElement {
 	const { sharedText } = props;
 
 	return sharedText === undefined ? (
@@ -296,7 +294,7 @@ interface CounterViewProps {
 	sharedCounter: SharedCounter;
 }
 
-function CounterView(props: CounterViewProps): React.ReactElement {
+function CounterView(props: CounterViewProps): ReactElement {
 	const { sharedCounter } = props;
 
 	return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
@@ -306,7 +304,7 @@ interface EmojiMatrixViewProps {
 	emojiMatrix: SharedMatrix;
 }
 
-function EmojiMatrixView(props: EmojiMatrixViewProps): React.ReactElement {
+function EmojiMatrixView(props: EmojiMatrixViewProps): ReactElement {
 	const { emojiMatrix } = props;
 
 	return emojiMatrix === undefined ? <Spinner /> : <EmojiGrid emojiMatrix={emojiMatrix} />;
@@ -316,7 +314,7 @@ interface TodoAppViewProps {
 	todoModel: AppDataTree;
 }
 
-function TodoAppView(props: TodoAppViewProps): React.ReactElement {
+function TodoAppView(props: TodoAppViewProps): ReactElement {
 	const { todoModel } = props;
 
 	return todoModel === undefined ? <Spinner /> : <TodoListView todoModel={todoModel} />;
