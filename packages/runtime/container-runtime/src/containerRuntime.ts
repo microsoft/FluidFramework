@@ -1750,15 +1750,6 @@ export class ContainerRuntime
 				this.getConnectionState() === ConnectionState.CatchingUp
 			: undefined;
 
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GCFeatureMatrix",
-			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
-			inputs: JSON.stringify({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
-			}),
-		});
-
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
 
 		const opGroupingManager = new OpGroupingManager(
@@ -2093,7 +2084,11 @@ export class ContainerRuntime
 			summaryNumber: loadSummaryNumber,
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
-			gcVersion: metadata?.gcFeature,
+			gcDetails: JSON.stringify({
+				gcFeature: metadata?.gcFeature,
+				gcFeatureMatrix: JSON.stringify(metadata?.gcFeatureMatrix),
+				gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
+			}),
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
