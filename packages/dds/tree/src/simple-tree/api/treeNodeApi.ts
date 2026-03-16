@@ -40,19 +40,23 @@ import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
- * A single sequential operation in an array node change delta.
- *
- * Operations are applied in order and are relative to the original array state before the change.
+ * A single operation in an array node change delta, used to efficiently sync an external
+ * representation of an array (e.g. a text editor or virtual list) with tree changes, without
+ * needing to snapshot the old state or diff the entire array. Each op describes a contiguous run
+ * of positions in the array before the change; for inserts, read the new element values from the
+ * current tree at those positions.
  *
  * @remarks
- * Use this to efficiently sync an external representation of the array (e.g. a text editor or
- * virtual list) with the tree's changes, without needing to snapshot the old state or diff the
- * entire array. The delta tells you which positions changed; for inserts, read the new element
- * values from the current tree at those positions.
- *
  * - `"retain"` — elements that were not added or removed (may have nested changes).
  * - `"insert"` — elements added to the array.
- * - `"remove"` — elements removed from the array (includes moves, represented as remove + insert).
+ * - `"remove"` — elements removed from the array.
+ *
+ * Moves are represented as remove + insert.
+ * There is no dedicated `"move"` op. When an element is moved within the same array it appears
+ * as a `"remove"` at the source position followed by an `"insert"` at the destination position.
+ * When an element is moved across two different arrays, the source array's delta contains a
+ * `"remove"` and the destination array's delta contains an `"insert"` — they cannot be
+ * correlated without additional bookkeeping on the caller's side.
  *
  * @sealed @beta
  */
@@ -223,7 +227,7 @@ export const treeNodeApi: TreeNodeApi = {
 						// TODO: Once the eventing stack is rewritten to walk the composed delta at
 						// flush time, `marks` will always be defined. Remove the `undefined` fallback
 						// and simplify to: `const delta = deltaMarksToArrayOps(marks);`
-						const delta = marks !== undefined ? deltaMarksToArrayOps(marks) : undefined;
+						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks);
 						listener({ delta });
 					});
 				} else {
@@ -292,11 +296,11 @@ function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDeltaOp[] {
 			ops.push({ type: "insert", count: mark.count });
 		} else if (mark.attach !== undefined) {
 			ops.push({ type: "insert", count: mark.count });
-		} else if (mark.detach !== undefined) {
-			ops.push({ type: "remove", count: mark.count });
-		} else {
+		} else if (mark.detach === undefined) {
 			// Neither attach nor detach: elements retained (may have nested changes in mark.fields).
 			ops.push({ type: "retain", count: mark.count });
+		} else {
+			ops.push({ type: "remove", count: mark.count });
 		}
 	}
 	return ops;

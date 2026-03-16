@@ -39,7 +39,7 @@ import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { treeNodeApi, type ArrayNodeDeltaOp } from "./treeNodeApi.js";
-export type { ArrayNodeDeltaOp };
+export type { ArrayNodeDeltaOp } from "./treeNodeApi.js";
 import { cursorFromVerbose } from "./verboseTree.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
@@ -69,11 +69,13 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	/**
 	 * When the node changed is an array node, the sequential operations describing what changed.
 	 * @remarks
-	 * `undefined` when:
+	 * Not present for object, map, or record nodes — use {@link NodeChangedData.changedProperties} instead.
+	 *
+	 * When present, the value may still be `undefined` in two cases:
 	 * - The array node is {@link Unhydrated} — unhydrated nodes are not visited by the delta
-	 *   pipeline, so no field marks are available.
+	 * pipeline, so no field marks are available.
 	 * - The array was modified across multiple batches within a single flush (e.g. due to an
-	 *   interleaved schema change) and the marks from those batches could not be composed.
+	 * interleaved schema change) and the marks from those batches could not be composed.
 	 *
 	 * See {@link ArrayNodeDeltaOp} for op semantics.
 	 */
@@ -127,11 +129,11 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
 				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
 				: // For array nodes, guarantee `delta` is always present in the data object.
-				// The value may still be `undefined` when marks could not be composed across
-				// multiple batches (e.g. due to an interleaved schema change).
-				// TODO: Once the eventing stack is rewritten, `delta` will always be defined.
-				// Simplify back to `Required<Pick<NodeChangedData<TNode>, "delta">>` and
-				// remove `| undefined` from `NodeChangedData.delta`.
+					// The value may still be `undefined` when marks could not be composed across
+					// multiple batches (e.g. due to an interleaved schema change).
+					// TODO: Once the eventing stack is rewritten, `delta` will always be defined.
+					// Simplify back to `Required<Pick<NodeChangedData<TNode>, "delta">>` and
+					// remove `| undefined` from `NodeChangedData.delta`.
 					TNode extends WithType<string, NodeKind.Array>
 					? { readonly delta: readonly ArrayNodeDeltaOp[] | undefined }
 					: unknown),

@@ -102,6 +102,18 @@ export interface ArrayNodeCustomizableSchemaUnsafe<out TName extends string, in 
 }, false, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {
 }
 
+// @beta @sealed
+export type ArrayNodeDeltaOp = {
+    readonly type: "retain";
+    readonly count: number;
+} | {
+    readonly type: "insert";
+    readonly count: number;
+} | {
+    readonly type: "remove";
+    readonly count: number;
+};
+
 // @alpha @sealed @system
 export interface ArrayNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Array, TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {
 }
@@ -1140,6 +1152,7 @@ type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly changedProperties?: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
+    readonly delta?: readonly ArrayNodeDeltaOp[];
 }
 
 // @public
@@ -2000,7 +2013,9 @@ export interface TreeChangeEvents {
 
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
-    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : TNode extends WithType<string, NodeKind.Array> ? {
+        readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
+    } : unknown)) => void;
 }
 
 // @alpha

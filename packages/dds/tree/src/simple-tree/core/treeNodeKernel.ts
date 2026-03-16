@@ -372,7 +372,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	/**
 	 * Fields whose marks have been permanently invalidated within the current buffer window due to
 	 * two or more separate delta batches touching the same field.
-	 * Once a key is in this set it must never be re-added to {@link #fieldMarksBuffer}, even if
+	 * Once a key is in this set it must never be re-added to the marks buffer, even if
 	 * a third (or later) batch arrives for that field.
 	 */
 	readonly #invalidatedFieldMarkKeys: Set<FieldKey> = new Set();
@@ -438,7 +438,10 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 				0xc4f /* Should not have a dispose function without listeners */,
 			);
 
-			const off = this.#eventSource.on(eventName, (args) => this.#emit(eventName, args));
+			const off: Off =
+				eventName === "childrenChangedAfterBatch"
+					? this.#eventSource.on(eventName, (args) => this.#emit(eventName, args))
+					: this.#eventSource.on(eventName, () => this.#emit(eventName));
 			this.#disposeSourceListeners.set(eventName, off);
 		}
 

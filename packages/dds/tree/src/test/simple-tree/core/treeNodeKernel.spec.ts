@@ -152,10 +152,9 @@ describe("withBufferedTreeEvents", () => {
 });
 
 describe("array node delta in nodeChanged", () => {
-	// Each call to array.insertAtEnd / removeAt etc. within withBufferedTreeEvents fires a
-	// separate childrenChangedAfterBatch from the anchor set.  When two edits hit the same
-	// field before the buffer is flushed, KernelEventBuffer cannot compose the marks, so it
-	// invalidates them and emits delta: undefined.  These tests verify that behaviour.
+	// When two edits to the same array occur within a single withBufferedTreeEvents window,
+	// the marks from the first edit cannot be composed with those from the second, so the
+	// flushed event carries delta: undefined rather than stale or partial marks.
 	const schemaFactory = new SchemaFactory("test");
 	const MyArray = schemaFactory.array("myArray", schemaFactory.number);
 
@@ -420,6 +419,54 @@ describe("array node delta in nodeChanged", () => {
 	// never emits such marks for array (EmptyKey) fields in the current implementation.
 	// It is handled defensively in the conversion function but is not reachable via the public API.
 
+	it("insert into empty array produces a single insert op with no leading retain", () => {
+		const myArray = hydrate(MyArray, []);
+
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
+			deltas.push(delta);
+		});
+
+		myArray.insertAtEnd(1);
+
+		assert.equal(deltas.length, 1);
+		assert.deepEqual(deltas[0], [{ type: "insert", count: 1 }]);
+	});
+
+	it("multi-element insert produces correct count in insert op", () => {
+		const myArray = hydrate(MyArray, [1, 2]);
+
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
+			deltas.push(delta);
+		});
+
+		myArray.insertAt(1, 10, 20, 30);
+
+		assert.equal(deltas.length, 1);
+		assert.deepEqual(deltas[0], [
+			{ type: "retain", count: 1 },
+			{ type: "insert", count: 3 },
+		]);
+	});
+
+	it("removeRange produces correct count in remove op", () => {
+		const myArray = hydrate(MyArray, [1, 2, 3, 4, 5]);
+
+		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
+			deltas.push(delta);
+		});
+
+		myArray.removeRange(1, 4); // removes elements at indices 1, 2, 3
+
+		assert.equal(deltas.length, 1);
+		assert.deepEqual(deltas[0], [
+			{ type: "retain", count: 1 },
+			{ type: "remove", count: 3 },
+		]);
+	});
+
 	it("delta is defined when two different arrays are modified within the same buffered events", () => {
 		// Modifying two *different* arrays within one buffer window should not invalidate either
 		// delta, since the marks are for different fields / different anchor nodes.
@@ -583,6 +630,23 @@ describe("array move events", () => {
 			]);
 			// Source: the moved element is removed from position 0.
 			assert.deepEqual(delta2, [[{ type: "remove", count: 1 }]]);
+		});
+
+		it("moveRangeToEnd emits correct count in remove and insert ops", () => {
+			const arr = hydrate(MoveArray, [1, 2, 3, 4, 5]);
+			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+			TreeBeta.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+			// Move elements at indices 1 and 2 (values 2, 3) to the end.
+			arr.moveRangeToEnd(1, 3);
+
+			assert.equal(deltas.length, 1);
+			assert.deepEqual(deltas[0], [
+				{ type: "retain", count: 1 },
+				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2 },
+				{ type: "insert", count: 2 },
+			]);
 		});
 	});
 });

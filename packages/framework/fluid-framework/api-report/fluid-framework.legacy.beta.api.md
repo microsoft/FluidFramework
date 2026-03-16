@@ -86,6 +86,18 @@ type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boole
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
+// @beta @sealed
+export type ArrayNodeDeltaOp = {
+    readonly type: "retain";
+    readonly count: number;
+} | {
+    readonly type: "insert";
+    readonly count: number;
+} | {
+    readonly type: "remove";
+    readonly count: number;
+};
+
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
@@ -1012,6 +1024,7 @@ type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly changedProperties?: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
+    readonly delta?: readonly ArrayNodeDeltaOp[];
 }
 
 // @public
@@ -1633,7 +1646,9 @@ export interface TreeChangeEvents {
 
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
-    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : TNode extends WithType<string, NodeKind.Array> ? {
+        readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
+    } : unknown)) => void;
 }
 
 // @beta @input
