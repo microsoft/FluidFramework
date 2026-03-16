@@ -195,11 +195,6 @@ const defaultFormat = {
 } as const;
 
 const formatKey: FieldKey = brand("format");
-const boldKey: FieldKey = brand("bold");
-const italicKey: FieldKey = brand("italic");
-const underlineKey: FieldKey = brand("underline");
-const sizeKey: FieldKey = brand("size");
-const fontKey: FieldKey = brand("font");
 
 function textAtomsFromString(
 	value: string,
@@ -274,23 +269,29 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 		if (maxLength <= 0 || startIndex >= this.length) return 0;
 		const arrayLength = this.length;
 		return this.withBorrowedSequenceCursor((cursor) => {
-			const readLeaf = (key: FieldKey): Value => {
-				cursor.enterField(key);
-				cursor.enterNode(0);
-				const value = cursor.value;
-				cursor.exitNode();
-				cursor.exitField();
-				return value;
-			};
-
 			cursor.enterNode(startIndex);
+
+			// Line atoms are handled separately from text atoms
+			cursor.enterField(EmptyKey);
+			cursor.enterNode(0);
+			const contentType = cursor.type;
+			cursor.exitNode();
+			cursor.exitField();
+
+			// Line atoms contain only a single value, so the uniform run length is always 1.
+			if (contentType === FormattedTextAsTree.StringLineAtom.identifier) {
+				cursor.exitNode();
+				return 1;
+			}
+
+			const formatValues: Value[] = [];
 			cursor.enterField(formatKey);
 			cursor.enterNode(0);
-			const boldA = readLeaf(boldKey);
-			const italicA = readLeaf(italicKey);
-			const underlineA = readLeaf(underlineKey);
-			const sizeA = readLeaf(sizeKey);
-			const fontA = readLeaf(fontKey);
+			for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+				cursor.enterNode(0);
+				formatValues.push(cursor.value);
+				cursor.exitNode();
+			}
 			cursor.exitNode();
 			cursor.exitField();
 
@@ -298,14 +299,29 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 			const limit = Math.min(maxLength, arrayLength - startIndex);
 
 			while (count < limit && cursor.nextNode()) {
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				const contentTypeMatch = cursor.type === contentType;
+				cursor.exitNode();
+				cursor.exitField();
+				if (!contentTypeMatch) {
+					break;
+				}
 				cursor.enterField(formatKey);
 				cursor.enterNode(0);
-				const match =
-					boldA === readLeaf(boldKey) &&
-					italicA === readLeaf(italicKey) &&
-					underlineA === readLeaf(underlineKey) &&
-					sizeA === readLeaf(sizeKey) &&
-					fontA === readLeaf(fontKey);
+				let match = true;
+				let index = 0;
+				for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+					cursor.enterNode(0);
+					if (cursor.value !== formatValues[index++]) {
+						match = false;
+					}
+					cursor.exitNode();
+					if (!match) {
+						cursor.exitField();
+						break;
+					}
+				}
 				cursor.exitNode();
 				cursor.exitField();
 				if (!match) {
