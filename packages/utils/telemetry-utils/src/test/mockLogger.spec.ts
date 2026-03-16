@@ -231,10 +231,14 @@ describe("MockLogger", () => {
 		});
 
 		it("Assertion exceptions", () => {
-			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", logLevel: LogLevelValue.essential, a: 1 });
+			mockLogger
+				.toTelemetryLogger()
+				.sendTelemetryEvent({ eventName: "A", logLevel: LogLevelValue.essential, a: 1 });
 
 			try {
-				mockLogger.assertMatchStrict([{ eventName: "B", logLevel: LogLevelValue.essential, b: 2 }]);
+				mockLogger.assertMatchStrict([
+					{ eventName: "B", logLevel: LogLevelValue.essential, b: 2 },
+				]);
 			} catch (error: unknown) {
 				assert.equal(
 					(error as Error).message,
