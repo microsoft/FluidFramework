@@ -14,17 +14,42 @@ import {
 import React from "react";
 
 /**
- * Internal component that listens for code changes inside SandpackProvider.
+ * Internal component that syncs external file changes into the live Sandpack
+ * instance and reports code edits back to the parent via {@link onCodeChange}.
+ *
+ * By calling `sandpack.updateFile` imperatively we avoid destroying and
+ * recreating the SandpackProvider (which would re-download and re-bundle every
+ * npm dependency from scratch — the main cause of ~60 s load times).
  */
-function CodeChangeListener({
+function SandpackBridge({
+	files,
 	activeFile,
 	onCodeChange,
 }: {
+	files: SandpackFiles;
 	activeFile: string;
 	onCodeChange: (code: string) => void;
 }): null {
 	const { sandpack } = useSandpack();
 
+	// Track previous files so we only call updateFile when they actually change.
+	const prevFilesRef = React.useRef<SandpackFiles>(files);
+
+	React.useEffect(() => {
+		if (prevFilesRef.current === files) return;
+		prevFilesRef.current = files;
+
+		// Push every file into the running sandbox.
+		for (const [path, content] of Object.entries(files)) {
+			const code = typeof content === "string" ? content : content.code;
+			sandpack.updateFile(path, code);
+		}
+
+		// Switch to the requested active file.
+		sandpack.setActiveFile(activeFile);
+	}, [files, activeFile, sandpack]);
+
+	// Report edits back for validation.
 	React.useEffect(() => {
 		const code = sandpack.files[activeFile]?.code ?? "";
 		onCodeChange(code);
@@ -78,6 +103,11 @@ const indexHtml = `<!DOCTYPE html>
  * instead of Babel. Babel's ES5 class transpilation adds _classCallCheck
  * which is incompatible with SharedTree's Reflect.construct-based proxy
  * node system, causing "Cannot call a class as a function" errors.
+ *
+ * IMPORTANT: This component keeps a single SandpackProvider mounted for the
+ * lifetime of the tutorial. Step changes push new files via the imperative
+ * `updateFile` API so the bundler stays warm and dependencies are not
+ * re-downloaded.
  */
 export function PlaygroundWorkspace({
 	files,
@@ -85,13 +115,8 @@ export function PlaygroundWorkspace({
 	dependencies,
 	onCodeChange,
 }: PlaygroundWorkspaceProps): React.ReactElement {
-	// Memoize all object props so SandpackProvider doesn't see new references
-	// on every re-render (which would reset the editor and undo user typing).
-	const sandpackFiles = React.useMemo(
-		() => ({ "/index.html": indexHtml, ...files }),
-		[files],
-	);
-
+	// Initial files are used only for the first mount of SandpackProvider.
+	const initialFilesRef = React.useRef({ "/index.html": indexHtml, ...files });
 	const customSetup = React.useMemo(() => ({ dependencies }), [dependencies]);
 
 	const options = React.useMemo(
@@ -104,11 +129,17 @@ export function PlaygroundWorkspace({
 		[activeFile],
 	);
 
+	// Merge index.html into the file map so the bridge pushes it too.
+	const allFiles = React.useMemo(
+		() => ({ "/index.html": indexHtml, ...files }),
+		[files],
+	);
+
 	return (
 		<div className="ffcom-playground-workspace">
 			<SandpackProvider
 				template="vite-react-ts"
-				files={sandpackFiles}
+				files={initialFilesRef.current}
 				customSetup={customSetup}
 				options={options}
 			>
@@ -120,7 +151,11 @@ export function PlaygroundWorkspace({
 					/>
 					<SandpackPreview style={{ minHeight: "300px", flex: "none" }} />
 				</SandpackLayout>
-				<CodeChangeListener activeFile={activeFile} onCodeChange={onCodeChange} />
+				<SandpackBridge
+					files={allFiles}
+					activeFile={activeFile}
+					onCodeChange={onCodeChange}
+				/>
 			</SandpackProvider>
 		</div>
 	);

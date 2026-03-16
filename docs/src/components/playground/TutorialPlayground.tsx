@@ -175,7 +175,6 @@ export function TutorialPlayground({
 	return (
 		<div className="ffcom-playground-container">
 			<PlaygroundWorkspace
-				key={`${moduleId}-${currentStepIndex}-${showSolution}-${resetCounter}`}
 				files={files}
 				activeFile={currentStep.activeFile}
 				dependencies={selectedModule.dependencies}
