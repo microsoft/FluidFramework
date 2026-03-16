@@ -63,7 +63,7 @@ After the build completes, confirm:
 - Listed in [GitHub releases](https://github.com/microsoft/FluidFramework/releases)
 - Published on [npm](https://www.npmjs.com/search?q=%40fluidframework)
 
-Once confirmed, remind the user to announce the release in the Fluid Framework "General" Teams channel with a link to the GitHub release. (Never auto-announce in either mode.)
+Once confirmed, remind the user to announce the release in the "Fluid Framework All" Teams channel with a link to the GitHub release. (Never auto-announce in either mode.)
 
 ## Step 7: Bump Release Branch to Next Patch
 

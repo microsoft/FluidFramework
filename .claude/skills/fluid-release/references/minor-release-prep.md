@@ -77,7 +77,7 @@ pnpm flub generate releaseNotes -g client -t minor --outFile RELEASE_NOTES/<VERS
 pnpm flub generate changelog -g client
 ```
 
-Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR (as draft, assigned to you). Must merge before the version bump PR.
+Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR (as draft, assigned to the release runner via `--assignee @me`). Must merge before the version bump PR.
 
 ### Announce merge freeze
 
