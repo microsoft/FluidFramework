@@ -77,7 +77,11 @@ pnpm flub generate releaseNotes -g client -t minor --outFile RELEASE_NOTES/<VERS
 pnpm flub generate changelog -g client
 ```
 
-Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR. Must merge before the version bump PR.
+Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR (as draft, assigned to you). Must merge before the version bump PR.
+
+### Announce merge freeze
+
+After opening the release notes PR, remind the user to post an announcement in the Fluid Framework **"General" Teams channel** telling the team to **avoid merging PRs to main until the version bump PR is merged**. Merges between the release notes PR and the version bump can cause conflicts or include unintended changes in the release. In autonomous mode, include this reminder in the phase completion report. Never auto-post to Teams.
 
 ### If changeset edits are needed after generation
 
@@ -114,6 +118,19 @@ pnpm install --no-frozen-lockfile
 
 Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
 
+## Pre-merge Blocker Check
+
+Before merging any of the release-prep PRs, re-check for release blockers. Late-breaking issues can appear between when the PRs were created and when they're ready to merge.
+
+```bash
+gh issue list --repo microsoft/FluidFramework --label release-blocking --state open
+gh pr list --repo microsoft/FluidFramework --label release-blocking --state open
+```
+
+If blockers are found, **stop and report them**. Do not merge the release-prep PRs until blockers are resolved.
+
+Also explicitly ask the user to check ADO for release-blocking issues and confirm there are none. Do not skip this — ADO issues cannot be queried via CLI and are easy to miss.
+
 ## Step 5: Create the Release Branch
 
 **CI note:** This step requires elevated permissions to create `release/` branches. In CI, skip this step and report it as a required human action.
@@ -127,7 +144,7 @@ gh issue list --repo microsoft/FluidFramework --label release-blocking --state o
 gh pr list --repo microsoft/FluidFramework --label release-blocking --state open
 ```
 
-If blockers are found, **stop and report them**. Do not create the release branch. Also remind the user to check ADO for release-blocking issues.
+If blockers are found, **stop and report them**. Do not create the release branch. Also explicitly ask the user to check ADO for release-blocking issues and confirm there are none before proceeding.
 
 **Autonomous mode:** In autonomous mode, the PRs have just been created but not yet merged. Stop here and report:
 

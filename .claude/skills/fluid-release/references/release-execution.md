@@ -35,7 +35,7 @@ gh issue list --repo microsoft/FluidFramework --label release-blocking --state o
 gh pr list --repo microsoft/FluidFramework --label release-blocking --state open
 ```
 
-If blockers are found, **stop and report them**. Do not proceed with the release. Also remind the user to check ADO for release-blocking issues.
+If blockers are found, **stop and report them**. Do not proceed with the release. Also explicitly ask the user to check ADO for release-blocking issues and confirm there are none before proceeding.
 
 ### Run the release
 
