@@ -2084,6 +2084,7 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			// This is useful even for interactive clients since they track unreferenced nodes and log errors.
+			gcVersion: metadata?.gcFeature,
 			gcConfigs: this.garbageCollector.serializedConfigs,
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
