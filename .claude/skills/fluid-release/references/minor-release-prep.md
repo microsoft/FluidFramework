@@ -129,6 +129,8 @@ pnpm install --no-frozen-lockfile
 
 Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
 
+**Never enable auto-merge on the version bump PR.** Always merge it manually. If a release-blocking PR lands with a new changeset between the release notes merge and the bump merge, you need to revert and regenerate release notes first. Auto-merge creates a race condition where the bump lands before you notice the new changeset, forcing a more complex recovery (downgrading the version on the release branch instead of simply cutting the branch from the right commit).
+
 ## Pre-merge Blocker Check
 
 Before merging any of the release-prep PRs, re-check for release blockers. Late-breaking issues can appear between when the PRs were created and when they're ready to merge.
