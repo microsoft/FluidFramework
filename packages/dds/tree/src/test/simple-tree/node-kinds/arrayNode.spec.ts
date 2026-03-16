@@ -355,10 +355,10 @@ describe("ArrayNode", () => {
 					assert.equal(list.length, 5);
 					assert.deepEqual([...list], [0, 1, 4, 5, 6]);
 				});
-				it("splice last two with negative start index", () => {
+				it("splice last three with negative start index", () => {
 					const list = init(schemaType, [0, 1, 2, 3]);
 					const removed = list.splice(-3);
-					assert.deepEqual([...removed], [1, 2, 3], `Expected [1,2,3] recieved ${removed}`);
+					assert.deepEqual([...removed], [1, 2, 3], `Expected [1,2,3] received ${removed}`);
 					assert.equal(list.length, 1);
 					assert.deepEqual([...list], [0]);
 				});
