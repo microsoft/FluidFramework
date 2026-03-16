@@ -134,7 +134,7 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 				// published. This ensures that no packages are published to npm without their dependencies first being
 				// published. Note that despite publishing in order, npm itself may still make packages available in a different
 				// order - but we have no control over that.
-				// eslint-disable-next-line no-await-in-loop
+
 				status = await publishTarball(toPublish, this.logger, publishArgs);
 				tryCount++;
 			} while (status === "Error" && tryCount <= retry);
@@ -155,6 +155,8 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 					this.error(
 						`Fatal error publishing ${toPublish.fileName}, total attempts: ${tryCount}`,
 					);
+					// this.error exits the process, but break is more explicit
+					break;
 				}
 
 				default: {
@@ -180,13 +182,12 @@ async function extractPackageJsonFromTarball(
 	let unzipped: Uint8Array;
 
 	{
-		// eslint-disable-next-line no-return-assign -- assigning the chunk to unzipped is intentional
 		const gunzip = new Gunzip((chunk: Uint8Array) => (unzipped = chunk));
 		gunzip.push(tarball, /* final */ true);
 	}
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
 	const data = untar(unzipped!);
-	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
+
 	const prefix = data[0].filename.substring(0, data[0].filename.indexOf("/") + 1);
 	const packageJsonText = data.find((f) => f.filename === `${prefix}package.json`)?.fileData;
 	const packageJson = JSON.parse(new TextDecoder().decode(packageJsonText)) as PackageJson;

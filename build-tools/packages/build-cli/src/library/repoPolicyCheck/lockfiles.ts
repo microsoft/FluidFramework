@@ -34,7 +34,6 @@ const getKnownPaths = (config: FlubConfig, repoConfig: IFluidBuildConfig): strin
 			);
 			for (const arr of arrayVals) {
 				if (Array.isArray(arr)) {
-					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					_knownPaths.push(...arr.map((p) => p.toString()));
 				}
 			}
