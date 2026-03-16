@@ -686,7 +686,7 @@ describe("Ops on Reconnect", () => {
 	});
 
 	afterEach(async () => {
-		await deltaConnectionServer.webSocketServer.close();
+		await deltaConnectionServer.close();
 		receivedValues = [];
 	});
 });

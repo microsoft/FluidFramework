@@ -112,8 +112,9 @@ describe("Logging Last Connection Mode ", () => {
 		await loaderContainerTracker.ensureSynchronized();
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		loaderContainerTracker.reset();
+		await deltaConnectionServer.close();
 	});
 
 	it(`Logs the correct connection mode at disconnect`, async () => {

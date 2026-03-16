@@ -46,6 +46,7 @@ describe("No Delta Stream", () => {
 
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
 	let loaderContainerTracker: LoaderContainerTracker;
+	let storageOnlyContainers: IContainer[] = [];
 
 	async function createContainer(): Promise<IContainer> {
 		const createDetachedContainerProps = createLoaderProps(
@@ -62,7 +63,7 @@ describe("No Delta Stream", () => {
 		return container;
 	}
 
-	async function loadContainer(storageOnly: boolean, track = true): Promise<IContainer> {
+	async function loadContainer(storageOnly: boolean): Promise<IContainer> {
 		const service = new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly });
 		const loaderProps = createLoaderProps(
 			[[codeDetails, factory]],
@@ -76,10 +77,12 @@ describe("No Delta Stream", () => {
 				url: documentLoadUrl,
 			},
 		});
-		if (!storageOnly) {
+		if (storageOnly) {
+			storageOnlyContainers.push(container);
+		} else {
 			loaderContainerTracker.addContainer(container);
+			await loaderContainerTracker.ensureSynchronized();
 		}
-		await loaderContainerTracker.ensureSynchronized();
 		return container;
 	}
 
@@ -92,6 +95,7 @@ describe("No Delta Stream", () => {
 			new LocalResolver(),
 		);
 		const container = await loader.resolve({ url: documentLoadUrl });
+		loaderContainerTracker.addContainer(container);
 		await loaderContainerTracker.ensureSynchronized();
 		return container;
 	}
@@ -99,6 +103,7 @@ describe("No Delta Stream", () => {
 	beforeEach(async () => {
 		deltaConnectionServer = LocalDeltaConnectionServer.create();
 		loaderContainerTracker = new LoaderContainerTracker();
+		storageOnlyContainers = [];
 
 		// Create a Container for the first client.
 		const container = await createContainer();
@@ -115,6 +120,9 @@ describe("No Delta Stream", () => {
 	});
 
 	afterEach(() => {
+		for (const c of storageOnlyContainers) {
+			c.dispose?.();
+		}
 		loaderContainerTracker.reset();
 	});
 
@@ -221,6 +229,6 @@ describe("No Delta Stream", () => {
 	});
 
 	afterEach(async () => {
-		await deltaConnectionServer.webSocketServer.close();
+		await deltaConnectionServer.close();
 	});
 });

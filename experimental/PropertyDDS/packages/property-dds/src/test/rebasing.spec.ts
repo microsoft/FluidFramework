@@ -1135,12 +1135,22 @@ describe("PropertyDDS", () => {
 			await setupContainers();
 		});
 
+		afterEach(async () => {
+			opProcessingController.reset();
+			await deltaConnectionServer.close();
+		});
+
 		rebaseTests();
 	});
 
 	describe("Rebasing with reconnection", () => {
 		beforeEach(async () => {
 			await setupContainers(false);
+		});
+
+		afterEach(async () => {
+			opProcessingController.reset();
+			await deltaConnectionServer.close();
 		});
 
 		rebaseTests();

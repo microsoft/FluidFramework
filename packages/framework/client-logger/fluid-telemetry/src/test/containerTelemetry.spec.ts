@@ -68,6 +68,11 @@ describe("container telemetry via", () => {
 		};
 	});
 
+	afterEach(() => {
+		// Dispose the container to trigger cleanup of the heartbeat interval in ContainerTelemetryManager.
+		mockFluidContainer.dispose();
+	});
+
 	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 

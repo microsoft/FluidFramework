@@ -98,6 +98,13 @@ export class NoopHeuristic extends TypedEventEmitter<INoopSenderEvents> {
 	public notifyDisconnect(): void {
 		// No need to noop for any ops processed prior to disconnect - we are already removed from MSN calculation.
 		this.opsProcessedSinceOpSent = 0;
+		// Clear the timer so it doesn't keep the event loop alive after disconnect.
+		// If the container reconnects, the timer will be restarted by notifyMessageProcessed when the next op arrives.
+		this.timer?.clear();
+	}
+
+	public dispose(): void {
+		this.timer?.clear();
 	}
 
 	public notifyMessageSent(): void {

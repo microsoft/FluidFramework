@@ -1043,6 +1043,10 @@ export class Container
 	private closeCore(error?: ICriticalContainerError): void {
 		assert(!this.closed, 0x315 /* re-entrancy */);
 
+		// Clear the NoopHeuristic timer so it doesn't keep the event loop alive after the container is closed.
+		this.noopHeuristic?.dispose();
+		this.noopHeuristic = undefined;
+
 		try {
 			// Ensure that we raise all key events even if one of these throws
 			try {
@@ -1093,6 +1097,11 @@ export class Container
 	private disposeCore(error?: ICriticalContainerError): void {
 		assert(!this._disposed, 0x54c /* Container already disposed */);
 		this._disposed = true;
+
+		// Clear the NoopHeuristic timer so it doesn't keep the event loop alive after the container is disposed.
+		// This handles the case where dispose() is called without close() first (e.g. container.dispose() in tests).
+		this.noopHeuristic?.dispose();
+		this.noopHeuristic = undefined;
 
 		try {
 			// Ensure that we raise all key events even if one of these throws

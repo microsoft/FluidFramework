@@ -236,6 +236,17 @@ export interface ITestObjectProvider {
 	 * Resets and closes all tracked containers and class states.
 	 */
 	reset(): void;
+
+	/**
+	 * Disposes all drivers used by this provider, closing their underlying local servers (and any timers
+	 * they hold, such as DeliLambda.readClientIdleTimer).
+	 *
+	 * Must be called during test teardown (after `reset()`) to allow the process to exit cleanly.
+	 * Use this instead of `provider.driver.dispose?.()` directly, because some provider implementations
+	 * (e.g. {@link TestObjectProviderWithVersionedLoad}) maintain more than one driver — one for creating
+	 * containers and one for loading them — and only `driver` getter exposes a single one.
+	 */
+	dispose(): Promise<void>;
 }
 
 /**
@@ -651,6 +662,13 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.dispose}
+	 */
+	public async dispose(): Promise<void> {
+		await this.driver.dispose?.();
+	}
 }
 
 /**
@@ -1038,6 +1056,22 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false): void {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
+	}
+
+	/**
+	 * {@inheritDoc ITestObjectProvider.dispose}
+	 *
+	 * @privateremarks
+	 * This override disposes BOTH drivers. Unlike the base {@link TestObjectProvider} which only has a single
+	 * driver, this class maintains two separate drivers — one for creating containers and one for loading
+	 * them — each backed by its own {@link LocalDeltaConnectionServer}. Each server independently holds a
+	 * `DeliLambda.readClientIdleTimer` (60-second setInterval). Calling `provider.driver.dispose?.()` from
+	 * the outside only disposes whichever driver the `driver` getter currently returns, leaving the other
+	 * server's timer alive and preventing mocha from exiting.
+	 */
+	public async dispose(): Promise<void> {
+		await this.driverForCreating.dispose?.();
+		await this.driverForLoading.dispose?.();
 	}
 }
 

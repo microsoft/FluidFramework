@@ -57,6 +57,7 @@ describe("OdspClient", () => {
 	// const connectTimeoutMs = 5000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
+	let createdContainers: { dispose(): void }[] = [];
 
 	beforeEach(() => {
 		client = createOdspClient();
@@ -67,6 +68,13 @@ describe("OdspClient", () => {
 		};
 	});
 
+	afterEach(() => {
+		for (const container of createdContainers) {
+			container.dispose();
+		}
+		createdContainers = [];
+	});
+
 	/**
 	 * Scenario: test when ODSP Client is instantiated correctly, it can create
 	 * a container successfully.
@@ -75,9 +83,8 @@ describe("OdspClient", () => {
 	 * be returned.
 	 */
 	it("can create new ODSP container successfully", async () => {
-		const resourcesP = client.createContainer(schema);
-
-		await assert.doesNotReject(resourcesP, () => true, "container cannot be created in ODSP");
+		const { container } = await client.createContainer(schema);
+		createdContainers.push(container);
 	});
 
 	/**
@@ -89,6 +96,7 @@ describe("OdspClient", () => {
 	 */
 	it("created container is detached", async () => {
 		const { container } = await client.createContainer(schema);
+		createdContainers.push(container);
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Detached,
@@ -98,6 +106,7 @@ describe("OdspClient", () => {
 
 	it("GC is disabled by default", async () => {
 		const { container: container_defaultConfig } = await client.createContainer(schema);
+		createdContainers.push(container_defaultConfig);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { sweepEnabled, throwOnTombstoneLoad } =
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access

@@ -78,6 +78,7 @@ export async function validateSnapshots(
 		const sourceDir = `${srcDir}/${file.name}`;
 		const srcContent = fs.readFileSync(sourceDir, "utf-8");
 
+		let container: IContainer | undefined;
 		try {
 			// This function will be called by the storage service when the container is snapshotted. When that happens,
 			// validate that snapshot with the destination snapshot.
@@ -98,7 +99,7 @@ export async function validateSnapshots(
 				onSnapshotCb,
 			);
 
-			const container: IContainer = await loadContainer(
+			container = await loadContainer(
 				new StaticStorageDocumentServiceFactory(storage),
 				FileStorageDocumentName,
 				true,
@@ -119,6 +120,8 @@ export async function validateSnapshots(
 				);
 			}
 			throw e;
+		} finally {
+			container?.dispose();
 		}
 	}
 

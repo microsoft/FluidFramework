@@ -41,10 +41,14 @@ describe("reactSharedTreeView", () => {
 		const tinyliciousClient = new TinyliciousClient();
 
 		const { container } = await tinyliciousClient.createContainer(containerSchema, "2");
-		const dataObject = container.initialObjects.tree;
-		assert.equal(dataObject.treeView.root.nuts, 5);
-		dataObject.treeView.root.nuts += 1;
-		assert.equal(dataObject.treeView.root.bolts, 6);
+		try {
+			const dataObject = container.initialObjects.tree;
+			assert.equal(dataObject.treeView.root.nuts, 5);
+			dataObject.treeView.root.nuts += 1;
+			assert.equal(dataObject.treeView.root.bolts, 6);
+		} finally {
+			container.dispose();
+		}
 	});
 
 	describe("dom tests", () => {
@@ -55,6 +59,10 @@ describe("reactSharedTreeView", () => {
 		});
 
 		after(() => {
+			// Close JSDOM window to clear timers (e.g. requestAnimationFrame intervals) before cleanup.
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			const jsdom = (globalThis as any).$jsdom as { window: { close(): void } } | undefined;
+			jsdom?.window.close();
 			cleanup();
 		});
 

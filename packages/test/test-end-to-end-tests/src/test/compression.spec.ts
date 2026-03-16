@@ -178,30 +178,44 @@ describeInstallVersions(
 		requestAbsoluteVersions: [loaderWithoutCompressionField],
 	},
 	/* timeoutMs: 3 minutes */ 180000,
-)("Op Compression self-healing with old loader", (getProvider) =>
-	compressionSuite(async () => {
-		const provider = getProvider();
+)("Op Compression self-healing with old loader", (getProvider) => {
+	let versionedProvider: ITestObjectProvider | undefined;
+	before(async function () {
+		const baseProvider = getProvider();
 		// Ensure support for endpoint names for r11s driver. ODSP might need similar help at some point if we have
 		// scenarios that run into issues otherwise.
 		const driverConfig =
-			provider.driver.endpointName !== undefined
+			baseProvider.driver.endpointName !== undefined
 				? {
-						r11s: { r11sEndpointName: provider.driver.endpointName },
+						r11s: { r11sEndpointName: baseProvider.driver.endpointName },
 					}
 				: undefined;
-		return getVersionedTestObjectProvider(
+		versionedProvider = await getVersionedTestObjectProvider(
 			pkgVersion, // base version
 			loaderWithoutCompressionField, // loader version
 			{
-				type: provider.driver.type,
+				type: baseProvider.driver.type,
 				version: pkgVersion,
 				config: driverConfig,
 			}, // driver version
 			pkgVersion, // runtime version
 			pkgVersion, // datastore runtime version
 		);
-	}),
-);
+	});
+	after(async function () {
+		if (versionedProvider !== undefined) {
+			versionedProvider.reset();
+			await versionedProvider.dispose();
+			versionedProvider = undefined;
+		}
+	});
+	compressionSuite(async () => {
+		if (versionedProvider === undefined) {
+			throw new Error("versionedProvider not initialized");
+		}
+		return versionedProvider;
+	});
+});
 
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
 	crypto.randomBytes(sizeInBytes / 2).toString("hex");
