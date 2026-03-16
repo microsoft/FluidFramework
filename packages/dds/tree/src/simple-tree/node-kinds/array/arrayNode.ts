@@ -1030,30 +1030,20 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				: Math.min(Math.max(deleteCount, 0), length - actualStart);
 		const removed: TreeNodeFromImplicitAllowedTypes<T>[] = [];
 		for (let index = actualStart; index < actualStart + actualDeleteCount; index++) {
-			removed.push(this.at(index) ?? fail(0xadc /* Index is out of bounds */));
+			removed.push(this.at(index) ?? oob());
 		}
 
 		const innerNode = getInnerNode(this);
 		if (innerNode.isHydrated()) {
-			const { checkout } = innerNode.context;
-			checkout.transaction.start();
-			try {
-				this.removeRange(actualStart, actualStart + actualDeleteCount);
-				if (items.length > 0) {
-					this.insertAt(actualStart, ...items);
-				}
-				checkout.transaction.commit();
-			} catch (error) {
-				checkout.transaction.abort();
-				throw error;
-			}
-		} else {
-			this.removeRange(actualStart, actualStart + actualDeleteCount);
-			if (items.length > 0) {
-				this.insertAt(actualStart, ...items);
-			}
+			innerNode.context.checkout.transaction.start();
 		}
-
+		this.removeRange(actualStart, actualStart + actualDeleteCount);
+		if (items.length > 0) {
+			this.insertAt(actualStart, ...items);
+		}
+		if (innerNode.isHydrated()) {
+			innerNode.context.checkout.transaction.commit();
+		}
 		return removed;
 	}
 
