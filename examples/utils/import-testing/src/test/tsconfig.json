@@ -19,9 +19,6 @@
 		"incremental": false,
 	},
 	"include": ["./**/*"],
-	// Temporary: cross-package importers excluded because skipLibCheck: false
-	// checks the cross-package .d.ts output which has the known broken import paths.
-	// Remove this exclusion when tree's exports are fixed.
 	"exclude": ["./crossPackage/**/*"],
 	"references": [
 		{

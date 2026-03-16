@@ -82,7 +82,7 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:esnext:main": [
+			"build:esnext:crossPackage:bundler": [
 				"^api-extractor:esnext",
 				"^build:esnext"
 			],
@@ -90,15 +90,25 @@
 				"^api-extractor:esnext",
 				"^build:esnext"
 			],
-			"build:esnext:crossPackage:bundler": [
+			"build:esnext:main": [
 				"^api-extractor:esnext",
 				"^build:esnext"
 			],
-			"build:test:esm:main": [
-				"build:esnext"
+			"build:test:cjs:crossPackage": [
+				"tsc:crossPackage:node16"
+			],
+			"build:test:cjs:main": [
+				"tsc:main",
+				"tsc:crossPackage:node16"
 			],
 			"build:test:esm:crossPackage": [
-				"build:esnext"
+				"build:esnext:crossPackage:bundler",
+				"build:esnext:crossPackage:node16"
+			],
+			"build:test:esm:main": [
+				"build:esnext:crossPackage:bundler",
+				"build:esnext:crossPackage:node16",
+				"build:esnext:main"
 			],
 			"tsc:crossPackage:node16": [
 				"^api-extractor:commonjs",
@@ -107,13 +117,6 @@
 			"tsc:main": [
 				"^api-extractor:commonjs",
 				"^tsc"
-			],
-			"build:test:cjs:main": [
-				"tsc:main",
-				"tsc:crossPackage:node16"
-			],
-			"build:test:cjs:crossPackage": [
-				"tsc:crossPackage:node16"
 			]
 		}
 	},
