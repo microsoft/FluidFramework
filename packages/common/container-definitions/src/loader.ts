@@ -433,13 +433,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 		request: IRequest,
 		attachProps?: {
 			deltaConnection?: "none" | "delayed";
-			/**
-			 * Maximum number of retries when creating a new container fails with a retriable error.
-			 *
-			 * - The `Fluid.Container.CreateMaxRetries` feature flag takes precedence over this option.
-			 * - If neither is set, retries will continue indefinitely (default behavior).
-			 */
-			maxCreateRetries?: number;
 		},
 	): Promise<void>;
 

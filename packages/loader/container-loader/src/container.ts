@@ -1216,7 +1216,6 @@ export class Container
 			request: IRequest,
 			attachProps?: {
 				deltaConnection?: "none" | "delayed";
-				maxCreateRetries?: number;
 			},
 		): Promise<void> => {
 			await PerformanceEvent.timedExecAsync(
@@ -1289,7 +1288,6 @@ export class Container
 								this.service = await this.createDocumentService(createNewResolvedUrl, {
 									mode: "attach",
 									summary,
-									maxCreateRetries: attachProps?.maxCreateRetries,
 								});
 							}
 							this.storageAdapter.connectToService(this.service);
@@ -1537,9 +1535,7 @@ export class Container
 	 */
 	private async createDocumentService(
 		resolvedUrl: IResolvedUrl,
-		props:
-			| { mode: "load" }
-			| { mode: "attach"; summary: ISummaryTree | undefined; maxCreateRetries?: number },
+		props: { mode: "load" } | { mode: "attach"; summary: ISummaryTree | undefined },
 	): Promise<IDocumentService> {
 		let service: IDocumentService;
 		if (props.mode === "load") {
@@ -1553,9 +1549,11 @@ export class Container
 				service.on("metadataUpdate", this.metadataUpdateHandler);
 			}
 		} else {
-			// Feature flag takes precedence over the attach parameter.
-			const maxRetries =
-				this.mc.config.getNumber("Fluid.Container.CreateMaxRetries") ?? props.maxCreateRetries;
+			// When RetryOnAttachFailure is enabled, use no internal retries
+			// The consumer will own the retry policy
+			const retryOnAttachFailure =
+				this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") === true;
+			const maxRetries = retryOnAttachFailure ? 0 : undefined;
 
 			service = await runWithRetry(
 				async () =>

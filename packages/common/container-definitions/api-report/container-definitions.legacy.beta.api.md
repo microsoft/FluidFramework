@@ -146,7 +146,6 @@ export interface IConnectionDetails {
 export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest, attachProps?: {
         deltaConnection?: "none" | "delayed";
-        maxCreateRetries?: number;
     }): Promise<void>;
     readonly attachState: AttachState;
     readonly audience: IAudience;
