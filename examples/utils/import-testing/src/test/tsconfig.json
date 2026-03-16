@@ -19,7 +19,6 @@
 		"incremental": false,
 	},
 	"include": ["./**/*"],
-	"exclude": ["./crossPackage/**/*"],
 	"references": [
 		{
 			"path": "../..",

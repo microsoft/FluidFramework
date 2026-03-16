@@ -30,12 +30,8 @@
 		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.node16.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "npm run build:test:cjs:main && npm run build:test:cjs:crossPackage",
-		"build:test:cjs:crossPackage": "fluid-tsc commonjs --project ./src/test/tsconfig.crossPackageConsumer.cjs.json",
-		"build:test:cjs:main": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "npm run build:test:esm:main && npm run build:test:esm:crossPackage",
-		"build:test:esm:crossPackage": "tsc --project ./src/test/tsconfig.crossPackageConsumer.json",
-		"build:test:esm:main": "tsc --project ./src/test/tsconfig.json",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -94,18 +90,11 @@
 				"^api-extractor:esnext",
 				"^build:esnext"
 			],
-			"build:test:cjs:crossPackage": [
-				"tsc:crossPackage:node16"
+			"build:test:cjs": [
+				"tsc:crossPackage:node16",
+				"tsc:main"
 			],
-			"build:test:cjs:main": [
-				"tsc:main",
-				"tsc:crossPackage:node16"
-			],
-			"build:test:esm:crossPackage": [
-				"build:esnext:crossPackage:bundler",
-				"build:esnext:crossPackage:node16"
-			],
-			"build:test:esm:main": [
+			"build:test:esm": [
 				"build:esnext:crossPackage:bundler",
 				"build:esnext:crossPackage:node16",
 				"build:esnext:main"
