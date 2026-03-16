@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient } from "@fluidframework/azure-client";
+import { LeveeClient } from "@tylerbu/levee-client";
 
 export function apisToBundle(): void {
-	new AzureClient({} as any);
+	new LeveeClient({} as any);
 }

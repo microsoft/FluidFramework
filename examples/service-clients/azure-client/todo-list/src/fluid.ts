@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousEndpoint } from "@fluid-example/example-utils";
-import type {
-	AzureLocalConnectionConfig,
-	AzureRemoteConnectionConfig,
-} from "@fluidframework/azure-client";
-// eslint-disable-next-line import-x/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import type { LeveeConnectionConfig } from "@tylerbu/levee-client";
 import {
 	type ContainerSchema,
 	type IFluidContainer,
@@ -19,42 +13,21 @@ import {
 import { SharedString } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 
-import { AzureFunctionTokenProvider } from "./azureFunctionTokenProvider.js";
 import { TodoItem, TodoList } from "./schema.js";
-
-// Define the server we will be using and initialize Fluid
-const useAzure = process.env.FLUID_CLIENT === "azure";
 
 const user = {
 	id: uuid(),
 	name: uuid(),
 };
 
-const azureUser = {
-	id: user.id,
-	name: user.name,
-	additionalDetails: {
-		gender: "female",
-		email: "xyz@microsoft.com",
-	},
-};
-
 /**
- * Azure Fluid Relay connection configuration.
+ * Levee connection configuration.
  */
-export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig =
-	useAzure
-		? {
-				type: "remote",
-				tenantId: "",
-				tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-				endpoint: "",
-			}
-		: {
-				type: "local",
-				tokenProvider: new InsecureTokenProvider("fooBar", user),
-				endpoint: getTinyliciousEndpoint(),
-			};
+export const connectionConfig: LeveeConnectionConfig = {
+	httpUrl: "http://localhost:4000",
+	tenantKey: "dev-tenant-secret-key",
+	user,
+};
 
 /**
  * Schema for the TODO list application.

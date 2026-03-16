@@ -34,7 +34,7 @@ overrides:
   axios@<0.30.0: ^0.30.0
   tar: '>=7.5.7'
 
-pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
+pnpmfileChecksum: sha256-A/p/1XDUEnsehZswjgscFVnsSyUTLsohlurgYH31Vq0=
 
 patchedDependencies:
   '@microsoft/api-extractor@7.52.11':
@@ -1055,9 +1055,9 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../../packages/dds/shared-object-base
-      '@fluidframework/tinylicious-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/tinylicious-client
+      '@tylerbu/levee-client':
+        specifier: ^0.1.2
+        version: 0.1.2
       emoji-picker-element:
         specifier: ^1.26.1
         version: 1.26.1
@@ -1134,9 +1134,6 @@ importers:
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
-      tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
@@ -2163,9 +2160,6 @@ importers:
       '@fluid-private/stochastic-test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/stochastic-test-utils
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
@@ -2175,12 +2169,12 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../packages/dds/matrix
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
+      '@tylerbu/levee-client':
+        specifier: ^0.1.2
+        version: 0.1.2
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -2233,9 +2227,6 @@ importers:
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
-      tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -2281,12 +2272,12 @@ importers:
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
-      '@fluidframework/tinylicious-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/tinylicious-client
       '@microsoft/applicationinsights-web':
         specifier: ^2.8.11
         version: 2.8.18(tslib@1.14.1)
+      '@tylerbu/levee-client':
+        specifier: ^0.1.2
+        version: 0.1.2
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -2369,9 +2360,6 @@ importers:
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
-      tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
@@ -3831,21 +3819,15 @@ importers:
 
   examples/data-objects/text-editor:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
+      '@tylerbu/levee-client':
+        specifier: ^0.1.2
+        version: 0.1.2
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -3928,12 +3910,12 @@ importers:
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.103.0)
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
-      tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -4444,18 +4426,15 @@ importers:
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../../packages/service-clients/azure-client
       '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../../packages/framework/presence
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../../packages/utils/telemetry-utils
+      '@tylerbu/levee-client':
+        specifier: ^0.1.2
+        version: 0.1.2
       assert:
         specifier: ^2.0.0
         version: 2.1.0
@@ -4505,9 +4484,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
@@ -4565,9 +4541,6 @@ importers:
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8
-      tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4592,21 +4565,18 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../../packages/service-clients/azure-client
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../../packages/framework/react
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../../packages/utils/telemetry-utils
+      '@tylerbu/levee-client':
+        specifier: ^0.1.2
+        version: 0.1.2
       assert:
         specifier: ^2.0.0
         version: 2.1.0
@@ -4659,9 +4629,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools':
         specifier: ^2.0.0
         version: 2.0.1
@@ -4731,9 +4698,6 @@ importers:
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.103.0)
-      tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@20.19.30)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.19.30)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4849,9 +4813,6 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -4882,6 +4843,9 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
+      '@tylerbu/levee-client':
+        specifier: ^0.1.2
+        version: 0.1.2
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -19880,6 +19844,12 @@ packages:
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
 
+  '@tylerbu/levee-client@0.1.2':
+    resolution: {integrity: sha512-m46LMJpktD2uuWBH/Bluo6+uhKTDV4hdI9pnMBeRecvTDAQ5HFXetdVLZeiQ56uNkG76n7w0W5/zVDBG+RAIaA==}
+
+  '@tylerbu/levee-driver@0.1.2':
+    resolution: {integrity: sha512-T1rvHJMqoTb47QXzPOrbHikDmbVzPrL7vKMiIJCzpVQbiA1zuYxCeH2uqTAHjzcLTIytk0Fb159pPBnT+YLB/Q==}
+
   '@tylerbu/markdown-magic@2.4.0-tylerbu-1':
     resolution: {integrity: sha512-p8nG2uH2+tQMGtT2Tam4gdJuJwuOdJdSA73LlNmRG+8dcxSNXkiwADyd/to6gY/oZOuNB5sJahBho5fLmxLI3Q==}
     hasBin: true
@@ -24038,6 +24008,9 @@ packages:
   joi@17.13.3:
     resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
 
+  jose@6.2.1:
+    resolution: {integrity: sha512-jUaKr1yrbfaImV7R2TN/b3IcZzsw38/chqMpo2XJ7i2F8AfM/lA4G1goC3JVEwg0H7UldTmSt3P68nt31W7/mw==}
+
   js-base64@3.7.7:
     resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
 
@@ -25603,6 +25576,9 @@ packages:
 
   pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
+
+  phoenix@1.8.5:
+    resolution: {integrity: sha512-Oj5nlRV/NKXkjBx8uMgCMmgMf1twd/B2qOcO30cHLH1PCGR8149o4T1lRIaqN4nq2KQJAeMqPiLdh1Asd0wQFg==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -33372,6 +33348,27 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@tylerbu/levee-client@0.1.2':
+    dependencies:
+      '@fluidframework/container-definitions': link:packages/common/container-definitions
+      '@fluidframework/container-loader': link:packages/loader/container-loader
+      '@fluidframework/core-interfaces': link:packages/common/core-interfaces
+      '@fluidframework/driver-definitions': link:packages/common/driver-definitions
+      '@fluidframework/fluid-static': link:packages/framework/fluid-static
+      '@fluidframework/telemetry-utils': link:packages/utils/telemetry-utils
+      '@tylerbu/levee-driver': 0.1.2
+
+  '@tylerbu/levee-driver@0.1.2':
+    dependencies:
+      '@fluidframework/core-interfaces': link:packages/common/core-interfaces
+      '@fluidframework/driver-definitions': link:packages/common/driver-definitions
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/routerlicious-driver': link:packages/drivers/routerlicious-driver
+      '@fluidframework/telemetry-utils': link:packages/utils/telemetry-utils
+      jose: 6.2.1
+      phoenix: 1.8.5
+      uuid: 11.1.0
+
   '@tylerbu/markdown-magic@2.4.0-tylerbu-1':
     dependencies:
       '@technote-space/doctoc': 2.6.4
@@ -38252,6 +38249,8 @@ snapshots:
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
 
+  jose@6.2.1: {}
+
   js-base64@3.7.7: {}
 
   js-git@0.7.8:
@@ -40250,6 +40249,8 @@ snapshots:
       through: 2.3.8
 
   pend@1.2.0: {}
+
+  phoenix@1.8.5: {}
 
   picocolors@1.1.1: {}
 

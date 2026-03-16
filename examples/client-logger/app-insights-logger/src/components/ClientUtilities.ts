@@ -6,11 +6,8 @@
 import { createLogger } from "@fluidframework/app-insights-logger/beta";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import {
-	TinyliciousClient,
-	type TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
+import { LeveeClient, type LeveeContainerServices } from "@tylerbu/levee-client";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -21,7 +18,7 @@ import { ApplicationInsights } from "@microsoft/applicationinsights-web";
  */
 export interface ContainerLoadResult {
 	container: IFluidContainer;
-	services: TinyliciousContainerServices;
+	services: LeveeContainerServices;
 }
 
 /**
@@ -39,7 +36,7 @@ export interface ContainerInfo {
 	container: IFluidContainer;
 }
 
-function initializeTinyliciousClient(): TinyliciousClient {
+function initializeLeveeClient(): LeveeClient {
 	const appInsightsClient = new ApplicationInsights({
 		config: {
 			connectionString:
@@ -50,7 +47,13 @@ function initializeTinyliciousClient(): TinyliciousClient {
 
 	appInsightsClient.loadAppInsights();
 
-	return new TinyliciousClient({
+	const userId = Math.random().toString(36).slice(2);
+	return new LeveeClient({
+		connection: {
+			httpUrl: "http://localhost:4000",
+			tenantKey: "dev-tenant-secret-key",
+			user: { id: userId, name: `User-${userId}` },
+		},
 		logger: createLogger(appInsightsClient),
 	});
 }
@@ -69,7 +72,7 @@ export async function createFluidContainer(
 	setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
 ): Promise<ContainerInfo> {
 	// Initialize Tinylicious client
-	const client = initializeTinyliciousClient();
+	const client = initializeLeveeClient();
 
 	// Create the container
 	console.log("Creating new container...");
@@ -121,7 +124,7 @@ export async function loadExistingFluidContainer(
 	containerSchema: ContainerSchema,
 ): Promise<ContainerInfo> {
 	// Initialize Tinylicious client
-	const client = initializeTinyliciousClient();
+	const client = initializeLeveeClient();
 
 	console.log("Loading existing container...");
 	let loadContainerResult: ContainerLoadResult;

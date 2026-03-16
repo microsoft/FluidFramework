@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { getPresence } from "@fluidframework/presence/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
+import { LeveeClient, type LeveeContainerServices } from "@tylerbu/levee-client";
 import type { IFluidContainer } from "fluid-framework";
 
 import { DiceRollerController, type DieValue } from "./controller.js";
@@ -22,7 +22,7 @@ import type { TwoDiceApp } from "./schema.js";
 import { makeAppView } from "./view.js";
 
 async function start(): Promise<void> {
-	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
+	// Create a custom ITelemetryBaseLogger object to pass into the Levee container
 	// and hook to the Telemetry system
 	const baseLogger = createChildLogger();
 
@@ -33,9 +33,9 @@ async function start(): Promise<void> {
 		connection: connectionConfig,
 		logger: devtoolsLogger,
 	};
-	const client = new AzureClient(clientProps);
+	const client = new LeveeClient(clientProps);
 	let container: IFluidContainer<DiceRollerContainerSchema>;
-	let services: AzureContainerServices;
+	let services: LeveeContainerServices;
 	let id: string;
 
 	// Get or create the document depending if we are running through the create new flow
