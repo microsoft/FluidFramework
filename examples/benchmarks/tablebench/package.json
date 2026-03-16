@@ -62,7 +62,7 @@
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/benchmark": "^0.52.0",
+		"@fluid-tools/benchmark": "catalog:benchmark",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
