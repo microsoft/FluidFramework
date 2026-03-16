@@ -4,7 +4,6 @@
  */
 
 // Too restrictive for test suite hierarchy
-/* eslint-disable max-nested-callbacks */
 
 import { expect } from "chai";
 import { describe, it } from "mocha";

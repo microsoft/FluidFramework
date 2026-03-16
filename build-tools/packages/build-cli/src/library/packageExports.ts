@@ -201,7 +201,6 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 	}
 
 	if (Array.isArray(exports)) {
-		// eslint-disable-next-line unicorn/prefer-type-error
 		throw new Error(`required entrypoints cannot be generated for "exports" array`);
 	}
 

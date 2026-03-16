@@ -32,7 +32,6 @@ const knownDtsKinds = ["alpha", "beta", "public", "untrimmed"] as const;
 type DtsKind = (typeof knownDtsKinds)[number];
 
 function isDtsKind(str: string | undefined): str is DtsKind {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 	return str === undefined ? false : knownDtsKinds.includes(str as any);
 }
 
