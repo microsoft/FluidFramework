@@ -83,11 +83,22 @@ Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release 
 
 After opening the release notes PR, remind the user to post an announcement in the **"Fluid Framework All" Teams channel** telling the team to **avoid merging PRs to main until the version bump PR is merged**. Merges between the release notes PR and the version bump can cause conflicts or include unintended changes in the release. In autonomous mode, include this reminder in the phase completion report. Never auto-post to Teams.
 
-### If changeset edits are needed after generation
+### If changesets change after release notes are merged
 
-If feedback requires changeset wording changes:
+If a release-blocking PR merges after the release notes PR (adding a new changeset), or if changeset wording changes are needed:
+
+1. Wait for the new PR to merge into `main`
+2. Create a new branch from `main`
+3. **Revert** the release notes commit (the one from the release notes PR that deleted changesets and generated changelogs)
+4. Regenerate release notes and changelogs — this will now include the new changeset(s)
+5. Commit, push, and open a PR
+6. Merge this PR before the version bump PR
+
+This revert-and-regenerate approach ensures all changes are captured in the release notes. Do not skip this — incomplete release notes cause confusion for users tracking what's in each release.
+
+If the changeset change is only a wording fix (no new changesets), an alternative lighter approach:
 1. Make changeset edits in a **separate PR**, merge it
-2. Regenerate release notes and changelogs
+2. Then revert and regenerate as above
 3. This ensures changeset changes have a commit in main (since changesets are deleted during changelog generation)
 
 ## Step 4: Bump Main to Next Version
