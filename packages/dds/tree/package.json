@@ -232,6 +232,18 @@
 				"...",
 				"@fluidframework/id-compressor#build:test:esm"
 			],
+			"build:api-reports:current": [
+				"build:esnext"
+			],
+			"build:api-reports:legacy": [
+				"build:esnext"
+			],
+			"ci:build:api-reports:current": [
+				"build:esnext"
+			],
+			"ci:build:api-reports:legacy": [
+				"build:esnext"
+			],
 			"ci:build:docs": [
 				"build:esnext"
 			]
