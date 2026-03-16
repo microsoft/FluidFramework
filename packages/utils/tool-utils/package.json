@@ -135,7 +135,6 @@
 			"Interface_IResources": {
 				"backCompat": false
 			},
-
 			"Interface_IOdspTokenManagerCacheKey": {
 				"backCompat": false,
 				"forwardCompat": false
