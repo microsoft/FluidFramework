@@ -25,9 +25,6 @@ export default [
 
 			"@typescript-eslint/no-non-null-assertion": "error",
 
-			// Allow empty object types for extending interfaces
-			"@typescript-eslint/no-empty-object-type": "off",
-
 			// Allow require imports for dynamic loading
 			"@typescript-eslint/no-require-imports": "off",
 
