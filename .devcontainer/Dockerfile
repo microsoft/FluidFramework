@@ -31,4 +31,8 @@ RUN apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
+# Optionally install Playwright CLI for AI agent workflows
+ARG INSTALL_PLAYWRIGHT_CLI=false
+RUN if [ "$INSTALL_PLAYWRIGHT_CLI" = "true" ]; then npm install -g @playwright/cli@latest; fi
+
 USER node
