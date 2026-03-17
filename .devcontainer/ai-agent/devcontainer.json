@@ -5,7 +5,8 @@
 		"dockerfile": "../Dockerfile",
 		"args": {
 			"NODE_VERSION": "24",
-			"INSTALL_PLAYWRIGHT_CLI": "true"
+			// TODO: Figure out the playwright strategy
+			"INSTALL_PLAYWRIGHT_CLI": "false"
 		}
 	},
 	"runArgs": ["--init"],
