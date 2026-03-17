@@ -54,17 +54,16 @@ USAGE
     --outputDir <value> [-v | --quiet] [--org <value>] [--buildCount <value>] [--parallelJobs <value>]
 
 FLAGS
-  --adoApiToken=<value>     (required) [env: ADO_API_TOKEN] Azure DevOps API token for authentication.
-  --buildCount=<value>      [default: 500, env: BUILD_COUNT] Number of builds to fetch. Note: This will be limited
-                            by the number of builds held by the ADO project's retention policy.
-  --buildDefId=<value>      (required) [env: BUILD_DEF_ID] Build definition ID to query.
-  --mode=<option>           (required) [env: MODE] Pipeline mode: "public" (PR builds) or "internal".
-                            <options: public|internal>
-  --org=<value>             [default: fluidframework, env: ORG] Azure DevOps organization name.
-  --outputDir=<value>       (required) [env: OUTPUT_DIR] Directory to write output files to.
-  --parallelJobs=<value>    [default: 20, env: PARALLEL_JOBS] Number of concurrent API requests for timeline
-                            fetching.
-  --project=<value>         (required) [env: PROJECT] Azure DevOps project name.
+  --adoApiToken=<value>   (required) [env: ADO_API_TOKEN] Azure DevOps API token for authentication.
+  --buildCount=<value>    [default: 500, env: BUILD_COUNT] Number of builds to fetch. Note: This will be limited by the
+                          number of builds held by the ADO project's retention policy.
+  --buildDefId=<value>    (required) [env: BUILD_DEF_ID] Build definition ID to query.
+  --mode=<option>         (required) [env: MODE] Pipeline mode: "public" (PR builds) or "internal".
+                          <options: public|internal>
+  --org=<value>           [default: fluidframework, env: ORG] Azure DevOps organization name.
+  --outputDir=<value>     (required) [env: OUTPUT_DIR] Directory to write output files to.
+  --parallelJobs=<value>  [default: 20, env: PARALLEL_JOBS] Number of concurrent API requests for timeline fetching.
+  --project=<value>       (required) [env: PROJECT] Azure DevOps project name.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
