@@ -1599,15 +1599,7 @@ function sharedTreeChangeHasNetEffect(change: SharedTreeChange): boolean {
 	return false;
 }
 
-/**
- * Returns true if the given field map contains any changes that have a net effect
- * on the document state. A field has no net effect if all its attach/detach marks
- * cancel out (i.e., every attach ID has a matching detach ID) and any nested field
- * changes are also net-no-ops (recursively).
- */
-function deltaFieldMapHasNetEffect(
-	fields: DeltaFieldMap | undefined,
-): boolean {
+function deltaFieldMapHasNetEffect(fields: DeltaFieldMap | undefined): boolean {
 	if (fields === undefined || fields.size === 0) {
 		return false;
 	}
@@ -1620,45 +1612,15 @@ function deltaFieldMapHasNetEffect(
 }
 
 function deltaFieldChangesHaveNetEffect(fieldChanges: DeltaFieldChanges): boolean {
-	// First pass: accumulate attach and detach marks by their detached node ID, recording
-	// the index at which each occurs so we can verify ordering in the second pass.
-	const attachByID = new Map<string, number>();
-	const detachByID = new Map<string, number>();
-	let markIndex = 0;
 	for (const mark of fieldChanges.marks) {
-		// Recursively check nested field changes.
-		if (deltaFieldMapHasNetEffect(mark.fields)) {
+		if (
+			mark.attach !== undefined ||
+			mark.detach !== undefined ||
+			deltaFieldMapHasNetEffect(mark.fields)
+		) {
 			return true;
 		}
-		if (mark.attach !== undefined) {
-			const key = `${mark.attach.major ?? ""}:${mark.attach.minor}`;
-			attachByID.set(key, markIndex);
-		}
-		if (mark.detach !== undefined) {
-			const key = `${mark.detach.major ?? ""}:${mark.detach.minor}`;
-			detachByID.set(key, markIndex);
-		}
-		markIndex++;
 	}
 
-	// Second pass: match attach/detach pairs, verifying that each pair has valid ordering.
-	// For each attach, look for a matching detach at a later index (content moved in, then moved back out).
-	for (const [key, attachIdx] of attachByID) {
-		const detachIdx = detachByID.get(key);
-		if (detachIdx !== undefined && detachIdx > attachIdx) {
-			attachByID.delete(key);
-			detachByID.delete(key);
-		}
-	}
-	// For each remaining detach, look for a matching attach at a later index (content moved out, then moved back in).
-	for (const [key, detachIdx] of detachByID) {
-		const attachIdx = attachByID.get(key);
-		if (attachIdx !== undefined && attachIdx > detachIdx) {
-			attachByID.delete(key);
-			detachByID.delete(key);
-		}
-	}
-	// Any remaining unmatched attaches or detaches represent a net effect.
-	return attachByID.size > 0 || detachByID.size > 0;
+	return false;
 }
-

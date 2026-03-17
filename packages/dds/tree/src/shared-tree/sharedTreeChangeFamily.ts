@@ -96,15 +96,17 @@ export class SharedTreeChangeFamily
 
 	public unviolateNoChangeConstraint(change: SharedTreeChange): SharedTreeChange {
 		let changed = false;
-		const newChanges: Mutable<SharedTreeChange["changes"]> = change.changes.map(inner => {
+		const newChanges: Mutable<SharedTreeChange["changes"]> = change.changes.map((inner) => {
 			if (inner.type === "data") {
-				const updated = this.modularChangeFamily.unviolateNoChangeConstraint(inner.innerChange);
+				const updated = this.modularChangeFamily.unviolateNoChangeConstraint(
+					inner.innerChange,
+				);
 				if (updated !== inner.innerChange) {
 					changed = true;
 					return { type: "data", innerChange: updated };
 				}
 			}
-			
+
 			return inner;
 		});
 		return changed ? { changes: newChanges } : change;
