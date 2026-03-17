@@ -87,7 +87,7 @@ module.exports = class {
 				if (!("on" in test)) {
 					// In parallel mode, we can not subscribe to events on the test,
 					// but the event we are in is delayed until after the test ran so we can get the results off of it.
-					// To make this work, the emit code crammed the results in the test body, so parse that.
+					// To make this work, the emit code (emitResultsMocha) crammed the results in the test body, so parse that.
 
 					// The if above narrows test to `never` here, so undo that:
 					const test2 = test as Test;

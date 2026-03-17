@@ -66,7 +66,8 @@ async function getUsage(
 		// 1. A sync GC then an 8-second wait (unreliable across multiple runs unless a debugger takes a heap snapshot, possibly due to JIT).
 		// 2. Two async GCs in a row.
 		// Option 2 is both more robust and faster, so it is used here.
-		// The second iteration of this loop will pick up any pending finalizers.
+		// When the first iteration of this loop is not a no-op (and thus could cause there to be pending finalizers), a second iteration will run.
+		// The second iteration of this loop provides the second async GC which will pick up any pending finalizers.
 
 		if (enableAsyncGC) {
 			await gc(gcOptionsAsync);
@@ -209,11 +210,11 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 
 	// When debugging the behaviors, inspecting this can be helpful to see if there is noise coming from specific iterations and the trim needs adjusting.
 	if (args.logRawData) {
-		console.log(`Raw data (First ${trimCount} rows discarded):`);
+		console.log(`Raw data (First ${trimCount} rows of this data will be discarded):`);
 		console.log(data);
 	}
 	if (args.logProcessedData) {
-		console.log(`Processed data (First ${trimCount} rows discarded):`);
+		console.log(`Processed data (First ${trimCount} rows of this data will be discarded):`);
 		console.log(processedAll);
 	}
 
@@ -222,6 +223,10 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 
 	// Split up data into "first" and "last" halves and compute stats on those
 	// to see if there is a trend in the data that might indicate leaking memory across iterations.
+	// This is only used to estimate a trend over the run, and thus only needs needs two samples at different points in the run.
+	// For simplicity, and to leverage the most data, we split the samples in half.
+	// The flooring here results in ignoring the middle sample if the sample count is odd, which keeps the two halves having the same size making the analysis easier.
+	// If there is only one sample, both halves are just that sample, and no cross iteration leaking will be detected.
 	const sizeOfHalf = Math.max(1, Math.floor(processed.length / 2));
 	const firstHalfStats = getArrayStatistics(
 		processed.slice(0, sizeOfHalf).map((x) => x.meanBytes),
@@ -234,9 +239,11 @@ export async function collectMemoryUseData(argsIn: MemoryUseBenchmark): Promise<
 	const averageIndexInEnd = (processed.length - sizeOfHalf + (processed.length - 1)) / 2;
 	const iterationsBetweenStartAndEndStats = averageIndexInEnd - averageIndexInStart;
 
-	const startBeforeStats = getArrayStatistics(trimmed.slice(0, sizeOfHalf).map((x) => x.before));
-	const endBeforeStats = getArrayStatistics(trimmed.slice(-sizeOfHalf).map((x) => x.before));
-	const leak = endBeforeStats.arithmeticMean - startBeforeStats.arithmeticMean;
+	const firstHalfBeforeStats = getArrayStatistics(
+		trimmed.slice(0, sizeOfHalf).map((x) => x.before),
+	);
+	const lastHalfBeforeStats = getArrayStatistics(trimmed.slice(-sizeOfHalf).map((x) => x.before));
+	const leak = lastHalfBeforeStats.arithmeticMean - firstHalfBeforeStats.arithmeticMean;
 	const leakPerIteration = leak / iterationsBetweenStartAndEndStats;
 
 	const meanStats = getArrayStatistics(processed.map((x) => x.meanBytes));

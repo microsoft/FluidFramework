@@ -40,6 +40,9 @@ benchmark tests.
 Each test is also tagged based on its `type` option: `@Measurement` (the default), `@Perspective`, or `@Diagnostic`.
 Use a more specific filter like `--fgrep @Measurement` to run only tests of a particular type.
 
+Note that Mocha only supports one `fgrep` or `grep` argument at a time, so if you have other filtering,
+it may need to be merged into a single more complex `--grep` option.
+
 ### `--reporter <path>`
 
 Lets you specify the path to a custom reporter to output the tests' results.
