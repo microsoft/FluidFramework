@@ -96,6 +96,8 @@ extends:
           clean: true
           path: ${{ variables.FluidFrameworkDirectory }}
 
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
             buildDirectory: ${{ variables.FluidFrameworkDirectory }}
@@ -158,6 +160,8 @@ extends:
         - checkout: self
           clean: true
           path: ${{ variables.FluidFrameworkDirectory }}
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
