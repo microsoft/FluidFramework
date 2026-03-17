@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-shopt -s expand_aliases
+# Return early if sourced by a shell that doesn't support these aliases (e.g. /bin/sh).
+[ -n "${BASH_VERSION:-}" ] || [ -n "${ZSH_VERSION:-}" ] || return 0
+
+# shopt -s expand_aliases is bash-only; zsh expands aliases by default in interactive shells.
+[ -n "${BASH_VERSION:-}" ] && shopt -s expand_aliases
 
 alias claude="agency claude"
 alias haiku="agency claude --model haiku"

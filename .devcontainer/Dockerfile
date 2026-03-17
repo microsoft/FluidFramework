@@ -36,3 +36,11 @@ ARG INSTALL_PLAYWRIGHT_CLI=false
 RUN if [ "$INSTALL_PLAYWRIGHT_CLI" = "true" ]; then npm install -g @playwright/cli@latest; fi
 
 USER node
+
+# Optionally install agency for AI agent workflows
+ARG INSTALL_AGENCY=false
+RUN if [ "$INSTALL_AGENCY" = "true" ]; then curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency; fi
+
+# Optionally install repoverlay
+ARG INSTALL_REPOVERLAY=false
+RUN if [ "$INSTALL_REPOVERLAY" = "true" ]; then curl --proto '=https' --tlsv1.2 -LsSf https://github.com/tylerbutler/repoverlay/releases/latest/download/repoverlay-installer.sh | sh; fi
