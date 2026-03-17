@@ -1034,16 +1034,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 
 		const innerNode = getInnerNode(this);
-		if (innerNode.isHydrated()) {
-			innerNode.context.checkout.transaction.start();
-		}
+		const transaction = innerNode.isHydrated() ? innerNode.context.checkout.transaction : undefined;
+		transaction?.start();
 		this.removeRange(actualStart, actualStart + actualDeleteCount);
 		if (items.length > 0) {
 			this.insertAt(actualStart, ...items);
 		}
-		if (innerNode.isHydrated()) {
-			innerNode.context.checkout.transaction.commit();
-		}
+		transaction?.commit();
 		return removed;
 	}
 
