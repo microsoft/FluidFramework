@@ -35,8 +35,13 @@
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"moby": false
 		},
+		// Install the github CLI
 		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/devcontainers/features/git-lfs:1": {}
+		// Install git lfs
+		"ghcr.io/devcontainers/features/git-lfs:1": {},
+		// Features needed for the ms-codespaces-tools.ado-codespaces-auth extension
+		"ghcr.io/microsoft/codespace-features/external-repository:4": {},
+		"ghcr.io/microsoft/codespace-features/artifacts-helper:3": {}
 	},
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
 	// can be lengthy enough that it's convenient.
