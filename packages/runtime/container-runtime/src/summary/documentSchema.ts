@@ -524,8 +524,8 @@ function arrayToProp(arr: string[]): string[] | undefined {
  *    multiple reloads / new sessions to get there (depends on if code reacts to schema changes right away, or only consults
  *    schema on document load).
  * 3) Schema upgrade disabled mode (disableSchemaUpgrade = true). In this mode the controller will never send DocumentSchemaChange ops
- *    and will throw an error if any incoming schema change ops are received. The document schema is effectively frozen at whatever
- *    state it was in when the document was created.
+ *    and will throw an error if any incoming schema change ops are received. The document schema is effectively frozen at the schema
+ *    loaded for this session (snapshot) and will not accept further schema-change ops.
  *
  * How schemas are changed (in non-legacy mode):
  * If a client needs to change a schema, it will attempt to do so as part of normal ops sending process.
