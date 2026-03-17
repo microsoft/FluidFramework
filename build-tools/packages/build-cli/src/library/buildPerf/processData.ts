@@ -7,7 +7,6 @@
  * Processes raw ADO build data into aggregated metrics for build performance dashboards.
  */
 
-import { BUILD_PERF_CONFIG } from "./config.js";
 import type {
 	AdoBuildRecord,
 	AdoTimeline,
@@ -64,11 +63,11 @@ export function getSourceText(build: AdoBuildRecord): string {
  * Build source URL (GitHub PR or commit).
  *
  * @param build - The build record.
- * @param githubRepo - GitHub repo slug (e.g. "microsoft/FluidFramework"). Defaults to BUILD_PERF_CONFIG.githubRepo.
+ * @param githubRepo - GitHub repo slug (e.g. "microsoft/FluidFramework"). Defaults to "microsoft/FluidFramework".
  */
 export function getSourceUrl(
 	build: AdoBuildRecord,
-	githubRepo: string = BUILD_PERF_CONFIG.githubRepo,
+	githubRepo: string = "microsoft/FluidFramework",
 ): string | null {
 	const branch = build.sourceBranch || "";
 	if (branch.startsWith("refs/pull/")) {
@@ -86,12 +85,12 @@ export function getSourceUrl(
  *
  * @param build - The build record.
  * @param project - The ADO project name.
- * @param org - The ADO organization name. Defaults to BUILD_PERF_CONFIG.org.
+ * @param org - The ADO organization name. Defaults to "fluidframework".
  */
 export function getBuildUrl(
 	build: AdoBuildRecord,
 	project: string,
-	org: string = BUILD_PERF_CONFIG.org,
+	org: string = "fluidframework",
 ): string {
 	return `https://dev.azure.com/${org}/${project}/_build/results?buildId=${build.id}`;
 }

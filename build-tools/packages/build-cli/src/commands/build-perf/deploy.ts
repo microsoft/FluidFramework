@@ -18,7 +18,7 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 
 import { generateAswaHtml, TEMPLATES_DIR } from "../../library/buildPerf/htmlGenerator.js";
-import type { BuildPerfMode } from "../../library/buildPerf/types.js";
+import { type BuildPerfMode, DATA_FILENAMES } from "../../library/buildPerf/types.js";
 import { BaseCommand } from "../../library/commands/base.js";
 
 /**
@@ -83,8 +83,9 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 		this.logHr();
 
 		// Copy our generated data file
-		const currentFile = mode === "public" ? "public-data.json" : "internal-data.json";
-		const otherFile = mode === "public" ? "internal-data.json" : "public-data.json";
+		const currentFile = DATA_FILENAMES[mode];
+		const otherMode: BuildPerfMode = mode === "public" ? "internal" : "public";
+		const otherFile = DATA_FILENAMES[otherMode];
 
 		const sourceFile = path.join(flags.dataDir, currentFile);
 		if (!existsSync(sourceFile)) {

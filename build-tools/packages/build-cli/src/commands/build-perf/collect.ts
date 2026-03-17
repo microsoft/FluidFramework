@@ -10,7 +10,7 @@ import { Flags } from "@oclif/core";
 
 import { fetchBuilds, fetchTimelines } from "../../library/buildPerf/adoClient.js";
 import { processRawData } from "../../library/buildPerf/processData.js";
-import type { BuildPerfMode } from "../../library/buildPerf/types.js";
+import { type BuildPerfMode, DATA_FILENAMES } from "../../library/buildPerf/types.js";
 import { BaseCommand } from "../../library/commands/base.js";
 
 /**
@@ -52,13 +52,10 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 			env: "BUILD_COUNT",
 			default: 500,
 		}),
-		prBuildDefId: Flags.integer({
-			description: "Build definition ID for PR builds (required for public mode).",
-			env: "PR_BUILD_DEF_ID",
-		}),
-		internalBuildDefId: Flags.integer({
-			description: "Build definition ID for internal builds (required for internal mode).",
-			env: "INTERNAL_BUILD_DEF_ID",
+		buildDefId: Flags.integer({
+			description: "Build definition ID to query.",
+			env: "BUILD_DEF_ID",
+			required: true,
 		}),
 		parallelJobs: Flags.integer({
 			description: "Number of concurrent API requests for timeline fetching.",
@@ -77,7 +74,7 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 		{
 			description: "Collect public (PR) build data.",
 			command:
-				"<%= config.bin %> <%= command.id %> --mode public --project public --prBuildDefId 11 --outputDir ./output --adoApiToken $ADO_TOKEN",
+				"<%= config.bin %> <%= command.id %> --mode public --project public --buildDefId 11 --outputDir ./output --adoApiToken $ADO_TOKEN",
 		},
 	];
 
@@ -106,8 +103,7 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 				project: flags.project,
 				mode,
 				buildCount: flags.buildCount,
-				prBuildDefId: flags.prBuildDefId,
-				internalBuildDefId: flags.internalBuildDefId,
+				buildDefId: flags.buildDefId,
 			},
 			this.logger,
 		);
@@ -141,10 +137,7 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 		const processedData = processRawData(builds, timelines, mode, generatedAt, flags.org);
 
 		// Write output
-		const outputFile =
-			mode === "public"
-				? path.join(flags.outputDir, "public-data.json")
-				: path.join(flags.outputDir, "internal-data.json");
+		const outputFile = path.join(flags.outputDir, DATA_FILENAMES[mode]);
 
 		const output = JSON.stringify(processedData);
 		writeFileSync(outputFile, output);

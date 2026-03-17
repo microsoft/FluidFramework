@@ -50,24 +50,21 @@ Collect build performance data from Azure DevOps and generate processed metrics.
 
 ```
 USAGE
-  $ flub build-perf collect --adoApiToken <value> --project <value> --mode public|internal --outputDir <value> [-v |
-    --quiet] [--org <value>] [--buildCount <value>] [--prBuildDefId <value>] [--internalBuildDefId <value>]
-    [--parallelJobs <value>]
+  $ flub build-perf collect --adoApiToken <value> --project <value> --mode public|internal --buildDefId <value>
+    --outputDir <value> [-v | --quiet] [--org <value>] [--buildCount <value>] [--parallelJobs <value>]
 
 FLAGS
-  --adoApiToken=<value>         (required) [env: ADO_API_TOKEN] Azure DevOps API token for authentication.
-  --buildCount=<value>          [default: 500, env: BUILD_COUNT] Number of builds to fetch. Note: This will be limited
-                                by the number of builds held by the ADO project's retention policy.
-  --internalBuildDefId=<value>  [env: INTERNAL_BUILD_DEF_ID] Build definition ID for internal builds (required for
-                                internal mode).
-  --mode=<option>               (required) [env: MODE] Pipeline mode: "public" (PR builds) or "internal".
-                                <options: public|internal>
-  --org=<value>                 [default: fluidframework, env: ORG] Azure DevOps organization name.
-  --outputDir=<value>           (required) [env: OUTPUT_DIR] Directory to write output files to.
-  --parallelJobs=<value>        [default: 20, env: PARALLEL_JOBS] Number of concurrent API requests for timeline
-                                fetching.
-  --prBuildDefId=<value>        [env: PR_BUILD_DEF_ID] Build definition ID for PR builds (required for public mode).
-  --project=<value>             (required) [env: PROJECT] Azure DevOps project name.
+  --adoApiToken=<value>     (required) [env: ADO_API_TOKEN] Azure DevOps API token for authentication.
+  --buildCount=<value>      [default: 500, env: BUILD_COUNT] Number of builds to fetch. Note: This will be limited
+                            by the number of builds held by the ADO project's retention policy.
+  --buildDefId=<value>      (required) [env: BUILD_DEF_ID] Build definition ID to query.
+  --mode=<option>           (required) [env: MODE] Pipeline mode: "public" (PR builds) or "internal".
+                            <options: public|internal>
+  --org=<value>             [default: fluidframework, env: ORG] Azure DevOps organization name.
+  --outputDir=<value>       (required) [env: OUTPUT_DIR] Directory to write output files to.
+  --parallelJobs=<value>    [default: 20, env: PARALLEL_JOBS] Number of concurrent API requests for timeline
+                            fetching.
+  --project=<value>         (required) [env: PROJECT] Azure DevOps project name.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -79,7 +76,7 @@ DESCRIPTION
 EXAMPLES
   Collect public (PR) build data.
 
-    $ flub build-perf collect --mode public --project public --prBuildDefId 11 --outputDir ./output --adoApiToken \
+    $ flub build-perf collect --mode public --project public --buildDefId 11 --outputDir ./output --adoApiToken \
       $ADO_TOKEN
 ```
 

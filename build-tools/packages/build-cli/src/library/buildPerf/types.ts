@@ -9,6 +9,14 @@
 export type BuildPerfMode = "public" | "internal";
 
 /**
+ * Data filenames by mode.
+ */
+export const DATA_FILENAMES: Record<BuildPerfMode, string> = {
+	public: "public-data.json",
+	internal: "internal-data.json",
+} as const;
+
+/**
  * A raw ADO build record (subset of fields we use).
  */
 export interface AdoBuildRecord {

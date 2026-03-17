@@ -41,11 +41,12 @@ variables:
       value: public
     ${{ else }}:
       value: internal
-  # Build definition IDs
-  - name: publicPRBuildDefinitionId
-    value: 11
-  - name: internalBuildDefinitionId
-    value: 12
+  # Build definition ID (public=PR builds, internal=internal builds)
+  - name: buildDefinitionId
+    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+      value: 11
+    ${{ else }}:
+      value: 12
   # Project to query (same as where pipeline runs)
   - name: targetProject
     value: $(System.TeamProject)
@@ -105,14 +106,13 @@ extends:
             PROJECT: $(targetProject)
             MODE: $(runMode)
             BUILD_COUNT: $(buildCount)
-            PR_BUILD_DEF_ID: $(publicPRBuildDefinitionId)
-            INTERNAL_BUILD_DEF_ID: $(internalBuildDefinitionId)
+            BUILD_DEF_ID: $(buildDefinitionId)
             PARALLEL_JOBS: $(parallelJobs)
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)/data
           inputs:
             targetType: 'inline'
             script: |
-              flub collect build-perf
+              flub build-perf collect
 
         - task: Bash@3
           displayName: Generate HTML dashboard artifact
@@ -123,7 +123,7 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
-              flub generate build-perf
+              flub build-perf generate
 
         templateContext:
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -171,4 +171,4 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
-              flub check build-perf
+              flub build-perf check

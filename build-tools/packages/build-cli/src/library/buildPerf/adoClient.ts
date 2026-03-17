@@ -27,8 +27,7 @@ export interface FetchBuildsOptions {
 	project: string;
 	mode: BuildPerfMode;
 	buildCount: number;
-	prBuildDefId?: number;
-	internalBuildDefId?: number;
+	buildDefId: number;
 }
 
 /**
@@ -124,15 +123,7 @@ export async function fetchBuilds(
 	options: FetchBuildsOptions,
 	logger?: AdoClientLogger,
 ): Promise<AdoBuildRecord[]> {
-	const { adoToken, org, project, mode, buildCount, prBuildDefId, internalBuildDefId } =
-		options;
-
-	const buildDefId = mode === "public" ? prBuildDefId : internalBuildDefId;
-	if (buildDefId === undefined) {
-		throw new Error(
-			`Build definition ID is required for ${mode} mode (${mode === "public" ? "prBuildDefId" : "internalBuildDefId"})`,
-		);
-	}
+	const { adoToken, org, project, mode, buildCount, buildDefId } = options;
 
 	logger?.log(`Fetching ${buildCount} ${mode} builds (definition ${buildDefId})...`);
 

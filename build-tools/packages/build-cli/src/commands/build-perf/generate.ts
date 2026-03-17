@@ -12,7 +12,7 @@ import {
 	generateStandaloneHtml,
 	TEMPLATES_DIR,
 } from "../../library/buildPerf/htmlGenerator.js";
-import type { BuildPerfMode } from "../../library/buildPerf/types.js";
+import { type BuildPerfMode, DATA_FILENAMES } from "../../library/buildPerf/types.js";
 import { BaseCommand } from "../../library/commands/base.js";
 
 /**
@@ -71,10 +71,7 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 		this.logHr();
 
 		// Determine the data file for this mode
-		const dataFile =
-			mode === "public"
-				? path.join(flags.inputDir, "public-data.json")
-				: path.join(flags.inputDir, "internal-data.json");
+		const dataFile = path.join(flags.inputDir, DATA_FILENAMES[mode]);
 
 		if (!existsSync(dataFile)) {
 			this.error(`Data file not found: ${dataFile}`);

@@ -8,10 +8,11 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 
-import type {
-	BuildPerfMode,
-	ProcessedDataOutput,
-	ThresholdResult,
+import {
+	type BuildPerfMode,
+	DATA_FILENAMES,
+	type ProcessedDataOutput,
+	type ThresholdResult,
 } from "../../library/buildPerf/types.js";
 import { BaseCommand } from "../../library/commands/base.js";
 
@@ -67,10 +68,7 @@ export default class BuildPerfCheckCommand extends BaseCommand<typeof BuildPerfC
 		// oclif validates --mode against the options array, so the cast is safe.
 		const mode = flags.mode as BuildPerfMode;
 
-		const dataFile =
-			mode === "public"
-				? path.join(flags.inputDir, "public-data.json")
-				: path.join(flags.inputDir, "internal-data.json");
+		const dataFile = path.join(flags.inputDir, DATA_FILENAMES[mode]);
 		const changePeriodDays = mode === "public" ? 3 : 7;
 		const changeField = mode === "public" ? "change3Day" : "change7Day";
 
