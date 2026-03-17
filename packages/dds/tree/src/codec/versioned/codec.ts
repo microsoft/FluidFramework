@@ -221,7 +221,6 @@ export interface CodecVersion<
 	TContext,
 	TFormatVersion extends FormatVersion,
 	TBuildOptions extends ICodecOptions,
-	TBuildOptions extends ICodecOptions,
 > extends CodecVersionBase<
 		| CodecAndSchema<TDecoded, TContext>
 		| ((options: TBuildOptions) => CodecAndSchema<TDecoded, TContext>),
