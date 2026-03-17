@@ -40,7 +40,7 @@ const generateExampleGettingStartedSection = (
 
 	if (includeTinyliciousStep) {
 		sectionBody.push(
-			`1. In a separate terminal, start a Tinylicious server by running \`pnpm Tinylicious\` in this directory.`,
+			`1. In a separate terminal, start a Tinylicious server by running \`pnpm tinylicious\` in this directory.`,
 		);
 
 		sectionBody.push(

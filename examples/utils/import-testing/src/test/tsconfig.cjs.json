@@ -5,8 +5,6 @@
 		"outDir": "../../dist/test",
 	},
 	"exclude": [
-		// Temporarily all cross-package importers are compiled separately by tsconfig.crossPackageConsumer*.json.
-		"./crossPackage/**/*",
 		// bundler is only produced and tested for ESM, so exclude it from CJS compilation.
 		"./crossPackage/bundlerImporter.ts",
 	],

@@ -1,6 +1,8 @@
-{
-  "anyOf": [
-    {
+[
+  {
+    "version": 1,
+    "minVersionForCollab": "1.0.0",
+    "schema": {
       "additionalProperties": false,
       "type": "object",
       "properties": {
@@ -147,8 +149,12 @@
         "data",
         "shapes"
       ]
-    },
-    {
+    }
+  },
+  {
+    "version": 2,
+    "minVersionForCollab": "2.73.0",
+    "schema": {
       "additionalProperties": false,
       "type": "object",
       "properties": {
@@ -296,5 +302,5 @@
         "shapes"
       ]
     }
-  ]
-}
+  }
+]
