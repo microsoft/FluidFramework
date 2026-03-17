@@ -60,3 +60,6 @@ temp_modules/
 
 # Output folder for custom benchmark tests
 .customBenchmarksOutput
+
+# Temporary manual Node10 entrypoint file
+!legacy.d.ts
