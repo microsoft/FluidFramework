@@ -15,6 +15,7 @@ export const benchmarkCustom: typeof benchmarkIt;
 // @public @input
 export interface BenchmarkDescription {
     readonly category?: string;
+    readonly testType?: TestType;
     readonly type?: BenchmarkType;
 }
 
@@ -240,7 +241,7 @@ export interface SuiteData {
     parent?: ReportPath;
 }
 
-// @public (undocumented)
+// @public
 export enum TestType {
     ExecutionTime = 0,
     MemoryUsage = 1

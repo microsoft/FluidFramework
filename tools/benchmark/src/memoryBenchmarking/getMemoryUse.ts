@@ -6,6 +6,7 @@
 import { assert, assertProperUse } from "../assert.js";
 import {
 	isInPerformanceTestingMode,
+	TestType,
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
@@ -373,7 +374,7 @@ export function benchmarkMemoryUse(
 	args: MemoryUseBenchmark,
 ): BenchmarkDescription & BenchmarkFunction {
 	return {
-		category: "Memory",
+		testType: TestType.MemoryUsage,
 		run: async () => {
 			// The first time collectMemoryUseData runs, it causes some memory instability, likely related to JITing.
 			// We can mitigate that by running it once, before we start collecting data, to warm up the system.

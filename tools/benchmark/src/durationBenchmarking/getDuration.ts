@@ -5,6 +5,7 @@
 
 import {
 	isInPerformanceTestingMode,
+	TestType,
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
@@ -334,7 +335,7 @@ export function benchmarkDuration(
 	args: DurationBenchmark,
 ): BenchmarkDescription & BenchmarkFunction {
 	return {
-		category: "Duration",
+		testType: TestType.ExecutionTime,
 		run: () => collectDurationData(args),
 	};
 }

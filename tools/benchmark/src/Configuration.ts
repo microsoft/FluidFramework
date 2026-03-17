@@ -52,6 +52,10 @@ export enum BenchmarkType {
 }
 
 /**
+ * A set of well known kinds of tests that can be used to categorize benchmarks.
+ * @remarks
+ * This is not an exhaustive list of test types:
+ * other categories can be added by using the `category` field of {@link BenchmarkDescription} or just included directly in the test's name.
  * @public
  */
 export enum TestType {
@@ -102,6 +106,12 @@ export interface BenchmarkDescription {
 	 * The kind of benchmark.
 	 */
 	readonly type?: BenchmarkType;
+
+	/**
+	 * The type of test being performed, which is used to categorize the benchmark.
+	 * This gets added as a tag to the test name.
+	 */
+	readonly testType?: TestType;
 
 	/**
 	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
