@@ -8,7 +8,7 @@ import { useColorMode } from "@docusaurus/theme-common";
 import GitHubIcon from "@theme/Icon/Socials/GitHub";
 import XIcon from "@theme/Icon/Socials/X";
 import clsx from "clsx";
-import React from "react";
+import { memo, type ReactNode } from "react";
 
 import FooterLogo from "./Logo";
 
@@ -50,7 +50,7 @@ function Footer(): JSX.Element {
 }
 
 interface LinkItemProps {
-	children?: React.ReactNode;
+	children?: ReactNode;
 	targetUrl: string;
 	ariaLabel?: string;
 }
@@ -118,4 +118,4 @@ function FooterCopyright(): JSX.Element {
 	);
 }
 
-export default React.memo(Footer);
+export default memo(Footer);

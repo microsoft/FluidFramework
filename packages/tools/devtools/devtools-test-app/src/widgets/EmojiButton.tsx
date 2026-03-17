@@ -5,8 +5,7 @@
 
 import { Button, Tooltip } from "@fluentui/react-components";
 import type { ISharedCell } from "@fluidframework/cell/internal";
-import React from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 /**
  * {@link EmojiButton} input props.
  * @internal
@@ -22,15 +21,15 @@ export interface EmojiButtonProps {
  * State is shared via the provided `SharedCell`.
  * @internal
  */
-export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
+export function EmojiButton(props: EmojiButtonProps): ReactElement {
 	const { emojiCell } = props;
 
 	// undefined => No expression
 	// false => frowny
 	// true => smiley
-	const [isSmiley, setIsSmiley] = React.useState<boolean | undefined>(emojiCell.get());
+	const [isSmiley, setIsSmiley] = useState<boolean | undefined>(emojiCell.get());
 
-	React.useEffect(() => {
+	useEffect(() => {
 		function updateState(): void {
 			setIsSmiley(emojiCell.get());
 		}

@@ -1,6 +1,12 @@
 {
+	// Used by build.spec.ts to compile this package with multiple TS versions (5.4-5.9).
+	// Includes src/**/* (not just test/) because the test verifies that the package's
+	// exports type-check correctly across TS versions with skipLibCheck: false.
 	"include": ["src/**/*"],
-	// "exclude": ["src/test/**/*"],
+	// Cross-package schema files produce .d.ts with intentionally broken import paths
+	// (documenting a known tree export bug). Exclude them so the multi-version build
+	// tests aren't affected.
+	"exclude": ["src/crossPackage/**/*", "src/test/crossPackage/**/*"],
 	"compilerOptions": {
 		"target": "es2022",
 		"module": "Node16",

@@ -773,16 +773,16 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("statuses are reported correctly", ({ view }) => {
-			assert.equal(view.checkout.transaction.isInProgress(), false);
+			assert.equal(view.checkout.transaction.size, 0);
 			view.runTransaction(() => {
-				assert.equal(view.checkout.transaction.isInProgress(), true);
+				assert.equal(view.checkout.transaction.size, 1);
 				view.runTransaction(() => {
-					assert.equal(view.checkout.transaction.isInProgress(), true);
+					assert.equal(view.checkout.transaction.size, 2);
 				});
-				assert.equal(view.checkout.transaction.isInProgress(), true);
+				assert.equal(view.checkout.transaction.size, 1);
 				return { rollback: true };
 			});
-			assert.equal(view.checkout.transaction.isInProgress(), false);
+			assert.equal(view.checkout.transaction.size, 0);
 		});
 
 		it("rejects async transactions within existing transactions", async () => {

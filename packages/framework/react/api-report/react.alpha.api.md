@@ -8,7 +8,7 @@
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
     readonly config: TreeViewConfiguration<TSchema>;
     readonly treeView: TreeView<TSchema>;
-    readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React_2.JSX.Element;
+    readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => JSX_2.Element;
 }
 
 // @alpha @system
@@ -55,12 +55,12 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfigur
 // @alpha
 export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, viewComponent: ViewComponent, errorComponent, }: TreeViewProps<TSchema> & {
     tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
-}): React_2.JSX.Element;
+}): JSX_2.Element;
 
 // @alpha @input
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
-    readonly errorComponent?: React_2.FC<SchemaIncompatibleProps>;
-    readonly viewComponent: React_2.FC<{
+    readonly errorComponent?: FC<SchemaIncompatibleProps>;
+    readonly viewComponent: FC<{
         root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
     }>;
 }
@@ -92,12 +92,12 @@ export function useTree(subtreeRoot: TreeNode): number;
 export function useTreeObservations<TResult>(trackDuring: () => TResult, options?: ObservationOptions): TResult;
 
 // @alpha
-export function withMemoizedTreeObservations<TIn>(component: React_2.FC<TIn>, options?: ObservationOptions & {
-    readonly propsAreEqual?: Parameters<typeof React_2.memo>[1];
-}): React_2.MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>>;
+export function withMemoizedTreeObservations<TIn>(component: FC<TIn>, options?: ObservationOptions & {
+    readonly propsAreEqual?: Parameters<typeof memo>[1];
+}): MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>>;
 
 // @alpha
-export function withTreeObservations<TIn>(component: React_2.FC<TIn>, options?: ObservationOptions): React_2.FC<TIn> & React_2.FC<WrapNodes<TIn>> & React_2.FC<TIn | WrapNodes<TIn>>;
+export function withTreeObservations<TIn>(component: FC<TIn>, options?: ObservationOptions): FC<TIn> & FC<WrapNodes<TIn>> & FC<TIn | WrapNodes<TIn>>;
 
 // @alpha
 export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends readonly (infer U)[] ? readonly WrapNodes<U>[] : T extends infer U ? IsMappableObjectType<U, {
