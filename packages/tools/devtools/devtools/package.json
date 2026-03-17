@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -58,7 +58,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",

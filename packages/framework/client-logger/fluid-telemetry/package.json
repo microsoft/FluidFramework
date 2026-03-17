@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",

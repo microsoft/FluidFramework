@@ -95,7 +95,14 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: [
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"build:entrypoints:node10",
+				// Depend on "tsc" and "build:esnext" in case there is no matching "api-extractor:*".
+				"tsc",
+				"build:esnext",
+			],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -109,10 +116,10 @@ module.exports = {
 		// generate reports from legacy entrypoint as well as the "current" one.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports:current": ["api-extractor:esnext"],
-		"build:api-reports:legacy": ["api-extractor:esnext"],
-		"ci:build:api-reports:current": ["api-extractor:esnext"],
-		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
+		"build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
@@ -196,6 +203,10 @@ module.exports = {
 			],
 			outputGlobs: ["package.json"],
 			gitignore: ["input", "output"],
+		},
+		"flub generate node10Entrypoints": {
+			inputGlobs: ["package.json"],
+			outputGlobs: ["(alpha|beta|internal|legacy).d.ts", "legacy/alpha.d.ts"],
 		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
