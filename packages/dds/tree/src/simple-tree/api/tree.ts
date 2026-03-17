@@ -517,7 +517,7 @@ export interface SchemaCompatibilityStatus {
  * Events for {@link TreeBranch}.
  * @sealed @alpha
  */
-export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
+export interface TreeBranchEvents {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).
