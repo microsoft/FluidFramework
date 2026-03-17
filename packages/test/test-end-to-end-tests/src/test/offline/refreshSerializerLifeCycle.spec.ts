@@ -114,7 +114,11 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			testConfig ?? "undefined",
 		)}`, async () => {
 			const provider: ITestObjectProvider = getTestObjectProvider();
-			if (provider.driver.type !== "local") {
+			if (
+				provider.driver.type !== "local" &&
+				provider.driver.type !== "t9s" &&
+				provider.driver.type !== "tinylicious"
+			) {
 				return;
 			}
 			let snapshotRefreshTimeoutMs;

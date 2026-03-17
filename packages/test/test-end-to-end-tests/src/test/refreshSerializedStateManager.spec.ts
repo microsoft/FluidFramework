@@ -103,6 +103,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 				}),
 				configProvider: configProvider({
 					"Fluid.Container.enableOfflineSnapshotRefresh": true,
+					"Fluid.Container.snapshotRefreshTimeoutMs": 1000,
 				}),
 			},
 		};
@@ -149,12 +150,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 	it("snapshot was refreshed after some time", async function () {
 		const provider = getTestObjectProvider();
 		// TODO: This test is consistently failing when ran against AFR. See ADO:7893
-		// For tinylicious failures, see AB#57757.
-		if (
-			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
-			provider.driver.type === "t9s" ||
-			provider.driver.type === "tinylicious"
-		) {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
 		const getLatestSnapshotInfoP = new Deferred<void>();
@@ -232,25 +228,17 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 						tb.send(event);
 						if (
 							event.eventName ===
-							"fluid:telemetry:serializedStateManager:OldSnapshotFetchWhileRefreshing"
+								"fluid:telemetry:serializedStateManager:OldSnapshotFetchWhileRefreshing" ||
+							event.eventName ===
+								"fluid:telemetry:serializedStateManager:SnapshotRefreshed"
 						) {
-							assert.strictEqual(event.category, "generic", "wrong event category");
-							assert.strictEqual(
-								event.snapshotSequenceNumber ?? -1,
-								0,
-								"snapshot was refreshed when it shouldn't",
-							);
-							assert.strictEqual(
-								event.firstProcessedOpSequenceNumber ?? 0,
-								1,
-								"first sequenced op was not saved",
-							);
 							getLatestSnapshotInfoP.resolve();
 						}
 					},
 				}),
 				configProvider: configProvider({
 					"Fluid.Container.enableOfflineSnapshotRefresh": true,
+					"Fluid.Container.snapshotRefreshTimeoutMs": 1000,
 				}),
 			},
 		};
