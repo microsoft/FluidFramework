@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/platform-dependent",
-	"version": "2.82.0",
+	"version": "2.92.0",
 	"private": true,
 	"description": "Helper package that separates code for browser and server.",
 	"homepage": "https://fluidframework.com",
@@ -20,7 +20,7 @@
 		"format:biome": "biome check . --write"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"jiti": "^2.6.1"
 	},
 	"typeValidation": {

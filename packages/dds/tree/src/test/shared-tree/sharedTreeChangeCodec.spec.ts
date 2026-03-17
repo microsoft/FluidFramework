@@ -13,16 +13,21 @@ import { TreeStoredSchemaRepository } from "../../core/index.js";
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
+import type {
+	EncodedFieldBatch,
+	FieldBatchCodec,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	FieldBatchFormatVersion,
 	FieldKinds,
 	type ModularChangeset,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
 	makeModularChangeCodecFamily,
+	newChangeAtomIdBTree,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
@@ -30,7 +35,7 @@ import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/mo
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
-import { brand, newTupleBTree } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
@@ -41,7 +46,7 @@ const codecOptions: CodecWriteOptions = {
 
 describe("sharedTreeChangeCodec", () => {
 	it("passes down the context's schema to the fieldBatchCodec", () => {
-		const dummyFieldBatchCodec = {
+		const dummyFieldBatchCodec: FieldBatchCodec = {
 			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 				// Checks that the context's schema matches the schema passed into the sharedTreeChangeCodec.
 				assert.equal(context.schema?.schema, dummyTestSchema);
@@ -53,6 +58,7 @@ describe("sharedTreeChangeCodec", () => {
 					originatorId: context.originatorId,
 				}).map((chunk) => chunk.cursor());
 			},
+			writeVersion: FieldBatchFormatVersion.v2,
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -63,7 +69,7 @@ describe("sharedTreeChangeCodec", () => {
 		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(
 			modularChangeCodecs,
 			codecOptions,
-		).resolve(3).json;
+		).resolve(3);
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {
@@ -74,12 +80,12 @@ describe("sharedTreeChangeCodec", () => {
 		};
 		const changeA: Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
-			nodeChanges: newTupleBTree(),
+			nodeChanges: newChangeAtomIdBTree(),
 			fieldChanges: new Map([
 				[brand("fA"), { fieldKind: FieldKinds.sequence.identifier, change: brand(changeA) }],
 			]),
-			nodeToParent: newTupleBTree(),
-			nodeAliases: newTupleBTree(),
+			nodeToParent: newChangeAtomIdBTree(),
+			nodeAliases: newChangeAtomIdBTree(),
 			crossFieldKeys: newCrossFieldKeyTable(),
 		};
 		sharedTreeChangeCodec.encode(

@@ -718,6 +718,7 @@ describe("Undo and redo", () => {
 					const latestGroup = undoGroups[undoGroups.length - 1];
 					if (
 						label !== undefined &&
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58522 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 						latestGroup !== undefined &&
 						label === latestGroup.label
 					) {

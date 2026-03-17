@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.82.0",
+	"version": "2.92.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,52 +15,52 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/entrypoints/public.d.ts",
+				"default": "./lib/entrypoints/public.js"
 			},
 			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/entrypoints/public.d.ts",
+				"default": "./dist/entrypoints/public.js"
 			}
 		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/alpha.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/entrypoints/alpha.d.ts",
+				"default": "./lib/entrypoints/alpha.js"
 			},
 			"require": {
-				"types": "./dist/alpha.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/entrypoints/alpha.d.ts",
+				"default": "./dist/entrypoints/alpha.js"
 			}
 		},
 		"./beta": {
 			"import": {
-				"types": "./lib/beta.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/entrypoints/beta.d.ts",
+				"default": "./lib/entrypoints/beta.js"
 			},
 			"require": {
-				"types": "./dist/beta.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/entrypoints/beta.d.ts",
+				"default": "./dist/entrypoints/beta.js"
 			}
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/entrypoints/internal.d.ts",
+				"default": "./lib/entrypoints/internal.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/entrypoints/internal.d.ts",
+				"default": "./dist/entrypoints/internal.js"
 			}
 		},
 		"./legacy": {
 			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/entrypoints/legacy.d.ts",
+				"default": "./lib/entrypoints/legacy.js"
 			},
 			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/entrypoints/legacy.d.ts",
+				"default": "./dist/entrypoints/legacy.js"
 			}
 		},
 		"./internal/test": {
@@ -77,11 +77,9 @@
 		}
 	},
 	"main": "lib/index.js",
-	"types": "lib/public.d.ts",
+	"types": "lib/entrypoints/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
@@ -91,6 +89,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints:node10": "flub generate node10Entrypoints",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
@@ -113,13 +112,14 @@
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"depcruise": "depcruise src/ --ignore-known",
 		"depcruise:regen-known-issues": "depcruise-baseline src",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
+		"generate:entrypoint-sources": "scripts/generate-entrypoint-sources.sh",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"pack:tests": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
@@ -177,7 +177,7 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@sinclair/typebox": "^0.34.13",
-		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@tylerbu/sorted-btree-es6": "^2.1.1",
 		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
 		"semver-ts": "^1.0.3",
@@ -185,21 +185,21 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.52.0",
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.81.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.83.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
@@ -217,9 +217,9 @@
 		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"jiti": "^2.6.1",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

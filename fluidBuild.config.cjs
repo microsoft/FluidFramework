@@ -9,6 +9,16 @@
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
+// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+// have packages at today. Once we can upgrade to a later version of
+// globby things might be faster.
+const releaseGroupPackageJsonGlobs = [
+	"{azure,examples,experimental,packages}/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/package.json",
+	"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+	"tools/markdown-magic/package.json",
+];
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -49,7 +59,9 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "^api", "build:test", "build:copy"],
+			// Note that "api" is included as "compile" intends to build a complete package
+			// and "api" generates package entrypoint files.
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -74,6 +86,7 @@ module.exports = {
 		"typetests:gen": [],
 		"ts2esm": [],
 		"tsc": tscDependsOn,
+		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
@@ -82,7 +95,14 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: [
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"build:entrypoints:node10",
+				// Depend on "tsc" and "build:esnext" in case there is no matching "api-extractor:*".
+				"tsc",
+				"build:esnext",
+			],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -96,10 +116,10 @@ module.exports = {
 		// generate reports from legacy entrypoint as well as the "current" one.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports:current": ["api-extractor:esnext"],
-		"build:api-reports:legacy": ["api-extractor:esnext"],
-		"ci:build:api-reports:current": ["api-extractor:esnext"],
-		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
+		"build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
@@ -115,6 +135,7 @@ module.exports = {
 		},
 		"depcruise": [],
 		"check:exports": ["api"],
+		"check:exports:bundle-release-tags": ["build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
@@ -132,6 +153,7 @@ module.exports = {
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
+		"eslint:fix": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
@@ -177,16 +199,14 @@ module.exports = {
 			inputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: ["package.json"],
 			gitignore: ["input", "output"],
+		},
+		"flub generate node10Entrypoints": {
+			inputGlobs: ["package.json"],
+			outputGlobs: ["(alpha|beta|internal|legacy).d.ts", "legacy/alpha.d.ts"],
 		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
@@ -224,24 +244,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},
@@ -250,24 +258,12 @@ module.exports = {
 				"syncpack.config.cjs",
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			outputGlobs: [
 				"package.json",
 
-				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
-				// have packages at today. Once we can upgrade to a later version of
-				// globby things might be faster.
-				"{azure,examples,experimental,packages}/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/package.json",
-				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
-				"tools/markdown-magic/package.json",
+				...releaseGroupPackageJsonGlobs,
 			],
 			gitignore: ["input", "output"],
 		},
@@ -326,6 +322,7 @@ module.exports = {
 			"common/build/build-common/src/esm/package.json",
 			"packages/common/core-interfaces/src/cjs/package.json",
 			"packages/framework/presence/src/cjs/package.json",
+			"examples/utils/import-testing/src/cjs/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {

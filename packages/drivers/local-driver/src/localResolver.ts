@@ -86,7 +86,9 @@ export class LocalResolver implements IUrlResolver {
 			0x09a /* "'documentId' must be a defined, non-zero length string." */,
 		);
 
-		return `http://localhost:3000/${documentId}/${url}`;
+		return url
+			? `http://localhost:3000/${documentId}/${url}`
+			: `http://localhost:3000/${documentId}`;
 	}
 
 	public createCreateNewRequest(documentId: string): IRequest {

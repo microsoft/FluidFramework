@@ -125,8 +125,9 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
  */
-export const schemaCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Schema", {
-	[lowestMinVersionForCollab]: {
+export const schemaCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Schema", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
 		formatVersion: SchemaFormatVersion.v1,
 		codec: {
 			encode: (data: TreeStoredSchema) => encodeRepoV1(data),
@@ -134,7 +135,8 @@ export const schemaCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Sc
 			schema: FormatV1,
 		},
 	},
-	[FluidClientVersion.v2_43]: {
+	{
+		minVersionForCollab: FluidClientVersion.v2_43,
 		formatVersion: SchemaFormatVersion.v2,
 		codec: {
 			encode: (data: TreeStoredSchema) => encodeRepoV2(data),
@@ -142,4 +144,4 @@ export const schemaCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Sc
 			schema: FormatV2,
 		},
 	},
-});
+]);

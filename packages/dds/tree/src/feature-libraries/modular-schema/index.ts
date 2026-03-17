@@ -74,7 +74,10 @@ export {
 	relevantRemovedRoots,
 	updateRefreshers,
 } from "./modularChangeFamily.js";
-export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export {
+	ModularChangeFormatVersion,
+	makeModularChangeCodecFamily,
+} from "./modularChangeCodecs.js";
 export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,

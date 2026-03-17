@@ -40,7 +40,11 @@ const generateExampleGettingStartedSection = (
 
 	if (includeTinyliciousStep) {
 		sectionBody.push(
-			`1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious).`,
+			`1. In a separate terminal, start a Tinylicious server by running \`pnpm tinylicious\` in this directory.`,
+		);
+
+		sectionBody.push(
+			`1. If using codespaces in a browser, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. See [sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port) for how to do this.`,
 		);
 	}
 

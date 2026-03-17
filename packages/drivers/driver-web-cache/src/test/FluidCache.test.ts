@@ -74,7 +74,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 	describe(`Fluid Cache tests: immediateClose: ${immediateClose}`, () => {
 		beforeEach(() => {
 			// Reset the indexed db before each test so that it starts off in an empty state
-			// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+			// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
 			const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
 			(window.indexedDB as any) = new FDBFactory();
 		});

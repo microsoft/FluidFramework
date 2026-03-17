@@ -64,3 +64,4 @@ export {
 	type ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "./SharedStringHelper.js";
+export { getTinyliciousEndpoint } from "./getTinyliciousEndpoint.js";

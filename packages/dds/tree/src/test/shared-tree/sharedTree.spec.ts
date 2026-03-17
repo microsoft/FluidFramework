@@ -2002,6 +2002,73 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("tolerates open async transactions in the face of inbound commits", () => {
+		it("committed transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const view1 = asAlpha(tree1.viewWith(config));
+			const view2 = tree2.viewWith(config);
+			view1.initialize(["A", "C", "E"]);
+			await provider.ensureSynchronized();
+
+			await view1.runTransactionAsync(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
+
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+			});
+			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+
+			await provider.ensureSynchronized();
+			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "D", "E"]);
+		});
+
+		it("aborted transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const view1 = asAlpha(tree1.viewWith(config));
+			const view2 = tree2.viewWith(config);
+			view1.initialize(["A", "C", "E"]);
+			await provider.ensureSynchronized();
+
+			await view1.runTransactionAsync(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
+
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				return { rollback: true };
+			});
+			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+
+			await provider.ensureSynchronized();
+			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+		});
+	});
+
 	describe("Anchors", () => {
 		it("Anchors can be created and dereferenced", () => {
 			const provider = new TestTreeProviderLite();

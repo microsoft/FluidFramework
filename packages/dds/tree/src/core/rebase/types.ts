@@ -19,6 +19,7 @@ import {
 	brand,
 	brandedNumberType,
 	brandedStringType,
+	comparePartialStrings,
 } from "../../util/index.js";
 import type { RevertibleAlpha } from "../revertible.js";
 
@@ -46,6 +47,9 @@ export const StableIdSchema = Type.String();
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
+ * @remarks
+ * Always a real number (never `NaN` or +/- `Infinity`).
+ *
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
  * but they are unique when qualified by the revision of the change they are used in.
  */
@@ -125,6 +129,26 @@ export function taggedOptAtomId(
 export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
 	return { ...id, localId: brand(id.localId + offset) };
 }
+
+// #region These comparison functions are used instead of e.g. `compareNumbers` as a performance optimization
+
+export function compareChangesetLocalIds(a: ChangesetLocalId, b: ChangesetLocalId): number {
+	return a - b; // No need to consider `NaN` or `Infinity` since ChangesetLocalId is always a real number
+}
+
+export function comparePartialChangesetLocalIds(
+	a: ChangesetLocalId | undefined,
+	b: ChangesetLocalId | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	}
+	return compareChangesetLocalIds(a, b);
+}
+
+// #endregion
 
 /**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
@@ -210,7 +234,82 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * This can be used by undo/redo to group or classify edits.
 	 */
 	readonly label?: unknown;
+
+	/**
+	 * A set of {@link RunTransactionParams.label | labels} for all transactions (nested or otherwise)
+	 * that made up this change.
+	 * This can be used to identify, group, or filter changes — for example, to decide whether a change
+	 * should be included in an undo/redo stack.
+	 *
+	 * @remarks
+	 * The optional {@link TransactionLabels.tree | tree} property provides the structural nesting
+	 * of the transactions as a {@link LabelTree}.
+	 *
+	 * The `tree` property is present whenever the change was produced by a transaction that
+	 * includes at least one label. If the change was unlabeled,
+	 * `tree` is `undefined` and the set is empty.
+	 *
+	 * @example
+	 * Checking whether a change was produced by a specific kind of transaction:
+	 * ```typescript
+	 * branch.events.on("changed", (metadata) => {
+	 *   if (metadata.labels.has("testLabel")) {
+	 *     // This change came from a transaction labeled "testLabel"
+	 *   }
+	 * });
+	 * ```
+	 *
+	 * @example
+	 * A nested transaction produces a tree that reflects the nesting:
+	 * ```typescript
+	 * tree.runTransaction(() => {
+	 *   tree.runTransaction(() => { ... }, { label: "inner" });
+	 * }, { label: "outer" });
+	 * // metadata.labels.has("inner") === true
+	 * // metadata.labels.tree will be:
+	 * //   { label: "outer", sublabels: [{ label: "inner", sublabels: [] }] }
+	 * ```
+	 */
+	readonly labels: TransactionLabels;
 }
+
+/**
+ * A tree representing the nesting structure of transaction labels.
+ *
+ * @remarks
+ * Each transaction contributes a node whose {@link LabelTree.label} is its
+ * {@link RunTransactionParams.label | label} (or `undefined` if no label was provided).
+ * When transactions are nested, inner transaction nodes become {@link LabelTree.sublabels | sublabels}
+ * of outer ones.
+ *
+ * @sealed @alpha
+ */
+export interface LabelTree {
+	/**
+	 * The label for this transaction, or `undefined` if no label was provided.
+	 */
+	label: unknown;
+
+	/**
+	 * The label trees of any nested transactions within this one.
+	 */
+	sublabels: LabelTree[];
+}
+
+/**
+ * A set of transaction labels with an optional structural tree.
+ *
+ * @remarks
+ * The set contains all label values from the transactions that produced the change.
+ * Use standard {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set | Set}
+ * methods to check for specific labels.
+ *
+ * The optional {@link TransactionLabels.tree | tree} property provides the structural nesting
+ * of the transactions as a {@link LabelTree}.
+ *
+ * @sealed @alpha
+ */
+export type TransactionLabels = Set<unknown> & { tree?: LabelTree };
 
 /**
  * Information about a change that has been applied by a remote client.
@@ -236,6 +335,11 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
 	 */
 	readonly label?: undefined;
+	/**
+	 * A set of labels from nested transaction labels.
+	 * @remarks This is always empty for remote changes. Labels are only available for {@link LocalChangeMetadata | local changes}.
+	 */
+	readonly labels: TransactionLabels;
 }
 
 /**
@@ -273,7 +377,7 @@ export function newChangeAtomIdRangeMap<V>(
 }
 
 export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
-	const cmp = compareRevisions(a.revision, b.revision);
+	const cmp = comparePartialRevisions(a.revision, b.revision);
 	if (cmp !== 0) {
 		return cmp * Number.POSITIVE_INFINITY;
 	}
@@ -281,19 +385,20 @@ export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number 
 	return a.localId - b.localId;
 }
 
-export function compareRevisions(
+/**
+ * Compares two {@link RevisionTag}s to form a strict total ordering.
+ * @remarks This function tolerates arbitrary strings, not just the string "root".
+ * It sorts as follows: `undefined` \< `string` \< `number`
+ */
+export function comparePartialRevisions(
 	a: RevisionTag | undefined,
 	b: RevisionTag | undefined,
 ): number {
-	if (a === undefined) {
-		return b === undefined ? 0 : -1;
-	} else if (b === undefined) {
-		return 1;
-	} else if (a < b) {
+	if (typeof a === "number") {
+		return typeof b === "number" ? a - b : 1;
+	} else if (typeof b === "number") {
 		return -1;
-	} else if (a > b) {
-		return 1;
 	}
 
-	return 0;
+	return comparePartialStrings(a, b);
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getTinyliciousEndpoint } from "@fluid-example/example-utils";
 import type { AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { AzureClient } from "@fluidframework/azure-client";
 // eslint-disable-next-line import-x/no-internal-modules -- #26985: `test-runtime-utils` internal `InsecureTokenProvider` used in examples
@@ -21,7 +22,7 @@ const localConnectionConfig: AzureLocalConnectionConfig = {
 		id: userId,
 		name: `TestUser-${userId}`,
 	}),
-	endpoint: "http://localhost:7070",
+	endpoint: getTinyliciousEndpoint(),
 };
 
 const client = new AzureClient({ connection: localConnectionConfig });

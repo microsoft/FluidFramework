@@ -21,6 +21,6 @@ steps:
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
+        searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/${{ testResultDir }}
         mergeTestResults: false
       condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))

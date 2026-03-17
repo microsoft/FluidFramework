@@ -145,6 +145,13 @@ export class BuildPackage {
 		return undefined;
 	}
 
+	/**
+	 * Get additional config files specified in the task definition for incremental tracking.
+	 */
+	public getAdditionalConfigFiles(taskName: string): readonly string[] {
+		return this.getTaskDefinition(taskName)?.files?.additionalConfigFiles ?? [];
+	}
+
 	private createTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
 		const config = this.getTaskDefinition(taskName);
 		if (config?.script === false) {
