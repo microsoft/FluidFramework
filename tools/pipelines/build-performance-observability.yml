@@ -98,6 +98,19 @@ extends:
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
+
+        - task: Bash@3
+          displayName: Install root dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              pnpm install --workspace-root --frozen-lockfile
+
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
             buildDirectory: ${{ variables.FluidFrameworkDirectory }}
@@ -162,6 +175,19 @@ extends:
           path: ${{ variables.FluidFrameworkDirectory }}
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
+
+        - task: Bash@3
+          displayName: Install root dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              pnpm install --workspace-root --frozen-lockfile
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
