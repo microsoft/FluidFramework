@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",
@@ -36,7 +36,7 @@
 		}
 	},
 	"scripts": {
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",

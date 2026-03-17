@@ -4,7 +4,8 @@
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
-			"NODE_VERSION": "24"
+			"NODE_VERSION": "24",
+			"INSTALL_PLAYWRIGHT_CLI": "true"
 		}
 	},
 	"runArgs": ["--init"],
@@ -20,6 +21,9 @@
 				"mutantdino.resourcemonitor"
 			]
 		}
+	},
+	"containerEnv": {
+		"NODE_VERSION_OVERRIDE": "24"
 	},
 	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh && bash scripts/codespace-setup/ai-setup.sh",
 	"remoteUser": "node",
