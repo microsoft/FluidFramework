@@ -5,7 +5,7 @@
 		"dockerfile": "../Dockerfile",
 		"args": {
 			"NODE_VERSION": "24",
-			"AI_READY": "true"
+			"INSTALL_PLAYWRIGHT_CLI": "true"
 		}
 	},
 	"runArgs": ["--init"],
@@ -22,7 +22,10 @@
 			]
 		}
 	},
-	"postCreateCommand": "bash -lc \"scripts/codespace-setup/post-create.sh && . scripts/codespace-setup/ai-setup.sh\"",
+	"containerEnv": {
+		"NODE_VERSION_OVERRIDE": "24"
+	},
+	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh && bash scripts/codespace-setup/ai-setup.sh",
 	"remoteUser": "node",
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {

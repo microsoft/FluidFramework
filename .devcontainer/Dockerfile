@@ -31,10 +31,8 @@ RUN apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Optionally install Agency tooling for AI-ready codespace configs
-ARG AI_READY="false"
-RUN if [ "$AI_READY" = "true" ]; then \
-        curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency; \
-    fi
+# Optionally install Playwright CLI for AI agent workflows
+ARG INSTALL_PLAYWRIGHT_CLI=false
+RUN if [ "$INSTALL_PLAYWRIGHT_CLI" = "true" ]; then npm install -g @playwright/cli@latest; fi
 
 USER node

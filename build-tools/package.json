@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.64.0",
+	"version": "0.65.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -154,7 +154,8 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability (unsanitized class attribute injection).",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport)."
 		],
 		"overrides": {
 			"@types/glob>@types/minimatch": "~5.1.2",
@@ -171,7 +172,8 @@
 			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
-			"sharp": "^0.34.5"
+			"sharp": "^0.34.5",
+			"tar": "^7.5.11"
 		},
 		"updateConfig": {
 			"ignoreDependencies": [
