@@ -9,9 +9,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	EmptyKey,
 	mapCursorField,
+	buildNodeComparator,
 	type FieldKey,
 	type ITreeCursorSynchronous,
-	type Value,
 } from "../core/index.js";
 import { currentObserver } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
@@ -178,11 +178,11 @@ class TextNode
 			});
 		}
 	}
-	public getUniformRun(startIndex: number, maxLength?: number): number {
-		return this.content.getUniformRun(startIndex, maxLength);
+	public getUniformRun(startIndex: number, endIndex?: number): number {
+		return this.content.getUniformRun(startIndex, endIndex);
 	}
-	public textString(startIndex: number, length: number): string {
-		return this.content.textString(startIndex, length);
+	public getString(startIndex: number, endIndex?: number): string {
+		return this.content.getString(startIndex, endIndex);
 	}
 }
 
@@ -265,79 +265,13 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 	public fullString(): string {
 		return this.charactersCopy().join("");
 	}
-	public getUniformRun(startIndex: number, maxLength: number = this.length): number {
-		if (maxLength <= 0 || startIndex >= this.length) return 0;
+	public getString(startIndex: number, endIndex?: number): string {
 		const arrayLength = this.length;
+		if (startIndex < 0 || startIndex >= arrayLength) {
+			return "";
+		}
 		return this.withBorrowedSequenceCursor((cursor) => {
-			cursor.enterNode(startIndex);
-
-			// Line atoms are handled separately from text atoms
-			cursor.enterField(EmptyKey);
-			cursor.enterNode(0);
-			const contentType = cursor.type;
-			cursor.exitNode();
-			cursor.exitField();
-
-			// Line atoms contain only a single value, so the uniform run length is always 1.
-			if (contentType === FormattedTextAsTree.StringLineAtom.identifier) {
-				cursor.exitNode();
-				return 1;
-			}
-
-			const formatValues: Value[] = [];
-			cursor.enterField(formatKey);
-			cursor.enterNode(0);
-			for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
-				cursor.enterNode(0);
-				formatValues.push(cursor.value);
-				cursor.exitNode();
-			}
-			cursor.exitNode();
-			cursor.exitField();
-
-			let count = 1;
-			const limit = Math.min(maxLength, arrayLength - startIndex);
-
-			while (count < limit && cursor.nextNode()) {
-				cursor.enterField(EmptyKey);
-				cursor.enterNode(0);
-				const contentTypeMatch = cursor.type === contentType;
-				cursor.exitNode();
-				cursor.exitField();
-				if (!contentTypeMatch) {
-					break;
-				}
-				cursor.enterField(formatKey);
-				cursor.enterNode(0);
-				let match = true;
-				let index = 0;
-				for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
-					cursor.enterNode(0);
-					if (cursor.value !== formatValues[index++]) {
-						match = false;
-					}
-					cursor.exitNode();
-					if (!match) {
-						cursor.exitField();
-						break;
-					}
-				}
-				cursor.exitNode();
-				cursor.exitField();
-				if (!match) {
-					break;
-				}
-				count++;
-			}
-			cursor.exitNode();
-			return count;
-		});
-	}
-	public textString(startIndex: number, length: number): string {
-		if (length <= 0 || startIndex >= this.length) return "";
-		const arrayLength = this.length;
-		return this.withBorrowedSequenceCursor((cursor) => {
-			const limit = Math.min(length, arrayLength - startIndex);
+			const limit = Math.min(endIndex ?? arrayLength, arrayLength) - startIndex;
 			let result = "";
 
 			cursor.enterNode(startIndex);
@@ -362,7 +296,7 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 						break;
 					}
 					default: {
-						fail(0xcde, () => `${cursor.type}`);
+						fail(0xcde /* Unsupported node type in text array */, () => `${cursor.type}`);
 					}
 				}
 				cursor.exitNode();
@@ -370,6 +304,62 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 			}
 			cursor.exitNode();
 			return result;
+		});
+	}
+	public getUniformRun(startIndex: number, endIndex: number = this.length): number {
+		if (startIndex < 0 || startIndex >= this.length) {
+			throw new UsageError("startIndex out of bounds");
+		}
+		const arrayLength = this.length;
+		if (endIndex <= startIndex) {
+			throw new UsageError("endIndex must be greater than startIndex");
+		}
+		return this.withBorrowedSequenceCursor((cursor) => {
+			cursor.enterNode(startIndex);
+
+			// Capture the content type of the first atom
+			cursor.enterField(EmptyKey);
+			cursor.enterNode(0);
+			const contentType = cursor.type;
+			cursor.exitNode();
+			cursor.exitField();
+
+			// Build a comparator from the format subtree of the first atom
+			// This compares by field key
+			cursor.enterField(formatKey);
+			cursor.enterNode(0);
+			const formatComparator = buildNodeComparator(cursor);
+			cursor.exitNode();
+			cursor.exitField();
+
+			let runLength = 1;
+			const limit = Math.min(endIndex, arrayLength) - startIndex;
+
+			while (runLength < limit && cursor.nextNode()) {
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				const typeMatches = cursor.type === contentType;
+				cursor.exitNode();
+				cursor.exitField();
+				if (!typeMatches) {
+					break;
+				}
+
+				// Compare format subtree using the compiled comparator
+				cursor.enterField(formatKey);
+				cursor.enterNode(0);
+				const formatMatches = formatComparator(cursor);
+				cursor.exitNode();
+				cursor.exitField();
+
+				if (formatMatches !== true) {
+					break;
+				}
+
+				runLength++;
+			}
+			cursor.exitNode();
+			return runLength;
 		});
 	}
 }
@@ -550,18 +540,17 @@ export namespace FormattedTextAsTree {
 		): void;
 
 		/**
-		 * Returns the length of the run of characters starting at `startIndex` which have the same formatting, up to a maximum of `maxLength`.
+		 * Returns the length of the run of characters starting at `startIndex` which have the same formatting and atom type, up to `endIndex`.
 		 * @param startIndex - The starting index of the run.
-		 * @param maxLength - The maximum length of the run. Defaults to the length of the text.
+		 * @param endIndex - The ending index (exclusive) of the run. Defaults to the end of the text.
 		 */
-		getUniformRun(startIndex: number, maxLength?: number): number;
-
+		getUniformRun(startIndex: number, endIndex?: number): number;
 		/**
-		 * Returns a substring of the text starting at `startIndex` and spanning `length` characters.
-		 * @param startIndex - The starting index of the substring.
-		 * @param length - The number of characters to include in the substring.
+		 * Returns a substring of the text from `startIndex` to `endIndex`
+		 * @param startIndex - starting index (inclusive)
+		 * @param endIndex - Optional ending index (exclusive). Defaults to the end of the text.
 		 */
-		textString(startIndex: number, length: number): string;
+		getString(startIndex: number, endIndex?: number): string;
 	}
 
 	/**

@@ -29,6 +29,8 @@ export {
 	inCursorNode,
 	CursorMarker,
 	isCursor,
+	type NodeComparator,
+	buildNodeComparator,
 } from "./cursor.js";
 export type {
 	ProtoNodes,

@@ -305,9 +305,9 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
 			index += 1;
 		} else {
 			// Regular text atom: use getUniformRun to get length of consecutive characters with same formatting.
-			// Then textString to get the substring.
+			// Then getString to get the substring.
 			const runLength = root.getUniformRun(index);
-			const text = root.textString(index, runLength);
+			const text = root.getString(index, index + runLength);
 			const attributes = formatToQuillAttributes(atom.format);
 			const op: QuillDeltaOp = { insert: text };
 			if (Object.keys(attributes).length > 0) {
