@@ -26,6 +26,9 @@ overrides:
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
   fast-xml-parser: ^4.5.4
+  js-yaml@<4: ^3.14.2
+  js-yaml@>=4: ^4.1.1
+  jws: ^3.2.3
   good-fences>nodegit: npm:empty-npm-package@1.0.0
   qs: ^6.15.0
   simple-git: ^3.32.3
@@ -24186,14 +24189,8 @@ packages:
   jwa@1.4.2:
     resolution: {integrity: sha512-eeH5JO+21J78qMvTIDdBXidBd6nG2kZjg5Ohz/1fpa28Z4CcsWUzJ1ZZyFq/3z3N17aZy+ZuBoHljASbL1WfOw==}
 
-  jwa@2.0.1:
-    resolution: {integrity: sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==}
-
   jws@3.2.3:
     resolution: {integrity: sha512-byiJ0FLRdLdSVSReO/U4E7RoEyOCKnEnEPMjq3HxWtvzLsV08/i5RQKsFVNkCldrCaPr2vDNAOMsfs8T/Hze7g==}
-
-  jws@4.0.1:
-    resolution: {integrity: sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==}
 
   jwt-decode@3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
@@ -28377,7 +28374,7 @@ snapshots:
       '@azure/msal-browser': 3.27.0
       '@azure/msal-node': 2.16.2
       events: 3.3.0
-      jws: 4.0.1
+      jws: 3.2.3
       open: 8.4.2
       stoppable: 1.1.0
       tslib: 2.8.1
@@ -38456,20 +38453,9 @@ snapshots:
       ecdsa-sig-formatter: 1.0.11
       safe-buffer: 5.2.1
 
-  jwa@2.0.1:
-    dependencies:
-      buffer-equal-constant-time: 1.0.1
-      ecdsa-sig-formatter: 1.0.11
-      safe-buffer: 5.2.1
-
   jws@3.2.3:
     dependencies:
       jwa: 1.4.2
-      safe-buffer: 5.2.1
-
-  jws@4.0.1:
-    dependencies:
-      jwa: 2.0.1
       safe-buffer: 5.2.1
 
   jwt-decode@3.1.2: {}
