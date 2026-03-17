@@ -1034,7 +1034,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 
 		const innerNode = getInnerNode(this);
-		const transaction = innerNode.isHydrated() ? innerNode.context.checkout.transaction : undefined;
+		const transaction = innerNode.isHydrated()
+			? innerNode.context.checkout.transaction
+			: undefined;
 		transaction?.start();
 		this.removeRange(actualStart, actualStart + actualDeleteCount);
 		if (items.length > 0) {
