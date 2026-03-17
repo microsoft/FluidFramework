@@ -17,7 +17,7 @@ describe("buildNodeComparator", () => {
 		const cursor2 = cursorForJsonableTreeNode(tree);
 		assert.equal(comparator(cursor2), true);
 	});
-	it ("rejects leaf nodes with different values", () => {
+	it("rejects leaf nodes with different values", () => {
 		const tree1: JsonableTree = { type: brand("Leaf"), value: 67 };
 		const tree2: JsonableTree = { type: brand("Leaf"), value: 68 };
 		const cursor1 = cursorForJsonableTreeNode(tree1);
@@ -30,8 +30,8 @@ describe("buildNodeComparator", () => {
 			type: brand("Parent"),
 			fields: {
 				name: [{ type: brand("Str"), value: "Bill" }],
-				age: [{ type: brand("Num"), value: 30 }]
-			}
+				age: [{ type: brand("Num"), value: 30 }],
+			},
 		};
 		const cursor = cursorForJsonableTreeNode(tree);
 		const comparator = buildNodeComparator(cursor);
@@ -43,13 +43,13 @@ describe("buildNodeComparator", () => {
 			type: brand("Parent"),
 			fields: {
 				name: [{ type: brand("Str"), value: "Bill" }],
-			}
+			},
 		};
 		const tree2: JsonableTree = {
 			type: brand("Parent"),
 			fields: {
 				name: [{ type: brand("Str"), value: "Bob" }],
-			}
+			},
 		};
 		const cursor1 = cursorForJsonableTreeNode(tree1);
 		const comparator = buildNodeComparator(cursor1);
@@ -62,17 +62,15 @@ describe("buildNodeComparator", () => {
 			fields: {
 				items: [
 					{ type: brand("Str"), value: "Bill" },
-					{ type: brand("Num"), value: 30 }
+					{ type: brand("Num"), value: 30 },
 				],
-			}
+			},
 		};
 		const tree2: JsonableTree = {
 			type: brand("Parent"),
 			fields: {
-				otherItems: [
-					{ type: brand("Str"), value: "Bill" },
-				]
-			}
+				otherItems: [{ type: brand("Str"), value: "Bill" }],
+			},
 		};
 		const cursor1 = cursorForJsonableTreeNode(tree1);
 		const comparator = buildNodeComparator(cursor1);
@@ -87,13 +85,11 @@ describe("buildNodeComparator", () => {
 					{
 						type: brand("Mid"),
 						fields: {
-							leaf: [
-								{ type: brand("Leaf"), value: 67 }
-							]
-						}
-					}
-				]
-			}
+							leaf: [{ type: brand("Leaf"), value: 67 }],
+						},
+					},
+				],
+			},
 		};
 		const cursor = cursorForJsonableTreeNode(tree);
 		const comparator = buildNodeComparator(cursor);
@@ -108,13 +104,11 @@ describe("buildNodeComparator", () => {
 					{
 						type: brand("Mid"),
 						fields: {
-							leaf: [
-								{ type: brand("Leaf"), value: 67 }
-							]
-						}
-					}
-				]
-			}
+							leaf: [{ type: brand("Leaf"), value: 67 }],
+						},
+					},
+				],
+			},
 		};
 		const tree2: JsonableTree = {
 			type: brand("Root"),
@@ -123,13 +117,11 @@ describe("buildNodeComparator", () => {
 					{
 						type: brand("Mid"),
 						fields: {
-							leaf: [
-								{ type: brand("Leaf"), value: 76 }
-							]
-						}
-					}
-				]
-			}
+							leaf: [{ type: brand("Leaf"), value: 76 }],
+						},
+					},
+				],
+			},
 		};
 		const cursor1 = cursorForJsonableTreeNode(tree1);
 		const comparator = buildNodeComparator(cursor1);
