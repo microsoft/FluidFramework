@@ -94,11 +94,11 @@ extends:
         steps:
         - checkout: self
           clean: true
-          path: $(FluidFrameworkDirectory)
+          path: ${{ variables.FluidFrameworkDirectory }}
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(FluidFrameworkDirectory)
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
 
         # Collect build data, fetch timelines, and process into aggregated metrics
         - task: Bash@3
@@ -157,11 +157,11 @@ extends:
         steps:
         - checkout: self
           clean: true
-          path: $(FluidFrameworkDirectory)
+          path: ${{ variables.FluidFrameworkDirectory }}
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(FluidFrameworkDirectory)
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
 
         - task: Bash@3
           name: checkThresholds
