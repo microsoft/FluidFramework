@@ -150,9 +150,10 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 		this.log("Deploying to Azure Static Web Apps...");
 		try {
 			execFileSync(
-				"npx",
+				"pnpm",
 				[
-					"--yes",
+					"--config.frozen-lockfile=false",
+					"dlx",
 					// Pinned for stability
 					"@azure/static-web-apps-cli@2.0.8",
 					"deploy",
