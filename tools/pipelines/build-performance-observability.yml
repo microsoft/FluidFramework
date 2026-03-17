@@ -143,56 +143,6 @@ extends:
             script: |
               flub build-perf generate
 
-        templateContext:
-          outputParentDirectory: $(Build.ArtifactStagingDirectory)
-          outputs:
-          - output: pipelineArtifact
-            displayName: Publish data artifact
-            targetPath: $(Build.ArtifactStagingDirectory)/data
-            artifactName: data
-            publishLocation: pipeline
-          - output: pipelineArtifact
-            displayName: Publish HTML dashboard artifact
-            targetPath: $(Build.ArtifactStagingDirectory)/dashboard
-            artifactName: dashboard
-            publishLocation: pipeline
-
-    - stage: alert_on_thresholds
-      displayName: Check Thresholds
-      dependsOn: collect_metrics
-      condition: succeeded('collect_metrics')
-      jobs:
-      - job: check_thresholds
-        displayName: Check Performance Thresholds
-        templateContext:
-          inputs:
-          - input: pipelineArtifact
-            artifactName: data
-            targetPath: $(Build.ArtifactStagingDirectory)/data
-        steps:
-        - checkout: self
-          clean: true
-          path: ${{ variables.FluidFrameworkDirectory }}
-
-        - template: /tools/pipelines/templates/include-use-node-version.yml@self
-
-        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-          parameters:
-            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
-
-        - task: Bash@3
-          displayName: Install root dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
-            script: |
-              set -eu -o pipefail
-              pnpm install --workspace-root --frozen-lockfile
-
-        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-          parameters:
-            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
-
         - task: Bash@3
           name: checkThresholds
           displayName: Check performance thresholds
@@ -206,3 +156,17 @@ extends:
             targetType: 'inline'
             script: |
               flub build-perf check
+
+        templateContext:
+          outputParentDirectory: $(Build.ArtifactStagingDirectory)
+          outputs:
+          - output: pipelineArtifact
+            displayName: Publish data artifact
+            targetPath: $(Build.ArtifactStagingDirectory)/data
+            artifactName: data
+            publishLocation: pipeline
+          - output: pipelineArtifact
+            displayName: Publish HTML dashboard artifact
+            targetPath: $(Build.ArtifactStagingDirectory)/dashboard
+            artifactName: dashboard
+            publishLocation: pipeline
