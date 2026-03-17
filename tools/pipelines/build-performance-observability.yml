@@ -29,6 +29,8 @@ pr: none
 variables:
   # Provides ado-feeds-primary-registry for pnpm install
   - group: ado-feeds
+  - name: FluidFrameworkDirectory
+    value: s/FluidFramework
   # Number of recent builds to fetch
   - name: buildCount
     value: 500
@@ -92,10 +94,11 @@ extends:
         steps:
         - checkout: self
           clean: true
+          path: $(FluidFrameworkDirectory)
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            buildDirectory: $(FluidFrameworkDirectory)
 
         # Collect build data, fetch timelines, and process into aggregated metrics
         - task: Bash@3
@@ -154,10 +157,11 @@ extends:
         steps:
         - checkout: self
           clean: true
+          path: $(FluidFrameworkDirectory)
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            buildDirectory: $(FluidFrameworkDirectory)
 
         - task: Bash@3
           name: checkThresholds
