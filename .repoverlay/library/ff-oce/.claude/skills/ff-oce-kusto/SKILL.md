@@ -27,7 +27,7 @@ The primary tables are:
 - `union Office_Fluid_FluidRuntime_*` — all three at once
 - `OwhLoads` (stored function) — denominator for ICE/ACE error rate queries
 
-Key correlation ID hierarchy: `Session_Id` → `Data_hostCorrelationId` → `Data_docId` → `Data_containerId`
+Key correlation ID hierarchy: `Session_Id`/`Data_hostCorrelationId` → `Data_docId` → `Data_containerId`
 
 Key deployment ring field: `Loop_Audience` (FluidRuntime tables), `Release_AudienceGroup` (OWH/QoS tables)
 
