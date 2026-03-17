@@ -36,7 +36,7 @@
 		}
 	},
 	"scripts": {
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
