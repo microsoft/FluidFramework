@@ -6,7 +6,7 @@
 		"args": {
 			"NODE_VERSION": "24",
 			// TODO: Figure out the playwright strategy
-			"INSTALL_PLAYWRIGHT_CLI": "false"
+			// "INSTALL_PLAYWRIGHT_CLI": "true"
 		}
 	},
 	"runArgs": ["--init"],
