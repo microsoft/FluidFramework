@@ -91,6 +91,15 @@ export async function npmCheckUpdates(
 	const searchGlobs: string[] = [];
 	const repoPath = context.repo.resolvedRoot;
 
+	const recordUpgradedDependencies = (upgradedDeps: Record<string, string>): boolean => {
+		for (const [dep, newRange] of Object.entries(upgradedDeps)) {
+			upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
+			updatedDependencies[dep] = newRange;
+		}
+
+		return Object.keys(upgradedDeps).length > 0;
+	};
+
 	const releaseGroupsToCheck =
 		releaseGroup === undefined // run on the whole repo
 			? [...context.repo.releaseGroups.keys()]
@@ -178,12 +187,7 @@ export async function npmCheckUpdates(
 					continue;
 				}
 
-				for (const [dep, newRange] of Object.entries(upgradedDeps)) {
-					upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
-					updatedDependencies[dep] = newRange;
-				}
-
-				if (Object.keys(upgradedDeps).length > 0) {
+				if (recordUpgradedDependencies(upgradedDeps)) {
 					updatedPackages.push(pkg);
 				}
 			}
@@ -199,12 +203,7 @@ export async function npmCheckUpdates(
 				continue;
 			}
 
-			for (const [dep, newRange] of Object.entries(resultRecord)) {
-				upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
-				updatedDependencies[dep] = newRange;
-			}
-
-			if (Object.keys(resultRecord).length > 0) {
+			if (recordUpgradedDependencies(resultRecord)) {
 				updatedPackages.push(pkg);
 			}
 		}
