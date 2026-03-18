@@ -1018,7 +1018,12 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	): TreeNodeFromImplicitAllowedTypes<T>[] {
 		const length = this.length;
 		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
-		validateIndexRange(actualStart, actualStart + (deleteCount ?? (length - actualStart)), getSequenceField(this), "TreeArrayNode.splice");
+		validateIndexRange(
+			actualStart,
+			actualStart + (deleteCount ?? length - actualStart),
+			getSequenceField(this),
+			"TreeArrayNode.splice",
+		);
 		const actualDeleteCount =
 			deleteCount === undefined
 				? length - actualStart
