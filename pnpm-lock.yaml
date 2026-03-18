@@ -15484,8 +15484,8 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
-        version: 0.52.0
+        specifier: file:../../../tools/benchmark
+        version: file:tools/benchmark
       '@fluid-tools/version-tools':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@20.19.30)

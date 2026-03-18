@@ -14,9 +14,9 @@
 	"sideEffects": false,
 	"type": "module",
 	"scripts": {
-		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha",
 		"bench:profile": "cross-env FLUID_TEST_PERF_MODE=1 mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
-		"bench:size": "mocha --timeout 999999 --perfMode --fgrep @Size",
+		"bench:size": "cross-env FLUID_TEST_PERF_MODE=1 mocha --fgrep @Size",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
