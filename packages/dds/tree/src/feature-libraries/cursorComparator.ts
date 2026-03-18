@@ -5,6 +5,7 @@
 
 import {
 	mapCursorField,
+	mapCursorFields,
 	inCursorField,
 	type ITreeCursorSynchronous,
 	type Value,
@@ -57,20 +58,10 @@ export function buildNodeComparator(cursor: ITreeCursorSynchronous): NodeCompara
 	if (expectedValue !== undefined) {
 		return (other: ITreeCursorSynchronous): boolean => Object.is(other.value, expectedValue);
 	}
-	const fieldComparators: { key: FieldKey; compare: FieldComparator }[] = [];
-
-	for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
-		const key = cursor.getFieldKey();
-		const nodeComparators: NodeComparator[] = mapCursorField(cursor, buildNodeComparator);
-
-		fieldComparators.push({
-			key,
-			compare: buildFieldComparator(nodeComparators),
-		});
-	}
-	// Note: if firstField() returned false, we're already back in Nodes mode.
-	// If it returned true and we iterated to exhaustion, nextField returned
-	// false, which also put us back in Nodes mode.
+	const fieldComparators = mapCursorFields(cursor, (fieldCursor) => ({
+		key: fieldCursor.getFieldKey(),
+		compare: buildFieldComparator(mapCursorField(fieldCursor, buildNodeComparator)),
+	}));
 
 	return (other: ITreeCursorSynchronous): boolean => {
 		if (!Object.is(other.value, expectedValue)) {
