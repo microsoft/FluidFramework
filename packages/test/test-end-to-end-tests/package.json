@@ -152,7 +152,7 @@
 			"build:test:esm": [
 				"^build:esnext",
 				"build:genver",
-				"^tsc"
+				"@fluid-internal/test-driver-definitions#tsc"
 			]
 		}
 	},

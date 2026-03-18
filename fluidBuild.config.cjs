@@ -64,6 +64,10 @@ module.exports = {
 			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
+		"compile:esm": {
+			dependsOn: ["compile:esm:packages", "build:test:esm"],
+			script: false,
+		},
 		"compile:esm:packages": {
 			// Note that "api-extractor:esnext" is included as "compile" intends
 			// to build complete packages and "api-extractor:esnext" currently

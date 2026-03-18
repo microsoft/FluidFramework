@@ -16,7 +16,8 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "npm run build:test:cjs",
+		"build:test:cjs": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -97,14 +98,6 @@
 		"sinon": "^18.0.1",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:test": [
-				"^tsc",
-				"^api-extractor:commonjs"
-			]
-		}
 	},
 	"typeValidation": {
 		"disabled": true

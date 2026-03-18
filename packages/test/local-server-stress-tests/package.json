@@ -16,7 +16,8 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/tsconfig.json",
+		"build:test": "npm run build:test:cjs",
+		"build:test:cjs": "tsc --project ./src/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -107,19 +108,19 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:cjs": [
 				"^tsc",
 				"^api-extractor:commonjs",
-				"@fluidframework/id-compressor#build:test",
-				"@fluidframework/sequence#build:test",
-				"@fluidframework/map#build:test",
-				"@fluidframework/matrix#build:test",
-				"@fluidframework/tree#build:test",
-				"@fluidframework/task-manager#build:test",
-				"@fluidframework/legacy-dds#build:test",
-				"@fluidframework/ordered-collection#build:test",
-				"@fluidframework/counter#build:test",
-				"@fluidframework/register-collection#build:test"
+				"@fluidframework/id-compressor#build:test:cjs",
+				"@fluidframework/sequence#build:test:cjs",
+				"@fluidframework/map#build:test:cjs",
+				"@fluidframework/matrix#build:test:cjs",
+				"@fluidframework/tree#build:test:cjs",
+				"@fluidframework/task-manager#build:test:cjs",
+				"@fluidframework/legacy-dds#build:test:cjs",
+				"@fluidframework/ordered-collection#build:test:cjs",
+				"@fluidframework/counter#build:test:cjs",
+				"@fluidframework/register-collection#build:test:cjs"
 			]
 		}
 	},
