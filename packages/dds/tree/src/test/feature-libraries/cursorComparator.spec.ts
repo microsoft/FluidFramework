@@ -5,8 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { buildNodeComparator, type JsonableTree } from "../../core/index.js";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import type { JsonableTree } from "../../core/index.js";
+import {
+	buildNodeComparator,
+	cursorForJsonableTreeNode,
+} from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 
 describe("buildNodeComparator", () => {

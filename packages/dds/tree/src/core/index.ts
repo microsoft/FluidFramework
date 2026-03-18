@@ -106,8 +106,6 @@ export {
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
 	detachedFieldIndexCodecBuilder,
-	type NodeComparator,
-	buildNodeComparator,
 } from "./tree/index.js";
 
 export {

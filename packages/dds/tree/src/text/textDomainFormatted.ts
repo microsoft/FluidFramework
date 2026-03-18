@@ -9,11 +9,10 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	EmptyKey,
 	mapCursorField,
-	buildNodeComparator,
 	type FieldKey,
 	type ITreeCursorSynchronous,
 } from "../core/index.js";
-import { currentObserver } from "../feature-libraries/index.js";
+import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
@@ -307,13 +306,11 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 		});
 	}
 	public getUniformRun(startIndex: number, endIndex: number = this.length): number {
-		if (startIndex < 0 || startIndex >= this.length) {
-			throw new UsageError("startIndex out of bounds");
+		validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getUniformRun");
+		if (endIndex === startIndex) {
+			throw new UsageError("endIndex must be greater than startIndex for getUniformRun.");
 		}
 		const arrayLength = this.length;
-		if (endIndex <= startIndex) {
-			throw new UsageError("endIndex must be greater than startIndex");
-		}
 		return this.withBorrowedSequenceCursor((cursor) => {
 			cursor.enterNode(startIndex);
 
@@ -336,6 +333,7 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 			const limit = Math.min(endIndex, arrayLength) - startIndex;
 
 			while (runLength < limit && cursor.nextNode()) {
+				// Compare atom type
 				cursor.enterField(EmptyKey);
 				cursor.enterNode(0);
 				const typeMatches = cursor.type === contentType;
