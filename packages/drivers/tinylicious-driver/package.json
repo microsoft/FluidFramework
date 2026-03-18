@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-driver",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "Driver for tinylicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -47,7 +47,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
@@ -95,9 +95,9 @@
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.83.0",
 		"@microsoft/api-extractor": "7.52.11",

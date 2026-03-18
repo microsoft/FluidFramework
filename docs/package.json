@@ -105,7 +105,7 @@
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"rimraf": "^6.1.3",
-		"simple-git": "^3.27.0",
+		"simple-git": "^3.32.3",
 		"start-server-and-test": "^2.0.8",
 		"typescript": "~5.5.4",
 		"uuid": "^11.0.3"
@@ -115,6 +115,27 @@
 		"node": ">=18.0"
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"@types/react: pinned to v18 to prevent pnpm re-resolution from pulling in v19, which is incompatible with the React 18 docs site.",
+			"jws: overridden to ^3.2.3 to resolve a known vulnerability in jws 3.2.2 (transitive via jsonwebtoken). Stays within jsonwebtoken's declared ^3.2.2 range.",
+			"validator: overridden to ^13.15.0 to resolve a known vulnerability in older versions (transitive via swagger-tools).",
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
+			"mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability (unsanitized class attribute injection).",
+			"node-forge: overridden to ^1.3.2 to fix known ASN.1 vulnerabilities.",
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+		],
+		"overrides": {
+			"@types/react": "^18.3.12",
+			"js-yaml@<4": "^3.14.2",
+			"js-yaml@>=4": "^4.1.1",
+			"jws": "^3.2.3",
+			"mdast-util-to-hast": "^13.2.1",
+			"node-forge": "^1.3.2",
+			"qs": "^6.15.0",
+			"simple-git": "^3.32.3",
+			"validator": "^13.15.0"
+		},
 		"onlyBuiltDependencies": [
 			"@parcel/watcher",
 			"core-js",
