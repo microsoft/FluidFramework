@@ -140,6 +140,11 @@ export namespace InternalTypes {
 	/**
 	 * Package internal function declaration for state and notification instantiation.
 	 *
+	 * @remarks
+	 * Direct use of this type is discouraged. If in need, try to use the type
+	 * returned by the factory functions instead, as those are more specific and
+	 * stable.
+	 *
 	 * @system
 	 */
 	export type ManagerFactory<

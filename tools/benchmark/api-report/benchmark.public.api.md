@@ -210,11 +210,9 @@ export enum TestType {
     MemoryUsage = 1
 }
 
-// @public (undocumented)
+// @public
 export interface Timer<T = unknown> {
-    // (undocumented)
     now(): T;
-    // (undocumented)
     toSeconds(before: T, after: T): number;
 }
 

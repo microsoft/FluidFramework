@@ -14,7 +14,7 @@ import {
 	createInsecureTinyliciousTestUrlResolver,
 	createTinyliciousTestCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/test-utils";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
@@ -43,13 +43,13 @@ const render = (model: IVersionedModel): void => {
 	// versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
 	// view code loader to pull in the view dynamically based on the version we discover.
 	if (isIInventoryListAppModel(model)) {
-		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+		ReactDOM.render(createElement(InventoryListAppView, { model }), appDiv);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugDiv = document.getElementById("debug") as HTMLDivElement;
 		ReactDOM.unmountComponentAtNode(debugDiv);
 		ReactDOM.render(
-			React.createElement(DebugView, {
+			createElement(DebugView, {
 				model,
 				summarizeOnDemand: model.DEBUG_summarizeOnDemand,
 				getUrlForContainerId,

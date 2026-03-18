@@ -112,15 +112,21 @@ export interface PresenceDatastoreManager {
 		alternateProvider: ClientConnectionId | undefined,
 	): void;
 	onDisconnected(): void;
-	getWorkspace<TSchema extends StatesWorkspaceSchema>(
+	getWorkspace<
+		TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
+		TSchemaKeys extends string & keyof TSchema,
+	>(
 		internalWorkspaceAddress: `s:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): StatesWorkspace<TSchema>;
-	getWorkspace<TSchema extends NotificationsWorkspaceSchema>(
+	): StatesWorkspace<TSchema, unknown, TSchemaKeys>;
+	getWorkspace<
+		TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>,
+		TSchemaKeys extends string & keyof TSchema,
+	>(
 		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
 		requestedContent: TSchema,
-	): NotificationsWorkspace<TSchema>;
+	): NotificationsWorkspace<TSchema, TSchemaKeys>;
 	processSignal(
 		message: InboundExtensionMessage<SignalMessages> & { clientId: ClientConnectionId },
 		local: boolean,
