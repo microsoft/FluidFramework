@@ -27,8 +27,8 @@ export class CellFactory implements IChannelFactory<ISharedCell> {
 	 * {@inheritDoc CellFactory."type"}
 	 */
 	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
-	// See legacyTypeRedirects in packages/runtime/datastore/src/channelContext.ts.
-	// public static readonly Type = "SharedCell";
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "cell";
 	public static readonly Type = "https://graph.microsoft.com/types/cell";
 
 	/**

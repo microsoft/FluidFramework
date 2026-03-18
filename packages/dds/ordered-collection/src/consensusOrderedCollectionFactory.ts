@@ -25,8 +25,8 @@ import { pkgVersion } from "./packageVersion.js";
  */
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
 	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
-	// See legacyTypeRedirects in packages/runtime/datastore/src/channelContext.ts.
-	// public static Type = "ConsensusQueue";
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static Type = "consensus-queue";
 	public static Type = "https://graph.microsoft.com/types/consensus-queue";
 
 	public static readonly Attributes: IChannelAttributes = {

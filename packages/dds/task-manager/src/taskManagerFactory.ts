@@ -20,8 +20,8 @@ import { TaskManagerClass } from "./taskManager.js";
  */
 export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
 	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
-	// See legacyTypeRedirects in packages/runtime/datastore/src/channelContext.ts.
-	// public static readonly Type = "TaskManager";
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "task-manager";
 	public static readonly Type = "https://graph.microsoft.com/types/task-manager";
 
 	public static readonly Attributes: IChannelAttributes = {

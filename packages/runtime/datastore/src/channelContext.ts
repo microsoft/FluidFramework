@@ -34,35 +34,6 @@ import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
-/**
- * Maps legacy URL-based DDS type strings to their replacement short-name types.
- *
- * Documents created before the type migration store URL-based type strings in their summaries.
- * When loading such a document, the stored type is looked up against the registry. If not found,
- * this table is consulted to translate the legacy type to the new short name for a second lookup.
- *
- * This allows registries built with the new short-name factory types to transparently load
- * documents that were summarized with the old URL-based types.
- */
-const legacyTypeRedirects: Readonly<Record<string, string>> = {
-	"https://graph.microsoft.com/types/directory": "SharedDirectory",
-	"https://graph.microsoft.com/types/map": "SharedMap",
-	"https://graph.microsoft.com/types/counter": "SharedCounter",
-	"https://graph.microsoft.com/types/cell": "SharedCell",
-	"https://graph.microsoft.com/types/mergeTree": "SharedString",
-	"https://graph.microsoft.com/types/sharedmatrix": "SharedMatrix",
-	"https://graph.microsoft.com/types/tree": "SharedTree2",
-	"https://graph.microsoft.com/types/ink": "Ink",
-	"https://graph.microsoft.com/types/pact-map": "PactMap",
-	"https://graph.microsoft.com/types/task-manager": "TaskManager",
-	"https://graph.microsoft.com/types/consensus-queue": "ConsensusQueue",
-	"https://graph.microsoft.com/types/consensus-register-collection":
-		"ConsensusRegisterCollection",
-	"https://graph.microsoft.com/types/shared-summary-block": "SharedSummaryBlock",
-	"https://graph.microsoft.com/types/SharedArray": "SharedArray",
-	"https://graph.microsoft.com/types/signal": "SharedSignal",
-};
-
 export interface IChannelContext {
 	getChannel(): Promise<IChannel>;
 
@@ -197,14 +168,7 @@ export async function loadChannelFactoryAndAttributes(
 			}),
 		);
 	}
-	let factory = registry.get(channelFactoryType);
-	if (factory === undefined) {
-		// Fall back to the redirect table for legacy URL-based type strings from old documents.
-		const redirectedType = legacyTypeRedirects[channelFactoryType];
-		if (redirectedType !== undefined) {
-			factory = registry.get(redirectedType);
-		}
-	}
+	const factory = registry.get(channelFactoryType);
 	if (factory === undefined) {
 		throw new DataCorruptionError(
 			"channelFactoryNotRegisteredForGivenType",

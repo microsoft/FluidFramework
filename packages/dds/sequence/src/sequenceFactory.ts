@@ -19,8 +19,8 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
 	// load code (UPDATE: paparazzi is gone... anything to do here?)
 	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
-	// See legacyTypeRedirects in packages/runtime/datastore/src/channelContext.ts.
-	// public static Type = "SharedString";
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static Type = "mergeTree";
 	public static Type = "https://graph.microsoft.com/types/mergeTree";
 
 	public static readonly Attributes: IChannelAttributes = {
