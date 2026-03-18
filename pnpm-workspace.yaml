@@ -23,17 +23,8 @@ packages:
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
-# syncpack entries can be removed from this list once 24h have passed since v14.0.2 was published (2026-03-07)
 minimumReleaseAgeExclude:
-  - syncpack
-  - syncpack-linux-x64
-  - syncpack-linux-x64-musl
-  - syncpack-linux-arm64
-  - syncpack-linux-arm64-musl
-  - syncpack-darwin-x64
-  - syncpack-darwin-arm64
-  - syncpack-windows-x64
-  - syncpack-windows-arm64
+ // Temporary exceptions go here as needed.
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
@@ -42,7 +33,7 @@ strictDepBuilds: true
 catalogs:
   # Build-tools packages
   buildTools:
-    "@fluid-tools/build-cli": ^0.63.0
-    "@fluid-tools/version-tools": ^0.63.0
-    "@fluidframework/build-tools": ^0.63.0
-    "@fluidframework/bundle-size-tools": ^0.63.0
+    "@fluid-tools/build-cli": ^0.64.0
+    "@fluid-tools/version-tools": ^0.64.0
+    "@fluidframework/build-tools": ^0.64.0
+    "@fluidframework/bundle-size-tools": ^0.64.0

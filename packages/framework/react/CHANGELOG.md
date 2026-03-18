@@ -1,5 +1,9 @@
 # @fluidframework/react
 
+## 2.91.0
+
+Dependency updates only.
+
 ## 2.90.0
 
 ### Minor Changes
