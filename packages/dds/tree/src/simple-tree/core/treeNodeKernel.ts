@@ -130,13 +130,25 @@ export class TreeNodeKernel {
 
 	/**
 	 * Emitter for status change events.
-	 * Unlike content events, status events are not buffered.
+	 * Unlike content events, status events are not buffered — they fire synchronously
+	 * when the kernel detects a status transition in {@link TreeNodeKernel.hydrate}
+	 * or {@link TreeNodeKernel.dispose}.
+	 *
+	 * @remarks
+	 * Currently these events are only consumed by ParentObject's `on()` implementation
+	 * (for RemovedRootParent and UnhydratedParent), which buffers them into the view's
+	 * afterBatch cycle before exposing to users. This means users never observe tree
+	 * state during an in-progress batch.
+	 *
+	 * If new consumers are added, care must be taken to ensure they do not expose
+	 * unbuffered status to users, as that could cause invalidation ordering issues
+	 * with the buffered content events and allow observation of intermediate states.
 	 */
 	readonly #statusEvents = createEmitter<KernelStatusEvents>();
 
 	/**
-	 * The last known status of this node.
-	 * Used to detect and emit status changes.
+	 * The last status for which a `statusChanged` event was fired on {@link TreeNodeKernel.statusEvents}.
+	 * Compared against the current status to detect transitions.
 	 */
 	#lastKnownStatus: TreeStatus;
 

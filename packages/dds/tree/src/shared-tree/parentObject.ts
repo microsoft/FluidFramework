@@ -10,15 +10,16 @@ import type { DetachedField } from "../core/index.js";
 import type { FlexTreeHydratedContext } from "../feature-libraries/index.js";
 import type { TreeNode, TreeBranch, UnhydratedFlexTreeNode } from "../simple-tree/index.js";
 
-// #region ParentObject Types
-
 /**
- * Opaque object representing the parent of a node that is not a TreeNode.
- * Returned by {@link (TreeAlpha:interface).parent2} for nodes that have no TreeNode parent
- * (e.g., root nodes, removed nodes, or newly created nodes not yet inserted into a document).
+ * Parent of a root {@link TreeNode}.
  *
  * @remarks
- * This is a sealed type - external implementations are not allowed.
+ * Returned by {@link (TreeAlpha:interface).parent2} for nodes that have no TreeNode parent
+ * (e.g., root nodes, including the roots of {@link TreeStatus.Removed | Removed} and {@link Unhydrated} trees).
+ *
+ * Each instance corresponds to a location (not a node). If a root node is moved
+ * (e.g., from the document root to a removed tree, or from unhydrated into the document),
+ * it will have a different parent, and subscriptions on the old parent will be invalidated.
  *
  * This object can be passed to {@link (TreeAlpha:interface).child},
  * {@link (TreeAlpha:interface).children}, and {@link (TreeAlpha:interface).on}.
@@ -46,10 +47,9 @@ export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.Paren
 export type TreeNodeParent = TreeNode | ParentObject;
 
 /**
- * Represents a node that is at the root of a hydrated tree branch.
- * @internal
+ * Parent above the {@link TreeStatus.InDocument | InDocument} tree of the provided branch.
  */
-export class RootParent
+export class DocumentRootParent
 	extends ErasedTypeImplementation<ParentObject>
 	implements ParentObject
 {
@@ -66,17 +66,20 @@ export class RootParent
 }
 
 /**
- * Represents a node that was removed from a hydrated tree but still exists in memory.
- * The node could potentially be re-inserted into the tree.
- * @internal
+ * A location which contained (and might still contain) a {@link TreeStatus.Removed | Removed} root.
  */
-export class DetachedParent
+export class RemovedRootParent
 	extends ErasedTypeImplementation<ParentObject>
 	implements ParentObject
 {
 	public constructor(
 		private readonly context: FlexTreeHydratedContext,
 		private readonly detachedField: DetachedField,
+		/**
+		 * The node which was in this detached field when this parent object was created.
+		 * @remarks
+		 * Invalidated when this field no longer contains this node.
+		 */
 		private readonly detachedNode: TreeNode,
 	) {
 		super();
@@ -105,8 +108,7 @@ export class DetachedParent
 }
 
 /**
- * Represents a node that was created but never inserted into any document.
- * @internal
+ * Parent of an {@link Unhydrated} root node that has not yet been inserted into any document.
  */
 export class UnhydratedParent
 	extends ErasedTypeImplementation<ParentObject>
@@ -134,49 +136,49 @@ export class UnhydratedParent
 	}
 }
 
-// #endregion
-
-// #region ParentObject Caches
-
 /**
- * Cache for RootParent instances (one per branch).
+ * Cache for DocumentRootParent instances (one per branch).
  * @remarks
- * Each TreeBranch has exactly one RootParent, ensuring that `parent2()` returns
- * the same RootParent instance for all root nodes of the same branch.
+ * Each TreeBranch has exactly one DocumentRootParent, ensuring that `parent2()` returns
+ * the same DocumentRootParent instance for all root nodes of the same branch.
  */
-const rootParentCache = new WeakMap<TreeBranch, RootParent>();
+const documentRootParentCache = new WeakMap<TreeBranch, DocumentRootParent>();
 
-export function getOrCreateRootParent(branch: TreeBranch): RootParent {
-	let rootParent = rootParentCache.get(branch);
+export function getOrCreateDocumentRootParent(branch: TreeBranch): DocumentRootParent {
+	let rootParent = documentRootParentCache.get(branch);
 	if (rootParent === undefined) {
-		rootParent = new RootParent(branch);
-		rootParentCache.set(branch, rootParent);
+		rootParent = new DocumentRootParent(branch);
+		documentRootParentCache.set(branch, rootParent);
 	}
 	return rootParent;
 }
 
 /**
- * Cache for DetachedParent instances.
+ * Cache for RemovedRootParent instances.
  * @remarks
  * Keyed by the detached TreeNode itself. A node can only be in one detached field
  * at a time, so keying by node is sufficient. Using WeakMap ensures entries are
  * cleaned up when the node is garbage collected.
+ *
+ * Entries are created/updated lazily by {@link getOrCreateRemovedRootParent} (called from
+ * `parent2()` in treeAlpha.ts). Stale entries (where the node was re-inserted then
+ * removed again, getting a new DetachedField) are detected and replaced on access.
  */
-const detachedParentCache = new WeakMap<TreeNode, DetachedParent>();
+const removedRootParentCache = new WeakMap<TreeNode, RemovedRootParent>();
 
-export function getOrCreateDetachedParent(
+export function getOrCreateRemovedRootParent(
 	context: FlexTreeHydratedContext,
 	detachedField: DetachedField,
 	detachedNode: TreeNode,
-): DetachedParent {
-	const cached = detachedParentCache.get(detachedNode);
+): RemovedRootParent {
+	const cached = removedRootParentCache.get(detachedNode);
 	// If the node was re-inserted and removed again, it gets a new DetachedField,
 	// so we need to replace the stale cached entry.
 	if (cached?.getDetachedField() === detachedField) {
 		return cached;
 	}
-	const detachedParent = new DetachedParent(context, detachedField, detachedNode);
-	detachedParentCache.set(detachedNode, detachedParent);
+	const detachedParent = new RemovedRootParent(context, detachedField, detachedNode);
+	removedRootParentCache.set(detachedNode, detachedParent);
 	return detachedParent;
 }
 
@@ -200,5 +202,3 @@ export function getOrCreateUnhydratedParent(
 	}
 	return unhydratedParent;
 }
-
-// #endregion

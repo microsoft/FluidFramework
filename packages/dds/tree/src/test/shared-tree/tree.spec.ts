@@ -11,8 +11,8 @@ import { asAlpha } from "../../api.js";
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
 /* eslint-disable import-x/no-internal-modules */
 import {
-	RootParent,
-	DetachedParent,
+	DocumentRootParent,
+	RemovedRootParent,
 	UnhydratedParent,
 } from "../../shared-tree/parentObject.js";
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
@@ -426,13 +426,13 @@ describe("treeApi", () => {
 	class Container extends sf.object("Container", { items: sf.array(ChildNode) }) {}
 
 	describe("parent2", () => {
-		it("returns parent TreeNode for nested nodes and RootParent for root nodes", () => {
+		it("returns parent TreeNode for nested nodes and DocumentRootParent for root nodes", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 1 } });
 
 			const root = view.root;
 			assert.equal(TreeAlpha.parent2(root.child), root);
-			assert(TreeAlpha.parent2(root) instanceof RootParent);
+			assert(TreeAlpha.parent2(root) instanceof DocumentRootParent);
 		});
 
 		it("throws when accessing parent of a disposed node", () => {
@@ -457,7 +457,7 @@ describe("treeApi", () => {
 	});
 
 	describe("on", () => {
-		it("fires content events on TreeNode and through RootParent", () => {
+		it("fires content events on TreeNode and through DocumentRootParent", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 1 } });
 
@@ -465,7 +465,7 @@ describe("treeApi", () => {
 			const child = root.child;
 
 			const rootParent = TreeAlpha.parent2(root);
-			assert(rootParent instanceof RootParent);
+			assert(rootParent instanceof DocumentRootParent);
 
 			const log: string[] = [];
 			TreeAlpha.on(child, "nodeChanged", () => log.push("child:nodeChanged"));
@@ -488,10 +488,10 @@ describe("treeApi", () => {
 			view.initialize({ child: { value: 1 } });
 
 			const forkedView = view.fork();
-			const forkRootParent = TreeAlpha.parent2(forkedView.root);
+			const forkDocumentRootParent = TreeAlpha.parent2(forkedView.root);
 
 			const log: string[] = [];
-			TreeAlpha.on(forkRootParent, "treeChanged", () => log.push("fork:treeChanged"));
+			TreeAlpha.on(forkDocumentRootParent, "treeChanged", () => log.push("fork:treeChanged"));
 
 			forkedView.root.child.value = 2;
 			assert.deepEqual(log, ["fork:treeChanged"]);
@@ -513,10 +513,10 @@ describe("treeApi", () => {
 			view.initialize({ child: { value: 42 } });
 
 			const forkedView = view.fork();
-			const forkRootParent = TreeAlpha.parent2(forkedView.root);
+			const forkDocumentRootParent = TreeAlpha.parent2(forkedView.root);
 
 			const log: string[] = [];
-			TreeAlpha.on(forkRootParent, "treeChanged", () => log.push("fork:treeChanged"));
+			TreeAlpha.on(forkDocumentRootParent, "treeChanged", () => log.push("fork:treeChanged"));
 
 			forkedView.root.child.value = 50;
 			assert.deepEqual(log, ["fork:treeChanged"]);
@@ -535,7 +535,7 @@ describe("treeApi", () => {
 			assert.deepEqual(log, ["fork:treeChanged", "fork:treeChanged", "fork:treeChanged"]);
 		});
 
-		describe("DetachedParent", () => {
+		describe("RemovedRootParent", () => {
 			it("fires status change on reattach and respects unsubscribe", () => {
 				const view = getView(new TreeViewConfiguration({ schema: Container }));
 				view.initialize({ items: [{ value: 42 }] });
@@ -546,7 +546,7 @@ describe("treeApi", () => {
 				view.root.items.removeAt(0);
 
 				const parent = TreeAlpha.parent2(item);
-				assert(parent instanceof DetachedParent);
+				assert(parent instanceof RemovedRootParent);
 
 				const log: string[] = [];
 				// Subscribe twice — unsubscribe one to verify unsubscribe works
@@ -602,7 +602,7 @@ describe("treeApi", () => {
 			});
 		});
 
-		it("nodeChanged on RootParent does not fire on root replacement but re-subscribes to new root", () => {
+		it("nodeChanged on DocumentRootParent does not fire on root replacement but re-subscribes to new root", () => {
 			const view = getView(
 				new TreeViewConfigurationAlpha({ schema: sf.optional(ParentNode) }),
 			);
@@ -611,7 +611,7 @@ describe("treeApi", () => {
 			const root = view.root;
 			assert(root !== undefined);
 			const rootParent = TreeAlpha.parent2(root);
-			assert(rootParent instanceof RootParent);
+			assert(rootParent instanceof DocumentRootParent);
 
 			const log: string[] = [];
 			TreeAlpha.on(rootParent, "nodeChanged", () => log.push("nodeChanged"));
@@ -627,14 +627,14 @@ describe("treeApi", () => {
 			assert.deepEqual(log, ["nodeChanged"]);
 		});
 
-		it("handles on() with RootParent when optional root is set to undefined", () => {
+		it("handles on() with DocumentRootParent when optional root is set to undefined", () => {
 			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
 			view.initialize({ value: 1 });
 
 			const root = view.root;
 			assert(root !== undefined);
 			const rootParent = TreeAlpha.parent2(root);
-			assert(rootParent instanceof RootParent);
+			assert(rootParent instanceof DocumentRootParent);
 
 			const log: string[] = [];
 			TreeAlpha.on(rootParent, "treeChanged", () => log.push("treeChanged"));
@@ -660,13 +660,13 @@ describe("treeApi", () => {
 			assert.deepEqual(log, ["treeChanged"]);
 		});
 
-		it("cleans up RootParent listener when view is disposed", () => {
+		it("cleans up DocumentRootParent listener when view is disposed", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 			view.initialize({ value: 1 });
 
 			const root = view.root;
 			const rootParent = TreeAlpha.parent2(root);
-			assert(rootParent instanceof RootParent);
+			assert(rootParent instanceof DocumentRootParent);
 
 			const log: string[] = [];
 			const unsubscribe = TreeAlpha.on(rootParent, "treeChanged", () =>
@@ -721,13 +721,13 @@ describe("treeApi", () => {
 	});
 
 	describe("child and children", () => {
-		it("returns root node via RootParent", () => {
+		it("returns root node via DocumentRootParent", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 			view.initialize({ value: 42 });
 
 			const root = view.root;
 			const rootParent = TreeAlpha.parent2(root);
-			assert(rootParent instanceof RootParent);
+			assert(rootParent instanceof DocumentRootParent);
 
 			assert.equal(TreeAlpha.child(rootParent, undefined), root);
 			assert.equal(TreeAlpha.child(rootParent, "foo"), undefined);
@@ -737,7 +737,7 @@ describe("treeApi", () => {
 			assert.deepEqual(childrenResult[0], [undefined, root]);
 		});
 
-		it("returns removed node via DetachedParent", () => {
+		it("returns removed node via RemovedRootParent", () => {
 			const view = getView(new TreeViewConfiguration({ schema: Container }));
 			view.initialize({ items: [{ value: 1 }] });
 
@@ -745,7 +745,7 @@ describe("treeApi", () => {
 			view.root.items.removeAt(0);
 
 			const detachedParent = TreeAlpha.parent2(item);
-			assert(detachedParent instanceof DetachedParent);
+			assert(detachedParent instanceof RemovedRootParent);
 
 			assert.equal(TreeAlpha.child(detachedParent, undefined), item);
 
@@ -766,13 +766,13 @@ describe("treeApi", () => {
 			assert.deepEqual(childrenResult[0], [undefined, item]);
 		});
 
-		it("returns empty results for RootParent with optional empty root", () => {
+		it("returns empty results for DocumentRootParent with optional empty root", () => {
 			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
 			view.initialize({ value: 42 });
 			const root = view.root;
 			assert(root !== undefined);
 			const rootParent = TreeAlpha.parent2(root);
-			assert(rootParent instanceof RootParent);
+			assert(rootParent instanceof DocumentRootParent);
 
 			view.root = undefined;
 

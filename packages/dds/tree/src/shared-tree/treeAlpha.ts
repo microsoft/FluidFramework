@@ -98,11 +98,11 @@ import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js"
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import {
-	RootParent,
-	DetachedParent,
+	DocumentRootParent,
+	RemovedRootParent,
 	UnhydratedParent,
-	getOrCreateRootParent,
-	getOrCreateDetachedParent,
+	getOrCreateDocumentRootParent,
+	getOrCreateRemovedRootParent,
 	getOrCreateUnhydratedParent,
 } from "./parentObject.js";
 import type { TreeNodeParent } from "./parentObject.js";
@@ -431,7 +431,7 @@ export interface TreeAlpha {
 	 *
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
-	 * @throws A usage error if the parent is a RootParent
+	 * @throws A usage error if the parent is a DocumentRootParent
 	 * with incompatible schema ({@link SchemaCompatibilityStatus.canView} is false).
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
@@ -462,7 +462,7 @@ export interface TreeAlpha {
 	 * For ParentObject parents (root, detached, unhydrated), returns a single child with key `undefined`.
 	 * Returns empty results if no child exists (e.g., optional root with no value).
 	 *
-	 * @throws A usage error if the parent is a RootParent
+	 * @throws A usage error if the parent is a DocumentRootParent
 	 * with incompatible schema ({@link SchemaCompatibilityStatus.canView} is false).
 	 *
 	 * @param parent - The parent (TreeNode or ParentObject) whose children are being requested.
@@ -1069,14 +1069,14 @@ export const TreeAlpha: TreeAlpha = {
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined => {
 		// Handle ParentObject cases
-		if (parent instanceof RootParent) {
+		if (parent instanceof DocumentRootParent) {
 			if (propertyKey !== undefined) {
 				return undefined;
 			}
 			const branch = parent.getBranch();
 			assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 			if (!branch.compatibility.canView) {
-				throw new UsageError("Cannot access child of a RootParent with incompatible schema");
+				throw new UsageError("Cannot access child of a DocumentRootParent with incompatible schema");
 			}
 			const root = branch.root;
 			if (root === undefined || isTreeNode(root)) {
@@ -1085,7 +1085,7 @@ export const TreeAlpha: TreeAlpha = {
 			return root as TreeLeafValue;
 		}
 
-		if (parent instanceof DetachedParent) {
+		if (parent instanceof RemovedRootParent) {
 			if (propertyKey !== undefined) {
 				return undefined;
 			}
@@ -1188,12 +1188,12 @@ export const TreeAlpha: TreeAlpha = {
 		parent: TreeNodeParent,
 	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]> {
 		// Handle ParentObject cases
-		if (parent instanceof RootParent) {
+		if (parent instanceof DocumentRootParent) {
 			const branch = parent.getBranch();
 			assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 			if (!branch.compatibility.canView) {
 				throw new UsageError(
-					"Cannot access children of a RootParent with incompatible schema",
+					"Cannot access children of a DocumentRootParent with incompatible schema",
 				);
 			}
 			const root = branch.root;
@@ -1203,7 +1203,7 @@ export const TreeAlpha: TreeAlpha = {
 			return [[undefined, isTreeNode(root) ? root : (root as TreeLeafValue)]];
 		}
 
-		if (parent instanceof DetachedParent) {
+		if (parent instanceof RemovedRootParent) {
 			return [[undefined, parent.getDetachedNode()]];
 		}
 
@@ -1320,7 +1320,7 @@ export const TreeAlpha: TreeAlpha = {
 			// Node is at the document root
 			const branch = anchorNode.anchorSet.slots.get(ViewSlot);
 			assert(branch !== undefined, "Expected TreeBranch to be present in ViewSlot");
-			return getOrCreateRootParent(branch);
+			return getOrCreateDocumentRootParent(branch);
 		} else {
 			// Node is detached (removed from tree but not deleted)
 			const detachedField = keyAsDetachedField(parentField);
@@ -1329,7 +1329,7 @@ export const TreeAlpha: TreeAlpha = {
 				hydratedContext !== undefined,
 				"Expected context to be present in SimpleContextSlot",
 			);
-			return getOrCreateDetachedParent(hydratedContext.flexContext, detachedField, node);
+			return getOrCreateRemovedRootParent(hydratedContext.flexContext, detachedField, node);
 		}
 	},
 
@@ -1338,15 +1338,15 @@ export const TreeAlpha: TreeAlpha = {
 		eventName: K,
 		listener: TreeChangeEvents[K],
 	): () => void {
-		if (parent instanceof RootParent) {
-			// RootParent - subscribe to the root node of the branch
+		if (parent instanceof DocumentRootParent) {
+			// DocumentRootParent - subscribe to the root node of the branch
 			const branch = parent.getBranch();
 			assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 
 			// Throw at call time if schema is already incompatible — this is a caller error.
 			if (!branch.compatibility.canView) {
 				throw new UsageError(
-					"Cannot subscribe to events on a RootParent with incompatible schema",
+					"Cannot subscribe to events on a DocumentRootParent with incompatible schema",
 				);
 			}
 
@@ -1414,8 +1414,8 @@ export const TreeAlpha: TreeAlpha = {
 			};
 		}
 
-		if (parent instanceof DetachedParent) {
-			// DetachedParent - subscribe to status changes on the detached node
+		if (parent instanceof RemovedRootParent) {
+			// RemovedRootParent - subscribe to status changes on the detached node
 			// This fires when the node is re-attached, deleted, or becomes inaccessible
 			const detachedNode = parent.getDetachedNode();
 			const kernel = getKernel(detachedNode);
@@ -1475,7 +1475,7 @@ export const TreeAlpha: TreeAlpha = {
 			// Subscribe to status changes (hydration). This is a one-shot subscription:
 			// once the node is hydrated, further status changes (e.g., Removed, re-inserted)
 			// are not the concern of the UnhydratedParent — those are handled by
-			// DetachedParent or RootParent.
+			// RemovedRootParent or DocumentRootParent.
 			let unsubscribe: (() => void) | undefined;
 			unsubscribe = kernel.statusEvents.on("statusChanged", () => {
 				unsubscribe?.();
