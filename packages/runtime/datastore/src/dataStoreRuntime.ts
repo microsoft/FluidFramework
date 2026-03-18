@@ -180,7 +180,7 @@ const legacyTypeUrlPrefix = atob("aHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3R5cGVzLw
  * @remarks
  * See {@link legacyTypeUrlPrefix} for details on old vs. new formats
  */
-class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
+export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
 	public constructor(private readonly base: ISharedObjectRegistry) {}
 
 	public get(name: string): IChannelFactory | undefined {
