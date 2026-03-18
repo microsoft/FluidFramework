@@ -14,6 +14,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get -y install --no-install-recommends \
+        bubblewrap \
         fd-find \
         jq \
         sqlite3 \
