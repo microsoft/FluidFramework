@@ -36,6 +36,31 @@ RUN apt-get autoremove -y \
 ARG INSTALL_PLAYWRIGHT_CLI=false
 RUN if [ "$INSTALL_PLAYWRIGHT_CLI" = "true" ]; then npm install -g @playwright/cli@latest; fi
 
+ARG INSTALL_AGENCY=false
+RUN if [ "$INSTALL_AGENCY" = "true" ]; then \
+        su node -c 'export HOME=/home/node; curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency'; \
+    fi
+
+# Add agency to PATH for all shells; use POSIX case syntax to avoid duplicate entries.
+# /etc/profile.d/ covers bash/sh login shells; /etc/zsh/zshenv covers zsh (all invocation types).
+# Also hook into bash interactive shells via /etc/bash/bashrc.d or /etc/bash.bashrc as a fallback.
+RUN printf '%s\n' \
+    'case ":${PATH}:" in' \
+    '    *":$HOME/.config/agency/CurrentVersion:"*) ;;' \
+    '    *) export PATH="$HOME/.config/agency/CurrentVersion:${PATH}" ;;' \
+    'esac' \
+    > /etc/profile.d/agency.sh \
+    && chmod +x /etc/profile.d/agency.sh \
+    && mkdir -p /etc/zsh \
+    && cp /etc/profile.d/agency.sh /etc/zsh/zshenv \
+    && if [ -d /etc/bash/bashrc.d ]; then \
+           cp /etc/profile.d/agency.sh /etc/bash/bashrc.d/agency.sh; \
+       elif [ -f /etc/bash.bashrc ]; then \
+           if ! grep -q 'agency/CurrentVersion' /etc/bash.bashrc; then \
+               { printf '\n# Add agency to PATH if installed\n'; cat /etc/profile.d/agency.sh; } >> /etc/bash.bashrc; \
+           fi; \
+       fi
+
 USER node
 
 # Ensure user-local install paths are on PATH for tools installed below
