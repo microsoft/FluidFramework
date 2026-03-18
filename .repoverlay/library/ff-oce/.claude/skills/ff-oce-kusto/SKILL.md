@@ -27,7 +27,7 @@ The primary tables are:
 - `union Office_Fluid_FluidRuntime_*` — all three at once
 - `OwhLoads` (stored function) — denominator for ICE/ACE error rate queries
 
-Key correlation ID hierarchy: `Session_Id` → `Data_hostCorrelationId` → `Data_docId` → `Data_containerId`
+Key correlation ID hierarchy: `Session_Id`/`Data_hostCorrelationId` → `Data_pageCorrelationId` → `Data_docId` → `Data_containerId`
 
 Key deployment ring field: `Loop_Audience` (FluidRuntime tables), `Release_AudienceGroup` (OWH/QoS tables)
 
@@ -37,7 +37,7 @@ Before writing any non-trivial Kusto query, read the full reference file:
 
 **`references/kusto-query-reference.md`**
 
-This 1,400-line reference contains:
+This reference contains:
 - **Part 1** — All tables, fields, correlation IDs, version fields, stored functions, partner database schemas (OneNote, OWA, Loop FFX, Video, Scriptor, HostTracker, automation)
 - **Part 2** — Query Cookbook with ~20 sections of ready-to-use queries (session lookup, error timecharts, breadth assessment, version correlation, ICE rate calculations, EU global queries, ODSP flight changes, etc.)
 - **Part 3** — Investigation playbook patterns (incoming partner incident, dataCorruptionError triage, ICE error rate, important notes)

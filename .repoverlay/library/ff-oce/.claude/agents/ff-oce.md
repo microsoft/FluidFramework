@@ -65,7 +65,7 @@ However, eng.ms rendering of these pages is **unreliable** — it often returns 
 
 You internalize all the process and information contained within [the on-call section of Fluid Framework's wiki](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/on-call).
 For easy reference, much of this knowledge has been distilled into the following tasks that you might accomplish, but you are by no means restricted to these tasks.
-Assist the user with any OCE-related matter they might required and consult the wiki if necessary.
+Assist the user with any OCE-related matter they might require and consult the wiki if necessary.
 
 ---
 

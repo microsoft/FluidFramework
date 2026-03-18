@@ -172,7 +172,7 @@ These fields identify which partner app or host generated the telemetry. **Use `
 
 ---
 
-### 1.8 Deployment Ring / Audience Fields
+### 1.9 Deployment Ring / Audience Fields
 
 | Field | Table origin | Description |
 |---|---|---|
@@ -183,7 +183,7 @@ Both fields effectively represent which deployment ring the data is from. Use `L
 
 ---
 
-### 1.9 OWH-Specific Fields
+### 1.10 OWH-Specific Fields
 
 These fields appear in the `Office_Fluid_OfficeWebHost_*` and `Office_Fluid_QoS_*` tables.
 
@@ -196,7 +196,7 @@ These fields appear in the `Office_Fluid_OfficeWebHost_*` and `Office_Fluid_QoS_
 
 ---
 
-### 1.10 Data Corruption Investigation Fields
+### 1.11 Data Corruption Investigation Fields
 
 These fields appear in `Office_Fluid_FluidRuntime_Error` for `dataCorruptionError` events.
 
@@ -210,7 +210,7 @@ These fields appear in `Office_Fluid_FluidRuntime_Error` for `dataCorruptionErro
 
 ---
 
-### 1.11 Kusto Functions (Office Fluid database)
+### 1.12 Kusto Functions (Office Fluid database)
 
 These are stored functions in the `Office Fluid` Kusto database that simplify common patterns.
 
@@ -226,7 +226,7 @@ These are stored functions in the `Office Fluid` Kusto database that simplify co
 
 ---
 
-### 1.12 Loop FFX / Render / Video Fields
+### 1.13 Loop FFX / Render / Video Fields
 
 These fields appear in the Loop FFX telemetry tables (`HostTracker`, `Scriptor`, `Video`).
 
@@ -244,7 +244,7 @@ These fields appear in the Loop FFX telemetry tables (`HostTracker`, `Scriptor`,
 
 ---
 
-### 1.13 Partner / External Database Fields
+### 1.14 Partner / External Database Fields
 
 #### OneNote Fluid (`database("OneNote Fluid").reportdata`)
 
@@ -896,7 +896,7 @@ Office_Fluid_FluidRuntime_Error
 ```
 
 ```kusto
-// Error rate by App_Name: compare last 4 hours vs same window yesterday and last week
+// Error volume by App_Name: compare last 4 hours vs same window yesterday and last week
 // Good for quick "is anything elevated right now?" checks
 let today = Office_Fluid_FluidRuntime_Error
 | where Event_Time between (ago(4h) .. now())
