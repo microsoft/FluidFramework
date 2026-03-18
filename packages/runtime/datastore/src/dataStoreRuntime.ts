@@ -189,8 +189,9 @@ export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
 			return factory;
 		}
 
-		// Back-compat: if the name is a legacy URL-based type string, retry with just the trailing path segment.
+		// eslint-disable-next-line unicorn/prefer-ternary -- This is more readable as an if statement to clearly delineate which logic can be later removed vs. which needs to stay.
 		if (name.startsWith(legacyTypeUrlPrefix)) {
+			// Back-compat: if the name is a legacy URL-based type string, retry with just the trailing path segment.
 			factory = this.base.get(name.slice(legacyTypeUrlPrefix.length));
 		} else {
 			// Temporary compat: if the name is *not* a legacy URL-based type string and we haven't found a match yet, check if we have a match with the
@@ -209,7 +210,7 @@ export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
 			// the base URL was likely changed by a reverse proxy or similar. Assume that its final segment is still the short (modern) name of
 			// a valid DDS type and look it up as such.
 			const finalSegment = name.split("/").slice(-1)[0];
-			if (finalSegment) {
+			if (finalSegment !== undefined) {
 				return (
 					this.base.get(finalSegment) ?? this.base.get(`${legacyTypeUrlPrefix}${finalSegment}`)
 				);
