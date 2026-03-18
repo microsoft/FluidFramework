@@ -3475,7 +3475,7 @@ describe("Editing", () => {
 				unsubscribe();
 			});
 
-			it("Should not be violated when there are multiple reverts 2", () => {
+			it("Should not be violated when there are multiple moves reverted", () => {
 				const tree = makeTreeFromJsonSequence([{ "A": 1, "B": 2, "C": 3 }], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
