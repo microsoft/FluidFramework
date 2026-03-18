@@ -153,6 +153,7 @@
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched versions to resolve a known ReDoS vulnerability.",
 			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport)."
 		],
 		"overrides": {
@@ -172,6 +173,9 @@
 			"@babel/traverse": "7.27.7",
 			"@babel/types": "7.27.7",
 			"@babel/runtime": "7.27.6",
+			"diff@>=4 <5": "^4.0.4",
+			"diff@>=5 <6": "^5.2.2",
+			"diff@>=8 <9": "^8.0.3",
 			"eslint": "^9.39.2",
 			"jws": "^3.2.3",
 			"mongodb>@aws-sdk/credential-providers": "-",

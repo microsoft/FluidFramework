@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@types/react': ^18.3.12
+  diff@>=5 <6: ^5.2.2
   js-yaml@<4: ^3.14.2
   js-yaml@>=4: ^4.1.1
   jws: ^3.2.3
@@ -3782,8 +3783,8 @@ packages:
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
-  diff@5.2.0:
-    resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
+  diff@5.2.2:
+    resolution: {integrity: sha512-vtcDfH3TOjP8UekytvnHH1o1P4FcUdt4eQ1Y+Abap1tk/OB2MWQvcwS2ClCd1zuIhc3JKOx6p3kod8Vfys3E+A==}
     engines: {node: '>=0.3.1'}
 
   dill-cli@0.1.3:
@@ -13675,7 +13676,7 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  diff@5.2.0: {}
+  diff@5.2.2: {}
 
   dill-cli@0.1.3(typescript@5.5.4):
     dependencies:
@@ -18235,7 +18236,7 @@ snapshots:
       loader-utils: 2.0.4
       neo-async: 2.6.2
       schema-utils: 3.3.0
-      semver: 7.7.2
+      semver: 7.7.4
       webpack: 5.96.1
     optionalDependencies:
       sass: 1.81.0
@@ -19276,7 +19277,7 @@ snapshots:
   uvu@0.5.6:
     dependencies:
       dequal: 2.0.3
-      diff: 5.2.0
+      diff: 5.2.2
       kleur: 4.1.5
       sade: 1.8.1
 

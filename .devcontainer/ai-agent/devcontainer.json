@@ -5,7 +5,10 @@
 		"dockerfile": "../Dockerfile",
 		"args": {
 			"NODE_VERSION": "24",
-			"INSTALL_PLAYWRIGHT_CLI": "true"
+			"INSTALL_AGENCY": "true",
+			"INSTALL_REPOVERLAY": "true"
+			// TODO: Figure out the playwright strategy
+			// "INSTALL_PLAYWRIGHT_CLI": "true"
 		}
 	},
 	"runArgs": ["--init"],
@@ -16,6 +19,7 @@
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
 				"MAI-EngineeringSystems.mai-ai-telemetry",
+				"ms-codespaces-tools.ado-codespaces-auth",
 				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-docker",
 				"mutantdino.resourcemonitor"
@@ -28,11 +32,21 @@
 	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh && bash scripts/codespace-setup/ai-setup.sh",
 	"remoteUser": "node",
 	"features": {
+		// Enables docker CLI inside the container
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"moby": false
 		},
+		// Install the github CLI
 		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/devcontainers/features/git-lfs:1": {}
+		// Install git lfs
+		"ghcr.io/devcontainers/features/git-lfs:1": {},
+		// Enables SSH connections into the container using `gh codespace ssh`
+		"ghcr.io/devcontainers/features/sshd:1": {
+			"version": "latest"
+		},
+		// Features needed for the ms-codespaces-tools.ado-codespaces-auth extension
+		"ghcr.io/microsoft/codespace-features/external-repository:4": {},
+		"ghcr.io/microsoft/codespace-features/artifacts-helper:3": {}
 	},
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
 	// can be lengthy enough that it's convenient.
