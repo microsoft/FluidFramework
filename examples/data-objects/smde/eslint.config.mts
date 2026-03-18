@@ -20,7 +20,7 @@ const config: Linter.Config[] = [
 			"import-x/no-extraneous-dependencies": [
 				"error",
 				{
-					devDependencies: true,
+					"devDependencies": true,
 				},
 			],
 			"unicorn/no-array-for-each": "off",

@@ -29,7 +29,7 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					allow: [...importInternalModulesAllowed, "*/*.js"],
+					"allow": [...importInternalModulesAllowed, "*/*.js"],
 				},
 			],
 			"no-bitwise": "off",
@@ -58,7 +58,7 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					allow: [...importInternalModulesAllowedForTest],
+					"allow": [...importInternalModulesAllowedForTest],
 				},
 			],
 		},
