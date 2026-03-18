@@ -4812,11 +4812,18 @@ export class ContainerRuntime
 		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
 		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
 		// sequence number changes and throws if unexpected changes are detected.
-		if (
-			this.inStagingMode &&
-			this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold
-		) {
-			return;
+		if (this.inStagingMode) {
+			if (this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold) {
+				return;
+			}
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "StagingModeAutoFlush",
+				category: "generic",
+				details: {
+					threshold: this.stagingModeAutoFlushThreshold,
+					mainBatchMessageCount: this.outbox.mainBatchMessageCount,
+				},
+			});
 		}
 
 		if (this.flushScheduled) {

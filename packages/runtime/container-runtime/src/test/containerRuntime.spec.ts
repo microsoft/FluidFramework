@@ -4414,7 +4414,19 @@ describe("Runtime", () => {
 				});
 
 				it("ops flush when threshold is reached", async () => {
-					runtimeWithThreshold = await createRuntimeWithThreshold(3);
+					const logger = new MockLogger();
+					const threshold = 3;
+					mockContext = getMockContext({ logger }) as IContainerContext;
+					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							stagingModeAutoFlushThreshold: threshold,
+							enableGroupedBatching: false,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					})) as unknown as ContainerRuntime_WithPrivates;
 					stubChannelCollection(runtimeWithThreshold);
 					submittedOps.length = 0;
 
@@ -4448,6 +4460,14 @@ describe("Runtime", () => {
 						0,
 						"Outbox should be empty after threshold flush",
 					);
+
+					// Verify telemetry was logged when threshold was hit
+					logger.assertMatch([
+						{
+							eventName: "ContainerRuntime:StagingModeAutoFlush",
+							category: "generic",
+						},
+					]);
 				});
 
 				it("incoming ops break the batch regardless of threshold", async () => {
