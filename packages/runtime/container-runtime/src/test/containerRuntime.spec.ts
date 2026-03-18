@@ -4430,7 +4430,7 @@ describe("Runtime", () => {
 					stubChannelCollection(runtimeWithThreshold);
 					submittedOps.length = 0;
 
-					runtimeWithThreshold.enterStagingMode();
+					const controls = runtimeWithThreshold.enterStagingMode();
 
 					// Submit 3 ops — exactly at the threshold
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
@@ -4461,11 +4461,15 @@ describe("Runtime", () => {
 						"Outbox should be empty after threshold flush",
 					);
 
-					// Verify telemetry was logged when threshold was hit
-					logger.assertMatch([
+					// Exit staging mode and verify perf event includes auto-flush count
+					controls.commitChanges();
+					logger.assertMatchAny([
 						{
-							eventName: "ContainerRuntime:StagingModeAutoFlush",
-							category: "generic",
+							eventName: "ContainerRuntime:ExitStagingMode_end",
+							category: "performance",
+							exitMethod: "commit",
+							autoFlushCount: 1,
+							autoFlushThreshold: threshold,
 						},
 					]);
 				});

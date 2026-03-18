@@ -1419,6 +1419,11 @@ export class ContainerRuntime
 	private readonly _flushMode: FlushMode;
 	private readonly stagingModeAutoFlushThreshold: number;
 	/**
+	 * Tracks auto-flush events during the current staging mode session.
+	 * Reset on enter, incremented when threshold is hit, reported on exit.
+	 */
+	private stagingModeAutoFlushCount: number = 0;
+	/**
 	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
 	 * where the same local state is pending in two different running Containers, each of
 	 * which is trying to ensure it's persisted.
@@ -3634,21 +3639,36 @@ export class ContainerRuntime
 		// Make sure Outbox is empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
+		this.stagingModeAutoFlushCount = 0;
 
-		const exitStagingMode = (discardOrCommit: () => void): void => {
+		const exitStagingMode = (
+			discardOrCommit: (event: PerformanceEvent) => void,
+			exitMethod: "commit" | "discard",
+		): void => {
 			try {
-				// Final flush of any last staged changes
-				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-				this.outbox.flush();
+				PerformanceEvent.timedExec(
+					this.mc.logger,
+					{
+						eventName: "ExitStagingMode",
+						exitMethod,
+						autoFlushCount: this.stagingModeAutoFlushCount,
+						autoFlushThreshold: this.stagingModeAutoFlushThreshold,
+					},
+					(event) => {
+						// Final flush of any last staged changes
+						// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
+						this.outbox.flush();
 
-				this.stageControls = undefined;
+						this.stageControls = undefined;
 
-				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-				discardOrCommit();
+						// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
+						// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
+						this.submitIdAllocationOpIfNeeded({ staged: false });
+						discardOrCommit(event);
 
-				this.channelCollection.notifyStagingMode(false);
+						this.channelCollection.notifyStagingMode(false);
+					},
+				);
 			} catch (error) {
 				const normalizedError = normalizeError(error);
 				this.closeFn(normalizedError);
@@ -3658,23 +3678,23 @@ export class ContainerRuntime
 
 		const stageControls: StageControlsInternal = {
 			discardChanges: () =>
-				exitStagingMode(() => {
+				exitStagingMode((_event) => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
 					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
 						this.rollbackStagedChange(runtimeOp, localOpMetadata);
 					});
 					this.updateDocumentDirtyState();
-				}),
+				}, "discard"),
 			commitChanges: (options) => {
 				const { squash } = { ...defaultStagingCommitOptions, ...options };
-				exitStagingMode(() => {
+				exitStagingMode((_event) => {
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
 					this.pendingStateManager.replayPendingStates({
 						committingStagedBatches: true,
 						squash,
 					});
-				});
+				}, "commit");
 			},
 		};
 
@@ -4816,14 +4836,7 @@ export class ContainerRuntime
 			if (this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold) {
 				return;
 			}
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "StagingModeAutoFlush",
-				category: "generic",
-				details: {
-					threshold: this.stagingModeAutoFlushThreshold,
-					mainBatchMessageCount: this.outbox.mainBatchMessageCount,
-				},
-			});
+			this.stagingModeAutoFlushCount++;
 		}
 
 		if (this.flushScheduled) {
