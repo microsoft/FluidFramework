@@ -20,6 +20,9 @@ import { SharedSignalClass } from "./sharedSignal.js";
  * @internal
  */
 export class SharedSignalFactory implements IChannelFactory<ISharedSignal> {
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See legacyTypeRedirects in packages/runtime/datastore/src/channelContext.ts.
+	// public static readonly Type: string = "SharedSignal";
 	public static readonly Type: string = "https://graph.microsoft.com/types/signal";
 
 	public static readonly Attributes: IChannelAttributes = {

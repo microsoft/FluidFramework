@@ -12,6 +12,11 @@ import { pkgVersion } from "./packageVersion.js";
  * @beta
  * @legacy
  */
+// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+// See legacyTypeRedirects in packages/runtime/datastore/src/channelContext.ts.
+// IMPORTANT: "SharedTree" cannot be used here because experimental/dds/tree already uses that string
+// as its live type.
+// export const SharedTreeFactoryType = "SharedTree2";
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 /**

@@ -26,6 +26,9 @@ import { SharedArrayClass } from "./sharedArray.js";
 export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 	implements IChannelFactory
 {
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See legacyTypeRedirects in packages/runtime/datastore/src/channelContext.ts.
+	// public static readonly Type = "SharedArray";
 	public static readonly Type = "https://graph.microsoft.com/types/SharedArray";
 
 	public static readonly Attributes: IChannelAttributes = {
