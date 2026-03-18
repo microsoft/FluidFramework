@@ -244,6 +244,7 @@ import {
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	type IBatchCheckpoint,
+	largeBatchThreshold,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -625,10 +626,10 @@ const defaultChunkSizeInBytes = 204800;
  *
  * Chosen based on production telemetry: copy-paste operations routinely produce batches
  * of 1000+ ops (435K instances over 30 days), and receivers on modern Fluid versions
- * handle them without issues. 1000 also matches the existing "large batch" telemetry
- * threshold ({@link OpGroupingManager}).
+ * handle them without issues. Uses {@link largeBatchThreshold} to stay aligned with
+ * the existing "large batch" telemetry threshold ({@link OpGroupingManager}).
  */
-const defaultStagingModeAutoFlushThreshold = 1000;
+const defaultStagingModeAutoFlushThreshold = largeBatchThreshold;
 
 /**
  * The default time to wait for pending ops to be processed during summarization
