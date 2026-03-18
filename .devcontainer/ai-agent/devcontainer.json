@@ -40,6 +40,10 @@
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		// Install git lfs
 		"ghcr.io/devcontainers/features/git-lfs:1": {},
+		// Enables SSH connections into the container using `gh codespace ssh`
+		"ghcr.io/devcontainers/features/sshd:1": {
+			"version": "latest"
+		},
 		// Features needed for the ms-codespaces-tools.ado-codespaces-auth extension
 		"ghcr.io/microsoft/codespace-features/external-repository:4": {},
 		"ghcr.io/microsoft/codespace-features/artifacts-helper:3": {}
