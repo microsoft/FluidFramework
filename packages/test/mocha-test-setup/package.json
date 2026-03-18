@@ -77,6 +77,15 @@
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
+	"fluidBuild": {
+		"_tasks_comment": "build:esnext is configured to depend on tsc task as all consumers configure mocha using CommonJS. Building CommonJS when ESM is requested ensures the CommonJS expectation is satisfied.",
+		"tasks": {
+			"build:esnext": [
+				"...",
+				"tsc"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true
 	}
