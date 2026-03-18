@@ -19,7 +19,7 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["fs", "node:fs"],
+					"allow": ["fs"],
 				},
 			],
 			"jsdoc/require-description": "off",

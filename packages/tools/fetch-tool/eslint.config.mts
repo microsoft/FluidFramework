@@ -25,7 +25,7 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["child_process", "fs", "node:fs", "node:util", "util"],
+					"allow": ["child_process", "fs", "util"],
 				},
 			],
 			"unicorn/catch-error-name": "off",
