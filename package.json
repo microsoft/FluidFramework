@@ -364,9 +364,7 @@
 			"fast-xml-parser: overridden to ^4.5.4 to resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow). Stays within @langchain/anthropic's declared ^4.4.1 range.",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
-			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major.",
-			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
-			"jws: overridden to ^3.2.3 to resolve a known vulnerability in jws 3.2.2 (transitive via jsonwebtoken)."
+			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major."
 		],
 		"overrides": {
 			"@types/node": "~20.19.30",
@@ -375,9 +373,6 @@
 			"diff@>=7 <8": "^8.0.3",
 			"diff@>=8 <9": "^8.0.3",
 			"fast-xml-parser": "^4.5.4",
-			"js-yaml@<4": "^3.14.2",
-			"js-yaml@>=4": "^4.1.1",
-			"jws": "^3.2.3",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
