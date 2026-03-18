@@ -4772,6 +4772,126 @@ describe("Runtime", () => {
 						"Outbox should be drained after reconnect",
 					);
 				});
+
+				it("IdAllocation + reconnect while in staging mode does not hit coherency check", async () => {
+					// This is the highest-risk scenario from Mark's test plan.
+					// The fix in b4e1fd1dd25 added scheduleFlush() after submitIdAllocationOpIfNeeded
+					// during replayPendingStates. With threshold suppression, that scheduleFlush()
+					// returns early if in staging mode and under threshold. But the "op" handler
+					// calls flush() directly, so the IdAllocation op still gets flushed before
+					// new ops with different refSeqs are submitted.
+
+					// Start disconnected so we can trigger IdAllocation on reconnect
+					mockContext = getMockContext({ connected: false }) as IContainerContext;
+					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+
+					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							stagingModeAutoFlushThreshold: Infinity,
+							enableRuntimeIdCompressor: "on",
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					})) as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					runtimeWithThreshold.enterStagingMode();
+
+					// Generate 1st compressed ID while disconnected — queues an IdAllocation op
+					runtimeWithThreshold.idCompressor?.generateCompressedId();
+
+					// Reconnect — replayPendingStates submits IdAllocation op + calls scheduleFlush()
+					// scheduleFlush() returns early due to staging mode threshold suppression
+					changeConnectionState(runtimeWithThreshold, true, mockClientId);
+
+					// Simulate a remote op arriving (bumps refSeq)
+					// The "op" handler calls this.flush() directly, draining the IdAllocation op
+					++mockDeltaManager.lastSequenceNumber;
+					mockDeltaManager.emit("op", {
+						clientId: mockClientId,
+						sequenceNumber: mockDeltaManager.lastSequenceNumber,
+						clientSequenceNumber: 1,
+						type: MessageType.ClientJoin,
+						contents: "test content",
+					});
+
+					// Generate 2nd compressed ID — its IdAllocation op has a new refSeq
+					const id2 = runtimeWithThreshold.idCompressor?.generateCompressedId();
+
+					// This would throw outboxSequenceNumberCoherencyCheck if the first IdAllocation
+					// op wasn't flushed before the refSeq changed.
+					assert.doesNotThrow(
+						() =>
+							submitDataStoreOp(
+								runtimeWithThreshold,
+								"someDS",
+								genTestDataStoreMessage({ id: id2 }),
+							),
+						"Should not throw coherency check — IdAllocation op should have been flushed by the 'op' handler",
+					);
+				});
+
+				it("reconnect resubmits pre-staged batches with threshold active", async () => {
+					mockContext = getMockContext() as IContainerContext;
+					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							stagingModeAutoFlushThreshold: Infinity,
+							enableGroupedBatching: false,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					})) as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					// Submit ops BEFORE entering staging mode
+					submitDataStoreOp(
+						runtimeWithThreshold,
+						"pre1",
+						genTestDataStoreMessage("pre-staging-op"),
+					);
+					await Promise.resolve();
+					assert.equal(submittedOps.length, 1, "Pre-staging op should be submitted");
+
+					// Enter staging mode and submit more ops
+					const controls = runtimeWithThreshold.enterStagingMode();
+					submitDataStoreOp(
+						runtimeWithThreshold,
+						"staged1",
+						genTestDataStoreMessage("staged-op"),
+						"STAGED_META",
+					);
+					runtimeWithThreshold.flush();
+					assert.equal(submittedOps.length, 1, "Staged op should not be submitted to wire");
+
+					// Disconnect
+					changeConnectionState(runtimeWithThreshold, false, "disconnectedClientId");
+					submittedOps.length = 0;
+
+					// Reconnect — replayPendingStates resubmits all pending ops
+					changeConnectionState(runtimeWithThreshold, true, mockClientId);
+					await Promise.resolve();
+
+					// The pre-staging op should be resubmitted to the wire.
+					// The staged op stays in PSM as staged (not sent to wire).
+					assert(
+						submittedOps.length > 0,
+						"Pre-staging op should be resubmitted after reconnect",
+					);
+					const opsAfterReconnect = submittedOps.length;
+
+					// Verify we can still commit the staged changes
+					controls.commitChanges();
+					assert(
+						submittedOps.length > opsAfterReconnect,
+						"Staged op should be submitted after commitChanges",
+					);
+				});
 			});
 		});
 	});
