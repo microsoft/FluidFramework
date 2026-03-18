@@ -64,6 +64,13 @@ module.exports = {
 			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
+		"compile:esm:packages": {
+			// Note that "api-extractor:esnext" is included as "compile" intends
+			// to build complete packages and "api-extractor:esnext" currently
+			// generates package entrypoint files.
+			dependsOn: ["build:esnext", "api-extractor:esnext", "build:copy"],
+			script: false,
+		},
 		"commonjs": {
 			dependsOn: ["tsc", "build:test"],
 			script: false,
@@ -162,8 +169,8 @@ module.exports = {
 		// TODO: ensure webpack dependencies are correct and minimal, ideally just depending
 		// on "^api-extractor:esnext", "^build:esnext". Or distribute these setting to the
 		// individual packages that need them instead of having poor config in the root config.
-		"webpack": ["^api", "^tsc", "^build:esnext"],
-		"webpack:profile": ["^api", "^tsc", "^build:esnext"],
+		"webpack": ["^api-extractor:esnext", "^build:esnext"],
+		"webpack:profile": ["^api-extractor:esnext", "^build:esnext"],
 		"clean": {
 			before: ["*"],
 		},

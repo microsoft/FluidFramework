@@ -23,6 +23,7 @@
 		"build-and-test:unit:esm": "fluid-build --task test:unit:esm --worker",
 		"build:api": "fluid-build --task build:api",
 		"build:compile": "fluid-build --task compile",
+		"build:compile:esm:packages": "fluid-build --task compile:esm:packages --worker",
 		"build:docs": "fluid-build --task build:docs",
 		"build:eslint": "fluid-build --task eslint",
 		"build:fast": "fluid-build --task build --worker",
