@@ -48,11 +48,6 @@ import type {
 	IPendingMessage,
 } from "../../pendingStateManager.js";
 
-function typeFromBatchedOp(message: LocalBatchMessage): string {
-	assert(message.runtimeOp !== undefined, "PRECONDITION: runtimeOp is undefined");
-	return message.runtimeOp.type;
-}
-
 // Make a mock op with distinguishable contents
 function op(data: string): LocalContainerRuntimeMessage {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

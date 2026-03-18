@@ -1783,6 +1783,7 @@ describe("Runtime", () => {
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
 				createBlobPayloadPending: undefined,
+				stagingModeAutoFlushThreshold: 1000,
 			} as const satisfies ContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
@@ -3739,6 +3740,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					stagingModeAutoFlushThreshold: 1000,
 				};
 
 				logger.assertMatchAny([
@@ -3798,6 +3800,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
+					stagingModeAutoFlushThreshold: 1000,
 				};
 
 				logger.assertMatchAny([
@@ -3836,6 +3839,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					stagingModeAutoFlushThreshold: 1000,
 				};
 
 				logger.assertMatchAny([
@@ -3874,6 +3878,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					stagingModeAutoFlushThreshold: 1000,
 				};
 
 				logger.assertMatchAny([
@@ -3911,6 +3916,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					stagingModeAutoFlushThreshold: 1000,
 				};
 
 				logger.assertMatchAny([
@@ -3956,6 +3962,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
+					stagingModeAutoFlushThreshold: 1000,
 				};
 
 				logger.assertMatchAny([
@@ -4015,6 +4022,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 						enableGroupedBatching: true,
 						explicitSchemaControl: false,
+						stagingModeAutoFlushThreshold: 1000,
 					};
 
 					logger.assertMatchAny([
@@ -4055,6 +4063,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					stagingModeAutoFlushThreshold: 1000,
 				};
 
 				logger.assertMatchAny([
@@ -4549,6 +4558,219 @@ describe("Runtime", () => {
 					);
 
 					controls.commitChanges();
+				});
+
+				it("discardChanges flushes outbox before rollback", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(Infinity);
+					const channelCollectionStub = stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					const controls = runtimeWithThreshold.enterStagingMode();
+
+					submitDataStoreOp(
+						runtimeWithThreshold,
+						"1",
+						genTestDataStoreMessage("op1"),
+						"META1",
+					);
+					submitDataStoreOp(
+						runtimeWithThreshold,
+						"2",
+						genTestDataStoreMessage("op2"),
+						"META2",
+					);
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						2,
+						"2 ops in outbox before discard",
+					);
+
+					controls.discardChanges();
+
+					// Outbox should have been drained before rollback
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						0,
+						"Outbox should be empty after discard",
+					);
+					// Staged ops should be rolled back (LIFO order)
+					assert.equal(
+						channelCollectionStub.rollbackDataStoreOp.callCount,
+						2,
+						"Both ops should be rolled back",
+					);
+					// Nothing sent to wire
+					assert.equal(
+						submittedOps.length,
+						0,
+						"No ops should be submitted to wire after discard",
+					);
+				});
+
+				it("enterStagingMode flushes any pending outbox contents as non-staged", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(Infinity);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					// Submit ops before entering staging mode (not yet flushed — still in outbox)
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("pre1"));
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("pre2"));
+					assert.equal(submittedOps.length, 0, "Ops not yet flushed");
+
+					// Enter staging mode — should flush pre-staging ops as non-staged
+					const controls = runtimeWithThreshold.enterStagingMode();
+					assert.equal(
+						submittedOps.length,
+						2,
+						"Pre-staging ops should be flushed on enterStagingMode",
+					);
+
+					// Submit more ops while in staging mode
+					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("staged1"));
+					runtimeWithThreshold.flush();
+					assert.equal(submittedOps.length, 2, "Staged ops should NOT be submitted to wire");
+
+					controls.commitChanges();
+					assert.equal(submittedOps.length, 3, "All ops should be submitted after commit");
+				});
+
+				it("config override takes precedence over runtime option", async () => {
+					const configThreshold = 5;
+					const runtimeOptionThreshold = 50;
+					mockContext = getMockContext({
+						settings: {
+							"Fluid.ContainerRuntime.StagingModeAutoFlushThreshold": configThreshold,
+						},
+					}) as IContainerContext;
+					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							stagingModeAutoFlushThreshold: runtimeOptionThreshold,
+							enableGroupedBatching: false,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					})) as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					runtimeWithThreshold.enterStagingMode();
+
+					// Submit ops up to the config override threshold (5), not the runtime option (50)
+					for (let i = 0; i < configThreshold; i++) {
+						submitDataStoreOp(runtimeWithThreshold, `${i}`, genTestDataStoreMessage(`op${i}`));
+					}
+					// Threshold reached — scheduleFlush falls through, flush happens on next microtask
+					await Promise.resolve();
+
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						0,
+						"Outbox should be empty — config override threshold (5) should win over runtime option (50)",
+					);
+				});
+
+				it("runtime option takes precedence over default", async () => {
+					const runtimeOptionThreshold = 5;
+					runtimeWithThreshold = await createRuntimeWithThreshold(runtimeOptionThreshold);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					runtimeWithThreshold.enterStagingMode();
+
+					for (let i = 0; i < runtimeOptionThreshold; i++) {
+						submitDataStoreOp(runtimeWithThreshold, `${i}`, genTestDataStoreMessage(`op${i}`));
+					}
+					await Promise.resolve();
+
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						0,
+						"Outbox should be empty — runtime option (5) should win over default (1000)",
+					);
+				});
+
+				it("incoming non-runtime op breaks batch during staging mode", async () => {
+					runtimeWithThreshold = await createRuntimeWithThreshold(Infinity);
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					runtimeWithThreshold.enterStagingMode();
+
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						2,
+						"2 ops in outbox",
+					);
+
+					// Simulate an incoming non-runtime op (e.g. ClientJoin signal)
+					// The deltaManager "op" handler calls this.flush() directly.
+					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+					++mockDeltaManager.lastSequenceNumber;
+					mockDeltaManager.emit("op", {
+						clientId: mockClientId,
+						sequenceNumber: mockDeltaManager.lastSequenceNumber,
+						clientSequenceNumber: 1,
+						type: MessageType.ClientJoin,
+						contents: "test content",
+					});
+
+					assert.equal(submittedOps.length, 0, "No ops sent to wire during staging mode");
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						0,
+						"Outbox should be empty — non-runtime op should break the batch",
+					);
+				});
+
+				it("reconnect breaks batch during staging mode", async () => {
+					mockContext = getMockContext() as IContainerContext;
+					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
+						context: mockContext as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							stagingModeAutoFlushThreshold: Infinity,
+							enableGroupedBatching: false,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					})) as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtimeWithThreshold);
+					submittedOps.length = 0;
+
+					runtimeWithThreshold.enterStagingMode();
+
+					// Submit ops while connected (sitting in outbox under threshold)
+					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
+					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						2,
+						"2 ops in outbox before disconnect",
+					);
+
+					// Disconnect
+					changeConnectionState(runtimeWithThreshold, false, "disconnectedClientId");
+
+					// Reconnect — triggers flush and replayPendingStates
+					changeConnectionState(runtimeWithThreshold, true, mockClientId);
+
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						0,
+						"Outbox should be drained after reconnect",
+					);
 				});
 			});
 		});
