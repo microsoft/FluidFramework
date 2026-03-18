@@ -10,6 +10,7 @@ export {
 	TreeArrayNode,
 	type ReadonlyArrayNode,
 	type ArrayPlaceAnchor,
+	type TreeArrayNodeAlpha,
 	createArrayInsertionAnchor,
 } from "./arrayNode.js";
 export {

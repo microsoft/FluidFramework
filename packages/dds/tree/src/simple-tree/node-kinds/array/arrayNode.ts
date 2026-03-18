@@ -164,20 +164,6 @@ export interface TreeArrayNode<
 	removeRange(start?: number, end?: number): void;
 
 	/**
-	 * Removes existing item(s) and/or adds new item(s).
-	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
-	 * Must be a positive in bounds index or a negative index such that `array.length + start` is a positive in bounds index.
-	 * @param deleteCount - The number of item(s) to remove. If not provided, it defaults to the end of the array.
-	 * Must be a non-negative integer no greater than the number of items from `start` to the end of the array.
-	 * @param items - The item(s) to insert at `start`.
-	 * @returns An array containing the item(s) that were removed.
-	 */
-	splice(
-		start: number,
-		deleteCount?: number,
-		...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]
-	): T[];
-	/**
 	 * Moves the specified item to the start of the array.
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `array.length`).
@@ -459,6 +445,35 @@ export interface TreeArrayNode<
 	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
 	 */
 	values(): IterableIterator<T>;
+}
+
+/**
+ * {@link (TreeArrayNode:interface)} with additional alpha APIs.
+ * @alpha @sealed
+ */
+export interface TreeArrayNodeAlpha<
+	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
+	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+	in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+> extends TreeArrayNode<TAllowedTypes, T, TNew> {
+	/**
+	 * Removes existing item(s) and/or adds new item(s).
+	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
+	 * Must be a positive in bounds index or a negative index such that `array.length + start` is a positive in bounds index.
+	 * @param deleteCount - The number of item(s) to remove. If not provided, it defaults to the end of the array.
+	 * Must be a non-negative integer no greater than the number of items from `start` to the end of the array.
+	 * @param items - The item(s) to insert at `start`.
+	 * @returns An array containing the item(s) that were removed.
+	 */
+	splice(
+		start: number,
+		deleteCount?: number,
+		...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]
+	): T[];
 }
 
 /**
@@ -1018,16 +1033,16 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	): TreeNodeFromImplicitAllowedTypes<T>[] {
 		const length = this.length;
 		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
-		validateIndexRange(
-			actualStart,
-			actualStart + (deleteCount ?? length - actualStart),
-			getSequenceField(this),
-			"TreeArrayNode.splice",
-		);
 		const actualDeleteCount =
 			deleteCount === undefined
 				? length - actualStart
 				: Math.min(Math.max(deleteCount, 0), length - actualStart);
+		validateIndexRange(
+			actualStart,
+			actualStart + actualDeleteCount,
+			getSequenceField(this),
+			"TreeArrayNode.splice",
+		);
 		const removed: TreeNodeFromImplicitAllowedTypes<T>[] = [];
 		for (let index = actualStart; index < actualStart + actualDeleteCount; index++) {
 			removed.push(this.at(index) ?? oob());

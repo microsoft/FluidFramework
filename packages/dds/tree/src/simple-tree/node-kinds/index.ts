@@ -12,6 +12,7 @@ export {
 	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type ReadonlyArrayNode,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,

@@ -88,6 +88,7 @@ export {
 
 export {
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,

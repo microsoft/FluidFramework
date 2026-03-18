@@ -125,6 +125,9 @@ export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSch
 // @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeViewConfiguration<TSchema>): TreeViewConfigurationAlpha<TSchema>;
 
+// @alpha
+export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeArrayNode<TAllowedTypes>): TreeArrayNodeAlpha<TAllowedTypes>;
+
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
@@ -1638,7 +1641,6 @@ export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllow
     push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
-    splice(start: number, deleteCount?: number, ...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]): T[];
     values(): IterableIterator<T>;
 }
 
@@ -1646,6 +1648,11 @@ export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllow
 export const TreeArrayNode: {
     readonly spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
+
+// @alpha @sealed
+export interface TreeArrayNodeAlpha<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes, out T = [TAllowedTypes] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TAllowedTypes> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes> : InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>> extends TreeArrayNode<TAllowedTypes, T, TNew> {
+    splice(start: number, deleteCount?: number, ...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]): T[];
+}
 
 // @beta @sealed
 export interface TreeBeta {

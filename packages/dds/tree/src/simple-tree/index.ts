@@ -255,6 +255,7 @@ export {
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type MapNodeCustomizableSchema,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,

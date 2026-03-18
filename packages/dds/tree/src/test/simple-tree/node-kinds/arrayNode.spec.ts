@@ -10,9 +10,12 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../../api.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
+	type TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
@@ -341,51 +344,57 @@ describe("ArrayNode", () => {
 			});
 
 			describe("splice", () => {
+				function buildAlphaArray(
+					initial: number[],
+				): TreeArrayNodeAlpha<typeof schemaFactory.number> {
+					const list = init(schemaType, initial);
+					return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+				}
 				it("splice first item", () => {
 					const initial = [0, 1, 2, 3];
-					const list = init(schemaType, [...initial]);
+					const list = buildAlphaArray(initial);
 					const removed = list.splice(0, 1, 4);
 					assert.deepEqual(removed, initial.splice(0, 1, 4));
 					assert.deepEqual([...list], initial);
 				});
 				it("splice last two", () => {
 					const initial = [0, 1, 2, 3];
-					const list = init(schemaType, [...initial]);
+					const list = buildAlphaArray(initial);
 					const removed = list.splice(2, 2, 4, 5, 6);
 					assert.deepEqual(removed, initial.splice(2, 2, 4, 5, 6));
 					assert.deepEqual([...list], initial);
 				});
 				it("splice last three with negative start index", () => {
 					const initial = [0, 1, 2, 3];
-					const list = init(schemaType, [...initial]);
+					const list = buildAlphaArray(initial);
 					const removed = list.splice(-3);
 					assert.deepEqual(removed, initial.splice(-3));
 					assert.deepEqual([...list], initial);
 				});
 				it("splice with out-of-bounds index", () => {
 					const initial = [0, 1, 2, 3];
-					const list = init(schemaType, [...initial]);
+					const list = buildAlphaArray(initial);
 					const removed = list.splice(5, 8);
 					assert.deepEqual(removed, initial.splice(5, 8));
 					assert.deepEqual([...list], initial);
 				});
 				it("splice single element array", () => {
 					const initial = [0];
-					const list = init(schemaType, [...initial]);
+					const list = buildAlphaArray(initial);
 					const removed = list.splice(0, 1, 1, 2, 3);
 					assert.deepEqual(removed, initial.splice(0, 1, 1, 2, 3));
 					assert.deepEqual([...list], initial);
 				});
 				it("splice entire array", () => {
 					const initial = [0, 1, 2, 3];
-					const list = init(schemaType, [...initial]);
+					const list = buildAlphaArray(initial);
 					const removed = list.splice(0);
 					assert.deepEqual(removed, initial.splice(0));
 					assert.deepEqual([...list], initial);
 				});
 				it("splice empty array", () => {
 					const initial: number[] = [];
-					const list = init(schemaType, [...initial]);
+					const list = buildAlphaArray(initial);
 					const removed = list.splice(0, 1, 0, 1, 2, 3);
 					assert.deepEqual(removed, initial.splice(0, 1, 0, 1, 2, 3));
 					assert.deepEqual([...list], initial);
@@ -399,7 +408,7 @@ describe("ArrayNode", () => {
 						array2: schemaFactory.array(schemaFactory.number),
 					});
 					const { array1, array2 } = init(schema, { array1: [], array2: [1, 2, 3] });
-					array1.moveToStart(1, array2);
+					asAlpha(array1).moveToStart(1, array2);
 					assert.deepEqual([...array1], [2]);
 					assert.deepEqual([...array2], [1, 3]);
 				});
