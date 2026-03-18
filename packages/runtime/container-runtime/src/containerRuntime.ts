@@ -220,7 +220,6 @@ import {
 	type IGCRuntimeOptions,
 	type IGCStats,
 	type IGarbageCollector,
-	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
@@ -1751,16 +1750,6 @@ export class ContainerRuntime
 				this.getConnectionState() === ConnectionState.CatchingUp
 			: undefined;
 
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GCFeatureMatrix",
-			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
-			inputs: JSON.stringify({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
-			}),
-			logLevel: LogLevelValue.info,
-		});
-
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
 
 		const opGroupingManager = new OpGroupingManager(
@@ -2095,7 +2084,9 @@ export class ContainerRuntime
 			summaryNumber: loadSummaryNumber,
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
+			// This is useful even for interactive clients since they track unreferenced nodes and log errors.
 			gcVersion: metadata?.gcFeature,
+			gcConfigs: this.garbageCollector.serializedConfigs,
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
