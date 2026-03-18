@@ -569,25 +569,6 @@ export interface TreeBranchEvents {
 	 * this change is not revertible.
 	 */
 	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-
-	/**
-	 * Fired when:
-	 *
-	 * - a local commit is applied outside of a transaction
-	 *
-	 * - a local transaction is committed
-	 *
-	 * The event is not fired when:
-	 *
-	 * - a local commit is applied within a transaction
-	 *
-	 * - a remote commit is applied
-	 *
-	 * @param data - information about the commit that was applied
-	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
-	 * this commit is not revertible.
-	 */
-	commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**
