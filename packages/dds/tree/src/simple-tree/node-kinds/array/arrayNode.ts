@@ -166,9 +166,9 @@ export interface TreeArrayNode<
 	/**
 	 * Removes existing item(s) and/or adds new item(s).
 	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
-	 * Must be a safe integer
+	 * Must be a positive in bounds index or a negative index such that `array.length + start` is a positive in bounds index.
 	 * @param deleteCount - The number of item(s) to remove. If not provided, it defaults to the end of the array.
-	 * Must be a safe integer if provided
+	 * Must be a non-negative integer no greater than the number of items from `start` to the end of the array.
 	 * @param items - The item(s) to insert at `start`.
 	 * @returns An array containing the item(s) that were removed.
 	 */
@@ -1016,14 +1016,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		deleteCount?: number,
 		...items: Insertable<T>
 	): TreeNodeFromImplicitAllowedTypes<T>[] {
-		if (!Number.isSafeInteger(start)) {
-			throw new UsageError(`Expected a safe integer for start, got ${start}`);
-		}
-		if (deleteCount !== undefined && !Number.isSafeInteger(deleteCount)) {
-			throw new UsageError(`Expected a safe integer for deleteCount, got ${deleteCount}`);
-		}
 		const length = this.length;
 		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
+		validateIndexRange(actualStart, actualStart + (deleteCount ?? (length - actualStart)), getSequenceField(this), "TreeArrayNode.splice");
 		const actualDeleteCount =
 			deleteCount === undefined
 				? length - actualStart
