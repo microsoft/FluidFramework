@@ -1683,7 +1683,6 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 // @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-    commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 // @alpha @sealed
