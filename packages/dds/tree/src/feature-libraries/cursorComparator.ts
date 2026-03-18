@@ -9,7 +9,6 @@ import {
 	inCursorField,
 	type ITreeCursorSynchronous,
 	type Value,
-	type FieldKey,
 } from "../core/index.js";
 /**
  * Tests whether a cursor's current node matches a previously captured subtree.
