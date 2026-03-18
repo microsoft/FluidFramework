@@ -27,7 +27,6 @@ import {
 	Tree,
 	TreeCheckout,
 	type ITreeCheckout,
-	type ITreeCheckoutFork,
 	type BranchableTree,
 	createTreeCheckout,
 	type SharedTreeChange,
@@ -1040,7 +1039,7 @@ describe("sharedTreeView", () => {
 			expectSchemaEqual(toUpgradeSchema(schema3), view3.checkout.storedSchema);
 
 			// Rebase view3 onto view2.
-			(view3.checkout as ITreeCheckoutFork).rebaseOnto(view2.checkout);
+			view3.checkout.rebaseOnto(view2.checkout);
 
 			// All changes on view3 should be dropped but the schema change and edit in view2 should be preserved.
 			expectSchemaEqual(toUpgradeSchema(schema2), view2.checkout.storedSchema);

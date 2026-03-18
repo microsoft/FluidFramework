@@ -9,7 +9,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey } from "../core/index.js";
@@ -17,7 +17,6 @@ import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	cursorForMapTreeField,
-	TreeStatus,
 	Context,
 	combineChunks,
 	type FlexTreeOptionalField,
@@ -41,16 +40,12 @@ import {
 	type ReadableField,
 	type ReadSchema,
 	type UnsafeUnknownSchema,
-	type TreeBranch,
 	type TreeBranchEvents,
-	getInnerNode,
-	getKernel,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type TransactionConstraintAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -72,7 +67,7 @@ import {
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
-import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -276,16 +271,10 @@ export class SchematizingSimpleTreeView<
 		return this.flexTreeContext;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
@@ -297,21 +286,14 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		this.mountTransaction(params, false);
-		const transactionCallbackStatus = transaction();
-		return this.unmountTransaction(transactionCallbackStatus, params);
+		this.ensureUndisposed();
+		return this.checkout.runTransaction(transaction, params);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
-	 */
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
-	 */
 	public runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
 		params?: RunTransactionParams,
@@ -324,66 +306,8 @@ export class SchematizingSimpleTreeView<
 		>,
 		params: RunTransactionParams | undefined,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
-		this.mountTransaction(params, true);
-		const transactionCallbackStatus = await transaction();
-		return this.unmountTransaction(transactionCallbackStatus, params);
-	}
-
-	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.ensureUndisposed();
-		const { checkout } = this;
-		if (isAsync && checkout.transaction.size > 0) {
-			throw new UsageError(
-				"An asynchronous transaction cannot be started while another transaction is already in progress.",
-			);
-		}
-		checkout.pushLabelFrame(params?.label);
-		checkout.transaction.start();
-
-		// Validate preconditions before running the transaction callback.
-		addConstraintsToTransaction(
-			checkout,
-			false /* constraintsOnRevert */,
-			params?.preconditions,
-		);
-	}
-
-	private unmountTransaction<TSuccessValue, TFailureValue>(
-		transactionCallbackStatus:
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
-			| void,
-		params: RunTransactionParams | undefined,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		this.ensureUndisposed();
-		const { checkout } = this;
-		const rollback = transactionCallbackStatus?.rollback;
-		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-		)?.value;
-
-		if (rollback === true) {
-			checkout.popLabelFrame(true);
-			checkout.transaction.abort();
-			return value === undefined
-				? { success: false }
-				: { success: false, value: value as TFailureValue };
-		}
-
-		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraintsToTransaction(
-			checkout,
-			true /* constraintsOnRevert */,
-			transactionCallbackStatus?.preconditionsOnRevert,
-		);
-
-		checkout.popLabelFrame(false);
-		checkout.runWithTransactionLabel(() => {
-			checkout.transaction.commit();
-		}, params?.label);
-		return value === undefined
-			? { success: true }
-			: { success: true, value: value as TSuccessValue };
+		return this.checkout.runTransactionAsync(transaction, params);
 	}
 
 	private ensureUndisposed(): void {
@@ -585,95 +509,12 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
-		this.checkout.merge(getCheckout(context), disposeMerged);
+		this.checkout.merge(context, disposeMerged);
 	}
 
 	public rebaseOnto(context: TreeBranchAlpha): void {
-		getCheckout(context).rebase(this.checkout);
+		this.checkout.rebaseOnto(context);
 	}
 
 	// #endregion Branching
-}
-
-/**
- * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
- * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
- * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
- */
-export function getCheckout(context: TreeBranch): TreeCheckout {
-	if (context instanceof SchematizingSimpleTreeView) {
-		return context.checkout;
-	}
-	throw new UsageError("Unsupported context implementation");
-}
-
-/**
- * Adds constraints to a `checkout`'s pending transaction.
- *
- * @param checkout - The checkout's who's transaction will have the constraints added to it.
- * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
- * @param constraints - The constraints to add to the transaction.
- *
- * @see {@link RunTransactionParams.preconditions}.
- */
-export function addConstraintsToTransaction(
-	checkout: ITreeCheckout,
-	constraintsOnRevert: boolean,
-	constraints: readonly TransactionConstraintAlpha[] = [],
-): void {
-	for (const constraint of constraints) {
-		assertValidConstraint(constraint, constraintsOnRevert);
-		const constraintType = constraint.type;
-		switch (constraintType) {
-			case "nodeInDocument": {
-				const node = getInnerNode(constraint.node);
-				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
-				if (constraintsOnRevert) {
-					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
-				} else {
-					checkout.editor.addNodeExistsConstraint(node.anchorNode);
-				}
-				break;
-			}
-			case "noChange": {
-				if (constraintsOnRevert) {
-					checkout.editor.addNoChangeConstraintOnRevert();
-				} else {
-					checkout.editor.addNoChangeConstraint();
-				}
-				break;
-			}
-			default: {
-				unreachableCase(constraintType);
-			}
-		}
-	}
-}
-
-/**
- * Throws if the given {@link TransactionConstraintAlpha | transaction constraint} is not currently satisfied.
- */
-export function assertValidConstraint(
-	constraint: TransactionConstraintAlpha,
-	onRevert: boolean,
-): void {
-	switch (constraint.type) {
-		case "nodeInDocument": {
-			const nodeStatus = getKernel(constraint.node).getStatus();
-			if (nodeStatus !== TreeStatus.InDocument) {
-				const revertText = onRevert ? " on revert" : "";
-				throw new UsageError(
-					`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-				);
-			}
-			break;
-		}
-		case "noChange": {
-			// This constraint is always satisfied at the time of checking, since it just requires that no changes have been made since the transaction callback returned.
-			break;
-		}
-		default: {
-			unreachableCase(constraint);
-		}
-	}
 }
