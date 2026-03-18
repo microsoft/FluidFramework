@@ -32,19 +32,12 @@ RUN apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Optionally install Playwright CLI for AI agent workflows
-ARG INSTALL_PLAYWRIGHT_CLI=false
-RUN if [ "$INSTALL_PLAYWRIGHT_CLI" = "true" ]; then npm install -g @playwright/cli@latest; fi
-
-ARG INSTALL_AGENCY=false
-RUN if [ "$INSTALL_AGENCY" = "true" ]; then \
-        su node -c 'export HOME=/home/node; curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency'; \
-    fi
-
-# Add agency to PATH for all shells; use POSIX case syntax to avoid duplicate entries.
+# Optionally configure agency PATH for all shells (must run as root, before USER node).
 # /etc/profile.d/ covers bash/sh login shells; /etc/zsh/zshenv covers zsh (all invocation types).
 # Also hook into bash interactive shells via /etc/bash/bashrc.d or /etc/bash.bashrc as a fallback.
-RUN printf '%s\n' \
+# Use POSIX case syntax to avoid duplicate PATH entries.
+ARG INSTALL_AGENCY=false
+RUN if [ "$INSTALL_AGENCY" = "true" ]; then printf '%s\n' \
     'case ":${PATH}:" in' \
     '    *":$HOME/.config/agency/CurrentVersion:"*) ;;' \
     '    *) export PATH="$HOME/.config/agency/CurrentVersion:${PATH}" ;;' \
@@ -59,15 +52,20 @@ RUN printf '%s\n' \
            if ! grep -q 'agency/CurrentVersion' /etc/bash.bashrc; then \
                { printf '\n# Add agency to PATH if installed\n'; cat /etc/profile.d/agency.sh; } >> /etc/bash.bashrc; \
            fi; \
-       fi
+       fi; \
+    fi
 
 USER node
 
 # Ensure user-local install paths are on PATH for tools installed below
 ENV PATH="/home/node/.local/bin:/home/node/.cargo/bin:${PATH}"
 
-# Optionally install agency for AI agent workflows
-ARG INSTALL_AGENCY=false
+# Optionally install Playwright CLI
+ARG INSTALL_PLAYWRIGHT_CLI=false
+RUN if [ "$INSTALL_PLAYWRIGHT_CLI" = "true" ]; then npm install -g @playwright/cli@latest; fi
+
+# Optionally install agency (installs to $HOME/.config/agency, must run as node user)
+ARG INSTALL_AGENCY
 RUN if [ "$INSTALL_AGENCY" = "true" ]; then curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency; fi
 
 # Optionally install repoverlay
