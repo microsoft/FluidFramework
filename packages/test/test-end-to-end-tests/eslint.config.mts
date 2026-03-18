@@ -4,17 +4,16 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/explicit-function-return-type": "warn",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"prefer-arrow-callback": "off",
-			"import-x/no-nodejs-modules": ["error"],
+			"@typescript-eslint/explicit-module-boundary-types": "off",
+			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-restricted-imports": [
 				"error",
 				{
@@ -82,7 +81,37 @@ const config: Linter.Config[] = [
 					],
 				},
 			],
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-deprecated": "off",
+			"import-x/no-nodejs-modules": ["error"],
+			"no-void": "off",
+			"prefer-arrow-callback": "off",
+			"require-atomic-updates": "off",
+			"unicorn/catch-error-name": "off",
+			"unicorn/explicit-length-check": "off",
+			"unicorn/new-for-builtins": "off",
+			"unicorn/no-array-for-each": "off",
+			"unicorn/no-await-expression-member": "off",
+			"unicorn/no-await-in-promise-methods": "off",
+			"unicorn/no-lonely-if": "off",
+			"unicorn/no-negated-condition": "off",
+			"unicorn/no-new-array": "off",
+			"unicorn/no-null": "off",
+			"unicorn/no-unnecessary-await": "off",
+			"unicorn/no-useless-promise-resolve-reject": "off",
+			"unicorn/no-zero-fractions": "off",
+			"unicorn/prefer-node-protocol": "off",
+			"unicorn/prefer-optional-catch-binding": "off",
+			"unicorn/prefer-set-has": "off",
+			"unicorn/prefer-spread": "off",
+			"unicorn/switch-case-braces": "off",
+			"unicorn/text-encoding-identifier-case": "off",
+			"unicorn/throw-new-error": "off",
 		},
 	},
 	{

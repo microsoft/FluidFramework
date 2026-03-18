@@ -4,9 +4,25 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 import sharedConfig from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [...minimalDeprecated, ...sharedConfig];
+const config: Linter.Config[] = [
+	...recommended,
+	...sharedConfig,
+	{
+		rules: {
+			"@typescript-eslint/consistent-type-exports": "off",
+			"@typescript-eslint/consistent-type-imports": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"require-atomic-updates": "off",
+			"unicorn/prefer-query-selector": "off",
+			"unicorn/prefer-string-slice": "off",
+			"unicorn/prefer-top-level-await": "off",
+			"unicorn/switch-case-braces": "off",
+		},
+	},
+];
 
 export default config;

@@ -4,15 +4,18 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/dot-notation": "off",
 			"@typescript-eslint/explicit-function-return-type": "warn",
+			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-dynamic-delete": "off",
+			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-extraneous-class": "off",
 			"@typescript-eslint/no-implied-eval": "off",
 			"@typescript-eslint/no-invalid-this": "off",
@@ -33,10 +36,17 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/restrict-plus-operands": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
+			"depend/ban-dependencies": [
+				"error",
+				{
+					"allowed": ["lodash", "underscore"],
+				},
+			],
 			"guard-for-in": "off",
 			"import-x/no-duplicates": "off",
 			"import-x/no-extraneous-dependencies": "off",
 			"import-x/no-internal-modules": "off",
+			"jsdoc/require-description": "off",
 			"max-len": "off",
 			"no-bitwise": "off",
 			"no-new-func": "off",
@@ -53,14 +63,33 @@ const config: Linter.Config[] = [
 			"prefer-template": "off",
 			"quote-props": "off",
 			"tsdoc/syntax": "off",
+			"@typescript-eslint/consistent-type-imports": "off",
 			"unicorn/better-regex": "off",
-			"depend/ban-dependencies": [
-				"error",
-				{
-					"allowed": ["lodash", "underscore"],
-				},
-			],
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"unicorn/catch-error-name": "off",
+			"unicorn/explicit-length-check": "off",
+			"unicorn/new-for-builtins": "off",
+			"unicorn/no-array-for-each": "off",
+			"unicorn/no-console-spaces": "off",
+			"unicorn/no-lonely-if": "off",
+			"unicorn/no-negated-condition": "off",
+			"unicorn/no-new-array": "off",
+			"unicorn/no-null": "off",
+			"unicorn/no-static-only-class": "off",
+			"unicorn/no-this-assignment": "off",
+			"unicorn/no-useless-promise-resolve-reject": "off",
+			"unicorn/no-zero-fractions": "off",
+			"unicorn/prefer-default-parameters": "off",
+			"unicorn/prefer-export-from": "off",
+			"unicorn/prefer-includes": "off",
+			"unicorn/prefer-module": "off",
+			"unicorn/prefer-native-coercion-functions": "off",
+			"unicorn/prefer-number-properties": "off",
+			"unicorn/prefer-optional-catch-binding": "off",
+			"unicorn/prefer-reflect-apply": "off",
+			"unicorn/prefer-spread": "off",
+			"unicorn/prefer-string-slice": "off",
+			"unicorn/switch-case-braces": "off",
+			"unicorn/throw-new-error": "off",
 		},
 	},
 	// Migrated from .eslintignore
