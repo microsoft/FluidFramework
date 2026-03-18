@@ -45,11 +45,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			const errorDetail = e instanceof Error ? e.message : String(e);
 			this.traceError(`error generating done file content: ${errorDetail}`);
 			const message = `failed to generate incremental build cache for ${configPath}: ${errorDetail}`;
-			const error = new Error(message);
-			if (e instanceof Error) {
-				error.stack = e.stack;
-			}
-			throw error;
+			throw new Error(message, { cause: e instanceof Error ? e : undefined });
 		}
 	}
 
