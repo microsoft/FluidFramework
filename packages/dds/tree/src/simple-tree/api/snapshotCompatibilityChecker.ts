@@ -167,7 +167,7 @@ export function importCompatibilitySchemaSnapshot(
  * allowing for greater portability and easier testing.
  *
  * @input
- * @alpha
+ * @beta
  */
 export interface SnapshotFileSystem {
 	/**
@@ -245,7 +245,7 @@ export interface CombinedSchemaCompatibilityStatus {
 /**
  * The options for {@link snapshotSchemaCompatibility}.
  * @input
- * @alpha
+ * @beta
  */
 export interface SnapshotSchemaCompatibilityOptions {
 	/**
@@ -447,7 +447,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  * import fs from "node:fs";
  * import path from "node:path";
  *
- * import { snapshotSchemaCompatibility } from "@fluidframework/tree/alpha";
+ * import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
  *
  * // The TreeViewConfiguration the application uses, which contains the application's schema.
  * import { treeViewConfiguration } from "./schema.js";
@@ -485,7 +485,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  * but it would be nice to better unify how we do that versioning and format validation with our codecs.
  *
  * See snapshotCompatibilityChecker.example.mts for the large example included above.
- * @alpha
+ * @beta
  */
 export function snapshotSchemaCompatibility(
 	options: SnapshotSchemaCompatibilityOptions,

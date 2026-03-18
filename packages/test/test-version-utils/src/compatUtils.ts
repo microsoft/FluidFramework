@@ -175,7 +175,6 @@ export const getDataStoreFactory = createGetDataStoreFactoryFunction(
 	getDataRuntimeApi(pkgVersion),
 );
 
-// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */
@@ -214,7 +213,6 @@ export async function getVersionedTestObjectProviderFromApis(
 	return new TestObjectProvider(apis.loader.Loader, driver, containerFactoryFn);
 }
 
-// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */
@@ -242,7 +240,6 @@ export async function getVersionedTestObjectProvider(
 	);
 }
 
-// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */

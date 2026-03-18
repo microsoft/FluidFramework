@@ -100,6 +100,10 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly configs: IGarbageCollectorConfigs;
 
+	public get serializedConfigs(): string {
+		return JSON.stringify(this.configs);
+	}
+
 	public get shouldRunGC(): boolean {
 		return this.configs.gcAllowed;
 	}
@@ -333,15 +337,6 @@ export class GarbageCollector implements IGarbageCollector {
 			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
 			return { gcData: { gcNodes }, usedRoutes };
-		});
-
-		// Log all the GC options and the state determined by the garbage collector.
-		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GarbageCollectorLoaded",
-			gcConfigs: JSON.stringify(this.configs),
-			gcOptions: JSON.stringify(createParams.gcOptions),
-			...createParams.createContainerMetadata,
 		});
 	}
 
