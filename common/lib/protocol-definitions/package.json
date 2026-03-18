@@ -119,6 +119,7 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
 			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport)."
 		],
 		"onlyBuiltDependencies": [
@@ -135,6 +136,7 @@
 			]
 		},
 		"overrides": {
+			"diff@>=8 <9": "^8.0.3",
 			"js-yaml@<4": "^3.14.2",
 			"jws": "^3.2.3",
 			"oclif>@aws-sdk/client-cloudfront": "-",
