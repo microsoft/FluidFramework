@@ -75,7 +75,6 @@ export function visitDelta(
 	}
 	const detachConfig: PassConfig = {
 		func: detachPass,
-		isFirstPass: true,
 		latestRevision,
 		refreshers,
 		detachedFieldIndex,
@@ -99,7 +98,6 @@ export function visitDelta(
 	);
 	const attachConfig: PassConfig = {
 		func: attachPass,
-		isFirstPass: false,
 		latestRevision,
 		refreshers,
 		detachedFieldIndex,
@@ -338,12 +336,6 @@ interface PassConfig {
 	readonly func: Pass;
 
 	/**
-	 * True for the first (detach) pass, false for the second (attach) pass.
-	 * Used to ensure `fieldMarks` is called exactly once per field per delta visit.
-	 */
-	readonly isFirstPass: boolean;
-
-	/**
 	 * The latest revision tag associated with the given delta. This is used to keep track
 	 * of when repair data should be garbage collected.
 	 */
@@ -382,7 +374,12 @@ interface PassConfig {
 	readonly rootDestructions: Delta.DetachedNodeDestruction[];
 }
 
-type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
+type Pass = (
+	key: FieldKey,
+	delta: Delta.FieldChanges,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+) => void;
 
 function visitFieldMarks(
 	fields: Delta.FieldMap | undefined,
@@ -392,10 +389,7 @@ function visitFieldMarks(
 	if (fields !== undefined) {
 		for (const [key, field] of fields) {
 			visitor.enterField(key);
-			if (config.isFirstPass) {
-				visitor.fieldMarks?.(key, field.marks);
-			}
-			config.func(field, visitor, config);
+			config.func(key, field, visitor, config);
 			visitor.exitField(key);
 		}
 	}
@@ -420,10 +414,12 @@ function visitNode(
  * - Executes detaches (bottom-up)
  */
 function detachPass(
+	key: FieldKey,
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
 ): void {
+	visitor.fieldMarks?.(key, fieldChanges.marks);
 	let index = 0;
 	for (const mark of fieldChanges.marks) {
 		if (mark.fields !== undefined) {
@@ -530,6 +526,7 @@ function collectDestroys(
  * - Executes attaches (top-down) applying nested changes on the attached nodes
  */
 function attachPass(
+	_key: FieldKey,
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,

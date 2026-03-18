@@ -277,30 +277,23 @@ export const treeNodeApi: TreeNodeApi = {
  * - A mark with only `count` (no attach/detach) → `"retain"` (elements unchanged at this level)
  * - A mark with only `attach` → `"insert"` (new elements added)
  * - A mark with only `detach` → `"remove"` (elements removed)
- * - A mark with both `attach` and `detach` → `"remove"` + `"insert"` (replacement)
+ * - A mark with both `attach` and `detach` → `"remove"` + `"insert"`
  *
  * @privateRemarks
- * The `attach && detach` branch is defensive: the sequence-field encoder does not currently emit
- * marks with both set for array (EmptyKey) fields, so this path is unreachable in practice today.
- * It is retained in case future encoder changes produce such marks.
+ * The case where both `attach` and `detach` are set is unreachable today: the sequence-field
+ * encoder never emits such marks for array (EmptyKey) fields. It is handled defensively.
  */
 function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDeltaOp[] {
 	const ops: ArrayNodeDeltaOp[] = [];
 	for (const mark of marks) {
-		if (mark.attach !== undefined && mark.detach !== undefined) {
-			// Replacement: content removed and new content attached in the same position.
-			// The `Delta.Mark` format allows both to be set simultaneously (e.g. when a slot's
-			// content is atomically swapped), even though the sequence-field encoder does not
-			// currently emit such marks for array (EmptyKey) fields.  Handle it defensively.
+		if (mark.detach !== undefined) {
 			ops.push({ type: "remove", count: mark.count });
-			ops.push({ type: "insert", count: mark.count });
-		} else if (mark.attach !== undefined) {
+		}
+		if (mark.attach !== undefined) {
 			ops.push({ type: "insert", count: mark.count });
 		} else if (mark.detach === undefined) {
 			// Neither attach nor detach: elements retained (may have nested changes in mark.fields).
 			ops.push({ type: "retain", count: mark.count });
-		} else {
-			ops.push({ type: "remove", count: mark.count });
 		}
 	}
 	return ops;

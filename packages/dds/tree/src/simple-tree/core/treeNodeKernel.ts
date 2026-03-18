@@ -461,20 +461,16 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	#emit(
-		...args:
-			| [
-					eventName: "childrenChangedAfterBatch",
-					arg: {
-						changedFields: ReadonlySet<FieldKey>;
-						fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
-					},
-			  ]
-			| [eventName: "subtreeChangedAfterBatch"]
+		eventName: keyof KernelEvents,
+		arg?: {
+			changedFields: ReadonlySet<FieldKey>;
+			fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
+		},
 	): void {
 		this.#assertNotDisposed();
-		const [eventName, arg] = args;
 		switch (eventName) {
 			case "childrenChangedAfterBatch": {
+				assert(arg !== undefined, "childrenChangedAfterBatch requires arg");
 				return this.#handleChildrenChangedAfterBatch(arg.changedFields, arg.fieldMarks);
 			}
 			case "subtreeChangedAfterBatch": {
