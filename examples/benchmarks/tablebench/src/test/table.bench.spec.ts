@@ -5,13 +5,20 @@
 
 import {
 	BenchmarkType,
+	type CollectedData,
+	ValueType,
 	benchmark,
-	benchmarkCustom,
+	benchmarkIt,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions/legacy";
 import { SharedMatrix } from "@fluidframework/matrix/legacy";
-import { type ITree, NodeFromSchema, TreeViewConfiguration } from "@fluidframework/tree";
+import {
+	type ITree,
+	NodeFromSchema,
+	TreeAlpha,
+	TreeViewConfiguration,
+} from "@fluidframework/tree/alpha";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
 import { Table, generateTable } from "../index.js";
@@ -87,19 +94,22 @@ describe("Table", () => {
 				processAllMessages();
 			},
 			benchmarkFn: () => {
-				for (const row of table) {
-					const unitsSold = row["Units Sold"];
-					const unitPrice = row["Unit Price"];
-					const unitCost = row["Unit Cost"];
+				// Batching these updates in a transaction gives a about a 3x performance boost
+				TreeAlpha.context(table).runTransaction(() => {
+					for (const row of table) {
+						const unitsSold = row["Units Sold"];
+						const unitPrice = row["Unit Price"];
+						const unitCost = row["Unit Cost"];
 
-					const totalRevenue = unitsSold * unitPrice;
-					const totalCost = unitsSold * unitCost;
-					const totalProfit = totalRevenue - totalCost;
+						const totalRevenue = unitsSold * unitPrice;
+						const totalCost = unitsSold * unitCost;
+						const totalProfit = totalRevenue - totalCost;
 
-					row["Total Revenue"] = totalRevenue;
-					row["Total Cost"] = totalCost;
-					row["Total Profit"] = totalProfit;
-				}
+						row["Total Revenue"] = totalRevenue;
+						row["Total Cost"] = totalCost;
+						row["Total Profit"] = totalProfit;
+					}
+				});
 				processAllMessages();
 			},
 		});
@@ -107,9 +117,6 @@ describe("Table", () => {
 
 	describe(`@Size of ${numRows} rows`, () => {
 		describe("attachment summary size", () => {
-			let tree: ITree;
-			let matrix: SharedMatrix;
-
 			/**
 			 * Transpose a table in row-major "array of objects" format to column-major "object of arrays" format.
 			 * The column-major "object of arrays" form removes the redundancy of repeating column names in each row.
@@ -136,41 +143,44 @@ describe("Table", () => {
 
 			const rowMajorJsonBytes = measureEncodedLength(JSON.stringify(data));
 			const colMajorJsonBytes = measureEncodedLength(JSON.stringify(transposeTable(data)));
-			let summaryBytes: number;
 
-			benchmarkCustom({
+			function summarySizeResult(bytes: number): CollectedData {
+				return [
+					{
+						name: `summaryBytes`,
+						value: bytes,
+						units: `bytes`,
+						type: ValueType.SmallerIsBetter,
+						significance: `Primary` as const,
+					},
+					{ name: `vs row-major:`, value: bytes / rowMajorJsonBytes },
+					{ name: `vs col-major:`, value: bytes / colMajorJsonBytes },
+				] as const;
+			}
+
+			benchmarkIt({
 				only: false,
-				type: BenchmarkType.Measurement,
+				type: BenchmarkType.Perspective,
 				title: `Row-major JSON (Typical Database Baseline)`,
-				run: async (reporter) => {
-					summaryBytes = rowMajorJsonBytes;
-					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
-					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
-				},
+				run: () => summarySizeResult(rowMajorJsonBytes),
 			});
 
-			benchmarkCustom({
+			benchmarkIt({
 				only: false,
-				type: BenchmarkType.Measurement,
+				type: BenchmarkType.Perspective,
 				title: `Column-major JSON (Compact REST Baseline)`,
-				run: async (reporter) => {
-					summaryBytes = colMajorJsonBytes;
-					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
-					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
-				},
+				run: () => summarySizeResult(colMajorJsonBytes),
 			});
 
-			benchmarkCustom({
+			benchmarkIt({
 				only: false,
 				type: BenchmarkType.Measurement,
 				title: `SharedMatrix`,
-				run: async (reporter) => {
+				run: () => {
 					const columnNames = Object.keys(data[0]);
 
 					const { channel, processAllMessages } = create(SharedMatrix.getFactory());
-					matrix = channel as SharedMatrix;
+					const matrix = channel as SharedMatrix;
 					matrix.insertCols(0, columnNames.length);
 					matrix.insertRows(0, data.length);
 
@@ -182,31 +192,23 @@ describe("Table", () => {
 					}
 
 					processAllMessages();
-					summaryBytes = measureAttachmentSummary(channel);
-
-					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
-					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
+					return summarySizeResult(measureAttachmentSummary(channel));
 				},
 			});
 
-			benchmarkCustom({
+			benchmarkIt({
 				only: false,
 				type: BenchmarkType.Measurement,
 				title: `SharedTree`,
-				run: async (reporter) => {
+				run: () => {
 					const { channel, processAllMessages } = create(SharedTree.getFactory());
-					tree = channel;
+					const tree = channel as ITree;
 
 					const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
 					view.initialize(data);
 
 					processAllMessages();
-					summaryBytes = measureAttachmentSummary(channel);
-
-					reporter.addMeasurement(`summaryBytes`, summaryBytes);
-					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
-					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
+					return summarySizeResult(measureAttachmentSummary(channel));
 				},
 			});
 		});
