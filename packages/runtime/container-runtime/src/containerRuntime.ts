@@ -475,6 +475,18 @@ export interface ContainerRuntimeOptions {
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
 	readonly createBlobPayloadPending: true | undefined;
+
+	/**
+	 * Controls automatic batch flushing during staging mode.
+	 * Normal turn-based/async flush scheduling is suppressed while in staging mode
+	 * until the accumulated batch reaches this many ops, at which point the batch
+	 * is flushed. Incoming ops always break the current batch regardless of this setting.
+	 *
+	 * Set to Infinity to only break batches on system events (incoming ops).
+	 *
+	 * @defaultValue 1000
+	 */
+	readonly stagingModeAutoFlushThreshold: number;
 }
 
 /**
@@ -512,18 +524,6 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching: boolean;
-
-	/**
-	 * Controls automatic batch flushing during staging mode.
-	 * Normal turn-based/async flush scheduling is suppressed while in staging mode
-	 * until the accumulated batch reaches this many ops, at which point the batch
-	 * is flushed. Incoming ops always break the current batch regardless of this setting.
-	 *
-	 * Set to Infinity to only break batches on system events (incoming ops).
-	 *
-	 * @defaultValue 1000
-	 */
-	readonly stagingModeAutoFlushThreshold?: number;
 }
 
 /**
@@ -983,6 +983,7 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
+			stagingModeAutoFlushThreshold: defaultStagingModeAutoFlushThreshold,
 		};
 
 		const defaultConfigs = {
@@ -1008,7 +1009,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
-			stagingModeAutoFlushThreshold,
+			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -4810,9 +4811,7 @@ export class ContainerRuntime
 		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
 		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
 		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
-		// sequence number changes. By default it throws if unexpected changes are detected; it only
-		// forces a flush as a safety net when partial-batch flushing is enabled via
-		// Fluid.ContainerRuntime.DisableFlushBeforeProcess.
+		// sequence number changes and throws if unexpected changes are detected.
 		if (
 			this.inStagingMode &&
 			this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold
