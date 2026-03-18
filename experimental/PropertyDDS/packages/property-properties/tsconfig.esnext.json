@@ -3,5 +3,7 @@
 	"compilerOptions": {
 		"outDir": "./lib",
 		"module": "esnext",
+		// bundler is required to allow resolution of property-changeset along ESM lines.
+		"moduleResolution": "bundler",
 	},
 }
