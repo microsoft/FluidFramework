@@ -24,7 +24,6 @@ const config: Linter.Config[] = [
 					"devDependencies": ["src/utils.ts", "src/test/**"],
 				},
 			],
-			"import-x/no-nodejs-modules": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/error-message": "off",
 			"unicorn/no-array-reduce": "off",

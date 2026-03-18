@@ -16,7 +16,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-nodejs-modules": [
 				"error",
 				{

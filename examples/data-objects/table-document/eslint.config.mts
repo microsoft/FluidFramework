@@ -20,7 +20,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/prefer-nullish-coalescing": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@typescript-eslint/unbound-method": "off",
 			"import-x/no-deprecated": "off",
 			"unicorn/no-new-array": "off",
 			"unicorn/prefer-code-point": "off",

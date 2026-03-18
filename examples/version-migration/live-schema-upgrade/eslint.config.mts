@@ -14,8 +14,6 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/consistent-type-exports": "off",
 			"@typescript-eslint/consistent-type-imports": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
 			"require-atomic-updates": "off",
 			"unicorn/prefer-query-selector": "off",
 			"unicorn/prefer-string-slice": "off",

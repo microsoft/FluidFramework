@@ -16,7 +16,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-nodejs-modules": ["error"],
 			"unicorn/filename-case": [
 				"error",
@@ -30,8 +29,8 @@ const config: Linter.Config[] = [
 			],
 			"unicorn/no-useless-promise-resolve-reject": "off",
 			"unicorn/prefer-export-from": "off",
-			"unicorn/prefer-set-has": "off",
 			"unicorn/prefer-node-protocol": "off",
+			"unicorn/prefer-set-has": "off",
 			"unicorn/prefer-string-slice": "off",
 		},
 	},

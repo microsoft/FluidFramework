@@ -11,6 +11,8 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/consistent-type-exports": "off",
+			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/explicit-function-return-type": "warn",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-explicit-any": "off",
@@ -27,8 +29,6 @@ const config: Linter.Config[] = [
 			],
 			"no-void": "off",
 			"tsdoc/syntax": "off",
-			"@typescript-eslint/consistent-type-exports": "off",
-			"@typescript-eslint/consistent-type-imports": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
 			"unicorn/no-array-for-each": "off",

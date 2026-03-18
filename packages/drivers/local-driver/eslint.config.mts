@@ -18,7 +18,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-nodejs-modules": "off",
 			"require-atomic-updates": "off",
 			"unicorn/no-array-for-each": "off",
 			"unicorn/no-array-method-this-argument": "off",
