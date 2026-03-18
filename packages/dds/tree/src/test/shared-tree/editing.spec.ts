@@ -3476,7 +3476,7 @@ describe("Editing", () => {
 			});
 
 			it("Should not be violated when there are multiple reverts 2", () => {
-				const tree = makeTreeFromJsonSequence([{"A": 1, "B": 2, "C": 3}], {
+				const tree = makeTreeFromJsonSequence([{ "A": 1, "B": 2, "C": 3 }], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
 				const branch = tree.branch();
@@ -3484,23 +3484,41 @@ describe("Editing", () => {
 
 				branch.transaction.start();
 				branch.editor.addNoChangeConstraintOnRevert();
-				branch.editor.move({ parent: rootNode, field: brand("A") }, 0, 1, { parent: rootNode, field: brand("X") }, 0);
+				branch.editor.move(
+					{ parent: rootNode, field: brand("A") },
+					0,
+					1,
+					{ parent: rootNode, field: brand("X") },
+					0,
+				);
 				branch.transaction.commit();
 
 				branch.transaction.start();
 				branch.editor.addNoChangeConstraintOnRevert();
-				branch.editor.move({ parent: rootNode, field: brand("B") }, 0, 1, { parent: rootNode, field: brand("Y") }, 0);
+				branch.editor.move(
+					{ parent: rootNode, field: brand("B") },
+					0,
+					1,
+					{ parent: rootNode, field: brand("Y") },
+					0,
+				);
 				branch.transaction.commit();
 
 				branch.transaction.start();
 				branch.editor.addNoChangeConstraintOnRevert();
-				branch.editor.move({ parent: rootNode, field: brand("C") }, 0, 1, { parent: rootNode, field: brand("Z") }, 0);
+				branch.editor.move(
+					{ parent: rootNode, field: brand("C") },
+					0,
+					1,
+					{ parent: rootNode, field: brand("Z") },
+					0,
+				);
 				branch.transaction.commit();
 
 				undoStack.pop()?.revert();
 				undoStack.pop()?.revert();
 
-				expectJsonTree(branch, [{"X": 1, "B": 2, "C": 3}]);
+				expectJsonTree(branch, [{ "X": 1, "B": 2, "C": 3 }]);
 				unsubscribe();
 			});
 		});
