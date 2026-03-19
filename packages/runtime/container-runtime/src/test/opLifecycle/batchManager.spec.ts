@@ -12,6 +12,7 @@ import {
 } from "../../messageTypes.js";
 import type { IBatchMetadata } from "../../metadata.js";
 import {
+	addBatchMetadata,
 	BatchManager,
 	estimateSocketSize,
 	generateBatchId,
@@ -68,7 +69,7 @@ describe("BatchManager", () => {
 				/* reentrant */ false,
 			);
 
-			const batch = batchManager.popBatch(batchId);
+			const batch = addBatchMetadata(batchManager.popBatch(), batchId);
 			assert.deepEqual(
 				batch.messages.map((m) => m.metadata as IBatchMetadata),
 				[
@@ -82,7 +83,7 @@ describe("BatchManager", () => {
 				{ runtimeOp: op(), referenceSequenceNumber: 0 },
 				/* reentrant */ false,
 			);
-			const singleOpBatch = batchManager.popBatch(batchId);
+			const singleOpBatch = addBatchMetadata(batchManager.popBatch(), batchId);
 			assert.deepEqual(
 				singleOpBatch.messages.map((m) => m.metadata as IBatchMetadata),
 				[
