@@ -2737,10 +2737,11 @@ export class ContainerRuntime
 		this.emitDirtyDocumentEvent = false;
 
 		try {
-			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
-			// the corresponding ranges resubmitted. This immediately takes all unfinalized ranges from
-			// the compressor and flushes them as a standalone batch, before replay begins.
-			this.outbox.flushUnfinalizedIdRanges();
+			// Signal to the outbox that the next JIT ID allocation should use the comprehensive
+			// unfinalized range (instead of incremental). The range will be prepended to the
+			// first replayed batch, preserving batch structure for fork detection.
+			this.outbox.requestUnfinalizedIdRanges();
+			//* CLAUDE: We need to handle the case where replayPendingStates submits to ops.
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();

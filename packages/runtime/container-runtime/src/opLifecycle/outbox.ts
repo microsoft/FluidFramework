@@ -209,6 +209,7 @@ export class Outbox {
 	private readonly blobAttachBatch: BatchManager;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
+	private useUnfinalizedRangeOnNextFlush = false;
 
 	/**
 	 * Track the number of ops which were detected to have a mismatched
@@ -347,20 +348,12 @@ export class Outbox {
 	}
 
 	/**
-	 * Immediately takes all unfinalized ID ranges from the compressor and flushes them
-	 * as a standalone batch. Used during reconnect to resubmit comprehensive ID ranges
-	 * before replaying pending states.
+	 * Signals that on the next JIT ID allocation, the outbox should use
+	 * `takeUnfinalizedCreationRange()` (comprehensive) instead of `takeNextCreationRange()` (incremental).
+	 * Used during reconnect so the first replayed batch includes all outstanding ID ranges.
 	 */
-	public flushUnfinalizedIdRanges(): void {
-		const idAllocMsg = this.params.generateIdAllocationOp(/* useUnfinalizedRange */ true);
-		if (idAllocMsg === undefined) {
-			return;
-		}
-
-		//* Assert this, or just prepend anyway
-		// Outbox should be empty at reconnect time (before replay starts)
-		this.addMessageToBatchManager(this.mainBatch, idAllocMsg);
-		this.flushInternal({ batchManager: this.mainBatch });
+	public requestUnfinalizedIdRanges(): void {
+		this.useUnfinalizedRangeOnNextFlush = true;
 	}
 
 	private addMessageToBatchManager(
@@ -403,7 +396,6 @@ export class Outbox {
 	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
 		const allBatchesEmpty = this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
-			//* CLAUDE: Double-check this reasoning. Any concerns about empty batches given ID Allocation ops new placement?
 			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
 			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
 			// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
@@ -415,20 +407,19 @@ export class Outbox {
 			return;
 		}
 
-		// CLAUDE: What if we always try JIT in both calls to flushInternal?
-		// Determine which batch gets the JIT ID allocation op prepended.
-		// blobAttach flushes first, so prepend there if non-empty; otherwise prepend to main.
-		const generateJITForBlobAttach = !this.blobAttachBatch.empty;
+		// JIT ID allocation: generateJIT=true on both calls. takeNextCreationRange() is
+		// cumulative, so the first non-empty batch captures all pending IDs. The second
+		// call will return undefined (no remaining IDs). This is simpler than picking a target.
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
 			disableGroupedBatching: true,
 			resubmitInfo,
-			generateJIT: generateJITForBlobAttach,
+			generateJIT: true,
 		});
 		this.flushInternal({
 			batchManager: this.mainBatch,
 			resubmitInfo,
-			generateJIT: !generateJITForBlobAttach,
+			generateJIT: true,
 		});
 	}
 
@@ -505,7 +496,9 @@ export class Outbox {
 		// ID ranges aren't lost during rebase (since reSubmit drops IdAllocation ops).
 		// Only generate for non-staged batches — ID alloc ops are always non-staged.
 		if (generateJIT === true && !staged) {
-			const idAllocMsg = this.params.generateIdAllocationOp(/* useUnfinalizedRange */ false);
+			const useUnfinalized = this.useUnfinalizedRangeOnNextFlush;
+			this.useUnfinalizedRangeOnNextFlush = false;
+			const idAllocMsg = this.params.generateIdAllocationOp(useUnfinalized);
 			if (idAllocMsg !== undefined) {
 				rawBatch = { ...rawBatch, messages: [idAllocMsg, ...rawBatch.messages] };
 			}
