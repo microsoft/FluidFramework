@@ -1782,6 +1782,75 @@ describe("sharedTreeView", () => {
 			});
 		});
 	});
+
+	describe("fork breaker isolation", () => {
+		const sf = new SchemaFactory("fork isolation test schema");
+		const config = new TreeViewConfiguration({ schema: sf.number });
+
+		it("fork has a distinct breaker from its parent", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork = view.fork();
+			assert.notEqual(view.checkout.breaker, fork.checkout.breaker);
+			fork.dispose();
+		});
+
+		it("breaking a fork does not break its parent", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork = view.fork();
+
+			// Break the fork by calling initialize() on an already-initialized tree.
+			assert.throws(
+				() => fork.initialize(10),
+				validateUsageError("Tree cannot be initialized more than once."),
+			);
+
+			// Fork should now be broken.
+			assert.throws(() => fork.root, validateUsageError(/invalid state/));
+
+			// Parent should still be usable.
+			assert.equal(view.root, 5);
+		});
+
+		it("breaking a fork does not break sibling forks", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork1 = view.fork();
+			const fork2 = view.fork();
+
+			// Break fork1.
+			assert.throws(
+				() => fork1.initialize(10),
+				validateUsageError("Tree cannot be initialized more than once."),
+			);
+			assert.throws(() => fork1.root, validateUsageError(/invalid state/));
+
+			// Sibling fork should still be usable.
+			assert.equal(fork2.root, 5);
+			fork2.dispose();
+		});
+
+		it("breaking a transitive fork does not break its ancestors", () => {
+			const view = getView(config);
+			view.initialize(5);
+			const fork1 = view.fork();
+			const fork2 = fork1.checkout.branch().viewWith(config);
+
+			// Break the transitive fork.
+			assert.throws(
+				() => fork2.initialize(10),
+				validateUsageError("Tree cannot be initialized more than once."),
+			);
+			assert.throws(() => fork2.root, validateUsageError(/invalid state/));
+
+			// fork1 should still be usable.
+			assert.equal(fork1.root, 5);
+			// view should still be usable.
+			assert.equal(view.root, 5);
+			fork1.dispose();
+		});
+	});
 });
 
 const defaultSf = new SchemaFactory("Checkout and view test schema");

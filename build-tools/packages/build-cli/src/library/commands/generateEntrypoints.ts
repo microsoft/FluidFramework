@@ -21,6 +21,7 @@ import { unscopedPackageNameString } from "./constants.js";
 
 interface Options {
 	readonly mainEntrypoint: string;
+	readonly resolutionConditions: string[];
 	readonly outDir: string;
 	readonly outFilePrefix: string;
 
@@ -71,6 +72,7 @@ interface Options {
  */
 export const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
+	resolutionConditions: [],
 	outDir: "./lib",
 	outFilePrefix: "",
 	outFileAlpha: "alpha",
@@ -96,6 +98,11 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			description: "Main entrypoint file containing all untrimmed exports.",
 			default: optionDefaults.mainEntrypoint,
 			exists: true,
+		}),
+		resolutionConditions: Flags.string({
+			description: `Import resolution conditions used while resolving imports. If neither "import" nor "require" are specified, one of those will be inferred based on mainEntrypoint file extension and package.json "type" field.`,
+			multiple: true,
+			default: optionDefaults.resolutionConditions,
 		}),
 		outDir: Flags.directory({
 			description: "Directory to emit entrypoint declaration files.",
@@ -148,7 +155,7 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint, node10TypeCompat } = this.flags;
+		const { mainEntrypoint, resolutionConditions, node10TypeCompat } = this.flags;
 
 		const packageJson = await readPackageJson();
 
@@ -186,9 +193,35 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
+		const customConditions = [...resolutionConditions];
+		const conditionsPresent =
+			(customConditions.includes("import") ? 1 : 0) +
+			(customConditions.includes("require") ? 2 : 0);
+		if (conditionsPresent === 3) {
+			// Someone could call using both "import" and "require" conditions,
+			// to say they just don't care and will take whatever is found.
+			// That is unlikely, so warn about this just in case.
+			this.logger.warning(
+				'both "import" and "require" --resolutionConditions flags given; results may be unstable',
+			);
+		} else if (conditionsPresent === 0) {
+			const inferredImportCondition = inferImportConditionFromFilePath(
+				mainEntrypoint,
+				packageJson,
+			);
+			this.logger.info(`Inferred import resolution condition "${inferredImportCondition}"`);
+			customConditions.push(inferredImportCondition);
+		}
+
 		const commandLine = `flub generate entrypoints${this.commandLineArgs()}`;
 		promises.push(
-			generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, commandLine, this.logger),
+			generateEntrypoints(
+				mainEntrypoint,
+				customConditions,
+				mapApiTagLevelToOutput,
+				commandLine,
+				this.logger,
+			),
 		);
 
 		if (node10TypeCompat) {
@@ -211,6 +244,26 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 async function readPackageJson(): Promise<PackageJson> {
 	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
 	return JSON.parse(packageJson) as PackageJson;
+}
+
+function inferImportConditionFromFilePath(
+	filePath: string,
+	packageJson: PackageJson,
+): "import" | "require" {
+	const ext = path.extname(filePath);
+	// Following matches allow for the extension to be longer as in .mjsx.
+	// The import part is really the .m or .c for selecting one over the other
+	// and the [jt]s helps filter to expectations. Since this is an inference
+	// and best guess it is okay if the guess is wrong as the caller can be
+	// more prescriptive and avoid inference altogether.
+	if (ext.match(/^\.m[jt]s/) !== null) {
+		return "import";
+	}
+	if (ext.match(/^\.c[jt]s/i) !== null) {
+		return "require";
+	}
+
+	return packageJson.type === "module" ? "import" : "require";
 }
 
 /**
@@ -290,7 +343,7 @@ const apiLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
 ] as const;
 
 function getOutputConfiguration(
-	flags: Options & { node10TypeCompat: boolean },
+	flags: Pick<Options, `out${string}` & keyof Options> & { node10TypeCompat: boolean },
 	packageJson: PackageJson,
 	logger?: CommandLogger,
 ): {
@@ -380,13 +433,35 @@ function getOutputConfiguration(
  * @param commandLine - command line to extract from
  * @param argQuery - record of arguments to read (keys) with default values
  * @returns record of argument values extracted or given default value
+ *
+ * @remarks
+ * This functionality only supports arguments that are "--flagName single-value" pairs.
+ * In practice, other values that come through argQuery are preserved (default values
+ * used), but no caller should rely on unsupported arguments. Thus the return type is
+ * trimmed to those and also only those named with "out" prefix.
+ *
  * @privateRemarks Exported for testing.
  */
-export function readArgValues(commandLine: string, argQuery: Options): Options {
+export function readArgValues(
+	commandLine: string,
+	argQuery: Options,
+): Pick<
+	Options,
+	// This selects only "out" prefixed keys whose values are `string | undefined`.
+	`out${string}` & keyof Options extends infer Key
+		? Options[Key & keyof Options] extends string | undefined
+			? Key
+			: never
+		: never
+> {
 	const args = commandLine.split(" ");
 
-	const argValues: Record<string, string | undefined> = {};
-	for (const argName of Object.keys(argQuery)) {
+	const argValues: Record<`out${string}`, string> = {};
+	for (const argName of Object.keys(argQuery).filter(
+		(key): key is `out${string}` =>
+			key.startsWith("out") &&
+			["string", "undefined"].includes(typeof argQuery[key as keyof Options]),
+	)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
 		if (0 < indexOfArgValue && indexOfArgValue < args.length) {
 			argValues[argName] = args[indexOfArgValue];
@@ -443,11 +518,16 @@ function generatedHeader(commandLine: string): string {
  * Generate "rollup" entrypoints for the given main entrypoint file.
  *
  * @param mainEntrypoint - path to main entrypoint file
+ * @param customConditions - custom conditions to use for import resolution.
+ * ts-morph doesn't configure TypeScript to use import conditions in module
+ * context (https://github.com/dsherret/ts-morph/issues/1667), so, set
+ * "import" or "require" conditions explicitly.
  * @param mapApiTagLevelToOutput - level oriented ApiTag to output file mapping
  * @param log - logger
  */
 async function generateEntrypoints(
 	mainEntrypoint: string,
+	customConditions: string[],
 	mapApiTagLevelToOutput: ReadonlyMap<ApiLevel, ExportData>,
 	commandLineForContentHeader: string,
 	log: CommandLogger,
@@ -468,14 +548,14 @@ async function generateEntrypoints(
 		// part of its setting may be confusing to document and keep tidy with dual-emit.
 		compilerOptions: {
 			module: ModuleKind.Node16,
-
 			// Without this, JSX files are not properly handled by ts-morph. "React" is the
 			// value we use in our base config, so it should be a safe value.
 			jsx: 2 /* JSXEmit.React */,
+			customConditions,
 		},
 	});
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
-	const exports = getApiExports(mainSourceFile);
+	const exports = getApiExports(mainSourceFile, "throwForMissing", log);
 
 	const packageDocumentationHeader = getPackageDocumentationText(mainSourceFile);
 	const newFileHeader = `${generatedHeader(commandLineForContentHeader)}${packageDocumentationHeader}`;

@@ -6,6 +6,7 @@
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
+import type { Breakable } from "../../util/index.js";
 import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	type Anchor,
@@ -77,11 +78,13 @@ export interface IForestSubscription {
 	readonly anchors: AnchorSet;
 
 	/**
-	 * Create an independent copy of this forest, that uses the provided schema and anchors.
+	 * Create an independent copy of this forest, that uses the provided schema.
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
+	 * @param breaker - If provided, the cloned forest will use this breaker instead of inheriting the original's.
+	 * This is useful when creating a fork that should have fault isolation from the original.
 	 */
-	clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): IEditableForest;
+	clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): IEditableForest;
 
 	/**
 	 * Generate a TreeChunk[] for the current field (and its children) of cursor.
