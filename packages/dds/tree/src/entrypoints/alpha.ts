@@ -252,6 +252,7 @@ export {
 	TransactionResultFailed, 
 	TransactionResultSuccess, 
 	TreeAlpha, 
+	TreeArrayNodeAlpha, 
 	TreeBranchAlpha, 
 	TreeBranchEvents, 
 	TreeBranchFork, 
