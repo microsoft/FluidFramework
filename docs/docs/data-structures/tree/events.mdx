@@ -41,7 +41,7 @@ on<K extends keyof TreeChangeEvents>(
 
 See the API docs for each event for further details.
 
-`Tree.on()` returns an unsubscribe function, typically called during cleanup:
+`Tree.on()` returns an unsubscribe function, which should be called any time the need for callback ends before the node is [deleted](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#deleted-enummember) (Not just [removed]](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#removed-enummember).
 
 ```typescript
 const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
