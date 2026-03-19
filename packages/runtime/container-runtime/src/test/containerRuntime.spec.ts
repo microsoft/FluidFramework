@@ -1158,7 +1158,7 @@ describe("Runtime", () => {
 			const getMockPendingStateManager = (): PendingStateManager => {
 				let pendingMessages = 0;
 				return {
-					replayPendingStates: () => {},
+					replayPendingStates: () => [],
 					hasPendingMessages: (): boolean => pendingMessages > 0,
 					hasPendingUserChanges: (): boolean => pendingMessages > 0,
 					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {

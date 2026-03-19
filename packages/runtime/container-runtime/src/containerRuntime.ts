@@ -258,6 +258,7 @@ import {
 	type IPendingLocalState,
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
+	type IPendingMessage,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
@@ -3642,7 +3643,7 @@ export class ContainerRuntime
 		this.stagingModeAutoFlushCount = 0;
 
 		const exitStagingMode = (
-			discardOrCommit: (event: PerformanceEvent) => void,
+			discardOrCommit: () => IPendingMessage["batchInfo"][],
 			exitMethod: "commit" | "discard",
 		): void => {
 			try {
@@ -3664,8 +3665,13 @@ export class ContainerRuntime
 						// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
 						// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
 						this.submitIdAllocationOpIfNeeded({ staged: false });
-						discardOrCommit(event);
-
+						const batchInfos = discardOrCommit();
+						event.reportProgress({
+							batches: batchInfos.length,
+							batchesOverThreshold: batchInfos.filter(
+								(b) => b.length > this.stagingModeAutoFlushThreshold,
+							).length,
+						});
 						this.channelCollection.notifyStagingMode(false);
 					},
 				);
@@ -3678,19 +3684,22 @@ export class ContainerRuntime
 
 		const stageControls: StageControlsInternal = {
 			discardChanges: () =>
-				exitStagingMode((_event) => {
+				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
-					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-						this.rollbackStagedChange(runtimeOp, localOpMetadata);
-					});
+					const batchInfos = this.pendingStateManager.popStagedBatches(
+						({ runtimeOp, localOpMetadata }) => {
+							this.rollbackStagedChange(runtimeOp, localOpMetadata);
+						},
+					);
 					this.updateDocumentDirtyState();
+					return batchInfos;
 				}, "discard"),
 			commitChanges: (options) => {
 				const { squash } = { ...defaultStagingCommitOptions, ...options };
-				exitStagingMode((_event) => {
+				exitStagingMode(() => {
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
-					this.pendingStateManager.replayPendingStates({
+					return this.pendingStateManager.replayPendingStates({
 						committingStagedBatches: true,
 						squash,
 					});
