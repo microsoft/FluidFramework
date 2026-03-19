@@ -1431,11 +1431,6 @@ export class ContainerRuntime
 	private readonly _flushMode: FlushMode;
 	private readonly stagingModeAutoFlushThreshold: number;
 	/**
-	 * Tracks auto-flush events during the current staging mode session.
-	 * Reset on enter, incremented when threshold is hit, reported on exit.
-	 */
-	private stagingModeAutoFlushCount: number = 0;
-	/**
 	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
 	 * where the same local state is pending in two different running Containers, each of
 	 * which is trying to ensure it's persisted.
@@ -3651,7 +3646,6 @@ export class ContainerRuntime
 		// Make sure Outbox is empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
-		this.stagingModeAutoFlushCount = 0;
 
 		const exitStagingMode = (
 			discardOrCommit: () => IPendingMessage["batchInfo"][],
@@ -3663,7 +3657,6 @@ export class ContainerRuntime
 					{
 						eventName: "ExitStagingMode",
 						exitMethod,
-						autoFlushCount: this.stagingModeAutoFlushCount,
 						autoFlushThreshold: this.stagingModeAutoFlushThreshold,
 					},
 					(event) => {
@@ -3679,8 +3672,8 @@ export class ContainerRuntime
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
 							batches: batchInfos.length,
-							batchesOverThreshold: batchInfos.filter(
-								(b) => b.length > this.stagingModeAutoFlushThreshold,
+							batchesAtOrOverThreshold: batchInfos.filter(
+								(b) => b.length >= this.stagingModeAutoFlushThreshold,
 							).length,
 						});
 						this.channelCollection.notifyStagingMode(false);
@@ -4852,11 +4845,11 @@ export class ContainerRuntime
 		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
 		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
 		// sequence number changes and throws if unexpected changes are detected.
-		if (this.inStagingMode) {
-			if (this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold) {
-				return;
-			}
-			this.stagingModeAutoFlushCount++;
+		if (
+			this.inStagingMode &&
+			this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold
+		) {
+			return;
 		}
 
 		if (this.flushScheduled) {

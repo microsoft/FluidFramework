@@ -4478,7 +4478,6 @@ describe("Runtime", () => {
 							eventName: "ContainerRuntime:ExitStagingMode_end",
 							category: "performance",
 							exitMethod: "commit",
-							autoFlushCount: 1,
 							autoFlushThreshold: threshold,
 						},
 					]);

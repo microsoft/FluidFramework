@@ -18,7 +18,7 @@ import type {
 } from "./definitions.js";
 
 /**
- * The number of ops in a batch at or above which the batch is considered "large"
+ * The number of ops in a batch above which the batch is considered "large"
  * for telemetry purposes. Used by both {@link OpGroupingManager} (GroupLargeBatch event)
  * and as the default staging-mode auto-flush threshold.
  */
