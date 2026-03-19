@@ -19,8 +19,8 @@ import {
 import {
 	ReferenceType,
 	type LocalReferencePosition,
+	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
-import { segmentIsRemoved } from "@fluidframework/merge-tree/internal";
 
 import type { SharedStringFactory } from "../../sequenceFactory.js";
 import type { ISharedString } from "../../sharedString.js";

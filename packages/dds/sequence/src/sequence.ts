@@ -59,9 +59,10 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import type {
 	IFluidSerializer,
+	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, type ISharedObject } from "@fluidframework/shared-object-base/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	LoggingError,
 	createChildLogger,

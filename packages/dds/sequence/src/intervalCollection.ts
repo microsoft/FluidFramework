@@ -36,13 +36,11 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/intern
 import { v4 as uuid } from "uuid";
 
 import type {
-	IntervalMessageLocalMetadata,
-	SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
-import type {
 	IIntervalCollectionTypeOperationValue,
 	IntervalAddLocalMetadata,
 	IntervalChangeLocalMetadata,
+	IntervalMessageLocalMetadata,
+	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,

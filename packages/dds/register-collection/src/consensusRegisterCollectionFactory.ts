@@ -5,10 +5,10 @@
 
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
+	IChannelFactory,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory

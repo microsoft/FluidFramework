@@ -13,8 +13,8 @@ import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import type { SharedStringSegment } from "./sharedString.js";
-import { SharedStringClass, type ISharedString } from "./sharedString.js";
+import type { ISharedString, SharedStringSegment } from "./sharedString.js";
+import { SharedStringClass } from "./sharedString.js";
 
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically

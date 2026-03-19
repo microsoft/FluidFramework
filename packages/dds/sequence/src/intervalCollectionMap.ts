@@ -4,8 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";

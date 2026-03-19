@@ -15,9 +15,9 @@ import type {
 import type {
 	ISerializedInterval,
 	IntervalDeltaOpType,
+	SequenceIntervalClass,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
-import type { SequenceIntervalClass } from "./intervals/index.js";
 
 export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;
