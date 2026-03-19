@@ -11,7 +11,7 @@ import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
-import * as React from "react";
+import { createRef, type FC } from "react";
 
 import { toPropTreeNode } from "../../propNode.js";
 import {
@@ -21,6 +21,8 @@ import {
 	type FormattedEditorHandle,
 	parseCssFontFamily,
 	parseCssFontSize,
+	parseLineTag,
+	buildDeltaFromTree,
 	// Allow import of files being tested
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../text/formatted/quillFormattedView.js";
@@ -62,7 +64,7 @@ function createFormattedTreeViewWithEvents(
 	return treeView;
 }
 
-const views: { name: string; component: React.FC<MainViewProps> }[] = [
+const views: { name: string; component: FC<MainViewProps> }[] = [
 	{ name: "Quill", component: QuillMainView },
 	{ name: "Plain TextArea", component: PlainTextMainView },
 ];
@@ -705,7 +707,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = React.createRef<FormattedEditorHandle>();
+						const editorRef = createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
@@ -736,7 +738,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = React.createRef<FormattedEditorHandle>();
+						const editorRef = createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
@@ -774,7 +776,7 @@ describe("textEditor", () => {
 						const treeView = createFormattedTreeViewWithEvents();
 						const text = treeView.root;
 						const undoRedo = new UndoRedoStacks(treeView.events);
-						const editorRef = React.createRef<FormattedEditorHandle>();
+						const editorRef = createRef<FormattedEditorHandle>();
 						const content = (
 							<FormattedMainView
 								ref={editorRef}
@@ -961,6 +963,68 @@ describe("textEditor", () => {
 					});
 				});
 			}
+		});
+		describe("parseLineTag", () => {
+			it("return lineTag for valid header", () => {
+				const result = parseLineTag({ header: 1 });
+				assert.ok(result, "Expected a line tag for header 1");
+				assert.equal(result.value, "h1", "Expected tag to be h1");
+			});
+			it("returns lineTag for valid bullet list", () => {
+				const result = parseLineTag({ list: "bullet" });
+				assert.ok(result, "Expected a line tag for bullet list");
+				assert.equal(result.value, "li", "Expected tag to be li)");
+			});
+			// Tests for unsupported parameters - should return default header ("h5"), not throw an error.
+			// Also used for when formatting is stripped from a newline and it becomes a default newline
+			it("returns undefined for unsupported parameter", () => {
+				const result = parseLineTag({ header: 7 });
+				assert.ok(result, "Expected a line tag for header 5");
+				assert.equal(result.value, "h5", "Expected tag to be h5 for unsupported header level");
+			});
+		});
+		// tests quillFormattedview conversion that feeds into quill delta generation,
+		// specifically for line atoms which have special handling for headers and lists.
+		// Quill always has a trailing newline, so these tests set up the string with a newline,
+		// then replace it with a line atom with the appropriate tag.
+		describe("buildDeltaFromTree with line Atoms", () => {
+			it("emits header attribute for h1 line atom", () => {
+				const { tree } = createFormattedTreeView("Hello\n");
+				tree.removeRange(5, 6);
+				tree.insertWithFormattingAt(5, [
+					new FormattedTextAsTree.StringAtom({
+						content: new FormattedTextAsTree.StringLineAtom({
+							tag: FormattedTextAsTree.LineTag("h1"),
+						}),
+						format: createPlainFormat(),
+					}),
+				]);
+
+				const ops = buildDeltaFromTree(tree);
+				const lineOp = ops.find((op) => op.insert === "\n" && op.attributes?.header === 1);
+				assert.ok(lineOp, "Expected { insert : `\\n`, attributes: { header: 1 } } in delta");
+			});
+			it("emits header attribute for li line atom", () => {
+				const { tree } = createFormattedTreeView("item\n");
+				tree.removeRange(4, 5);
+				tree.insertWithFormattingAt(4, [
+					new FormattedTextAsTree.StringAtom({
+						content: new FormattedTextAsTree.StringLineAtom({
+							tag: FormattedTextAsTree.LineTag("li"),
+						}),
+						format: createPlainFormat(),
+					}),
+				]);
+
+				const ops = buildDeltaFromTree(tree);
+				const lineOp = ops.find(
+					(op) => op.insert === "\n" && op.attributes?.list === "bullet",
+				);
+				assert.ok(
+					lineOp,
+					"Expected { insert : `\\n`, attributes: { list: 'bullet' } } in delta",
+				);
+			});
 		});
 	});
 });

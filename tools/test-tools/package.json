@@ -46,6 +46,22 @@
 	},
 	"packageManager": "pnpm@10.29.2+sha512.bef43fa759d91fd2da4b319a5a0d13ef7a45bb985a3d7342058470f9d2051a3ba8674e629672654686ef9443ad13a82da2beb9eeb3e0221c87b8154fff9d74b8",
 	"pnpm": {
+		"commentsOverrides": [
+			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
+			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges."
+		],
+		"overrides": {
+			"diff@>=5 <6": "^5.2.2",
+			"js-yaml": "^4.1.1",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=6 <7": "^6.2.3",
+			"minimatch@>=7 <8": "^7.4.9",
+			"minimatch@>=8 <9": "^8.0.7",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10 <11": "^10.2.4"
+		},
 		"onlyBuiltDependencies": [
 			"unrs-resolver"
 		]

@@ -149,6 +149,11 @@ export const reactConfig = [
 			},
 		},
 	},
+	// react/flat["jsx-runtime"]
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		...reactPlugin.configs.flat["jsx-runtime"],
+	},
 	// Custom overrides from minimal-deprecated.js (lines 453-459)
 	{
 		files: ["**/*.jsx", "**/*.tsx"],

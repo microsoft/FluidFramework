@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { strict as assert } from "node:assert";
 
 import { benchmarkMemory } from "..";
 import { BenchmarkType, isParentProcess } from "../Configuration";
@@ -19,14 +19,8 @@ describe("`benchmarkMemory` function", () => {
 					beforeHasBeenCalled = true;
 				}),
 			run: async () => {
-				expect(beforeHasBeenCalled).to.equal(
-					true,
-					"before should be called before test body",
-				);
-				expect(afterHasBeenCalled).to.equal(
-					false,
-					"after should not be called during test execution",
-				);
+				assert(beforeHasBeenCalled, "before should be called before test body");
+				assert(!afterHasBeenCalled, "after should not be called during test execution");
 			},
 			after: async () =>
 				delay(1).then(() => {
@@ -39,10 +33,7 @@ describe("`benchmarkMemory` function", () => {
 			if (!isParentProcess) {
 				// If running with separate processes,
 				// this check must only be done in the child process (it will fail in the parent process)
-				expect(afterHasBeenCalled).to.equal(
-					true,
-					"after should be called after test execution",
-				);
+				assert(afterHasBeenCalled, "after should be called after test execution");
 			}
 		});
 	});

@@ -154,12 +154,12 @@ module.exports = {
 			range: "",
 		},
 
-		// @fluid-example/import-testing typescript versions should use ~
+		// @fluid-example/typescript-versions-host typescript versions should use ~
 		{
-			label: "@fluid-example/import-testing typescript versions should use ~",
+			label: "@fluid-example/typescript-versions-host typescript versions should use ~",
 			dependencies: ["typescript-*"],
 			dependencyTypes: ["dev"],
-			packages: ["@fluid-example/import-testing"],
+			packages: ["@fluid-example/typescript-versions-host"],
 			range: "~",
 		},
 
@@ -195,8 +195,6 @@ module.exports = {
 			label:
 				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: [
-				// TODO: Remove @biomejs/biome once all packages are updated to the latest version
-				"@biomejs/biome",
 				"react-virtualized-auto-sizer",
 				"@types/react",
 				"@types/react-dom",
