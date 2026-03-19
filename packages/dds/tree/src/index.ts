@@ -285,6 +285,7 @@ export {
 	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	type MapNodeCustomizableSchema,

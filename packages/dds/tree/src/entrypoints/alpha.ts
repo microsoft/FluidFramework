@@ -150,6 +150,7 @@ export {
 	// #region @alpha APIs
 	AllowedTypesFullUnsafe, 
 	ArrayNodeCustomizableSchema, 
+	ArrayNodeCustomizableSchemaAlpha, 
 	ArrayNodeCustomizableSchemaUnsafe, 
 	ArrayNodePojoEmulationSchema, 
 	ArrayNodeSchema, 

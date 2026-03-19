@@ -15,6 +15,7 @@ export {
 } from "./arrayNode.js";
 export {
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	isArrayNodeSchema,

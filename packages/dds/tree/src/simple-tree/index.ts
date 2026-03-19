@@ -248,6 +248,7 @@ export {
 export { tryGetTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	asIndex,
