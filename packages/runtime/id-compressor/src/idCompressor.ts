@@ -275,6 +275,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return this.updateToRange(range);
 	}
 
+	public releaseUnfinalizedCreationRange(): void {
+		const lastLocalCluster = this.localSession.getLastCluster();
+		this.nextRangeBaseGenCount =
+			lastLocalCluster === undefined
+				? 1
+				: genCountFromLocalId(
+						(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+					);
+	}
+
 	private updateToRange(range: IdCreationRange): IdCreationRange {
 		this.nextRangeBaseGenCount = this.localGenCount + 1;
 		return IdCompressor.assertValidRange(range);
