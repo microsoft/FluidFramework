@@ -162,6 +162,7 @@ export interface ISharedObjectRegistry {
  * Factories originally used full URLs (e.g. `"https://graph.microsoft.com/types/map"`);
  * new factories use only the trailing path segment (e.g. `"map"`).
  *
+ * Support for reading both formats was added in 2.92.0.
  * @remarks
  * This is encoded using base64 to avoid replacement of URL-like values that we have seen some reverse proxies perform.
  * The value at runtime is "https://graph.microsoft.com/types/".

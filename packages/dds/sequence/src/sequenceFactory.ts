@@ -16,8 +16,6 @@ import { pkgVersion } from "./packageVersion.js";
 import { SharedStringClass, SharedStringSegment, type ISharedString } from "./sharedString.js";
 
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
-	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-	// load code (UPDATE: paparazzi is gone... anything to do here?)
 	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
 	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
 	// public static Type = "mergeTree";

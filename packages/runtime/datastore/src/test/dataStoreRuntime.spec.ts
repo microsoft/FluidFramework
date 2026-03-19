@@ -532,7 +532,7 @@ describe("LegacyTypeAwareRegistry", () => {
 		});
 
 		it("returns undefined for a URL whose final path segment is empty", () => {
-			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ "": "empty" }));
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
 			assert.strictEqual(r.get("https://graph.microsoft.proxy.contoso.com/"), undefined);
 		});
 	});
