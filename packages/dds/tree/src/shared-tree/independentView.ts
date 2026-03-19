@@ -19,7 +19,6 @@ import {
 import {
 	createNodeIdentifierManager,
 	fieldBatchCodecBuilder,
-	schemaCodecBuilder,
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,

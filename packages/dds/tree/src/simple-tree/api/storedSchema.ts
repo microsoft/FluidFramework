@@ -5,16 +5,8 @@
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	FluidClientVersion,
-	FormatValidatorNoOp,
-	type ICodecOptions,
-} from "../../codec/index.js";
+import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
 import { schemaCodecBuilder } from "../../feature-libraries/index.js";
-import type {
-	FormatV1,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
