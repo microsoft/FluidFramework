@@ -85,10 +85,6 @@ export interface IPendingMessage {
 		 */
 		length: number;
 		/**
-		 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
-		 */
-		ignoreBatchId?: boolean;
-		/**
 		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
 		 */
 		staged: boolean;
@@ -403,13 +399,11 @@ export class PendingStateManager implements IDisposable {
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
-	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
 		batch: LocalBatchMessage[] | [LocalEmptyBatchPlaceholder],
 		clientSequenceNumber: number | undefined,
 		staged: boolean,
-		ignoreBatchId?: boolean,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
@@ -443,7 +437,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId, staged },
+				batchInfo: { clientId, batchStartCsn, length: batch.length, staged },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -509,23 +503,14 @@ export class PendingStateManager implements IDisposable {
 	 * @returns whether the batch IDs match
 	 */
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
-		// Find the first pending message that uses Batch ID, to compare to the incoming remote batch.
-		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
-		const firstIndexUsingBatchId = Array.from({
-			length: this.pendingMessages.length,
-		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.ignoreBatchId !== true);
-		const pendingMessageUsingBatchId =
-			firstIndexUsingBatchId === -1
-				? undefined
-				: this.pendingMessages.get(firstIndexUsingBatchId);
-
-		if (pendingMessageUsingBatchId === undefined) {
+		const pendingMessage = this.pendingMessages.peekFront();
+		if (pendingMessage === undefined) {
 			return false;
 		}
 
 		// We must compare the effective batch IDs, since one of these ops
 		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
-		const pendingBatchId = getEffectiveBatchId(pendingMessageUsingBatchId);
+		const pendingBatchId = getEffectiveBatchId(pendingMessage);
 		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
 		return pendingBatchId === inboundBatchId;
@@ -802,10 +787,7 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId =
-				pendingMessage.batchInfo.ignoreBatchId === true
-					? undefined
-					: getEffectiveBatchId(pendingMessage);
+			const batchId = getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 

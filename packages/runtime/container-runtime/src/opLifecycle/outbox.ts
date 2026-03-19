@@ -25,6 +25,7 @@ import type {
 
 import {
 	BatchManager,
+	addBatchMetadata,
 	type BatchSequenceNumbers,
 	sequenceNumbersMatch,
 	type BatchId,
@@ -71,6 +72,17 @@ export interface IOutboxParameters {
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
 	readonly reSubmit: (message: PendingMessageResubmitData, squash: boolean) => void;
 	readonly opReentrancy: () => boolean;
+	/**
+	 * JIT callback to generate an ID allocation op at flush time.
+	 * Called after rebase (if any), so the returned message has the correct refSeq.
+	 *
+	 * @param useUnfinalizedRange - If true, use `takeUnfinalizedCreationRange()` (for reconnect).
+	 * Otherwise use `takeNextCreationRange()` (normal flush).
+	 * @returns A LocalBatchMessage for the ID allocation op, or undefined if no IDs need allocating.
+	 */
+	readonly generateIdAllocationOp: (
+		useUnfinalizedRange: boolean,
+	) => LocalBatchMessage | undefined;
 }
 
 /**
@@ -195,7 +207,6 @@ export class Outbox {
 	private readonly logger: ITelemetryLoggerExt;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
-	private readonly idAllocationBatch: BatchManager;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
 
@@ -213,14 +224,10 @@ export class Outbox {
 
 		this.mainBatch = new BatchManager({ canRebase: true });
 		this.blobAttachBatch = new BatchManager({ canRebase: true });
-		this.idAllocationBatch = new BatchManager({
-			canRebase: false,
-			ignoreBatchId: true,
-		});
 	}
 
 	public get messageCount(): number {
-		return this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
+		return this.mainBatch.length + this.blobAttachBatch.length;
 	}
 
 	public get mainBatchMessageCount(): number {
@@ -231,9 +238,11 @@ export class Outbox {
 		return this.blobAttachBatch.length;
 	}
 
-	public get idAllocationBatchMessageCount(): number {
-		return this.idAllocationBatch.length;
-	}
+	/**
+	 * @remarks With JIT ID allocation, pending IDs are tracked by the compressor, not the outbox.
+	 * This always returns 0. ID allocation ops are generated at flush time.
+	 */
+	public readonly idAllocationBatchMessageCount: number = 0;
 
 	public get isEmpty(): boolean {
 		return this.messageCount === 0;
@@ -260,10 +269,8 @@ export class Outbox {
 	private maybeFlushPartialBatch(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
-		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
-			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
-				sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums),
+			sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -271,8 +278,7 @@ export class Outbox {
 
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(idAllocSeqNums, currentSequenceNumbers)
+			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -340,10 +346,21 @@ export class Outbox {
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
-	public submitIdAllocation(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+	/**
+	 * Immediately takes all unfinalized ID ranges from the compressor and flushes them
+	 * as a standalone batch. Used during reconnect to resubmit comprehensive ID ranges
+	 * before replaying pending states.
+	 */
+	public flushUnfinalizedIdRanges(): void {
+		const idAllocMsg = this.params.generateIdAllocationOp(/* useUnfinalizedRange */ true);
+		if (idAllocMsg === undefined) {
+			return;
+		}
 
-		this.addMessageToBatchManager(this.idAllocationBatch, message);
+		//* Assert this, or just prepend anyway
+		// Outbox should be empty at reconnect time (before replay starts)
+		this.addMessageToBatchManager(this.mainBatch, idAllocMsg);
+		this.flushInternal({ batchManager: this.mainBatch });
 	}
 
 	private addMessageToBatchManager(
@@ -366,8 +383,9 @@ export class Outbox {
 	 */
 	public flush(resubmitInfo?: BatchResubmitInfo): void {
 		// We have nothing to flush if all batchManagers are empty, and we we're not needing to resubmit an empty batch placeholder
+		// Note that it's possible that there are unfinalized ranges in the ID Compressor,
+		// but there's no urgency to flush those if they're not referenced in any messages.
 		if (
-			this.idAllocationBatch.empty &&
 			this.blobAttachBatch.empty &&
 			this.mainBatch.empty &&
 			resubmitInfo?.batchId === undefined
@@ -383,9 +401,9 @@ export class Outbox {
 	}
 
 	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
-		const allBatchesEmpty =
-			this.idAllocationBatch.empty && this.blobAttachBatch.empty && this.mainBatch.empty;
+		const allBatchesEmpty = this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
+			//* CLAUDE: Double-check this reasoning. Any concerns about empty batches given ID Allocation ops new placement?
 			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
 			// Note that we currently resubmit one batch at a time, so on resubmit, 1 of the 2 batches will *always* be empty.
 			// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
@@ -397,21 +415,20 @@ export class Outbox {
 			return;
 		}
 
-		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
-		this.flushInternal({
-			batchManager: this.idAllocationBatch,
-			// Note: For now, we will never stage ID Allocation messages.
-			// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
-		});
+		// CLAUDE: What if we always try JIT in both calls to flushInternal?
+		// Determine which batch gets the JIT ID allocation op prepended.
+		// blobAttach flushes first, so prepend there if non-empty; otherwise prepend to main.
+		const generateJITForBlobAttach = !this.blobAttachBatch.empty;
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
 			disableGroupedBatching: true,
 			resubmitInfo,
+			generateJIT: generateJITForBlobAttach,
 		});
 		this.flushInternal({
 			batchManager: this.mainBatch,
 			resubmitInfo,
+			generateJIT: !generateJITForBlobAttach,
 		});
 	}
 
@@ -448,13 +465,14 @@ export class Outbox {
 		batchManager: BatchManager;
 		disableGroupedBatching?: boolean;
 		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
+		generateJIT?: boolean;
 	}): void {
-		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
+		const { batchManager, disableGroupedBatching = false, resubmitInfo, generateJIT } = params;
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
+		let rawBatch = batchManager.popBatch();
 
 		// On resubmit we use the original batch's staged state, so these should match as well.
 		const staged = rawBatch.staged === true;
@@ -471,15 +489,29 @@ export class Outbox {
 			groupingEnabled
 		) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
+			// Rebase the current batch (resubmit the ops one-by-one) and then reinvoke flushInternal.
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
 			// Note: Since this is happening in the same turn the ops were originally created with,
 			// and they haven't gone to PendingStateManager yet, we can just let them respect
 			// ContainerRuntime.inStagingMode.  So we do not plumb local 'staged' variable through here.
-			this.rebase(rawBatch, batchManager);
+			this.rebase(rawBatch, batchManager, generateJIT);
 			return;
 		}
+
+		// Generate ID Allocation ops just-in-time, after rebase (if any).
+		// This ensures the refSeq is correct (matching the rest of the batch) and that
+		// ID ranges aren't lost during rebase (since reSubmit drops IdAllocation ops).
+		// Only generate for non-staged batches — ID alloc ops are always non-staged.
+		if (generateJIT === true && !staged) {
+			const idAllocMsg = this.params.generateIdAllocationOp(/* useUnfinalizedRange */ false);
+			if (idAllocMsg !== undefined) {
+				rawBatch = { ...rawBatch, messages: [idAllocMsg, ...rawBatch.messages] };
+			}
+		}
+
+		addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 
 		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
@@ -499,7 +531,6 @@ export class Outbox {
 			rawBatch.messages,
 			clientSequenceNumber,
 			staged,
-			batchManager.options.ignoreBatchId,
 		);
 	}
 
@@ -509,7 +540,11 @@ export class Outbox {
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
+	private rebase(
+		rawBatch: LocalBatch,
+		batchManager: BatchManager,
+		generateJIT?: boolean,
+	): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
@@ -538,7 +573,7 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal({ batchManager });
+		this.flushInternal({ batchManager, generateJIT });
 		this.rebasing = false;
 	}
 
@@ -679,7 +714,6 @@ export class Outbox {
 	 */
 	public getBatchCheckpoints(): {
 		mainBatch: IBatchCheckpoint;
-		idAllocationBatch: IBatchCheckpoint;
 		blobAttachBatch: IBatchCheckpoint;
 	} {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
@@ -687,7 +721,6 @@ export class Outbox {
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
 			mainBatch,
-			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}
