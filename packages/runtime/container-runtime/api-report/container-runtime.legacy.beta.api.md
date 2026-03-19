@@ -37,6 +37,7 @@ export interface ContainerRuntimeOptions {
     readonly chunkSizeInBytes: number;
     readonly compressionOptions: ICompressionRuntimeOptions;
     readonly createBlobPayloadPending: true | undefined;
+    readonly disableSchemaUpgrade: boolean;
     // @deprecated
     readonly enableGroupedBatching: boolean;
     readonly enableRuntimeIdCompressor: IdCompressorMode;
