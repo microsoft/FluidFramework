@@ -25,7 +25,7 @@ description: Analyzes recently modified code and creates pull requests with simp
 name: Code Simplifier
 source: github/gh-aw/.github/workflows/code-simplifier.md@94662b1dee8ce96c876ba9f33b3ab8be32de82a4
 strict: true
-timeout-minutes: 30
+timeout-minutes: 60
 tools:
   github:
     toolsets:
