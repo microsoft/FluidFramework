@@ -23,7 +23,7 @@ const mySchema = SchemaFactoryBeta.optional([SchemaFactoryBeta.number]);
 ### Step 1: Define and Stage the New Allowed Type
 
 Use [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) to add support for future documents containing the new type.
-This version still creates documents that only allow the old types, but can work with documents created in step three that contain the new type.
+This version still creates documents that only allow the old types, but can work with documents created in Step 3 that contain the new type.
 Any code using this schema must correctly handle the presence of the new type, even though it cannot be added to documents yet.
 
 ```typescript
@@ -36,6 +36,7 @@ const mySchema = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
 No schema upgrade is performed at this step: [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) types are excluded from stored schemas, so `upgradeSchema()` is a no-op and the new type cannot be added to documents yet:
 
 ```typescript
+// Assuming `view` is a TreeView configured with `mySchema`:
 assert.throws(() => {
     view.root = "test"; // Strings are staged: writing them is not allowed until Step 3.
 });
