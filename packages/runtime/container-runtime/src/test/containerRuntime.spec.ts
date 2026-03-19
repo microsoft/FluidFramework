@@ -649,32 +649,30 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				// 1st compressed id – queued while disconnected (goes to idAllocationBatch).
+				// 1st compressed id – queued while disconnected (stays in compressor with JIT).
 				containerRuntime.idCompressor?.generateCompressedId();
 
-				// Re-connect – replayPendingStates will submit only an idAllocation op.
-				// It's now in the Outbox and a flush is scheduled (including this flush was a bug fix)
+				// Re-connect – requestUnfinalizedIdRanges sets a flag for next JIT flush.
 				changeConnectionState(containerRuntime, true, mockClientId);
 
 				// Simulate a remote op arriving before we submit anything else.
 				// Bump refSeq and continue execution at the end of the microtask queue.
-				// This is how Inbound Queue works, and this is necessary to simulate here to allow scheduled flush to happen
 				++mockDeltaManager.lastSequenceNumber;
 				await Promise.resolve();
 
-				// 2nd compressed id – its idAllocation op will enter Outbox *after* the ref seq# bumped.
+				// 2nd compressed id – stays in compressor until flush.
 				const id2 = containerRuntime.idCompressor?.generateCompressedId();
 
-				// This would throw a DataProcessingError from codepath "outboxSequenceNumberCoherencyCheck"
-				// if we didn't schedule a flush after the idAllocation op submitted during the reconnect.
-				// (On account of the two ID Allocation ops having different refSeqs but being in the same batch)
+				// With JIT ID allocation, both IDs are captured in a single takeUnfinalizedCreationRange()
+				// call at flush time, producing one ID alloc op prepended to the data op batch.
+				// The refSeq coherency issue is eliminated because JIT generates the op at flush time.
 				submitDataStoreOp(containerRuntime, "someDS", genTestDataStoreMessage({ id: id2 }));
 
 				// Let the Outbox flush so we can check submittedOps length
 				await Promise.resolve();
 				assert(
-					submittedOps.length === 3,
-					"Expected 3 ops to be submitted (2 ID Allocation, 1 data)",
+					submittedOps.length === 2,
+					"Expected 2 ops to be submitted (1 JIT ID Allocation + 1 data, in one batch)",
 				);
 			});
 		});
