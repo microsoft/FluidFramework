@@ -42,7 +42,11 @@ import {
 } from "../../../shared-tree-core/index.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import {
+	snapshotCodecFormats,
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
@@ -53,7 +57,6 @@ describe("schemaSummarizer", () => {
 				assert(schemaFormat.minVersionForCollab !== undefined);
 				const codec = schemaFormat.codec({
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: schemaFormat.minVersionForCollab,
 				});
 				const result: JsonCompatibleReadOnly = codec.encode(schema);
 				return result;
@@ -72,6 +75,11 @@ describe("schemaSummarizer", () => {
 				takeJsonSnapshot(encoded);
 			});
 		}
+	});
+
+	useSnapshotDirectory("codecFormats");
+	it("formats", () => {
+		snapshotCodecFormats(schemaCodecBuilder, {});
 	});
 
 	describe("Summary metadata validation", () => {
