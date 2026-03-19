@@ -44,6 +44,7 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 	| "loadSequenceNumberVerification"
 	| "summaryOptions"
 	| "stagingModeAutoFlushThreshold"
+	| "disableSchemaUpgrade"
 >;
 
 /**

@@ -488,6 +488,13 @@ export interface ContainerRuntimeOptions {
 	 * @defaultValue 1000
 	 */
 	readonly stagingModeAutoFlushThreshold: number;
+
+	/**
+	 * When this property is set to true, the runtime will never send DocumentSchemaChange ops
+	 * and will throw an error if any incoming DocumentSchemaChange ops are received.
+	 * This effectively freezes the document schema at whatever state it was in when the document was created.
+	 */
+	readonly disableSchemaUpgrade: boolean;
 }
 
 /**
@@ -985,6 +992,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
 			stagingModeAutoFlushThreshold: defaultStagingModeAutoFlushThreshold,
+			disableSchemaUpgrade: false,
 		};
 
 		const defaultConfigs = {
@@ -1011,6 +1019,7 @@ export class ContainerRuntime
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
+			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1209,6 +1218,7 @@ export class ContainerRuntime
 			},
 			{ minVersionForCollab },
 			logger,
+			disableSchemaUpgrade,
 		);
 
 		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
@@ -1240,6 +1250,7 @@ export class ContainerRuntime
 			explicitSchemaControl,
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
+			disableSchemaUpgrade,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);

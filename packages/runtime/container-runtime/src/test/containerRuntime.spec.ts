@@ -1784,6 +1784,7 @@ describe("Runtime", () => {
 				explicitSchemaControl: false,
 				createBlobPayloadPending: undefined,
 				stagingModeAutoFlushThreshold: 1000,
+				disableSchemaUpgrade: false,
 			} as const satisfies ContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
@@ -3741,6 +3742,7 @@ describe("Runtime", () => {
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
 					stagingModeAutoFlushThreshold: 1000,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3801,6 +3803,7 @@ describe("Runtime", () => {
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
 					stagingModeAutoFlushThreshold: 1000,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3840,6 +3843,7 @@ describe("Runtime", () => {
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
 					stagingModeAutoFlushThreshold: 1000,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3879,6 +3883,7 @@ describe("Runtime", () => {
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 					stagingModeAutoFlushThreshold: 1000,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3917,6 +3922,7 @@ describe("Runtime", () => {
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 					stagingModeAutoFlushThreshold: 1000,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3963,6 +3969,7 @@ describe("Runtime", () => {
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
 					stagingModeAutoFlushThreshold: 1000,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3994,6 +4001,7 @@ describe("Runtime", () => {
 						enableGroupedBatching: undefined,
 						compressionOptions: undefined,
 						explicitSchemaControl: undefined,
+						disableSchemaUpgrade: undefined,
 						createBlobPayloadPending: undefined,
 					},
 				},
@@ -4023,6 +4031,7 @@ describe("Runtime", () => {
 						enableGroupedBatching: true,
 						explicitSchemaControl: false,
 						stagingModeAutoFlushThreshold: 1000,
+						disableSchemaUpgrade: false,
 					};
 
 					logger.assertMatchAny([
@@ -4064,6 +4073,7 @@ describe("Runtime", () => {
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 					stagingModeAutoFlushThreshold: 1000,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
