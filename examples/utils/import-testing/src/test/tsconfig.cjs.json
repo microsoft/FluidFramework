@@ -4,9 +4,16 @@
 	"compilerOptions": {
 		"outDir": "../../dist/test",
 	},
+	"exclude": [
+		// bundler is only produced and tested for ESM, so exclude it from CJS compilation.
+		"./crossPackage/bundlerImporter.ts",
+	],
 	"references": [
 		{
 			"path": "../../tsconfig.cjs.json",
+		},
+		{
+			"path": "../../tsconfig.crossPackage.node16.cjs.json",
 		},
 	],
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bubblebench-ot",
-	"version": "2.90.0",
+	"version": "2.92.0",
 	"private": true,
 	"description": "Bubblemark inspired DDS benchmark",
 	"homepage": "https://fluidframework.com",
@@ -51,12 +51,12 @@
 		"react": "^18.3.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/test-tools": "^1.0.195075",
+		"@fluidframework/test-tools": "^2.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "~20.19.30",

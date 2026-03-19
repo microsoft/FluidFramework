@@ -4,22 +4,22 @@
  */
 
 import { InfoLabel, Label, TableCellLayout } from "@fluentui/react-components";
-import React from "react";
+import type { PropsWithChildren, ReactElement } from "react";
 
 /**
  * {@link LabelCellLayout} input props.
  */
-export type LabelCellLayoutProps = React.PropsWithChildren<{
+export type LabelCellLayoutProps = PropsWithChildren<{
 	/**
 	 * Icon to display to the left of the label.
 	 */
-	icon: React.ReactElement;
+	icon: ReactElement;
 
 	/**
 	 * (Optional) If specified, will display an "info" badge to the right of the label.
 	 * When clicked, a tooltip will be displayed with the provided contents.
 	 */
-	infoTooltipContent?: React.ReactElement | string;
+	infoTooltipContent?: ReactElement | string;
 }>;
 
 /**
@@ -29,7 +29,7 @@ export type LabelCellLayoutProps = React.PropsWithChildren<{
  * Displays child content, with an optional content on the leading side and an optional "info" badge on the trailing
  * side.
  */
-export function LabelCellLayout(props: LabelCellLayoutProps): React.ReactElement {
+export function LabelCellLayout(props: LabelCellLayoutProps): ReactElement {
 	const { children, icon, infoTooltipContent } = props;
 
 	return (

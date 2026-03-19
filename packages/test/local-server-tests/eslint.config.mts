@@ -4,12 +4,19 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
+			"@typescript-eslint/consistent-type-imports": "off",
+			"@typescript-eslint/explicit-module-boundary-types": "off",
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 			"import-x/no-nodejs-modules": "off",
 			"import-x/no-extraneous-dependencies": [
@@ -20,6 +27,14 @@ const config: Linter.Config[] = [
 					devDependencies: ["src/utils.ts", "src/test/**"],
 				},
 			],
+			"unicorn/catch-error-name": "off",
+			"unicorn/error-message": "off",
+			"unicorn/no-array-reduce": "off",
+			"unicorn/no-lonely-if": "off",
+			"unicorn/no-object-as-default-parameter": "off",
+			"unicorn/prefer-node-protocol": "off",
+			"unicorn/prefer-optional-catch-binding": "off",
+			"unicorn/text-encoding-identifier-case": "off",
 		},
 	},
 	{

@@ -4,7 +4,7 @@
  */
 
 import { type VisualChildNode, VisualNodeKind } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type { ReactElement } from "react";
 
 /**
  * Interface for the props of {@link ToolTipContentsView}.
@@ -18,15 +18,15 @@ export interface ToolTipContentsViewProps {
  * @param props - {@link ToolTipContentsViewProps}
  * @returns a key-value pair of items as a list if `Record<string, VisualChildNode>`, a string otherwise.
  */
-export function ToolTipContentsView(props: ToolTipContentsViewProps): React.ReactElement {
+export function ToolTipContentsView(props: ToolTipContentsViewProps): ReactElement {
 	const { contents } = props;
 
 	if (typeof contents === "string") {
 		return <div> {contents} </div>;
 	}
 
-	const listItems: React.ReactElement[] = [];
-	let listItem: React.ReactElement;
+	const listItems: ReactElement[] = [];
+	let listItem: ReactElement;
 
 	// TOOD: Fix the entire component's logic to handle recursive input data.
 	// Currently, it only supports a single level of data and it is a temporary solution.

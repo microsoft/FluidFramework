@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// For the time being, if exports are changed, additional files under entrypoints need updated.
+// Run `pnpm generate:entrypoint-sources` to update them.
+
 export {
 	ValueSchema,
 	type Revertible,
@@ -12,6 +15,8 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -120,6 +125,7 @@ export {
 	NodeKind,
 	type TreeObjectNode,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -142,6 +148,8 @@ export {
 	type AllowedTypes,
 	type System_Unsafe,
 	type FieldSchemaAlphaUnsafe,
+	type FieldHasDefaultAlphaUnsafe,
+	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
@@ -190,6 +198,10 @@ export {
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
 	type SchemaType,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+	type InsertableObjectFromSchemaRecordAlpha,
+	type FieldHasDefaultAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -301,6 +313,9 @@ export {
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	type ErasedSchema,
+	type ErasedNode,
+	type ErasedSchemaSubclassable,
 	type SnapshotSchemaCompatibilityOptions,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
@@ -357,6 +372,12 @@ import * as InternalTypes from "./internalTypes.js";
 /**
  * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
  * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ *
+ * @public
+ * @system
+ *
+ * @privateRemarks These TS-Docs are not recognized by API-Extractor, but the
+ * support level tag is recognized by flub entrypoint generation.
  */
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
 export { InternalTypes };

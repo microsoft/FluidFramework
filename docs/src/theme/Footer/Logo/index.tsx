@@ -8,11 +8,11 @@ import { useBaseUrlUtils } from "@docusaurus/useBaseUrl";
 import type { Props } from "@theme/Footer/Logo";
 import ThemedImage from "@theme/ThemedImage";
 import clsx from "clsx";
-import React from "react";
+import type { ReactElement } from "react";
 
 import styles from "./styles.module.css";
 
-function LogoImage({ logo }: Props): React.ReactElement {
+function LogoImage({ logo }: Props): ReactElement {
 	const { withBaseUrl } = useBaseUrlUtils();
 	const sources = {
 		light: withBaseUrl(logo.src),

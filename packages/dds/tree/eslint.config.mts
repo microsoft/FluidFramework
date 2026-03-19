@@ -9,13 +9,18 @@ import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts"
 const config: Linter.Config[] = [
 	...recommended,
 	{
+		ignores: ["./src/entrypoints/**"],
+	},
+	{
 		rules: {
+			"@typescript-eslint/no-empty-object-type": [
+				"error",
+				{
+					allowInterfaces: "with-single-extends",
+					allowObjectTypes: "always",
+				},
+			],
 			"@typescript-eslint/no-namespace": "off",
-
-			// This library leverages empty, derived interface definitions to capture concepts
-			// in a nicely reusable way.
-			"@typescript-eslint/no-empty-interface": "off",
-			"@typescript-eslint/no-empty-object-type": "off",
 
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 

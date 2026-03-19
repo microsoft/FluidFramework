@@ -56,17 +56,15 @@ import {
 	buildForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
-	getCodecTreeForFieldBatchFormat,
-	getCodecTreeForForestFormat,
+	fieldBatchCodecBuilder,
+	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
-	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -241,7 +239,7 @@ export class SharedTreeKernel
 			schemaCodec,
 			options.minVersionForCollab,
 		);
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
 		const encoderContext = {
 			schema: {
@@ -255,7 +253,6 @@ export class SharedTreeKernel
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			encoderContext,
 			options,
 			idCompressor,
@@ -500,13 +497,8 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	// Any version can be passed down to makeSchemaCodec here.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec({
-		...options,
-		minVersionForCollab: FluidClientVersion.v2_0,
-	});
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+	const stored = schemaCodec.decode(persisted);
 	return exportSimpleSchema(stored);
 }
 
@@ -596,12 +588,12 @@ export function getCodecTreeForSharedTreeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const children: CodecTree[] = [];
-	children.push(getCodecTreeForForestFormat(clientVersion));
+	children.push(forestCodecBuilder.getCodecTree(clientVersion));
 	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
 	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
-	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
+	children.push(fieldBatchCodecBuilder.getCodecTree(clientVersion));
 	return {
 		name: "SharedTree",
 		version: undefined, // SharedTree does not have a version of its own.

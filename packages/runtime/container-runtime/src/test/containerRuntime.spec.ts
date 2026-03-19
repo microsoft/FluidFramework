@@ -5,11 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	stringToBuffer,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
-} from "@fluid-internal/client-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type ICriticalContainerError,
@@ -58,14 +54,12 @@ import type {
 	ITelemetryContext,
 	ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	FlushMode,
-	FlushModeExperimental,
-} from "@fluidframework/runtime-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
 	MockLogger,
+	UsageError,
 	createChildLogger,
 	isFluidError,
 	isILoggingError,
@@ -400,6 +394,47 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
 			});
 
+			it("Throws UsageError and calls closeFn for invalid flushMode", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext(),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				// Cast through unknown to simulate a stale/invalid numeric flushMode value (e.g., the former FlushModeExperimental.Async = 2)
+				const invalidFlushMode = 2 as unknown as FlushMode;
+
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { flushMode: invalidFlushMode },
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => {
+						assert.ok(
+							error instanceof UsageError,
+							"Should throw a UsageError for invalid flushMode",
+						);
+						return true;
+					},
+				);
+
+				assert.strictEqual(
+					containerErrors.length,
+					1,
+					"closeFn should have been called with the error",
+				);
+				assert.ok(
+					containerErrors[0] instanceof UsageError,
+					"closeFn should have been called with a UsageError",
+				);
+			});
+
 			it("Process empty batch", async () => {
 				let batchBegin = 0;
 				let batchEnd = 0;
@@ -517,88 +552,71 @@ describe("Runtime", () => {
 
 			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
 			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
-			for (const skipSafetyFlushDuringProcessStack of [true, undefined]) {
-				it(`Inbound (non-runtime) op triggers flush due to refSeq changing [skipSafetyFlush=${skipSafetyFlushDuringProcessStack}]`, async () => {
-					const submittedBatches: {
-						messages: IBatchMessage[];
-						referenceSequenceNumber: number;
-					}[] = [];
+			it("Inbound (non-runtime) op triggers flush due to refSeq changing", async () => {
+				const submittedBatches: {
+					messages: IBatchMessage[];
+					referenceSequenceNumber: number;
+				}[] = [];
 
-					const mockContext = getMockContext({
-						settings: {
-							"Fluid.ContainerRuntime.DisableFlushBeforeProcess":
-								skipSafetyFlushDuringProcessStack,
-						},
-					});
-					(
-						mockContext as { submitBatchFn: IContainerContext["submitBatchFn"] }
-					).submitBatchFn = (
-						messages: IBatchMessage[],
-						referenceSequenceNumber: number = -1,
-					) => {
+				const mockContext = getMockContext();
+				(mockContext as { submitBatchFn: IContainerContext["submitBatchFn"] }).submitBatchFn =
+					(messages: IBatchMessage[], referenceSequenceNumber: number = -1) => {
 						submittedOps.push(...messages); // Reusing submittedOps since submitFn won't be invoked due to submitBatchFn's presence
 						submittedBatches.push({ messages, referenceSequenceNumber });
 						return 999; // CSN not used in test asserts below
 					};
 
-					const containerRuntime = await ContainerRuntime.loadRuntime2({
-						context: mockContext as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						runtimeOptions: {},
-						provideEntryPoint: mockProvideEntryPoint,
-					});
-
-					// Submit the first message
-					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
-					assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
-
-					// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
-					// When [skipSafetyFlushDuringProcessStack: FALSE], this will trigger a flush, which allows us to safely submit more ops next
-					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
-					++mockDeltaManager.lastSequenceNumber;
-					mockDeltaManager.emit("op", {
-						clientId: mockClientId,
-						sequenceNumber: mockDeltaManager.lastSequenceNumber,
-						clientSequenceNumber: 1,
-						type: MessageType.ClientJoin,
-						contents: "test content",
-					});
-
-					const expectedSubmitCount = skipSafetyFlushDuringProcessStack === true ? 0 : 1;
-					assert.equal(
-						submittedOps.length,
-						expectedSubmitCount,
-						"Submitted op count wrong after first op",
-					);
-
-					// Submit the second message
-					// When [skipSafetyFlushDuringProcessStack: TRUE], this will trigger a flush via Outbox.maybeFlushPartialBatch
-					submitDataStoreOp(containerRuntime, "2", {
-						type: "op",
-						content: { address: "test-address", contents: "test-contents2" },
-					});
-					assert.equal(
-						submittedOps.length,
-						1,
-						"By now we expect the first op to have been submitted in both configurations",
-					);
-
-					// Wait for the next tick for the second message to be flushed
-					await Promise.resolve();
-
-					// Validate that the messages were submitted
-					assert.equal(submittedOps.length, 2, "Two messages should be submitted");
-					assert.deepEqual(
-						submittedBatches,
-						[
-							{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
-							{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The second op
-						],
-						"Two batches should be submitted with different refSeq",
-					);
+				const containerRuntime = await ContainerRuntime.loadRuntime2({
+					context: mockContext as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
-			}
+
+				// Submit the first message
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
+				assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
+
+				// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
+				// This will trigger a flush, which allows us to safely submit more ops next
+				const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+				++mockDeltaManager.lastSequenceNumber;
+				mockDeltaManager.emit("op", {
+					clientId: mockClientId,
+					sequenceNumber: mockDeltaManager.lastSequenceNumber,
+					clientSequenceNumber: 1,
+					type: MessageType.ClientJoin,
+					contents: "test content",
+				});
+
+				assert.equal(submittedOps.length, 1, "Submitted op count wrong after first op");
+
+				// Submit the second message
+				submitDataStoreOp(containerRuntime, "2", {
+					type: "op",
+					content: { address: "test-address", contents: "test-contents2" },
+				});
+				assert.equal(
+					submittedOps.length,
+					1,
+					"Second op not yet submitted (scheduled for next microtask)",
+				);
+
+				// Wait for the next tick for the second message to be flushed
+				await Promise.resolve();
+
+				// Validate that the messages were submitted
+				assert.equal(submittedOps.length, 2, "Two messages should be submitted");
+				assert.deepEqual(
+					submittedBatches,
+					[
+						{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
+						{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The second op
+					],
+					"Two batches should be submitted with different refSeq",
+				);
+			});
 
 			it("IdAllocation op from replayPendingStates is flushed, preventing outboxSequenceNumberCoherencyCheck error", async () => {
 				// Start out disconnected since step 1 is to trigger ID Allocation op on reconnect
@@ -646,16 +664,10 @@ describe("Runtime", () => {
 
 		const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
 		describe("orderSequentially (rollback not enabled)", () => {
-			for (const flushMode of [
-				FlushMode.TurnBased,
-				FlushMode.Immediate,
-				FlushModeExperimental.Async as unknown as FlushMode,
-			]) {
+			for (const flushMode of [FlushMode.TurnBased, FlushMode.Immediate]) {
 				const fakeClientId = "fakeClientId";
 
-				describe(`orderSequentially with flush mode: ${
-					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
-				}`, () => {
+				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
 					let containerRuntime: ContainerRuntime_WithPrivates;
 					let mockContext: Partial<IContainerContext>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -885,14 +897,8 @@ describe("Runtime", () => {
 		});
 
 		describe("orderSequentially with rollback", () => {
-			for (const flushMode of [
-				FlushMode.TurnBased,
-				FlushMode.Immediate,
-				FlushModeExperimental.Async as unknown as FlushMode,
-			]) {
-				describe(`orderSequentially with flush mode: ${
-					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
-				}`, () => {
+			for (const flushMode of [FlushMode.TurnBased, FlushMode.Immediate]) {
+				describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
 					let containerRuntime: ContainerRuntime_WithPrivates;
 					const containerErrors: ICriticalContainerError[] = [];
 					let submittedOpsCount: number = 0;
@@ -1759,7 +1765,6 @@ describe("Runtime", () => {
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				chunkSizeInBytes: 800 * 1024,
-				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
 			} as const satisfies IContainerRuntimeOptionsInternal;
 
@@ -1804,7 +1809,6 @@ describe("Runtime", () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 					"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 1337,
-					"Fluid.ContainerRuntime.DisableFlushBeforeProcess": true,
 				};
 				await ContainerRuntime.loadRuntime2({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1822,110 +1826,8 @@ describe("Runtime", () => {
 						idCompressorMode: "on",
 						featureGates: JSON.stringify({
 							closeSummarizerDelayOverride: 1337,
-							disableFlushBeforeProcess: true,
 						}),
 						groupedBatchingEnabled: true,
-					},
-				]);
-			});
-		});
-
-		describe("Container feature detection", () => {
-			const mockLogger = new MockLogger();
-
-			beforeEach(() => {
-				mockLogger.clear();
-			});
-
-			const localGetMockContext = (
-				features?: ReadonlyMap<string, unknown>,
-				compatibilityDetails?: ILayerCompatDetails,
-			): Partial<IContainerContext & IProvideLayerCompatDetails> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					audience: new MockAudience(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: mockLogger,
-					supportedFeatures: features,
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-					getLoadedFromVersion: () => undefined,
-					ILayerCompatDetails: compatibilityDetails,
-				};
-			};
-
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
-				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-			};
-
-			for (const features of [
-				undefined,
-				new Map([["referenceSequenceNumbers", false]]),
-				new Map([
-					["other", true],
-					["feature", true],
-				]),
-			]) {
-				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
-					const runtime = await ContainerRuntime.loadRuntime2({
-						context: localGetMockContext(features) as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						runtimeOptions,
-						provideEntryPoint: mockProvideEntryPoint,
-					});
-
-					assert.equal(runtime.flushMode, FlushMode.TurnBased);
-					mockLogger.assertMatchAny([
-						{
-							eventName: "ContainerRuntime:FlushModeFallback",
-							category: "error",
-						},
-					]);
-				});
-			}
-
-			it("Loader supported for async FlushMode", async () => {
-				const runtime = await ContainerRuntime.loadRuntime2({
-					context: localGetMockContext(
-						new Map([["referenceSequenceNumbers", true]]),
-					) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions,
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-
-				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
-				mockLogger.assertMatchNone([
-					{
-						eventName: "ContainerRuntime:FlushModeFallback",
-						category: "error",
-					},
-				]);
-			});
-
-			it("Loader supported for async FlushMode with ILayerCompatDetails", async () => {
-				const compatDetails: ILayerCompatDetails = {
-					pkgVersion: "0.1.0",
-					generation: 1,
-					supportedFeatures: new Set(),
-				};
-				const runtime = await ContainerRuntime.loadRuntime2({
-					context: localGetMockContext(undefined, compatDetails) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions,
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-
-				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
-				mockLogger.assertMatchNone([
-					{
-						eventName: "ContainerRuntime:FlushModeFallback",
-						category: "error",
 					},
 				]);
 			});
