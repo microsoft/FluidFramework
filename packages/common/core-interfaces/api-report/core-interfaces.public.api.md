@@ -299,7 +299,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 // @public
 export interface ITelemetryBaseLogger {
     minLogLevel?: LogLevel;
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 }
 
 // @public
@@ -321,6 +321,8 @@ export type Listeners<T extends object> = {
 // @public
 export const LogLevel: {
     readonly verbose: 10;
+    readonly info: 20;
+    readonly essential: 30;
     readonly default: 20;
     readonly error: 30;
 };
