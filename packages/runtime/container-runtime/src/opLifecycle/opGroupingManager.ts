@@ -130,7 +130,10 @@ export class OpGroupingManager {
 			return batch as OutboundSingletonBatch;
 		}
 
-		if (batch.messages.length >= largeBatchThreshold) {
+		// Use > (not >=) so that batches flushed exactly at the staging-mode
+		// auto-flush threshold (which defaults to largeBatchThreshold) don't
+		// trigger this event. Only genuinely oversized batches are logged.
+		if (batch.messages.length > largeBatchThreshold) {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
 				length: batch.messages.length,

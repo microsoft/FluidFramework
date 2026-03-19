@@ -776,7 +776,7 @@ export class PendingStateManager implements IDisposable {
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
-		const replayedBatches: Record<number, IPendingMessage["batchInfo"]> = {};
+		const replayedBatchInfos: IPendingMessage["batchInfo"][] = [];
 
 		let seenStagedBatch = false;
 
@@ -814,7 +814,7 @@ export class PendingStateManager implements IDisposable {
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
 				this.stateHandler.reSubmitBatch([], { batchId, staged, squash });
-				replayedBatches[pendingMessage.batchInfo.batchStartCsn] ??= pendingMessage.batchInfo;
+				replayedBatchInfos.push(pendingMessage.batchInfo);
 				continue;
 			}
 
@@ -841,7 +841,7 @@ export class PendingStateManager implements IDisposable {
 					],
 					{ batchId, staged, squash },
 				);
-				replayedBatches[pendingMessage.batchInfo.batchStartCsn] ??= pendingMessage.batchInfo;
+				replayedBatchInfos.push(pendingMessage.batchInfo);
 				continue;
 			}
 			// else: batchMetadataFlag === true  (It's a typical multi-message batch)
@@ -881,7 +881,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
-			replayedBatches[pendingMessage.batchInfo.batchStartCsn] ??= pendingMessage.batchInfo;
+			replayedBatchInfos.push(pendingMessage.batchInfo);
 		}
 
 		if (!committingStagedBatches) {
@@ -900,7 +900,7 @@ export class PendingStateManager implements IDisposable {
 			});
 		}
 
-		return Object.values(replayedBatches);
+		return replayedBatchInfos;
 	}
 
 	/**
@@ -912,14 +912,14 @@ export class PendingStateManager implements IDisposable {
 			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
 	): IPendingMessage["batchInfo"][] {
-		const batches: Record<number, IPendingMessage["batchInfo"]> = {};
+		const batchSet = new Set<IPendingMessage["batchInfo"]>();
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
 			if (stagedMessage?.batchInfo.staged === true) {
 				this.pendingMessages.pop();
+				batchSet.add(stagedMessage.batchInfo);
 
 				if (hasTypicalRuntimeOp(stagedMessage)) {
-					batches[stagedMessage.batchInfo.batchStartCsn] ??= stagedMessage.batchInfo;
 					callback(stagedMessage);
 				}
 			} else {
@@ -930,7 +930,7 @@ export class PendingStateManager implements IDisposable {
 			this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
 			0xb89 /* Shouldn't be any more staged messages */,
 		);
-		return Object.values(batches);
+		return [...batchSet];
 	}
 }
 
