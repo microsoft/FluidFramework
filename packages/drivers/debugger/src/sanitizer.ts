@@ -19,7 +19,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import * as Validator from "jsonschema";
 
 import {
@@ -100,8 +100,8 @@ class ChunkedOpProcessor {
 				// need to go deeper to get the desired contents
 				parsed = parsed.contents;
 			}
-		} catch (e) {
-			this.debugMsg(e);
+		} catch (error) {
+			this.debugMsg(error);
 			this.debugMsg(message.contents);
 		}
 		this.validateSchemaFn(parsed, chunkedOpContentsSchema);
@@ -130,9 +130,9 @@ class ChunkedOpProcessor {
 		this.concatenatedLength = contentsString.length;
 		try {
 			return JSON.parse(contentsString);
-		} catch (e) {
+		} catch (error) {
 			this.debugMsg(contentsString);
-			this.debugMsg(e);
+			this.debugMsg(error);
 			return undefined;
 		}
 	}
@@ -154,9 +154,9 @@ class ChunkedOpProcessor {
 				stringified.length <= this.concatenatedLength,
 				0x089 /* "Stringified length of chunk contents > total starting length" */,
 			);
-		} catch (e) {
-			this.debugMsg(e);
-			throw e;
+		} catch (error) {
+			this.debugMsg(error);
+			throw error;
 		}
 
 		for (let i = 0; i < this.messages.length; i++) {
@@ -179,8 +179,8 @@ class ChunkedOpProcessor {
 				} else {
 					stringifiedParsedContents = JSON.stringify(parsedContents);
 				}
-			} catch (e) {
-				this.debugMsg(e);
+			} catch (error) {
+				this.debugMsg(error);
 			}
 
 			message.contents = stringifiedParsedContents;
@@ -201,7 +201,7 @@ class ChunkedOpProcessor {
 	}
 
 	isPendingProcessing(): boolean {
-		return this.messages.length !== 0;
+		return this.messages.length > 0;
 	}
 }
 
@@ -272,9 +272,9 @@ export class Sanitizer {
 	getRandomText(len: number): string {
 		let str = "";
 		while (str.length < len) {
-			str = str + Math.random().toString(36).substring(2);
+			str = str + Math.random().toString(36).slice(2);
 		}
-		return str.substr(0, len);
+		return str.slice(0, Math.max(0, len));
 	}
 
 	readonly wordTokenRegex = /\S+/g;
@@ -344,7 +344,7 @@ export class Sanitizer {
 		}
 
 		const keys = Object.keys(input);
-		keys.forEach((key) => {
+		for (const key of keys) {
 			if (this.fullScrub || !excludedKeys.has(key)) {
 				const value = input[key];
 				if (typeof value === "string") {
@@ -358,7 +358,7 @@ export class Sanitizer {
 					input[key] = this.replaceObject(value, excludedKeys);
 				}
 			}
-		});
+		}
 		return input;
 	}
 
@@ -392,25 +392,23 @@ export class Sanitizer {
 
 		try {
 			let data = JSON.parse(message.data);
-			if (!this.objectMatchesSchema(data, joinDataSchema)) {
-				data = this.replaceAny(data);
-			} else {
+			if (this.objectMatchesSchema(data, joinDataSchema)) {
 				const user = data.detail.user;
 				user.id = this.replaceText(user.id, TextType.Email);
 				user.email = this.replaceText(user.email, TextType.Email);
 				user.name = this.replaceText(user.name, TextType.Name);
+			} else {
+				data = this.replaceAny(data);
 			}
 
 			message.data = JSON.stringify(data);
-		} catch (e) {
-			this.debugMsg(e);
+		} catch (error) {
+			this.debugMsg(error);
 		}
 	}
 
 	fixPropose(message: any): void {
-		if (!this.objectMatchesSchema(message.contents, proposeContentsSchema)) {
-			message.contents = this.replaceAny(message.contents);
-		} else {
+		if (this.objectMatchesSchema(message.contents, proposeContentsSchema)) {
 			if (typeof message.contents === "string") {
 				try {
 					const data = JSON.parse(message.contents);
@@ -423,8 +421,8 @@ export class Sanitizer {
 							pkg.fluid.browser.umd.files = this.replaceArray(pkg.fluid.browser.umd.files);
 						}
 					}
-				} catch (e) {
-					this.debugMsg(e);
+				} catch (error) {
+					this.debugMsg(error);
 				}
 			} else {
 				if (this.fullScrub) {
@@ -434,11 +432,13 @@ export class Sanitizer {
 					);
 				}
 			}
+		} else {
+			message.contents = this.replaceAny(message.contents);
 		}
 	}
 
 	fixAttachEntries(entries: any[]): void {
-		entries.forEach((element) => {
+		for (const element of entries) {
 			// Tree type
 			if (element.value.entries) {
 				this.fixAttachEntries(element.value.entries);
@@ -450,11 +450,11 @@ export class Sanitizer {
 						data = this.replaceObject(data);
 						element.value.contents = JSON.stringify(data);
 					}
-				} catch (e) {
-					this.debugMsg(e);
+				} catch (error) {
+					this.debugMsg(error);
 				}
 			}
-		});
+		}
 	}
 
 	/**
@@ -466,15 +466,15 @@ export class Sanitizer {
 			typeof contents === "object",
 			0x08b /* "Unexpected type on contents for fix of an attach!" */,
 		);
-		if (!this.objectMatchesSchema(contents, attachContentsSchema)) {
-			this.replaceObject(contents);
-		} else {
+		if (this.objectMatchesSchema(contents, attachContentsSchema)) {
 			if (this.fullScrub) {
 				contents.id = this.replaceText(contents.id, TextType.FluidObject);
 				contents.type = this.replaceText(contents.type, TextType.FluidObject);
 			}
 
 			this.fixAttachEntries(contents.snapshot.entries);
+		} else {
+			this.replaceObject(contents);
 		}
 	}
 
@@ -495,8 +495,8 @@ export class Sanitizer {
 				const data = JSON.parse(message.contents);
 				this.fixAttachContents(data);
 				message.contents = JSON.stringify(data);
-			} catch (e) {
-				this.debugMsg(e);
+			} catch (error) {
+				this.debugMsg(error);
 				return;
 			}
 		} else {
@@ -520,9 +520,7 @@ export class Sanitizer {
 	 */
 	fixOpContentsObject(contents: any): void {
 		// do replacement
-		if (!this.objectMatchesSchema(contents, opContentsSchema)) {
-			this.replaceAny(contents);
-		} else {
+		if (this.objectMatchesSchema(contents, opContentsSchema)) {
 			if (this.fullScrub) {
 				contents.address = this.replaceText(contents.address, TextType.FluidObject);
 			}
@@ -540,8 +538,8 @@ export class Sanitizer {
 						const data = JSON.parse(contents.contents.content);
 						this.fixAttachContents(data);
 						contents.contents.content = JSON.stringify(data);
-					} catch (e) {
-						this.debugMsg(e);
+					} catch (error) {
+						this.debugMsg(error);
 					}
 				} else {
 					this.fixAttachContents(contents.contents.content);
@@ -567,9 +565,9 @@ export class Sanitizer {
 				if (this.fullScrub) {
 					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
 				}
-				innerContent.contents.ops.forEach((deltaOp) => {
+				for (const deltaOp of innerContent.contents.ops) {
 					this.fixDeltaOp(deltaOp);
-				});
+				}
 			} else if (
 				this.validator.validate(innerContent, opContentsMergeTreeDeltaOpSchema).valid
 			) {
@@ -598,6 +596,8 @@ export class Sanitizer {
 				// message contents don't match any known op format
 				this.objectMatchesSchema(contents, false);
 			}
+		} else {
+			this.replaceAny(contents);
 		}
 	}
 
@@ -607,8 +607,8 @@ export class Sanitizer {
 		if (typeof message.contents === "string") {
 			try {
 				msgContents = JSON.parse(message.contents);
-			} catch (e) {
-				this.debugMsg(e);
+			} catch (error) {
+				this.debugMsg(error);
 				return;
 			}
 		} else {
@@ -653,8 +653,8 @@ export class Sanitizer {
 		if (typeof message.contents === "string") {
 			try {
 				message.contents = JSON.stringify(msgContents);
-			} catch (e) {
-				this.debugMsg(e);
+			} catch (error) {
+				this.debugMsg(error);
 				return;
 			}
 		}
@@ -712,10 +712,12 @@ export class Sanitizer {
 					case "noClient":
 					case "summarize":
 					case "summaryAck":
-					case "summaryNack":
+					case "summaryNack": {
 						break;
-					default:
+					}
+					default: {
 						this.debugMsg(`Unexpected op type ${message.type}`);
+					}
 				}
 			});
 
