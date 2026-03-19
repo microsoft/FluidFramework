@@ -149,7 +149,22 @@ These fields appear on connectivity and performance events.
 
 ---
 
-### 1.7 Client Type & Agent Fields
+### 1.7 App Identification Fields
+
+These fields identify which partner app or host generated the telemetry. **Use `App_Name` (not `AppName`) for partner-level breakdowns.**
+
+| Field | Type | Description |
+|---|---|---|
+| `App_Name` | string | Clean partner app name. Common values: `"Loop App"`, `"Teams"`, `"Outlook"`, `"Office.com"`, `"OneNote"`, `"Whiteboard"`, `"AIHub"`, `"Excel"`, `"Word"`, `"PowerPoint"`, `"Edge"`, `"Outlook_iOS"`, `"Outlook_Android"`, `"OfficeMobile"`, `"TeamSpace_Android"`, `"Loop"` (mobile), `"Microsoft Planner"`, `"Unknown"`. Use this field for baseline health checks and partner-level error breakdowns. |
+| `App_Platform` | string | Platform of the host app. Common values: `"Web"`, `"Win32"`, `"iOS"`, `"Android"`. |
+| `App_Version` | string | Host application build version. In the Fluid Preview app, maps directly to the Fluid package version. |
+| `Data_hostName` | string | Host app identifier from the Fluid loader perspective. More granular than `App_Name` — e.g. `"Loop"`, `"LoopEmbed"`, `"Teams"`, `"Whiteboard"`. |
+
+> **`App_Name` vs `Data_hostName`:** `App_Name` gives clean, user-friendly partner names (good for dashboards and high-level health checks). `Data_hostName` is more granular and distinguishes sub-hosts (e.g. `"Loop"` vs `"LoopEmbed"`). Use `App_Name` for shift baseline queries and `Data_hostName` for detailed investigations.
+
+---
+
+### 1.8 Client Type & Agent Fields
 
 | Field | Values | Description |
 |---|---|---|
@@ -157,7 +172,7 @@ These fields appear on connectivity and performance events.
 
 ---
 
-### 1.8 Deployment Ring / Audience Fields
+### 1.9 Deployment Ring / Audience Fields
 
 | Field | Table origin | Description |
 |---|---|---|
@@ -168,7 +183,7 @@ Both fields effectively represent which deployment ring the data is from. Use `L
 
 ---
 
-### 1.9 OWH-Specific Fields
+### 1.10 OWH-Specific Fields
 
 These fields appear in the `Office_Fluid_OfficeWebHost_*` and `Office_Fluid_QoS_*` tables.
 
@@ -181,7 +196,7 @@ These fields appear in the `Office_Fluid_OfficeWebHost_*` and `Office_Fluid_QoS_
 
 ---
 
-### 1.10 Data Corruption Investigation Fields
+### 1.11 Data Corruption Investigation Fields
 
 These fields appear in `Office_Fluid_FluidRuntime_Error` for `dataCorruptionError` events.
 
@@ -195,7 +210,7 @@ These fields appear in `Office_Fluid_FluidRuntime_Error` for `dataCorruptionErro
 
 ---
 
-### 1.11 Kusto Functions (Office Fluid database)
+### 1.12 Kusto Functions (Office Fluid database)
 
 These are stored functions in the `Office Fluid` Kusto database that simplify common patterns.
 
@@ -211,7 +226,7 @@ These are stored functions in the `Office Fluid` Kusto database that simplify co
 
 ---
 
-### 1.12 Loop FFX / Render / Video Fields
+### 1.13 Loop FFX / Render / Video Fields
 
 These fields appear in the Loop FFX telemetry tables (`HostTracker`, `Scriptor`, `Video`).
 
@@ -229,7 +244,7 @@ These fields appear in the Loop FFX telemetry tables (`HostTracker`, `Scriptor`,
 
 ---
 
-### 1.13 Partner / External Database Fields
+### 1.14 Partner / External Database Fields
 
 #### OneNote Fluid (`database("OneNote Fluid").reportdata`)
 
@@ -878,6 +893,30 @@ Office_Fluid_FluidRuntime_Error
 | summarize count(), dcount(Data_docId)
   by Data_hostName, Loop_Audience, Data_errorType
 | sort by count_ desc
+```
+
+```kusto
+// Error volume by App_Name: compare last 4 hours vs same window yesterday and last week
+// Good for quick "is anything elevated right now?" checks
+let today = Office_Fluid_FluidRuntime_Error
+| where Event_Time between (ago(4h) .. now())
+| where Loop_Audience == "Production"
+| summarize TodayErrors=count(), TodaySessions=dcount(Session_Id) by App_Name;
+let yesterday = Office_Fluid_FluidRuntime_Error
+| where Event_Time between (ago(28h) .. ago(24h))
+| where Loop_Audience == "Production"
+| summarize YesterdayErrors=count(), YesterdaySessions=dcount(Session_Id) by App_Name;
+let lastweek = Office_Fluid_FluidRuntime_Error
+| where Event_Time between (ago(172h) .. ago(168h))
+| where Loop_Audience == "Production"
+| summarize LastWeekErrors=count(), LastWeekSessions=dcount(Session_Id) by App_Name;
+today
+| join kind=leftouter yesterday on App_Name
+| join kind=leftouter lastweek on App_Name
+| project App_Name, TodayErrors, TodaySessions,
+    YesterdayErrors=coalesce(YesterdayErrors,0), YesterdaySessions=coalesce(YesterdaySessions,0),
+    LastWeekErrors=coalesce(LastWeekErrors,0), LastWeekSessions=coalesce(LastWeekSessions,0)
+| order by TodayErrors desc
 ```
 
 ---
