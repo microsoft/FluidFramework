@@ -212,7 +212,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"dependency-cruiser": "^17.3.2",
-		"diff": "^3.5.0",
+		"diff": "^4.0.4",
 		"easy-table": "^1.2.0",
 		"eslint": "catalog:eslint",
 		"eslint-config-prettier": "catalog:eslint",
