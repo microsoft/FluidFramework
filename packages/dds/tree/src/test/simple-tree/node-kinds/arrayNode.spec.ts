@@ -408,7 +408,7 @@ describe("ArrayNode", () => {
 						array2: schemaFactory.array(schemaFactory.number),
 					});
 					const { array1, array2 } = init(schema, { array1: [], array2: [1, 2, 3] });
-					asAlpha(array1).moveToStart(1, array2);
+					array1.moveToStart(1, array2);
 					assert.deepEqual([...array1], [2]);
 					assert.deepEqual([...array2], [1, 3]);
 				});
