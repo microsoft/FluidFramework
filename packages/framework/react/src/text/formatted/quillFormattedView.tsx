@@ -65,6 +65,27 @@ const fontSet = new Set<string>(["monospace", "serif", "sans-serif", "Arial"]);
 const defaultSize = 12;
 /** Default font when no explicit font is specified. */
 const defaultFont = "Arial";
+/** default heading for when an unsupported header is supplied */
+const defaultHeading = "h5";
+/** The string literal values accepted by LineTag. */
+type LineTagValue = Parameters<typeof FormattedTextAsTree.LineTag>[0];
+/** Quill header numbers → LineTag values. */
+const headerToLineTag = {
+	1: "h1",
+	2: "h2",
+	3: "h3",
+	4: "h4",
+	5: "h5",
+} as const satisfies Readonly<Record<number, LineTagValue>>;
+/** LineTag values → Quill attributes. Used by buildDeltaFromTree (tree → Quill). */
+const lineTagToQuillAttributes = {
+	h1: { header: 1 },
+	h2: { header: 2 },
+	h3: { header: 3 },
+	h4: { header: 4 },
+	h5: { header: 5 },
+	li: { list: "bullet" },
+} as const satisfies Readonly<Record<LineTagValue, Record<string, unknown>>>;
 /**
  * Parse CSS font-size from a pasted HTML element's inline style.
  * Returns a Quill size name if the pixel value matches a supported size, undefined otherwise.
@@ -155,12 +176,43 @@ function parseSize(size: unknown): number {
 	return defaultSize;
 }
 
+/** Extract a LineTag from Quill attributes, or undefined if none present. Quill only supports one LineTag at a time. */
+export function parseLineTag(
+	attributes?: Record<string, unknown>,
+): FormattedTextAsTree.LineTag | undefined {
+	if (!attributes) return undefined;
+	// Quill should never send both header and list attributes simultaneously.
+	assert(
+		!(typeof attributes.header === "number" && typeof attributes.list === "string"),
+		0xce2 /* expected at most one line tag (header or list), but received both */,
+	);
+	if (typeof attributes.header === "number") {
+		const tag: LineTagValue =
+			headerToLineTag[attributes.header as keyof typeof headerToLineTag] ?? defaultHeading;
+		return FormattedTextAsTree.LineTag(tag);
+	}
+	if (attributes.list === "bullet") {
+		return FormattedTextAsTree.LineTag("li");
+	}
+	return undefined;
+}
+
+/** Create a StringAtom containing a StringLineAtom with the given line tag. */
+function createLineAtom(lineTag: FormattedTextAsTree.LineTag): FormattedTextAsTree.StringAtom {
+	return new FormattedTextAsTree.StringAtom({
+		content: new FormattedTextAsTree.StringLineAtom({
+			tag: lineTag,
+		}),
+		format: new FormattedTextAsTree.CharacterFormat(quillAttributesToFormat()),
+	});
+}
+
 /**
  * Convert Quill attributes to a complete CharacterFormat object.
  * Used when inserting new characters - all format properties must have values.
  * Missing attributes default to false/default values.
  */
-function quillAttrsToFormat(attrs?: Record<string, unknown>): {
+function quillAttributesToFormat(attributes?: Record<string, unknown>): {
 	bold: boolean;
 	italic: boolean;
 	underline: boolean;
@@ -168,11 +220,11 @@ function quillAttrsToFormat(attrs?: Record<string, unknown>): {
 	font: string;
 } {
 	return {
-		bold: attrs?.bold === true,
-		italic: attrs?.italic === true,
-		underline: attrs?.underline === true,
-		size: parseSize(attrs?.size),
-		font: typeof attrs?.font === "string" ? attrs.font : defaultFont,
+		bold: attributes?.bold === true,
+		italic: attributes?.italic === true,
+		underline: attributes?.underline === true,
+		size: parseSize(attributes?.size),
+		font: typeof attributes?.font === "string" ? attributes.font : defaultFont,
 	};
 }
 
@@ -182,17 +234,18 @@ function quillAttrsToFormat(attrs?: Record<string, unknown>): {
  * Only includes properties that were explicitly set in the Quill attributes,
  * allowing selective format updates without overwriting unrelated properties.
  */
-function quillAttrsToPartial(
-	attrs?: Record<string, unknown>,
+function quillAttributesToPartial(
+	attributes?: Record<string, unknown>,
 ): Partial<FormattedTextAsTree.CharacterFormat> {
-	if (!attrs) return {};
+	if (!attributes) return {};
 	const format: Partial<FormattedTextAsTree.CharacterFormat> = {};
 	// Only include attributes that are explicitly present in the Quill delta
-	if ("bold" in attrs) format.bold = attrs.bold === true;
-	if ("italic" in attrs) format.italic = attrs.italic === true;
-	if ("underline" in attrs) format.underline = attrs.underline === true;
-	if ("size" in attrs) format.size = parseSize(attrs.size);
-	if ("font" in attrs) format.font = typeof attrs.font === "string" ? attrs.font : defaultFont;
+	if ("bold" in attributes) format.bold = attributes.bold === true;
+	if ("italic" in attributes) format.italic = attributes.italic === true;
+	if ("underline" in attributes) format.underline = attributes.underline === true;
+	if ("size" in attributes) format.size = parseSize(attributes.size);
+	if ("font" in attributes)
+		format.font = typeof attributes.font === "string" ? attributes.font : defaultFont;
 	return format;
 }
 
@@ -201,23 +254,23 @@ function quillAttrsToPartial(
  * Used when building Quill deltas from tree content to sync external changes.
  * Only includes non-default values to keep deltas minimal.
  */
-function formatToQuillAttrs(
+function formatToQuillAttributes(
 	format: FormattedTextAsTree.CharacterFormat,
 ): Record<string, unknown> {
-	const attrs: Record<string, unknown> = {};
+	const attributes: Record<string, unknown> = {};
 	// Only include non-default formatting to keep Quill deltas minimal
-	if (format.bold) attrs.bold = true;
-	if (format.italic) attrs.italic = true;
-	if (format.underline) attrs.underline = true;
+	if (format.bold) attributes.bold = true;
+	if (format.italic) attributes.italic = true;
+	if (format.underline) attributes.underline = true;
 	if (format.size !== defaultSize) {
 		// Convert pixel value back to Quill size name if possible
-		attrs.size =
+		attributes.size =
 			format.size in sizeReverse
 				? sizeReverse[format.size as keyof typeof sizeReverse]
 				: `${format.size}px`;
 	}
-	if (format.font !== defaultFont) attrs.font = format.font;
-	return attrs;
+	if (format.font !== defaultFont) attributes.font = format.font;
+	return attributes;
 }
 
 /**
@@ -229,11 +282,11 @@ function formatToQuillAttrs(
  * This is used to sync Quill's display when the tree changes externally
  * (e.g., from a remote collaborator's edit).
  */
-function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
+export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 	const ops: QuillDeltaOp[] = [];
 	// Accumulator for current run of identically-formatted text
 	let text = "";
-	let attrs: Record<string, unknown> = {};
+	let previousAttributes: Record<string, unknown> = {};
 	// JSON key for current attributes, used for equality comparison
 	// TODO:Performance: implement faster equality check.
 	let key = "";
@@ -242,7 +295,7 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 	const pushRun = (): void => {
 		if (!text) return;
 		const op: QuillDeltaOp = { insert: text };
-		if (Object.keys(attrs).length > 0) op.attributes = attrs;
+		if (Object.keys(previousAttributes).length > 0) op.attributes = previousAttributes;
 		ops.push(op);
 	};
 
@@ -250,19 +303,35 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 	// TODO:Performance: Optimize this loop by adding an API to get runs to FormattedTextAsTree.Tree, and implementing that using cursors.
 	// Something like `getUniformRun(startIndex, maxLength): number` and `substring(startIndex, length): string`.
 	for (const atom of root.charactersWithFormatting()) {
-		const a = formatToQuillAttrs(atom.format);
-		const k = JSON.stringify(a);
-		if (k === key) {
-			// Same formatting as previous character - extend current run
-			text += atom.content.content;
-		} else {
-			// Different formatting - push current run and start new one
+		const currentAttributes = formatToQuillAttributes(atom.format);
+
+		if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
+			// Merge line-specific attributes (header/list) into the format
+			const lineTag = atom.content.tag.value;
+			Object.assign(currentAttributes, lineTagToQuillAttributes[lineTag]);
+
+			// Line atoms always break the current run and emit a newline
 			pushRun();
-			text = atom.content.content;
-			attrs = a;
-			key = k;
+			text = "";
+			key = "";
+			const op: QuillDeltaOp = { insert: "\n" };
+			if (Object.keys(currentAttributes).length > 0) op.attributes = currentAttributes;
+			ops.push(op);
+		} else {
+			const stringifiedAttributes = JSON.stringify(currentAttributes);
+			if (stringifiedAttributes === key) {
+				// Same formatting as previous character - extend run
+				text += atom.content.content;
+			} else {
+				// Different formatting - push previous run and start a new one
+				pushRun();
+				text = atom.content.content;
+				previousAttributes = currentAttributes;
+				key = stringifiedAttributes;
+			}
 		}
 	}
+
 	// Push any remaining accumulated text
 	pushRun();
 
@@ -326,6 +395,8 @@ const FormattedTextEditorView = forwardRef<
 					["bold", "italic", "underline"],
 					[{ size: ["small", false, "large", "huge"] }],
 					[{ font: [] }],
+					[{ header: [1, 2, 3, 4, 5, false] }],
+					[{ list: "bullet" }],
 					["clean"],
 				],
 				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
@@ -375,7 +446,39 @@ const FormattedTextEditorView = forwardRef<
 						const cpCount = codepointCount(retainedStr);
 
 						if (op.attributes) {
-							root.formatRange(cpPos, cpPos + cpCount, quillAttrsToPartial(op.attributes));
+							const lineTag = parseLineTag(op.attributes);
+							// Case 1: Applying line formatting (header/list) to an existing newline in the document.
+							if (lineTag !== undefined && content[utf16Pos] === "\n") {
+								// Swap existing newline atom to StringLineAtom
+								root.removeRange(cpPos, cpPos + 1);
+								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+								// Case 2: Applying line formatting past the end of content. Quill's implicit trailing newline.
+							} else if (lineTag !== undefined && utf16Pos >= content.length) {
+								// Quill's implicit trailing newline — insert a new line atom
+								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+								content += "\n";
+								// Case 3: clearing line formatting. Deletes StringLineAtom and inserts a plain
+								// StringTextAtom("\n") in its place.
+							} else if (
+								lineTag === undefined &&
+								content[utf16Pos] === "\n" &&
+								root.charactersWithFormatting()[cpPos]?.content instanceof
+									FormattedTextAsTree.StringLineAtom
+							) {
+								// Quill is clearing line formatting (e.g. { retain: 1, attributes: { header: null } }).
+								// StringLineAtom and StringTextAtom are distinct schema types in the tree,
+								// so we can't convert between them via formatRange — we must delete the
+								// StringLineAtom and insert a plain StringTextAtom("\n") in its place.
+								root.removeRange(cpPos, cpPos + 1);
+								root.insertAt(cpPos, "\n");
+								// Case 4: Normal character formatting (bold, italic, size, etc...)
+							} else {
+								root.formatRange(
+									cpPos,
+									cpPos + cpCount,
+									quillAttributesToPartial(op.attributes),
+								);
+							}
 						}
 						utf16Pos += op.retain;
 						cpPos += cpCount;
@@ -389,11 +492,16 @@ const FormattedTextEditorView = forwardRef<
 						content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
 						// Don't advance positions - next op starts at same position
 					} else if (typeof op.insert === "string") {
-						// Insert: add new text with formatting at current position
-						root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
-							quillAttrsToFormat(op.attributes),
-						);
-						root.insertAt(cpPos, op.insert);
+						const lineTag = parseLineTag(op.attributes);
+						if (lineTag !== undefined && op.insert === "\n") {
+							root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+						} else {
+							// Insert: add new text with formatting at current position
+							root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
+								quillAttributesToFormat(op.attributes),
+							);
+							root.insertAt(cpPos, op.insert);
+						}
 						// Update content to reflect insertion
 						content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
 						// Advance by inserted content length
@@ -497,6 +605,10 @@ const FormattedTextEditorView = forwardRef<
 				.ql-undo::after { content: "↶"; font-size: 18px; }
 				.ql-redo::after { content: "↷"; font-size: 18px; }
 				.ql-undo:disabled, .ql-redo:disabled { opacity: 0.3; cursor: not-allowed; }
+				/* custom css altering Quill's default bullet point alignment */
+				/* vertically center bullets in list items, since Quill's bullet has no inherent height */
+				li[data-list="bullet"] { display: flex; align-items: center; }
+				li[data-list="bullet"] .ql-ui { align-self: center; }
 			`}</style>
 			<h2 style={{ margin: "10px 0" }}>Collaborative Formatted Text Editor</h2>
 			<div

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/app-insights-logger",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",

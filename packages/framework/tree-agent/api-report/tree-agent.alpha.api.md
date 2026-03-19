@@ -53,6 +53,17 @@ export interface EditResult {
 }
 
 // @alpha
+export function executeSemanticEditing<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, prompt: string, options?: ExecuteSemanticEditingOptions<TSchema>): Promise<string>;
+
+// @alpha
+export interface ExecuteSemanticEditingOptions<TSchema extends ImplicitFieldSchema> {
+    domainHints?: string;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+    logger?: Logger;
+    maximumSequentialEdits?: number;
+}
+
+// @alpha
 export interface ExposedMethods {
     expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(schema: S, methodName: K, tfFunction: Z): void;
 }

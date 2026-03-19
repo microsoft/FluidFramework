@@ -48,9 +48,11 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
+			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
 			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges."
 		],
 		"overrides": {
+			"diff@>=5 <6": "^5.2.2",
 			"js-yaml": "^4.1.1",
 			"minimatch@>=3 <4": "^3.1.5",
 			"minimatch@>=5 <6": "^5.1.9",
