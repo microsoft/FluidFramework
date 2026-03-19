@@ -618,8 +618,8 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("IdAllocation op from replayPendingStates is flushed, preventing outboxSequenceNumberCoherencyCheck error", async () => {
-				// Start out disconnected since step 1 is to trigger ID Allocation op on reconnect
+			it("IDs generated before a lost range are finalized after reconnect", async () => {
+				// Start out disconnected since step 1 is to generate IDs before reconnect
 				const connected = false;
 				const mockContext = getMockContext({ connected }) as IContainerContext;
 				const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
@@ -632,33 +632,45 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				// 1st compressed id – queued while disconnected (goes to idAllocationBatch).
-				containerRuntime.idCompressor?.generateCompressedId();
+				const compressor = containerRuntime.idCompressor;
+				assert(compressor !== undefined, "Expected idCompressor to be defined");
 
-				// Re-connect – replayPendingStates will submit only an idAllocation op.
-				// It's now in the Outbox and a flush is scheduled (including this flush was a bug fix)
+				// Generate an ID while disconnected.
+				const id1 = compressor.generateCompressedId();
+				// Simulate the range being taken but lost (e.g. nack'd / disconnect before submit).
+				compressor.takeNextCreationRange();
+
+				// Re-connect – replayPendingStates releases unfinalized ranges
+				// (no IdAllocation op is submitted at this point).
 				changeConnectionState(containerRuntime, true, mockClientId);
 
 				// Simulate a remote op arriving before we submit anything else.
 				// Bump refSeq and continue execution at the end of the microtask queue.
-				// This is how Inbound Queue works, and this is necessary to simulate here to allow scheduled flush to happen
+				// This is how Inbound Queue works, and this is makes sure we get coverage of ref seq coherency in this test.
 				++mockDeltaManager.lastSequenceNumber;
 				await Promise.resolve();
-
-				// 2nd compressed id – its idAllocation op will enter Outbox *after* the ref seq# bumped.
-				const id2 = containerRuntime.idCompressor?.generateCompressedId();
-
-				// This would throw a DataProcessingError from codepath "outboxSequenceNumberCoherencyCheck"
-				// if we didn't schedule a flush after the idAllocation op submitted during the reconnect.
-				// (On account of the two ID Allocation ops having different refSeqs but being in the same batch)
+				// Generate another ID and submit a data store op referencing it.
+				// This triggers submitIdAllocationOpIfNeeded → takeNextCreationRange.
+				// Because the unfinalized range was released during replay, both IDs
+				// are included in the resulting allocation range.
+				const id2 = compressor.generateCompressedId();
 				submitDataStoreOp(containerRuntime, "someDS", genTestDataStoreMessage({ id: id2 }));
 
 				// Let the Outbox flush so we can check submittedOps length
 				await Promise.resolve();
-				assert(
-					submittedOps.length === 3,
-					"Expected 3 ops to be submitted (2 ID Allocation, 1 data)",
-				);
+				assert.strictEqual(submittedOps.length, 2, "Expected 1 ID Allocation + 1 data op");
+
+				// Simulate processing the ID Allocation ack — finalize the range.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+				compressor.finalizeCreationRange(submittedOps[0].contents);
+
+				// Both IDs should now be finalized (positive final IDs in op space).
+				// Without releaseUnfinalizedCreationRange, id1 would remain a local-only
+				// ID (negative) that could never be shared with other clients.
+				const id1OpSpace = compressor.normalizeToOpSpace(id1);
+				const id2OpSpace = compressor.normalizeToOpSpace(id2);
+				assert(id1OpSpace >= 0, "id1 should be finalized after allocation range is sequenced");
+				assert(id2OpSpace >= 0, "id2 should be finalized after allocation range is sequenced");
 			});
 		});
 

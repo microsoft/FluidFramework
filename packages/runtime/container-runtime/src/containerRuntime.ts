@@ -2699,12 +2699,10 @@ export class ContainerRuntime
 		this.emitDirtyDocumentEvent = false;
 
 		try {
-			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
-			// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
-			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
-			// before staging mode so we can simply say staged: false.
-			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
-			this.scheduleFlush();
+			// Any ID Allocation ops that failed to submit need to have their ranges included
+			// in the next allocation op. Release the unfinalized ranges back so that the next
+			// call to takeNextCreationRange (during replay) will include them.
+			this._idCompressor?.releaseUnfinalizedCreationRange();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
