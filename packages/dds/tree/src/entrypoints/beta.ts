@@ -102,6 +102,7 @@ export {
 	AnnotatedAllowedTypeUnsafe, 
 	AnnotatedAllowedTypes, 
 	AnnotatedAllowedTypesUnsafe, 
+	ArrayNodeDeltaOp, 
 	CodecWriteOptionsBeta, 
 	ConciseTree, 
 	ExtensibleUnionNode, 
