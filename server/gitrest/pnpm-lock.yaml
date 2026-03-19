@@ -23,8 +23,11 @@ overrides:
   tar: ^7.5.11
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
   minimatch@>=9 <10: ^9.0.9
-  minimatch@>=10: ^10.2.4
+  minimatch@>=10 <11: ^10.2.4
 
 importers:
 
@@ -3446,8 +3449,8 @@ packages:
     resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
     engines: {node: '>=10'}
 
-  minimatch@6.2.0:
-    resolution: {integrity: sha512-sauLxniAmvnhhRjFwPNnJKaPFYyddAgbYdeUpHULtCT/GhzdCx/MDNy+Y40lBxTQUrMzDE8e0S43Z5uqfO0REg==}
+  minimatch@6.2.3:
+    resolution: {integrity: sha512-5rvZbDy5y2k40rre/0OBbYnl03en25XPU3gOVO7532beGMjAipq88VdS9OeLOZNrD+Tb0lDhBJHZ7Gcd8qKlPg==}
     engines: {node: '>=10'}
 
   minimatch@9.0.9:
@@ -7870,7 +7873,7 @@ snapshots:
 
   ignore-walk@6.0.1:
     dependencies:
-      minimatch: 6.2.0
+      minimatch: 6.2.3
 
   ignore@5.3.2: {}
 
@@ -8762,7 +8765,7 @@ snapshots:
     dependencies:
       brace-expansion: 2.0.2
 
-  minimatch@6.2.0:
+  minimatch@6.2.3:
     dependencies:
       brace-expansion: 2.0.2
 

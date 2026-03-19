@@ -106,8 +106,11 @@
 			"tar": "^7.5.11",
 			"minimatch@>=3 <4": "^3.1.5",
 			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=6 <7": "^6.2.3",
+			"minimatch@>=7 <8": "^7.4.9",
+			"minimatch@>=8 <9": "^8.0.7",
 			"minimatch@>=9 <10": "^9.0.9",
-			"minimatch@>=10": "^10.2.4"
+			"minimatch@>=10 <11": "^10.2.4"
 		},
 		"onlyBuiltDependencies": [
 			"core-js",

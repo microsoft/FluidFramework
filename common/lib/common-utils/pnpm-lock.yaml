@@ -19,8 +19,11 @@ overrides:
   tar: ^7.5.11
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
   minimatch@>=9 <10: ^9.0.9
-  minimatch@>=10: ^10.2.4
+  minimatch@>=10 <11: ^10.2.4
 
 patchedDependencies:
   '@microsoft/api-extractor@7.52.11':
@@ -4152,12 +4155,12 @@ packages:
     resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
     engines: {node: '>=10'}
 
-  minimatch@7.4.6:
-    resolution: {integrity: sha512-sBz8G/YjVniEz6lKPNpKxXwazJe4c19fEfV2GDMX6AjFz+MX9uDWIZW8XreVhkFW3fkIdTv/gxWr/Kks5FFAVw==}
+  minimatch@7.4.9:
+    resolution: {integrity: sha512-Brg/fp/iAVDOQoHxkuN5bEYhyQlZhxddI78yWsCbeEwTHXQjlNLtiJDUsp1GIptVqMI7/gkJMz4vVAc01mpoBw==}
     engines: {node: '>=10'}
 
-  minimatch@8.0.4:
-    resolution: {integrity: sha512-W0Wvr9HyFXZRGIDgCicunpQ299OKXs9RgZfaukz4qAW/pJhcpUfupc9c+OObPOFueNy8VSrZgEmDtk6Kh4WzDA==}
+  minimatch@8.0.7:
+    resolution: {integrity: sha512-V+1uQNdzybxa14e/p00HZnQNNcTjnRJjDxg2V8wtkjFctq4M7hXFws4oekyTP0Jebeq7QYtpFyOeBAjc88zvYg==}
     engines: {node: '>=16 || 14 >=14.17'}
 
   minimatch@9.0.9:
@@ -7449,7 +7452,7 @@ snapshots:
   '@tufjs/models@1.0.3':
     dependencies:
       '@tufjs/canonical-json': 1.0.0
-      minimatch: 7.4.6
+      minimatch: 7.4.9
 
   '@types/argparse@1.0.38': {}
 
@@ -9519,7 +9522,7 @@ snapshots:
   glob@9.3.5:
     dependencies:
       fs.realpath: 1.0.0
-      minimatch: 8.0.4
+      minimatch: 8.0.7
       minipass: 4.2.8
       path-scurry: 1.11.1
 
@@ -9746,7 +9749,7 @@ snapshots:
 
   ignore-walk@6.0.2:
     dependencies:
-      minimatch: 7.4.6
+      minimatch: 7.4.9
 
   ignore@4.0.6: {}
 
@@ -11103,11 +11106,11 @@ snapshots:
     dependencies:
       brace-expansion: 2.0.2
 
-  minimatch@7.4.6:
+  minimatch@7.4.9:
     dependencies:
       brace-expansion: 2.0.2
 
-  minimatch@8.0.4:
+  minimatch@8.0.7:
     dependencies:
       brace-expansion: 2.0.2
 
