@@ -1076,7 +1076,9 @@ export const TreeAlpha: TreeAlpha = {
 			const branch = parent.getBranch();
 			assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 			if (!branch.compatibility.canView) {
-				throw new UsageError("Cannot access child of a DocumentRootParent with incompatible schema");
+				throw new UsageError(
+					"Cannot access child of a DocumentRootParent with incompatible schema",
+				);
 			}
 			const root = branch.root;
 			if (root === undefined || isTreeNode(root)) {
