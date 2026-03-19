@@ -119,6 +119,7 @@ export function generateRuntimeOptions(
 		createBlobPayloadPending: [true, undefined],
 		explicitSchemaControl: [true, false],
 		disableSchemaUpgrade: [true, false],
+		stagingModeAutoFlushThreshold: [undefined],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
