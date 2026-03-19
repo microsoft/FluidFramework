@@ -14,7 +14,7 @@
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.cjs.json",
 		},
 	],
 }
