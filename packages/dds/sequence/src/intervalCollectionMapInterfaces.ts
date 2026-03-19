@@ -4,20 +4,20 @@
  */
 
 import type { ListNode } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
 	ISerializedIntervalCollectionV1,
 	ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
-import {
+import type {
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	SerializedIntervalDelta,
-	type SequenceIntervalClass,
 } from "./intervals/index.js";
+import type { SequenceIntervalClass } from "./intervals/index.js";
 
 export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;

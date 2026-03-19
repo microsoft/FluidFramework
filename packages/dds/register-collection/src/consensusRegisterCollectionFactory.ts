@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
-	type IChannelFactory,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
-import { IConsensusRegisterCollection } from "./interfaces.js";
+import type { IConsensusRegisterCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**

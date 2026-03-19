@@ -4,11 +4,12 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { ValueType } from "@fluidframework/shared-object-base/internal";
 
 import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
@@ -16,7 +17,7 @@ import {
 	type ISerializedIntervalCollectionV1,
 	type ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
-import {
+import type {
 	IIntervalCollectionTypeOperationValue,
 	ISerializableIntervalCollection,
 	SequenceOptions,
@@ -135,14 +136,14 @@ export class IntervalCollectionMap {
 
 	public serialize(serializer: IFluidSerializer): string {
 		const serializableMapData: IMapDataObjectSerializable = {};
-		this.data.forEach((localValue, key) => {
+		for (const [key, localValue] of this.data.entries()) {
 			serializableMapData[key] = makeSerializable(
 				localValue,
 				serializer,
 				this.handle,
 				this.options?.intervalSerializationFormat ?? "2",
 			);
-		});
+		}
 		return JSON.stringify(serializableMapData);
 	}
 
@@ -168,7 +169,7 @@ export class IntervalCollectionMap {
 			// "intervalCollections/". This would burden users trying to iterate the collection and
 			// access its value, as well as those trying to match a create message to its underlying
 			// collection. See https://github.com/microsoft/FluidFramework/issues/10557 for more context.
-			const normalizedKey = key.startsWith("intervalCollections/") ? key.substring(20) : key;
+			const normalizedKey = key.startsWith("intervalCollections/") ? key.slice(20) : key;
 
 			assert(
 				serializable.type !== ValueType[ValueType.Plain] &&
