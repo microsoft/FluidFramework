@@ -94,8 +94,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	// #region Final state
 
-	// The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
-	// This is updated to be equal to `generatedIdCount` + 1 each time it is called.
+	/**
+	 * The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
+	 * This is advanced to `generatedIdCount` + 1 each time it is called.
+	 * On the other hand, when `releaseUnfinalizedCreationRange` is called,
+	 * this is moved back to the start of the unfinalized range, to ensure those IDs are included in the next range.
+	 */
 	private nextRangeBaseGenCount = 1;
 	private readonly sessions = new Sessions();
 	private readonly finalSpace = new FinalSpace();
@@ -249,6 +253,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public releaseUnfinalizedCreationRange(): void {
+		assert(
+			!this.ongoingGhostSession,
+			"IdCompressor should not be operated normally when in a ghost session",
+		);
+
 		const lastLocalCluster = this.localSession.getLastCluster();
 		this.nextRangeBaseGenCount =
 			lastLocalCluster === undefined
