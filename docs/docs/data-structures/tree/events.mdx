@@ -3,45 +3,8 @@ title: Events
 sidebar_position: 5
 ---
 
-## Whole-Tree Events
-
-`TreeView` exposes two events for tree-wide changes:
-
-- `rootChanged` fires when the root field changes — i.e., a new root node is assigned or the schema changes.
-It does not fire when a property of the root node changes.
-- `commitApplied` fires when a change is applied outside a transaction, or when a transaction commits.
-Use this to obtain `Revertible` objects for undo/redo stacks.
-See [undo/redo support](./undo-redo.mdx) and [Transactions](./transactions.mdx).
-
-To subscribe to an event:
-
-```typescript
-const unsubscribe = treeView.events.on("rootChanged", () => {...});
-
-// Later at some point when the event subscription is not needed anymore
-unsubscribe();
-```
-
-## Node-Level Events
-
-`SharedTree` supports two node-level events, subscribed to via `Tree.on`:
-
-```typescript
-on<K extends keyof TreeChangeEvents>(
-		node: TreeNode,
-		eventName: K,
-		listener: TreeChangeEvents[K],
-	): () => void;
-```
-
-`eventName` is either `"nodeChanged"` or `"treeChanged"`:
-
--   `nodeChanged` fires when one or more properties of `node` change.
--   `treeChanged` fires when one or more properties of `node` or any node in its subtree changes.
-
-See the API docs for each event for further details.
-
-`Tree.on()` returns an unsubscribe function, which should be called any time the need for callback ends before the node is [deleted](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#deleted-enummember) (Not just [removed]](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#removed-enummember).
+SharedTree's events are subscribed to via "on" methods which return an unsubscribe function.
+The returned unsubscribe function should be called when the event subscription is no longer needed.
 
 ```typescript
 const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
@@ -49,3 +12,19 @@ const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
 // Later at some point when the event subscription is not needed anymore
 unsubscribe();
 ```
+
+## Whole-Tree Events
+
+[`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) exposes [events for the whole tree](https://fluidframework.com/docs/api/fluid-framework/treeviewevents-interface).
+
+## Node-Level Events
+
+The [`Tree`](https://fluidframework.com/docs/api/fluid-framework/#tree-variable) singleton provides [APIs for working with nodes](https://fluidframework.com/docs/api/fluid-framework/treenodeapi-interface)
+including [events](https://fluidframework.com/docs/api/fluid-framework/treechangeevents-interface).
+
+`Tree` supports two node-level events, subscribed to via `Tree.on`:
+
+-   `nodeChanged` fires when one or more properties of `node` change.
+-   `treeChanged` fires when one or more properties of `node` or any node in its subtree changes.
+
+See the API docs for each event for further details.
