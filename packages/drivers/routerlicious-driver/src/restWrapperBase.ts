@@ -5,7 +5,7 @@
 
 import type { QueryStringType } from "./queryStringUtils.js";
 import type { RequestConfig, RequestHeaders } from "./request.cjs";
-import { IR11sResponse } from "./restWrapper.js";
+import type { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
 	constructor(

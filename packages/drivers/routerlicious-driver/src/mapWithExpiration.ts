@@ -18,7 +18,7 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
 	}
 
 	private refresh(key: TKey): void {
-		this.lastRefreshedTimes.set(key, new Date().valueOf());
+		this.lastRefreshedTimes.set(key, Date.now());
 	}
 
 	/**
@@ -35,7 +35,7 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
 		if (refreshTime === undefined) {
 			return undefined;
 		}
-		const expired = new Date().valueOf() - refreshTime >= this.expiryMs;
+		const expired = Date.now() - refreshTime >= this.expiryMs;
 		if (expired && cleanUp) {
 			this.delete(key);
 		}

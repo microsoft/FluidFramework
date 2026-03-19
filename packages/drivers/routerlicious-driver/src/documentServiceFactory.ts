@@ -7,35 +7,34 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	FiveDaysMs,
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
+import { LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
 import {
 	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ISession,
-	convertSummaryTreeToWholeSummaryTree,
-} from "@fluidframework/server-services-client";
+import type { ISession } from "@fluidframework/server-services-client";
+import { convertSummaryTreeToWholeSummaryTree } from "@fluidframework/server-services-client";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { ICache, InMemoryCache, NullCache } from "./cache.js";
-import { INormalizedWholeSnapshot } from "./contracts.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
+import type { ICache } from "./cache.js";
+import { InMemoryCache, NullCache } from "./cache.js";
+import type { INormalizedWholeSnapshot } from "./contracts.js";
+import type { ISnapshotTreeVersion } from "./definitions.js";
 import { DocumentService } from "./documentService.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
 import { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";
 import {
 	RouterliciousOrdererRestWrapper,
@@ -45,7 +44,7 @@ import {
 } from "./restWrapper.js";
 import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
 import { SessionInfoManager } from "./sessionInfoManager.js";
-import { ITokenProvider } from "./tokens.js";
+import type { ITokenProvider } from "./tokens.js";
 import { replaceDocumentIdInPath } from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms

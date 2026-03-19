@@ -10,25 +10,27 @@ import {
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	type ISnapshot,
-	type ISnapshotFetchOptions,
 	ISummaryContext,
 	ICreateBlobResponse,
 	ISnapshotTreeEx,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshot,
+	ISnapshotFetchOptions,
+} from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
+import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import type {
 	GitManager,
 	ISummaryUploadManager,
-	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
+import { SummaryTreeUploadManager } from "@fluidframework/server-services-client";
 
 import { createDocument } from "./localCreateDocument.js";
 
@@ -218,7 +220,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				);
 			}),
 		);
-		const isAncestorOfDescendantsWithGroupId = descendants.some((keep) => keep);
+		const isAncestorOfDescendantsWithGroupId = descendants.some(Boolean);
 
 		// We don't want to return prematurely as we still may have children that we want to keep.
 		if (

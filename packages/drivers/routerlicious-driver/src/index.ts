@@ -8,7 +8,7 @@ export type { IRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
 
 // Tokens
 export { DefaultTokenProvider } from "./defaultTokenProvider.js";
-export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens.js";
+export type { ITokenProvider, ITokenResponse, ITokenService } from "./tokens.js";
 
 // Errors
 export { RouterliciousErrorTypes } from "./errorUtils.js";
@@ -21,7 +21,7 @@ export {
 } from "./documentServiceFactory.js";
 
 // Configuration
-export { IRouterliciousDriverPolicies } from "./policies.js";
+export type { IRouterliciousDriverPolicies } from "./policies.js";
 
 // Layer Compat details
 export { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";

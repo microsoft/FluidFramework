@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { io } from "socket.io-client";
-
 // Import is required for side-effects.
-export const SocketIOClientStatic = io;
+
+export { io as SocketIOClientStatic } from "socket.io-client";
