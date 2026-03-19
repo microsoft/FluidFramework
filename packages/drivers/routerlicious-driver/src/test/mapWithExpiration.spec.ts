@@ -291,7 +291,7 @@ describe("MapWithExpiration", () => {
 
 					map.forEach(() => {
 						assert.equal(this, thisOutside, "Expected 'this' to be unchanged for arrow fn");
-					});
+					}, thisArg);
 				}
 			})();
 
