@@ -1459,11 +1459,9 @@ export const TreeAlpha: TreeAlpha = {
 		}
 
 		if (parent instanceof UnhydratedParent) {
-			// UnhydratedParent - subscribe to status changes to detect hydration
+			// UnhydratedParent - subscribe to status changes to detect hydration.
 			const unhydratedRoot = parent.getUnhydratedRoot();
 
-			// Get the kernel for the unhydrated node's TreeNode (if one exists)
-			// For unhydrated nodes, we need to track when they get hydrated
 			const treeNode = unhydratedRoot.treeNode;
 			assert(
 				treeNode !== undefined,
@@ -1471,7 +1469,6 @@ export const TreeAlpha: TreeAlpha = {
 			);
 
 			const kernel = getKernel(treeNode);
-
 			// Subscribe to status changes (hydration). This is a one-shot subscription:
 			// once the node is hydrated, further status changes (e.g., Removed, re-inserted)
 			// are not the concern of the UnhydratedParent — those are handled by

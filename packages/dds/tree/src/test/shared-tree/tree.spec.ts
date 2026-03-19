@@ -10,6 +10,7 @@ import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-uti
 import { asAlpha } from "../../api.js";
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
 /* eslint-disable import-x/no-internal-modules */
+import { TreeStatus } from "../../feature-libraries/index.js";
 import {
 	DocumentRootParent,
 	RemovedRootParent,
@@ -569,6 +570,9 @@ describe("treeApi", () => {
 
 		describe("UnhydratedParent", () => {
 			it("fires status change on hydration and respects unsubscribe", () => {
+				const view = getView(new TreeViewConfiguration({ schema: Container }));
+				view.initialize({ items: [] });
+
 				const item = new ChildNode({ value: 42 });
 				const parent = TreeAlpha.parent2(item);
 				assert(parent instanceof UnhydratedParent);
@@ -580,23 +584,21 @@ describe("treeApi", () => {
 				TreeAlpha.on(parent, "treeChanged", () => log.push("treeChanged"));
 				unsubscribe();
 
-				const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
-				view.initialize(item);
+				view.root.items.insertAtEnd(item);
 
 				assert.deepEqual(log, ["treeChanged"]);
 			});
 
-			it("fires status change event for nested unhydrated nodes", () => {
-				const parentNode = new ParentNode({ child: { value: 5 } });
-
-				const rootParent = TreeAlpha.parent2(parentNode);
-				assert(rootParent instanceof UnhydratedParent);
+			it("fires status change on hydration via view.initialize()", () => {
+				const item = new ChildNode({ value: 42 });
+				const parent = TreeAlpha.parent2(item);
+				assert(parent instanceof UnhydratedParent);
 
 				const log: string[] = [];
-				TreeAlpha.on(rootParent, "treeChanged", () => log.push("treeChanged"));
+				TreeAlpha.on(parent, "treeChanged", () => log.push("treeChanged"));
 
-				const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
-				view.initialize(parentNode);
+				const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
+				view.initialize(item);
 
 				assert.deepEqual(log, ["treeChanged"]);
 			});
@@ -715,6 +717,45 @@ describe("treeApi", () => {
 			undoRedoStacks.undoStack.pop()?.revert();
 
 			assert.deepEqual(log, ["hydrated", "reattached"]);
+
+			undoRedoStacks.unsubscribe();
+		});
+
+		it("listeners observe consistent tree state on reattach via undo", () => {
+			const view = getView(new TreeViewConfiguration({ schema: Container }));
+			view.initialize({ items: [{ value: 1 }, { value: 2 }] });
+
+			const undoRedoStacks = createTestUndoRedoStacks(view.events);
+
+			const item0 = view.root.items[0];
+			const item1 = view.root.items[1];
+
+			// Remove both items in a single transaction
+			Tree.runTransaction(view, () => {
+				view.root.items.removeAt(0);
+				view.root.items.removeAt(0);
+			});
+
+			const parent0 = TreeAlpha.parent2(item0);
+			const parent1 = TreeAlpha.parent2(item1);
+
+			const log: string[] = [];
+			TreeAlpha.on(parent0, "nodeChanged", () => {
+				// When item0's listener fires, both items should be reattached
+				assert.equal(Tree.status(item0), TreeStatus.InDocument);
+				assert.equal(Tree.status(item1), TreeStatus.InDocument);
+				log.push("item0:reattached");
+			});
+			TreeAlpha.on(parent1, "nodeChanged", () => {
+				assert.equal(Tree.status(item0), TreeStatus.InDocument);
+				assert.equal(Tree.status(item1), TreeStatus.InDocument);
+				log.push("item1:reattached");
+			});
+
+			// Undo the transaction — both items reattach in one batch
+			undoRedoStacks.undoStack.pop()?.revert();
+
+			assert.deepEqual(log, ["item0:reattached", "item1:reattached"]);
 
 			undoRedoStacks.unsubscribe();
 		});
