@@ -12,17 +12,15 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	ISummaryContext,
-	ICreateBlobResponse,
-	ISnapshotTreeEx,
-	IVersion,
-} from "@fluidframework/driver-definitions/internal";
-import type {
 	ISnapshot,
 	ISnapshotFetchOptions,
+	ISnapshotTreeEx,
+	ISummaryContext,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
