@@ -597,7 +597,15 @@ export abstract class FluidDataStoreContext
 				throw errorWrapped;
 			});
 		}
-		return this.channelP;
+		return this.channelP.then(async (channel) => {
+			//* PROBLEM:  This does avoid deadlock, but if a realize call comes in from the app _in_parallel_to_ the initial load, it could get interleaved and beat the migration.
+			//* If we nerf entryPoint until migration is complete (in a uniform way) then at least this would fail fast (component wouldn't be initialized), but it's icky.
+			if (channel.tryMigrate !== undefined) {
+				// NOTE: TryMigration must be idempotent, including for reentrant calls
+				await channel.tryMigrate();
+			}
+			return channel;
+		});
 	}
 
 	/**
@@ -704,7 +712,12 @@ export abstract class FluidDataStoreContext
 			channel.dispose();
 		}
 
-		await factory.afterBindRuntime?.(channel);
+		//* PROBLEM
+		// This causes deadlock due to reentrancy when getting portable data for migration resolves internal DDS handles,
+		// which require a "fully" (at least "internally") realized channel to get to the target DDS.
+		// await factory.afterBindRuntime?.(channel);
+
+		//* IDEA:  Can we make handle resolution smarter? i.e. local handles can be resolved without calling through the ContainerContext
 
 		return channel;
 	}

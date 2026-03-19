@@ -6,10 +6,10 @@
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
-	DirectoryFactory,
-	SharedDirectory,
-	MapFactory,
 	SharedMap,
+	DirectoryFactory,
+	MapFactory,
+	SharedDirectory,
 } from "@fluidframework/map/internal";
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
@@ -84,8 +84,6 @@ export class DataObjectFactory<
 			sharedObjects.push(SharedMap.getFactory());
 		}
 
-		super({
-			...newProps,
-		});
+		super(newProps);
 	}
 }

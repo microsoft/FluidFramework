@@ -121,6 +121,7 @@ export function rootSharedTreeDescriptor(
 		},
 		probe: async (runtime) => {
 			try {
+				await treeDelayLoadFactory?.loadObjectKindAsync();
 				const tree = await runtime.getChannel(treeChannelId);
 				if (SharedTree.is(tree)) {
 					return { tree: tree as ITree };

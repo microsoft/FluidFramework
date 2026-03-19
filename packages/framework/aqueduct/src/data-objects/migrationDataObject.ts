@@ -296,6 +296,7 @@ export abstract class MigrationDataObject<
 
 			// Call consumer-provided migration implementation
 			this.migrateDataObject(newModel, data);
+			this.#activeModel = { descriptor: targetDescriptor, view: newModel };
 
 			// We deferred full initialization while migration was pending.
 			// This will complete initialization now that migration has finished.

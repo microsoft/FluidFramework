@@ -503,6 +503,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	request(request: IRequest): Promise<IResponse>;
 
 	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+
+	/**
+	 * Instruct the channel to try migrating from the current data format to a newer one, as applicable.
+	 */
+	tryMigrate?(): Promise<boolean>;
 }
 
 /**

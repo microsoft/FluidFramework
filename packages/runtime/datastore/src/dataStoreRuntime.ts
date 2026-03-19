@@ -1342,6 +1342,11 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	public async tryMigrate(): Promise<boolean> {
+		//* TODO: Implement migration logic
+		return false;
+	}
+
 	// TODO: use something other than `any` here
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
