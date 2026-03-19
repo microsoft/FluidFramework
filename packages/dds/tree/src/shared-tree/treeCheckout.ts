@@ -23,7 +23,6 @@ import {
 	type Anchor,
 	type AnchorLocator,
 	type AnchorNode,
-	AnchorSet,
 	type AnchorSetRootEvents,
 	type ChangeFamily,
 	CommitKind,
@@ -997,10 +996,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 
 		this.editLock.checkUnlocked("Branching");
-		const anchors = new AnchorSet();
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forest = this.forest.clone(storedSchema, anchors);
+		const forkBreaker = new Breakable("TreeCheckout");
+		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
 			false,
@@ -1012,7 +1011,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.idCompressor,
 			this._removedRoots.clone(),
 			this.logger,
-			this.breaker,
+			forkBreaker,
 			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);

@@ -63,8 +63,7 @@ import {
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -497,13 +496,8 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	// Any version can be passed down as minVersionForCollab.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data.
-	const schemaCodec = schemaCodecBuilder.build({
-		...options,
-		minVersionForCollab: FluidClientVersion.v2_0,
-	});
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+	const stored = schemaCodec.decode(persisted);
 	return exportSimpleSchema(stored);
 }
 
