@@ -52,6 +52,7 @@ export type {
 	TelemetryBaseEventPropertyType,
 	Tagged,
 	ReplaceIEventThisPlaceHolder,
+	FluidMapLegacy,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
 	/* eslint-disable import-x/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */

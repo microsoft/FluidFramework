@@ -19,6 +19,23 @@ export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventP
 // @public
 export const fluidHandleSymbol: unique symbol;
 
+// @public @sealed
+export interface FluidMapLegacy<K, V> {
+    [Symbol.iterator](): IterableIterator<[K, V]>;
+    // (undocumented)
+    readonly [Symbol.toStringTag]: string;
+    clear(): void;
+    delete(key: K): boolean;
+    entries(): IterableIterator<[K, V]>;
+    forEach(callbackfn: (value: V, key: K, map: FluidMapLegacy<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): IterableIterator<K>;
+    set(key: K, value: V): this;
+    readonly size: number;
+    values(): IterableIterator<V>;
+}
+
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];

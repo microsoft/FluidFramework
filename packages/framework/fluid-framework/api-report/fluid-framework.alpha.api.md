@@ -458,6 +458,23 @@ export const FluidClientVersion: {
     readonly v2_80: "2.80.0";
 };
 
+// @public @sealed
+export interface FluidMapLegacy<K, V> {
+    [Symbol.iterator](): IterableIterator<[K, V]>;
+    // (undocumented)
+    readonly [Symbol.toStringTag]: string;
+    clear(): void;
+    delete(key: K): boolean;
+    entries(): IterableIterator<[K, V]>;
+    forEach(callbackfn: (value: V, key: K, map: FluidMapLegacy<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): IterableIterator<K>;
+    set(key: K, value: V): this;
+    readonly size: number;
+    values(): IterableIterator<V>;
+}
+
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
@@ -465,6 +482,11 @@ export type FluidObject<T = unknown> = {
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @alpha @sealed
+export interface FluidReadonlyMap<K, V> extends Omit<FluidMapLegacy<K, V>, "clear" | "delete" | "set" | "forEach" | typeof Symbol.toStringTag> {
+    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+}
 
 // @beta
 export namespace FluidSerializableAsTree {
@@ -2128,7 +2150,7 @@ export interface TreeIdentifierUtils {
 }
 
 // @alpha @sealed
-export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
+export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
     dispose(): void;
 }
 

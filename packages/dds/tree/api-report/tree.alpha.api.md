@@ -404,6 +404,11 @@ export const FluidClientVersion: {
     readonly v2_80: "2.80.0";
 };
 
+// @alpha @sealed
+export interface FluidReadonlyMap<K, V> extends Omit<FluidMapLegacy<K, V>, "clear" | "delete" | "set" | "forEach" | typeof Symbol.toStringTag> {
+    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+}
+
 // @beta
 export namespace FluidSerializableAsTree {
     // @sealed
@@ -1736,7 +1741,7 @@ export interface TreeIdentifierUtils {
 }
 
 // @alpha @sealed
-export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
+export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
     dispose(): void;
 }
 

@@ -4,6 +4,7 @@
  */
 
 import type {
+	FluidMapLegacy,
 	IDisposable,
 	IEvent,
 	IEventProvider,
@@ -45,7 +46,7 @@ export interface IValueChanged {
 export interface IDirectory
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	extends Map<string, any>,
+	extends FluidMapLegacy<string, any>,
 		IEventProvider<IDirectoryEvents>,
 		Partial<IDisposable> {
 	/**
@@ -379,8 +380,10 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @legacy @beta
  */
 // TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap
+	extends ISharedObject<ISharedMapEvents>,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		FluidMapLegacy<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from

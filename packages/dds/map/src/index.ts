@@ -25,6 +25,8 @@ export type {
 	ISharedMapEvents,
 	IValueChanged,
 } from "./interfaces.js";
+
+export type { FluidMapLegacy } from "@fluidframework/core-interfaces";
 export { SharedMap } from "./mapFactory.js";
 export { SharedDirectory } from "./directoryFactory.js";
 

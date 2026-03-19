@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
+
 /**
  * an array of nodes that is guaranteed to have at least one element
  *
@@ -25,7 +27,7 @@ export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
  * @sealed
  * @alpha
  */
-export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
+export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
 	/**
 	 * Disposes the index such that it can no longer be used and receives no updates for changes in the tree.
 	 * @remarks
