@@ -646,7 +646,7 @@ describe("Runtime", () => {
 
 				// Simulate a remote op arriving before we submit anything else.
 				// Bump refSeq and continue execution at the end of the microtask queue.
-				// This is how Inbound Queue works, and this is makes sure we get coverage of ref seq coherency in this test.
+				// This is how Inbound Queue works, and it makes sure we get coverage of ref seq coherency in this test.
 				++mockDeltaManager.lastSequenceNumber;
 				await Promise.resolve();
 				// Generate another ID and submit a data store op referencing it.
