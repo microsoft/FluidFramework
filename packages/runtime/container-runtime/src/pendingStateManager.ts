@@ -776,7 +776,7 @@ export class PendingStateManager implements IDisposable {
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
-		const replayedBatchInfos: IPendingMessage["batchInfo"][] = [];
+		const replayedBatchSet = new Set<IPendingMessage["batchInfo"]>();
 
 		let seenStagedBatch = false;
 
@@ -814,7 +814,7 @@ export class PendingStateManager implements IDisposable {
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
 				this.stateHandler.reSubmitBatch([], { batchId, staged, squash });
-				replayedBatchInfos.push(pendingMessage.batchInfo);
+				replayedBatchSet.add(pendingMessage.batchInfo);
 				continue;
 			}
 
@@ -841,7 +841,7 @@ export class PendingStateManager implements IDisposable {
 					],
 					{ batchId, staged, squash },
 				);
-				replayedBatchInfos.push(pendingMessage.batchInfo);
+				replayedBatchSet.add(pendingMessage.batchInfo);
 				continue;
 			}
 			// else: batchMetadataFlag === true  (It's a typical multi-message batch)
@@ -881,7 +881,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
-			replayedBatchInfos.push(pendingMessage.batchInfo);
+			replayedBatchSet.add(pendingMessage.batchInfo);
 		}
 
 		if (!committingStagedBatches) {
@@ -900,7 +900,7 @@ export class PendingStateManager implements IDisposable {
 			});
 		}
 
-		return replayedBatchInfos;
+		return [...replayedBatchSet];
 	}
 
 	/**
