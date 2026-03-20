@@ -242,8 +242,7 @@ export interface ITreeCheckout
 	 */
 	readonly transaction: Transactor;
 
-	// TODO: rename to fork() and remove the separate fork() method on TreeCheckout.
-	branch(): ITreeCheckout;
+	fork(): ITreeCheckout;
 
 	/**
 	 * Replaces all schema with the provided schema.
@@ -833,11 +832,6 @@ export class TreeCheckout implements ITreeCheckout {
 		this.applySerializedChange(change);
 	}
 
-	@throwIfBroken
-	public fork(): TreeCheckout {
-		return this.branch();
-	}
-
 	public isBranch(): this is TreeBranchAlpha {
 		return true;
 	}
@@ -1132,11 +1126,12 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
 	 *
 	 * To avoid updating observers of the view state with intermediate results during a transaction,
-	 * use {@link ITreeCheckout#branch} and {@link ISharedTreeFork#merge}.
+	 * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
 	 */
 	#transaction: SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange>;
 
-	public branch(): TreeCheckout {
+	@throwIfBroken
+	public fork(): TreeCheckout {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);

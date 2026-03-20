@@ -518,7 +518,7 @@ export class SchematizingSimpleTreeView<
 
 	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
-		return this.checkout.branch().viewWith(this.config);
+		return this.checkout.fork().viewWith(this.config);
 	}
 
 	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
