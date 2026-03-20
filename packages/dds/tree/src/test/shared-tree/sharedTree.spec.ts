@@ -1615,7 +1615,7 @@ describe("SharedTree", () => {
 				provider.synchronizeMessages();
 
 				// fork the tree
-				const branch = resubmitter.checkout.branch();
+				const branch = resubmitter.checkout.fork();
 
 				// edit the removed tree on the fork
 				const branchView = new SchematizingSimpleTreeView(
@@ -2217,7 +2217,7 @@ describe("SharedTree", () => {
 			Tree.runTransaction(parentView, () => {
 				parentView.root.insertAtStart("B");
 			});
-			const childCheckout = parentTree.kernel.checkout.branch();
+			const childCheckout = parentTree.kernel.checkout.fork();
 			const childView = new SchematizingSimpleTreeView(
 				childCheckout,
 				new TreeViewConfiguration({

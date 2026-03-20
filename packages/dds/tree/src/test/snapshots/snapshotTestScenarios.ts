@@ -205,7 +205,7 @@ export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 				provider.synchronizeMessages();
 
 				const branch1 = view1.checkout;
-				const tree2 = branch1.branch();
+				const tree2 = branch1.fork();
 				const view2 = tree2.viewWith(view1.config);
 				view1.root.insertAt(0, "y");
 				tree2.rebaseOnto(branch1);
@@ -223,7 +223,7 @@ export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 				assert.deepEqual(view1.root, ["x", "y", "a", "b", "c"]);
 				assert.deepEqual(view1.root, view2.root);
 
-				const tree3 = branch1.branch();
+				const tree3 = branch1.fork();
 				const view3 = tree3.viewWith(view1.config);
 				view1.root.insertAt(0, "z");
 				view3.root.insertAt(1, "d", "e");

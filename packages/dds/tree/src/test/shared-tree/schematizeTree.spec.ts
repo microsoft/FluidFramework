@@ -180,9 +180,6 @@ describe("schematizeTree", () => {
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
 			transaction: undefined as unknown as Transactor,
-			branch(): ITreeCheckout {
-				throw new Error("Function not implemented.");
-			},
 			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},

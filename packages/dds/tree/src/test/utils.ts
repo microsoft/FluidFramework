@@ -1470,11 +1470,8 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 
 	public disposed = false;
-	public branch(): ITreeCheckout {
+	public fork(): ITreeCheckout {
 		throw new Error("Method 'branch' not implemented in MockTreeCheckout.");
-	}
-	public fork(): TreeBranchAlpha {
-		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
 	}
 	public isBranch(): this is TreeBranchAlpha {
 		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");

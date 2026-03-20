@@ -401,7 +401,7 @@ export class SharedTreeKernel
 	}
 
 	private checkoutBranch(branchId: BranchId): TreeCheckout {
-		const checkout = this.checkout.branch();
+		const checkout = this.checkout.fork();
 		checkout.switchBranch(this.getSharedBranch(branchId));
 		this.registerSharedBranchForEditing(branchId, checkout);
 		this.registerCheckout(branchId, checkout);
