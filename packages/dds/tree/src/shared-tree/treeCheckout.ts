@@ -107,9 +107,11 @@ import {
 } from "../simple-tree/index.js";
 import {
 	Breakable,
+	breakingMethod,
 	disposeSymbol,
 	getOrCreate,
 	hasSome,
+	throwIfBroken,
 	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
@@ -732,6 +734,7 @@ export class TreeCheckout implements ITreeCheckout {
 		});
 	}
 
+	@throwIfBroken
 	public exportVerbose(): VerboseTree | undefined {
 		const cursor = this.forest.allocateCursor("contentSnapshot");
 		try {
@@ -854,6 +857,7 @@ export class TreeCheckout implements ITreeCheckout {
 	/**
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
+	@throwIfBroken
 	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
@@ -876,10 +880,12 @@ export class TreeCheckout implements ITreeCheckout {
 
 	// #region TreeBranchAlpha
 
+	@throwIfBroken
 	public applyChange(change: JsonCompatibleReadOnly): void {
 		this.applySerializedChange(change);
 	}
 
+	@throwIfBroken
 	public fork(): TreeCheckout {
 		return this.branch();
 	}
@@ -902,6 +908,7 @@ export class TreeCheckout implements ITreeCheckout {
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
+	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
@@ -922,6 +929,7 @@ export class TreeCheckout implements ITreeCheckout {
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
 		params?: RunTransactionParams,
 	): Promise<TransactionResult>;
+	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
@@ -1135,6 +1143,7 @@ export class TreeCheckout implements ITreeCheckout {
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 
+	@throwIfBroken
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {

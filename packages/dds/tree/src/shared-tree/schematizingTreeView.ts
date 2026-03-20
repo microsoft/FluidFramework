@@ -307,6 +307,19 @@ export class SchematizingSimpleTreeView<
 		params: RunTransactionParams | undefined,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.ensureUndisposed();
+		if (this.checkout.transaction.size > 0) {
+			// breaker.break() sets brokenBy synchronously before throwing.
+			// A plain `throw` inside an async function would be captured as a rejected Promise
+			// before @breakingClass could set brokenBy. By setting it here first, the
+			// subsequent call to unmountTransaction (also @breakingClass-wrapped) will see the
+			// broken state and throw synchronously, propagating out of the outer runTransaction
+			// to its caller.
+			this.breaker.break(
+				new UsageError(
+					"An asynchronous transaction cannot be started while another transaction is already in progress.",
+				),
+			);
+		}
 		return this.checkout.runTransactionAsync(transaction, params);
 	}
 
