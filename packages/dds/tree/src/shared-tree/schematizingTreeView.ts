@@ -55,6 +55,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranch,
 	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
