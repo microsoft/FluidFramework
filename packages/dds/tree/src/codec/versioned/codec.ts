@@ -399,29 +399,59 @@ export class ClientVersionDispatchingCodecBuilder<
 		 */
 		readonly writeVersion: TFormatVersion;
 	} {
-		const applied = this.applyOptions(options);
+		const [applied, decoder] = this.buildDecoderInternal(options);
 		const writeVersion = getWriteVersion(this.name, options, applied);
+		return {
+			...decoder,
+			encode: (data: TDecoded, context: TContext): JsonCompatibleReadOnly => {
+				return writeVersion.codec.encode(data, context);
+			},
+			writeVersion: writeVersion.formatVersion,
+		};
+	}
+
+	private buildDecoderInternal(
+		options: TBuildOptions,
+	): [
+		EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>[],
+		Pick<
+			IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+			"decode"
+		>,
+	] {
+		const applied = this.applyOptions(options);
 		const fromFormatVersion = new Map<
 			FormatVersion,
 			EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>
 		>(applied.map((codec) => [codec.formatVersion, codec]));
-		return {
-			encode: (data: TDecoded, context: TContext): JsonCompatibleReadOnly => {
-				return writeVersion.codec.encode(data, context);
-			},
-			decode: (data: JsonCompatibleReadOnly, context: TContext): TDecoded => {
-				const versioned = data as Partial<Versioned>;
-				const codec = fromFormatVersion.get(versioned.version);
-				if (codec === undefined) {
-					throw new UsageError(
-						`Unsupported version ${versioned.version} encountered while decoding ${this.name} data. Supported versions for this data are: ${versionList(applied)}.
+		return [
+			applied,
+			{
+				decode: (data: JsonCompatibleReadOnly, context: TContext): TDecoded => {
+					const versioned = data as Partial<Versioned>;
+					const codec = fromFormatVersion.get(versioned.version);
+					if (codec === undefined) {
+						throw new UsageError(
+							`Unsupported version ${versioned.version} encountered while decoding ${this.name} data. Supported versions for this data are: ${versionList(applied)}.
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
-					);
-				}
-				return codec.codec.decode(data, context);
+						);
+					}
+					return codec.codec.decode(data, context);
+				},
 			},
-			writeVersion: writeVersion.formatVersion,
-		};
+		];
+	}
+
+	/**
+	 * Produce a single codec which can read any supported format.
+	 */
+	public buildDecoder(
+		options: TBuildOptions,
+	): Pick<
+		IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+		"decode"
+	> {
+		return this.buildDecoderInternal(options)[1];
 	}
 
 	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree {

@@ -31,7 +31,6 @@ export {
 	TreeCheckout,
 	type ITreeCheckout,
 	type CheckoutEvents,
-	type ITreeCheckoutFork,
 	type BranchableTree,
 	type TreeBranchFork,
 } from "./treeCheckout.js";
