@@ -139,6 +139,8 @@ function composeMarksIgnoreChild(
 	if (!markHasCellEffect(baseMark)) {
 		assert(baseMark.type === "Attach", "Expected baseMark to be a pin");
 
+		// XXX: We should use `newMark`.
+
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
 		const isNewPin = newMark.type === "Attach";

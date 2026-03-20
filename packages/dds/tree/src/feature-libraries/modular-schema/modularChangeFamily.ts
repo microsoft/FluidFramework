@@ -2921,6 +2921,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		private readonly allowInval: boolean = true,
 	) {}
 
+	// TODO: Should this just return an empty DetachNodeEntry instead of undefined?
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
@@ -2944,7 +2945,8 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		countToProcess = nodeEntry.length;
 		const newNodeId = nodeEntry.value;
 
-		const newRenameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
+		const newRenameEntry = getFirstRenameId(
+			this.table.newChange.rootNodes,
 			detachEntry.value,
 			countToProcess,
 		);
@@ -3270,7 +3272,9 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				true,
 			);
 		} else {
-			this.table.attachDetachRenames.set(baseAttachId, countToProcess, newDetachId);
+			if (!areEqualChangeAtomIds(newDetachId, baseAttachId)) {
+				this.table.attachDetachRenames.set(baseAttachId, countToProcess, newDetachId);
+			}
 
 			// Both changes can have the same ID if they came from inverse changesets
 			const hasNewAttachWithBaseAttachId =
@@ -4238,6 +4242,7 @@ export function newRootTable(): RootNodeTable {
 	return {
 		newToOldId: newChangeAtomIdTransform(),
 		oldToNewId: newChangeAtomIdTransform(),
+		firstIntermediateRenames: newChangeAtomIdTransform(),
 		nodeChanges: newChangeAtomIdBTree(),
 		detachLocations: newChangeAtomIdRangeMap(),
 		outputDetachLocations: newChangeAtomIdRangeMap(),
@@ -4353,13 +4358,30 @@ function rebaseRename(
 			detachLocation,
 		);
 	} else {
+		// The renamed nodes are attached in the input context of the rebased change.
 		// This rename represents an intention to detach these nodes.
 		// The rebased change should have a detach in the field where the base change attaches the nodes,
 		// so we need to ensure that field is processed.
-		affectedBaseFields.set(
-			fieldIdKeyFromFieldId(normalizeFieldId(baseAttachEntry.value, base.nodeAliases)),
-			true,
+		const fieldId = normalizeFieldId(baseAttachEntry.value, base.nodeAliases);
+		affectedBaseFields.set(fieldIdKeyFromFieldId(fieldId), true);
+
+		const intermediateRenameEntry = newRoots.firstIntermediateRenames.getFirst(
+			renameEntry.start,
+			count,
 		);
+		count = intermediateRenameEntry.length;
+
+		if (intermediateRenameEntry.value !== undefined) {
+			// The rebased change will detach these nodes with `intermediateRenameEntry.value` as the ID.
+			// We still need a rename from that detach ID to the final output ID.
+			addNodeRename(
+				rebasedRoots,
+				intermediateRenameEntry.value,
+				renameEntry.value,
+				count,
+				undefined,
+			);
+		}
 	}
 
 	const countRemaining = renameEntry.length - count;
@@ -4645,6 +4667,7 @@ export function cloneRootTable(table: RootNodeTable): RootNodeTable {
 	return {
 		oldToNewId: table.oldToNewId.clone(),
 		newToOldId: table.newToOldId.clone(),
+		firstIntermediateRenames: table.firstIntermediateRenames.clone(),
 		nodeChanges: brand(table.nodeChanges.clone()),
 		detachLocations: table.detachLocations.clone(),
 		outputDetachLocations: table.outputDetachLocations.clone(),
@@ -4890,6 +4913,15 @@ function insertRootRename(
 		if (rename1Entry.value !== undefined) {
 			composedOldId = rename1Entry.value;
 			deleteNodeRenameFrom(tableToUpdate, composedOldId, countToProcess);
+
+			const intermediateRenameEntry = tableToUpdate.firstIntermediateRenames.getFirst(
+				composedOldId,
+				countToProcess,
+			);
+			countToProcess = intermediateRenameEntry.length;
+			if (intermediateRenameEntry.value === undefined) {
+				tableToUpdate.firstIntermediateRenames.set(composedOldId, countToProcess, oldId);
+			}
 		}
 	}
 
@@ -4902,6 +4934,15 @@ function insertRootRename(
 		if (rename2Entry.value !== undefined) {
 			composedNewId = rename2Entry.value;
 			deleteNodeRenameTo(tableToUpdate, composedNewId, countToProcess);
+
+			const intermediateRenameEntry = tableToUpdate.firstIntermediateRenames.getFirst(
+				composedOldId,
+				countToProcess,
+			);
+			countToProcess = intermediateRenameEntry.length;
+			if (intermediateRenameEntry.value === undefined) {
+				tableToUpdate.firstIntermediateRenames.set(composedOldId, countToProcess, newId);
+			}
 		}
 	}
 
@@ -5071,6 +5112,11 @@ function replaceRootTableRevision(
 		(id) => replacer.getUpdatedAtomId(id),
 	);
 
+	const firstIntermediateRenames = table.firstIntermediateRenames.mapEntries(
+		(id) => replacer.getUpdatedAtomId(id),
+		(id) => replacer.getUpdatedAtomId(id),
+	);
+
 	const nodeChanges: ChangeAtomIdBTree<NodeId> = replaceIdMapRevisions(
 		table.nodeChanges,
 		replacer,
@@ -5087,7 +5133,14 @@ function replaceRootTableRevision(
 		(fieldId) => replaceFieldIdRevision(normalizeFieldId(fieldId, nodeAliases), replacer),
 	);
 
-	return { oldToNewId, newToOldId, nodeChanges, detachLocations, outputDetachLocations };
+	return {
+		oldToNewId,
+		newToOldId,
+		firstIntermediateRenames,
+		nodeChanges,
+		detachLocations,
+		outputDetachLocations,
+	};
 }
 
 function newDetachedEntryMap(): ChangeAtomIdRangeMap<DetachedNodeEntry> {
@@ -5155,10 +5208,24 @@ function getFieldToRootChanges(
 	return fields;
 }
 
+function getFirstRenameId(
+	roots: RootNodeTable,
+	inputRootId: ChangeAtomId,
+	count: number,
+): RangeQueryResult<ChangeAtomId | undefined> {
+	const intermediateEntry = roots.firstIntermediateRenames.getFirst(inputRootId, count);
+	if (intermediateEntry.value !== undefined) {
+		return intermediateEntry;
+	}
+
+	return roots.oldToNewId.getFirst(inputRootId, count);
+}
+
 function muteRootChanges(roots: RootNodeTable): RootNodeTable {
 	return {
 		oldToNewId: newChangeAtomIdTransform(),
 		newToOldId: newChangeAtomIdTransform(),
+		firstIntermediateRenames: newChangeAtomIdTransform(),
 		nodeChanges: brand(roots.nodeChanges.clone()),
 		detachLocations: roots.detachLocations.clone(),
 		outputDetachLocations: newChangeAtomIdRangeMap(),

@@ -1213,6 +1213,7 @@ describe("ModularChangeFamily integration", () => {
 						{
 							oldId,
 							newId: { revision: tag2, localId: brand(3) },
+							firstIntermediateRename: { revision: tag2, localId: brand(1) },
 							count: 1,
 							detachLocation: { nodeId: undefined, field: fieldA },
 						},
@@ -1268,8 +1269,10 @@ describe("ModularChangeFamily integration", () => {
 				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
 			);
 
-			const moveId1: ChangeAtomId = { revision: tag2, localId: brand(3) };
-			const moveId2: ChangeAtomId = { revision: tag2, localId: brand(5) };
+			const removeId: ChangeAtomId = { revision: tag1, localId: brand(2) };
+
+			const moveAId: ChangeAtomId = { revision: tag2, localId: brand(3) };
+			const moveBId: ChangeAtomId = { revision: tag2, localId: brand(5) };
 
 			const expected = Change.build(
 				{
@@ -1277,23 +1280,20 @@ describe("ModularChangeFamily integration", () => {
 					maxId: 6,
 					renames: [
 						{
-							oldId: moveId1,
-							newId: moveId2,
+							oldId: removeId,
+							newId: moveBId,
 							count: 1,
 							detachLocation: { nodeId: undefined, field: fieldA },
+							firstIntermediateRename: moveAId,
 						},
 					],
 					revisions: [{ revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
 					MarkMaker.tomb(tag1, brand(0)),
-					MarkMaker.rename(1, { revision: tag1, localId: brand(4) }, moveId1),
+					MarkMaker.rename(1, removeId, moveAId),
 					MarkMaker.skip(1),
-					MarkMaker.rename(
-						1,
-						{ revision: tag2, localId: brand(2) },
-						{ revision: tag2, localId: brand(3) },
-					),
+					MarkMaker.rename(1, { revision: tag2, localId: brand(4) }, moveBId),
 					MarkMaker.skip(2),
 					MarkMaker.attach(1, { revision: tag2, localId: brand(6) }, { id: brand(5) }),
 				]),
@@ -1323,8 +1323,10 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			);
 
-			const detachCellId: ChangeAtomId = { revision: tag2, localId: brand(0) };
-			const moveId: ChangeAtomId = { revision: tag2, localId: brand(1) };
+			const moveOutId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const moveInId: ChangeAtomId = { revision: tag2, localId: brand(1) };
+
+			// This represents a composition of a revive and move with `moveOutId`, followed by a move with `moveInId`.
 			const move = Change.build(
 				{
 					family,
@@ -1332,16 +1334,17 @@ describe("ModularChangeFamily integration", () => {
 					renames: [
 						{
 							oldId,
-							newId: moveId,
+							newId: moveInId,
 							count: 1,
 							detachLocation: { nodeId: undefined, field: fieldA },
+							firstIntermediateRename: moveOutId,
 						},
 					],
 					revisions: [{ revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.rename(1, oldId, detachCellId),
-					MarkMaker.moveIn(1, moveId),
+					MarkMaker.rename(1, oldId, moveOutId),
+					MarkMaker.moveIn(1, moveInId),
 				]),
 			);
 
@@ -1351,18 +1354,19 @@ describe("ModularChangeFamily integration", () => {
 				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
 			);
 
+			// We expect the rebased change to still be a composite move.
 			const expected = Change.build(
 				{
 					family,
 					maxId: 1,
 					renames: [
-						{ oldId: detachCellId, newId: moveId, count: 1, detachLocation: undefined },
+						{ oldId: moveOutId, newId: moveInId, count: 1, detachLocation: undefined },
 					],
 					revisions: [{ revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.moveOut(1, moveId, { cellRename: detachCellId }),
-					MarkMaker.moveIn(1, moveId),
+					MarkMaker.moveOut(1, moveOutId),
+					MarkMaker.moveIn(1, moveInId),
 				]),
 			);
 
@@ -1866,7 +1870,15 @@ describe("ModularChangeFamily integration", () => {
 				{
 					family,
 					maxId: 3,
-					renames: [{ oldId, newId, count: 1, detachLocation: fieldAId }],
+					renames: [
+						{
+							oldId,
+							newId,
+							firstIntermediateRename: { revision: tag1, localId: brand(1) },
+							count: 1,
+							detachLocation: fieldAId,
+						},
+					],
 					detachedMoves: [
 						{
 							detachId: newId,
@@ -1996,7 +2008,15 @@ describe("ModularChangeFamily integration", () => {
 					family,
 					maxId: 2,
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
-					renames: [{ oldId, count: 1, newId: attachId, detachLocation: fieldAId }],
+					renames: [
+						{
+							oldId,
+							count: 1,
+							newId: attachId,
+							firstIntermediateRename: newId,
+							detachLocation: fieldAId,
+						},
+					],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
 					MarkMaker.rename(1, oldId, cellId1),
@@ -2049,7 +2069,15 @@ describe("ModularChangeFamily integration", () => {
 				{
 					family,
 					maxId: 2,
-					renames: [{ oldId: cellId1, newId: attachId, count: 1, detachLocation: undefined }],
+					renames: [
+						{
+							oldId: cellId1,
+							newId: attachId,
+							firstIntermediateRename: detachId,
+							count: 1,
+							detachLocation: undefined,
+						},
+					],
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
@@ -2109,6 +2137,7 @@ describe("ModularChangeFamily integration", () => {
 						{
 							oldId: moveId2,
 							newId: moveId3,
+							firstIntermediateRename: { revision: tag1, localId: brand(0) },
 							count: 1,
 							detachLocation: undefined,
 						},
@@ -2289,7 +2318,13 @@ describe("ModularChangeFamily integration", () => {
 					family,
 					renames: [
 						{ oldId: detachId2, newId: detachId1, count: 1, detachLocation: fieldAId },
-						{ oldId: attachId1, newId: rootId3, count: 1, detachLocation: fieldAId },
+						{
+							oldId: attachId1,
+							newId: rootId3,
+							firstIntermediateRename: detachId2,
+							count: 1,
+							detachLocation: fieldAId,
+						},
 					],
 					revisions: [
 						{ revision: tag0, rollbackOf: tag2 },
@@ -2950,6 +2985,7 @@ describe("ModularChangeFamily integration", () => {
 			]),
 		);
 
+		// XXX: Update to include intermediate rename.
 		const removeId: ChangeAtomId = { revision: tag1, localId: brand(2) };
 		const reviveMoveAndRemove = Change.build(
 			{

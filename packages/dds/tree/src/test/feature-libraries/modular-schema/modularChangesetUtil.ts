@@ -302,6 +302,11 @@ function normalizeRangeMaps(change: ModularChangeset): ModularChangeset {
 				areEqualChangeAtomIds,
 				areEqualChangeAtomIds,
 			),
+			firstIntermediateRenames: normalizeRangeMap(
+				change.rootNodes.firstIntermediateRenames,
+				areEqualChangeAtomIds,
+				areEqualChangeAtomIds,
+			),
 			detachLocations: normalizeRangeMap(
 				change.rootNodes.detachLocations,
 				areEqualChangeAtomIds,
@@ -542,13 +547,17 @@ function newField(
 	return { fieldKey, kind, changeset, children };
 }
 
+interface TestRenameDescription extends RenameDescription {
+	readonly firstIntermediateRename?: ChangeAtomId;
+}
+
 interface BuildArgs {
 	rebaseVersion?: RebaseVersion;
 	family: ModularChangeFamily;
 	maxId?: number;
 	revisions?: RevisionInfo[];
 	builds?: ChangeAtomIdBTree<TreeChunk>;
-	renames?: RenameDescription[];
+	renames?: TestRenameDescription[];
 	roots?: {
 		detachId: ChangeAtomId;
 		detachLocation?: FieldId;
@@ -629,6 +638,14 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 				rename.count,
 				rename.detachLocation,
 			);
+
+			if (rename.firstIntermediateRename !== undefined) {
+				result.rootNodes.firstIntermediateRenames.set(
+					rename.oldId,
+					rename.count,
+					rename.firstIntermediateRename,
+				);
+			}
 		}
 	}
 
