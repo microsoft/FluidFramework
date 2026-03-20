@@ -9,7 +9,6 @@ export {
 	type SharedTreeOptions,
 	type SharedTreeOptionsBeta,
 	SharedTreeKernel,
-	getBranch,
 	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
@@ -31,8 +30,6 @@ export {
 	TreeCheckout,
 	type ITreeCheckout,
 	type CheckoutEvents,
-	type BranchableTree,
-	type TreeBranchFork,
 } from "./treeCheckout.js";
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";

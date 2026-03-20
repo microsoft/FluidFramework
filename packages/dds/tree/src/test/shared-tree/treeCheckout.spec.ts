@@ -23,11 +23,9 @@ import {
 } from "../../core/index.js";
 import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
-	getBranch,
 	Tree,
 	TreeCheckout,
 	type ITreeCheckout,
-	type BranchableTree,
 	createTreeCheckout,
 	type SharedTreeChange,
 } from "../../shared-tree/index.js";
@@ -514,7 +512,7 @@ describe("sharedTreeView", () => {
 		it("submit edits to Fluid when merging into the root view", () => {
 			const sf = new SchemaFactory("edits submitted schema");
 			const provider = new TestTreeProviderLite(2);
-			const branch1 = getBranch(provider.trees[0]);
+			const branch1 = provider.trees[0].kernel.checkout;
 			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -548,7 +546,7 @@ describe("sharedTreeView", () => {
 			const sf = new SchemaFactory("no squash commits schema");
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const branch1 = getBranch(tree1);
+			const branch1 = tree1.kernel.checkout;
 			const view1 = tree1.kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
@@ -955,7 +953,7 @@ describe("sharedTreeView", () => {
 			const oldSchema = sf1.array(sf1.string);
 			const oldSchemaConfig = { schema: oldSchema, enableSchemaValidation };
 			const tree1 = provider.trees[0];
-			const branch1 = getBranch(tree1);
+			const branch1 = tree1.kernel.checkout;
 			const view1 = tree1.kernel.viewWith(new TreeViewConfiguration(oldSchemaConfig));
 			view1.initialize(["A", "B", "C"]);
 
@@ -1870,7 +1868,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1882,7 +1880,7 @@ function itView(
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<typeof rootArray>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	}) => void,
 	options?: {
@@ -1896,7 +1894,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1910,7 +1908,7 @@ function itView<
 		thunk: typeof fn,
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: BranchableTree;
+			tree: ITreeCheckout;
 			logger: IMockLoggerExt;
 		},
 	): void {
@@ -1928,7 +1926,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: BranchableTree;
+					tree: ITreeCheckout;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -1942,7 +1940,7 @@ function itView<
 			(
 				thunk as unknown as (args: {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: BranchableTree;
+					tree: ITreeCheckout;
 					logger: IMockLoggerExt;
 				}) => void
 			)({ view, tree, logger });
@@ -1954,7 +1952,7 @@ function itView<
 		fork: boolean,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: BranchableTree;
+		tree: ITreeCheckout;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
@@ -1977,14 +1975,14 @@ function itView<
 		);
 
 		if (fork) {
-			const treeBranch = getBranch(view).branch();
+			const treeBranch = view.checkout.branch();
 			const viewBranch = treeBranch.viewWith(view.config);
 			assert(viewBranch instanceof SchematizingSimpleTreeView);
 			return { view: viewBranch, tree: treeBranch, logger };
 		} else {
 			return {
 				view,
-				tree: getBranch(view),
+				tree: view.checkout,
 				logger,
 			};
 		}
@@ -1993,7 +1991,7 @@ function itView<
 	itFunction(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		const branch = getBranch(tree);
+		const branch = tree.kernel.checkout;
 		callWithView(fn, (config) => ({
 			view: tree.kernel.viewWith(config),
 			tree: branch,
@@ -2008,7 +2006,7 @@ function itView<
 	itFunction(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		const branch = getBranch(tree).branch();
+		const branch = tree.kernel.checkout.branch();
 		callWithView(fn, (config) => {
 			const view = branch.viewWith(config);
 			assert(view instanceof SchematizingSimpleTreeView);
