@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { LogLevel } from "@fluidframework/core-interfaces";
 import {
 	type ISharedDirectory,
 	MapFactory,
@@ -62,7 +63,7 @@ export abstract class DataObject<
 					eventName: "MapDataObject",
 					message:
 						"Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
-				});
+				}, LogLevel.essential);
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime

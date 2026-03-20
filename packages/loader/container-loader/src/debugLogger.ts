@@ -73,6 +73,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 	 * Send an event to debug loggers
 	 *
 	 * @param event - the event to send
+	 * PR COMMENT: Should this be updated to also use logLevel?
 	 */
 	public send(event: ITelemetryBaseEvent): void {
 		const newEvent: ITelemetryBaseProperties = { ...event };

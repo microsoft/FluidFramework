@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-	ITelemetryBaseLogger,
+import {
+	LogLevel,
+	type ConfigTypes,
+	type IConfigProviderBase,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 
@@ -253,7 +254,7 @@ export class CachedConfigProvider implements IConfigProvider {
 							configName: name,
 							configValue: JSON.stringify(parsed),
 						}),
-					});
+					}, LogLevel.essential);
 					return parsed;
 				}
 			}

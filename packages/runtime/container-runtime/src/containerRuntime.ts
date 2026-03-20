@@ -57,13 +57,14 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
-import type {
-	IFluidHandleContext,
-	IFluidHandleInternal,
-	IProvideFluidHandleContext,
-	ISignalEnvelope,
-	OpaqueJsonDeserialized,
-	TypedMessage,
+import {
+	LogLevel,
+	type IFluidHandleContext,
+	type IFluidHandleInternal,
+	type IProvideFluidHandleContext,
+	type ISignalEnvelope,
+	type OpaqueJsonDeserialized,
+	type TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -2074,7 +2075,7 @@ export class ContainerRuntime
 			category: "generic",
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
-		});
+		}, LogLevel.essential);
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
@@ -2099,7 +2100,7 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab: this.minVersionForCollab,
-		});
+		}, LogLevel.essential);
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
 		BindBatchTracker(this, this.baseLogger);

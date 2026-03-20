@@ -180,6 +180,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 * Routes Fluid telemetry events to the trackEvent App Insights API.
 	 * This method also uses the provided {@link FluidAppInsightsLoggerConfig} to
 	 * determine whether an event should be sent or not.
+	 * PR COMMMENT: Should this be updated to also use logLevel?
 	 */
 	public send(event: ITelemetryBaseEvent): void {
 		if (this.shouldSendEvent(event)) {
