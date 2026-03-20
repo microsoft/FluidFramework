@@ -22,8 +22,9 @@ packages:
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
-minimumReleaseAgeExclude:
- // Temporary exceptions go here as needed.
+minimumReleaseAgeExclude: [
+  # Temporary exceptions go here as needed.
+]
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
