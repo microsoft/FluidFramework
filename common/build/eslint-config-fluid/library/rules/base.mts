@@ -7,7 +7,7 @@
  * Base ESLint rules.
  *
  * This module contains the foundational rules applied by the base configuration.
- * These rules are inherited by all higher-level configs (minimal-deprecated, recommended, strict).
+ * These rules are inherited by all higher-level configs (recommended, strict).
  * Rules are organized by plugin/source and include custom Fluid rules, TypeScript rules,
  * import-x rules, unicorn rules, and core ESLint rules.
  */
@@ -47,6 +47,23 @@ export const baseRules = {
 	 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
 	 */
 	"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
+
+	/**
+	 * Restricts including release tags inside the member class / interface.
+	 *
+	 * Refer to the rule by the unprefixed plugin name in the consumed package.
+	 * {@link https://eslint.org/docs/latest/extend/plugins#rules-in-plugins}
+	 */
+	"@fluid-internal/fluid/no-member-release-tags": "error",
+
+	/**
+	 * Rule to enforce safe property access on index signature types.
+	 *
+	 * Reports issues when non-array index properties are accessed without handling
+	 * the possibility that they are absent.
+	 * Enabling `noUncheckedIndexedAccess` will disable these checks.
+	 */
+	"@fluid-internal/fluid/no-unchecked-record-access": "error",
 
 	// #endregion
 
@@ -135,7 +152,6 @@ export const baseRules = {
 			ignoreStatic: true,
 		},
 	],
-	"@typescript-eslint/unified-signatures": "error",
 	"@typescript-eslint/no-wrapper-object-types": "error",
 
 	/**
@@ -538,10 +554,6 @@ export const baseRules = {
 	 * Requires `@returns` tags to be non-empty.
 	 */
 	"jsdoc/require-returns-description": "error",
-
-	// #endregion
-
-	// #region Fluid Custom Rules
 
 	// #endregion
 } as const satisfies Linter.RulesRecord;

@@ -6,9 +6,9 @@
 /**
  * Recommended ESLint rules.
  *
- * This module contains rules that extend the minimal-deprecated configuration.
+ * This module contains rules that extend the base configuration.
  * The recommended config adds stricter type safety rules, unicorn/recommended overrides,
- * and enables rules that were disabled at lower levels. This is the standard config
+ * and enables rules that were at "warn" in the base config. This is the standard config
  * for most Fluid Framework packages.
  */
 
