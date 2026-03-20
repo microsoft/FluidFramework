@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-utils",
-	"version": "2.91.0",
+	"version": "2.91.1",
 	"description": "Collection of utility functions for Fluid drivers",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -130,7 +130,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@2.83.0",
+		"@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@2.91.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/lz4js": "^0.2.0",
