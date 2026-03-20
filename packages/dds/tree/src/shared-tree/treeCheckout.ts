@@ -1249,10 +1249,10 @@ export class TreeCheckout implements ITreeCheckout {
 	private rebase(branch: TreeBranch): void {
 		const checkout = getCheckout(branch);
 		this.checkNotDisposed(
-			"The target of the branch rebase has been disposed and cannot be rebased.",
+			"The target branch of the rebase has been disposed and cannot be rebased.",
 		);
 		checkout.checkNotDisposed(
-			"The source of the branch rebase has been disposed and cannot be rebased.",
+			"The source branch of the rebase has been disposed and cannot be rebased.",
 		);
 		this.editLock.checkUnlocked("Rebasing");
 
@@ -1274,9 +1274,6 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public rebaseOnto(branch: TreeBranch): void {
-		this.checkNotDisposed(
-			"The target of the branch rebase has been disposed and cannot be rebased.",
-		);
 		getCheckout(branch).rebase(this);
 	}
 
@@ -1285,10 +1282,10 @@ export class TreeCheckout implements ITreeCheckout {
 	public merge(branch: TreeBranch, disposeMerged = true): void {
 		const checkout = getCheckout(branch);
 		this.checkNotDisposed(
-			"The target of the branch merge has been disposed and cannot be merged.",
+			"The target branch of the merge has been disposed and cannot be merged.",
 		);
 		checkout.checkNotDisposed(
-			"The source of the branch merge has been disposed and cannot be merged.",
+			"The source branch of the merge has been disposed and cannot be merged.",
 		);
 		this.editLock.checkUnlocked("Merging");
 		if (this.transaction.size > 0) {
