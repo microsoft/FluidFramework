@@ -150,18 +150,6 @@
 		"ses": "^1.14.0",
 		"typescript": "~5.4.5"
 	},
-	"fluidBuild": {
-		"tasks": {
-			"build:esnext": [
-				"...",
-				"typetests:gen"
-			],
-			"tsc": [
-				"...",
-				"typetests:gen"
-			]
-		}
-	},
 	"typeValidation": {
 		"disabled": true
 	}
