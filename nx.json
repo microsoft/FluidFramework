@@ -24,22 +24,12 @@
 	},
 	"targetDefaults": {
 		"tsc": {
-			"executor": "nx:run-commands",
-			"options": {
-				"command": "{workspaceRoot}/scripts/nx-clean-and-build.sh tsc",
-				"cwd": "{projectRoot}"
-			},
 			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm"],
 			"inputs": ["production"],
 			"outputs": ["{projectRoot}/dist", "{projectRoot}/*.tsbuildinfo"],
 			"cache": true
 		},
 		"build:esnext": {
-			"executor": "nx:run-commands",
-			"options": {
-				"command": "{workspaceRoot}/scripts/nx-clean-and-build.sh build:esnext",
-				"cwd": "{projectRoot}"
-			},
 			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm", "^build:esnext"],
 			"inputs": ["production"],
 			"outputs": ["{projectRoot}/lib"],
