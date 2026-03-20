@@ -6,11 +6,11 @@
 /**
  * Shared ESLint configuration for build-tools packages.
  *
- * This module re-exports the recommended config from @fluidframework/eslint-config-fluid
+ * This module re-exports the base config from @fluidframework/eslint-config-fluid
  * and provides additional utilities for build-tools specific needs.
  */
 
-import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
+import { base } from "@fluidframework/eslint-config-fluid/flat.mts";
 import chaiFriendly from "eslint-plugin-chai-friendly";
 
 /**
@@ -150,8 +150,11 @@ const buildToolsOverrides = {
 
 /**
  * The base ESLint flat config from eslint-config-fluid with build-tools overrides.
+ *
+ * @remarks
+ * TODO: AB#58054 Consider updating to recommended or strict config from eslint-config-fluid if possible.
  */
-export const baseConfig = [...recommended, linterOptions, buildToolsOverrides];
+export const baseConfig = [...base, linterOptions, buildToolsOverrides];
 
 /**
  * Chai-friendly configuration for test files.

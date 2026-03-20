@@ -17,14 +17,17 @@
  * @see lib/configs/factory.mts for the main config assembly logic
  */
 
+import { baseConfig } from "./library/configs/base.mjs";
+import { sharedConfigs } from "./library/configs/overrides.mjs";
 import {
 	fullRecommendedConfig,
 	fullStrictBiomeConfig,
 	fullStrictConfig,
 } from "./library/configs/factory.mjs";
 
+const base = [...baseConfig, ...sharedConfigs] as const;
 const recommended = [...fullRecommendedConfig] as const;
 const strict = [...fullStrictConfig] as const;
 const strictBiome = [...fullStrictBiomeConfig] as const;
 
-export { recommended, strict, strictBiome };
+export { base, recommended, strict, strictBiome };
