@@ -64,8 +64,7 @@ import {
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -498,13 +497,8 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	// Any version can be passed down to makeSchemaCodec here.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec({
-		...options,
-		minVersionForCollab: FluidClientVersion.v2_0,
-	});
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+	const stored = schemaCodec.decode(persisted);
 	return exportSimpleSchema(stored);
 }
 
@@ -547,7 +541,6 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs<
 	EditManagerFormatVersion,
 	SharedTreeChangeFormatVersion
