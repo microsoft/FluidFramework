@@ -13,7 +13,8 @@ This skill provides a comprehensive reference for Fluid Framework telemetry inve
 ## Cluster & Access
 
 - **Cluster:** `https://kusto.aria.microsoft.com`
-- **Primary database:** `Office Fluid`
+- **Primary database:** `Office Fluid` (GUID: `6a8929bcfc6d44e9b13fee392ada9cf0`)
+- **Stress test database:** `Office Fluid Test` (GUID: `742fa5a288b045e5beab1a2b8e445a71`) — contains `office_fluid_ffautomation*` tables
 - **Retention:** ~28 days
 - **VPN:** Required (Microsoft internal network)
 - **Access requirement:** M365HeartbeatTenantUsers group membership

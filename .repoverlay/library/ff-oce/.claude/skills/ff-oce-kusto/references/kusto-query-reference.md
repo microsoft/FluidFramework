@@ -36,8 +36,8 @@ This document is a comprehensive reference for Fluid Framework telemetry investi
 | `Office_Fluid_Video_Activity_GetPersonalOdbUrl` | ODB URL fetch events. `Activity_Success == false` signals failures. `Data_isExpected` marks expected failures (e.g. 404 for users without ODB). |
 | `Office_Fluid_Video_Activity_CreateRedeemableSharingLink` | Sharing link creation events for video. `Activity_Success == 'false'` for failures. |
 | `Office_Fluid_Video_Generic_Request` | Raw HTTP request events from the video component. Fields: `Data_status` (HTTP status code), `Data_clientRequestId`, `Data_requestId`, `Data_spRequestGuid`. |
-| `office_fluid_ffautomation_error` | Errors from stress test / automation runs. Fields: `Data_buildId`, `Data_driverType`, `Data_driverEndpointName`, `Data_profile`, `Data_branch`. Key field: `Data_hostName == "@fluid-internal/test-service-load"`. |
-| `union office_fluid_ffautomation*` | All automation tables — used for summarizer investigation in stress test runs (`DidSummarizerRecover`, `SummarizerView` queries). |
+| `office_fluid_ffautomation_error` | Errors from stress test / automation runs. Fields: `Data_buildId`, `Data_driverType`, `Data_driverEndpointName`, `Data_profile`, `Data_branch`. Key field: `Data_hostName == "@fluid-internal/test-service-load"`. **⚠️ This table is in the "Office Fluid Test" database (`742fa5a288b045e5beab1a2b8e445a71`), NOT the primary "Office Fluid" database.** |
+| `union office_fluid_ffautomation*` | All automation tables — used for summarizer investigation in stress test runs (`DidSummarizerRecover`, `SummarizerView` queries). **⚠️ Same as above — these tables are in the "Office Fluid Test" database (`742fa5a288b045e5beab1a2b8e445a71`).** |
 | `cluster('https://stream.eastus2.kusto.windows.net').database("OnePlayer").*` | OnePlayer (Stream video player) telemetry. Key fields: `playbackSessionId`, `userId`, `odspItemId`, `hostComponent`, `hostApp`, `result` (`"Fatal"` = error), `name`, `message`. EU cluster: `cluster('https://streameu.northeurope.kusto.windows.net')`. |
 
 **Shorthand for all FluidRuntime tables:**
@@ -1398,6 +1398,8 @@ union Office_Fluid_FluidRuntime_*
 ### 4.6 Stress Test Automation Queries
 
 **Source:** `summaryinvestigations` page, EngineeringHub. These queries run against `office_fluid_ffautomation*` tables (not `Office_Fluid_FluidRuntime_*`).
+
+> **⚠️ Database:** The `office_fluid_ffautomation*` tables are in the **"Office Fluid Test"** database (GUID: `742fa5a288b045e5beab1a2b8e445a71`), NOT the primary "Office Fluid" database (`6a8929bcfc6d44e9b13fee392ada9cf0`). When using the MCP Kusto tool, you must specify the "Office Fluid Test" database GUID for these queries.
 
 ```kusto
 // FindBuildErrors: All errors for a specific stress test run
