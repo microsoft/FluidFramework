@@ -46,6 +46,10 @@ export {
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
+export {
+	buildNodeComparator,
+	type NodeComparator,
+} from "./cursorComparator.js";
 
 import * as SequenceField from "./sequence-field/index.js";
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
