@@ -150,9 +150,6 @@ const buildToolsOverrides = {
 
 /**
  * The base ESLint flat config from eslint-config-fluid with build-tools overrides.
- *
- * @remarks
- * TODO: AB#58054 Consider updating to recommended or strict config from eslint-config-fluid if possible.
  */
 export const baseConfig = [...recommended, linterOptions, buildToolsOverrides];
 
