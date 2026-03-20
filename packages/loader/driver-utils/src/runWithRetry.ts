@@ -46,12 +46,6 @@ export interface IProgress {
 	 * @param error - error object returned from the call.
 	 */
 	onRetry?(delayInMs: number, error: unknown): void;
-
-	/**
-	 * Maximum number of retries before giving up on a retriable error.
-	 * If undefined, retries will continue indefinitely (default behavior).
-	 */
-	maxRetries?: number;
 }
 
 /**
@@ -64,6 +58,7 @@ export async function runWithRetry<T>(
 	fetchCallName: string,
 	logger: ITelemetryLoggerExt,
 	progress: IProgress,
+	maxRetries?: number,
 ): Promise<T> {
 	let result: T | undefined;
 	let success = false;
@@ -131,12 +126,12 @@ export async function runWithRetry<T>(
 			numRetries++;
 
 			// Check if max retries limit has been reached
-			if (progress.maxRetries !== undefined && numRetries > progress.maxRetries) {
+			if (maxRetries !== undefined && numRetries > maxRetries) {
 				logger.sendTelemetryEvent(
 					{
 						eventName: `${fetchCallName}_maxRetriesExceeded`,
 						retry: numRetries - 1,
-						maxRetries: progress.maxRetries,
+						maxRetries,
 						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
@@ -152,7 +147,7 @@ export async function runWithRetry<T>(
 							{
 								driverVersion: pkgVersion,
 								fetchCallName,
-								maxRetries: progress.maxRetries,
+								maxRetries,
 							},
 						),
 				);

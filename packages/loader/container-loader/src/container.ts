@@ -1214,9 +1214,7 @@ export class Container
 	public readonly attach = runSingle(
 		async (
 			request: IRequest,
-			attachProps?: {
-				deltaConnection?: "none" | "delayed";
-			},
+			attachProps?: { deltaConnection?: "none" | "delayed" },
 		): Promise<void> => {
 			await PerformanceEvent.timedExecAsync(
 				this.mc.logger,
@@ -1567,8 +1565,8 @@ export class Container
 				this.mc.logger,
 				{
 					cancel: this._deltaManager.closeAbortController.signal,
-					maxRetries,
 				}, // progress
+				maxRetries,
 			);
 		}
 		return service;

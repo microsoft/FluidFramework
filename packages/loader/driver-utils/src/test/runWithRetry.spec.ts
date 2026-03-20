@@ -223,7 +223,6 @@ describe("runWithRetry Tests", () => {
 	});
 
 	it("Should stop retrying after maxRetries is exceeded", async () => {
-		const maxRetries = 3;
 		let retryTimes = 0;
 		const api = async (): Promise<boolean> => {
 			retryTimes += 1;
@@ -234,11 +233,7 @@ describe("runWithRetry Tests", () => {
 		};
 
 		try {
-			await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {
-					maxRetries,
-				}),
-			);
+			await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}, 3));
 			assert.fail("Should not succeed");
 		} catch (error) {
 			// Verify the wrapped error includes the original error message
@@ -251,11 +246,10 @@ describe("runWithRetry Tests", () => {
 			assert.strictEqual(causeMessage, "Throw error");
 		}
 		// Initial call + maxRetries attempts
-		assert.strictEqual(retryTimes, maxRetries + 1, "Should retry exactly maxRetries times");
+		assert.strictEqual(retryTimes, 4, "Should retry exactly maxRetries times");
 	});
 
 	it("Should succeed before maxRetries is exceeded", async () => {
-		const maxRetries = 5;
 		let retryTimes = 0;
 		const api = async (): Promise<boolean> => {
 			retryTimes += 1;
@@ -270,9 +264,7 @@ describe("runWithRetry Tests", () => {
 		};
 
 		const success = await runWithFastSetTimeout(async () =>
-			runWithRetry(api, "test", logger, {
-				maxRetries,
-			}),
+			runWithRetry(api, "test", logger, {}, 5),
 		);
 		assert.strictEqual(success, true, "Should succeed");
 		assert.strictEqual(retryTimes, 3, "Should take 3 attempts to succeed");
@@ -310,11 +302,7 @@ describe("runWithRetry Tests", () => {
 		};
 
 		try {
-			await runWithFastSetTimeout(async () =>
-				runWithRetry(api, "test", logger, {
-					maxRetries: 0,
-				}),
-			);
+			await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}, 0));
 			assert.fail("Should not succeed");
 		} catch (error) {
 			// Verify the wrapped error includes the original error message
