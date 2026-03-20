@@ -356,7 +356,14 @@ export const baseRules = {
 	/**
 	 * Disabled as it conflicts with biome formatting.
 	 */
-	"max-len": "off",
+	"max-len": [
+		"off",
+		{
+			ignoreRegExpLiterals: false,
+			ignoreStrings: false,
+			code: 120,
+		},
+	],
 	"max-lines": "off",
 	"new-parens": "error",
 	"newline-per-chained-call": "off",
@@ -386,12 +393,6 @@ export const baseRules = {
 		},
 	],
 	"no-nested-ternary": "off", // Superseded by unicorn/no-nested-ternary
-	"no-multi-spaces": [
-		"error",
-		{
-			ignoreEOLComments: true,
-		},
-	],
 	"no-new-func": "error",
 	"no-new-wrappers": "error",
 	"no-octal": "error",

@@ -116,4 +116,15 @@ export const baseConfig: FlatConfigArray = [
 	},
 	// Prettier disables conflicting rules - must come after custom rules
 	prettierConfig satisfies Linter.Config,
+	// Re-enable no-multi-spaces after prettier (which disables it)
+	{
+		rules: {
+			"no-multi-spaces": [
+				"error",
+				{
+					ignoreEOLComments: true,
+				},
+			],
+		},
+	},
 ];

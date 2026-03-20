@@ -1339,7 +1339,12 @@
 			"off"
 		],
 		"max-len": [
-			"off"
+			"off",
+			{
+				"ignoreRegExpLiterals": false,
+				"ignoreStrings": false,
+				"code": 120
+			}
 		],
 		"max-lines": [
 			"off"
@@ -1544,7 +1549,7 @@
 			"off"
 		],
 		"no-multi-spaces": [
-			"off",
+			"error",
 			{
 				"ignoreEOLComments": true
 			}
