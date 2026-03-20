@@ -40,7 +40,7 @@ export interface ArrayNodeCustomizableSchema<
 /**
  * A Schema for customizable {@link (TreeArrayNode:interface)}s with additional alpha APIs.
  * @remarks
- * Extends {@link ArrayNodeCustomizableSchema} with {@link TreeArrayNodeAlpha} as the node type,
+ * Duplicates {@link ArrayNodeCustomizableSchema} with {@link TreeArrayNodeAlpha} as the node type,
  * adding support for the alpha APIs on those nodes.
  * @system @sealed @alpha
  */
