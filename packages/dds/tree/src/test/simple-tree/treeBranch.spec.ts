@@ -45,6 +45,14 @@ describe("TreeBranch", () => {
 		assert.deepEqual([...array], ["a", "b", "c"]);
 	});
 
+	it("isViewOf without schema", () => {
+		const view = init(["a", "b", "c"]);
+		const context = TreeAlpha.context(view.root);
+		assert(context.isBranch());
+		// A view should return true for isViewOf() with no schema argument
+		assert.equal(context.isViewOf(), true);
+	});
+
 	describe("branches", () => {
 		function newBranch(view: TreeView<typeof Array>) {
 			const context = TreeAlpha.context(view.root);

@@ -825,7 +825,7 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	branch(node: TreeNode): TreeBranchAlpha | undefined {
-		const context = this.context(node);
+		const context = TreeAlpha.context(node);
 		return context.isBranch() ? context : undefined;
 	},
 
