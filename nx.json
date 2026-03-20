@@ -24,27 +24,29 @@
 	},
 	"targetDefaults": {
 		"tsc": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "{workspaceRoot}/scripts/nx-clean-and-build.sh tsc",
+				"cwd": "{projectRoot}"
+			},
 			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm"],
 			"inputs": ["production"],
-			"outputs": [
-				"{projectRoot}/dist",
-				"{projectRoot}/*.tsbuildinfo"
-			],
+			"outputs": ["{projectRoot}/dist", "{projectRoot}/*.tsbuildinfo"],
 			"cache": true
 		},
 		"build:esnext": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "{workspaceRoot}/scripts/nx-clean-and-build.sh build:esnext",
+				"cwd": "{projectRoot}"
+			},
 			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm", "^build:esnext"],
 			"inputs": ["production"],
 			"outputs": ["{projectRoot}/lib"],
 			"cache": true
 		},
 		"build:test": {
-			"dependsOn": [
-				"typetests:gen",
-				"tsc",
-				"api-extractor:commonjs",
-				"api-extractor:esnext"
-			],
+			"dependsOn": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
 			"inputs": ["source", "config"],
 			"outputs": ["{projectRoot}/dist/test", "{projectRoot}/lib/test"],
 			"cache": true
@@ -94,39 +96,27 @@
 			"cache": true
 		},
 		"build:api-reports:current": {
-			"dependsOn": ["api-extractor:esnext"],
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
 			"inputs": ["production", "{projectRoot}/api-extractor/**"],
-			"outputs": [
-				"{projectRoot}/api-report/**",
-				"{projectRoot}/_api-extractor-temp/**"
-			],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
 			"cache": true
 		},
 		"build:api-reports:legacy": {
-			"dependsOn": ["api-extractor:esnext"],
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
 			"inputs": ["production", "{projectRoot}/api-extractor/**"],
-			"outputs": [
-				"{projectRoot}/api-report/**",
-				"{projectRoot}/_api-extractor-temp/**"
-			],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
 			"cache": true
 		},
 		"ci:build:api-reports:current": {
-			"dependsOn": ["api-extractor:esnext"],
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
 			"inputs": ["production", "{projectRoot}/api-extractor/**"],
-			"outputs": [
-				"{projectRoot}/api-report/**",
-				"{projectRoot}/_api-extractor-temp/**"
-			],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
 			"cache": true
 		},
 		"ci:build:api-reports:legacy": {
-			"dependsOn": ["api-extractor:esnext"],
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
 			"inputs": ["production", "{projectRoot}/api-extractor/**"],
-			"outputs": [
-				"{projectRoot}/api-report/**",
-				"{projectRoot}/_api-extractor-temp/**"
-			],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
 			"cache": true
 		},
 		"build:docs": {
@@ -161,6 +151,17 @@
 		"build:copy": {
 			"inputs": ["{projectRoot}/src/**/*.css"],
 			"outputs": ["{projectRoot}/lib/**/*.css"],
+			"cache": true
+		},
+		"build:entrypoints:node10": {
+			"inputs": ["{projectRoot}/package.json"],
+			"outputs": [
+				"{projectRoot}/alpha.d.ts",
+				"{projectRoot}/beta.d.ts",
+				"{projectRoot}/internal.d.ts",
+				"{projectRoot}/legacy.d.ts",
+				"{projectRoot}/legacy/alpha.d.ts"
+			],
 			"cache": true
 		},
 		"build:genver": {
@@ -339,7 +340,13 @@
 			"dependsOn": []
 		},
 		"api": {
-			"dependsOn": ["api-extractor:commonjs", "api-extractor:esnext"]
+			"dependsOn": [
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"build:entrypoints:node10",
+				"tsc",
+				"build:esnext"
+			]
 		},
 		"test:cjs": {
 			"dependsOn": ["test:unit:cjs"]
@@ -367,5 +374,6 @@
 		}
 	},
 	"cacheDirectory": ".nx/cache",
-	"parallel": 12
+	"parallel": 12,
+	"analytics": false
 }
