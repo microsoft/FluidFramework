@@ -247,14 +247,17 @@ export class CachedConfigProvider implements IConfigProvider {
 				const parsed = stronglyTypedParse(provider?.getRawConfig(name));
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
-					this.logger?.send({
-						category: "generic",
-						eventName: "ConfigRead",
-						...tagCodeArtifacts({
-							configName: name,
-							configValue: JSON.stringify(parsed),
-						}),
-					}, LogLevel.essential);
+					this.logger?.send(
+						{
+							category: "generic",
+							eventName: "ConfigRead",
+							...tagCodeArtifacts({
+								configName: name,
+								configValue: JSON.stringify(parsed),
+							}),
+						},
+						LogLevel.essential,
+					);
 					return parsed;
 				}
 			}

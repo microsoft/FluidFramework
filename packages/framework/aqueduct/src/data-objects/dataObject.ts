@@ -58,12 +58,15 @@ export abstract class DataObject<
 			// DataObject which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
 			// SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
 			if (this.internalRoot.attributes.type === MapFactory.Type) {
-				this.runtime.logger.send({
-					category: "generic",
-					eventName: "MapDataObject",
-					message:
-						"Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
-				}, LogLevel.essential);
+				this.runtime.logger.send(
+					{
+						category: "generic",
+						eventName: "MapDataObject",
+						message:
+							"Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
+					},
+					LogLevel.essential,
+				);
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
