@@ -18,15 +18,13 @@
  */
 
 import {
-	fullMinimalDeprecatedConfig,
 	fullRecommendedConfig,
 	fullStrictBiomeConfig,
 	fullStrictConfig,
 } from "./library/configs/factory.mjs";
 
-const minimalDeprecated = [...fullMinimalDeprecatedConfig] as const;
 const recommended = [...fullRecommendedConfig] as const;
 const strict = [...fullStrictConfig] as const;
 const strictBiome = [...fullStrictBiomeConfig] as const;
 
-export { recommended, strict, minimalDeprecated, strictBiome };
+export { recommended, strict, strictBiome };

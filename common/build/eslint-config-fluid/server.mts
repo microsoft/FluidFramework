@@ -18,7 +18,9 @@
  * ```
  */
 
-import { minimalDeprecated, recommended } from "./flat.mts";
+import { baseConfig } from "./library/configs/base.mjs";
+import { sharedConfigs } from "./library/configs/overrides.mjs";
+import { recommended } from "./flat.mts";
 
 /**
  * Server-specific rule overrides.
@@ -227,9 +229,9 @@ const serverOverrides = {
 
 /**
  * ESLint flat config for server packages.
- * Uses minimalDeprecated config with server-specific rule overrides.
+ * Uses base config with shared overrides and server-specific rule overrides.
  */
-export const server = [...minimalDeprecated, serverOverrides];
+export const server = [...baseConfig, ...sharedConfigs, serverOverrides];
 
 /**
  * ESLint flat config for server packages using the recommended config level.

@@ -60,12 +60,6 @@
 		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
 			"error"
 		],
-		"@fluid-internal/fluid/no-member-release-tags": [
-			"error"
-		],
-		"@fluid-internal/fluid/no-unchecked-record-access": [
-			"error"
-		],
 		"@rushstack/no-new-null": [
 			"error"
 		],
@@ -1339,12 +1333,7 @@
 			"off"
 		],
 		"max-len": [
-			"off",
-			{
-				"ignoreRegExpLiterals": false,
-				"ignoreStrings": false,
-				"code": 120
-			}
+			"off"
 		],
 		"max-lines": [
 			"off"
@@ -1549,7 +1538,7 @@
 			"off"
 		],
 		"no-multi-spaces": [
-			"error",
+			"off",
 			{
 				"ignoreEOLComments": true
 			}

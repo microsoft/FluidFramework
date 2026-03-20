@@ -36,6 +36,7 @@ import type { ESLint, Linter } from "eslint";
 import { globalIgnores } from "../constants.mjs";
 import { importXSettings, jsdocSettings } from "../settings.mjs";
 import { baseRules, eslintCommentsRecommendedRules } from "../rules/base.mjs";
+import { dependConfig } from "./overrides.mjs";
 
 export type FlatConfigArray = readonly Readonly<Linter.Config>[];
 
@@ -90,21 +91,21 @@ export const baseConfig: FlatConfigArray = [
 			...baseRules,
 		},
 	},
-	// TypeScript file override from base.js (lines 328-343)
-	// These rules are disabled by default but re-enabled in recommended.js
+	// TypeScript file overrides
 	{
 		files: ["**/*.ts", "**/*.tsx"],
 		rules: {
 			"@typescript-eslint/indent": "off",
-			"func-call-spacing": "off",
-			// TODO: Enable these ASAP (from base.js)
-			"@typescript-eslint/explicit-module-boundary-types": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
+			"dot-notation": "off",
+			"no-unused-expressions": "off",
+		},
+		settings: {
+			jsdoc: {
+				mode: "typescript",
+			},
 		},
 	},
+	dependConfig,
 	// Type validation files need relaxed rules for type compatibility testing
 	{
 		files: ["**/types/*validate*Previous*.ts"],
