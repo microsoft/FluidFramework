@@ -284,57 +284,39 @@ function formatToQuillAttributes(
  */
 export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp[] {
 	const ops: QuillDeltaOp[] = [];
-	// Accumulator for current run of identically-formatted text
-	let text = "";
-	let previousAttributes: Record<string, unknown> = {};
-	// JSON key for current attributes, used for equality comparison
-	// TODO:Performance: implement faster equality check.
-	let key = "";
+	let index = 0;
 
-	// Helper to push accumulated text as an insert operation
-	const pushRun = (): void => {
-		if (!text) return;
-		const op: QuillDeltaOp = { insert: text };
-		if (Object.keys(previousAttributes).length > 0) op.attributes = previousAttributes;
-		ops.push(op);
-	};
-
-	// Iterate through each formatted character in the tree
-	// TODO:Performance: Optimize this loop by adding an API to get runs to FormattedTextAsTree.Tree, and implementing that using cursors.
-	// Something like `getUniformRun(startIndex, maxLength): number` and `substring(startIndex, length): string`.
-	for (const atom of root.charactersWithFormatting()) {
-		const currentAttributes = formatToQuillAttributes(atom.format);
-
+	while (index < root.characterCount()) {
+		const atom = root.charactersWithFormatting()[index];
+		if (atom === undefined) {
+			break;
+		}
 		if (atom.content instanceof FormattedTextAsTree.StringLineAtom) {
-			// Merge line-specific attributes (header/list) into the format
+			// Line atom (header, bullet lists) emit a newline with a line tag attribute
+			const currentAttributes = formatToQuillAttributes(atom.format);
 			const lineTag = atom.content.tag.value;
 			Object.assign(currentAttributes, lineTagToQuillAttributes[lineTag]);
 
-			// Line atoms always break the current run and emit a newline
-			pushRun();
-			text = "";
-			key = "";
 			const op: QuillDeltaOp = { insert: "\n" };
-			if (Object.keys(currentAttributes).length > 0) op.attributes = currentAttributes;
-			ops.push(op);
-		} else {
-			const stringifiedAttributes = JSON.stringify(currentAttributes);
-			if (stringifiedAttributes === key) {
-				// Same formatting as previous character - extend run
-				text += atom.content.content;
-			} else {
-				// Different formatting - push previous run and start a new one
-				pushRun();
-				text = atom.content.content;
-				previousAttributes = currentAttributes;
-				key = stringifiedAttributes;
+			if (Object.keys(currentAttributes).length > 0) {
+				op.attributes = currentAttributes;
 			}
+			ops.push(op);
+			index += 1;
+		} else {
+			// Regular text atom: use getUniformRun to get length of consecutive characters with same formatting.
+			// Then getString to get the substring.
+			const runLength = root.getUniformRun(index);
+			const text = root.getString(index, index + runLength);
+			const attributes = formatToQuillAttributes(atom.format);
+			const op: QuillDeltaOp = { insert: text };
+			if (Object.keys(attributes).length > 0) {
+				op.attributes = attributes;
+			}
+			ops.push(op);
+			index += runLength;
 		}
 	}
-
-	// Push any remaining accumulated text
-	pushRun();
-
 	// Quill expects documents to end with a newline
 	// eslint-disable-next-line unicorn/prefer-at -- .at() not available in target
 	const last = ops[ops.length - 1];
