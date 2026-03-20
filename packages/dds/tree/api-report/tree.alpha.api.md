@@ -144,14 +144,6 @@ export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSche
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha @sealed
-export interface BranchableTree extends ViewableTree {
-    branch(): TreeBranchFork;
-    merge(branch: TreeBranchFork): void;
-    merge(branch: TreeBranchFork, disposeMerged: boolean): void;
-    rebase(branch: TreeBranchFork): void;
-}
-
-// @alpha @sealed
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
@@ -473,12 +465,6 @@ export type FormatVersion = number | string | undefined;
 
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
-
-// @alpha @deprecated
-export function getBranch(tree: ITree): BranchableTree;
-
-// @alpha @deprecated
-export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(view: TreeViewAlpha<T>): BranchableTree;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;
@@ -1696,11 +1682,6 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 // @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-}
-
-// @alpha @sealed
-export interface TreeBranchFork extends BranchableTree, IDisposable {
-    rebaseOnto(branch: BranchableTree): void;
 }
 
 // @public @sealed

@@ -206,7 +206,6 @@ function transferRoots(
 				delayed.push({ oldId, newId });
 				continue;
 			}
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
 			newRootId = detachedFieldIndex.createEntry(newId, revision);
 			const fields = mapToUpdate.get(oldRootId);
 			if (fields !== undefined) {

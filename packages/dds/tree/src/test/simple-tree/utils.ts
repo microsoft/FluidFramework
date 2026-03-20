@@ -139,7 +139,7 @@ export function pretty(arg: unknown): number | string {
 export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema>(
 	originalView: SchematizingSimpleTreeView<TSchema>,
 ): { forkView: SchematizingSimpleTreeView<TSchema>; forkCheckout: TreeCheckout } {
-	const forkCheckout = originalView.checkout.branch();
+	const forkCheckout = originalView.checkout.fork();
 	return {
 		forkView: new SchematizingSimpleTreeView<TSchema>(
 			forkCheckout,

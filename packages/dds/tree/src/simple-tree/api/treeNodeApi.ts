@@ -131,6 +131,9 @@ export interface TreeNodeApi {
 	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
+	 * @remarks
+	 * The returned unsubscribe function should be called any time the need for the `listener` callback ends before the node is {@link TreeStatus.Deleted | deleted} (Not just {@link TreeStatus.Removed | removed}).
+	 * Doing so removes the overhead of tracking and triggering the event, and also avoids leaking any memory retained by the callback.
 	 */
 	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,

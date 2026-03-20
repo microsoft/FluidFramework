@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { TreeAlpha } from "../../shared-tree/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
 // Allow importing file being tested
@@ -84,6 +86,66 @@ describe("textDomainFormatted", () => {
 				["d", true],
 			],
 		);
+	});
+
+	it("getUniformRun", () => {
+		const text = FormattedTextAsTree.Tree.fromString("abc");
+		text.defaultFormat.underline = true;
+		text.insertAt(3, "de");
+		text.defaultFormat.italic = true;
+		text.insertAt(5, "f");
+		assert.equal(text.getUniformRun(0, 5), 3);
+		assert.equal(text.getUniformRun(0), 3);
+		assert.equal(text.getUniformRun(3, 5), 2);
+		assert.equal(text.getUniformRun(4, 5), 1);
+		assert.equal(text.getUniformRun(5, 6), 1);
+		assert.throws(() => text.getUniformRun(6), UsageError);
+	});
+
+	it("getString with getUniformRun", () => {
+		const text = FormattedTextAsTree.Tree.fromString("abc");
+		text.defaultFormat.underline = true;
+		text.insertAt(3, "de");
+		text.defaultFormat.italic = true;
+		text.insertAt(5, "f");
+		let index = 0;
+		let currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "abc");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "de");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "f");
+		assert.equal(text.getUniformRun(0), 3);
+	});
+	it("getString with getUniformRun on line atoms", () => {
+		const text = FormattedTextAsTree.Tree.fromString("abcde");
+
+		text.insertWithFormattingAt(3, [
+			new FormattedTextAsTree.StringAtom({
+				content: new FormattedTextAsTree.StringLineAtom({
+					tag: FormattedTextAsTree.LineTag("h5"),
+				}),
+				format: new FormattedTextAsTree.CharacterFormat({
+					bold: false,
+					italic: false,
+					underline: false,
+					size: 12,
+					font: "Arial",
+				}),
+			}),
+		]);
+		let index = 0;
+		let currentRun = text.getUniformRun(0, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "abc");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(currentRun, 1);
+		assert.equal(text.getString(index, index + currentRun), "\n");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "de");
 	});
 
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
