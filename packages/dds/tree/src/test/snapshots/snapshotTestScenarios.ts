@@ -204,7 +204,7 @@ export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 				view1.initialize([]);
 				provider.synchronizeMessages();
 
-				const branch1 = tree1.kernel.checkout;
+				const branch1 = view1.checkout;
 				const tree2 = branch1.branch();
 				const view2 = tree2.viewWith(view1.config);
 				view1.root.insertAt(0, "y");
