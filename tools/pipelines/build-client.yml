@@ -78,6 +78,8 @@ trigger:
     - biome.jsonc
     - BREAKING.md
     - common/build/build-common
+    # TODO: Can be removed once the dependency on the shared lint config is via an npm package instead of link:
+    - common/build/eslint-config-fluid
     - ClientRequirements.md
     - CODE_OF_CONDUCT.md
     - CONTRIBUTING.md
@@ -143,6 +145,8 @@ pr:
     - biome.jsonc
     - BREAKING.md
     - common/build/build-common
+    # TODO: Can be removed once the dependency on the shared lint config is via an npm package instead of link:
+    - common/build/eslint-config-fluid
     - ClientRequirements.md
     - CODE_OF_CONDUCT.md
     - CONTRIBUTING.md
