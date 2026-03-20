@@ -24,6 +24,9 @@ import type { SchemaChange } from "./schemaChangeTypes.js";
  * Create a family of schema change codecs.
  * @param options - Specifies common codec options, including which `validator` to use.
  * @returns The composed codec family.
+ * @remarks
+ * Data encoded with this codec is not versioned.
+ * Users of this codec must thus ensure that the decoder always knows which version was used.
  */
 export function makeSchemaChangeCodecs(
 	options: CodecWriteOptions,
