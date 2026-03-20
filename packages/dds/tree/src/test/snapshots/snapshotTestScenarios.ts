@@ -9,7 +9,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { getBranch, type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
+import { type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../treeFactory.js";
 import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
@@ -204,7 +204,7 @@ export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 				view1.initialize([]);
 				provider.synchronizeMessages();
 
-				const branch1 = getBranch(tree1);
+				const branch1 = view1.checkout;
 				const tree2 = branch1.branch();
 				const view2 = tree2.viewWith(view1.config);
 				view1.root.insertAt(0, "y");

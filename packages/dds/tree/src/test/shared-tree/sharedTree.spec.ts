@@ -59,7 +59,6 @@ import {
 	ForestTypeExpensiveDebug,
 	ForestTypeOptimized,
 	ForestTypeReference,
-	getBranch,
 	type ITreePrivate,
 	Tree,
 	type TreeCheckout,
@@ -757,7 +756,7 @@ describe("SharedTree", () => {
 		);
 		view.initialize(["a"]);
 		// Create a branch to prevent the EditManager from evicting all of its commits - otherwise, the summary won't have these edits in the trunk.
-		getBranch(tree).branch();
+		asAlpha(view).fork();
 		view.root.insertAtEnd("b");
 
 		const treeSummarizeResult = await tree.summarize();

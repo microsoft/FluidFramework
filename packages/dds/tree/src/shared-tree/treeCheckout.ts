@@ -4,7 +4,6 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
@@ -193,57 +192,6 @@ export interface CheckoutEvents {
 	 * Fired when the checkout is disposed.
 	 */
 	dispose(): void;
-}
-
-/**
- * A "version control"-style branch of a SharedTree.
- * @remarks Branches may be used to coordinate edits to a SharedTree, e.g. via merge and rebase operations.
- * Changes applied to a branch of a branch only apply to that branch and are isolated from other branches.
- * Changes may be synchronized across branches via merge and rebase operations provided on the branch object.
- * @alpha @sealed
- */
-export interface BranchableTree extends ViewableTree {
-	/**
-	 * Spawn a new branch which is based off of the current state of this branch.
-	 * Any mutations of the new branch will not apply to this branch until the new branch is merged back into this branch via `merge()`.
-	 */
-	branch(): TreeBranchFork;
-
-	/**
-	 * Apply all the new changes on the given branch to this branch.
-	 * @param view - a branch which was created by a call to `branch()`.
-	 * It is automatically disposed after the merge completes.
-	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
-	 * A "changed" event and a corresponding {@link Revertible} will be emitted on this branch for each new change merged from 'branch'.
-	 */
-	merge(branch: TreeBranchFork): void;
-
-	/**
-	 * Apply all the new changes on the given branch to this branch.
-	 * @param branch - a branch which was created by a call to `branch()`.
-	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
-	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
-	 */
-	merge(branch: TreeBranchFork, disposeMerged: boolean): void;
-
-	/**
-	 * Rebase the given branch onto this branch.
-	 * @param branch - a branch which was created by a call to `branch()`. It is modified by this operation.
-	 */
-	rebase(branch: TreeBranchFork): void;
-}
-
-/**
- * A {@link BranchableTree | branch} of a SharedTree that has merged from another branch.
- * @remarks This branch should be disposed when it is no longer needed in order to free resources.
- * @alpha @sealed
- */
-export interface TreeBranchFork extends BranchableTree, IDisposable {
-	/**
-	 * Rebase the changes that have been applied to this branch over all the new changes in the given branch.
-	 * @param branch - Either the root branch or a branch that was created by a call to `branch()`. It is not modified by this operation.
-	 */
-	rebaseOnto(branch: BranchableTree): void;
 }
 
 /**
