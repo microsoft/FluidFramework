@@ -6,8 +6,13 @@
 import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
-import { currentObserver } from "../feature-libraries/index.js";
+import {
+	EmptyKey,
+	mapCursorField,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+} from "../core/index.js";
+import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
@@ -24,7 +29,7 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	WithType,
 } from "../simple-tree/index.js";
-import { mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
+import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
 import { charactersFromString, type TextAsTree } from "./textDomain.js";
 
@@ -172,6 +177,12 @@ class TextNode
 			});
 		}
 	}
+	public getUniformRun(startIndex: number, endIndex?: number): number {
+		return this.content.getUniformRun(startIndex, endIndex);
+	}
+	public getString(startIndex: number, endIndex?: number): string {
+		return this.content.getString(startIndex, endIndex);
+	}
 }
 
 const defaultFormat = {
@@ -181,6 +192,8 @@ const defaultFormat = {
 	size: 12,
 	font: "Arial",
 } as const;
+
+const formatKey: FieldKey = brand("format");
 
 function textAtomsFromString(
 	value: string,
@@ -250,6 +263,102 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 
 	public fullString(): string {
 		return this.charactersCopy().join("");
+	}
+	public getString(startIndex: number, endIndex?: number): string {
+		const arrayLength = this.length;
+		if (startIndex < 0 || startIndex >= arrayLength) {
+			return "";
+		}
+		return this.withBorrowedSequenceCursor((cursor) => {
+			const limit = Math.min(endIndex ?? arrayLength, arrayLength) - startIndex;
+			let result = "";
+
+			cursor.enterNode(startIndex);
+			for (let index = 0; index < limit; index++) {
+				if (index > 0 && !cursor.nextNode()) {
+					break;
+				}
+
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				switch (cursor.type) {
+					case FormattedTextAsTree.StringTextAtom.identifier: {
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+						result += cursor.value as string;
+						cursor.exitNode();
+						cursor.exitField();
+						break;
+					}
+					case FormattedTextAsTree.StringLineAtom.identifier: {
+						result += "\n";
+						break;
+					}
+					default: {
+						fail(0xcde /* Unsupported node type in text array */, () => `${cursor.type}`);
+					}
+				}
+				cursor.exitNode();
+				cursor.exitField();
+			}
+			cursor.exitNode();
+			return result;
+		});
+	}
+	public getUniformRun(startIndex: number, endIndex: number = this.length): number {
+		validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getUniformRun");
+		if (endIndex === startIndex) {
+			throw new UsageError("endIndex must be greater than startIndex for getUniformRun.");
+		}
+		const arrayLength = this.length;
+		return this.withBorrowedSequenceCursor((cursor) => {
+			cursor.enterNode(startIndex);
+
+			// Capture the content type of the first atom
+			cursor.enterField(EmptyKey);
+			cursor.enterNode(0);
+			const contentType = cursor.type;
+			cursor.exitNode();
+			cursor.exitField();
+
+			// Build a comparator from the format subtree of the first atom
+			// This compares by field key
+			cursor.enterField(formatKey);
+			cursor.enterNode(0);
+			const formatComparator = buildNodeComparator(cursor);
+			cursor.exitNode();
+			cursor.exitField();
+
+			let runLength = 1;
+			const limit = Math.min(endIndex, arrayLength) - startIndex;
+
+			while (runLength < limit && cursor.nextNode()) {
+				// Compare atom type
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				const typeMatches = cursor.type === contentType;
+				cursor.exitNode();
+				cursor.exitField();
+				if (!typeMatches) {
+					break;
+				}
+
+				// Compare format subtree using the compiled comparator
+				cursor.enterField(formatKey);
+				cursor.enterNode(0);
+				const formatMatches = formatComparator(cursor);
+				cursor.exitNode();
+				cursor.exitField();
+
+				if (formatMatches !== true) {
+					break;
+				}
+
+				runLength++;
+			}
+			cursor.exitNode();
+			return runLength;
+		});
 	}
 }
 
@@ -427,6 +536,19 @@ export namespace FormattedTextAsTree {
 			endIndex: number | undefined,
 			format: Partial<CharacterFormat>,
 		): void;
+
+		/**
+		 * Returns the length of the run of characters starting at `startIndex` which have the same formatting and atom type, up to `endIndex`.
+		 * @param startIndex - The starting index of the run.
+		 * @param endIndex - The ending index (exclusive) of the run. Defaults to the end of the text.
+		 */
+		getUniformRun(startIndex: number, endIndex?: number): number;
+		/**
+		 * Returns a substring of the text from `startIndex` to `endIndex`
+		 * @param startIndex - starting index (inclusive)
+		 * @param endIndex - Optional ending index (exclusive). Defaults to the end of the text.
+		 */
+		getString(startIndex: number, endIndex?: number): string;
 	}
 
 	/**

@@ -515,7 +515,7 @@ export class OrderedClientElection
 				"InteractiveClientElected",
 				client,
 				sequenceNumber,
-				true /* forceSend */,
+				false /* forceSend */,
 				reason,
 			);
 			// Changing the elected parent as well.
@@ -544,7 +544,7 @@ export class OrderedClientElection
 				"ParentElected",
 				client,
 				sequenceNumber,
-				true /* forceSend */,
+				false /* forceSend */,
 				reason,
 			);
 			this._electedParent = client;

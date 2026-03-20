@@ -39,7 +39,6 @@ import {
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "../json/index.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import { testDocumentIndependentView } from "../testTrees.js";

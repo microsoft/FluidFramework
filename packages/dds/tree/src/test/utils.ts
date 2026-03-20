@@ -165,7 +165,6 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	type ITreeCheckoutFork,
 	independentView,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
@@ -180,6 +179,7 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 	type TreeView,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
@@ -191,6 +191,7 @@ import {
 	toInitialSchema,
 	toStoredSchema,
 	type SnapshotFileSystem,
+	type TreeViewAlpha,
 } from "../simple-tree/index.js";
 import {
 	configuredSharedTree,
@@ -1468,14 +1469,33 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 
-	public branch(): ITreeCheckoutFork {
-		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
+	public disposed = false;
+	public fork(): ITreeCheckout {
+		throw new Error("Method 'branch' not implemented in MockTreeCheckout.");
+	}
+	public isBranch(): this is TreeBranchAlpha {
+		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");
+	}
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
+		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
+	}
+	public runTransaction(): never {
+		throw new Error("Method 'runTransaction' not implemented in MockTreeCheckout.");
+	}
+	public runTransactionAsync(): never {
+		throw new Error("Method 'runTransactionAsync' not implemented in MockTreeCheckout.");
+	}
+	public applyChange(): void {
+		throw new Error("Method 'applyChange' not implemented in MockTreeCheckout.");
 	}
 	public merge(view: unknown, disposeView?: unknown): void {
 		throw new Error("Method 'merge' not implemented in MockTreeCheckout.");
 	}
-	public rebase(view: ITreeCheckoutFork): void {
-		throw new Error("Method 'rebase' not implemented in MockTreeCheckout.");
+	public rebaseOnto(branch: unknown): void {
+		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
+	}
+	public dispose(): void {
+		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
 	}
 	public updateSchema(newSchema: TreeStoredSchema): void {
 		throw new Error("Method 'updateSchema' not implemented in MockTreeCheckout.");

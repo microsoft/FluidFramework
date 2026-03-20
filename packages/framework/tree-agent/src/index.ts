@@ -13,6 +13,7 @@ export {
 	SharedTreeSemanticAgent,
 	createContext,
 	createTreeAgent,
+	executeSemanticEditing,
 } from "./agent.js";
 export type {
 	// New API
@@ -25,6 +26,7 @@ export type {
 	TreeAgentToolResultMessage,
 	TreeAgentChatResponse,
 	TreeAgentOptions,
+	ExecuteSemanticEditingOptions,
 	// Existing API
 	EditResult,
 	SharedTreeChatModel,
