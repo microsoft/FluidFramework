@@ -25,7 +25,6 @@ import {
 } from "../../feature-libraries/index.js";
 import type {
 	ITreeCheckout,
-	ITreeCheckoutFork,
 	CheckoutEvents,
 	ISharedTreeEditor,
 } from "../../shared-tree/index.js";
@@ -174,19 +173,41 @@ describe("schematizeTree", () => {
 	function mockCheckout(InputSchema: ImplicitFieldSchema, isEmpty: boolean): ITreeCheckout {
 		const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(InputSchema));
 		const checkout: ITreeCheckout = {
+			disposed: false,
 			breaker: new Breakable("mockCheckout"),
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
 			transaction: undefined as unknown as Transactor,
-			branch(): ITreeCheckoutFork {
+			branch(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
-			merge(view: ITreeCheckoutFork): void {
+			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
-			rebase(view: ITreeCheckoutFork): void {
+			isBranch(): boolean {
+				return true;
+			},
+			hasRootSchema(): boolean {
+				return false;
+			},
+			runTransaction(): never {
+				throw new Error("Function not implemented.");
+			},
+			runTransactionAsync(): never {
+				throw new Error("Function not implemented.");
+			},
+			applyChange(): void {
+				throw new Error("Function not implemented.");
+			},
+			merge(): void {
+				throw new Error("Function not implemented.");
+			},
+			rebaseOnto(): void {
+				throw new Error("Function not implemented.");
+			},
+			dispose(): void {
 				throw new Error("Function not implemented.");
 			},
 			updateSchema(newSchema: TreeStoredSchema): void {
