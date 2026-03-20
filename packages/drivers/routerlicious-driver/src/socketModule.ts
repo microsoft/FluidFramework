@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Import is required for side-effects.
+import { io } from "socket.io-client";
 
-export { io as SocketIOClientStatic } from "socket.io-client";
+// eslint-disable-next-line unicorn/prefer-export-from -- Import is required for side-effects.
+export const SocketIOClientStatic = io;
