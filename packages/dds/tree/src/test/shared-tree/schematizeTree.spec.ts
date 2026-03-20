@@ -183,11 +183,14 @@ describe("schematizeTree", () => {
 			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
+			isViewOf(): boolean {
+				return false;
+			},
 			isBranch(): boolean {
 				return true;
 			},
 			hasRootSchema(): boolean {
-				return false;
+				return this.isViewOf();
 			},
 			runTransaction(): never {
 				throw new Error("Function not implemented.");

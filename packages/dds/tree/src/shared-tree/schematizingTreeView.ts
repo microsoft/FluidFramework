@@ -161,6 +161,15 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
+	public isViewOf<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>(
+		schema?: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		if (schema !== undefined) {
+			return areImplicitFieldSchemaEqual(this.rootFieldSchema, schema);
+		}
+		return true;
+	}
+
 	public isBranch(): this is TreeBranchAlpha {
 		return true;
 	}
@@ -172,7 +181,7 @@ export class SchematizingSimpleTreeView<
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 	): this is TreeViewAlpha<TSchema> {
-		return areImplicitFieldSchemaEqual(this.rootFieldSchema, schema);
+		return this.isViewOf(schema);
 	}
 
 	public get schema(): ReadSchema<TRootSchema> {

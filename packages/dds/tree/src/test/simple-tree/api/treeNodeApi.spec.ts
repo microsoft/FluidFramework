@@ -3812,7 +3812,7 @@ describe("treeNodeApi", () => {
 			const branch = TreeAlpha.context(obj);
 			assert(branch.isBranch());
 			// Compile check: `isBranch()` should downcast the context to a branch
-			branch.hasRootSchema(Obj); // This is a method on branches but not on context
+			branch.isViewOf(Obj); // This is a method on branches but not on context
 		});
 
 		it("for unhydrated nodes is not a branch", () => {

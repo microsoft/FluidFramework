@@ -250,7 +250,7 @@ export interface TreeContextAlpha {
 	 * ```typescript
 	 * const context = tree.context(someNode);
 	 * if (context.isBranch()) {
-	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 *   assert(context.isViewOf(MySchema)) // `isViewOf` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
 	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
 	 * }
 	 * ```
@@ -261,9 +261,7 @@ export interface TreeContextAlpha {
 /**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
- * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
- *
- * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
+ * The `TreeBranchAlpha` for a specific {@link TreeNode} may be acquired via `TreeAlpha.context`.
  * @sealed @alpha
  */
 export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
@@ -285,9 +283,36 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 *   // ...
 	 * }
 	 * ```
+	 * @deprecated Use {@link TreeBranchAlpha.isViewOf | isViewOf} instead.
 	 */
 	hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
+	): this is TreeViewAlpha<TSchema>;
+
+	/**
+	 * Returns true if this branch object is a {@link TreeViewAlpha | view}.
+	 * @param rootSchema - If provided, the schema to check against.
+	 * Must be invariant to the schema of the view - it must include exactly the same allowed types.
+	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
+	 *
+	 * If omitted, returns true if this branch object is a {@link TreeViewAlpha}, though its content will not be strongly typed at compile time.
+	 * @example
+	 * ```typescript
+	 * if (branch.isViewOf(MySchema)) {
+	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
+	 *   // ...
+	 * }
+	 * ```
+	 * @example
+	 * ```typescript
+	 * // Check if the branch is a view without specifying a schema
+	 * if (branch.isViewOf()) {
+	 *   // `branch` is a TreeViewAlpha, but `root` is not strongly typed
+	 * }
+	 * ```
+	 */
+	isViewOf<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>(
+		rootSchema?: TSchema,
 	): this is TreeViewAlpha<TSchema>;
 
 	// Override the base fork method to return the alpha variant.

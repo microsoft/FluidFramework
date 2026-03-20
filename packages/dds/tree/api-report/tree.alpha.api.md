@@ -1659,7 +1659,9 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     readonly events: Listenable_2<TreeBranchEvents>;
     // (undocumented)
     fork(): TreeBranchAlpha;
+    // @deprecated
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    isViewOf<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>(rootSchema?: TSchema): this is TreeViewAlpha<TSchema>;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;

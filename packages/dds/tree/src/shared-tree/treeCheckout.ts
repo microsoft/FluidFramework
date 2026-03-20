@@ -832,6 +832,12 @@ export class TreeCheckout implements ITreeCheckout {
 		this.applySerializedChange(change);
 	}
 
+	public isViewOf<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>(
+		_schema?: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return false;
+	}
+
 	public isBranch(): this is TreeBranchAlpha {
 		return true;
 	}
@@ -839,7 +845,7 @@ export class TreeCheckout implements ITreeCheckout {
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		_schema: TSchema,
 	): this is TreeViewAlpha<TSchema> {
-		return false;
+		return this.isViewOf(_schema);
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(

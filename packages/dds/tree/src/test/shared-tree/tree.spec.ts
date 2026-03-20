@@ -406,11 +406,12 @@ describe("treeApi", () => {
 
 		// Hydrated
 		const array = view.root;
-		const context = TreeAlpha.branch(array);
-		assert(context !== undefined);
+		const context = TreeAlpha.context(array);
+		assert(context.isBranch());
 
 		// Unhydrated
-		assert.equal(TreeAlpha.branch(new ArrayNode([1, 2, 3])), undefined);
+		const unhydratedContext = TreeAlpha.context(new ArrayNode([1, 2, 3]));
+		assert.equal(unhydratedContext.isBranch(), false);
 	});
 
 	it("can cast to alpha", () => {

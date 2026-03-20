@@ -1473,11 +1473,18 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public fork(): ITreeCheckout {
 		throw new Error("Method 'branch' not implemented in MockTreeCheckout.");
 	}
+	public isViewOf<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>(
+		_schema?: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return false;
+	}
 	public isBranch(): this is TreeBranchAlpha {
 		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");
 	}
-	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
-		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return this.isViewOf(schema);
 	}
 	public runTransaction(): never {
 		throw new Error("Method 'runTransaction' not implemented in MockTreeCheckout.");

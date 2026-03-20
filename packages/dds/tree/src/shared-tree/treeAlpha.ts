@@ -812,13 +812,9 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	context(node: TreeNode): TreeContextAlpha {
-		return this.branch(node) ?? UnhydratedTreeContext.instance;
-	},
-
-	branch(node: TreeNode): TreeBranchAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
-			return undefined;
+			return UnhydratedTreeContext.instance;
 		}
 		const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
 		assert(
@@ -826,6 +822,11 @@ export const TreeAlpha: TreeAlpha = {
 			0xa5c /* Unexpected view implementation */,
 		);
 		return view;
+	},
+
+	branch(node: TreeNode): TreeBranchAlpha | undefined {
+		const context = this.context(node);
+		return context.isBranch() ? context : undefined;
 	},
 
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(

@@ -38,26 +38,26 @@ describe("TreeBranch", () => {
 	it("can downcast to a view", () => {
 		const view = init(["a", "b", "c"]);
 		const array = view.root;
-		const context = TreeAlpha.branch(array);
-		assert(context !== undefined);
-		assert.equal(context.hasRootSchema(Array), true);
-		assert.equal(context.hasRootSchema(schemaFactory.number), false);
+		const context = TreeAlpha.context(array);
+		assert(context.isBranch());
+		assert.equal(context.isViewOf(Array), true);
+		assert.equal(context.isViewOf(schemaFactory.number), false);
 		assert.deepEqual([...array], ["a", "b", "c"]);
 	});
 
 	describe("branches", () => {
 		function newBranch(view: TreeView<typeof Array>) {
-			const context = TreeAlpha.branch(view.root);
-			assert(context !== undefined);
+			const context = TreeAlpha.context(view.root);
+			assert(context.isBranch());
 			const branch = context.fork();
-			assert(branch.hasRootSchema(Array));
+			assert(branch.isViewOf(Array));
 			return branch;
 		}
 
 		it("can downcast to a view", () => {
 			const view = init(["a", "b", "c"]);
 			const branch = newBranch(view);
-			assert(branch.hasRootSchema(Array));
+			assert(branch.isViewOf(Array));
 			assert.deepEqual([...branch.root], ["a", "b", "c"]);
 		});
 
