@@ -38,6 +38,6 @@ catalogs:
     "@fluidframework/bundle-size-tools": ^0.64.0
   # eslint and related packages
   eslint:
-    "@fluid-internal/eslint-config-fluid": "^9.0.0"
+    "@fluidframework/eslint-config-fluid": "^9.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
