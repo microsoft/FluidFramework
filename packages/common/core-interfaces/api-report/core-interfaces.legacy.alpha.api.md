@@ -58,29 +58,27 @@ export type FluidErrorTypesAlpha = (typeof FluidErrorTypesAlpha)[keyof typeof Fl
 // @public
 export const fluidHandleSymbol: unique symbol;
 
-// @alpha @sealed
+// @public @sealed
+export interface FluidIterable<T> {
+    // (undocumented)
+    [Symbol.iterator](): FluidIterableIterator<T>;
+}
+
+// @public @sealed
+export interface FluidIterableIterator<T> extends FluidIterable<T> {
+    // (undocumented)
+    next(): {
+        value: T;
+        done?: boolean;
+    };
+}
+
+// @public @sealed
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     clear(): void;
     delete(key: K): boolean;
     forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
     set(key: K, value: V): void;
-}
-
-// @public @sealed
-export interface FluidMapLegacy<K, V> {
-    [Symbol.iterator](): IterableIterator<[K, V]>;
-    // (undocumented)
-    readonly [Symbol.toStringTag]: string;
-    clear(): void;
-    delete(key: K): boolean;
-    entries(): IterableIterator<[K, V]>;
-    forEach(callbackfn: (value: V, key: K, map: FluidMapLegacy<K, V>) => void, thisArg?: any): void;
-    get(key: K): V | undefined;
-    has(key: K): boolean;
-    keys(): IterableIterator<K>;
-    set(key: K, value: V): this;
-    readonly size: number;
-    values(): IterableIterator<V>;
 }
 
 // @public
@@ -94,9 +92,17 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha @sealed
-export interface FluidReadonlyMap<K, V> extends Omit<FluidMapLegacy<K, V>, "clear" | "delete" | "set" | "forEach" | typeof Symbol.toStringTag> {
+// @public @sealed
+export interface FluidReadonlyMap<K, V> {
+    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
+    readonly [Symbol.toStringTag]: string;
+    entries(): FluidIterableIterator<[K, V]>;
     forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): FluidIterableIterator<K>;
+    readonly size: number;
+    values(): FluidIterableIterator<V>;
 }
 
 // @public

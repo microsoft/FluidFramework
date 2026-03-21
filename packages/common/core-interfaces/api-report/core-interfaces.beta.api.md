@@ -20,20 +20,26 @@ export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventP
 export const fluidHandleSymbol: unique symbol;
 
 // @public @sealed
-export interface FluidMapLegacy<K, V> {
-    [Symbol.iterator](): IterableIterator<[K, V]>;
+export interface FluidIterable<T> {
     // (undocumented)
-    readonly [Symbol.toStringTag]: string;
+    [Symbol.iterator](): FluidIterableIterator<T>;
+}
+
+// @public @sealed
+export interface FluidIterableIterator<T> extends FluidIterable<T> {
+    // (undocumented)
+    next(): {
+        value: T;
+        done?: boolean;
+    };
+}
+
+// @public @sealed
+export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     clear(): void;
     delete(key: K): boolean;
-    entries(): IterableIterator<[K, V]>;
-    forEach(callbackfn: (value: V, key: K, map: FluidMapLegacy<K, V>) => void, thisArg?: any): void;
-    get(key: K): V | undefined;
-    has(key: K): boolean;
-    keys(): IterableIterator<K>;
-    set(key: K, value: V): this;
-    readonly size: number;
-    values(): IterableIterator<V>;
+    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    set(key: K, value: V): void;
 }
 
 // @public
@@ -46,6 +52,19 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @public @sealed
+export interface FluidReadonlyMap<K, V> {
+    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
+    readonly [Symbol.toStringTag]: string;
+    entries(): FluidIterableIterator<[K, V]>;
+    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): FluidIterableIterator<K>;
+    readonly size: number;
+    values(): FluidIterableIterator<V>;
+}
 
 // @public
 export interface IConfigProviderBase {

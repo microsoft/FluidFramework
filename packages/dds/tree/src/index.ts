@@ -51,7 +51,11 @@ export type Listenable<T extends object> = EventListenable<T>;
  */
 export type Off = EventOff;
 
-export type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
+export type {
+	FluidIterable,
+	FluidIterableIterator,
+	FluidReadonlyMap,
+} from "@fluidframework/core-interfaces";
 
 export {
 	TreeStatus,
