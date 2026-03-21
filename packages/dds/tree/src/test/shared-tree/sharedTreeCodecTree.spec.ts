@@ -4,7 +4,8 @@
  */
 
 import { FluidClientVersion, jsonableCodecTree } from "../../codec/index.js";
-import { getCodecTreeForSharedTreeFormat } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getCodecTreeForSharedTreeFormat } from "../../shared-tree/sharedTree.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 
 describe("SharedTree Codec Tree", () => {

@@ -218,7 +218,11 @@ export function eraseEncodedType<
 
 /**
  * Represents a family of codecs that can be used to encode and decode data in different formats.
+ * @remarks
  * The family is identified by a format version, which is typically used to select the codec to use.
+ *
+ * TODO: Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} if the data is explicitly versioned,
+ * and directly reference the format and encode/decode logic from the parent codec if the data is not explicitly versioned.
  *
  * Separating codecs into families rather than having a single codec support multiple versions (i.e. currying
  * the `formatVersion` parameter)

@@ -117,8 +117,7 @@ function makeVersionedValidatedCodec<
 /**
  * Creates a codec which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
  *
- * TODO: {@link ClientVersionDispatchingCodecBuilder} should get support for extra decode only entries and/or unstable formats (codecs without a minVersionForCollab that will never be selected for write unless overridden).
- * Once done, users of this should migrate to ClientVersionDispatchingCodecBuilder and this function can be simplified.
+ * TODO: Users of this should migrate to ClientVersionDispatchingCodecBuilder.
  */
 export function makeDiscontinuedCodecVersion<
 	TDecoded,
