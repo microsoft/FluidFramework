@@ -5,9 +5,8 @@
 
 /**
  * Like TypeScript's built-in `Iterable` type, except unaffected by TypeScript's version and configuration options.
- * @remarks
- * Native iterables (e.g., `Map`, `Set`, `Array`) are assignable to this type.
- * @sealed @public
+ *
+ * @sealed @alpha
  */
 export interface FluidIterable<T> {
 	[Symbol.iterator](): FluidIterableIterator<T>;
@@ -15,31 +14,24 @@ export interface FluidIterable<T> {
 
 /**
  * Like TypeScript's built-in iterable iterator type, except unaffected by TypeScript's version and configuration options.
- * @remarks
- * Native iterable iterators (e.g., those returned by `Map.keys()`, `Set.values()`, etc.) are assignable to this type.
- * @sealed @public
+ *
+ * @sealed @alpha
  */
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
 	next(): { value: T; done?: boolean };
 }
 
 /**
- * A readonly map interface controlled by Fluid Framework.
+ * Like TypeScript's built in `ReadonlyMap` type, except unaffected by TypeScript's version and configuration options.
+ * Also, unlike the build in `ReadonlyMap`, this interface includes Symbol.toStringTag.
  *
  * @remarks
- * Fluid Framework uses this type instead of the built-in `ReadonlyMap` to insulate
- * against breaking changes introduced by the TypeScript standard library across versions.
- * Interfaces that need map-like read behavior should extend this type.
+ * This exists so that Fluid has a `ReadonlyMap` type which is safe to implement that cannot be broken by changes to TypeScript's default ReadonlyMap type.
+ * All behavior exposed through this interface should be compatible with the corresponding behavior of JavaScript ReadonlyMaps,
+ * but it may lack some of the newer APIs,
+ * and might express the type slightly different from how TypeScript does in its `ReadonlyMap` type.
  *
- * A native `ReadonlyMap\<K, V\>` is NOT assignable to `FluidReadonlyMap\<K, V\>` because
- * `FluidReadonlyMap` has `[Symbol.toStringTag]`, which `ReadonlyMap` lacks.
- * In the other direction, `FluidReadonlyMap` is assignable to
- * `Omit\<ReadonlyMap, "forEach"\>`.
- *
- * A native `Map\<K, V\>` IS assignable to `FluidReadonlyMap\<K, V\>` since `Map` has
- * `[Symbol.toStringTag]` and all required readonly members.
- *
- * @sealed @public
+ * @sealed @alpha
  */
 export interface FluidReadonlyMap<K, V> {
 	/**
@@ -94,19 +86,15 @@ export interface FluidReadonlyMap<K, V> {
 }
 
 /**
- * A mutable map interface controlled by Fluid Framework, extending {@link FluidReadonlyMap}
- * with write operations.
+ * Like TypeScript's built in `Map` type, except unaffected by TypeScript's version and configuration options.
  *
  * @remarks
- * The `set` method returns `void` instead of `this`,
- * which avoids covariant `this` return type issues in interface hierarchies.
+ * This exists so that Fluid has a `Map` type which is safe to implement that cannot be broken by changes to TypeScript's default Map type.
+ * All behavior exposed through this interface should be compatible with the corresponding behavior of JavaScript Maps,
+ * but it may lack some of the newer APIs,
+ * and might express the type slightly different from how TypeScript does in its `Map` type.
  *
- * `FluidMap` is NOT assignable to the built-in `Map` because `set` returns `void`
- * instead of `this`. It is assignable to `Omit\<Map, "forEach" | "set"\>`.
- * A native `Map\<K, V\>` is NOT assignable to `FluidMap\<K, V\>` because `Map.set`
- * returns `this`, which is not assignable to `void` in a contravariant callback position.
- *
- * @sealed @public
+ * @sealed @alpha
  */
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
 	/**
