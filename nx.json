@@ -174,7 +174,7 @@
 			"cache": true
 		},
 		"eslint": {
-			"dependsOn": ["compile", "build:test:esm", "^tsc", "^build:esnext", "^api"],
+			"dependsOn": ["compile", "build:test:esm", "^tsc", "^build:esnext", "^build:test"],
 			"inputs": ["source"],
 			"cache": true
 		},
@@ -197,6 +197,36 @@
 			"cache": true
 		},
 		"check:exports:bundle-release-tags": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:cjs:index": {
+			"dependsOn": ["tsc"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:cjs:legacy": {
+			"dependsOn": ["tsc"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:cjs:public": {
+			"dependsOn": ["tsc"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:esm:index": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:esm:legacy": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:esm:public": {
 			"dependsOn": ["build:esnext"],
 			"inputs": ["production", "{projectRoot}/api-extractor/**"],
 			"cache": true
