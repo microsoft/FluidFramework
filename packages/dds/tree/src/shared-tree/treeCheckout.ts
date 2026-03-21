@@ -4,7 +4,6 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
@@ -69,13 +68,14 @@ import {
 	createNodeIdentifierManager,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
+	TreeStatus,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
 import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
-	TransactionResult,
+	TransactionResult as InternalTransactionResult,
 	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
@@ -88,22 +88,34 @@ import {
 	type UnsafeUnknownSchema,
 	type ViewableTree,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type TreeChangeEvents,
 	type VerboseTree,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type RunTransactionParams,
+	type TransactionConstraintAlpha,
+	type TreeViewAlpha,
+	getInnerNode,
+	getKernel,
 	customFromCursorStored,
 	type CustomTreeValue,
 	type CustomTreeNode,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
+	breakingMethod,
 	disposeSymbol,
 	getOrCreate,
 	hasSome,
+	throwIfBroken,
 	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
 
-import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -183,57 +195,6 @@ export interface CheckoutEvents {
 }
 
 /**
- * A "version control"-style branch of a SharedTree.
- * @remarks Branches may be used to coordinate edits to a SharedTree, e.g. via merge and rebase operations.
- * Changes applied to a branch of a branch only apply to that branch and are isolated from other branches.
- * Changes may be synchronized across branches via merge and rebase operations provided on the branch object.
- * @alpha @sealed
- */
-export interface BranchableTree extends ViewableTree {
-	/**
-	 * Spawn a new branch which is based off of the current state of this branch.
-	 * Any mutations of the new branch will not apply to this branch until the new branch is merged back into this branch via `merge()`.
-	 */
-	branch(): TreeBranchFork;
-
-	/**
-	 * Apply all the new changes on the given branch to this branch.
-	 * @param view - a branch which was created by a call to `branch()`.
-	 * It is automatically disposed after the merge completes.
-	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
-	 * A "changed" event and a corresponding {@link Revertible} will be emitted on this branch for each new change merged from 'branch'.
-	 */
-	merge(branch: TreeBranchFork): void;
-
-	/**
-	 * Apply all the new changes on the given branch to this branch.
-	 * @param branch - a branch which was created by a call to `branch()`.
-	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
-	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
-	 */
-	merge(branch: TreeBranchFork, disposeMerged: boolean): void;
-
-	/**
-	 * Rebase the given branch onto this branch.
-	 * @param branch - a branch which was created by a call to `branch()`. It is modified by this operation.
-	 */
-	rebase(branch: TreeBranchFork): void;
-}
-
-/**
- * A {@link BranchableTree | branch} of a SharedTree that has merged from another branch.
- * @remarks This branch should be disposed when it is no longer needed in order to free resources.
- * @alpha @sealed
- */
-export interface TreeBranchFork extends BranchableTree, IDisposable {
-	/**
-	 * Rebase the changes that have been applied to this branch over all the new changes in the given branch.
-	 * @param branch - Either the root branch or a branch that was created by a call to `branch()`. It is not modified by this operation.
-	 */
-	rebaseOnto(branch: BranchableTree): void;
-}
-
-/**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
@@ -241,7 +202,11 @@ export interface TreeBranchFork extends BranchableTree, IDisposable {
  * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
  */
-export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakable {
+export interface ITreeCheckout
+	extends TreeBranchAlpha,
+		AnchorLocator,
+		ViewableTree,
+		WithBreakable {
 	/**
 	 * Read and Write access for schema stored in the document.
 	 *
@@ -277,13 +242,7 @@ export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakabl
 	 */
 	readonly transaction: Transactor;
 
-	branch(): ITreeCheckoutFork;
-
-	merge(checkout: ITreeCheckoutFork): void;
-
-	merge(checkout: ITreeCheckoutFork, disposeMerged: boolean): void;
-
-	rebase(checkout: ITreeCheckoutFork): void;
+	fork(): ITreeCheckout;
 
 	/**
 	 * Replaces all schema with the provided schema.
@@ -389,15 +348,6 @@ export function createTreeCheckout(
 }
 
 /**
- * Branch (like in a version control system) of SharedTree.
- *
- * {@link ITreeCheckout} that has forked off of the main trunk/branch.
- */
-export interface ITreeCheckoutFork extends ITreeCheckout {
-	rebaseOnto(view: ITreeCheckout): void;
-}
-
-/**
  * Metrics derived from a revert operation.
  *
  * @see {@link TreeCheckout.revertRevertible}.
@@ -412,9 +362,93 @@ export interface RevertMetrics {
 }
 
 /**
- * An implementation of {@link ITreeCheckoutFork}.
+ * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
  */
-export class TreeCheckout implements ITreeCheckoutFork {
+function getCheckout(context: TreeBranch): TreeCheckout {
+	if (context instanceof TreeCheckout) {
+		return context;
+	}
+	if (context instanceof SchematizingSimpleTreeView) {
+		return context.checkout;
+	}
+	throw new UsageError("Unsupported context implementation");
+}
+
+/**
+ * Adds constraints to a `checkout`'s pending transaction.
+ *
+ * @param checkout - The checkout whose transaction will have the constraints added to it.
+ * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
+ * @param constraints - The constraints to add to the transaction.
+ *
+ * @see {@link RunTransactionParams.preconditions}.
+ */
+export function addConstraintsToTransaction(
+	checkout: ITreeCheckout,
+	constraintsOnRevert: boolean,
+	constraints: readonly TransactionConstraintAlpha[] = [],
+): void {
+	for (const constraint of constraints) {
+		assertValidConstraint(constraint, constraintsOnRevert);
+		const constraintType = constraint.type;
+		switch (constraintType) {
+			case "nodeInDocument": {
+				const node = getInnerNode(constraint.node);
+				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
+				if (constraintsOnRevert) {
+					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+				} else {
+					checkout.editor.addNodeExistsConstraint(node.anchorNode);
+				}
+				break;
+			}
+			case "noChange": {
+				if (constraintsOnRevert) {
+					checkout.editor.addNoChangeConstraintOnRevert();
+				} else {
+					checkout.editor.addNoChangeConstraint();
+				}
+				break;
+			}
+			default: {
+				unreachableCase(constraintType);
+			}
+		}
+	}
+}
+
+/**
+ * Throws if the given {@link TransactionConstraintAlpha | transaction constraint} is not currently satisfied.
+ */
+export function assertValidConstraint(
+	constraint: TransactionConstraintAlpha,
+	onRevert: boolean,
+): void {
+	switch (constraint.type) {
+		case "nodeInDocument": {
+			const nodeStatus = getKernel(constraint.node).getStatus();
+			if (nodeStatus !== TreeStatus.InDocument) {
+				const revertText = onRevert ? " on revert" : "";
+				throw new UsageError(
+					`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+				);
+			}
+			break;
+		}
+		case "noChange": {
+			// This constraint is always satisfied at the time of checking, since it just requires that no changes have been made since the transaction callback returned.
+			break;
+		}
+		default: {
+			unreachableCase(constraint);
+		}
+	}
+}
+
+/**
+ * An implementation of {@link ITreeCheckout}.
+ */
+export class TreeCheckout implements ITreeCheckout {
 	public disposed = false;
 
 	private editLock: EditLock;
@@ -621,16 +655,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
 				const newHead = this.#transaction.branch.getHead();
 				switch (result) {
-					case TransactionResult.Abort: {
+					case InternalTransactionResult.Abort: {
 						restoreRemovedRoots();
 						if (viewUpdate !== undefined) {
-							this.applyChange(viewUpdate, newHead.revision);
+							this.applyInternalChange(viewUpdate, newHead.revision);
 						}
 						break;
 					}
-					case TransactionResult.Commit: {
+					case InternalTransactionResult.Commit: {
 						if (viewUpdate !== undefined) {
-							this.applyChange(viewUpdate, newHead.revision);
+							this.applyInternalChange(viewUpdate, newHead.revision);
 						}
 						if (this.transaction.size === 0) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
@@ -647,6 +681,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		});
 	}
 
+	@throwIfBroken
 	public exportVerbose(): VerboseTree | undefined {
 		const cursor = this.forest.allocateCursor("contentSnapshot");
 		try {
@@ -755,7 +790,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					? this.#transaction.activeBranch.getHead().revision
 					: event.change.revision;
 
-			this.applyChange(event.change.change, revision);
+			this.applyInternalChange(event.change.change, revision);
 		}
 		this.#events.emit("afterBatch");
 		this.editLock.unlock();
@@ -769,6 +804,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	/**
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
+	@throwIfBroken
 	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
@@ -789,8 +825,115 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.#transaction.branch.apply(tagChange(decodedChange, revision));
 	}
 
+	// #region TreeBranchAlpha
+
+	@throwIfBroken
+	public applyChange(change: JsonCompatibleReadOnly): void {
+		this.applySerializedChange(change);
+	}
+
+	public isBranch(): this is TreeBranchAlpha {
+		return true;
+	}
+
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		_schema: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return false;
+	}
+
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	public runTransaction(
+		transaction: () => VoidTransactionCallbackStatus | void,
+		params?: RunTransactionParams,
+	): TransactionResult;
+	@breakingMethod
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () =>
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		this.mountTransaction(params, false);
+		const transactionCallbackStatus = transaction();
+		return this.unmountTransaction(transactionCallbackStatus, params);
+	}
+
+	public runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	public runTransactionAsync(
+		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResult>;
+	@breakingMethod
+	public async runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void
+		>,
+		params: RunTransactionParams | undefined,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		this.mountTransaction(params, true);
+		const transactionCallbackStatus = await transaction();
+		return this.unmountTransaction(transactionCallbackStatus, params);
+	}
+
+	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+		this.checkNotDisposed();
+		if (isAsync && this.transaction.size > 0) {
+			throw new UsageError(
+				"An asynchronous transaction cannot be started while another transaction is already in progress.",
+			);
+		}
+		this.pushLabelFrame(params?.label);
+		this.transaction.start();
+
+		addConstraintsToTransaction(this, false, params?.preconditions);
+	}
+
+	private unmountTransaction<TSuccessValue, TFailureValue>(
+		transactionCallbackStatus:
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+		params: RunTransactionParams | undefined,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		this.checkNotDisposed();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+		)?.value;
+
+		if (rollback === true) {
+			this.popLabelFrame(true);
+			this.transaction.abort();
+			return value === undefined
+				? { success: false }
+				: { success: false, value: value as TFailureValue };
+		}
+
+		addConstraintsToTransaction(this, true, transactionCallbackStatus?.preconditionsOnRevert);
+
+		this.popLabelFrame(false);
+		this.runWithTransactionLabel(() => {
+			this.transaction.commit();
+		}, params?.label);
+		return value === undefined
+			? { success: true }
+			: { success: true, value: value as TSuccessValue };
+	}
+
+	// #endregion TreeBranchAlpha
+
 	// Revision is the revision of the commit, if any, which caused this change.
-	private applyChange(change: SharedTreeChange, revision?: RevisionTag): void {
+	private applyInternalChange(change: SharedTreeChange, revision?: RevisionTag): void {
 		// Conflicts due to schema will be empty and thus are not applied.
 		for (const innerChange of change.changes) {
 			if (innerChange.type === "data") {
@@ -942,6 +1085,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 
+	@throwIfBroken
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {
@@ -982,11 +1126,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
 	 *
 	 * To avoid updating observers of the view state with intermediate results during a transaction,
-	 * use {@link ITreeCheckout#branch} and {@link ISharedTreeFork#merge}.
+	 * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
 	 */
 	#transaction: SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange>;
 
-	public branch(): TreeCheckout {
+	@throwIfBroken
+	public fork(): TreeCheckout {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
@@ -1040,16 +1185,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.registerForBranchEvents();
 
 		// TODO: Rework eventing
-		this.applyChange(diff);
+		this.applyInternalChange(diff);
 		this.#events.emit("afterBatch");
 	}
 
-	public rebase(checkout: TreeCheckout): void {
+	private rebase(branch: TreeBranch): void {
+		const checkout = getCheckout(branch);
 		this.checkNotDisposed(
-			"The target of the branch rebase has been disposed and cannot be rebased.",
+			"The target branch of the rebase has been disposed and cannot be rebased.",
 		);
 		checkout.checkNotDisposed(
-			"The source of the branch rebase has been disposed and cannot be rebased.",
+			"The source branch of the rebase has been disposed and cannot be rebased.",
 		);
 		this.editLock.checkUnlocked("Rebasing");
 
@@ -1070,21 +1216,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		checkout.#transaction.activeBranch.rebaseOnto(this.#transaction.activeBranch);
 	}
 
-	public rebaseOnto(checkout: ITreeCheckout): void {
-		this.checkNotDisposed(
-			"The target of the branch rebase has been disposed and cannot be rebased.",
-		);
-		checkout.rebase(this);
+	public rebaseOnto(branch: TreeBranch): void {
+		getCheckout(branch).rebase(this);
 	}
 
-	public merge(checkout: TreeCheckout): void;
-	public merge(checkout: TreeCheckout, disposeMerged: boolean): void;
-	public merge(checkout: TreeCheckout, disposeMerged = true): void {
+	public merge(branch: TreeBranch): void;
+	public merge(branch: TreeBranch, disposeMerged: boolean): void;
+	public merge(branch: TreeBranch, disposeMerged = true): void {
+		const checkout = getCheckout(branch);
 		this.checkNotDisposed(
-			"The target of the branch merge has been disposed and cannot be merged.",
+			"The target branch of the merge has been disposed and cannot be merged.",
 		);
 		checkout.checkNotDisposed(
-			"The source of the branch merge has been disposed and cannot be merged.",
+			"The source branch of the merge has been disposed and cannot be merged.",
 		);
 		this.editLock.checkUnlocked("Merging");
 		if (this.transaction.size > 0) {
