@@ -33,9 +33,9 @@ export function makeSchemaChangeCodecs(
 	options: CodecWriteOptions,
 ): ICodecFamily<SchemaChange> {
 	// TODO:
-	// This coded has no need to force specific versions of the inner schema codec.
+	// This codec has no need to force specific versions of the inner schema codec.
 	// The inner schema codec is explicitly versioned, and could safely select its own version based on the provided options.
-	// This change however would modify which version of it got selected in some cases, altering snapshot tests a being somewhat high risk.
+	// This change however would modify which version of it got selected in some cases, altering snapshot tests and being somewhat high risk.
 	// Therefore such a change should be made in a PR with no other changes for easier review, ensuring it is the only cause of the snapshot changes.
 	// Doing this only requires removing the overrides below and updating the snapshots.
 	// TODO:
