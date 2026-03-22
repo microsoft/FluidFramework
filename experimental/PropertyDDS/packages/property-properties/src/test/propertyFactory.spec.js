@@ -5,11 +5,12 @@
 
 /* globals expect, sinon */
 
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;
+import { constants, GuidUtils } from "@fluid-experimental/property-common";
+const { MSG } = constants;
+const { generateGUID } = GuidUtils;
 
-const { PropertyFactory } = require("..");
-const { StringProperty } = require("../properties/stringProperty");
+import { PropertyFactory } from "../index.js";
+import { StringProperty } from "../properties/stringProperty.js";
 
 describe("PropertyFactory", function () {
 	beforeEach(() => {
@@ -52,13 +53,13 @@ describe("PropertyFactory", function () {
 	});
 
 	it("should validate a simple file", function () {
-		var testFile1 = require("./validation/goodPointId");
+		var testFile1 = require("./validation/goodPointId.js").default;
 		var result = PropertyFactory.validate(testFile1);
 		expect(result.isValid).to.equal(true);
 	});
 
 	it("should fail an invalid file", function () {
-		var testFile1 = require("./validation/badPrimitiveTypeid");
+		var testFile1 = require("./validation/badPrimitiveTypeid.js").default;
 		var result = PropertyFactory.validate(testFile1);
 		expect(result.isValid).to.equal(false);
 		expect(result.errors.length).to.be.greaterThan(0);
@@ -3490,7 +3491,7 @@ describe("Template registration", function () {
 	var ColorID, myPropertyFactory;
 
 	before(function () {
-		ColorID = require("./validation/goodColorId");
+		ColorID = require("./validation/goodColorId.js").default;
 	});
 
 	beforeEach(function () {
@@ -3561,7 +3562,7 @@ describe("Template registration", function () {
 		expect(
 			myPropertyFactory.register.bind(
 				myPropertyFactory,
-				require("./validation/badMissingSemverInTypeid"),
+				require("./validation/badMissingSemverInTypeid.js").default,
 			),
 		).to.throw(Error);
 	});
@@ -3570,7 +3571,7 @@ describe("Template registration", function () {
 		expect(
 			myPropertyFactory.register.bind(
 				myPropertyFactory,
-				require("./validation/badPrimitiveTypeid"),
+				require("./validation/badPrimitiveTypeid.js").default,
 			),
 		).to.throw(Error);
 	});
@@ -3672,7 +3673,7 @@ describe("Template registration", function () {
 		expect(
 			myPropertyFactory._registerRemoteTemplate.bind(
 				myPropertyFactory,
-				require("./validation/badMissingSemverInTypeid"),
+				require("./validation/badMissingSemverInTypeid.js").default,
 				generateGUID(),
 			),
 		).to.throw(Error);
@@ -3693,9 +3694,12 @@ describe("Template registration", function () {
 		var scope2 = generateGUID();
 		myPropertyFactory._registerRemoteTemplate(ColorID["1-1-0"].goodSemver, scope);
 		myPropertyFactory._registerRemoteTemplate(ColorID["1-0-1"].goodSemver, scope);
-		myPropertyFactory._registerRemoteTemplate(require("./validation/goodPointId"), scope2);
 		myPropertyFactory._registerRemoteTemplate(
-			require("./validation/goodColorPalette"),
+			require("./validation/goodPointId.js").default,
+			scope2,
+		);
+		myPropertyFactory._registerRemoteTemplate(
+			require("./validation/goodColorPalette.js").default,
 			scope2,
 		);
 
@@ -3957,7 +3961,9 @@ describe("Async validation", function () {
 			hasSchemaAsync: hasSchemaAsync,
 		});
 
-		var templatePrevious = JSON.parse(JSON.stringify(require("./validation/goodPointId")));
+		var templatePrevious = JSON.parse(
+			JSON.stringify(require("./validation/goodPointId.js").default),
+		);
 		var template = JSON.parse(JSON.stringify(templatePrevious));
 		template.typeid = "TeamLeoValidation2:PointID-0.9.9";
 		return templateValidator.validateAsync(template, templatePrevious).then(function (result) {
@@ -4319,7 +4325,7 @@ describe("Remote template scope collection", () => {
 	var scope = () => PropertyFactory._remoteScopedAndVersionedTemplates;
 
 	before(() => {
-		ColorID = require("./validation/goodColorId");
+		ColorID = require("./validation/goodColorId.js").default;
 	});
 
 	beforeEach(() => {

@@ -85,6 +85,13 @@ const config: Linter.Config[] = [
 	{
 		ignores: ["src/index.d.ts"],
 	},
+	// Test overrides
+	{
+		files: ["src/test/validation/*.js"],
+		rules: {
+			"import-x/no-default-export": "off",
+		},
+	},
 ];
 
 export default config;

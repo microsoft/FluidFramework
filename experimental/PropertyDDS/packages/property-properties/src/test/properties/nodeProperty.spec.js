@@ -8,15 +8,16 @@
 /**
  * @fileoverview In this file, we will test the NodeProperty object described in properties/nodeProperty.js
  */
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { constants, GuidUtils } from "@fluid-experimental/property-common";
+const { generateGUID } = GuidUtils;
+const { MSG } = constants;
+import _ from "lodash";
 
-const { PropertyFactory } = require("../..");
-const { BaseProperty } = require("../..");
-const { MapProperty } = require("../../properties/mapProperty");
-const { NodeProperty } = require("../../properties/nodeProperty");
+import { PropertyFactory } from "../../index.js";
+import { BaseProperty } from "../../index.js";
+import { MapProperty } from "../../properties/mapProperty.js";
+import { NodeProperty } from "../../properties/nodeProperty.js";
 
 describe("NodeProperty", function () {
 	var changeSetWithTwoMapEntries, changeSetWithTwoMapEntries_full, removalChangeSet;

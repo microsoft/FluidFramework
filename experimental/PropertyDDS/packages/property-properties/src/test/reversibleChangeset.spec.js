@@ -7,11 +7,11 @@
 /**
  * @fileoverview In this file, we will test the functions of the property factory.
  */
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { Int64, Uint64 } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { Int64, Uint64 } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { PropertyFactory } = require("..");
+import { PropertyFactory } from "../index.js";
 const deepCopy = _.cloneDeep;
 
 describe("Reversible ChangeSets", function () {
