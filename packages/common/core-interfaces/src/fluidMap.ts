@@ -18,7 +18,7 @@ export interface FluidIterable<T> {
  * @sealed @alpha
  */
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
-	next(): { value: T; done?: boolean };
+	next(): { value: T; done?: false } | { value: undefined; done: true };
 }
 
 /**
