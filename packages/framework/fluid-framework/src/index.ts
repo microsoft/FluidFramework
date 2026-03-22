@@ -52,9 +52,6 @@ export type {
 	TelemetryBaseEventPropertyType,
 	Tagged,
 	ReplaceIEventThisPlaceHolder,
-	FluidIterable,
-	FluidIterableIterator,
-	FluidReadonlyMap,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
 	/* eslint-disable import-x/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
@@ -64,7 +61,12 @@ export type {
 	Off,
 	/* eslint-enable import-x/export */
 } from "@fluidframework/core-interfaces";
-export type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
+export type {
+	ErasedBaseType,
+	FluidIterable,
+	FluidIterableIterator,
+	FluidReadonlyMap,
+} from "@fluidframework/core-interfaces/internal";
 
 // This is an alpha API, but this package doesn't have an alpha entry point so its imported from "internal".
 export { onAssertionFailure } from "@fluidframework/core-utils/internal";

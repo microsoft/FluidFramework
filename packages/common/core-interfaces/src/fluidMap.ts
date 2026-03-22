@@ -98,15 +98,15 @@ export interface FluidReadonlyMap<K, V> {
  */
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
 	/**
-	 * Removes all entries from the map.
-	 */
-	clear(): void;
-
-	/**
 	 * Removes the specified element from the map by its key.
-	 * @returns `true` if the element existed and has been removed, or `false` if the element does not exist.
+	 *
+	 * @remarks
+	 * Unlike the built-in `Map.delete`, this returns `void` instead of a boolean.
+	 * This is intentional: in a distributed system, the caller often cannot reliably know
+	 * whether the element existed at the time of deletion.
+	 * Subtypes may override this to return a boolean if appropriate.
 	 */
-	delete(key: K): boolean;
+	delete(key: K): void;
 
 	/**
 	 * Executes the provided function once per each key/value pair in the map.

@@ -4,39 +4,8 @@
 
 ```ts
 
-// @public @sealed
-export interface FluidIterable<T> {
-    // (undocumented)
-    [Symbol.iterator](): FluidIterableIterator<T>;
-}
-
-// @public @sealed
-export interface FluidIterableIterator<T> extends FluidIterable<T> {
-    // (undocumented)
-    next(): {
-        value: T;
-        done?: boolean;
-    };
-}
-
 // @public @sealed @legacy
-export interface FluidMapLegacy<K, V> {
-    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
-    readonly [Symbol.toStringTag]: string;
-    clear(): void;
-    delete(key: K): boolean;
-    entries(): FluidIterableIterator<[K, V]>;
-    forEach(callbackfn: (value: V, key: K, map: FluidMapLegacy<K, V>) => void, thisArg?: any): void;
-    get(key: K): V | undefined;
-    has(key: K): boolean;
-    keys(): FluidIterableIterator<K>;
-    set(key: K, value: V): this;
-    readonly size: number;
-    values(): FluidIterableIterator<V>;
-}
-
-// @public @sealed @legacy
-export interface IDirectory extends FluidMapLegacy<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;

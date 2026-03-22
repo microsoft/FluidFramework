@@ -260,6 +260,7 @@ export {
 	MapNodeSchema,
 	isMapNodeSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	type MapNodeInsertableData,
 	type FieldHasDefault,
 	type FieldHasDefaultAlpha,

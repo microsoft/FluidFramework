@@ -404,11 +404,6 @@ export const FluidClientVersion: {
     readonly v2_80: "2.80.0";
 };
 
-// @alpha @sealed
-export interface FluidReadonlyMap<K, V> extends Omit<FluidMapLegacy<K, V>, "clear" | "delete" | "set" | "forEach" | typeof Symbol.toStringTag> {
-    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
-}
-
 // @beta
 export namespace FluidSerializableAsTree {
     // @sealed
@@ -1762,6 +1757,12 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
     keys(): IterableIterator<string>;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
+}
+
+// @alpha @sealed
+export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
+    delete(key: string): void;
+    set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
 }
 
 // @public @sealed

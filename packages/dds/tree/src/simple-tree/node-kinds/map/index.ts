@@ -7,6 +7,7 @@ export {
 	type MapNodeInsertableData,
 	mapSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 } from "./mapNode.js";
 export {
 	isMapNodeSchema,

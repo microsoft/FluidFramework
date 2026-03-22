@@ -4,19 +4,4 @@
 
 ```ts
 
-// @public @sealed
-export interface FluidIterable<T> {
-    // (undocumented)
-    [Symbol.iterator](): FluidIterableIterator<T>;
-}
-
-// @public @sealed
-export interface FluidIterableIterator<T> extends FluidIterable<T> {
-    // (undocumented)
-    next(): {
-        value: T;
-        done?: boolean;
-    };
-}
-
 ```

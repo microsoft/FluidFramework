@@ -14,37 +14,6 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     get type(): string;
 }
 
-// @public @sealed
-export interface FluidIterable<T> {
-    // (undocumented)
-    [Symbol.iterator](): FluidIterableIterator<T>;
-}
-
-// @public @sealed
-export interface FluidIterableIterator<T> extends FluidIterable<T> {
-    // (undocumented)
-    next(): {
-        value: T;
-        done?: boolean;
-    };
-}
-
-// @public @sealed @legacy
-export interface FluidMapLegacy<K, V> {
-    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
-    readonly [Symbol.toStringTag]: string;
-    clear(): void;
-    delete(key: K): boolean;
-    entries(): FluidIterableIterator<[K, V]>;
-    forEach(callbackfn: (value: V, key: K, map: FluidMapLegacy<K, V>) => void, thisArg?: any): void;
-    get(key: K): V | undefined;
-    has(key: K): boolean;
-    keys(): FluidIterableIterator<K>;
-    set(key: K, value: V): this;
-    readonly size: number;
-    values(): FluidIterableIterator<V>;
-}
-
 // @beta @deprecated @legacy
 export interface ICreateInfo {
     ccIds: string[];
@@ -52,7 +21,7 @@ export interface ICreateInfo {
 }
 
 // @public @sealed @legacy
-export interface IDirectory extends FluidMapLegacy<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
@@ -117,7 +86,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @beta @sealed @legacy
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, FluidMapLegacy<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
