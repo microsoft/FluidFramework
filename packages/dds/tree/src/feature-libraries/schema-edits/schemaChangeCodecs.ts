@@ -99,7 +99,7 @@ export function getCodecTreeForSchemaChangeFormat(
 }
 
 /**
- * Compose the change codec using mostly v1 logic.
+ * This is the same for both v1 and v2 and wrap an independently versioned schemaCodec which may be of any version.
  * @param options - The codec options.
  * @param schemaWriteVersion - The schema write version.
  * @returns The composed schema change codec.
