@@ -152,6 +152,26 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			]);
 		});
 
+		describe("buildDecoder", () => {
+			it("decodes all supported format versions", () => {
+				const decoder = builder.buildDecoder({ jsonValidator: FormatValidatorBasic });
+				assert.equal(decoder.decode({ version: 1, value1: 42 }), 42);
+				assert.equal(decoder.decode({ version: 2, value2: 99 }), 99);
+				assert.equal(decoder.decode({ version: "X", valueX: 7 }), 7);
+			});
+
+			it("throws UsageError for unsupported version", () => {
+				const decoder = builder.buildDecoder({ jsonValidator: FormatValidatorBasic });
+				assert.throws(
+					() => decoder.decode({ version: 3, value2: 42 }),
+					validateUsageError(
+						`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: [1,2,"X"].
+The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+					),
+				);
+			});
+		});
+
 		it("bad builds", () => {
 			// Build asserts are debugAsserts, so only test them when those are enabled.
 			if (nonProductionConditionalsIncluded()) {

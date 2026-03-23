@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
@@ -19,6 +20,10 @@ import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 
 import type {
 	SharedTreeChatModel,
+	TreeAgentChatMessage,
+	TreeAgent,
+	TreeAgentOptions,
+	ExecuteSemanticEditingOptions,
 	EditResult,
 	SemanticAgentOptions,
 	Logger,
@@ -43,53 +48,65 @@ import {
  */
 const defaultMaxSequentialEdits = 20;
 
+// #region Shared utilities
+
+/**
+ * Logs the agent creation header with formatted date and model name.
+ */
+function logAgentHeader(logger: Logger | undefined, modelName: string | undefined): void {
+	logger?.log(`# Fluid Framework SharedTree AI Agent Log\n\n`);
+	const formattedDate = new Date().toLocaleString(undefined, {
+		weekday: "long",
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+		second: "2-digit",
+	});
+	logger?.log(`Agent created: **${formattedDate}**\n\n`);
+	if (modelName !== undefined) {
+		logger?.log(`Model: **${modelName}**\n\n`);
+	}
+}
+
+/**
+ * The tree-changed notification text used when the tree has been externally modified.
+ */
+function treeChangedText(stringified: string): string {
+	return `The tree has changed since the last query. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``;
+}
+
+// #endregion
+
 /**
  * An agent that uses a {@link SharedTreeChatModel} to interact with a SharedTree.
  * @remarks This class forwards user queries to the chat model, and handles the application of any edits to the tree that the model requests.
  * @alpha @sealed
  */
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-	// Converted from ECMAScript private fields (#name) to TypeScript private members for easier debugger inspection.
 	private readonly outerTree: Subtree<TSchema>;
 	private readonly editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
-	/**
-	 * Whether or not the outer tree has changed since the last query finished.
-	 */
-	private outerTreeIsDirty = false;
+	private isDirty = false;
 
 	public constructor(
 		private readonly client: SharedTreeChatModel,
 		tree: ViewOrTree<TSchema>,
 		private readonly options?: Readonly<SemanticAgentOptions<TSchema>>,
 	) {
-		if (tree instanceof TreeNode) {
-			Tree.on(tree, "treeChanged", () => (this.outerTreeIsDirty = true));
-		} else {
-			tree.events.on("changed", () => (this.outerTreeIsDirty = true));
-		}
-
 		this.outerTree = new Subtree(tree);
+		this.outerTree.onTreeChanged(() => {
+			this.isDirty = true;
+		});
 		this.editor = this.options?.editor ?? createDefaultEditor();
+
 		const prompt = getPrompt({
 			subtree: this.outerTree,
 			editToolName: this.client.editToolName,
 			domainHints: this.options?.domainHints,
 		});
-		this.options?.logger?.log(`# Fluid Framework SharedTree AI Agent Log\n\n`);
-		const now = new Date();
-		const formattedDate = now.toLocaleString(undefined, {
-			weekday: "long",
-			year: "numeric",
-			month: "long",
-			day: "numeric",
-			hour: "numeric",
-			minute: "2-digit",
-			second: "2-digit",
-		});
-		this.options?.logger?.log(`Agent created: **${formattedDate}**\n\n`);
-		if (this.client.name !== undefined) {
-			this.options?.logger?.log(`Model: **${this.client.name}**\n\n`);
-		}
+
+		logAgentHeader(this.options?.logger, this.client.name);
 		this.client.appendContext?.(prompt);
 		this.options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
 	}
@@ -103,15 +120,14 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	public async query(userPrompt: string): Promise<string> {
 		this.options?.logger?.log(`## User Query\n\n${userPrompt}\n\n`);
 
-		// Notify the llm if the tree has changed since the last query, and if so, provide the new state of the tree.
-		if (this.outerTreeIsDirty) {
+		if (this.isDirty) {
 			const stringified = stringifyTree(this.outerTree.field);
-			this.client.appendContext?.(
-				`The tree has changed since the last query. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
-			);
+			const text = treeChangedText(stringified);
+			this.client.appendContext?.(text);
 			this.options?.logger?.log(
 				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
 			);
+			this.isDirty = false;
 		}
 
 		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
@@ -120,7 +136,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
 		let active = true;
 		let editCount = 0;
-		let rollbackEdits = false;
+		let lastEditFailed = false;
 		const { editToolName } = this.client;
 		const edit = async (editCode: string): Promise<EditResult> => {
 			if (editToolName === undefined) {
@@ -137,7 +153,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 			}
 
 			if (++editCount > maxEditCount) {
-				rollbackEdits = true;
+				lastEditFailed = true;
 				return {
 					type: "tooManyEditsError",
 					message: `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`,
@@ -151,19 +167,26 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 				this.options?.logger,
 			);
 
-			rollbackEdits = editResult.type !== "success";
+			lastEditFailed = editResult.type !== "success";
 			return editResult;
 		};
 
+		if (this.client.query === undefined) {
+			throw new UsageError(
+				"The provided SharedTreeChatModel does not implement query(). Use createTreeAgent instead.",
+			);
+		}
 		const responseMessage = await this.client.query({
 			text: userPrompt,
 			edit,
 		});
 		active = false;
 
-		if (!rollbackEdits) {
+		if (lastEditFailed) {
+			queryTree.branch.dispose();
+		} else {
 			this.outerTree.branch.merge(queryTree.branch);
-			this.outerTreeIsDirty = false;
+			this.isDirty = false;
 		}
 		this.options?.logger?.log(`## Response\n\n`);
 		this.options?.logger?.log(`${responseMessage}\n\n`);
@@ -303,3 +326,293 @@ export function createContext<TSchema extends ImplicitFieldSchema>(
 		key: (child: TreeNode): string | number => Tree.key(child),
 	} satisfies Context<TSchema>;
 }
+
+// #region Factory functions
+
+/**
+ * Internal implementation of the {@link TreeAgent} interface.
+ */
+class TreeAgentImpl<TSchema extends ImplicitFieldSchema> implements TreeAgent {
+	readonly #model: SharedTreeChatModel;
+	readonly #outerTree: Subtree<TSchema>;
+	readonly #history: TreeAgentChatMessage[];
+	readonly #editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+	readonly #maxEditCount: number;
+	readonly #editToolName: string;
+	readonly #options?: TreeAgentOptions<TSchema>;
+	readonly #offTreeChanged: () => void;
+	#isDirty = false;
+
+	public constructor(
+		model: SharedTreeChatModel,
+		tree: ViewOrTree<TSchema>,
+		options?: TreeAgentOptions<TSchema>,
+	) {
+		if (model.invoke === undefined) {
+			throw new UsageError(
+				"The provided SharedTreeChatModel does not implement invoke(). Provide a model that implements invoke(), such as the one returned by createLangchainChatModel from @fluidframework/tree-agent-langchain.",
+			);
+		}
+
+		const editToolName = model.editToolName;
+		if (editToolName === undefined) {
+			throw new UsageError(
+				"The provided SharedTreeChatModel does not have an editToolName. Editing requires a model with editToolName set.",
+			);
+		}
+
+		this.#model = model;
+		this.#options = options;
+		this.#editToolName = editToolName;
+		this.#outerTree = new Subtree(tree);
+		this.#editor = options?.editor ?? createDefaultEditor();
+		this.#maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+
+		const prompt = getPrompt({
+			subtree: this.#outerTree,
+			editToolName: this.#editToolName,
+			domainHints: options?.domainHints,
+		});
+
+		logAgentHeader(options?.logger, model.name);
+		options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
+
+		this.#history = [{ role: "system", content: prompt }];
+
+		this.#offTreeChanged = this.#outerTree.onTreeChanged(() => {
+			this.#isDirty = true;
+		});
+	}
+
+	public dispose(): void {
+		this.#offTreeChanged();
+	}
+
+	public async message(prompt: string): Promise<string> {
+		this.#options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
+
+		if (this.#isDirty) {
+			const stringified = stringifyTree(this.#outerTree.field);
+			const text = treeChangedText(stringified);
+			this.#history.push({ role: "system", content: text });
+			this.#options?.logger?.log(
+				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
+			);
+			this.#isDirty = false;
+		}
+
+		this.#history.push({ role: "user", content: prompt });
+
+		// Fork a branch for rollback isolation — all edits during this query happen on the fork.
+		const queryTree = this.#outerTree.fork();
+
+		try {
+			const result = await runEditLoop(this.#model, queryTree, this.#history, {
+				editor: this.#editor,
+				maxEditCount: this.#maxEditCount,
+				logger: this.#options?.logger,
+			});
+
+			if (result.lastEditFailed) {
+				queryTree.branch.dispose();
+			} else {
+				this.#outerTree.branch.merge(queryTree.branch);
+				this.#isDirty = false;
+			}
+
+			this.#options?.logger?.log(`## Response\n\n${result.response}\n\n`);
+			return result.response;
+		} catch (error) {
+			queryTree.branch.dispose();
+			throw error;
+		}
+	}
+}
+
+/**
+ * Extracts the JavaScript code string from a tool call's args record.
+ * @returns The single string value if args contains exactly one string-valued property, or `undefined` otherwise.
+ */
+function extractCodeFromToolArgs(args: Record<string, unknown>): string | undefined {
+	const stringValues = Object.values(args).filter((v): v is string => typeof v === "string");
+	if (stringValues.length === 1) {
+		return stringValues[0];
+	}
+	return undefined;
+}
+
+/**
+ * Creates an agent that can analyze and edit a SharedTree.
+ * @param model - The chat model. Must implement {@link SharedTreeChatModel.invoke} and have {@link SharedTreeChatModel.editToolName} set.
+ * @param tree - The tree or subtree to edit.
+ * @param options - Optional configuration.
+ * @returns A {@link TreeAgent}.
+ * @alpha
+ */
+export function createTreeAgent<TSchema extends ImplicitFieldSchema>(
+	model: SharedTreeChatModel,
+	tree: ViewOrTree<TSchema>,
+	options?: TreeAgentOptions<TSchema>,
+): TreeAgent {
+	return new TreeAgentImpl(model, tree, options);
+}
+
+/**
+ * Executes semantic editing on a tree.
+ *
+ * @param model - The chat model. Must implement {@link SharedTreeChatModel.invoke} and have {@link SharedTreeChatModel.editToolName} set.
+ * @param tree - The tree or subtree to edit.
+ * @param prompt - The user's edit instruction.
+ * @param options - Optional configuration.
+ * @returns The model's text response.
+ * @alpha
+ */
+export async function executeSemanticEditing<TSchema extends ImplicitFieldSchema>(
+	model: SharedTreeChatModel,
+	tree: ViewOrTree<TSchema>,
+	prompt: string,
+	options?: ExecuteSemanticEditingOptions<TSchema>,
+): Promise<string> {
+	if (model.invoke === undefined) {
+		throw new UsageError(
+			"The provided SharedTreeChatModel does not implement invoke(). Provide a model that implements invoke(), such as the one returned by createLangchainChatModel from @fluidframework/tree-agent-langchain.",
+		);
+	}
+
+	const editToolName = model.editToolName;
+	if (editToolName === undefined) {
+		throw new UsageError(
+			"The provided SharedTreeChatModel does not have an editToolName. Editing requires a model with editToolName set.",
+		);
+	}
+
+	const subtree = new Subtree(tree);
+	const editor = options?.editor ?? createDefaultEditor();
+	const maxEditCount = options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+
+	const history: TreeAgentChatMessage[] = [
+		{
+			role: "system",
+			content: getPrompt({
+				subtree,
+				editToolName,
+				domainHints: options?.domainHints,
+			}),
+		},
+	];
+
+	logAgentHeader(options?.logger, model.name);
+	options?.logger?.log(
+		`## System Prompt\n\n${(history[0] as { content: string }).content}\n\n`,
+	);
+
+	options?.logger?.log(`## User Query\n\n${prompt}\n\n`);
+	history.push({ role: "user", content: prompt });
+
+	// Fork a branch for rollback isolation — all edits during this call happen on the fork.
+	const editTree = subtree.fork();
+
+	try {
+		const result = await runEditLoop(model, editTree, history, {
+			editor,
+			maxEditCount,
+			logger: options?.logger,
+		});
+
+		if (result.lastEditFailed) {
+			editTree.branch.dispose();
+		} else {
+			subtree.branch.merge(editTree.branch);
+		}
+
+		options?.logger?.log(`## Response\n\n${result.response}\n\n`);
+		return result.response;
+	} catch (error) {
+		editTree.branch.dispose();
+		throw error;
+	}
+}
+
+/**
+ * The result of the internal edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEditing}.
+ */
+interface EditLoopResult {
+	readonly response: string;
+	readonly lastEditFailed: boolean;
+}
+
+/**
+ * Core edit loop shared by {@link TreeAgentImpl.message} and {@link executeSemanticEditing}.
+ * @remarks Invokes the model in a loop, handling tool calls and applying edits, until the model
+ * produces an assistant response. The provided `history` array is mutated in place.
+ */
+async function runEditLoop<TSchema extends ImplicitFieldSchema>(
+	model: SharedTreeChatModel,
+	tree: Subtree<TSchema>,
+	history: TreeAgentChatMessage[],
+	options: {
+		editor: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+		maxEditCount: number;
+		logger?: Logger;
+	},
+): Promise<EditLoopResult> {
+	let editLoopTurns = 0;
+	let lastEditFailed = false;
+
+	while (true) {
+		editLoopTurns++;
+		// Allow for two extra turns: one for a last tool error message, and one for a final response from the llm.
+		if (editLoopTurns > options.maxEditCount + 2) {
+			const cutoffMessage = `The model failed to produce a response within ${options.maxEditCount} edits.`;
+			history.push({ role: "assistant", content: cutoffMessage });
+			options.logger?.log(`## Cancel\n\n${cutoffMessage}\n\n`);
+			return { response: cutoffMessage, lastEditFailed: true };
+		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const response = await model.invoke!(history);
+
+		if (response.role === "assistant") {
+			history.push(response);
+			return { response: response.content, lastEditFailed };
+		}
+
+		// response.role === "tool_call"
+		history.push(response);
+
+		// Extract the code string from the tool call args.
+		const code = extractCodeFromToolArgs(response.toolArgs);
+		if (code === undefined) {
+			lastEditFailed = true;
+			const errorMessage = `Expected a single string argument in the tool call, but received: ${JSON.stringify(response.toolArgs)}`;
+			history.push({
+				role: "tool_result",
+				toolCallId: response.toolCallId,
+				content: errorMessage,
+			});
+			continue;
+		}
+
+		// Every loop turn roughly corresponds to one edit attempt, since the loop terminates when the llm produces a non-tool response.
+		if (editLoopTurns > options.maxEditCount) {
+			lastEditFailed = true;
+			const errorMessage = `The maximum number of edits (${options.maxEditCount}) for this query has been exceeded.`;
+			history.push({
+				role: "tool_result",
+				toolCallId: response.toolCallId,
+				content: errorMessage,
+			});
+			continue;
+		}
+
+		const editResult = await applyTreeFunction(tree, code, options.editor, options.logger);
+
+		lastEditFailed = editResult.type !== "success";
+		history.push({
+			role: "tool_result",
+			toolCallId: response.toolCallId,
+			content: editResult.message,
+		});
+	}
+}
+
+// #endregion

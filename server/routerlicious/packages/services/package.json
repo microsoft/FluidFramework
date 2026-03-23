@@ -109,8 +109,22 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_NodeAllowList": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Class_NodeCodeLoader": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"Class_TenantManager": {
 				"forwardCompat": false
+			},
+			"ClassStatics_NodeAllowList": {
+				"backCompat": false
+			},
+			"ClassStatics_NodeCodeLoader": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"
