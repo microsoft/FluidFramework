@@ -24,11 +24,7 @@ import biomeConfig from "eslint-config-biome";
 import { baseConfig, type FlatConfigArray } from "./base.mjs";
 import { recommendedRules } from "../rules/recommended.mjs";
 import { strictRules, strictTsRules } from "../rules/strict.mjs";
-import {
-	reactRecommendedOverride,
-	sharedConfigs,
-	testRecommendedOverride,
-} from "./overrides.mjs";
+import { reactRecommendedOverride, sharedConfigs, testRecommendedOverride } from "./overrides.mjs";
 
 /**
  * Recommended configuration.
