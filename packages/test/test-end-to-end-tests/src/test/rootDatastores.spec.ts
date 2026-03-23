@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
@@ -83,7 +82,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		const alias = "alias";
 
 		it("Assign multiple data stores to the same alias, first write wins, same container - detached", async function () {
-			const loader = provider.makeTestLoader(testContainerConfig) as Loader;
+			const loader = provider.makeTestLoader(testContainerConfig);
 			const container: IContainer = await loader.createDetachedContainer(
 				provider.defaultCodeDetails,
 			);

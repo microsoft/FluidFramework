@@ -18,7 +18,6 @@ import {
 	IContainer,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	IContainerRuntimeOptions,
 	IdCompressorMode,
@@ -772,7 +771,7 @@ describeCompat(
 
 			// Create another container to test sync
 			const url: any = await container.getAbsoluteUrl("");
-			const loader2 = provider.makeTestLoader(testConfig) as Loader;
+			const loader2 = provider.makeTestLoader(testConfig);
 			const container2 = await loader2.resolve({ url });
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");

@@ -33,9 +33,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
-import { Loader } from "./loader.js";
+import { createLoaderServices, resolveAndLoadContainer } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type {
@@ -178,11 +179,15 @@ export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContaine
 export async function createDetachedContainer(
 	createDetachedContainerProps: ICreateDetachedContainerProps,
 ): Promise<IContainer> {
-	const loader = new Loader(createDetachedContainerProps);
-	return loader.createDetachedContainer(createDetachedContainerProps.codeDetails, {
-		canReconnect: createDetachedContainerProps.allowReconnect,
-		clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
-	});
+	const { services } = createLoaderServices(createDetachedContainerProps);
+	return Container.createDetached(
+		{
+			canReconnect: createDetachedContainerProps.allowReconnect,
+			clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
+			...services,
+		},
+		createDetachedContainerProps.codeDetails,
+	);
 }
 
 /**
@@ -194,13 +199,14 @@ export async function createDetachedContainer(
 export async function rehydrateDetachedContainer(
 	rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps,
 ): Promise<IContainer> {
-	const loader = new Loader(rehydrateDetachedContainerProps);
-	return loader.rehydrateDetachedContainerFromSnapshot(
-		rehydrateDetachedContainerProps.serializedState,
+	const { services } = createLoaderServices(rehydrateDetachedContainerProps);
+	return Container.rehydrateDetachedFromSnapshot(
 		{
 			canReconnect: rehydrateDetachedContainerProps.allowReconnect,
 			clientDetailsOverride: rehydrateDetachedContainerProps.clientDetailsOverride,
+			...services,
 		},
+		rehydrateDetachedContainerProps.serializedState,
 	);
 }
 
@@ -212,11 +218,9 @@ export async function rehydrateDetachedContainer(
 export async function loadExistingContainer(
 	loadExistingContainerProps: ILoadExistingContainerProps,
 ): Promise<IContainer> {
-	const loader = new Loader(loadExistingContainerProps);
-	return loader.resolve(
-		loadExistingContainerProps.request,
-		loadExistingContainerProps.pendingLocalState,
-	);
+	const { services, mc } = createLoaderServices(loadExistingContainerProps);
+	const { request, pendingLocalState } = loadExistingContainerProps;
+	return resolveAndLoadContainer(services, mc, request, pendingLocalState);
 }
 
 /**

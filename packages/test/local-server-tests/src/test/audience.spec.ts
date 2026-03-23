@@ -11,7 +11,10 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -90,13 +93,17 @@ describe("Audience correctness", () => {
 		const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
 		const urlResolver = new LocalResolver();
 
-		// Create container in first client
-		const loader = new Loader({
+		const loaderProps = {
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,
+		};
+
+		// Create container in first client
+		const container1 = await createDetachedContainer({
+			...loaderProps,
+			codeDetails,
 		});
-		const container1 = await loader.createDetachedContainer(codeDetails);
 		await container1.attach({
 			url: testDocumentUrl,
 			headers: {
@@ -105,8 +112,9 @@ describe("Audience correctness", () => {
 		});
 
 		// Load container from a second client
-		const container2 = await loader.resolve({
-			url: testDocumentUrl,
+		const container2 = await loadExistingContainer({
+			...loaderProps,
+			request: { url: testDocumentUrl },
 		});
 
 		await waitForContainerConnection(container1);

@@ -6,24 +6,16 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ITestObjectProvider,
-	LoaderContainerTracker,
-	LocalCodeLoader,
-	TestFluidObjectFactory,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-const codeDetails: IFluidCodeDetails = { package: "test" };
-
 describe("Pong", () => {
 	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
-		const loaderContainerTracker = new LoaderContainerTracker();
 
 		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
@@ -31,18 +23,6 @@ describe("Pong", () => {
 			if (provider.driver.type === "local") {
 				this.skip();
 			}
-
-			const loader = new Loader({
-				logger: provider.logger,
-				urlResolver: provider.urlResolver,
-				documentServiceFactory: provider.documentServiceFactory,
-				codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
-			});
-			loaderContainerTracker.add(loader);
-		});
-
-		afterEach(() => {
-			loaderContainerTracker.reset();
 		});
 
 		it("Delta manager receives pong event", async () => {

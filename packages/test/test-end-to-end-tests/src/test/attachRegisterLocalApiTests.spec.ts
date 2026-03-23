@@ -11,7 +11,7 @@ import type {
 	IContainer,
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createDetachedContainer } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
@@ -65,7 +65,6 @@ describeCompat(
 		const mapId2 = "mapId2";
 
 		let request: IRequest;
-		let loader: Loader;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
 		const createTestStatementForAttachedDetached = (name: string, attached: boolean): string =>
@@ -75,7 +74,22 @@ describeCompat(
 			container: IContainer;
 			defaultDataStore: ITestFluidObject;
 		}> {
-			const container = await loader.createDetachedContainer(codeDetails);
+			const container = await createDetachedContainer({
+				urlResolver: provider.urlResolver,
+				documentServiceFactory: provider.documentServiceFactory,
+				codeLoader: new LocalCodeLoader([
+					[
+						codeDetails,
+						new TestFluidObjectFactory([
+							[mapId1, SharedMap.getFactory()],
+							[mapId2, SharedMap.getFactory()],
+						]),
+					],
+				]),
+				logger: provider.logger,
+				codeDetails,
+			});
+			loaderContainerTracker.addContainer(container);
 			// Get the root dataStore from the detached container.
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			return {
@@ -97,31 +111,12 @@ describeCompat(
 			};
 		};
 
-		function createTestLoader(): Loader {
-			const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
-				[mapId1, SharedMap.getFactory()],
-				[mapId2, SharedMap.getFactory()],
-			]);
-			const urlResolver = provider.urlResolver;
-			const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
-			const documentServiceFactory = provider.documentServiceFactory;
-			const testLoader = new Loader({
-				urlResolver,
-				documentServiceFactory,
-				codeLoader,
-				logger: provider.logger,
-			});
-			loaderContainerTracker.add(testLoader);
-			return testLoader;
-		}
-
 		let provider: ITestObjectProvider;
 		beforeEach("createLoader", async (): Promise<void> => {
 			provider = getTestObjectProvider();
 			const documentId = createDocumentId();
 			const driver = provider.driver;
 			request = driver.createCreateNewRequest(documentId);
-			loader = createTestLoader();
 		});
 
 		afterEach(() => {

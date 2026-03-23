@@ -210,7 +210,7 @@ export async function getVersionedTestObjectProviderFromApis(
 		);
 	};
 
-	return new TestObjectProvider(apis.loader.Loader, driver, containerFactoryFn);
+	return new TestObjectProvider(apis.loader.createLoader, driver, containerFactoryFn);
 }
 
 /**
@@ -355,8 +355,8 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	};
 
 	return new TestObjectProviderWithVersionedLoad(
-		apis.loader.Loader,
-		apis.loaderForLoading.Loader,
+		apis.loader.createLoader,
+		apis.loaderForLoading.createLoader,
 		driverForCreating,
 		driverForLoading,
 		createContainerFactoryFn,
