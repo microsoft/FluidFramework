@@ -1,6 +1,6 @@
 # Incremental Summary
 
-Incremental summary is an optimization where parts of the tree that don't change across summaries are not re-summarized. The types in a schema can be opted into incremental summarization by marking them with `incrementalSummaryHint`. These types are tracked as independent chunk in the summary and during summarization, if their content hasn't changed since the last summary, they are re-used from the last summary. So, their data doesn't need to be re-encoded (saving processing time) and their summary tree doesn't need to be uploaded (reducing summary upload size).
+Incremental summary is an optimization that avoids re-summarizing parts of the tree that don't change between summaries. Types in a schema can opt in to incremental summarization by being marked with `incrementalSummaryHint`. These types are tracked as independent chunks in the summary. During summarization, if their content hasn't changed since the last summary, their previously generated summaries are reused. As a result, their data doesn't need to be re-encoded (saving processing time), and their summary trees don't need to be uploaded again (reducing summary upload size).
 
 > **Warning:** This is an alpha API and is actively under development. Interfaces and behavior may change in future releases without notice. Do not rely on it in production.
 
@@ -48,29 +48,32 @@ class Root extends sf.objectAlpha("Root", {
 }) {}
 ```
 
-> **Note:** Leaf nodes (string, number, boolean, null) are not incrementally summarized even when marked with `incrementalSummaryHint`.
+> **Note:** Incremental summarization is applied to **fields**, not node kinds. Leaf values (string, number, boolean, null) can be incrementally summarized when they are stored in a field that is opted in via `incrementalSummaryHint` (for example, an object field whose allowed type is `string`). Root fields themselves cannot be incrementally summarized, and leaf node kinds do not expose child fields for the policy to apply to.
 
 ### 2. Configure the SharedTree
 
-Pass all four required options when creating the SharedTree:
+Pass all four required options when creating the SharedTree using `configuredSharedTreeAlpha`:
 
 ```typescript
 import {
+    configuredSharedTreeAlpha,
     ForestTypeOptimized,
     TreeCompressionStrategy,
     TreeViewConfigurationAlpha,
+    incrementalEncodingPolicyForAllowedTypes,
+    FluidClientVersion,
 } from "@fluidframework/tree/alpha";
-import { incrementalEncodingPolicyForAllowedTypes } from "@fluidframework/tree/alpha";
-import { FluidClientVersion } from "@fluidframework/tree/internal";
 
 const config = new TreeViewConfigurationAlpha({ schema: Root });
 
-const sharedTree = SharedTree.create(runtime, "tree", {
+const TreeFactory = configuredSharedTreeAlpha({
     forest: ForestTypeOptimized,
     treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
     shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(config),
     minVersionForCollab: FluidClientVersion.v2_74,
 });
+
+const sharedTree = TreeFactory.create(runtime, "tree");
 ```
 
 ## How `incrementalEncodingPolicyForAllowedTypes` Works
