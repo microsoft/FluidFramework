@@ -1,0 +1,399 @@
+{
+	"$schema": "./node_modules/nx/schemas/nx-schema.json",
+	"defaultBase": "main",
+	"namedInputs": {
+		"source": [
+			"{projectRoot}/src/**/*.ts",
+			"{projectRoot}/src/**/*.tsx",
+			"{projectRoot}/src/**/*.js",
+			"{projectRoot}/src/**/*.json"
+		],
+		"config": [
+			"{projectRoot}/package.json",
+			"{projectRoot}/tsconfig.json",
+			"{projectRoot}/tsconfig*.json",
+			"{projectRoot}/.eslintrc.*"
+		],
+		"production": [
+			"source",
+			"config",
+			"!{projectRoot}/src/test/**",
+			"!{projectRoot}/src/**/*.test.ts",
+			"!{projectRoot}/src/**/*.spec.ts"
+		]
+	},
+	"targetDefaults": {
+		"tsc": {
+			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm"],
+			"inputs": ["production"],
+			"outputs": ["{projectRoot}/dist", "{projectRoot}/*.tsbuildinfo"],
+			"cache": true
+		},
+		"build:esnext": {
+			"dependsOn": ["^tsc", "^api", "build:genver", "ts2esm", "^build:esnext"],
+			"inputs": ["production"],
+			"outputs": ["{projectRoot}/lib"],
+			"cache": true
+		},
+		"build:test": {
+			"dependsOn": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+			"inputs": ["source", "config"],
+			"outputs": ["{projectRoot}/dist/test", "{projectRoot}/lib/test"],
+			"cache": true
+		},
+		"build:test:cjs": {
+			"dependsOn": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+			"inputs": ["source", "config"],
+			"outputs": ["{projectRoot}/dist/test"],
+			"cache": true
+		},
+		"build:test:esm": {
+			"dependsOn": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+			"inputs": ["source", "config"],
+			"outputs": ["{projectRoot}/lib/test"],
+			"cache": true
+		},
+		"api-extractor:commonjs": {
+			"dependsOn": ["tsc"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/dist/public.d.ts",
+				"{projectRoot}/dist/beta.d.ts",
+				"{projectRoot}/dist/alpha.d.ts",
+				"{projectRoot}/dist/legacy.d.ts",
+				"{projectRoot}/dist/legacyAlpha.d.ts",
+				"{projectRoot}/dist/internal.d.ts"
+			],
+			"cache": true
+		},
+		"api-extractor:esnext": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/lib/public.d.ts",
+				"{projectRoot}/lib/beta.d.ts",
+				"{projectRoot}/lib/alpha.d.ts",
+				"{projectRoot}/lib/legacy.d.ts",
+				"{projectRoot}/lib/legacyAlpha.d.ts",
+				"{projectRoot}/lib/internal.d.ts",
+				"{projectRoot}/public.d.ts",
+				"{projectRoot}/beta.d.ts",
+				"{projectRoot}/alpha.d.ts",
+				"{projectRoot}/legacy.d.ts",
+				"{projectRoot}/legacyAlpha.d.ts",
+				"{projectRoot}/internal.d.ts"
+			],
+			"cache": true
+		},
+		"build:api-reports:current": {
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
+			"cache": true
+		},
+		"build:api-reports:legacy": {
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
+			"cache": true
+		},
+		"ci:build:api-reports:current": {
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
+			"cache": true
+		},
+		"ci:build:api-reports:legacy": {
+			"dependsOn": ["api-extractor:esnext", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": ["{projectRoot}/api-report/**", "{projectRoot}/_api-extractor-temp/**"],
+			"cache": true
+		},
+		"build:docs": {
+			"dependsOn": ["tsc", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/_api-extractor-temp/doc-models/**",
+				"{projectRoot}/lib/tsdoc-metadata.json"
+			],
+			"cache": true
+		},
+		"ci:build:docs": {
+			"dependsOn": ["tsc", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"outputs": [
+				"{projectRoot}/_api-extractor-temp/doc-models/**",
+				"{projectRoot}/lib/tsdoc-metadata.json"
+			],
+			"cache": true
+		},
+		"build:readme": {
+			"dependsOn": ["compile"],
+			"inputs": ["production", "{projectRoot}/README.md"],
+			"outputs": ["{projectRoot}/README.md"],
+			"cache": true
+		},
+		"build:manifest": {
+			"dependsOn": ["compile"],
+			"inputs": ["production"],
+			"cache": true
+		},
+		"build:copy": {
+			"inputs": ["{projectRoot}/src/**/*.css"],
+			"outputs": ["{projectRoot}/lib/**/*.css"],
+			"cache": true
+		},
+		"build:entrypoints:node10": {
+			"inputs": ["{projectRoot}/package.json"],
+			"outputs": [
+				"{projectRoot}/alpha.d.ts",
+				"{projectRoot}/beta.d.ts",
+				"{projectRoot}/internal.d.ts",
+				"{projectRoot}/legacy.d.ts",
+				"{projectRoot}/legacy/alpha.d.ts"
+			],
+			"cache": true
+		},
+		"build:genver": {
+			"inputs": ["{projectRoot}/package.json"],
+			"outputs": ["{projectRoot}/src/packageVersion.ts"],
+			"cache": true
+		},
+		"typetests:gen": {
+			"inputs": ["{projectRoot}/package.json"],
+			"outputs": ["{projectRoot}/src/test/types/**"],
+			"cache": true
+		},
+		"ts2esm": {
+			"inputs": ["production"],
+			"cache": true
+		},
+		"layerGeneration:gen": {
+			"inputs": ["{projectRoot}/package.json", "source"],
+			"outputs": ["{projectRoot}/src/layerGenerationState.ts"],
+			"cache": true
+		},
+		"eslint": {
+			"dependsOn": ["compile", "build:test:esm", "^tsc", "^build:esnext", "^build:test"],
+			"inputs": ["source"],
+			"cache": true
+		},
+		"eslint:fix": {
+			"dependsOn": ["compile", "build:test:esm"],
+			"inputs": ["source"],
+			"cache": false
+		},
+		"good-fences": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"depcruise": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"check:exports": {
+			"dependsOn": ["api"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:bundle-release-tags": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:cjs:index": {
+			"dependsOn": ["tsc"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:cjs:legacy": {
+			"dependsOn": ["tsc"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:cjs:public": {
+			"dependsOn": ["tsc"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:esm:index": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:esm:legacy": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:exports:esm:public": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:release-tags": {
+			"dependsOn": ["tsc", "build:esnext"],
+			"inputs": ["production", "{projectRoot}/api-extractor/**"],
+			"cache": true
+		},
+		"check:are-the-types-wrong": {
+			"dependsOn": ["tsc", "build:esnext", "api"],
+			"inputs": ["production", "{projectRoot}/package.json"],
+			"cache": true
+		},
+		"check:format": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"format": {
+			"inputs": ["source"],
+			"cache": false
+		},
+		"check:biome": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"check:prettier": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"format:biome": {
+			"inputs": ["source"],
+			"cache": false
+		},
+		"format:prettier": {
+			"inputs": ["source"],
+			"cache": false
+		},
+		"prettier": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"prettier:fix": {
+			"inputs": ["source"],
+			"cache": false
+		},
+		"webpack": {
+			"dependsOn": ["^tsc", "^build:esnext"],
+			"inputs": ["source", "{projectRoot}/webpack.config.*"],
+			"outputs": ["{projectRoot}/dist"],
+			"cache": true
+		},
+		"webpack:profile": {
+			"dependsOn": ["^tsc", "^build:esnext"],
+			"inputs": ["source", "{projectRoot}/webpack.config.*"],
+			"outputs": ["{projectRoot}/dist"],
+			"cache": true
+		},
+		"test:jest": {
+			"dependsOn": ["build:compile"],
+			"inputs": ["source", "config"],
+			"cache": true
+		},
+		"test:mocha": {
+			"dependsOn": ["build:test"],
+			"inputs": ["source", "config"],
+			"cache": true
+		},
+		"test:mocha:cjs": {
+			"dependsOn": ["build:test:cjs"],
+			"inputs": ["source", "config"],
+			"cache": true
+		},
+		"test:mocha:esm": {
+			"dependsOn": ["build:test:esm"],
+			"inputs": ["source", "config"],
+			"cache": true
+		},
+		"clean": {
+			"cache": false
+		},
+		"ci:build": {
+			"dependsOn": [
+				"compile",
+				"lint",
+				"ci:build:api-reports",
+				"ci:build:docs",
+				"build:manifest",
+				"build:readme"
+			]
+		},
+		"ci:build:api-reports": {
+			"dependsOn": ["ci:build:api-reports:current", "ci:build:api-reports:legacy"]
+		},
+		"full": {
+			"dependsOn": ["build", "webpack"]
+		},
+		"build": {
+			"dependsOn": [
+				"check:format",
+				"compile",
+				"lint",
+				"build:api-reports",
+				"build:docs",
+				"build:manifest",
+				"build:readme"
+			]
+		},
+		"build:api-reports": {
+			"dependsOn": ["build:api-reports:current", "build:api-reports:legacy"]
+		},
+		"compile": {
+			"dependsOn": ["commonjs", "build:esnext", "api", "build:test", "build:copy"]
+		},
+		"commonjs": {
+			"dependsOn": ["tsc", "build:test"]
+		},
+		"lint": {
+			"dependsOn": [
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags"
+			]
+		},
+		"checks": {
+			"dependsOn": ["check:format"]
+		},
+		"checks:fix": {
+			"dependsOn": []
+		},
+		"api": {
+			"dependsOn": [
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"build:entrypoints:node10",
+				"tsc",
+				"build:esnext"
+			]
+		},
+		"test:cjs": {
+			"dependsOn": ["test:unit:cjs"]
+		},
+		"test:esm": {
+			"dependsOn": ["test:unit:esm"]
+		},
+		"test:unit": {
+			"dependsOn": ["test:mocha", "test:jest"]
+		},
+		"test:unit:cjs": {
+			"dependsOn": ["test:mocha:cjs"]
+		},
+		"test:unit:esm": {
+			"dependsOn": ["test:mocha:esm"]
+		},
+		"build:full": {
+			"dependsOn": ["full"]
+		},
+		"build:compile": {
+			"dependsOn": ["compile"]
+		},
+		"build:commonjs": {
+			"dependsOn": ["commonjs"]
+		}
+	},
+	"cacheDirectory": ".nx/cache",
+	"parallel": 12,
+	"analytics": false
+}

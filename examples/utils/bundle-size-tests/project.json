@@ -1,0 +1,54 @@
+{
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"build": {
+			"executor": "nx:noop"
+		},
+		"build:compile": {
+			"executor": "nx:noop"
+		},
+		"build:test": {
+			"executor": "nx:noop",
+			"dependsOn": [
+				"typetests:gen",
+				"tsc",
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"webpack"
+			]
+		},
+		"webpack": {
+			"dependsOn": ["^build:esnext"]
+		},
+		"test:mocha:esm": {
+			"dependsOn": ["build:test:esm", "webpack"]
+		},
+		"check:format": {
+			"executor": "nx:noop"
+		},
+		"explore:tree": {
+			"executor": "nx:noop"
+		},
+		"format": {
+			"executor": "nx:noop"
+		},
+		"lint": {
+			"executor": "nx:noop"
+		},
+		"lint:fix": {
+			"executor": "nx:noop"
+		},
+		"prepack": {
+			"executor": "nx:noop"
+		},
+		"test": {
+			"executor": "nx:noop"
+		},
+		"test:mocha": {
+			"executor": "nx:noop"
+		},
+		"webpack:profile": {
+			"executor": "nx:noop"
+		}
+	}
+}

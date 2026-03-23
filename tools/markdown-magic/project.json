@@ -1,0 +1,14 @@
+{
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"targets": {
+		"build": {
+			"executor": "nx:noop"
+		},
+		"check:format": {
+			"executor": "nx:noop"
+		},
+		"format": {
+			"executor": "nx:noop"
+		}
+	}
+}

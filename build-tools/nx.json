@@ -1,0 +1,116 @@
+{
+	"$schema": "./node_modules/nx/schemas/nx-schema.json",
+	"affected": {
+		"defaultBase": "main"
+	},
+	"namedInputs": {
+		"source": [
+			"{projectRoot}/src/**/*.ts",
+			"{projectRoot}/src/**/*.tsx",
+			"{projectRoot}/src/**/*.js",
+			"{projectRoot}/src/**/*.json"
+		],
+		"config": [
+			"{projectRoot}/package.json",
+			"{projectRoot}/tsconfig.json",
+			"{projectRoot}/tsconfig*.json",
+			"{projectRoot}/.eslintrc.*"
+		],
+		"production": [
+			"source",
+			"config",
+			"!{projectRoot}/src/test/**",
+			"!{projectRoot}/src/**/*.test.ts",
+			"!{projectRoot}/src/**/*.spec.ts"
+		]
+	},
+	"targetDefaults": {
+		"tsc": {
+			"dependsOn": ["^tsc"],
+			"inputs": ["production"],
+			"outputs": [
+				"{projectRoot}/dist",
+				"{projectRoot}/lib",
+				"{projectRoot}/*.tsbuildinfo"
+			],
+			"cache": true
+		},
+		"build:esnext": {
+			"dependsOn": ["^tsc", "^build:esnext"],
+			"inputs": ["production"],
+			"outputs": ["{projectRoot}/lib"],
+			"cache": true
+		},
+		"build:commonjs": {
+			"dependsOn": ["tsc", "build:test"],
+			"cache": false
+		},
+		"build:test": {
+			"dependsOn": ["tsc"],
+			"inputs": ["source", "config"],
+			"outputs": ["{projectRoot}/dist/test"],
+			"cache": true
+		},
+		"build:test:esm": {
+			"dependsOn": ["build:esnext"],
+			"inputs": ["source", "config"],
+			"outputs": ["{projectRoot}/lib/test"],
+			"cache": true
+		},
+		"compile": {
+			"dependsOn": ["build:compile"]
+		},
+		"build:compile": {
+			"dependsOn": ["tsc", "build:esnext", "build:test", "build:test:esm", "build:copy"]
+		},
+		"build:copy": {
+			"cache": true
+		},
+		"build": {
+			"dependsOn": ["compile", "lint", "build:docs", "build:manifest", "build:readme"]
+		},
+		"build:docs": {
+			"dependsOn": ["tsc", "build:esnext"],
+			"cache": true
+		},
+		"build:manifest": {
+			"dependsOn": ["compile"],
+			"cache": true
+		},
+		"build:readme": {
+			"dependsOn": ["compile"],
+			"cache": true
+		},
+		"lint": {
+			"dependsOn": ["eslint"]
+		},
+		"eslint": {
+			"dependsOn": ["compile"],
+			"inputs": ["source"],
+			"cache": true
+		},
+		"check:biome": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"check:format": {
+			"inputs": ["source"],
+			"cache": true
+		},
+		"test": {
+			"dependsOn": ["compile"],
+			"inputs": ["source", "config"],
+			"cache": true
+		},
+		"test:mocha": {
+			"dependsOn": ["compile"],
+			"inputs": ["source", "config"],
+			"cache": true
+		},
+		"clean": {
+			"cache": false
+		}
+	},
+	"cacheDirectory": ".nx/cache",
+	"parallel": 3
+}
