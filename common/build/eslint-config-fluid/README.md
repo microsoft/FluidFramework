@@ -103,6 +103,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 |--------|-------------|
 | `build` | `npm run print-config` |
 | `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
+| `clean` | `rimraf --glob dist "**/*.build.log"` |
 | `format` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
