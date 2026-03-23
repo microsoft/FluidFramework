@@ -4,11 +4,8 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import {
-	LogLevel,
-	type IDisposable,
-	type ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { roundToDecimalPlaces } from "./mathTools.js";

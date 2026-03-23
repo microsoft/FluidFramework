@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	LogLevel,
-	type ConfigTypes,
-	type IConfigProviderBase,
-	type ITelemetryBaseLogger,
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
