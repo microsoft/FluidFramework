@@ -85,6 +85,9 @@ const lineTagToQuillAttributes = {
 	h4: { header: 4 },
 	h5: { header: 5 },
 	li: { list: "bullet" },
+	ol: { list: "ordered" },
+	blockquote: { blockquote: true },
+	codeBlock: { "code-block": "plain" },
 } as const satisfies Readonly<Record<LineTagValue, Record<string, unknown>>>;
 /**
  * Parse CSS font-size from a pasted HTML element's inline style.
@@ -183,8 +186,16 @@ export function parseLineTag(
 	if (!attributes) return undefined;
 	// Quill should never send both header and list attributes simultaneously.
 	assert(
-		!(typeof attributes.header === "number" && typeof attributes.list === "string"),
-		0xce2 /* expected at most one line tag (header or list), but received both */,
+		[
+			attributes.header,
+			attributes.list,
+			attributes.blockquote,
+			attributes["code-block"],
+		].filter(
+			// Quill includes null in trailing line tag deltas when only updating the index value
+			(attr) => attr !== null && attr !== undefined,
+		).length <= 1,
+		0xce2 /* expected at most one line tag (header, list, blockquote, or codeblock), but received multiple */,
 	);
 	if (typeof attributes.header === "number") {
 		const tag: LineTagValue =
@@ -194,14 +205,27 @@ export function parseLineTag(
 	if (attributes.list === "bullet") {
 		return FormattedTextAsTree.LineTag("li");
 	}
+	if (attributes.list === "ordered") {
+		return FormattedTextAsTree.LineTag("ol");
+	}
+	if (attributes.blockquote === true) {
+		return FormattedTextAsTree.LineTag("blockquote");
+	}
+	if (typeof attributes["code-block"] === "string") {
+		return FormattedTextAsTree.LineTag("codeBlock");
+	}
 	return undefined;
 }
 
 /** Create a StringAtom containing a StringLineAtom with the given line tag. */
-function createLineAtom(lineTag: FormattedTextAsTree.LineTag): FormattedTextAsTree.StringAtom {
+function createLineAtom(
+	lineTag: FormattedTextAsTree.LineTag,
+	indent?: number,
+): FormattedTextAsTree.StringAtom {
 	return new FormattedTextAsTree.StringAtom({
 		content: new FormattedTextAsTree.StringLineAtom({
 			tag: lineTag,
+			...(indent === undefined ? {} : { indent }),
 		}),
 		format: new FormattedTextAsTree.CharacterFormat(quillAttributesToFormat()),
 	});
@@ -297,6 +321,10 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
 			const lineTag = atom.content.tag.value;
 			Object.assign(currentAttributes, lineTagToQuillAttributes[lineTag]);
 
+			// If the line has an indent property, include that as well
+			if (atom.content.indent !== undefined) {
+				currentAttributes.indent = atom.content.indent;
+			}
 			const op: QuillDeltaOp = { insert: "\n" };
 			if (Object.keys(currentAttributes).length > 0) {
 				op.attributes = currentAttributes;
@@ -378,7 +406,8 @@ const FormattedTextEditorView = forwardRef<
 					[{ size: ["small", false, "large", "huge"] }],
 					[{ font: [] }],
 					[{ header: [1, 2, 3, 4, 5, false] }],
-					[{ list: "bullet" }],
+					[{ list: "bullet" }, { list: "ordered" }],
+					["blockquote", "code-block"],
 					["clean"],
 				],
 				clipboard: [Node.ELEMENT_NODE, clipboardFormatMatcher],
@@ -429,17 +458,30 @@ const FormattedTextEditorView = forwardRef<
 
 						if (op.attributes) {
 							const lineTag = parseLineTag(op.attributes);
+							const indent =
+								typeof op.attributes.indent === "number" ? op.attributes.indent : undefined;
 							// Case 1: Applying line formatting (header/list) to an existing newline in the document.
 							if (lineTag !== undefined && content[utf16Pos] === "\n") {
 								// Swap existing newline atom to StringLineAtom
 								root.removeRange(cpPos, cpPos + 1);
-								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
 								// Case 2: Applying line formatting past the end of content. Quill's implicit trailing newline.
 							} else if (lineTag !== undefined && utf16Pos >= content.length) {
 								// Quill's implicit trailing newline — insert a new line atom
-								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+								root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
 								content += "\n";
-								// Case 3: clearing line formatting. Deletes StringLineAtom and inserts a plain
+								// Case 3: indent-only change on existing line atom
+							} else if (
+								lineTag === undefined &&
+								"indent" in op.attributes &&
+								content[utf16Pos] === "\n"
+							) {
+								// Indent only change on an existing line atom
+								const lineAtom = root.charactersWithFormatting()[cpPos]?.content;
+								if (lineAtom instanceof FormattedTextAsTree.StringLineAtom) {
+									lineAtom.indent = indent;
+								}
+								// Case 4: clearing line formatting. Deletes StringLineAtom and inserts a plain
 								// StringTextAtom("\n") in its place.
 							} else if (
 								lineTag === undefined &&
@@ -453,7 +495,7 @@ const FormattedTextEditorView = forwardRef<
 								// StringLineAtom and insert a plain StringTextAtom("\n") in its place.
 								root.removeRange(cpPos, cpPos + 1);
 								root.insertAt(cpPos, "\n");
-								// Case 4: Normal character formatting (bold, italic, size, etc...)
+								// Case 5: Normal character formatting (bold, italic, size, etc...)
 							} else {
 								root.formatRange(
 									cpPos,
@@ -475,8 +517,10 @@ const FormattedTextEditorView = forwardRef<
 						// Don't advance positions - next op starts at same position
 					} else if (typeof op.insert === "string") {
 						const lineTag = parseLineTag(op.attributes);
+						const indent =
+							typeof op.attributes?.indent === "number" ? op.attributes.indent : undefined;
 						if (lineTag !== undefined && op.insert === "\n") {
-							root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag)]);
+							root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
 						} else {
 							// Insert: add new text with formatting at current position
 							root.defaultFormat = new FormattedTextAsTree.CharacterFormat(

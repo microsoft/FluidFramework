@@ -414,6 +414,9 @@ export namespace FormattedTextAsTree {
 		"h4",
 		"h5",
 		"li",
+		"ol",
+		"blockquote",
+		"codeBlock",
 	]);
 	/**
 	 * {@inheritdoc FormattedTextAsTree.(LineTag:variable)}
@@ -431,6 +434,7 @@ export namespace FormattedTextAsTree {
 	 */
 	export class StringLineAtom extends sf.object("StringLineAtom", {
 		tag: LineTag.schema,
+		indent: sf.optional(SchemaFactory.number),
 	}) {
 		public readonly content = "\n";
 	}
