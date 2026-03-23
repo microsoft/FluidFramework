@@ -78,15 +78,39 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"eslint is overridden to v9 for flat config support across all packages"
+			"eslint is overridden to v9 for flat config support across all packages",
+			"oclif includes some AWS-related features, but we don't use them, so we drop those dependencies entirely via overrides. This helps reduce lockfile churn since the deps release very frequently.",
+			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
+			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@7.x has no fix so it is bumped to 8.0.3.",
+			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport).",
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges."
 		],
 		"overrides": {
 			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
+			"diff@>=5 <6": "^5.2.2",
+			"diff@>=7 <8": "^8.0.3",
+			"diff@>=8 <9": "^8.0.3",
 			"@types/node": "^18.17.1",
 			"eslint": "~9.39.2",
+			"jws": "^3.2.3",
 			"nanoid": "^3.3.9",
-			"qs": "^6.11.0",
-			"sharp": "^0.33.2"
+			"oclif>@aws-sdk/client-cloudfront": "-",
+			"oclif>@aws-sdk/client-s3": "-",
+			"js-yaml@<4": "^3.14.2",
+			"js-yaml@>=4": "^4.1.1",
+			"qs": "^6.15.0",
+			"simple-git": "^3.32.3",
+			"sharp": "^0.33.2",
+			"tar": "^7.5.11",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=6 <7": "^6.2.3",
+			"minimatch@>=7 <8": "^7.4.9",
+			"minimatch@>=8 <9": "^8.0.7",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10 <11": "^10.2.4"
 		},
 		"onlyBuiltDependencies": [
 			"core-js",

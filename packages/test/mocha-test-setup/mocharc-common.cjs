@@ -72,6 +72,10 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
+		// Fail the test run if no tests are found/run. This catches cases where test files fail to
+		// load silently (e.g. due to broken imports), which would otherwise produce a green "0 passing"
+		// result with exit code 0.
+		"fail-zero": true,
 		ignore: [
 			// Ignore "tools" which are scripts intended to be run, not part of the test suite.
 			"**/*.tool.{js,cjs,mjs}",

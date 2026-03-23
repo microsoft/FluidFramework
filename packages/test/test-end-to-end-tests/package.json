@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 		"test:realsvc:r11s:docker": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker --timeout=20s",
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
-		"test:realsvc:run": "mocha lib/test --config src/test/.mocharc.cjs --exclude \"lib/test/benchmark/**/*\" --verbose",
+		"test:realsvc:run": "mocha --verbose",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
@@ -134,9 +134,9 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@types/mocha": "^10.0.10",

@@ -6,13 +6,15 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { ImplicitAllowedTypes } from "../core/index.js";
-import { FieldKind, getDefaultProvider, createFieldSchema } from "../fieldSchema.js";
-import type {
-	FieldProps,
-	FieldSchema,
-	DefaultProvider,
-	FieldPropsAlpha,
-	FieldSchemaAlpha,
+import {
+	FieldKind,
+	getDefaultProvider,
+	createFieldSchema,
+	type FieldProps,
+	type DefaultProvider,
+	type FieldPropsAlpha,
+	type FieldSchema,
+	type FieldSchemaAlpha,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -180,7 +182,12 @@ export const schemaStaticsStable = {
 	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata> => {
+	): FieldSchemaAlpha<
+		FieldKind.Optional,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	> => {
 		return createFieldSchema(FieldKind.Optional, t, {
 			defaultProvider: defaultOptionalProvider,
 			...props,
@@ -190,8 +197,13 @@ export const schemaStaticsStable = {
 	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
 		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata> => {
-		return createFieldSchema(FieldKind.Required, t, props);
+	): FieldSchemaAlpha<
+		FieldKind.Required,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	> => {
+		return createFieldSchema(FieldKind.Required, t, { defaultProvider: undefined, ...props });
 	},
 
 	optionalRecursive: <
@@ -200,7 +212,12 @@ export const schemaStaticsStable = {
 	>(
 		t: T,
 		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
+	): FieldSchemaAlphaUnsafe<
+		FieldKind.Optional,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	> => {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, {
 			defaultProvider: defaultOptionalProvider,
 			...props,
@@ -213,8 +230,16 @@ export const schemaStaticsStable = {
 	>(
 		t: T,
 		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
-		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
+	): FieldSchemaAlphaUnsafe<
+		FieldKind.Required,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	> => {
+		return createFieldSchemaUnsafe(FieldKind.Required, t, {
+			defaultProvider: undefined,
+			...props,
+		});
 	},
 } as const satisfies SchemaStatics;
 
@@ -225,8 +250,16 @@ export const schemaStatics = {
 	...schemaStaticsStable,
 	identifier: <const TCustomMetadata = unknown>(
 		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata> => {
-		return createFieldSchema(FieldKind.Identifier, stringSchema, props);
+	): FieldSchemaAlpha<
+		FieldKind.Identifier,
+		typeof stringSchema,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	> => {
+		return createFieldSchema(FieldKind.Identifier, stringSchema, {
+			defaultProvider: undefined,
+			...props,
+		});
 	},
 } as const;
 
@@ -237,15 +270,40 @@ function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
 	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	TCustomMetadata = unknown,
+>(kind: Kind, allowedTypes: Types): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
+function createFieldSchemaUnsafe<
+	Kind extends FieldKind,
+	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+	TCustomMetadata = unknown,
+	TProps extends FieldProps<TCustomMetadata> = FieldProps<TCustomMetadata>,
+>(
+	kind: Kind,
+	allowedTypes: Types,
+	props: TProps,
+): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata, TProps>;
+function createFieldSchemaUnsafe<
+	Kind extends FieldKind,
+	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	allowedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
+): FieldSchemaAlphaUnsafe<
+	Kind,
+	Types,
+	TCustomMetadata,
+	FieldProps<TCustomMetadata> | undefined
+> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return createFieldSchema(
-		kind,
-		allowedTypes as ImplicitAllowedTypes & Types,
-		props,
-	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
+	const schema =
+		props === undefined
+			? createFieldSchema(kind, allowedTypes as ImplicitAllowedTypes & Types)
+			: createFieldSchema(kind, allowedTypes as ImplicitAllowedTypes & Types, props);
+	return schema as FieldSchemaAlphaUnsafe<
+		Kind,
+		Types,
+		TCustomMetadata,
+		FieldProps<TCustomMetadata> | undefined
+	>;
 }

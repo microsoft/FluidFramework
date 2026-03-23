@@ -219,7 +219,6 @@ import {
 	type IGCRuntimeOptions,
 	type IGCStats,
 	type IGarbageCollector,
-	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
@@ -474,6 +473,13 @@ export interface ContainerRuntimeOptions {
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
 	readonly createBlobPayloadPending: true | undefined;
+
+	/**
+	 * When this property is set to true, the runtime will never send DocumentSchemaChange ops
+	 * and will throw an error if any incoming DocumentSchemaChange ops are received.
+	 * This effectively freezes the document schema at whatever state it was in when the document was created.
+	 */
+	readonly disableSchemaUpgrade: boolean;
 }
 
 /**
@@ -960,6 +966,7 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
+			disableSchemaUpgrade: false,
 		};
 
 		const defaultConfigs = {
@@ -985,6 +992,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1183,6 +1191,7 @@ export class ContainerRuntime
 			},
 			{ minVersionForCollab },
 			logger,
+			disableSchemaUpgrade,
 		);
 
 		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
@@ -1213,6 +1222,7 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			disableSchemaUpgrade,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1532,13 +1542,6 @@ export class ContainerRuntime
 		return runtimeCompatDetailsForLoader;
 	}
 
-	/**
-	 * If true, will skip Outbox flushing before processing an incoming message (and on DeltaManager "op" event for loader back-compat),
-	 * and instead the Outbox will check for a split batch on every submit.
-	 * This is a kill-bit switch for this simplification of logic, in case it causes unexpected issues.
-	 */
-	private readonly skipSafetyFlushDuringProcessStack: boolean;
-
 	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
 
 	/***/
@@ -1748,15 +1751,6 @@ export class ContainerRuntime
 			? this.getConnectionState() === ConnectionState.Connected ||
 				this.getConnectionState() === ConnectionState.CatchingUp
 			: undefined;
-
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GCFeatureMatrix",
-			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
-			inputs: JSON.stringify({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
-			}),
-		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
 
@@ -1997,10 +1991,6 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
-		this.skipSafetyFlushDuringProcessStack =
-			// Keep the old flag name even though we renamed the class member (it shipped in 2.31.0)
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableFlushBeforeProcess") === true;
-
 		this.outbox = new Outbox({
 			shouldSend: () => this.shouldSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -2011,8 +2001,6 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				// If we disable flush before process, we must be ready to flush partial batches
-				flushPartialBatches: this.skipSafetyFlushDuringProcessStack,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -2069,14 +2057,12 @@ export class ContainerRuntime
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
-		if (!this.skipSafetyFlushDuringProcessStack) {
-			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
-			// so we should flush now to clear the way for the next ops.
-			// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
-			// But we need this coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
-			// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
-			this.deltaManager.on("op", () => this.flush());
-		}
+		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
+		// so we should flush now to clear the way for the next ops.
+		// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
+		// But we need this coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
+		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
+		this.deltaManager.on("op", () => this.flush());
 
 		// logging hardware telemetry
 		this.baseLogger.send({
@@ -2092,7 +2078,9 @@ export class ContainerRuntime
 			summaryNumber: loadSummaryNumber,
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
+			// This is useful even for interactive clients since they track unreferenced nodes and log errors.
 			gcVersion: metadata?.gcFeature,
+			gcConfigs: this.garbageCollector.serializedConfigs,
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
@@ -2100,7 +2088,6 @@ export class ContainerRuntime
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
 				closeSummarizerDelayOverride,
-				disableFlushBeforeProcess: this.skipSafetyFlushDuringProcessStack,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -3018,10 +3005,8 @@ export class ContainerRuntime
 
 		this.verifyNotClosed();
 
-		if (!this.skipSafetyFlushDuringProcessStack) {
-			// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
-			this.flush();
-		}
+		// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
+		this.flush();
 
 		this.ensureNoDataModelChanges(() => {
 			this.processInboundMessageOrBatch(messageCopy, local);
@@ -3772,7 +3757,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Returns true if the container is dirty: not attached, or no pending user messages (could be some "non-dirtyable" ones though)
+	 * Returns true if the container is dirty: not attached, or has pending user messages (ignores "non-dirtyable" ones though)
 	 */
 	private computeCurrentDirtyState(): boolean {
 		return (
