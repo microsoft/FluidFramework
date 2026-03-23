@@ -27,7 +27,7 @@ import type { SchemaChange } from "./schemaChangeTypes.js";
  * @returns The composed codec family.
  * @remarks
  * Data encoded with this codec is not versioned.
- * Users of this codec must thus ensure that the decoder always knows which version was used.
+ * Users of this codec must therefore ensure that the decoder always knows which version was used.
  */
 export function makeSchemaChangeCodecs(
 	options: CodecWriteOptions,
@@ -75,7 +75,8 @@ export function makeSchemaChangeCodecs(
  * The format version for the schema change.
  * @remarks
  * The SchemaChangeFormat is not explicitly versioned in the data.
- * Therefore it may make more sense to inline this codec's formats into the parent codec that references it, rather than treating this like a versioned codec.
+ *
+ * TODO: Inline this codec's formats into the parent codec that references it, rather than treating this like a versioned codec. See related notes in makeSchemaChangeCodecs.
  */
 export const SchemaChangeFormatVersion = strictEnum("SchemaChangeFormatVersion", {
 	v1: 1,
