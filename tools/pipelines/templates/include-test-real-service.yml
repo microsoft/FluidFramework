@@ -447,11 +447,13 @@ stages:
             ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
               token__package__import__location: $(token__package__import__location)
               login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
               login__microsoft__clientId: $(appClientId)
               login__odspdf__test__tenants: $(tenantCreds)
             ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
               token__package__import__location: $(token__package__import__location)
               login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
               login__microsoft__clientId: $(appClientId)
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
