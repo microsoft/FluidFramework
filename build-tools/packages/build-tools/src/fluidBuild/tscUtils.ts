@@ -84,10 +84,8 @@ const incrementalOptions = [
 	"suppressExcessPropertyErrors",
 	"suppressImplicitAnyIndexErrors",
 	"noStrictGenericChecks",
-	"useDefineForClassFields",
 
 	"skipLibCheck",
-	"skipdefaultlibcheck",
 	"strict",
 	"strictBindCallApply",
 	"strictFunctionTypes",
