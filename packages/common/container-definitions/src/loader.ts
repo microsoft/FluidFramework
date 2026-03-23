@@ -421,7 +421,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 *
 	 * By default, the container will close if attach fails.
 	 * However, closure can now be avoided in most cased by setting:
-	 * Fluid.Container.RetryOnAttachFailure to true
+	 * Fluid.Container.DisableCloseOnAttachFailure to true
 	 * via the config provider passed to the loader.
 	 *
 	 * If attach fails, check the closed property to discover if retry is possible.
