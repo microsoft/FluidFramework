@@ -24,7 +24,6 @@ import {
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
-import { makeSchemaCodec } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -92,7 +91,7 @@ describe("schemaSummarizer", () => {
 				jsonValidator: FormatValidatorBasic,
 				minVersionForCollab,
 			};
-			const codec = makeSchemaCodec(codecOptions);
+			const codec = schemaCodecBuilder.build(codecOptions);
 			return new SchemaSummarizer(schema, collabWindow, codec, minVersionForCollab);
 		}
 
