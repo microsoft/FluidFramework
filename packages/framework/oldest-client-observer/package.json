@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/oldest-client-observer",
-	"version": "2.90.0",
+	"version": "2.92.0",
 	"description": "Data object to determine if the local client is the oldest amongst connected clients",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
@@ -78,31 +78,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
-	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"dist/test/**/*.*js",
-			"lib/test/**/*.*js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js",
-			"lib/**/*.*js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -113,11 +89,11 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-private/test-dds-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/node": "~20.19.30",
@@ -128,20 +104,5 @@
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:esnext": [
-				"...",
-				"typetests:gen"
-			],
-			"tsc": [
-				"...",
-				"typetests:gen"
-			]
-		}
-	},
-	"typeValidation": {
-		"disabled": true
 	}
 }

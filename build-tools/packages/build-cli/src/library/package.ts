@@ -25,8 +25,6 @@ import execa from "execa";
 import { readJsonSync } from "fs-extra/esm";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
-import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
-import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
 import {
 	AllPackagesSelectionCriteria,
@@ -38,6 +36,11 @@ import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../relea
 import type { DependencyUpdateType } from "./bump.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";
+import {
+	type PnpmCatalogMap,
+	readPnpmCatalogs,
+	resolveCatalogVersion,
+} from "./pnpmCatalog.js";
 import { indentString } from "./text.js";
 
 /**
@@ -144,7 +147,7 @@ export async function npmCheckUpdates(
 		log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
 		// eslint-disable-next-line no-await-in-loop
-		const result = (await ncu.run({
+		const result: unknown = await ncu.run({
 			filter: depsToUpdate,
 			cwd: repoPath,
 			packageFile: glob === "" ? "package.json" : `${glob}/package.json`,
@@ -154,16 +157,18 @@ export async function npmCheckUpdates(
 			jsonUpgraded: true,
 			silent: true,
 			peer: true,
-		})) as Index<VersionSpec>;
+		});
 
-		if (typeof result !== "object") {
+		if (typeof result !== "object" || result === null) {
 			throw new TypeError(`Expected an object: ${typeof result}`);
 		}
 
 		// npm-check-updates returns different data depending on how many packages were updated. This code detects the
 		// two main cases: a single package or multiple packages.
 		if (glob.endsWith("*")) {
-			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
+			// With glob patterns, result is Record<string, Record<string, string>> (path → upgraded deps)
+			const resultRecord = result as Record<string, Record<string, string>>;
+			for (const [pkgJsonPath, upgradedDeps] of Object.entries(resultRecord)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const { name } = readJsonSync(jsonPath);
@@ -183,6 +188,8 @@ export async function npmCheckUpdates(
 				}
 			}
 		} else {
+			// Without glob, result is Record<string, string> (dep → new range)
+			const resultRecord = result as Record<string, string>;
 			const jsonPath = path.join(repoPath, glob, "package.json");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { name } = readJsonSync(jsonPath);
@@ -192,12 +199,12 @@ export async function npmCheckUpdates(
 				continue;
 			}
 
-			for (const [dep, newRange] of Object.entries(result)) {
+			for (const [dep, newRange] of Object.entries(resultRecord)) {
 				upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
 				updatedDependencies[dep] = newRange;
 			}
 
-			if (Object.keys(result).length > 0) {
+			if (Object.keys(resultRecord).length > 0) {
 				updatedPackages.push(pkg);
 			}
 		}
@@ -284,17 +291,32 @@ export async function getPreReleaseDependencies(
 		);
 	}
 
+	// Cache catalogs per workspace root to avoid re-reading the file for each package.
+	const catalogCache = new Map<string, PnpmCatalogMap>();
+
 	for (const pkg of packagesToCheck) {
+		const workspaceRoot = pkg.monoRepo?.repoPath ?? context.root;
+		let catalogs = catalogCache.get(workspaceRoot);
+		if (catalogs === undefined) {
+			catalogs = readPnpmCatalogs(workspaceRoot);
+			catalogCache.set(workspaceRoot, catalogs);
+		}
+
 		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
 			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
 			}
 
+			// Resolve catalog: references before passing to semver
+			const resolvedVersion = resolveCatalogVersion(depName, depVersion, catalogs);
+
 			// Convert the range into the minimum version
-			const minVer = semver.minVersion(depVersion);
+			const minVer = semver.minVersion(resolvedVersion);
 			if (minVer === null) {
-				throw new Error(`semver.minVersion was null: ${depVersion} (${depName})`);
+				throw new Error(
+					`semver.minVersion was null: ${resolvedVersion}${resolvedVersion !== depVersion ? ` (resolved from ${depVersion})` : ""} for ${depName}`,
+				);
 			}
 
 			// If the min version has a pre-release section, then it needs to be released.
@@ -305,9 +327,9 @@ export async function getPreReleaseDependencies(
 				}
 
 				if (depPkg.monoRepo === undefined) {
-					prereleasePackages.set(depPkg.name, depVersion);
+					prereleasePackages.set(depPkg.name, resolvedVersion);
 				} else {
-					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, depVersion);
+					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, resolvedVersion);
 				}
 			}
 		}
@@ -453,20 +475,35 @@ export function getFluidDependencies(
 		packagesToCheck = [independentPackage];
 	}
 
+	// Cache catalogs per workspace root to avoid re-reading the file for each package.
+	const catalogCache = new Map<string, PnpmCatalogMap>();
+
 	for (const p of packagesToCheck) {
+		const workspaceRoot = p.monoRepo?.repoPath ?? context.root;
+		let catalogs = catalogCache.get(workspaceRoot);
+		if (catalogs === undefined) {
+			catalogs = readPnpmCatalogs(workspaceRoot);
+			catalogCache.set(workspaceRoot, catalogs);
+		}
+
 		for (const dep of p.combinedDependencies) {
 			const pkg = context.fullPackageMap.get(dep.name);
 			if (pkg === undefined) {
 				continue;
 			}
 
+			// Resolve catalog: references before passing to semver
+			const resolvedVersion = resolveCatalogVersion(dep.name, dep.version, catalogs);
+
 			// If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
 			// range. Otherwise pick the minimum version the range represents.
-			const newVersion = dep.version.startsWith("workspace:")
+			const newVersion = resolvedVersion.startsWith("workspace:")
 				? semver.parse(pkg.version)
-				: semver.minVersion(dep.version);
+				: semver.minVersion(resolvedVersion);
 			if (newVersion === null) {
-				throw new Error(`Failed to parse depVersion: ${dep.version}`);
+				throw new Error(
+					`Failed to parse depVersion: ${resolvedVersion}${resolvedVersion !== dep.version ? ` (resolved from ${dep.version})` : ""}`,
+				);
 			}
 
 			if (pkg.monoRepo !== undefined) {

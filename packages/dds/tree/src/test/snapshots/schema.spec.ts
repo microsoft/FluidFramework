@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { schemaCodecBuilder } from "../../feature-libraries/schema-index/codec.js";
@@ -18,12 +16,8 @@ describe("schema snapshots", () => {
 	for (const schemaFormat of schemaCodecBuilder.registry) {
 		for (const { name, schemaData } of testTrees) {
 			it(`${name} - schema v${schemaFormat.formatVersion}`, () => {
-				assert(schemaFormat.minVersionForCollab !== undefined);
 				const encoded = schemaFormat
-					.codec({
-						jsonValidator: FormatValidatorBasic,
-						minVersionForCollab: schemaFormat.minVersionForCollab,
-					})
+					.codec({ jsonValidator: FormatValidatorBasic })
 					.encode(schemaData);
 				takeJsonSnapshot(encoded);
 			});

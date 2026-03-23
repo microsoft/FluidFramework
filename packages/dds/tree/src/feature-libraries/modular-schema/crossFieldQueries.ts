@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ChangeAtomId,
-	ChangeAtomIdRangeMap,
-	ChangesetLocalId,
-	RevisionTag,
-} from "../../core/index.js";
+import type { ChangeAtomIdRangeMap, ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import type { RangeQueryResult } from "../../util/index.js";
 
 import type { NodeId } from "./modularChangeTypes.js";
@@ -40,7 +35,7 @@ export function getFirstFromCrossFieldMap<T>(
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-): RangeQueryResult<ChangeAtomId, T> {
+): RangeQueryResult<T | undefined> {
 	return map.getFirst({ revision, localId: id }, count);
 }
 
@@ -64,7 +59,7 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeQueryResult<ChangeAtomId, T>;
+	): RangeQueryResult<T | undefined>;
 
 	/**
 	 * Sets the range of keys to `newValue`.
