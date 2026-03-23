@@ -21,6 +21,9 @@ overrides:
   '@babel/traverse': 7.27.7
   '@babel/types': 7.27.7
   '@babel/runtime': 7.27.6
+  diff@>=4 <5: ^4.0.4
+  diff@>=5 <6: ^5.2.2
+  diff@>=8 <9: ^8.0.3
   eslint: ^9.39.2
   jws: ^3.2.3
   mongodb>@aws-sdk/credential-providers: '-'
@@ -34,6 +37,13 @@ overrides:
   tar: ^7.5.11
   socket.io-parser: ^4.2.4
   zookeeper: ^7.2.0
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
 
 patchedDependencies:
   '@microsoft/api-extractor@7.45.1':
@@ -2811,14 +2821,6 @@ packages:
   '@ioredis/commands@1.2.0':
     resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
 
-  '@isaacs/balanced-match@4.0.1':
-    resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
-    engines: {node: 20 || >=22}
-
-  '@isaacs/brace-expansion@5.0.0':
-    resolution: {integrity: sha512-ZT55BDLV0yv0RBm2czMiZ+SqCGO7AvmOM3G/w2xhVPH+te0aKgFjmBvGlL1dH+ql2tgGO3MVrbb3jCKyvpgnxA==}
-    engines: {node: 20 || >=22}
-
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
@@ -3205,6 +3207,9 @@ packages:
 
   '@sinonjs/text-encoding@0.7.3':
     resolution: {integrity: sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==}
+    deprecated: |-
+      Deprecated: no longer maintained and no longer used by Sinon packages. See
+        https://github.com/sinonjs/nise/issues/243 for replacement details.
 
   '@socket.io/component-emitter@3.1.0':
     resolution: {integrity: sha512-+9jVqKhRSpsc591z5vX+X5Yyw+he/HCB4iQ/RYxw35CEPaY1gnsNE43nf9n9AaYjAQrTiI/mOwKUKdUs9vf7Xg==}
@@ -4123,6 +4128,7 @@ packages:
   basic-ftp@5.0.4:
     resolution: {integrity: sha512-8PzkB0arJFV4jJWSGOYR+OEic6aeKMu/osRhBULN6RY0ykby6LKhbmuQ5ublvaas5BOwboah5D87nrHyuh8PPA==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.0, please upgrade
 
   before-after-hook@2.2.3:
     resolution: {integrity: sha512-NzUnlZexiaH/46WDhANlyR2bXRopNg4F/zuSA3OpZnllCUgRaOF2znDioDWrmbNVsuZk6l9pMquQB38cfBZwkQ==}
@@ -4834,16 +4840,16 @@ packages:
   diff3@0.0.3:
     resolution: {integrity: sha512-iSq8ngPOt0K53A6eVr4d5Kn6GNrM2nQZtC740pzIriHtn4pOQ2lyzEXQMBeVcWERN0ye7fhBsk9PbLLQOnUx/g==}
 
-  diff@4.0.2:
-    resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
+  diff@4.0.4:
+    resolution: {integrity: sha512-X07nttJQkwkfKfvTPG/KSnE2OMdcUCao6+eXF3wmnIQRn2aPAHH3VxDbDOdegkd6JbPsXqShpvEOHfAT+nCNwQ==}
     engines: {node: '>=0.3.1'}
 
-  diff@5.2.0:
-    resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
+  diff@5.2.2:
+    resolution: {integrity: sha512-vtcDfH3TOjP8UekytvnHH1o1P4FcUdt4eQ1Y+Abap1tk/OB2MWQvcwS2ClCd1zuIhc3JKOx6p3kod8Vfys3E+A==}
     engines: {node: '>=0.3.1'}
 
-  diff@8.0.2:
-    resolution: {integrity: sha512-sSuxWU5j5SR9QQji/o2qMvqRNYRDOcBTgsJ/DeCf4iSN4gW+gNMXM7wFIP+fdXZxoNiAnHUTGjCr+TSWXdRDKg==}
+  diff@8.0.3:
+    resolution: {integrity: sha512-qejHi7bcSD4hQAZE0tNAawRK1ZtafHDmMTMkrrIGgSLl7hTnQHmKCeB45xAcbfTqK2zowkM3j3bHt/4b/ARbYQ==}
     engines: {node: '>=0.3.1'}
 
   dir-glob@3.0.1:
@@ -5551,12 +5557,12 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-dirs@3.0.1:
     resolution: {integrity: sha512-NBcGGFbBA9s1VzD41QXDG+3++t9Mn5t1FpLdhESY6oKY4gYTFpX4wO3sqGUa0Srjtbfj3szX0RnemmrVRUdULA==}
@@ -6692,30 +6698,19 @@ packages:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
 
-  minimatch@10.0.3:
-    resolution: {integrity: sha512-IPZ167aShDZZUMdRk66cyQAW3qr0WzbHkPdMYa8bzZhlHhO3jALbKdxcaak7W9FfT2rZNpQuUu4Od7ILEpXSaw==}
-    engines: {node: 20 || >=22}
+  minimatch@10.2.4:
+    resolution: {integrity: sha512-oRjTw/97aTBN0RHbYCdtF1MQfvusSIBQM0IZEgzl6426+8jSC0nF1a/GmnVLpfB9yyr6g6FTqWqiZVbxrtaCIg==}
+    engines: {node: 18 || 20 || >=22}
 
-  minimatch@10.1.1:
-    resolution: {integrity: sha512-enIvLvRAFZYXJzkCYG5RKmPfrFArdLv+R+lbQ53BmIMLIry74bjKzX6iHAm8WYamJkhSSEabrWN5D97XnKObjQ==}
-    engines: {node: 20 || >=22}
+  minimatch@3.1.5:
+    resolution: {integrity: sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==}
 
-  minimatch@10.2.1:
-    resolution: {integrity: sha512-MClCe8IL5nRRmawL6ib/eT4oLyeKMGCghibcDWK+J0hh0Q8kqSdia6BvbRMVk6mPa6WqUa5uR2oxt6C5jd533A==}
-    engines: {node: 20 || >=22}
-
-  minimatch@3.0.8:
-    resolution: {integrity: sha512-6FsRAQsxQ61mw+qP1ZzbL9Bc78x2p5OqNgNpnoAFLTrX8n5Kxph0CsnhmKKNXTWjXqU5L0pGPR7hYk+XWZr60Q==}
-
-  minimatch@3.1.2:
-    resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
-
-  minimatch@5.1.6:
-    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
+  minimatch@5.1.9:
+    resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
     engines: {node: '>=10'}
 
-  minimatch@9.0.5:
-    resolution: {integrity: sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==}
+  minimatch@9.0.9:
+    resolution: {integrity: sha512-OBwBN9AL4dqmETlpS2zasx+vTeWclWzkblfZk7KTA5j3jeOONz/tRCnZomUyvNg83wL5Zv9Ss6HMJXAgL8R2Yg==}
     engines: {node: '>=16 || 14 >=14.17'}
 
   minimist@1.2.8:
@@ -7406,6 +7401,7 @@ packages:
   prebuild-install@5.3.0:
     resolution: {integrity: sha512-aaLVANlj4HgZweKttFNUVNRxDukytuIuxeK2boIMHjagNJCiVKWFsKF4tCE3ql3GbrD2tExPQ7/pwtEJcHNZeg==}
     engines: {node: '>=6'}
+    deprecated: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
     hasBin: true
 
   prelude-ls@1.2.1:
@@ -9341,7 +9337,7 @@ snapshots:
     dependencies:
       '@eslint/object-schema': 2.1.7
       debug: 4.4.3(supports-color@8.1.1)
-      minimatch: 3.1.2
+      minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
 
@@ -9362,7 +9358,7 @@ snapshots:
       ignore: 5.3.2
       import-fresh: 3.3.0
       js-yaml: 4.1.1
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -9448,7 +9444,7 @@ snapshots:
       mdast: 3.0.0
       mdast-util-heading-range: 4.0.0
       mdast-util-to-string: 4.0.0
-      minimatch: 10.1.1
+      minimatch: 10.2.4
       npm-check-updates: 16.14.20
       oclif: 4.22.52(@types/node@22.19.11)
       picocolors: 1.1.1
@@ -10298,12 +10294,6 @@ snapshots:
 
   '@ioredis/commands@1.2.0': {}
 
-  '@isaacs/balanced-match@4.0.1': {}
-
-  '@isaacs/brace-expansion@5.0.0':
-    dependencies:
-      '@isaacs/balanced-match': 4.0.1
-
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -10408,7 +10398,7 @@ snapshots:
       '@rushstack/terminal': 0.12.2(@types/node@22.19.11)
       '@rushstack/ts-command-line': 4.21.4(@types/node@22.19.11)
       lodash: 4.17.21
-      minimatch: 3.0.8
+      minimatch: 3.1.5
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
@@ -10425,9 +10415,9 @@ snapshots:
       '@rushstack/rig-package': 0.6.0
       '@rushstack/terminal': 0.19.4(@types/node@22.19.11)
       '@rushstack/ts-command-line': 5.1.4(@types/node@22.19.11)
-      diff: 8.0.2
+      diff: 8.0.3
       lodash: 4.17.21
-      minimatch: 10.0.3
+      minimatch: 10.2.4
       resolve: 1.22.10
       semver: 7.5.4
       source-map: 0.6.1
@@ -10536,7 +10526,7 @@ snapshots:
       indent-string: 4.0.0
       is-wsl: 2.2.0
       lilconfig: 3.1.3
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.3
       string-width: 4.2.3
       supports-color: 8.1.1
@@ -10955,7 +10945,7 @@ snapshots:
   '@ts-morph/common@0.23.0':
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       mkdirp: 3.0.1
       path-browserify: 1.0.1
 
@@ -10964,7 +10954,7 @@ snapshots:
   '@tufjs/models@1.0.4':
     dependencies:
       '@tufjs/canonical-json': 1.0.0
-      minimatch: 9.0.5
+      minimatch: 9.0.9
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
@@ -11320,7 +11310,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.3
       ts-api-utils: 1.4.3(typescript@5.1.6)
     optionalDependencies:
@@ -11335,7 +11325,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       fast-glob: 3.3.2
       is-glob: 4.0.3
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.3
       ts-api-utils: 2.4.0(typescript@5.1.6)
       typescript: 5.1.6
@@ -11351,7 +11341,7 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       fast-glob: 3.3.2
       is-glob: 4.0.3
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.3
       ts-api-utils: 2.1.0(typescript@5.1.6)
       typescript: 5.1.6
@@ -11365,7 +11355,7 @@ snapshots:
       '@typescript-eslint/types': 8.53.0
       '@typescript-eslint/visitor-keys': 8.53.0
       debug: 4.4.3(supports-color@8.1.1)
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       semver: 7.7.4
       tinyglobby: 0.2.15
       ts-api-utils: 2.4.0(typescript@5.1.6)
@@ -12457,7 +12447,7 @@ snapshots:
   copyfiles@2.4.1:
     dependencies:
       glob: 7.2.3
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       mkdirp: 1.0.4
       noms: 0.0.0
       through2: 2.0.5
@@ -12719,11 +12709,11 @@ snapshots:
 
   diff3@0.0.3: {}
 
-  diff@4.0.2: {}
+  diff@4.0.4: {}
 
-  diff@5.2.0: {}
+  diff@5.2.2: {}
 
-  diff@8.0.2: {}
+  diff@8.0.3: {}
 
   dir-glob@3.0.1:
     dependencies:
@@ -13017,7 +13007,7 @@ snapshots:
       eslint: 9.39.2(jiti@2.6.1)
       eslint-import-context: 0.1.9(unrs-resolver@1.11.1)
       is-glob: 4.0.3
-      minimatch: 10.1.1
+      minimatch: 9.0.9
       semver: 7.7.3
       stable-hash-x: 0.2.0
       unrs-resolver: 1.11.1
@@ -13065,7 +13055,7 @@ snapshots:
       estraverse: 5.3.0
       hasown: 2.0.2
       jsx-ast-utils: 3.3.3
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       object.entries: 1.1.9
       object.fromentries: 2.0.8
       object.values: 1.2.1
@@ -13152,7 +13142,7 @@ snapshots:
       is-glob: 4.0.3
       json-stable-stringify-without-jsonify: 1.0.1
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       natural-compare: 1.4.0
       optionator: 0.9.3
     optionalDependencies:
@@ -13341,7 +13331,7 @@ snapshots:
 
   filelist@1.0.4:
     dependencies:
-      minimatch: 5.1.6
+      minimatch: 5.1.9
 
   fill-range@7.1.1:
     dependencies:
@@ -13591,14 +13581,14 @@ snapshots:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 3.4.3
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       minipass: 7.1.2
       package-json-from-dist: 1.0.1
       path-scurry: 1.11.1
 
   glob@13.0.5:
     dependencies:
-      minimatch: 10.2.1
+      minimatch: 10.2.4
       minipass: 7.1.2
       path-scurry: 2.0.1
 
@@ -13607,7 +13597,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       once: 1.4.0
       path-is-absolute: 1.0.1
 
@@ -13616,7 +13606,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 5.1.6
+      minimatch: 5.1.9
       once: 1.4.0
 
   global-dirs@3.0.1:
@@ -13829,7 +13819,7 @@ snapshots:
 
   ignore-walk@6.0.3:
     dependencies:
-      minimatch: 9.0.5
+      minimatch: 9.0.9
 
   ignore@5.3.0: {}
 
@@ -14217,7 +14207,7 @@ snapshots:
       async: 3.2.6
       chalk: 4.1.2
       filelist: 1.0.4
-      minimatch: 3.1.2
+      minimatch: 3.1.5
 
   jest-worker@27.5.1:
     dependencies:
@@ -14360,7 +14350,7 @@ snapshots:
       debug: 2.6.9
       denque: 1.5.1
       lodash: 4.17.21
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       nested-error-stacks: 2.1.1
       retry: 0.10.1
       uuid: 3.4.0
@@ -14950,31 +14940,19 @@ snapshots:
 
   min-indent@1.0.1: {}
 
-  minimatch@10.0.3:
-    dependencies:
-      '@isaacs/brace-expansion': 5.0.0
-
-  minimatch@10.1.1:
-    dependencies:
-      '@isaacs/brace-expansion': 5.0.0
-
-  minimatch@10.2.1:
+  minimatch@10.2.4:
     dependencies:
       brace-expansion: 5.0.2
 
-  minimatch@3.0.8:
+  minimatch@3.1.5:
     dependencies:
       brace-expansion: 1.1.12
 
-  minimatch@3.1.2:
-    dependencies:
-      brace-expansion: 1.1.12
-
-  minimatch@5.1.6:
+  minimatch@5.1.9:
     dependencies:
       brace-expansion: 2.0.2
 
-  minimatch@9.0.5:
+  minimatch@9.0.9:
     dependencies:
       brace-expansion: 2.0.2
 
@@ -15053,14 +15031,14 @@ snapshots:
       browser-stdout: 1.3.1
       chokidar: 3.5.3
       debug: 4.4.0(supports-color@8.1.1)
-      diff: 5.2.0
+      diff: 5.2.2
       escape-string-regexp: 4.0.0
       find-up: 5.0.0
       glob: 8.1.0
       he: 1.2.0
       js-yaml: 4.1.1
       log-symbols: 4.1.0
-      minimatch: 5.1.6
+      minimatch: 5.1.9
       ms: 2.1.3
       serialize-javascript: 6.0.2
       strip-json-comments: 3.1.1
@@ -15126,7 +15104,7 @@ snapshots:
       array-differ: 3.0.0
       array-union: 2.1.0
       arrify: 2.0.1
-      minimatch: 3.1.2
+      minimatch: 3.1.5
 
   mute-stream@0.0.8: {}
 
@@ -15303,7 +15281,7 @@ snapshots:
       jsonlines: 0.1.1
       lodash: 4.17.21
       make-fetch-happen: 11.1.1
-      minimatch: 9.0.5
+      minimatch: 9.0.9
       p-map: 4.0.0
       pacote: 15.2.0
       parse-github-url: 1.0.2
@@ -16544,7 +16522,7 @@ snapshots:
       '@sinonjs/commons': 3.0.1
       '@sinonjs/fake-timers': 11.2.2
       '@sinonjs/samsam': 8.0.2
-      diff: 5.2.0
+      diff: 5.2.2
       nise: 6.1.1
       supports-color: 7.2.0
 
@@ -16972,7 +16950,7 @@ snapshots:
     dependencies:
       '@istanbuljs/schema': 0.1.3
       glob: 10.5.0
-      minimatch: 9.0.5
+      minimatch: 9.0.9
 
   text-hex@1.0.0: {}
 
@@ -17058,7 +17036,7 @@ snapshots:
   ts-node@8.10.2(typescript@5.1.6):
     dependencies:
       arg: 4.1.3
-      diff: 4.0.2
+      diff: 4.0.4
       make-error: 1.3.6
       source-map-support: 0.5.21
       typescript: 5.1.6
