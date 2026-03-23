@@ -48,7 +48,7 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 
 | IcM Team Name | Team ID | Description |
 |---|---|---|
-| FF Hot | 98481 | Primary rotation for 1P partner incident support (DEPRECATED for new incidents as of 2/9 — but still has active historical incidents) |
+| FF Hot | 98481 | Primary rotation for 1P partner incident support (DEPRECATED for new incidents; still has active historical incidents) |
 | Fluid Framework Client | 149377 | Current primary rotation for partner support and release management |
 | Azure Fluid Relay Client | 98313 | Azure Fluid Relay (FRS) client-side incidents |
 
@@ -149,7 +149,7 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 ### Pipeline Health Monitoring
 
-- **Monitor key pipelines**: Check Build (def 12), E2E (def 56), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs`, `e2e_frs`, and `e2e_azure_client_*` stages. Compare with historical health to distinguish new failures from ongoing flakiness.
+- **Monitor key pipelines**: Check Build (def 12), E2E (def 56), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs`, `e2e_azure_client_frs`, and `e2e_azure_client_local_server` stages. Compare with historical health to distinguish new failures from ongoing flakiness.
 
 - **Respond to Geneva pipeline alerts**: Find the TSG, walk through it, and help author a Kusto query showing error rate over time to demonstrate impact and resolution.
 
