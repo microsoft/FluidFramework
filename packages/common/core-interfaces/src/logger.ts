@@ -77,7 +77,7 @@ export const LogLevel = {
 	/**
 	 * Value to assume when not otherwise given.
 	 * @see {@link (LogLevel:variable).info}
-	 * @deprecated Use {@link (LogLevel:variable).info} or {@link (LogLevel:variable).essential}
+	 * @deprecated Use {@link (LogLevel:variable).info}
 	 */
 	default: 20, // Default log level
 
