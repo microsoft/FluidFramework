@@ -32,16 +32,9 @@ export function makeSchemaChangeCodecs(
 	options: CodecWriteOptions,
 ): ICodecFamily<SchemaChange> {
 	// TODO:
-	// Simplify this:
-	// SchemaChangeFormatVersion.v1 and SchemaChangeFormatVersion.v2 are the same, and since the version is never encoded, can be deduplicated.
-	// TODO:
-	// Further cleanup should be done here by inlining the schema change codec V1 into its parent codec,
+	// Inlining the schema change codec V1 into its parent codec,
 	// removing the use of codec family here.
-
-	return makeCodecFamily([
-		[SchemaChangeFormatVersion.v1, makeSchemaChangeCodecV1orV2(options)],
-		[SchemaChangeFormatVersion.v2, makeSchemaChangeCodecV1orV2(options)],
-	]);
+	return makeCodecFamily([[SchemaChangeFormatVersion.v1, makeSchemaChangeCodecV1(options)]]);
 }
 
 /**
@@ -53,10 +46,6 @@ export function makeSchemaChangeCodecs(
  */
 export const SchemaChangeFormatVersion = strictEnum("SchemaChangeFormatVersion", {
 	v1: 1,
-	/**
-	 * Same as V1: Added unnecessarily when {@link SchemaFormatVersion.v2} was added.
-	 */
-	v2: 2,
 });
 export type SchemaChangeFormatVersion = Values<typeof SchemaChangeFormatVersion>;
 
@@ -72,12 +61,12 @@ export function getCodecTreeForSchemaChangeFormat(
 }
 
 /**
- * This is the same for both v1 and v2 and wrap an independently versioned schemaCodec which may be of any version.
+ * This is independently versioned from the schemaCodec version.
  * @param options - The codec options.
  * @param schemaWriteVersion - The schema write version.
  * @returns The composed schema change codec.
  */
-function makeSchemaChangeCodecV1orV2(
+function makeSchemaChangeCodecV1(
 	options: CodecWriteOptions,
 ): IJsonCodec<SchemaChange, EncodedSchemaChange> {
 	const schemaCodec = schemaCodecBuilder.build(options);
