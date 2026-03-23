@@ -29,7 +29,6 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	makeSchemaCodec,
 	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
@@ -47,6 +46,10 @@ export {
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
+export {
+	buildNodeComparator,
+	type NodeComparator,
+} from "./cursorComparator.js";
 
 import * as SequenceField from "./sequence-field/index.js";
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
@@ -194,6 +197,7 @@ export {
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
 	getCodecTreeForSchemaChangeFormat,
+	SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

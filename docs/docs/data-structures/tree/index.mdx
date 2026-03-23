@@ -5,19 +5,19 @@ sidebar_position: 5
 
 import { PackageLink } from "@site/src/components/shortLinks";
 
-The `SharedTree` distributed data structure (DDS), available starting with Fluid Framework 2.0, is used to store most or all of your application's shared data in a hierarchical structure.
+The `SharedTree` distributed data structure (DDS), available in Fluid Framework 2.0+, stores your application's shared data in a hierarchical structure.
 
 A `SharedTree` has the following characteristics:
 
--   It is accessed through a `TreeView` object that exposes all the functionality for reading and editing data within a `SharedTree`.
--   It has a root and can have several types of internal (i.e., non-leaf) nodes and several types of leaf nodes.
--   Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null.
--   Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes.
--   A `TreeView` will conform to a schema that your code creates so it has application-specific strong typing.
--   The various types of internal nodes can be nested (subject to the constraints of the schema).
+-   Data is accessed through a `TreeView` object that exposes all APIs for reading and editing.
+-   It has a root and supports several kinds of internal (non-leaf) nodes and leaf nodes.
+-   Each node kind mirrors a familiar JavaScript type: object, map, array, boolean, number, string, or null (with some exceptions).
+-   Nodes are accessed using standard JavaScript/TypeScript syntax: dot notation, property assignment, and array indexes (with some exceptions).
+-   A `TreeView` conforms to an application-defined schema with strong typing.
+-   Internal nodes can be nested, subject to schema constraints.
 
-To get started working with `SharedTree` in your application, read this [quick start guide](../../start/tree-start.mdx).
-Provided below are links to more detailed information about `SharedTree` usage and its available APIs.
+To get started, read the [quick start guide](../../start/tree-start.mdx).
+For more detail, see the links below.
 
 - [Tree Nodes](./nodes.mdx): how information is stored on a `SharedTree`
 	- [Node Types](./node-types.mdx): outlines the specific types that are stored by a `SharedTree`

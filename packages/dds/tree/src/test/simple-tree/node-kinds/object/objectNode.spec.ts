@@ -691,7 +691,6 @@ describeHydration(
 				}) {
 					// Since fields are own properties, we expect inherited properties (like this) to be shadowed by fields.
 					// However in TypeScript they work like inherited properties, so the types don't make the runtime behavior.
-					// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 					public override get foo(): 5 {
 						return 5;
 					}
