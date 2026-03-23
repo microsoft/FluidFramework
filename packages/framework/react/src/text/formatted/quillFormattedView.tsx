@@ -77,6 +77,13 @@ const headerToLineTag = {
 	4: "h4",
 	5: "h5",
 } as const satisfies Readonly<Record<number, LineTagValue>>;
+/** Quill list tags → LineTag values. */
+const listToLineTag = {
+	bullet: "li",
+	ordered: "ol",
+	checked: "checked",
+	unchecked: "unchecked",
+} as const satisfies Readonly<Record<string, LineTagValue>>;
 /** LineTag values → Quill attributes. Used by buildDeltaFromTree (tree → Quill). */
 const lineTagToQuillAttributes = {
 	h1: { header: 1 },
@@ -86,6 +93,8 @@ const lineTagToQuillAttributes = {
 	h5: { header: 5 },
 	li: { list: "bullet" },
 	ol: { list: "ordered" },
+	checked: { list: "checked" },
+	unchecked: { list: "unchecked" },
 	blockquote: { blockquote: true },
 	codeBlock: { "code-block": "plain" },
 } as const satisfies Readonly<Record<LineTagValue, Record<string, unknown>>>;

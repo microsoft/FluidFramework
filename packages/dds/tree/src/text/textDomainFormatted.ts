@@ -415,6 +415,8 @@ export namespace FormattedTextAsTree {
 		"h5",
 		"li",
 		"ol",
+		"checked",
+		"unchecked",
 		"blockquote",
 		"codeBlock",
 	]);
