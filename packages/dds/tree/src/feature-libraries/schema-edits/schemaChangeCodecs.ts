@@ -14,7 +14,6 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { SchemaFormatVersion } from "../../core/index.js";
 import { strictEnum, type Values } from "../../util/index.js";
 import { schemaCodecBuilder } from "../schema-index/index.js";
 
@@ -33,41 +32,15 @@ export function makeSchemaChangeCodecs(
 	options: CodecWriteOptions,
 ): ICodecFamily<SchemaChange> {
 	// TODO:
-	// This codec has no need to force specific versions of the inner schema codec.
-	// The inner schema codec is explicitly versioned, and could safely select its own version based on the provided options.
-	// This change however would modify which version of it got selected in some cases, altering snapshot tests and being somewhat high risk.
-	// Therefore such a change should be made in a PR with no other changes for easier review, ensuring it is the only cause of the snapshot changes.
-	// Doing this only requires removing the overrides below and updating the snapshots.
-	// TODO:
-	// Once the above is done, another change can be made to simplify this:
+	// Simplify this:
 	// SchemaChangeFormatVersion.v1 and SchemaChangeFormatVersion.v2 are the same, and since the version is never encoded, can be deduplicated.
 	// TODO:
 	// Further cleanup should be done here by inlining the schema change codec V1 into its parent codec,
 	// removing the use of codec family here.
 
 	return makeCodecFamily([
-		[
-			SchemaChangeFormatVersion.v1,
-			makeSchemaChangeCodecV1orV2({
-				...options,
-				allowPossiblyIncompatibleWriteVersionOverrides: true,
-				writeVersionOverrides: new Map([
-					...(options.writeVersionOverrides ?? []),
-					[schemaCodecBuilder.name, SchemaFormatVersion.v1],
-				]),
-			}),
-		],
-		[
-			SchemaChangeFormatVersion.v2,
-			makeSchemaChangeCodecV1orV2({
-				...options,
-				allowPossiblyIncompatibleWriteVersionOverrides: true,
-				writeVersionOverrides: new Map([
-					...(options.writeVersionOverrides ?? []),
-					[schemaCodecBuilder.name, SchemaFormatVersion.v2],
-				]),
-			}),
-		],
+		[SchemaChangeFormatVersion.v1, makeSchemaChangeCodecV1orV2(options)],
+		[SchemaChangeFormatVersion.v2, makeSchemaChangeCodecV1orV2(options)],
 	]);
 }
 
