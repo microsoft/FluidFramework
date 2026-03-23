@@ -415,6 +415,11 @@ export function formatMeasurementValue(
 			? `${formatNanosecondDuration(measurement.value)}/op`
 			: `${prettyNumber(measurement.value, 1)} ns/op`;
 	}
+	if (measurement.units === "ns") {
+		return scaleUnits
+			? `${formatNanosecondDuration(measurement.value)}`
+			: `${prettyNumber(measurement.value, 1)} ns`;
+	}
 	if (measurement.units === "seconds") {
 		return scaleUnits
 			? `${formatNanosecondDuration(measurement.value * 1e9)}`
@@ -429,9 +434,9 @@ export function formatMeasurementValue(
  * @param nanoseconds - The duration in nanoseconds to format.
  */
 export function formatNanosecondDuration(nanoseconds: number): string {
-	const units = ["ns", "ms", "s"];
+	const units = ["ns", "ms", "s", "min"];
 	// Scaling factors between the above units
-	const scale = [1e6, 1e3];
+	const scale = [1e6, 1e3, 60];
 	let value = nanoseconds;
 	let unitIndex = 0;
 	while (Math.abs(value) >= scale[unitIndex] && unitIndex < units.length - 1) {

@@ -16,6 +16,7 @@ import {
 	reportTable,
 	type ReportPath,
 	formatMeasurementValue,
+	formatNanosecondDuration,
 	geometricMean,
 	prettyNumber,
 } from "../reporterUtilities.js";
@@ -343,6 +344,36 @@ describe("reporterUtilities", () => {
 
 		it("returns NaN for empty array", () => {
 			assert.equal(geometricMean([]), Number.NaN);
+		});
+	});
+
+	describe("formatNanosecondDuration", () => {
+		it("returns nanoseconds for small values", () => {
+			assert.equal(formatNanosecondDuration(500), "500.00 ns");
+		});
+
+		it("returns 0.00 ns for zero", () => {
+			assert.equal(formatNanosecondDuration(0), "0.00 ns");
+		});
+
+		it("uses 0 decimals when value exceeds 1000 ns", () => {
+			assert.equal(formatNanosecondDuration(5_000), "5,000 ns");
+		});
+
+		it("scales to ms at 1e6 ns", () => {
+			assert.equal(formatNanosecondDuration(1_000_000), "1.00 ms");
+		});
+
+		it("scales to s at 1e9 ns", () => {
+			assert.equal(formatNanosecondDuration(1_000_000_000), "1.00 s");
+		});
+
+		it("scales to min at 60e9 ns", () => {
+			assert.equal(formatNanosecondDuration(60_000_000_000), "1.00 min");
+		});
+
+		it("handles negative values", () => {
+			assert.equal(formatNanosecondDuration(-1_000_000), "-1.00 ms");
 		});
 	});
 
