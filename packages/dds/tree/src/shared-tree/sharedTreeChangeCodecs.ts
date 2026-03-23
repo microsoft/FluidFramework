@@ -17,15 +17,12 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
-import {
-	type ChangeEncodingContext,
-	SchemaFormatVersion,
-	type TreeStoredSchema,
-} from "../core/index.js";
+import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
 	ModularChangeFormatVersion,
 	type ModularChangeset,
 	type SchemaChange,
+	SchemaChangeFormatVersion,
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
 	getCodecTreeForSchemaChangeFormat,
@@ -48,6 +45,8 @@ export function makeSharedTreeChangeCodecFamily(
 	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	options: CodecWriteOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
+	// TODO: since this is using the SchemaChangeCodec without explicit versioning,
+	// it would probably be better to depend on its format directly without going through the codec family.
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
 	const versions: [
 		FormatVersion,
@@ -72,7 +71,7 @@ export function makeSharedTreeChangeCodecFamily(
 
 interface ChangeFormatDependencies {
 	readonly modularChange: ModularChangeFormatVersion;
-	readonly schemaChange: SchemaFormatVersion;
+	readonly schemaChange: SchemaChangeFormatVersion;
 }
 
 /**
@@ -107,6 +106,8 @@ export type SharedTreeChangeFormatVersion = Values<typeof SharedTreeChangeFormat
  * This is an arbitrary mapping that is injected in the SharedTree change codec.
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for the dependent formats are not explicitly versioned.
+ * @remarks
+ * SchemaFormatVersion (used by SchemaChangeFormat) is not included here since it is explicitly versioned.
  */
 export const dependenciesForChangeFormat = new Map<
 	SharedTreeChangeFormatVersion,
@@ -114,15 +115,24 @@ export const dependenciesForChangeFormat = new Map<
 >([
 	[
 		SharedTreeChangeFormatVersion.v3,
-		{ modularChange: ModularChangeFormatVersion.v3, schemaChange: SchemaFormatVersion.v1 },
+		{
+			modularChange: ModularChangeFormatVersion.v3,
+			schemaChange: SchemaChangeFormatVersion.v1,
+		},
 	],
 	[
 		SharedTreeChangeFormatVersion.v4,
-		{ modularChange: ModularChangeFormatVersion.v4, schemaChange: SchemaFormatVersion.v1 },
+		{
+			modularChange: ModularChangeFormatVersion.v4,
+			schemaChange: SchemaChangeFormatVersion.v1,
+		},
 	],
 	[
 		SharedTreeChangeFormatVersion.v5,
-		{ modularChange: ModularChangeFormatVersion.v5, schemaChange: SchemaFormatVersion.v1 },
+		{
+			modularChange: ModularChangeFormatVersion.v5,
+			schemaChange: SchemaChangeFormatVersion.v1,
+		},
 	],
 ]);
 
