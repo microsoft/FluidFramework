@@ -211,11 +211,11 @@ export function parseLineTag(
 			headerToLineTag[attributes.header as keyof typeof headerToLineTag] ?? defaultHeading;
 		return FormattedTextAsTree.LineTag(tag);
 	}
-	if (attributes.list === "bullet") {
-		return FormattedTextAsTree.LineTag("li");
-	}
-	if (attributes.list === "ordered") {
-		return FormattedTextAsTree.LineTag("ol");
+	if (typeof attributes.list === "string") {
+		const tag = listToLineTag[attributes.list as keyof typeof listToLineTag];
+		if (tag !== undefined) {
+			return FormattedTextAsTree.LineTag(tag);
+		}
 	}
 	if (attributes.blockquote === true) {
 		return FormattedTextAsTree.LineTag("blockquote");
@@ -415,7 +415,7 @@ const FormattedTextEditorView = forwardRef<
 					[{ size: ["small", false, "large", "huge"] }],
 					[{ font: [] }],
 					[{ header: [1, 2, 3, 4, 5, false] }],
-					[{ list: "bullet" }, { list: "ordered" }],
+					[{ list: "bullet" }, { list: "ordered" }, { list: "check" }],
 					["blockquote", "code-block"],
 					["clean"],
 				],
