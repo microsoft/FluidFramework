@@ -37,9 +37,8 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:cjs && echo ESM testing skipped as not yet supported - npm run test:mocha:esm",
+		"test:mocha": "npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/**/*.spec.*js\" mocha",
-		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/**/*.spec.*js\" mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
