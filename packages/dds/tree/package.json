@@ -80,8 +80,8 @@
 	"types": "lib/entrypoints/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parallel --jobs 8",
-		"bench:comment": "echo This package has the longest running benchmark suite, and also has a lot of test enumeration overhead which makes --parentProcess slow. Since --parallel doesn't support --parentProcess, thats several reasons to not use parent process on this specific package.",
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parallel --jobs 6",
+		"bench-comment": "echo \"This package has the longest running benchmark suite, and also has a lot of test enumeration overhead which makes --parentProcess slow. Since --parallel doesn't support --parentProcess, thats several reasons to not use parent process on this specific package.\"",
 		"bench:profile": "cross-env FLUID_TEST_PERF_MODE=1 mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/mocha/Reporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
