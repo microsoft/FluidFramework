@@ -77,15 +77,10 @@ Optional `__`-prefixed keys in the same frontmatter block:
 
 ### Available Sections
 
-| Section       | Heading                        | Use for                                    |
-|---------------|--------------------------------|--------------------------------------------|
-| `breaking`    | Breaking Changes               | Breaking API changes                       |
-| `feature`     | New Features                   | New capabilities and features              |
-| `tree`        | SharedTree DDS Changes         | Changes specific to SharedTree             |
-| `fix`         | Bug Fixes                      | Bug fixes                                  |
-| `deprecation` | Deprecations                   | Newly deprecated APIs                      |
-| `legacy`      | Legacy API Changes             | Changes to legacy/compat APIs              |
-| `other`       | Other Changes                  | Everything else                            |
+Sections are configured in `fluidBuild.config.cjs` (search for `sections`).
+See [.changeset/README.md](../../.changeset/README.md#release-note-sections) for the
+current list with descriptions. Common values: `feature`, `fix`, `breaking`,
+`deprecation`, `tree`, `legacy`, `other`.
 
 ## Package Selection
 
