@@ -128,8 +128,7 @@ Description of the change
 
 ## Writing Guidelines
 
-See [.changeset/README.md](../../.changeset/README.md) for detailed formatting rules and
-[references/writing-guidelines.md](references/writing-guidelines.md) for examples.
+See [.changeset/README.md](../../.changeset/README.md) for detailed formatting rules and examples.
 
 Summary line (first line after frontmatter):
 - One concise sentence, no trailing period
