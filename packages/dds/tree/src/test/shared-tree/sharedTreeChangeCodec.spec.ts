@@ -10,6 +10,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import { TreeStoredSchemaRepository, type ChangeEncodingContext } from "../../core/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -40,7 +41,6 @@ import { brand } from "../../util/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { FormatValidatorBasic } from "../../external-utilities/index.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
