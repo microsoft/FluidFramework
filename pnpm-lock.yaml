@@ -9089,6 +9089,9 @@ importers:
       '@fluid-private/test-pairwise-generator':
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
+      '@fluid-tools/benchmark':
+        specifier: ^0.52.0
+        version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
@@ -9110,9 +9113,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
-      '@types/benchmark':
-        specifier: ^2.1.0
-        version: 2.1.5
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9122,9 +9122,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      benchmark:
-        specifier: ^2.1.4
-        version: 2.1.4
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -9216,18 +9213,12 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
-      '@types/benchmark':
-        specifier: ^2.1.0
-        version: 2.1.5
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
-      benchmark:
-        specifier: ^2.1.4
-        version: 2.1.4
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -19613,9 +19604,6 @@ packages:
 
   '@types/base64-js@1.3.2':
     resolution: {integrity: sha512-Q2Xn2/vQHRGLRXhQ5+BSLwhHkR3JVflxVKywH0Q6fVoAiUE8fFYL2pE5/l2ZiOiBDfA8qUqRnSxln4G/NFz1Sg==}
-
-  '@types/benchmark@2.1.5':
-    resolution: {integrity: sha512-cKio2eFB3v7qmKcvIHLUMw/dIx/8bhWPuzpzRT4unCPRTD8VdA9Zb0afxpcxOqR4PixRS7yT42FqGS8BYL8g1w==}
 
   '@types/body-parser@1.19.5':
     resolution: {integrity: sha512-fB3Zu92ucau0iQ0JMCFQE7b/dv8Ot07NI3KaZIkIUNXq82k4eBAqUaneXfleGY9JWskeS9y+u0nXMyspcuQrCg==}
@@ -32624,8 +32612,6 @@ snapshots:
       '@babel/types': 7.28.4
 
   '@types/base64-js@1.3.2': {}
-
-  '@types/benchmark@2.1.5': {}
 
   '@types/body-parser@1.19.5':
     dependencies:
