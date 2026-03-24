@@ -6,13 +6,13 @@
 
 Array node `nodeChanged` events now include a delta payload (via `TreeAlpha`)
 
-The `nodeChanged` event for array nodes — accessed via `TreeAlpha.on` — now provides a `delta` field, a sequence of `ArrayNodeDeltaOp` values that describe exactly what changed in the array. This lets you efficiently sync an external representation with tree changes, without snapshotting the old state or diffing the entire array.
+The `nodeChanged` event for array nodes—accessed via `TreeAlpha.on`—now provides a `delta` field, a sequence of `ArrayNodeDeltaOp` values that describe exactly what changed in the array. This lets you efficiently sync an external representation with tree changes, without taking a snapshot of the old state or diffing the entire array.
 
 The delta follows Quill-style semantics: each op covers a contiguous run of positions in the array before the change.
 
-- `{ type: "retain", count: N }` — N elements stayed in place. Their positions are unchanged, though their contents may have changed (which would fire separate `nodeChanged` events on those elements).
-- `{ type: "insert", count: N }` — N elements were inserted; read their values from the current tree at these positions.
-- `{ type: "remove", count: N }` — N elements were removed.
+- `{ type: "retain", count: N }`—N elements stayed in place. Their positions are unchanged, though their contents may have changed (which would fire separate `nodeChanged` events on those elements).
+- `{ type: "insert", count: N }`—N elements were inserted; read their values from the current tree at these positions.
+- `{ type: "remove", count: N }`—N elements were removed.
 
 Trailing unchanged elements are not represented by a trailing `"retain"` op.
 
@@ -22,7 +22,7 @@ Use `TreeAlpha.on` to subscribe to the richer alpha events. The data passed to t
 
 `TreeBeta.on` is unchanged and does not include delta information.
 
-### Example: applying a delta to a plain array mirror
+### Example: Applying a Delta to a Plain Array Mirror
 
 ```typescript
 // Walk the delta to keep a plain JS array in sync with an array node.
@@ -52,7 +52,7 @@ TreeAlpha.on(myArrayNode, "nodeChanged", ({ delta }) => {
 });
 ```
 
-### Example: narrowing the union in a generic handler
+### Example: Narrowing the Union in a Generic Handler
 
 ```typescript
 TreeAlpha.on(node as TreeNode, "nodeChanged", (data) => {
