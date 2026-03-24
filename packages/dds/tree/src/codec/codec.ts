@@ -551,6 +551,14 @@ export const FluidClientVersion = {
  */
 export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
 
+/**
+ * TODO:
+ * This needs to be documented.
+ * Its documentation should cover at least the following:
+ * - Is this used for anything other than testing.
+ * - What should be included as children. For example should it include versioned codecs which dispatch base on the min version for collaboration? If so, what version of them should be used?
+ * - What risks does having this mitigate?
+ */
 export interface CodecTree {
 	readonly name: string;
 	readonly version: FormatVersion;

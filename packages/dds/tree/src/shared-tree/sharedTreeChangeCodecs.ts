@@ -4,6 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
@@ -22,6 +23,7 @@ import {
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
 	makeSchemaChangeCodec,
+	schemaCodecBuilder,
 } from "../feature-libraries/index.js";
 import {
 	strictEnum,
@@ -120,13 +122,17 @@ export const dependenciesForChangeFormat = new Map<
 
 export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
+	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const { modularChange } =
 		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
 	return {
 		name: "SharedTreeChange",
 		version,
-		children: [getCodecTreeForModularChangeFormat(modularChange)],
+		children: [
+			getCodecTreeForModularChangeFormat(modularChange),
+			schemaCodecBuilder.getCodecTree(clientVersion),
+		],
 	};
 }
 
