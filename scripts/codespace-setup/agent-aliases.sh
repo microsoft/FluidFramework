@@ -6,9 +6,11 @@
 [ -n "${BASH_VERSION:-}" ] && shopt -s expand_aliases
 
 alias claude="agency claude"
-alias haiku="agency claude --model haiku"
-alias sonnet="agency claude --model sonnet"
-alias opus="agency claude --model opus"
+alias haiku="agency claude -- --model haiku"
+alias sonnet="agency claude -- --model sonnet"
+alias opus="agency claude -- --model opus"
+
+alias nori="repoverlay switch nori && agency claude"
 
 alias copilot="agency copilot"
 alias copilot-ado="agency copilot --mcp 'ado --org fluidframework'"
