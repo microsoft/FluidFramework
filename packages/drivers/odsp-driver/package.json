@@ -124,7 +124,7 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"socket.io-client": "~4.7.5",
+		"socket.io-client": "^4.8.3",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
