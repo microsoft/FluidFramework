@@ -1001,6 +1001,7 @@ describe("textEditor", () => {
 					new FormattedTextAsTree.StringAtom({
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("h1"),
+							indent: 0,
 						}),
 						format: createPlainFormat(),
 					}),
@@ -1017,6 +1018,7 @@ describe("textEditor", () => {
 					new FormattedTextAsTree.StringAtom({
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("li"),
+							indent: 0,
 						}),
 						format: createPlainFormat(),
 					}),
@@ -1050,12 +1052,13 @@ describe("textEditor", () => {
 				assert(lineOp !== undefined);
 				assert.equal(lineOp.attributes?.indent, 2);
 			});
-			it("omits indent when not present in line atom", () => {
+			it("indent is 0 when not present in line atom", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
 					new FormattedTextAsTree.StringAtom({
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("ol"),
+							indent: 0,
 						}),
 						format: createPlainFormat(),
 					}),
@@ -1066,7 +1069,7 @@ describe("textEditor", () => {
 					(op) => op.insert === "\n" && op.attributes?.list === "ordered",
 				);
 				assert(lineOp !== undefined);
-				assert.equal(lineOp.attributes?.indent, undefined);
+				assert.equal(lineOp.attributes?.indent, 0);
 			});
 		});
 	});
