@@ -57,14 +57,14 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
-import {
-	LogLevel,
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
-	type IProvideFluidHandleContext,
-	type ISignalEnvelope,
-	type OpaqueJsonDeserialized,
-	type TypedMessage,
+import { LogLevel } from "@fluidframework/core-interfaces";
+import type{
+	 IFluidHandleContext,
+	 IFluidHandleInternal,
+	 IProvideFluidHandleContext,
+	 ISignalEnvelope,
+	 OpaqueJsonDeserialized,
+	 TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,

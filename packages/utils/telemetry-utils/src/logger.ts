@@ -192,7 +192,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
 			error,
-			event.category === "error" ? LogLevel.error : logLevel,
+			event.category === "error" ? LogLevel.essential : logLevel,
 		);
 	}
 
@@ -237,7 +237,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 				category: "error",
 			},
 			error,
-			LogLevel.error,
+			LogLevel.essential,
 		);
 	}
 
@@ -262,7 +262,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		this.sendTelemetryEventCore(
 			perfEvent,
 			error,
-			perfEvent.category === "error" ? LogLevel.error : logLevel,
+			perfEvent.category === "error" ? LogLevel.essential : logLevel,
 		);
 	}
 
@@ -559,7 +559,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
-		this._minLogLevelOfAllLoggers = LogLevel.default;
+		this._minLogLevelOfAllLoggers = LogLevel.essential;
 		this.calculateMinLogLevel();
 	}
 
@@ -571,7 +571,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 		if (this.loggers.length > 0) {
 			const logLevels: LogLevel[] = [];
 			for (const logger of this.loggers) {
-				logLevels.push(logger.minLogLevel ?? LogLevel.default);
+				logLevels.push(logger.minLogLevel ?? LogLevel.essential);
 			}
 			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevel;
 		}

@@ -194,15 +194,15 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 
-			minLogLevel: LogLevel.error,
+			minLogLevel: LogLevel.essential,
 		};
 		const childLogger1 = createChildLogger({ logger });
 
-		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.error);
+		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 
 		sent = false;
-		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.default);
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.info);
 		assert(!sent, "event should not be sent");
 	});
 
@@ -257,10 +257,10 @@ describe("ChildLogger", () => {
 				}
 				sent = true;
 			},
-			minLogLevel: LogLevel.default,
+			minLogLevel: LogLevel.essential,
 		};
 		const multiSinkLogger = createMultiSinkLogger({
-			loggers: [logger1, new MockLogger(LogLevel.error)],
+			loggers: [logger1, new MockLogger(LogLevel.essential)],
 		});
 		const childLogger1 = createChildLogger({
 			logger: multiSinkLogger,
@@ -269,7 +269,10 @@ describe("ChildLogger", () => {
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
 		assert(!sent, "verbose event should not be sent");
 
-		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.default);
-		assert(sent, "verbose event should be sent");
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.info);
+		assert(!sent, "info event should not be sent");
+
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
+		assert(sent, "essential event should be sent");
 	});
 });
