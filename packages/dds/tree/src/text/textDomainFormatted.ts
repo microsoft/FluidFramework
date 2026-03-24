@@ -430,13 +430,16 @@ export namespace FormattedTextAsTree {
 	 * Unit in the string representing a new line character with line formatting.
 	 * @remarks
 	 * This aligns with how Quill represents line formatting.
-	 * Note that not all new lines will use this,
-	 * but only ones using this can have line specific formatting.
+	 * Quill formats line attributes (headers, list, blockquote, etc... ) on the newline character
+	 * and only lines using this atom can have line-specific formatting.
+	 * The optional indent level mirrors Quill's indent attribute,
+	 * which is applies to the line before the line break.
+	 * Any tagged line can be indented independently.
 	 * @internal
 	 */
 	export class StringLineAtom extends sf.object("StringLineAtom", {
 		tag: LineTag.schema,
-		indent: sf.optional(SchemaFactory.number),
+		indent: SchemaFactory.number,
 	}) {
 		public readonly content = "\n";
 	}

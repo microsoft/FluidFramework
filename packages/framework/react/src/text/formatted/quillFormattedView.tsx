@@ -229,12 +229,12 @@ export function parseLineTag(
 /** Create a StringAtom containing a StringLineAtom with the given line tag. */
 function createLineAtom(
 	lineTag: FormattedTextAsTree.LineTag,
-	indent?: number,
+	indent: number = 0,
 ): FormattedTextAsTree.StringAtom {
 	return new FormattedTextAsTree.StringAtom({
 		content: new FormattedTextAsTree.StringLineAtom({
 			tag: lineTag,
-			...(indent === undefined ? {} : { indent }),
+			indent,
 		}),
 		format: new FormattedTextAsTree.CharacterFormat(quillAttributesToFormat()),
 	});
@@ -483,12 +483,16 @@ const FormattedTextEditorView = forwardRef<
 							} else if (
 								lineTag === undefined &&
 								"indent" in op.attributes &&
+								!("header" in op.attributes) &&
+								!("list" in op.attributes) &&
+								!("blockquote" in op.attributes) &&
+								!("code-block" in op.attributes) &&
 								content[utf16Pos] === "\n"
 							) {
 								// Indent only change on an existing line atom
 								const lineAtom = root.charactersWithFormatting()[cpPos]?.content;
 								if (lineAtom instanceof FormattedTextAsTree.StringLineAtom) {
-									lineAtom.indent = indent;
+									lineAtom.indent = indent ?? 0;
 								}
 								// Case 4: clearing line formatting. Deletes StringLineAtom and inserts a plain
 								// StringTextAtom("\n") in its place.

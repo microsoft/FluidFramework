@@ -126,6 +126,7 @@ describe("textDomainFormatted", () => {
 			new FormattedTextAsTree.StringAtom({
 				content: new FormattedTextAsTree.StringLineAtom({
 					tag: FormattedTextAsTree.LineTag("h5"),
+					indent: 0,
 				}),
 				format: new FormattedTextAsTree.CharacterFormat({
 					bold: false,

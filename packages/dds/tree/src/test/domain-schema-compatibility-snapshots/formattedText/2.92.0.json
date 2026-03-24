@@ -159,7 +159,7 @@
 						"storedKey": "tag"
 					},
 					"indent": {
-						"kind": 0,
+						"kind": 1,
 						"simpleAllowedTypes": {
 							"com.fluidframework.leaf.number": {
 								"isStaged": false
