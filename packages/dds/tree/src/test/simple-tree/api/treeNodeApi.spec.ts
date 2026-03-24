@@ -2737,7 +2737,7 @@ describe("treeNodeApi", () => {
 			assert.equal(eventCount, 1);
 		});
 
-		// TODO: Once delta event support for unhydrated nodes is implemented, convert this
+		// TODO AB#63261: Once delta event support for unhydrated nodes is implemented, convert this
 		// describe block to describeWithHydration to cover both hydrated and unhydrated paths.
 		describe(`'nodeChanged' delta payload for array operations`, () => {
 			// These tests verify the concrete ArrayNodeDeltaOp values emitted for specific

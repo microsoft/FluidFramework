@@ -67,5 +67,5 @@ TreeAlpha.on(node as TreeNode, "nodeChanged", (data) => {
 ```
 
 > **Note:** The `delta` value may be `undefined` in two cases:
-> - The node was created locally and has not yet been inserted into a document tree (a known temporary limitation).
+> - The node was created locally and has not yet been inserted into a document tree (a known temporary limitation, tracked in AB#63261).
 > - The document was updated in a way that required multiple internal change passes in a single operation (for example, a data change combined with a schema upgrade).
