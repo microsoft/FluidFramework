@@ -49,6 +49,8 @@ All custom metadata is optional and is primarily intended to help with release n
 - **`__includeInReleaseNotes`** — set to `false` to hide an entry from the release notes entirely.
 - **`__highlight`** — set to `true` to highlight an entry within its section, re-ordering it to appear first. Otherwise entries are sorted by commit date.
 
+The TypeScript type for this metadata is `FluidCustomChangesetMetadata` in `build-tools/packages/build-cli/src/library/changesets.ts`.
+
 > [!IMPORTANT]
 > Because standard changeset tools don't support custom metadata, our tools such as `flub generate:changelog` strip it before invoking commands like `changeset version`. If not removed, it ends up in changelogs and messes with formatting.
 
