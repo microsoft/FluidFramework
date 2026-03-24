@@ -60,14 +60,22 @@ import {
 // number of nodes in test for wide trees
 const nodesCountWide = [
 	[1, BenchmarkType.Measurement],
-	[100, BenchmarkType.Perspective],
-	[500, BenchmarkType.Measurement],
+	...(isInPerformanceTestingMode
+		? [
+				[100, BenchmarkType.Perspective],
+				[500, BenchmarkType.Measurement],
+			]
+		: []),
 ];
 // number of nodes in test for deep trees
 const nodesCountDeep = [
 	[1, BenchmarkType.Measurement],
-	[10, BenchmarkType.Perspective],
-	[100, BenchmarkType.Measurement],
+	...(isInPerformanceTestingMode
+		? [
+				[10, BenchmarkType.Perspective],
+				[100, BenchmarkType.Measurement],
+			]
+		: []),
 ];
 
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
