@@ -92,6 +92,7 @@ interface OpWeights {
 	remove: number;
 	intraMove: number;
 	crossMove: number;
+	synchronize: number;
 }
 
 const defaultOpWeights: OpWeights = {
@@ -99,6 +100,7 @@ const defaultOpWeights: OpWeights = {
 	remove: 2,
 	intraMove: 3,
 	crossMove: 3,
+	synchronize: 1,
 };
 
 /**
@@ -118,11 +120,19 @@ function applyDeltaToArray(
 	for (const op of delta) {
 		switch (op.type) {
 			case "retain": {
+				assert(
+					srcIdx + op.count <= shadow.length,
+					`retain count ${op.count} exceeds remaining source length ${shadow.length - srcIdx}`,
+				);
 				result.push(...shadow.slice(srcIdx, srcIdx + op.count));
 				srcIdx += op.count;
 				break;
 			}
 			case "remove": {
+				assert(
+					srcIdx + op.count <= shadow.length,
+					`remove count ${op.count} exceeds remaining source length ${shadow.length - srcIdx}`,
+				);
 				srcIdx += op.count;
 				break;
 			}
@@ -132,6 +142,10 @@ function applyDeltaToArray(
 				// than the source position (`srcIdx`) because the new elements land at the
 				// output cursor, not at any position in the original array.
 				const outIdx = result.length;
+				assert(
+					outIdx + op.count <= after.length,
+					`insert count ${op.count} exceeds remaining after length ${after.length - outIdx}`,
+				);
 				result.push(...after.slice(outIdx, outIdx + op.count));
 				break;
 			}
@@ -142,6 +156,7 @@ function applyDeltaToArray(
 		}
 	}
 	result.push(...shadow.slice(srcIdx)); // implicit trailing retain
+	assert.equal(result.length, after.length, "result length does not match post-op tree length");
 	return result;
 }
 
@@ -270,6 +285,9 @@ function makeOpGenerator(weights: OpWeights = defaultOpWeights) {
 				return root.arr1.length > 0 || root.arr2.length > 0;
 			},
 		],
+		// synchronize: flush all pending messages so remote edits are applied and
+		// per-client shadows are verified against the live tree.
+		[(): Op => ({ type: "synchronize" }), weights.synchronize],
 	]);
 }
 
