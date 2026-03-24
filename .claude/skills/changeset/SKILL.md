@@ -124,16 +124,20 @@ Description of the change
 
 ## Writing Guidelines
 
-See [references/writing-guidelines.md](references/writing-guidelines.md) for detailed
-content and formatting guidelines.
+See [.changeset/README.md](../../.changeset/README.md) for detailed formatting rules and
+[references/writing-guidelines.md](references/writing-guidelines.md) for examples.
 
 Key rules:
 - First line after frontmatter is the **summary** (one concise sentence, no period)
 - Write in present tense ("Add support for...") or present perfect ("Has been updated to...")
 - Mentally prefix with "In this release" to verify readability
 - No package names in the summary (they appear in metadata)
-- No code formatting in headings
-- Minimum: summary line (body paragraph optional but recommended)
+- No code formatting (backticks) in the summary line
+- Body paragraph is optional but recommended
+- Wrap lines at sentence boundaries for better git diffs
+- For features, breaking changes, and deprecations, include a **code example** showing
+  usage or migration. Use `// ...` to elide boilerplate and focus on the essential change.
+- Include links to relevant API docs on fluidframework.com where possible
 
 ## Workflow
 
