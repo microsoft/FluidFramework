@@ -364,9 +364,11 @@
 			"fast-xml-parser: overridden to ^4.5.4 to resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow). Stays within @langchain/anthropic's declared ^4.4.1 range.",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
-			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major."
+			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major.",
+			"@azure/msal-browser: overridden to ^3.30.0 to resolve a known security vulnerability in 3.27.0."
 		],
 		"overrides": {
+			"@azure/msal-browser@>=3 <4": "^3.30.0",
 			"@types/node": "~20.19.30",
 			"diff@>=3 <4": "^4.0.4",
 			"diff@>=5 <6": "^5.2.2",

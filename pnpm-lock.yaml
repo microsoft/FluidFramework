@@ -20,6 +20,7 @@ catalogs:
       version: 0.64.0
 
 overrides:
+  '@azure/msal-browser@>=3 <4': ^3.30.0
   '@types/node': ~20.19.30
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
@@ -4767,8 +4768,8 @@ importers:
   examples/service-clients/odsp-client/shared-tree-demo:
     dependencies:
       '@azure/msal-browser':
-        specifier: ^3.25.0
-        version: 3.27.0
+        specifier: ^3.30.0
+        version: 3.30.0
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/odsp-client
@@ -17160,12 +17161,16 @@ packages:
     resolution: {integrity: sha512-4IXXzcCdLdlXuCG+8UKEwLA1T1NHqUfanhXYHiQTn+6sfWCZXduqbtXDGceg3Ce5QxTGo7EqmbV6Bi+aqKuClQ==}
     engines: {node: '>=18.0.0'}
 
-  '@azure/msal-browser@3.27.0':
-    resolution: {integrity: sha512-+b4ZKSD8+vslCtVRVetkegEhOFMLP3rxDWJY212ct+2r6jVg6OSQKc1Qz3kCoXo0FgwaXkb+76TMZfpHp8QtgA==}
+  '@azure/msal-browser@3.30.0':
+    resolution: {integrity: sha512-I0XlIGVdM4E9kYP5eTjgW8fgATdzwxJvQ6bm2PNiHaZhEuUz47NYw1xHthC9R+lXz4i9zbShS0VdLyxd7n0GGA==}
     engines: {node: '>=0.8.0'}
 
   '@azure/msal-common@14.16.0':
     resolution: {integrity: sha512-1KOZj9IpcDSwpNiQNjt0jDYZpQvNZay7QAEi/5DLubay40iGYtLzya/jbjRPLyOTZhEKyL1MzPuw2HqBCjceYA==}
+    engines: {node: '>=0.8.0'}
+
+  '@azure/msal-common@14.16.1':
+    resolution: {integrity: sha512-nyxsA6NA4SVKh5YyRpbSXiMr7oQbwark7JU9LMeg6tJYTSPyAGkdx61wPT4gyxZfxlSxMMEyAsWaubBlNyIa1w==}
     engines: {node: '>=0.8.0'}
 
   '@azure/msal-node-extensions@1.5.0':
@@ -28347,7 +28352,7 @@ snapshots:
       '@azure/core-tracing': 1.2.0
       '@azure/core-util': 1.11.0
       '@azure/logger': 1.1.4
-      '@azure/msal-browser': 3.27.0
+      '@azure/msal-browser': 3.30.0
       '@azure/msal-node': 2.16.2
       events: 3.3.0
       jws: 4.0.1
@@ -28361,11 +28366,13 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@azure/msal-browser@3.27.0':
+  '@azure/msal-browser@3.30.0':
     dependencies:
-      '@azure/msal-common': 14.16.0
+      '@azure/msal-common': 14.16.1
 
   '@azure/msal-common@14.16.0': {}
+
+  '@azure/msal-common@14.16.1': {}
 
   '@azure/msal-node-extensions@1.5.0':
     dependencies:
