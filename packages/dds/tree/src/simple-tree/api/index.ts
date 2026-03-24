@@ -150,7 +150,12 @@ export {
 	exportConcise,
 	importConcise,
 	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
 	type NodeChangedData,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";

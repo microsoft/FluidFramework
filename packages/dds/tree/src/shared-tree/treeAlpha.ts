@@ -614,7 +614,9 @@ class NodeSubscription {
 			if (this.keys === "deep") {
 				return;
 			}
-			if (this.keys === undefined || data.changedProperties === undefined) {
+			const changedProperties =
+				"changedProperties" in data ? data.changedProperties : undefined;
+			if (this.keys === undefined || changedProperties === undefined) {
 				this.onInvalidation();
 			} else {
 				let keyMap: ReadonlyMap<FieldKey, string> | undefined;
@@ -627,7 +629,7 @@ class NodeSubscription {
 					// TODO:Performance: doing everything at the flex tree layer could avoid this translation
 					const key = keyMap?.get(flexKey) ?? flexKey;
 
-					if (data.changedProperties.has(key)) {
+					if (changedProperties.has(key)) {
 						this.onInvalidation();
 						return;
 					}

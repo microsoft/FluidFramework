@@ -132,7 +132,12 @@ export {
 	type InternalTreeNode,
 	type WithType,
 	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
 	type NodeChangedData,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
 	type SchemaUpgrade,
 	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.

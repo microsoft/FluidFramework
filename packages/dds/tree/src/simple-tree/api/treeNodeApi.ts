@@ -40,19 +40,46 @@ import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
- * A single operation in an array node change delta, used to efficiently sync an external
- * representation of an array (e.g. a text editor or virtual list) with tree changes, without
+ * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
+ * Represents elements that were not added or removed (though they may have nested changes).
+ * @sealed @beta
+ */
+export interface ArrayNodeRetainOp {
+	readonly type: "retain";
+	readonly count: number;
+}
+
+/**
+ * An `"insert"` op in an {@link ArrayNodeDeltaOp} sequence.
+ * Represents elements added to the array.
+ * Read the new element values from the current tree at the positions described by this op.
+ * @sealed @beta
+ */
+export interface ArrayNodeInsertOp {
+	readonly type: "insert";
+	readonly count: number;
+}
+
+/**
+ * A `"remove"` op in an {@link ArrayNodeDeltaOp} sequence.
+ * Represents elements removed from the array.
+ * @sealed @beta
+ */
+export interface ArrayNodeRemoveOp {
+	readonly type: "remove";
+	readonly count: number;
+}
+
+/**
+ * A single operation in an array node change delta. Used to efficiently sync an external
+ * representation of an array (e.g. a text editor or virtual list) with tree changes without
  * needing to snapshot the old state or diff the entire array. Each op describes a contiguous run
- * of positions in the array before the change; for inserts, read the new element values from the
+ * of positions in the array before the change. For inserts, read the new element values from the
  * current tree at those positions.
  *
  * @remarks
- * - `"retain"` — elements that were not added or removed (may have nested changes).
- * - `"insert"` — elements added to the array.
- * - `"remove"` — elements removed from the array.
- *
- * Moves are represented as remove + insert.
- * There is no dedicated `"move"` op. When an element is moved within the same array it appears
+ * There is no dedicated `"move"` op. Moves are represented as `"remove"` + `"insert"`.
+ * When an element is moved within the same array it appears
  * as a `"remove"` at the source position followed by an `"insert"` at the destination position.
  * When an element is moved across two different arrays, the source array's delta contains a
  * `"remove"` and the destination array's delta contains an `"insert"` — they cannot be
@@ -60,10 +87,7 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
  *
  * @sealed @beta
  */
-export type ArrayNodeDeltaOp =
-	| { readonly type: "retain"; readonly count: number }
-	| { readonly type: "insert"; readonly count: number }
-	| { readonly type: "remove"; readonly count: number };
+export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

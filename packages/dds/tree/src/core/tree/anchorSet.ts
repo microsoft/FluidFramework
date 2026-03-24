@@ -738,7 +738,7 @@ export class AnchorSet implements AnchorLocator {
 
 			/**
 			 * Field marks delivered via {@link DeltaVisitor.fieldMarks}, keyed by (PathNode, FieldKey).
-			 * Populated during the first (detach) pass and consumed during "free" when emitting events.
+			 * @remarks Populated during the first (detach) pass and consumed during "free" when emitting events.
 			 */
 			storedFieldMarks: new Map<PathNode, Map<FieldKey, readonly Delta.Mark[]>>(),
 

@@ -2619,11 +2619,17 @@ describe("treeNodeApi", () => {
 				return data.changedProperties;
 			}
 
+			function outDelta(data: { delta: readonly ArrayNodeDeltaOp[] | undefined }) {
+				return data.delta;
+			}
+
 			// Strong types work
 			TreeBeta.on(ab, "nodeChanged", out<"A" | "B">);
 			TreeBeta.on(ab, "nodeChanged", out<string>);
-			// Weakly typed (general) callback works
+			// Weakly typed (optional changedProperties) callback works for typed object/map nodes
 			TreeBeta.on(ab, "nodeChanged", outOpt<string>);
+			// Untyped TreeNode gets the full union; a callback must accept both variants
+			// @ts-expect-error outOpt only accepts NodeChangedDataProperties, not the full union
 			TreeBeta.on(ab as TreeNode, "nodeChanged", outOpt<string>);
 
 			// @ts-expect-error Check these test utils work
@@ -2640,9 +2646,12 @@ describe("treeNodeApi", () => {
 			// @ts-expect-error Check map is included
 			TreeBeta.on(oneOf(ab, map1), "nodeChanged", out<"A" | "B">);
 
-			// @ts-expect-error Array makes changedProperties optional
+			// Array nodes provide NodeChangedDataDelta (with delta field), not changedProperties
+			// @ts-expect-error Array provides NodeChangedDataDelta, not changedProperties
 			TreeBeta.on(array, "nodeChanged", out<string>);
+			// @ts-expect-error outOpt does not accept NodeChangedDataDelta
 			TreeBeta.on(array, "nodeChanged", outOpt<string>);
+			TreeBeta.on(array, "nodeChanged", outDelta);
 		});
 
 		it(`'nodeChanged' strong typing example`, () => {
@@ -2700,7 +2709,7 @@ describe("treeNodeApi", () => {
 			assert.deepEqual(eventLog, [new Set(["key1", "key2", "key3"])]);
 		});
 
-		it(`'nodeChanged' does not include the names of changed properties (arrayNode)`, () => {
+		it(`'nodeChanged' does not include changedProperties for arrayNode (provides delta instead)`, () => {
 			const sb = new SchemaFactory("test");
 			class TestNode extends sb.array("root", [sb.number]) {}
 
@@ -2708,8 +2717,13 @@ describe("treeNodeApi", () => {
 			view.initialize([1, 2]);
 			const root = view.root;
 
-			const eventLog: (ReadonlySet<string> | undefined)[] = [];
-			TreeBeta.on(root, "nodeChanged", (data) => eventLog.push(data.changedProperties));
+			let eventCount = 0;
+			TreeBeta.on(root, "nodeChanged", (data) => {
+				eventCount++;
+				// Array nodes provide delta, not changedProperties
+				assert.equal("changedProperties" in data, false);
+				assert.equal("delta" in data, true);
+			});
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
@@ -2721,7 +2735,7 @@ describe("treeNodeApi", () => {
 
 			view.checkout.merge(forkCheckout);
 
-			assert.deepEqual(eventLog, [undefined]);
+			assert.equal(eventCount, 1);
 		});
 
 		describe(`'nodeChanged' delta payload for array operations`, () => {

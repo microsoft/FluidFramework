@@ -87,16 +87,31 @@ Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
 // @beta @sealed
-export type ArrayNodeDeltaOp = {
-    readonly type: "retain";
+export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
+
+// @beta @sealed
+export interface ArrayNodeInsertOp {
+    // (undocumented)
     readonly count: number;
-} | {
+    // (undocumented)
     readonly type: "insert";
+}
+
+// @beta @sealed
+export interface ArrayNodeRemoveOp {
+    // (undocumented)
     readonly count: number;
-} | {
+    // (undocumented)
     readonly type: "remove";
+}
+
+// @beta @sealed
+export interface ArrayNodeRetainOp {
+    // (undocumented)
     readonly count: number;
-};
+    // (undocumented)
+    readonly type: "retain";
+}
 
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
