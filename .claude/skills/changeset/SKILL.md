@@ -122,13 +122,15 @@ Description of the change
 See [.changeset/README.md](../../.changeset/README.md) for detailed formatting rules and
 [references/writing-guidelines.md](references/writing-guidelines.md) for examples.
 
-Key rules:
-- First line after frontmatter is the **summary** (one concise sentence, no period)
-- Write in present tense ("Add support for...") or present perfect ("Has been updated to...")
+Summary line (first line after frontmatter):
+- One concise sentence, no trailing period
+- Present tense ("Add support for...") or present perfect ("Has been updated to...")
+- No package names (they appear in metadata)
+- No code formatting (backticks)
 - Mentally prefix with "In this release" to verify readability
-- No package names in the summary (they appear in metadata)
-- No code formatting (backticks) in the summary line
-- Body paragraph is optional but recommended
+
+Body content:
+- Optional but recommended
 - Wrap lines at sentence boundaries for better git diffs
 - For features, breaking changes, and deprecations, include a **code example** showing
   usage or migration. Use `// ...` to elide boilerplate and focus on the essential change.
