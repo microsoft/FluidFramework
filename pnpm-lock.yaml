@@ -11814,13 +11814,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+        version: 0.64.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.63.0(@types/node@20.19.30)
+        version: 0.64.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
