@@ -77,7 +77,7 @@ describe("sharedTreeChangeCodec", () => {
 			return { version: format, schema: codec.encodedSchema };
 		});
 		// Capture the portion of the schema validated at the root.
-		// Currently this does not included the schema for the modular change which is validated separately in the modular change codec,
+		// Currently this does not include the schema for the modular change which is validated separately in the modular change codec,
 		// but it does include the schema for the inner change wrapper.
 		takeJsonSnapshot(schema);
 	});
