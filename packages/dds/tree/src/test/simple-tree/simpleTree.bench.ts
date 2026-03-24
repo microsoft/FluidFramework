@@ -24,7 +24,7 @@ import { hydrateNode } from "./utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
-	[1, BenchmarkType.Measurement],
+	[2, BenchmarkType.Measurement],
 	...(isInPerformanceTestingMode
 		? [
 				[100, BenchmarkType.Perspective],
