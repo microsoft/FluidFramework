@@ -156,7 +156,11 @@ function applyDeltaToArray(
 		}
 	}
 	result.push(...shadow.slice(srcIdx)); // implicit trailing retain
-	assert.equal(result.length, after.length, "result length does not match post-op tree length");
+	assert.equal(
+		result.length,
+		after.length,
+		"result length does not match post-op tree length",
+	);
 	return result;
 }
 
