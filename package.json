@@ -365,7 +365,7 @@
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
 			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major.",
-		"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support)."
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support)."
 		],
 		"overrides": {
 			"@types/node": "~20.19.30",
