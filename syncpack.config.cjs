@@ -243,6 +243,9 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
+				// Can be re-enabled once the package is using a proper feed dependency instead of a file:
+				// reference to the local package.
+				// "@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
 			],
