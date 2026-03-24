@@ -22,6 +22,9 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/promise-function-async": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
+
+			// Disabled because the rule is crashing on this package - AB#51780
+			"@typescript-eslint/unbound-method": "off",
 			"unicorn/no-array-for-each": "off",
 			"unicorn/no-null": "off",
 			"unicorn/prefer-date-now": "off",

@@ -23,6 +23,9 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"no-case-declarations": "off",
+
+			// Disabled because the rule is crashing on this package - AB#51780
+			"@typescript-eslint/unbound-method": "off",
 			"require-atomic-updates": "off",
 			"unicorn/explicit-length-check": "off",
 			"unicorn/new-for-builtins": "off",

@@ -18,8 +18,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-deprecated": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+			"import-x/no-deprecated": "off", // This package tests deprecated DDSes like SparseMatrix
 			"import-x/no-nodejs-modules": "off",
 			"jsdoc/require-description": "off",
 			"unicorn/catch-error-name": "off",

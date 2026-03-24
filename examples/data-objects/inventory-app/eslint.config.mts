@@ -13,15 +13,17 @@ const config: Linter.Config[] = [
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
+			// TODO: AB#18875 - Re-enable react/no-deprecated once we replace uses of the deprecated ReactDOM.render()
+			// with the new React 18 createRoot().
 			"react/no-deprecated": "off",
 			"react-hooks/exhaustive-deps": ["error"],
 			"react-hooks/rules-of-hooks": "error",
 			"react/jsx-key": [
 				"error",
 				{
-					"checkFragmentShorthand": true,
-					"checkKeyMustBeforeSpread": true,
-					"warnOnDuplicates": true,
+					checkFragmentShorthand: true,
+					checkKeyMustBeforeSpread: true,
+					warnOnDuplicates: true,
 				},
 			],
 			"react/jsx-boolean-value": ["error", "always"],
@@ -30,15 +32,18 @@ const config: Linter.Config[] = [
 			"react/no-unstable-nested-components": [
 				"error",
 				{
-					"allowAsProps": true,
+					allowAsProps: true,
 				},
 			],
 			"react/self-closing-comp": "error",
 			"react/jsx-no-target-blank": "error",
+			// This is useful for catching potential performance issues, but also makes the code more verbose.
+			// "react/jsx-no-bind": "error",
+			// Avoid using fragments when `null` could be used instead
 			"react/jsx-no-useless-fragment": [
 				"error",
 				{
-					"allowExpressions": true,
+					allowExpressions: true,
 				},
 			],
 			"react/prop-types": "off",

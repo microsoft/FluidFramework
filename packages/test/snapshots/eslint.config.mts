@@ -14,7 +14,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-nodejs-modules": "off",
 			"unicorn/catch-error-name": "off",

@@ -24,16 +24,21 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/no-use-before-define": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [...importInternalModulesAllowed, "*/*.js"],
+					// package hasn't converted to barrel files (which may not be a bad thing)
+					allow: [...importInternalModulesAllowed, "*/*.js"],
 				},
 			],
 			"no-bitwise": "off",
 			"no-case-declarations": "off",
+
+			// Disabled because the rule is crashing on this package - AB#51780
+			"@typescript-eslint/unbound-method": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/error-message": "off",
 			"unicorn/no-array-for-each": "off",
@@ -52,13 +57,15 @@ const config: Linter.Config[] = [
 			"unicorn/switch-case-braces": "off",
 		},
 	},
+
+	// This should not be needed. For some reason no overrides from "../../eslint.config.data.mts" come thru.
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [...importInternalModulesAllowedForTest],
+					allow: [...importInternalModulesAllowedForTest],
 				},
 			],
 		},

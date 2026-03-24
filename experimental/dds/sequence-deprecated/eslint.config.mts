@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+			"import-x/no-deprecated": "off", // This package uses deprecated APIs by design.
 			"@typescript-eslint/consistent-type-exports": "off",
 			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
@@ -17,7 +18,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-deprecated": "off",
 			"jsdoc/require-description": "off",
 			"unicorn/no-lonely-if": "off",
 			"unicorn/no-new-array": "off",

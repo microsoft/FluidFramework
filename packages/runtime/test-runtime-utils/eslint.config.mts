@@ -28,6 +28,13 @@ const config: Linter.Config[] = [
 			"unicorn/switch-case-braces": "off",
 		},
 	},
+	// The assertion shortcode map file is auto-generated, so disable some rules.
+	{
+		files: ["src/assertionShortCodesMap.ts"],
+		rules: {
+			"@typescript-eslint/comma-dangle": "off",
+		},
+	},
 	{
 		files: ["src/test/**"],
 		rules: {

@@ -11,6 +11,9 @@ const config: Linter.Config[] = [
 	...recommended,
 	...sharedConfig,
 	{
+		ignores: ["*.spec.ts"],
+	},
+	{
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/consistent-type-imports": "off",
@@ -28,10 +31,6 @@ const config: Linter.Config[] = [
 			"unicorn/prefer-spread": "off",
 			"unicorn/switch-case-braces": "off",
 		},
-	},
-	// Migrated from .eslintignore
-	{
-		ignores: ["*.spec.ts"],
 	},
 ];
 
