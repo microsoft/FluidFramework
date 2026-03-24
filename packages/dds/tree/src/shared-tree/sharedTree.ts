@@ -60,7 +60,6 @@ import {
 	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
-	makeSchemaCodec,
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
@@ -228,7 +227,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options,
 		);
-		const schemaCodec = makeSchemaCodec(options);
+		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
 			{

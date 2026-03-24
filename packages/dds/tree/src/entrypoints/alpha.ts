@@ -150,6 +150,7 @@ export {
 	// #region @alpha APIs
 	AllowedTypesFullUnsafe, 
 	ArrayNodeCustomizableSchema, 
+	ArrayNodeCustomizableSchemaAlpha, 
 	ArrayNodeCustomizableSchemaUnsafe, 
 	ArrayNodePojoEmulationSchema, 
 	ArrayNodeSchema, 
@@ -251,6 +252,7 @@ export {
 	TransactionResultFailed, 
 	TransactionResultSuccess, 
 	TreeAlpha, 
+	TreeArrayNodeAlpha, 
 	TreeBranchAlpha, 
 	TreeBranchEvents, 
 	TreeCompressionStrategy, 
