@@ -14,7 +14,7 @@ Gathers data from multiple MCP servers in parallel and presents a consolidated s
 
 Before gathering any data, use the `ask_user` tool:
 
-**Question:** "Would you like me to generate a shift status dashboard? This will query IcM, ADO, Kusto, Teams, and WorkIQ and may trigger auth prompts."
+**Question:** "Would you like me to generate a shift status dashboard? This will query IcM, ADO, Kusto, Teams, and WorkIQ and may trigger auth prompts. Make sure you're connected to **VPN** first — it's required for Kusto and other internal services."
 
 **Choices:** "Yes", "Yes, and write it to a file", "No"
 
