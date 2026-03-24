@@ -81,7 +81,7 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.sendTelemetryEvent(event, LogLevel.essential);
+				logger.sendTelemetryEvent(event, undefined, LogLevel.essential);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
@@ -97,7 +97,7 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.sendPerformanceEvent(event, LogLevel.essential);
+				logger.sendPerformanceEvent(event, undefined, LogLevel.essential);
 			}
 		},
 		isSamplingDisabled,

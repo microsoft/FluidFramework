@@ -64,7 +64,6 @@ export const toRedirectTable = (
 			count: blobManagerLoadInfo.ids?.length ?? 0,
 			redirectTable: blobManagerLoadInfo.redirectTable?.length,
 		},
-		undefined,
 		LogLevel.info,
 	);
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);

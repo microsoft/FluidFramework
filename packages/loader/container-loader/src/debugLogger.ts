@@ -8,6 +8,7 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	type ITelemetryLoggerExt,
@@ -73,9 +74,9 @@ export class DebugLogger implements ITelemetryBaseLogger {
 	 * Send an event to debug loggers
 	 *
 	 * @param event - the event to send
-	 * PR COMMENT: Should this be updated to also use logLevel?
+	 * @param logLevel - the log level of the event
 	 */
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		const newEvent: ITelemetryBaseProperties = { ...event };
 		const isError = newEvent.category === "error";
 		let logger = isError ? this.debugErr : this.debug;

@@ -2100,6 +2100,7 @@ export class ContainerRuntime
 				initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 				minVersionForCollab: this.minVersionForCollab,
 			},
+			undefined,
 			LogLevel.essential,
 		);
 
