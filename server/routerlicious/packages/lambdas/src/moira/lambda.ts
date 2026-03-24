@@ -17,7 +17,6 @@ import {
 	getLumberBaseProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import axios from "axios";
 import shajs from "sha.js";
 
 /**
@@ -170,13 +169,17 @@ export class MoiraLambda implements IPartitionLambda {
 
 	private async createBranch(branchGuid: string): Promise<string> {
 		const rootCommitGuid = this.createDerivedGuid(branchGuid, "root");
-		const branchCreationResponse = await axios.post(
+		const branchCreationResponse = await fetch(
 			`${this.serviceConfiguration.moira.endpoint}/branch`,
 			{
-				guid: branchGuid,
-				rootCommitGuid,
-				meta: {},
-				created: 0,
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					guid: branchGuid,
+					rootCommitGuid,
+					meta: {},
+					created: 0,
+				}),
 			},
 		);
 
@@ -185,7 +188,7 @@ export class MoiraLambda implements IPartitionLambda {
 			[CommonProperties.statusCode]: branchCreationResponse.status,
 		};
 
-		if (branchCreationResponse.status === 200) {
+		if (branchCreationResponse.ok) {
 			const logMessage = `Branch with guid: ${branchGuid} created`;
 			this.context.log?.info(logMessage);
 			if (this.serviceConfiguration.enableLumberjack) {
@@ -220,12 +223,16 @@ export class MoiraLambda implements IPartitionLambda {
 					minimumSequenceNumber: message.operation.minimumSequenceNumber,
 				},
 			};
-			const commitCreationResponse = await axios.post(
+			const commitCreationResponse = await fetch(
 				`${this.serviceConfiguration.moira.endpoint}/branch/${branchGuid}/commit`,
 				{
-					...commitData,
-					changeSet: JSON.stringify(opData.changeSet),
-					rebase: true,
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						...commitData,
+						changeSet: JSON.stringify(opData.changeSet),
+						rebase: true,
+					}),
 				},
 			);
 
@@ -234,7 +241,7 @@ export class MoiraLambda implements IPartitionLambda {
 				[CommonProperties.statusCode]: commitCreationResponse.status,
 			};
 
-			if (commitCreationResponse.status === 200) {
+			if (commitCreationResponse.ok) {
 				const logMessage = `Commit created ${JSON.stringify(commitData)}`;
 				this.context.log?.info(logMessage);
 				if (this.serviceConfiguration.enableLumberjack) {

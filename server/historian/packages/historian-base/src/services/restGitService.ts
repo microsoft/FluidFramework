@@ -23,7 +23,7 @@ import {
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
-import type { RawAxiosRequestHeaders } from "axios";
+import type { RawRequestHeaders } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 
@@ -70,7 +70,7 @@ export class RestGitService {
 		private readonly maxCacheableSummarySize?: number,
 		private readonly simplifiedCustomData?: string,
 	) {
-		const defaultHeaders: RawAxiosRequestHeaders =
+		const defaultHeaders: RawRequestHeaders =
 			storageName !== undefined
 				? {
 						"User-Agent": userAgent,
