@@ -91,7 +91,8 @@ modified file's package. Ask: "Would a user of this package care about this chan
 
 - `@fluidframework/*` — Main public packages
 - `@fluid-experimental/*` — Experimental packages
-- `fluid-framework` — The umbrella package (reexports most of `@fluidframework/tree` and others)
+- `fluid-framework` — The umbrella package (reexports most of `@fluidframework/tree`, `@fluidframework/map`
+and `@fluidframework/fluid-static`)
 
 ### `fluid-framework` Reexports
 
@@ -99,6 +100,10 @@ The `fluid-framework` package reexports most of `@fluidframework/tree`'s public 
 When a change affects tree's public API surface, almost always include **both** packages
 in the changeset. This is one of the most common mistakes — forgetting to list
 `fluid-framework` alongside `@fluidframework/tree`.
+
+Other packages are re-exported by `fluid-framework` as well, including `@fluidframework/map`
+and `@fluidframework/fluid-static`. If the change affects the public API of any re-exported
+package, include both the original package and `fluid-framework` in the changeset.
 
 ### Exclude from changesets
 
