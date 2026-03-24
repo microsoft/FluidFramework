@@ -4,7 +4,6 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
@@ -20,10 +19,8 @@ import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
 	ModularChangeFormatVersion,
 	type ModularChangeset,
-	SchemaChangeFormatVersion,
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
-	getCodecTreeForSchemaChangeFormat,
 	makeSchemaChangeCodec,
 } from "../feature-libraries/index.js";
 import {
@@ -123,17 +120,13 @@ export const dependenciesForChangeFormat = new Map<
 
 export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
-	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const { modularChange } =
 		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
 	return {
 		name: "SharedTreeChange",
 		version,
-		children: [
-			getCodecTreeForModularChangeFormat(modularChange),
-			getCodecTreeForSchemaChangeFormat(SchemaChangeFormatVersion.v1, clientVersion),
-		],
+		children: [getCodecTreeForModularChangeFormat(modularChange)],
 	};
 }
 

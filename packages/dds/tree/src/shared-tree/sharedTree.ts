@@ -535,7 +535,7 @@ function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab
 	const change = changeFormatVersionForEditManager.lookup(
 		clientVersionToEditManagerFormatVersion(clientVersion),
 	);
-	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
+	const changeCodecTree = getCodecTreeForChangeFormat(change);
 	return getCodecTreeForEditManagerFormatWithChange(clientVersion, changeCodecTree);
 }
 
@@ -543,7 +543,7 @@ function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): C
 	const change = changeFormatVersionForMessage.lookup(
 		clientVersionToMessageFormatVersion(clientVersion),
 	);
-	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
+	const changeCodecTree = getCodecTreeForChangeFormat(change);
 	return getCodecTreeForMessageFormatWithChange(clientVersion, changeCodecTree);
 }
 

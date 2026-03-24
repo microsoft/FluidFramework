@@ -4,35 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
-import type { CodecTree, CodecWriteOptions, JsonCodecPart } from "../../codec/index.js";
-import { strictEnum, type Values } from "../../util/index.js";
+import type { CodecWriteOptions, JsonCodecPart } from "../../codec/index.js";
 import { schemaCodecBuilder } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
-
-/**
- * The format version for the schema change.
- * @remarks
- * The SchemaChangeFormat is not explicitly versioned in the data.
- */
-export const SchemaChangeFormatVersion = strictEnum("SchemaChangeFormatVersion", {
-	v1: 1,
-});
-export type SchemaChangeFormatVersion = Values<typeof SchemaChangeFormatVersion>;
-
-export function getCodecTreeForSchemaChangeFormat(
-	version: SchemaChangeFormatVersion,
-	clientVersion: MinimumVersionForCollab,
-): CodecTree {
-	return {
-		name: "SchemaChange",
-		version,
-		children: [schemaCodecBuilder.getCodecTree(clientVersion)],
-	};
-}
 
 /**
  * Creates a codec for schema changes.
