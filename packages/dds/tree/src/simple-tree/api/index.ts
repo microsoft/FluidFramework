@@ -149,16 +149,20 @@ export {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+} from "./treeBeta.js";
+export {
 	type ArrayNodeDeltaOp,
 	type ArrayNodeInsertOp,
 	type ArrayNodeRemoveOp,
 	type ArrayNodeRetainOp,
-	type NodeChangedData,
+	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
-	TreeBeta,
-	type TreeChangeEventsBeta,
-} from "./treeBeta.js";
+	type TreeChangeEventsAlpha,
+} from "./treeAlpha.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,

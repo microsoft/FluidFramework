@@ -38,71 +38,33 @@ import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
 import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { treeNodeApi, type ArrayNodeDeltaOp } from "./treeNodeApi.js";
-export type {
-	ArrayNodeDeltaOp,
-	ArrayNodeInsertOp,
-	ArrayNodeRemoveOp,
-	ArrayNodeRetainOp,
-} from "./treeNodeApi.js";
+import { treeNodeApi } from "./treeNodeApi.js";
 import { cursorFromVerbose } from "./verboseTree.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.
 
 /**
- * Data included for {@link TreeChangeEventsBeta.nodeChanged} when the node is an object, map, or record node.
+ * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
  * @sealed @beta
  */
-export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode> {
+export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	/**
-	 * Lists all the properties which changed on the node.
+	 * When the node changed is an object or Map node, this lists all the properties which changed.
 	 * @remarks
 	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
 	 *
-	 * The set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
+	 * Not present when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
+	 *
+	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
 	 */
-	readonly changedProperties: ReadonlySet<
-		// For Object nodes, strongly type with the property names from the schema:
+	readonly changedProperties?: ReadonlySet<
+		// For Object nodes, make changedProperties required and strongly typed with the property names from the schema:
 		TNode extends WithType<string, NodeKind.Object, infer TInfo>
 			? string & keyof TInfo
 			: string
 	>;
 }
-
-/**
- * Data included for {@link TreeChangeEventsBeta.nodeChanged} when the node is an array node.
- * @sealed @beta
- */
-export interface NodeChangedDataDelta {
-	/**
-	 * The sequential operations describing what changed in the array node.
-	 * @remarks
-	 * The value may be `undefined` in two cases:
-	 * - The array node is {@link Unhydrated} — unhydrated nodes are not visited by the delta
-	 * pipeline, so no field marks are available. This is a known temporary limitation and is
-	 * expected to be addressed in a future release.
-	 * - The array was modified across multiple batches within a single flush (e.g. due to an
-	 * interleaved schema change) and the marks from those batches could not be composed.
-	 *
-	 * See {@link ArrayNodeDeltaOp} for op semantics.
-	 */
-	readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
-}
-
-/**
- * Data included for {@link TreeChangeEventsBeta.nodeChanged}.
- * @remarks
- * This is a discriminated union — object, map, and record nodes provide {@link NodeChangedDataProperties},
- * while array nodes provide {@link NodeChangedDataDelta}.
- * @sealed @beta
- */
-export type NodeChangedData<TNode extends TreeNode = TreeNode> =
-	TNode extends WithType<string, NodeKind.Array>
-		? NodeChangedDataDelta
-		: TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
-			? NodeChangedDataProperties<TNode>
-			: NodeChangedDataProperties<TNode> | NodeChangedDataDelta;
 
 /**
  * Extensions to {@link TreeChangeEvents} which are not yet stable.
@@ -145,7 +107,13 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	 *
 	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
 	 */
-	nodeChanged: (data: NodeChangedData<TNode>) => void;
+	nodeChanged: (
+		data: NodeChangedData<TNode> &
+			// Make the properties of object, map, and record nodes required:
+			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
+				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
+				: unknown),
+	) => void;
 }
 
 /**

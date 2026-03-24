@@ -42,7 +42,7 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
 /**
  * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements that were not added or removed (though they may have nested changes).
- * @sealed @beta
+ * @sealed @alpha
  */
 export interface ArrayNodeRetainOp {
 	readonly type: "retain";
@@ -53,7 +53,7 @@ export interface ArrayNodeRetainOp {
  * An `"insert"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements added to the array.
  * Read the new element values from the current tree at the positions described by this op.
- * @sealed @beta
+ * @sealed @alpha
  */
 export interface ArrayNodeInsertOp {
 	readonly type: "insert";
@@ -63,7 +63,7 @@ export interface ArrayNodeInsertOp {
 /**
  * A `"remove"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements removed from the array.
- * @sealed @beta
+ * @sealed @alpha
  */
 export interface ArrayNodeRemoveOp {
 	readonly type: "remove";
@@ -85,7 +85,7 @@ export interface ArrayNodeRemoveOp {
  * `"remove"` and the destination array's delta contains an `"insert"` — they cannot be
  * correlated without additional bookkeeping on the caller's side.
  *
- * @sealed @beta
+ * @sealed @alpha
  */
 export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
 

@@ -86,33 +86,6 @@ type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boole
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
-// @beta @sealed
-export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
-
-// @beta @sealed
-export interface ArrayNodeInsertOp {
-    // (undocumented)
-    readonly count: number;
-    // (undocumented)
-    readonly type: "insert";
-}
-
-// @beta @sealed
-export interface ArrayNodeRemoveOp {
-    // (undocumented)
-    readonly count: number;
-    // (undocumented)
-    readonly type: "remove";
-}
-
-// @beta @sealed
-export interface ArrayNodeRetainOp {
-    // (undocumented)
-    readonly count: number;
-    // (undocumented)
-    readonly type: "retain";
-}
-
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
@@ -1039,7 +1012,6 @@ type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly changedProperties?: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
-    readonly delta?: readonly ArrayNodeDeltaOp[];
 }
 
 // @public
@@ -1691,9 +1663,7 @@ export interface TreeChangeEvents {
 
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
-    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : TNode extends WithType<string, NodeKind.Array> ? {
-        readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
-    } : unknown)) => void;
+    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
 }
 
 // @beta @input

@@ -75,6 +75,7 @@ import {
 	toInitialSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
+	type TreeChangeEventsAlpha,
 	type ConciseTree,
 	importConcise,
 	exportConcise,
@@ -231,6 +232,23 @@ export interface TreeIdentifierUtils {
  * @sealed @alpha
  */
 export interface TreeAlpha {
+	/**
+	 * Register an event listener on the given node.
+	 * @param node - The node whose events should be subscribed to.
+	 * @param eventName - Which event to subscribe to.
+	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
+	 * @returns A callback function which will deregister the event.
+	 * This callback should be called only once.
+	 * @remarks
+	 * Provides a richer `nodeChanged` event than {@link (TreeBeta:interface).on} — for array nodes the
+	 * event data includes a {@link NodeChangedDataDelta.delta | delta} payload.
+	 */
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void;
+
 	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
@@ -614,9 +632,7 @@ class NodeSubscription {
 			if (this.keys === "deep") {
 				return;
 			}
-			const changedProperties =
-				"changedProperties" in data ? data.changedProperties : undefined;
-			if (this.keys === undefined || changedProperties === undefined) {
+			if (this.keys === undefined || data.changedProperties === undefined) {
 				this.onInvalidation();
 			} else {
 				let keyMap: ReadonlyMap<FieldKey, string> | undefined;
@@ -629,7 +645,7 @@ class NodeSubscription {
 					// TODO:Performance: doing everything at the flex tree layer could avoid this translation
 					const key = keyMap?.get(flexKey) ?? flexKey;
 
-					if (changedProperties.has(key)) {
+					if (data.changedProperties.has(key)) {
 						this.onInvalidation();
 						return;
 					}
@@ -789,6 +805,14 @@ function trackObservations<TResult>(
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void {
+		return treeNodeApi.on(node, eventName, listener);
+	},
+
 	trackObservations<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,

@@ -2626,10 +2626,8 @@ describe("treeNodeApi", () => {
 			// Strong types work
 			TreeBeta.on(ab, "nodeChanged", out<"A" | "B">);
 			TreeBeta.on(ab, "nodeChanged", out<string>);
-			// Weakly typed (optional changedProperties) callback works for typed object/map nodes
+			// Weakly typed (optional changedProperties) callback works
 			TreeBeta.on(ab, "nodeChanged", outOpt<string>);
-			// Untyped TreeNode gets the full union; a callback must accept both variants
-			// @ts-expect-error outOpt only accepts NodeChangedDataProperties, not the full union
 			TreeBeta.on(ab as TreeNode, "nodeChanged", outOpt<string>);
 
 			// @ts-expect-error Check these test utils work
@@ -2646,12 +2644,13 @@ describe("treeNodeApi", () => {
 			// @ts-expect-error Check map is included
 			TreeBeta.on(oneOf(ab, map1), "nodeChanged", out<"A" | "B">);
 
-			// Array nodes provide NodeChangedDataDelta (with delta field), not changedProperties
-			// @ts-expect-error Array provides NodeChangedDataDelta, not changedProperties
+			// Array nodes: TreeBeta.on gives the changedProperties-only type (delta not included)
+			// @ts-expect-error changedProperties is required for typed array node via TreeBeta
 			TreeBeta.on(array, "nodeChanged", out<string>);
-			// @ts-expect-error outOpt does not accept NodeChangedDataDelta
 			TreeBeta.on(array, "nodeChanged", outOpt<string>);
-			TreeBeta.on(array, "nodeChanged", outDelta);
+
+			// Use TreeAlpha.on to get the full delta-aware NodeChangedDataDelta for array nodes
+			TreeAlpha.on(array, "nodeChanged", outDelta);
 		});
 
 		it(`'nodeChanged' strong typing example`, () => {
@@ -2738,6 +2737,8 @@ describe("treeNodeApi", () => {
 			assert.equal(eventCount, 1);
 		});
 
+		// TODO: Once delta event support for unhydrated nodes is implemented, convert this
+		// describe block to describeWithHydration to cover both hydrated and unhydrated paths.
 		describe(`'nodeChanged' delta payload for array operations`, () => {
 			// These tests verify the concrete ArrayNodeDeltaOp values emitted for specific
 			// array mutations.  The delta follows Quill-style semantics:
@@ -2754,7 +2755,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.insertAtEnd(4);
 
@@ -2772,7 +2773,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.insertAt(0, 0);
 
@@ -2785,7 +2786,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.removeAt(0);
 
@@ -2798,7 +2799,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.removeAt(2);
 
@@ -2816,7 +2817,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.moveRangeToEnd(0, 1);
 
@@ -2844,7 +2845,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				// Use a fork to compose two changes into a single delta: modify
 				// element 0's nested property and remove element 1. The merged

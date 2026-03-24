@@ -136,6 +136,7 @@ export {
 	type ArrayNodeRemoveOp,
 	type ArrayNodeRetainOp,
 	type NodeChangedData,
+	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type SchemaUpgrade,
@@ -208,6 +209,7 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type TreeChangeEventsAlpha,
 	// Other
 	type VerboseTreeNode,
 	type TreeEncodingOptions,

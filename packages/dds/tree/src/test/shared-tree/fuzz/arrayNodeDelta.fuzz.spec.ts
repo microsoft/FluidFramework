@@ -19,10 +19,10 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
+import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
-	TreeBeta,
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../../simple-tree/index.js";
@@ -166,14 +166,14 @@ function getShadow(client: Client<SharedTreeTestFactory>): ClientShadow {
 	return getOrCreate(shadowCache, client.channel, () => {
 		const root = getRoot(client);
 		const shadow: ClientShadow = { arr1: [...root.arr1], arr2: [...root.arr2] };
-		TreeBeta.on(root.arr1, "nodeChanged", ({ delta }) => {
+		TreeAlpha.on(root.arr1, "nodeChanged", ({ delta }) => {
 			assert(
 				delta !== undefined,
 				"delta should always be defined without withBufferedTreeEvents",
 			);
 			shadow.arr1 = applyDeltaToArray(shadow.arr1, [...root.arr1], delta);
 		});
-		TreeBeta.on(root.arr2, "nodeChanged", ({ delta }) => {
+		TreeAlpha.on(root.arr2, "nodeChanged", ({ delta }) => {
 			assert(
 				delta !== undefined,
 				"delta should always be defined without withBufferedTreeEvents",
