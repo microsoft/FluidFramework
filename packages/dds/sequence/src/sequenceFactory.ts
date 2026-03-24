@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -13,7 +13,8 @@ import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import { SharedStringClass, SharedStringSegment, type ISharedString } from "./sharedString.js";
+import type { ISharedString, SharedStringSegment } from "./sharedString.js";
+import { SharedStringClass } from "./sharedString.js";
 
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
