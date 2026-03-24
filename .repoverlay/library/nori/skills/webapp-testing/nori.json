@@ -1,5 +1,5 @@
 {
-  "name": "webapp-testing",
-  "version": "1.0.5",
-  "description": "Use this skill to build features or debug anything that uses a webapp frontend."
+	"name": "webapp-testing",
+	"version": "1.0.5",
+	"description": "Use this skill to build features or debug anything that uses a webapp frontend."
 }

@@ -1,5 +1,5 @@
 {
-  "name": "senior-swe",
-  "description": "General purpose profile ideal for software engineering. Comes with two modes: copilot mode (ideal for working side by side in pair programming mode, with frequent checkpoints) and full-send mode (highly autonomous mode with fewer checkpoints).",
-  "builtin": true
+	"name": "senior-swe",
+	"description": "General purpose profile ideal for software engineering. Comes with two modes: copilot mode (ideal for working side by side in pair programming mode, with frequent checkpoints) and full-send mode (highly autonomous mode with fewer checkpoints).",
+	"builtin": true
 }

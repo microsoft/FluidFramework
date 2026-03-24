@@ -1,7 +1,7 @@
 {
-  "name": "finishing-a-development-branch",
-  "version": "1.0.9",
-  "type": "skill",
-  "description": "Use this when you have completed some feature implementation and have written passing tests, and you are ready to create a PR.",
-  "registryURL": "http://noriskillsets.dev"
+	"name": "finishing-a-development-branch",
+	"version": "1.0.9",
+	"type": "skill",
+	"description": "Use this when you have completed some feature implementation and have written passing tests, and you are ready to create a PR.",
+	"registryURL": "http://noriskillsets.dev"
 }

@@ -1,5 +1,5 @@
 {
-  "name": "creating-skills",
-  "version": "1.0.7",
-  "description": "Use when you need to create a new custom skill for a profile - guides through gathering requirements, creating directory structure, writing SKILL.md, and optionally adding bundled scripts"
+	"name": "creating-skills",
+	"version": "1.0.7",
+	"description": "Use when you need to create a new custom skill for a profile - guides through gathering requirements, creating directory structure, writing SKILL.md, and optionally adding bundled scripts"
 }
