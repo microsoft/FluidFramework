@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
-import { TreeStoredSchemaRepository } from "../../core/index.js";
+import { TreeStoredSchemaRepository, type ChangeEncodingContext } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -39,6 +40,7 @@ import { brand } from "../../util/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
@@ -47,21 +49,19 @@ const codecOptions: CodecWriteOptions = {
 
 describe("sharedTreeChangeCodec", () => {
 	useSnapshotDirectory("sharedTreeChangeCodec");
-	it("codec schema snapshot", () => {
-		const dummyFieldBatchCodec: FieldBatchCodec = {
-			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
-				assert.fail();
-			},
-			decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
-				assert.fail();
-			},
-			writeVersion: FieldBatchFormatVersion.v2,
-		};
 
+	// Dummy FieldBatchCodec codec which asserts when encoding or decoding.
+	const failFieldBatchCodec: FieldBatchCodec = {
+		encode: (): EncodedFieldBatch => assert.fail(),
+		decode: (): FieldBatch => assert.fail(),
+		writeVersion: FieldBatchFormatVersion.v2,
+	};
+
+	it("codec schema snapshot", () => {
 		const modularChangeCodecs = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
 			testRevisionTagCodec,
-			dummyFieldBatchCodec,
+			failFieldBatchCodec,
 			codecOptions,
 		);
 
@@ -80,6 +80,29 @@ describe("sharedTreeChangeCodec", () => {
 		// Currently this does not included the schema for the modular change which is validated separately in the modular change codec,
 		// but it does include the schema for the inner change wrapper.
 		takeJsonSnapshot(schema);
+	});
+
+	// This ensures that the schema for schema changes is getting included in the TreeChangeCodec's schema.
+	it("rejects malformed schema-change data", () => {
+		const modularChangeCodecs = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
+			failFieldBatchCodec,
+			{ jsonValidator: FormatValidatorBasic },
+		);
+		const codec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, codecOptions).resolve(
+			3,
+		);
+
+		assert.throws(
+			() =>
+				codec.decode(
+					// missing 'old' field
+					[{ schema: { new: {} } }],
+					{} as unknown as ChangeEncodingContext,
+				),
+			validateAssertionError(/must have required property 'old'/),
+		);
 	});
 
 	it("passes down the context's schema to the fieldBatchCodec", () => {
