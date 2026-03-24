@@ -6,7 +6,7 @@
 
 Array node `nodeChanged` events now include a delta payload (via `TreeAlpha`)
 
-The `nodeChanged` event for array nodes—accessed via `TreeAlpha.on`—now provides a `delta` field, a sequence of `ArrayNodeDeltaOp` values that describe exactly what changed in the array. This lets you efficiently sync an external representation with tree changes, without taking a snapshot of the old state or diffing the entire array.
+The `nodeChanged` event for array nodes (accessed via `TreeAlpha.on`) now provides a `delta` field, a sequence of `ArrayNodeDeltaOp` values that describe exactly what changed in the array. This lets you efficiently sync an external representation with tree changes, without taking a snapshot of the old state or diffing the entire array.
 
 The delta follows Quill-style semantics: each op covers a contiguous run of positions in the array before the change.
 
