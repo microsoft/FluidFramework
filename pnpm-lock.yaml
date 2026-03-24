@@ -9,13 +9,7 @@ catalogs:
     '@fluid-tools/build-cli':
       specifier: ^0.64.0
       version: 0.64.0
-    '@fluid-tools/version-tools':
-      specifier: ^0.64.0
-      version: 0.64.0
     '@fluidframework/build-tools':
-      specifier: ^0.64.0
-      version: 0.64.0
-    '@fluidframework/bundle-size-tools':
       specifier: ^0.64.0
       version: 0.64.0
 
@@ -67,7 +61,7 @@ importers:
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.64.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+        version: 0.64.0(@types/node@20.19.30)(encoding@0.1.13)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -19933,9 +19927,6 @@ packages:
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
 
-  '@types/cookie@0.4.1':
-    resolution: {integrity: sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==}
-
   '@types/cors@2.8.17':
     resolution: {integrity: sha512-8CGDvrBj1zgo2qE+oS3pOCyYNqCPryMWY2bGfwA0dcfopWGgxs+78df0Rs3rc9THP4JkOhLsAa+15VdpAqkcUA==}
 
@@ -20263,6 +20254,9 @@ packages:
 
   '@types/ws@6.0.4':
     resolution: {integrity: sha512-PpPrX7SZW9re6+Ha8ojZG4Se8AZXgf0GK6zmfqEuCsY49LFDNXO3SByp44X3dFEqtB73lkCDAdUazhAjVPiNwg==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@types/ws@8.5.13':
     resolution: {integrity: sha512-osM/gWBTPKgHV8XkTunnegTRIsvF6owmf5w+JtAfOw472dptdm0dlGv4xCt6GwQRcC2XVOvvRE/0bAoQcL2QkA==}
@@ -22265,8 +22259,8 @@ packages:
     resolution: {integrity: sha512-HqD3yTBfnBxIrbnM1DoD6Pcq8NECnh8d4As1Qgh0z5Gg3jRRIqijury0CL3ghu/edArpUYiYqQiDUQBIs4np3Q==}
     engines: {node: '>=10.0.0'}
 
-  engine.io@6.6.2:
-    resolution: {integrity: sha512-gmNvsYi9C8iErnZdVcJnvCpSKbWTt1E8+JZo8b+daLninywUWi5NQ5STSHZ9rFjFO7imNcvb8Pc5pe/wMR5xEw==}
+  engine.io@6.6.6:
+    resolution: {integrity: sha512-U2SN0w3OpjFRVlrc17E6TMDmH58Xl9rai1MblNjAdwWp07Kk+llmzX0hjDpQdrDGzwmvOtgM5yI+meYX6iZ2xA==}
     engines: {node: '>=10.2.0'}
 
   enhanced-resolve@5.18.3:
@@ -30264,6 +30258,82 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluid-tools/build-cli@0.64.0(@types/node@20.19.30)(encoding@0.1.13)':
+    dependencies:
+      '@andrewbranch/untar.js': 1.0.3
+      '@fluid-tools/build-infrastructure': 0.64.0(@types/node@20.19.30)
+      '@fluid-tools/version-tools': 0.64.0(@types/node@20.19.30)
+      '@fluidframework/build-tools': 0.64.0(@types/node@20.19.30)
+      '@fluidframework/bundle-size-tools': 0.64.0
+      '@inquirer/prompts': 8.0.2(@types/node@20.19.30)
+      '@microsoft/api-extractor': 7.55.1(@types/node@20.19.30)
+      '@oclif/core': 4.8.0
+      '@oclif/plugin-autocomplete': 3.2.39
+      '@oclif/plugin-commands': 4.1.38
+      '@oclif/plugin-help': 6.2.36
+      '@oclif/plugin-not-found': 3.2.73(@types/node@20.19.30)
+      '@octokit/core': 7.0.6
+      '@octokit/rest': 22.0.1
+      '@rushstack/node-core-library': 5.19.0(@types/node@20.19.30)
+      async: 3.2.6
+      azure-devops-node-api: 11.2.0
+      change-case: 5.4.4
+      danger: 13.0.5(encoding@0.1.13)
+      date-fns: 3.6.0
+      debug: 4.4.3(supports-color@8.1.1)
+      execa: 5.1.1
+      fflate: 0.8.2
+      fs-extra: 11.3.2
+      github-slugger: 2.0.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.3
+      issue-parser: 7.0.1
+      json5: 2.2.3
+      jssm: 5.104.2
+      jszip: 3.10.1
+      latest-version: 9.0.0
+      lilconfig: 3.1.3
+      mdast: 3.0.0
+      mdast-util-heading-range: 4.0.0
+      mdast-util-to-string: 4.0.0
+      minimatch: 10.2.4
+      npm-check-updates: 16.14.20
+      oclif: 4.22.52(@types/node@20.19.30)
+      picocolors: 1.1.1
+      prettier: 3.2.5
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      remark: 15.0.1
+      remark-gfm: 4.0.1
+      remark-github: 12.0.0
+      remark-github-beta-blockquote-admonitions: 3.1.1
+      remark-toc: 9.0.0
+      replace-in-file: 7.2.0
+      resolve.exports: 2.0.3
+      semver: 7.7.3
+      simple-git: 3.32.3
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 7.1.2
+      table: 6.9.0
+      ts-morph: 22.0.0
+      unist-util-visit: 5.0.0
+      xml2js: 0.6.2
+      yaml: 2.8.2
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - bluebird
+      - bufferutil
+      - encoding
+      - esbuild
+      - react-devtools-core
+      - supports-color
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
   '@fluid-tools/build-cli@0.64.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
@@ -30556,6 +30626,20 @@ snapshots:
       - react-devtools-core
       - supports-color
       - utf-8-validate
+
+  '@fluidframework/bundle-size-tools@0.64.0':
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      fflate: 0.8.2
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      typescript: 5.4.5
+      webpack: 5.103.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
 
   '@fluidframework/bundle-size-tools@0.64.0(webpack-cli@5.1.4)':
     dependencies:
@@ -33468,8 +33552,6 @@ snapshots:
     dependencies:
       '@types/node': 20.19.30
 
-  '@types/cookie@0.4.1': {}
-
   '@types/cors@2.8.17':
     dependencies:
       '@types/node': 20.19.30
@@ -33807,6 +33889,10 @@ snapshots:
     dependencies:
       '@types/node': 20.19.30
 
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 20.19.30
+
   '@types/ws@8.5.13':
     dependencies:
       '@types/node': 20.19.30
@@ -34094,7 +34180,7 @@ snapshots:
 
   '@vvago/vale@3.12.0':
     dependencies:
-      axios: 1.13.5(debug@4.4.3)
+      axios: 1.13.5
       rimraf: 5.0.10
       tar: 7.5.11
       unzipper: 0.10.14
@@ -34538,6 +34624,14 @@ snapshots:
   axios@0.30.2(debug@4.4.3):
     dependencies:
       follow-redirects: 1.15.11(debug@4.4.3)
+      form-data: 4.0.5
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.13.5:
+    dependencies:
+      follow-redirects: 1.15.11
       form-data: 4.0.5
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -35982,18 +36076,18 @@ snapshots:
 
   engine.io-parser@5.2.3: {}
 
-  engine.io@6.6.2:
+  engine.io@6.6.6:
     dependencies:
-      '@types/cookie': 0.4.1
       '@types/cors': 2.8.17
       '@types/node': 20.19.30
+      '@types/ws': 8.18.1
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.7.2
       cors: 2.8.5
-      debug: 4.3.7
+      debug: 4.4.3(supports-color@8.1.1)
       engine.io-parser: 5.2.3
-      ws: 8.17.1
+      ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -36748,6 +36842,8 @@ snapshots:
   flatted@3.3.3: {}
 
   fn.name@1.1.0: {}
+
+  follow-redirects@1.15.11: {}
 
   follow-redirects@1.15.11(debug@4.3.7):
     optionalDependencies:
@@ -41680,7 +41776,7 @@ snapshots:
       base64id: 2.0.0
       cors: 2.8.5
       debug: 4.4.3(supports-color@8.1.1)
-      engine.io: 6.6.2
+      engine.io: 6.6.6
       socket.io-adapter: 2.5.6
       socket.io-parser: 4.2.6
     transitivePeerDependencies:
@@ -42241,7 +42337,7 @@ snapshots:
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
       terser: 5.37.0
-      webpack: 5.103.0(webpack-cli@5.1.4)
+      webpack: 5.103.0
 
   terser@5.37.0:
     dependencies:
@@ -43243,6 +43339,38 @@ snapshots:
       wildcard: 2.0.1
 
   webpack-sources@3.3.3: {}
+
+  webpack@5.103.0:
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.16.0
+      acorn-import-phases: 1.0.4(acorn@8.16.0)
+      browserslist: 4.28.1
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.3
+      es-module-lexer: 1.5.4
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.1
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.0
+      terser-webpack-plugin: 5.3.15(webpack@5.103.0)
+      watchpack: 2.4.4
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   webpack@5.103.0(webpack-cli@5.1.4):
     dependencies:
