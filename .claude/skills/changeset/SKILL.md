@@ -54,8 +54,8 @@ Detailed description of the feature.
 
 ## File Naming
 
-Generate a random `{adjective}-{noun}-{verb}.md` filename (lowercase, hyphen-separated).
-Examples: `brave-lions-roar.md`, `quiet-birds-sing.md`, `tall-dogs-jump.md`
+Use a short, descriptive kebab-case filename based on the change (e.g. `add-batch-operations.md`,
+`fix-dispose-error-message.md`, `remove-deprecated-root2.md`).
 
 Place the file in the `.changeset/` directory at the repo root.
 
@@ -143,7 +143,7 @@ Key rules:
 
 1. Determine which packages are affected and the appropriate bump type
 2. Choose a release notes section if applicable
-3. Generate a random filename
+3. Choose a descriptive kebab-case filename
 4. Write the changeset file with proper frontmatter and description
 5. If unsure about packages or bump type, ask the user
 
