@@ -4,7 +4,7 @@
  */
 
 export {
-	makeSchemaChangeCodecs,
+	makeSchemaChangeCodec,
 	getCodecTreeForSchemaChangeFormat,
 	SchemaChangeFormatVersion,
 } from "./schemaChangeCodecs.js";

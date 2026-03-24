@@ -37,6 +37,7 @@ import type { Changeset } from "../../feature-libraries/sequence-field/types.js"
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
 import { brand } from "../../util/index.js";
 import { ajvValidator } from "../codec/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const codecOptions: CodecWriteOptions = {
@@ -45,6 +46,42 @@ const codecOptions: CodecWriteOptions = {
 };
 
 describe("sharedTreeChangeCodec", () => {
+	useSnapshotDirectory("sharedTreeChangeCodec");
+	it("codec schema snapshot", () => {
+		const dummyFieldBatchCodec: FieldBatchCodec = {
+			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
+				assert.fail();
+			},
+			decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
+				assert.fail();
+			},
+			writeVersion: FieldBatchFormatVersion.v2,
+		};
+
+		const modularChangeCodecs = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
+			dummyFieldBatchCodec,
+			codecOptions,
+		);
+
+		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(
+			modularChangeCodecs,
+			codecOptions,
+		);
+
+		const formats = [...sharedTreeChangeCodec.getSupportedFormats()];
+		const schema = formats.map((format) => {
+			const codec = sharedTreeChangeCodec.resolve(format);
+			assert(codec.encodedSchema !== undefined);
+			return { version: format, schema: codec.encodedSchema };
+		});
+		// Capture the portion of the schema validated at the root.
+		// Currently this does not included the schema for the modular change which is validated separately in the modular change codec,
+		// but it does include the schema for the inner change wrapper.
+		takeJsonSnapshot(schema);
+	});
+
 	it("passes down the context's schema to the fieldBatchCodec", () => {
 		const dummyFieldBatchCodec: FieldBatchCodec = {
 			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
