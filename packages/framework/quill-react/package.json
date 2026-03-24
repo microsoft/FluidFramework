@@ -15,22 +15,50 @@
 	"exports": {
 		".": {
 			"import": {
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/alpha.d.ts",
+				"default": "./lib/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/beta.d.ts",
+				"default": "./lib/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}
 		}
 	},
 	"main": "lib/index.js",
-	"types": "./lib/index.d.ts",
+	"types": "./lib/public.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints . --profile esm-only",
 		"check:biome": "biome check .",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
+		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
+		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -84,12 +112,14 @@
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/react": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
+		"@microsoft/api-extractor": "7.52.11",
 		"@testing-library/react": "^16.3.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.1",
 		"c8": "^10.1.3",
+		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",

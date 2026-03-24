@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { MainView as QuillMainView, type MainViewProps } from "./quillView.js";
+export {
+	MainView as QuillMainView,
+	type MainViewProps as QuillMainViewProps,
+} from "./quillView.js";
