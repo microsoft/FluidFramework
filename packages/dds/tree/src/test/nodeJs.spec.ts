@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 // Created based on NodeJS v24.14.0. Reconfirmed in v25.8.1
+// This does not reproduce in NodeJS v22.22.1.
 describe("Node.js deepStrictEqual shared-reference bug", () => {
 	// Node.js's `deepStrictEqual` (and `strict.deepEqual`) uses an internal
 	// `detectCycles` function that starts with `memos = null` (no cycle
@@ -58,7 +59,7 @@ describe("Node.js deepStrictEqual shared-reference bug", () => {
 			() => assert.deepEqual(actualValues, expectedValues),
 			(err: unknown) =>
 				err instanceof assert.AssertionError &&
-				/same structure but are not reference-equal/.test(err.message),
+				err.message.includes("same structure but are not reference-equal"),
 			"Expected deepEqual to fail due to the Node.js shared-reference bug",
 		);
 
