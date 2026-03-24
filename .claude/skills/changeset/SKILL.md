@@ -31,7 +31,7 @@ Subheadings start at level 4 (####).
 ```markdown
 ---
 "@fluidframework/merge-tree": minor
-"@fluidframework/sequence": patch
+"@fluidframework/sequence": minor
 ---
 
 Summary affecting multiple packages
@@ -59,15 +59,11 @@ Use a short, descriptive kebab-case filename based on the change (e.g. `add-batc
 
 Place the file in the `.changeset/` directory at the repo root.
 
-## Version Bump Types
+## Version Bump Type
 
-| Type    | When to use                                            |
-|---------|--------------------------------------------------------|
-| `major` | Breaking changes to public API                         |
-| `minor` | New features, non-breaking API additions (most common) |
-| `patch` | Bug fixes, internal changes                            |
-
-Most changesets use `minor`. The bump type is generally determined by the branch.
+In this repo, the bump type is determined by the target branch, so use `minor` as the
+default for all changesets. If you're unsure whether a different bump type is appropriate,
+ask the user.
 
 ## Release Notes Metadata
 
