@@ -42,6 +42,7 @@ Summary affecting multiple packages
 ```markdown
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 "__section": feature
 "__highlight": true
 ---
@@ -97,11 +98,19 @@ modified file's package. Ask: "Would a user of this package care about this chan
 
 ### Common Package Scopes
 
-- `@fluidframework/*` - Main public packages
-- `@fluid-experimental/*` - Experimental packages
-- `fluid-framework` - The umbrella package
+- `@fluidframework/*` — Main public packages
+- `@fluid-experimental/*` — Experimental packages
+- `fluid-framework` — The umbrella package (reexports most of `@fluidframework/tree` and others)
 
-Exclude from changesets:
+### `fluid-framework` Reexports
+
+The `fluid-framework` package reexports most of `@fluidframework/tree`'s public API.
+When a change affects tree's public API surface, almost always include **both** packages
+in the changeset. This is one of the most common mistakes — forgetting to list
+`fluid-framework` alongside `@fluidframework/tree`.
+
+### Exclude from changesets
+
 - Any package marked `"private": true` in its `package.json` (any scope, including `@fluid-private/*`)
 - Packages in the `@fluid-example/*`, `@fluid-internal/*`, and `@fluid-test/*` scopes
 
