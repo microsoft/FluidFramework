@@ -3,9 +3,9 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Adds TreeArrayNodeAlpha with a new splice method.
+Adds TreeArrayNodeAlpha with a new splice method
 
-Adds a `splice` method on `TreeArrayNodeAlpha` that supports removing and inserting items in a single operation to align with JavaScripts Array splice API.
+Adds a `splice` method on `TreeArrayNodeAlpha` that supports removing and inserting items in a single operation to align with JavaScript's Array splice API.
 Returns the removed items as an array.
 Supports negative `start` indices (wraps from end).
 Optional `deleteCount` (omitting removes everything from `start` onward).
