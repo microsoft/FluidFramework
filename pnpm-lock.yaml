@@ -9,7 +9,13 @@ catalogs:
     '@fluid-tools/build-cli':
       specifier: ^0.64.0
       version: 0.64.0
+    '@fluid-tools/version-tools':
+      specifier: ^0.64.0
+      version: 0.64.0
     '@fluidframework/build-tools':
+      specifier: ^0.64.0
+      version: 0.64.0
+    '@fluidframework/bundle-size-tools':
       specifier: ^0.64.0
       version: 0.64.0
 
