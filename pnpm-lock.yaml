@@ -44,6 +44,7 @@ overrides:
   minimatch@>=8 <9: ^8.0.7
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
+  serialize-javascript@>=6 <7: ^7.0.4
 
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
@@ -26005,9 +26006,6 @@ packages:
   random-js@2.1.0:
     resolution: {integrity: sha512-CRUyWmnzmZBA7RZSVGq0xMqmgCyPPxbiKNLFA5ud7KenojVX2s7Gv+V7eB52beKTPGxWRnVZ7D/tCIgYJJ8vNQ==}
 
-  randombytes@2.1.0:
-    resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
-
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
@@ -26525,8 +26523,9 @@ packages:
     resolution: {integrity: sha512-3NnuWfM6vBYoy5gZFvHiYsVbafvI9vZv/+jlIigFn4oP4zjNPK3LhcY0xSCgeb1a5L8jO71Mit9LlNoi2UfDDQ==}
     engines: {node: '>=10'}
 
-  serialize-javascript@6.0.2:
-    resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
+  serialize-javascript@7.0.4:
+    resolution: {integrity: sha512-DuGdB+Po43Q5Jxwpzt1lhyFSYKryqoNjQSA9M92tyw0lyHIOur+XCalOUe0KTJpyqzT8+fQ5A0Jf7vCx/NKmIg==}
+    engines: {node: '>=20.0.0'}
 
   serve-index@1.9.1:
     resolution: {integrity: sha512-pXHfKNP4qujrtteMrSBb0rc8HJ9Ms/GrXwcUtUtD5s4ewDJI8bT3Cz2zTVRMKtri49pLx2e0Ya8ziP5Ya2pZZw==}
@@ -35297,7 +35296,7 @@ snapshots:
       globby: 14.1.0
       normalize-path: 3.0.0
       schema-utils: 4.3.3
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       webpack: 5.103.0(webpack-cli@5.1.4)
 
   copyfiles@2.4.1:
@@ -39427,7 +39426,7 @@ snapshots:
       log-symbols: 4.1.0
       minimatch: 5.1.9
       ms: 2.1.3
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
       workerpool: 6.5.1
@@ -39451,7 +39450,7 @@ snapshots:
       minimatch: 9.0.9
       ms: 2.1.3
       picocolors: 1.1.1
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
       workerpool: 9.3.4
@@ -40736,10 +40735,6 @@ snapshots:
 
   random-js@2.1.0: {}
 
-  randombytes@2.1.0:
-    dependencies:
-      safe-buffer: 5.2.1
-
   range-parser@1.2.1: {}
 
   raw-body@2.5.2:
@@ -41357,9 +41352,7 @@ snapshots:
     dependencies:
       type-fest: 0.20.2
 
-  serialize-javascript@6.0.2:
-    dependencies:
-      randombytes: 2.1.0
+  serialize-javascript@7.0.4: {}
 
   serve-index@1.9.1:
     dependencies:
@@ -42174,7 +42167,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.25
       jest-worker: 27.5.1
       schema-utils: 4.3.3
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       terser: 5.37.0
       webpack: 5.103.0(webpack-cli@5.1.4)
 

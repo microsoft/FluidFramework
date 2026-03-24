@@ -22,6 +22,7 @@ overrides:
   minimatch@>=8 <9: ^8.0.7
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
+  serialize-javascript@>=6 <7: ^7.0.4
 
 importers:
 
@@ -7046,9 +7047,6 @@ packages:
     resolution: {integrity: sha512-80WNmd9DA0tmZrw9qQa62GPPWfuXJknrmVmLcxvq4uZBdYqb1wYoKTmnlGUchvVWe0XiLupYkBoXVOxz3C8DYQ==}
     engines: {node: '>=0.12'}
 
-  randombytes@2.1.0:
-    resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
-
   range-parser@1.2.0:
     resolution: {integrity: sha512-kA5WQoNVo4t9lNx2kQNFCxKeBl5IbbSNBl1M/tLkw9WCn+hxNBAW5Qh8gdhs63CJnhjJ2zQWFoqPJP2sK1AV5A==}
     engines: {node: '>= 0.6'}
@@ -7504,8 +7502,9 @@ packages:
     resolution: {integrity: sha512-dW41u5VfLXu8SJh5bwRmyYUbAoSB3c9uQh6L8h/KtsFREPWpbX1lrljJo186Jc4nmci/sGUZ9a0a0J2zgfq2hw==}
     engines: {node: '>= 0.8.0'}
 
-  serialize-javascript@6.0.2:
-    resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
+  serialize-javascript@7.0.4:
+    resolution: {integrity: sha512-DuGdB+Po43Q5Jxwpzt1lhyFSYKryqoNjQSA9M92tyw0lyHIOur+XCalOUe0KTJpyqzT8+fQ5A0Jf7vCx/NKmIg==}
+    engines: {node: '>=20.0.0'}
 
   serve-handler@6.1.6:
     resolution: {integrity: sha512-x5RL9Y2p5+Sh3D38Fh9i/iQ5ZK+e4xuXRd/pGbM4D13tgo/MGwbttUk8emytcr1YYzBYs+apnUngBDFYfpjPuQ==}
@@ -13114,7 +13113,7 @@ snapshots:
       globby: 13.2.2
       normalize-path: 3.0.0
       schema-utils: 4.2.0
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       webpack: 5.96.1
 
   core-js-compat@3.39.0:
@@ -13213,7 +13212,7 @@ snapshots:
       jest-worker: 29.7.0
       postcss: 8.4.49
       schema-utils: 4.2.0
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       webpack: 5.96.1
     optionalDependencies:
       clean-css: 5.3.3
@@ -17732,10 +17731,6 @@ snapshots:
       discontinuous-range: 1.0.0
       ret: 0.1.15
 
-  randombytes@2.1.0:
-    dependencies:
-      safe-buffer: 5.2.1
-
   range-parser@1.2.0: {}
 
   range-parser@1.2.1: {}
@@ -18351,9 +18346,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  serialize-javascript@6.0.2:
-    dependencies:
-      randombytes: 2.1.0
+  serialize-javascript@7.0.4: {}
 
   serve-handler@6.1.6:
     dependencies:
@@ -18835,7 +18828,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.25
       jest-worker: 27.5.1
       schema-utils: 3.3.0
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       terser: 5.36.0
       webpack: 5.96.1
 
