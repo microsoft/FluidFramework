@@ -136,7 +136,7 @@ export function localBatchToOutboundBatch({
 	// Shallow copy each message as we switch types
 	const outboundMessages = localBatch.messages.map<OutboundBatchMessage>(
 		({ runtimeOp, ...message }) => ({
-			contents: serializeOp(runtimeOp),
+			contents: serializeOp(runtimeOp).content,
 			...message,
 		}),
 	);
