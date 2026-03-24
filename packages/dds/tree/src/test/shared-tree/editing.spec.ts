@@ -3467,9 +3467,12 @@ describe("Editing", () => {
 				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["W"]));
 				branch.transaction.commit();
 
-				undoStack.pop()?.revert();
-				undoStack.pop()?.revert();
-				undoStack.pop()?.revert();
+				const undo1 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo1.revert();
+				const undo2 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo2.revert();
+				const undo3 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo3.revert();
 
 				expectJsonTree(branch, ["A", "X", "B"]);
 				unsubscribe();
@@ -3515,8 +3518,10 @@ describe("Editing", () => {
 				);
 				branch.transaction.commit();
 
-				undoStack.pop()?.revert();
-				undoStack.pop()?.revert();
+				const undo1 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo1.revert();
+				const undo2 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo2.revert();
 
 				expectJsonTree(branch, [{ "X": 1, "B": 2, "C": 3 }]);
 				unsubscribe();
