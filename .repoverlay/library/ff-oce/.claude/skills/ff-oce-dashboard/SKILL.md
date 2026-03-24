@@ -43,15 +43,19 @@ Generated: <timestamp>
 
 ### 🚨 Active IcM Incidents
 | ID | Sev | Title | Status | Team | Age |
+| --- | --- | --- | --- | --- | --- |
 
 ### 🔧 Pipeline Health (main, last 3 runs)
 | Pipeline | Run 1 | Run 2 | Run 3 | Trend |
+| --- | --- | --- | --- | --- |
 
 ### 📊 Error Rates (last 1h)
 | Partner | Error Count | Notes |
+| --- | --- | --- |
 
 ### 🔔 Integration Pipeline Alerts (FF Hot, last 2 weeks)
 | Date | Description | Status | Action Needed |
+| --- | --- | --- | --- |
 
 ### 📋 WorkIQ
 (summary)
