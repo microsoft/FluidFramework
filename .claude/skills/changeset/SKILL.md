@@ -32,9 +32,12 @@ Subheadings start at level 4 (####).
 ---
 "@fluidframework/merge-tree": minor
 "@fluidframework/sequence": minor
+"__section": fix
 ---
 
-Summary affecting multiple packages
+Fix merge conflict resolution when segments overlap
+
+The merge-tree and sequence packages now handle overlapping segment ranges correctly during concurrent edits.
 ```
 
 ### With release notes metadata
@@ -47,9 +50,10 @@ Summary affecting multiple packages
 "__highlight": true
 ---
 
-Short summary
+Add support for optional field defaults in SharedTree schemas
 
-Detailed description of the feature.
+Schema definitions now support specifying default values for optional fields.
+When a document is opened and an optional field is missing, the default value is used automatically.
 ```
 
 ## File Naming

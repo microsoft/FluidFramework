@@ -11,14 +11,13 @@ This file contains additional examples to guide changeset writing.
 
 ```markdown
 ---
-"@fluidframework/container-runtime": patch
+"@fluidframework/container-runtime": minor
 "__section": fix
 ---
 
 Fix incorrect error message when disposing a container
 
-The error message when attempting to dispose a container that is already
-disposed now correctly identifies the operation that failed.
+The error message when attempting to dispose a container that is already disposed now correctly identifies the operation that failed.
 ```
 
 ### New feature (tree + fluid-framework)
@@ -34,8 +33,7 @@ disposed now correctly identifies the operation that failed.
 Add support for schema evolution in SharedTree
 
 SharedTree now supports evolving document schemas over time.
-When a document is opened with a newer schema version, the runtime
-automatically handles migration of existing data to match the new schema.
+When a document is opened with a newer schema version, the runtime automatically handles migration of existing data to match the new schema.
 
 #### Migration behavior
 
@@ -55,16 +53,15 @@ const view = tree.viewWith(new TreeViewConfiguration({ schema: MyUpdatedSchema }
 
 ````markdown
 ---
-"@fluidframework/container-runtime": major
-"@fluidframework/container-definitions": major
+"@fluidframework/container-runtime": minor
+"@fluidframework/container-definitions": minor
 "__section": breaking
 ---
 
 Remove deprecated summarizer options from container runtime
 
 The deprecated `ISummaryOptions` interface has been removed.
-Use `ISummaryConfiguration` instead, which provides the same
-capabilities with a clearer configuration model.
+Use `ISummaryConfiguration` instead, which provides the same capabilities with a clearer configuration model.
 
 #### Migration
 
