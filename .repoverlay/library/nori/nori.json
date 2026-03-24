@@ -1,0 +1,74 @@
+{
+  "name": "senior-swe",
+  "version": "1.0.2",
+  "description": "General purpose profile ideal for software engineering",
+  "dependencies": {
+    "skills": {
+      "brainstorming": "1.0.0",
+      "building-ui-ux": "1.0.0",
+      "creating-debug-tests-and-iterating": "1.0.0",
+      "creating-skills": "1.0.0",
+      "finishing-a-development-branch": "1.0.0",
+      "handle-large-tasks": "1.0.0",
+      "receiving-code-review": "1.0.0",
+      "root-cause-tracing": "1.0.0",
+      "systematic-debugging": "1.0.0",
+      "testing-anti-patterns": "1.0.0",
+      "test-driven-development": "1.0.0",
+      "updating-noridocs": "1.0.0",
+      "using-git-worktrees": "1.0.0",
+      "using-skills": "1.0.0",
+      "using-screenshots": "1.0.0",
+      "webapp-testing": "1.0.0",
+      "writing-plans": "1.0.0"
+    }
+  },
+  "subagents": [
+    {
+      "id": "nori-change-documenter",
+      "name": "nori-change-documenter",
+      "description": "Creates documentation about changes to a codebase. Call the nori-change-documenter whenever you change the codebase. Provide all of the relevance context for *why* the change was made. Be extremely detailed! Provide as much context as possible so the agent can accurately update documentation."
+    },
+    {
+      "id": "nori-code-reviewer",
+      "name": "nori-code-reviewer",
+      "description": "Use after making code changes but before submitting a PR as a final check. Explain what the purpose of the change is when using this agent."
+    },
+    {
+      "id": "nori-codebase-analyzer",
+      "name": "nori-codebase-analyzer",
+      "description": "Analyzes codebase implementation details. Call the nori-codebase-analyzer agent when you need to find detailed information about specific components. As always, the more detailed your request prompt, the better! :)"
+    },
+    {
+      "id": "nori-codebase-locator",
+      "name": "nori-codebase-locator",
+      "description": "Locates files, directories, and components relevant to a feature or task. Call `nori-codebase-locator` with human language prompt describing what you're looking for. Basically a \"Super Grep/Glob/LS tool\" — Use it if you find yourself desiring to use one of these tools more than once."
+    },
+    {
+      "id": "nori-codebase-pattern-finder",
+      "name": "nori-codebase-pattern-finder",
+      "description": "nori-codebase-pattern-finder is a useful subagent_type for finding similar implementations, usage examples, or existing patterns that can be modeled after. It will give you concrete code examples based on what you're looking for! It's sorta like nori-codebase-locator, but it will not only tell you the location of files, it will also give you code details!"
+    },
+    {
+      "id": "nori-initial-documenter",
+      "name": "nori-initial-documenter",
+      "description": "Creates documentation about a codebase. This agent creates the initial documentation for the codebase; use this agent when you want to create documentation and no existing documentation is present."
+    },
+    {
+      "id": "nori-web-search-researcher",
+      "name": "nori-web-search-researcher",
+      "description": "Do you find yourself desiring information that you don't quite feel well-trained (confident) on? Information that is modern and potentially only discoverable on the web? Use the nori-web-search-researcher subagent_type today to find any and all answers to your questions! It will research deeply to figure out and attempt to answer your questions! If you aren't immediately satisfied you can get your money back! (Not really - but you can re-run nori-web-search-researcher with an altered prompt in the event you're not satisfied the first time)"
+    },
+    {
+      "id": "paid-nori-knowledge-researcher",
+      "name": "nori-knowledge-researcher",
+      "description": "Research specialist for querying the Nori knowledge base to find relevant context and information. Executes focused, iterative research with clear stopping criteria."
+    }
+  ],
+  "slashcommands": [
+    {
+      "command": "nori-init-docs",
+      "description": "Initialize docs.md files throughout the codebase"
+    }
+  ]
+}
