@@ -35,7 +35,7 @@ Subheadings start at level 4 (####).
 "__section": fix
 ---
 
-Fix merge conflict resolution when segments overlap
+Merge conflict resolution for overlapping segments has been fixed
 
 The merge-tree and sequence packages now handle overlapping segment ranges correctly during concurrent edits.
 ```

@@ -15,7 +15,7 @@ This file contains additional examples to guide changeset writing.
 "__section": fix
 ---
 
-Fix incorrect error message when disposing a container
+Incorrect error message when disposing a container has been fixed
 
 The error message when attempting to dispose a container that is already disposed now correctly identifies the operation that failed.
 ```
@@ -58,7 +58,7 @@ const view = tree.viewWith(new TreeViewConfiguration({ schema: MyUpdatedSchema }
 "__section": breaking
 ---
 
-Remove deprecated summarizer options from container runtime
+Deprecated summarizer options have been removed from container runtime
 
 The deprecated `ISummaryOptions` interface has been removed.
 Use `ISummaryConfiguration` instead, which provides the same capabilities with a clearer configuration model.
