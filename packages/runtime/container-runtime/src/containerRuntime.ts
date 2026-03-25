@@ -485,7 +485,7 @@ export interface ContainerRuntimeOptions {
 	 *
 	 * Set to Infinity to only break batches on system events (incoming ops).
 	 *
-	 * @defaultValue {@link largeBatchThreshold} (currently 1000)
+	 * @defaultValue `largeBatchThreshold` (currently 1000)
 	 */
 	readonly stagingModeAutoFlushThreshold: number;
 

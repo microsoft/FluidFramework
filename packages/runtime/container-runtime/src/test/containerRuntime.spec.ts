@@ -4807,7 +4807,7 @@ describe("Runtime", () => {
 			it("enterStagingMode flushes any pending outbox contents as non-staged", async () => {
 				const context = getMockContext() as IContainerContext;
 				const runtime = (await ContainerRuntime.loadRuntime2({
-					context: context as IContainerContext,
+					context,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
@@ -4844,7 +4844,7 @@ describe("Runtime", () => {
 			it("reconnect breaks batch during staging mode", async () => {
 				const context = getMockContext() as IContainerContext;
 				const runtime = (await ContainerRuntime.loadRuntime2({
-					context: context as IContainerContext,
+					context,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
@@ -4885,7 +4885,7 @@ describe("Runtime", () => {
 			it("reconnect resubmits pre-staged batches", async () => {
 				const context = getMockContext() as IContainerContext;
 				const runtime = (await ContainerRuntime.loadRuntime2({
-					context: context as IContainerContext,
+					context,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
