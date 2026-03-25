@@ -94,6 +94,7 @@ module.exports = {
 				"minimatch@>=8 <9",
 				"minimatch@>=9 <10",
 				"minimatch@>=10 <11",
+				"serialize-javascript@>=6 <7",
 				"oclif>@aws-sdk/client*",
 				"@types/glob>@types/minimatch",
 			],
