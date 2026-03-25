@@ -284,6 +284,14 @@
 					"lineWidth": 1
 				}
 			}
+		},
+		{
+			// FILES WITH EXPLICIT IMPORT/EXPORT ORDERS
+			// These files have explicit import/export orders that do not conform to Biome's default organizeImports groups.
+			// Disable organizeImports for these files to avoid unintended changes.
+			"includes": [
+				"packages/framework/fluid-framework/src/index.ts"
+			]
 		}
 	]
 }
