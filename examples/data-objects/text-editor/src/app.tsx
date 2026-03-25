@@ -8,7 +8,8 @@ import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtoo
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
-} from "@fluidframework/quill-react";
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/quill-react/internal";
 import {
 	toPropTreeNode,
 	UndoRedoStacks,
