@@ -7,6 +7,11 @@ mcp-servers:
     command: agency
     args: ["mcp", "ado", "--organization", "fluidframework"]
     tools: ["*"]
+  ado-office:
+    type: local
+    command: agency
+    args: ["mcp", "ado", "--organization", "office"]
+    tools: ["*"]
   enghub:
     type: local
     command: agency
@@ -77,12 +82,14 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 
 ### ADO Pipeline Definitions
 
-| Pipeline | Def ID | ADO Org/Project | Key Stages to Monitor |
-|---|---|---|---|
-| Build - client packages | 12 | `fluidframework/internal` | `build`, `run_checks`, `publish_npm_internal_*` |
-| E2E tests | 56 | `fluidframework/internal` | `e2e_odsp`, `e2e_local_server`, `e2e_azure_client_frs`, `e2e_azure_client_local_server` |
-| Stress tests | 63 | `fluidframework/internal` | `stress_tests_frs`, `stress_tests_tinylicious` |
-| Loop-FF integration | 29163 | `office/OC` | (external — run manually for pre-merge validation) |
+| Pipeline | Def ID | ADO Org/Project | MCP Server | Key Stages to Monitor |
+|---|---|---|---|---|
+| Build - client packages | 12 | `fluidframework/internal` | `ado` | `build`, `run_checks`, `publish_npm_internal_*` |
+| E2E tests | 56 | `fluidframework/internal` | `ado` | `e2e_odsp`, `e2e_local_server`, `e2e_azure_client_frs`, `e2e_azure_client_local_server` |
+| Stress tests | 63 | `fluidframework/internal` | `ado` | `stress_tests_frs`, `stress_tests_tinylicious` |
+| Loop-FF integration | 29163 | `office/OC` | `ado-office` | `Build And Run E2E Tests`, `Build And Run Unit Tests`, `Lint and Type Check` |
+
+**ADO MCP servers:** Two ADO MCP servers are configured — `ado` (for `fluidframework` org) and `ado-office` (for `office` org). When querying pipelines in `office/OC` (e.g., Loop-FF integration pipeline def 29163), use the `ado-office` MCP server tools. All other pipelines use the default `ado` tools.
 
 **ADO Build API result codes:** `result`: `2` = succeeded ✅, `4` = partiallySucceeded ⚠️, `8` = failed ❌. `status`: `1` = inProgress, `2` = completed.
 
@@ -160,6 +167,8 @@ This section covers the tasks you may perform. You are not limited to these — 
 ### Pipeline Health Monitoring
 
 - **Monitor key pipelines**: Check Build (def 12), E2E (def 56), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs`, `e2e_azure_client_frs`, and `e2e_azure_client_local_server` stages. Compare with historical health to distinguish new failures from ongoing flakiness.
+
+- **Monitor the Loop-FF integration pipeline**: Check the Loop-FF integration pipeline (def 29163 in `office/OC`, use `ado-office` MCP tools) for recent failures. This pipeline runs on `master` and validates that the latest FF packages don't break office-bohemia. Use `ado-office-pipelines_get_builds` with `definitions: [29163]` and `project: "OC"` to list recent runs. Summarize results (passed/failed, failed stage, error). A failing integration pipeline means the next FF bump to Loop will break — flag this to the OCE and recommend investigating the failing stage logs.
 
 - **Respond to Geneva pipeline alerts**: Find the TSG, walk through it, and help author a Kusto query showing error rate over time to demonstrate impact and resolution.
 
