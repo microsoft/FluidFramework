@@ -1,5 +1,13 @@
 # @fluidframework/quill-react
 
+Examples for integrating content powered by the Fluid Framework into [React](https://react.dev/) applications that utilize the [Quill](https://quilljs.com/) rich text editor.
+
+This package provides Quill-based views for both plain and formatted text editing backed by SharedTree.
+
+## Known Issues and Limitations
+
+Applications utilizing Quill require DOM access at import time. This package contains all integrations of Fluid Framework with Quill/React. This package should only be imported in browser environments or test environments with JSDOM set up before import.
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
@@ -39,14 +47,6 @@ API documentation for **@fluidframework/quill-react** is available at <https://f
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
-
-Examples for integrating content powered by the Fluid Framework into [React](https://react.dev/) applications that utilize the [Quill](https://quilljs.com/) rich text editor.
-
-This package provides Quill-based views for both plain and formatted text editing backed by SharedTree.
-
-## Known Issues and Limitations
-
-Applications utilizing Quill require DOM access at import time. This package contains all integrations of Fluid Framework with Quill/React. This package should only be imported in browser environments or test environments with JSDOM set up before import.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
