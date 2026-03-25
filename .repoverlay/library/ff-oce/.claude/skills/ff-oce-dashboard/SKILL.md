@@ -90,7 +90,7 @@ Generated: <timestamp>
 | Partner | Error Count | Notes |
 | --- | --- | --- |
 
-### 🔔 Integration Pipeline Alerts (FF Hot, last 2 weeks)
+### 🔔 Integration Pipeline Alerts (FF Client OCE channel, last 2 weeks)
 | Date | Description | Status | Action Needed |
 | --- | --- | --- | --- |
 
