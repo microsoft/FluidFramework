@@ -9552,9 +9552,6 @@ importers:
       '@tylerbu/sorted-btree-es6':
         specifier: ^2.1.1
         version: 2.1.1
-      '@types/ungap__structured-clone':
-        specifier: ^1.2.0
-        version: 1.2.0
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.1
@@ -9628,6 +9625,9 @@ importers:
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
+      '@types/ungap__structured-clone':
+        specifier: ^1.2.0
+        version: 1.2.0
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -12515,9 +12515,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      '@types/events_pkg':
-        specifier: npm:@types/events@^3.0.0
-        version: '@types/events@3.0.3'
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.1
@@ -12570,6 +12567,9 @@ importers:
       '@types/double-ended-queue':
         specifier: ^2.1.0
         version: 2.1.7
+      '@types/events_pkg':
+        specifier: npm:@types/events@^3.0.0
+        version: '@types/events@3.0.3'
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13821,9 +13821,6 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
-      '@types/sinon':
-        specifier: ^17.0.3
-        version: 17.0.3
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
@@ -13858,6 +13855,9 @@ importers:
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -15063,9 +15063,6 @@ importers:
       '@fluidframework/undo-redo':
         specifier: workspace:~
         version: link:../../framework/undo-redo
-      '@types/sinon':
-        specifier: ^17.0.3
-        version: 17.0.3
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -15115,6 +15112,9 @@ importers:
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       c8:
         specifier: ^10.1.3
         version: 10.1.3
