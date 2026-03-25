@@ -1254,27 +1254,7 @@
 			"error"
 		],
 		"import-x/order": [
-			"error",
-			{
-				"groups": [
-					"builtin",
-					"external",
-					"internal",
-					"parent",
-					"sibling",
-					"index"
-				],
-				"newlines-between": "always",
-				"alphabetize": {
-					"order": "asc",
-					"caseInsensitive": false,
-					"orderImportKind": "ignore"
-				},
-				"distinctGroup": true,
-				"sortTypesGroup": false,
-				"named": false,
-				"warnOnUnassignedImports": false
-			}
+			"off"
 		],
 		"indent": [
 			"off"
