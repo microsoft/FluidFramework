@@ -8,6 +8,9 @@ import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtoo
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
+	// TODO: These imports use /internal entrypoints because the underlying APIs
+	// haven't been promoted to public yet. Update to public entrypoints as the
+	// APIs are stabalized. 
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/quill-react/internal";
 import {
