@@ -64,7 +64,7 @@ export function utf8Length(data: JsonCompatibleReadOnly): number {
 export function getOperationsStats(operations: ISequencedDocumentMessage[]): {
 	"Total Op Size (Bytes)": number;
 	"Max Op Size (Bytes)": number;
-	"Total Ops:": number;
+	"Total Ops": number;
 } {
 	const lengths = operations.map((op) => utf8Length(op as unknown as JsonCompatibleReadOnly));
 	return {
