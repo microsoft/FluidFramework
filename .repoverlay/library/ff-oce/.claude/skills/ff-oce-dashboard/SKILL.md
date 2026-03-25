@@ -83,8 +83,8 @@ Generated: <timestamp>
 | --- | --- | --- | --- | --- |
 
 ### 🔗 Loop-FF Integration Pipeline (last 5 runs)
-| Build ID | Result | Finished | Build Number | Notes |
-| --- | --- | --- | --- | --- |
+| Build ID | Branch | Result | Finished | Build Number | Notes |
+| --- | --- | --- | --- | --- | --- |
 
 ### 📊 Error Rates (last 1h)
 | Partner | Error Count | Notes |

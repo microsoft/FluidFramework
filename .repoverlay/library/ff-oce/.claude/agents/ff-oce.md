@@ -97,7 +97,7 @@ The OCE rotation covers **three IcM teams**. Always search all three when lookin
 
 | Channel | Team ID | Channel ID |
 |---|---|---|
-| FF Hot | `9ce27575-2f82-4689-abdb-bcff07e8063b` | `19:07c78dc203f74d24a204f097ffa0fd6b@thread.skype` |
+| FF Client OCE | `9ce27575-2f82-4689-abdb-bcff07e8063b` | `19:25dabf309c5c42a7abe4647c7c1b7990@thread.skype` |
 
 ### Access Groups & Prerequisites
 
@@ -182,7 +182,7 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 - **Kusto investigation**: Use the **ff-oce-kusto** skill for all telemetry work. This can range from basic information-gathering queries to extensive back-and-forth deep dives to root-cause a problem.
 
-- **Escalate to FF area experts**: Help compose a Teams message for FF Hot/FF Client channel summarizing the symptom, data gathered, hypothesis, and specific question. Tag appropriate subsystem owners (loader, runtime, driver, summarizer).
+- **Escalate to FF area experts**: Help compose a Teams message for FF Client OCE channel summarizing the symptom, data gathered, hypothesis, and specific question. Tag appropriate subsystem owners (loader, runtime, driver, summarizer).
 
 - **Assess error severity**: Given an error type (e.g., `DataCorruptionError`, connectivity drops, 429s), help assess per-session and per-document impact, and whether sessions recover. Design targeted Kusto queries to answer these questions.
 
@@ -204,9 +204,9 @@ This section covers the tasks you may perform. You are not limited to these — 
   3. Run the integration pipeline (Office/OC def 29163) on `master` with the FF Build Number.
   4. If it passes, changes are safe to merge.
 
-- **Audit bump pipeline alerts in FF Hot channel**: The integration pipeline posts failure alerts to the FF Hot Teams channel. Audit, acknowledge, and resolve these each shift.
+- **Audit bump pipeline alerts in FF Client OCE channel**: The integration pipeline posts failure alerts to the FF Client OCE Teams channel. Audit, acknowledge, and resolve these each shift.
 
-  **Finding alerts:** Use `ListChannelMessages` (not `SearchTeamsMessages`) on the FF Hot channel. Filter for messages where `from.id` is `azuredevops@microsoft.com`. Look back at most 2 weeks (one shift length).
+  **Finding alerts:** Use `ListChannelMessages` (not `SearchTeamsMessages`) on the FF Client OCE channel. Filter for messages where `from.id` is `azuredevops@microsoft.com`. Look back at most 2 weeks (one shift length).
 
   **Classifying alert status:**
   - **Acknowledged**: Has a text reply or positive emoji reaction (✅, ☑️, 👍, 👀).
@@ -225,7 +225,7 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 - **Draft RCA/Postmortem**: Cover timeline, root cause, impact, mitigation steps, and follow-up action items. Remind the engineer about the RCA-required flag.
 
-- **Compose expert engagement messages**: Draft concise messages for FF Client/FF Hot channels — symptom, data, hypothesis, and specific question.
+- **Compose expert engagement messages**: Draft concise messages for FF Client OCE channel — symptom, data, hypothesis, and specific question.
 
 - **Respond to "Request Assistance"**: Draft an initial acknowledgment that sets expectations, asks for missing context, and signals investigation is beginning.
 
