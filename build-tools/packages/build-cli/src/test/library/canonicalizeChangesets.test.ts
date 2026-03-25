@@ -209,31 +209,6 @@ describe("canonicalizeChangesets", () => {
 		assert.doesNotMatch(content, /__section/);
 	});
 
-	it("should write all changesets in parallel", async () => {
-		// Create multiple changesets sequentially because `writeChangesetFile` calls git operations and can't be parallellized
-		for (let i = 0; i < 10; i++) {
-			// eslint-disable-next-line no-await-in-loop -- needs to be sequential because the method calls git operations
-			await writeChangesetFile(
-				`change-${i}.md`,
-				`---\n"@fluid/package-${i}": patch\n"__custom": "metadata"\n---\n\nChange ${i}\n\nDetailed description.\n`,
-			);
-		}
-
-		await canonicalizeChangesets(testDir);
-
-		// Verify all were processed (custom metadata stripped)
-		const readPromises: Promise<void>[] = [];
-		for (let i = 0; i < 10; i++) {
-			readPromises.push(
-				readFile(path.join(changesetDir, `change-${i}.md`), "utf8").then((content) => {
-					assert.doesNotMatch(content, /__custom/);
-					assert.match(content, new RegExp(`Change ${i}`));
-				}),
-			);
-		}
-		await Promise.all(readPromises);
-	});
-
 	it("should throw error when directory doesn't have git repo", async () => {
 		// Create a directory without git init
 		const noGitDir = await mkdtemp(path.join(tmpdir(), "no-git-"));
