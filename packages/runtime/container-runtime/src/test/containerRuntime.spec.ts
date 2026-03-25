@@ -614,7 +614,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("IDs generated before a lost range are finalized after reconnect", async () => {
+			it("IDs unfinalized due to disconnect are properly finalized after reconnect", async () => {
 				// Start out disconnected since step 1 is to generate IDs before reconnect
 				const connected = false;
 				const mockContext = getMockContext({ connected }) as IContainerContext;
@@ -631,20 +631,22 @@ describe("Runtime", () => {
 				const compressor = containerRuntime.idCompressor;
 				assert(compressor !== undefined, "Expected idCompressor to be defined");
 
-				// Generate an ID while disconnected.
+				// Generate an ID while disconnected, and take the creation range,
+				// but do not submit the op to leave the range unfinalized (same as if the op were submitted but not sequenced).
 				const id1 = compressor.generateCompressedId();
-				// Simulate the range being taken but lost (e.g. nack'd / disconnect before submit).
 				compressor.takeNextCreationRange();
 
 				// Re-connect – replayPendingStates releases unfinalized ranges
-				// (no IdAllocation op is submitted at this point).
+				// (no IdAllocation op is submitted at this point, but the next will contain the unfinalized range).
 				changeConnectionState(containerRuntime, true, mockClientId);
 
 				// Simulate a remote op arriving before we submit anything else.
-				// Bump refSeq and continue execution at the end of the microtask queue.
+				// Bump refSeq, emit the "op" event, and continue execution at the end of the microtask queue.
 				// This is how Inbound Queue works, and it makes sure we get coverage of ref seq coherency in this test.
 				++mockDeltaManager.lastSequenceNumber;
+				mockDeltaManager.emit("op", {});
 				await Promise.resolve();
+
 				// Generate another ID and submit a data store op referencing it.
 				// This triggers submitIdAllocationOpIfNeeded → takeNextCreationRange.
 				// Because the unfinalized range was released during replay, both IDs
@@ -657,6 +659,8 @@ describe("Runtime", () => {
 				assert.strictEqual(submittedOps.length, 2, "Expected 1 ID Allocation + 1 data op");
 
 				// Simulate processing the ID Allocation ack — finalize the range.
+				// Without the call to resetUnfinalizedCreationRange in replayPendingStates,
+				// this results in a "Ranges finalized out of order" error.
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 				compressor.finalizeCreationRange(submittedOps[0].contents);
 

@@ -261,7 +261,7 @@ describe("Ops on Reconnect", () => {
 			);
 		});
 
-		it("ID Allocations properly finalized across resubmit", async () => {
+		it("ID Allocations properly finalized across reconnect", async () => {
 			// Setup with idCompressor enabled
 			await setupFirstContainer({ enableRuntimeIdCompressor: "on" });
 			await setupSecondContainersDataObject();
