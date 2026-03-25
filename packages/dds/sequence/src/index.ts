@@ -3,6 +3,19 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Supports distributed data structures which are list-like.
+ *
+ * This library's main export is {@link SharedString}, a DDS for storing and simultaneously editing a sequence of
+ * text.
+ *
+ * See the package's README for a high-level introduction to `SharedString`'s feature set.
+ * @remarks Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for
+ * working with text.
+ *
+ * @packageDocumentation
+ */
+
 export {
 	BaseSegment,
 	type InteriorSequencePlace,
@@ -28,18 +41,6 @@ export type {
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
 } from "./intervalCollection.js";
-/**
- * Supports distributed data structures which are list-like.
- *
- * This library's main export is {@link SharedString}, a DDS for storing and simultaneously editing a sequence of
- * text.
- *
- * See the package's README for a high-level introduction to `SharedString`'s feature set.
- * @remarks Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for
- * working with text.
- *
- * @packageDocumentation
- */
 export type { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
 	createEndpointIndex,
