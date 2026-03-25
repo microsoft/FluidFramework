@@ -572,6 +572,7 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 			const attachId = getAttachedRootId(mark);
 			count = context.isDetachId(attachId, count).length;
 			count = context.getInputRootId(attachId, count).length;
+			count = context.getFirstRenameId(attachId, count).length;
 			break;
 		}
 		case "Detach": {
@@ -656,14 +657,16 @@ function encodeMarkEffectV2(
 	const type = mark.type;
 	switch (type) {
 		case "Attach": {
+			// XXX: Handle pins
 			const attachId = getAttachedRootId(mark);
-			const detachId = context.getInputRootId(attachId, mark.count).value ?? attachId;
-			const isMove = context.isDetachId(detachId, mark.count).value;
+			const rootInputId = context.getInputRootId(attachId, mark.count).value ?? attachId;
+			const isMove = context.isDetachId(rootInputId, mark.count).value;
 
+			// XXX: Can we just call this `isMoveIn`? It seems like this check is sufficient.
 			// If the input context ID for these nodes is not the cell ID,
 			// then these nodes are being moved from the location at which they were last detached.
 			const isInitialAttachLocation =
-				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, detachId);
+				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, rootInputId);
 
 			if (!isMove && isInitialAttachLocation) {
 				return {
@@ -673,6 +676,10 @@ function encodeMarkEffectV2(
 					},
 				};
 			}
+
+			const detachId = isMove
+				? rootInputId
+				: (context.getFirstRenameId(rootInputId, mark.count).value ?? attachId);
 
 			const encodedEndpoint = areEqualChangeAtomIds(detachId, attachId)
 				? undefined

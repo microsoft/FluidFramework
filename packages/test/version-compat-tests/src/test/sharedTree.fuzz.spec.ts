@@ -6,7 +6,7 @@
 import { ensurePackageInstalled, getDataRuntimeApi } from "@fluid-private/test-version-utils";
 import { createCompatFuzzSuite } from "@fluidframework/tree/internal/test";
 
-const versionForCompat = "2.73.0";
+const versionForCompat = "2.82.0";
 
 await ensurePackageInstalled(versionForCompat, 0, false);
 

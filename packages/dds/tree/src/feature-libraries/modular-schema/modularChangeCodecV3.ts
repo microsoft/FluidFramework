@@ -135,6 +135,7 @@ export function makeModularChangeCodecV3(
 		encodeNode: NodeEncoder,
 		getInputRootId: ChangeAtomMappingQuery,
 		getOutputRootId: ChangeAtomMappingQuery,
+		getFirstRenameId: ChangeAtomMappingQuery,
 		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedFieldChangeMap {
@@ -152,6 +153,7 @@ export function makeModularChangeCodecV3(
 				encodeNode,
 				getInputRootId,
 				getOutputRootId,
+				getFirstRenameId,
 				isAttachId,
 				isDetachId,
 
@@ -188,6 +190,7 @@ export function makeModularChangeCodecV3(
 		encodeNode: NodeEncoder,
 		getInputDetachId: ChangeAtomMappingQuery,
 		getOutputDetachId: ChangeAtomMappingQuery,
+		getFirstRenameId: ChangeAtomMappingQuery,
 		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedNodeChangeset {
@@ -204,6 +207,7 @@ export function makeModularChangeCodecV3(
 				encodeNode,
 				getInputDetachId,
 				getOutputDetachId,
+				getFirstRenameId,
 				isAttachId,
 				isDetachId,
 			);
@@ -276,6 +280,7 @@ export function makeModularChangeCodecV3(
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 				getInputRootId: () => fail("Should not query during decoding"),
 				getOutputRootId: () => fail("Should not query during decoding"),
+				getFirstRenameId: () => fail("Should not query during decoding"),
 				isAttachId: () => fail("Should not query during decoding"),
 				isDetachId: () => fail("Should not query during decoding"),
 
@@ -419,6 +424,12 @@ export function makeModularChangeCodecV3(
 				return change.rootNodes.oldToNewId.getFirst(id, count);
 			};
 
+			const getFirstRenameId = (
+				id: ChangeAtomId,
+				count: number,
+			): RangeQueryResult<ChangeAtomId | undefined> =>
+				change.rootNodes.firstIntermediateRenames.getFirst(id, count);
+
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 				// TODO: Handle node aliasing.
 				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
@@ -431,6 +442,7 @@ export function makeModularChangeCodecV3(
 					encodeNode,
 					getInputDetachId,
 					getOutputDetachId,
+					getFirstRenameId,
 					isAttachId,
 					isDetachId,
 				);
@@ -452,6 +464,7 @@ export function makeModularChangeCodecV3(
 					encodeNode,
 					getInputDetachId,
 					getOutputDetachId,
+					getFirstRenameId,
 					isAttachId,
 					isDetachId,
 				),

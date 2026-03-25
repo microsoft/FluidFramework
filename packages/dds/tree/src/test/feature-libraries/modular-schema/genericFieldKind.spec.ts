@@ -223,6 +223,11 @@ describe("GenericField", () => {
 							value: id,
 							length: count,
 						}),
+						getFirstRenameId: (id, count) => ({
+							start: id,
+							value: undefined,
+							length: count,
+						}),
 						isAttachId: (id, count) => ({
 							start: id,
 							value: false,

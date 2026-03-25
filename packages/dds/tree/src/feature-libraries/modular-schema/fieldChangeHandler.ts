@@ -262,6 +262,14 @@ export interface FieldChangeEncodingContext {
 	): RangeQueryResult<ChangeAtomId | undefined>;
 
 	/**
+	 * XXX: Comment
+	 */
+	getFirstRenameId(
+		inputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	/**
 	 * Returns the input context root ID from an output context root ID.
 	 * This is only needed for encoding to sequence field format v3 and older.
 	 * This should only be called during encoding.

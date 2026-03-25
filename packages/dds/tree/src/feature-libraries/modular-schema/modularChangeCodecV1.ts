@@ -174,6 +174,7 @@ function encodeFieldChangesForJson(
 	encodeNode: NodeEncoder,
 	getInputRootId: ChangeAtomMappingQuery,
 	getOutputRootId: ChangeAtomMappingQuery,
+	getFirstRenameId: ChangeAtomMappingQuery,
 	isAttachId: ChangeAtomIdRangeQuery,
 	isDetachId: ChangeAtomIdRangeQuery,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -195,6 +196,7 @@ function encodeFieldChangesForJson(
 			encodeNode,
 			getInputRootId,
 			getOutputRootId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
 
@@ -240,6 +242,7 @@ function encodeNodeChangesForJson(
 	encodeNode: NodeEncoder,
 	getInputRootId: ChangeAtomMappingQuery,
 	getOutputRootId: ChangeAtomMappingQuery,
+	getFirstRenameId: ChangeAtomMappingQuery,
 	isAttachId: ChangeAtomIdRangeQuery,
 	isDetachId: ChangeAtomIdRangeQuery,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -257,6 +260,7 @@ function encodeNodeChangesForJson(
 			encodeNode,
 			getInputRootId,
 			getOutputRootId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
 			fieldChangesetCodecs,
@@ -316,6 +320,7 @@ function decodeFieldChangesFromJson(
 			encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 			getInputRootId: () => fail("Should not query during decoding"),
 			getOutputRootId: () => fail("Should not query during decoding"),
+			getFirstRenameId: () => fail("Should not query during decoding"),
 			isAttachId: () => fail("Should not query during decoding"),
 			isDetachId: () => fail("Should not query during decoding"),
 
@@ -576,6 +581,18 @@ export function encodeChange(
 	): RangeQueryResult<ChangeAtomId | undefined> =>
 		change.rootNodes.oldToNewId.getFirst(id, count);
 
+	const getFirstRenameId = (
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> => {
+		const entry = change.rootNodes.firstIntermediateRenames.getFirst(id, count);
+		if (entry.value !== undefined) {
+			return entry;
+		}
+
+		return change.rootNodes.oldToNewId.getFirst(id, entry.length);
+	};
+
 	const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 		// TODO: Handle node aliasing.
 		const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
@@ -588,6 +605,7 @@ export function encodeChange(
 			encodeNode,
 			getOldFromNewId,
 			getNewFromOldId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
 			fieldChangesetCodecs,
@@ -610,6 +628,7 @@ export function encodeChange(
 			encodeNode,
 			getOldFromNewId,
 			getNewFromOldId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
 			fieldChangesetCodecs,

@@ -781,7 +781,7 @@ export function testStateBasedRebaserAxioms(): void {
 			generateChildStates,
 			defaultFieldRebaser,
 			{
-				groupSubSuites: true,
+				groupSubSuites: false,
 				numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 3 : 4,
 				skipRebaseOverCompose: false,
 			},

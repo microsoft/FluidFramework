@@ -51,6 +51,11 @@ export function testSnapshots(): void {
 							baseContext,
 							getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
 							getOutputRootId: (id, count) => ({ start: id, value: id, length: count }),
+							getFirstRenameId: (id, count) => ({
+								start: id,
+								value: undefined,
+								length: count,
+							}),
 							isAttachId: (id, count) => ({
 								start: id,
 								value: false,
