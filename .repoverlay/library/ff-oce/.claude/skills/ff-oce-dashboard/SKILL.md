@@ -56,7 +56,9 @@ If it fails, retry with a simple `summarize ErrorCount = count()` fallback (no `
 
 #### Agent 5 — Teams Pipeline Alerts
 
-Call `teams-ListChannelMessages` with teamId `9ce27575-2f82-4689-abdb-bcff07e8063b`, channelId `19:25dabf309c5c42a7abe4647c7c1b7990@thread.skype`, top 50. Filter for messages from Azure DevOps in the last 2 weeks. Classify each as **Acknowledged** (has a text reply or ✅/☑️/👍/👀 reaction), **Resolved** (reply confirming fix), or **Unacknowledged** (no replies, no meaningful reactions). Report: Date, Description, Status, Action Needed.
+Call `teams-ListChannelMessages` with teamId `9ce27575-2f82-4689-abdb-bcff07e8063b`, channelId `19:25dabf309c5c42a7abe4647c7c1b7990@thread.skype`, top 50. Filter for messages from Azure DevOps in the last 2 weeks. Classify each as **Acknowledged** (has a text reply), **Resolved** (reply confirming fix), or **Unacknowledged** (no text replies). Report: Date, Description, Status, Action Needed.
+
+> **⚠️ Tool limitation:** The Teams MCP tool does not include emoji reactions in its response. Alerts acknowledged only via emoji (👍, ✅, etc.) will appear as "Unacknowledged." Always cross-check before acting on unacknowledged alerts.
 
 #### Agent 6 — WorkIQ
 

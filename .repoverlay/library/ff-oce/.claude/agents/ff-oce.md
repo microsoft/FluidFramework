@@ -209,11 +209,13 @@ This section covers the tasks you may perform. You are not limited to these — 
   **Finding alerts:** Use `ListChannelMessages` (not `SearchTeamsMessages`) on the FF Client OCE channel. Filter for messages where `from.id` is `azuredevops@microsoft.com`. Look back at most 2 weeks (one shift length).
 
   **Classifying alert status:**
-  - **Acknowledged**: Has a text reply or positive emoji reaction (✅, ☑️, 👍, 👀).
+  - **Acknowledged**: Has a text reply in the thread.
   - **Resolved**: Has a reply confirming no further action needed ("rolled back", "transient", "fixed in PR #1234").
-  - **Unacknowledged**: No text replies and no meaningful emoji reactions. Do not rely on `lastModifiedDateTime` — emoji reactions update it without adding a reply.
+  - **Unacknowledged**: No text replies in the thread.
 
-  **Actions:** Surface unacknowledged alerts and offer to post "acknowledged!". For acknowledged-but-unresolved, summarize the thread and suggest follow-up. Present results as a table (date, description, status, recommended action).
+  > **⚠️ Tool limitation:** The Teams MCP tool does not include emoji reactions in its response (the `reactions` field is absent from both `ListChannelMessages` and `GetChatMessage`). Alerts acknowledged only via emoji (👍, ✅, etc.) will appear as "Unacknowledged." Always confirm with the OCE before treating an alert as unacknowledged.
+
+  **Actions:** Surface unacknowledged alerts and **ask the user to verify** before offering to post "acknowledged!". For acknowledged-but-unresolved, summarize the thread and suggest follow-up. Present results as a table (date, description, status, recommended action).
 
 - **Monitor partner ring deployments**: Run Kusto queries to check for Fluid error rate spikes correlated with ring promotions (Dogfood → MSIT → Production).
 
