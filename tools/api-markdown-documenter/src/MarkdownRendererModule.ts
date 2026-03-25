@@ -9,8 +9,8 @@
 
 export {
 	type RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
-	type RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
 	renderApiModelAsMarkdown as renderApiModel,
+	type RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
 	renderMarkdownDocuments,
 } from "./RenderMarkdown.js";
 export { renderDocumentAsMarkdown as renderDocument } from "./renderers/index.js";

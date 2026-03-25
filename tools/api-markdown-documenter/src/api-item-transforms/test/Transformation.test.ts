@@ -20,6 +20,8 @@ import { expect } from "chai";
 
 import type { ApiDocument } from "../../ApiDocument.js";
 import type { NormalizedTree } from "../../mdast/index.js";
+import { apiItemToDocument } from "../TransformApiItem.js";
+import { transformApiModel } from "../TransformApiModel.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
@@ -27,8 +29,6 @@ import {
 	HierarchyKind,
 } from "../configuration/index.js";
 import { betaWarningSpan } from "../helpers/index.js";
-import { apiItemToDocument } from "../TransformApiItem.js";
-import { transformApiModel } from "../TransformApiModel.js";
 
 // Relative to lib/api-item-transforms/test
 const dirname = Path.dirname(fileURLToPath(import.meta.url));

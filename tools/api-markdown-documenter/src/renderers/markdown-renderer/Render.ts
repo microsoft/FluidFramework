@@ -6,8 +6,8 @@
 import type { Nodes as MdastTree } from "mdast";
 import { gfmToMarkdown } from "mdast-util-gfm";
 import {
-	type Options as MdastToMarkdownOptions,
 	toMarkdown as toMarkdownString,
+	type Options as MdastToMarkdownOptions,
 } from "mdast-util-to-markdown";
 
 import type { ApiDocument, RenderedDocument } from "../../ApiDocument.js";

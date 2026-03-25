@@ -11,19 +11,19 @@ import type { Link } from "mdast";
 import type { SectionHeading } from "../../mdast/index.js";
 import {
 	getApiItemKind,
-	getEffectiveReleaseLevel,
-	getFileSafeNameForApiItem,
 	getFilteredParent,
+	getFileSafeNameForApiItem,
 	type ValidApiItemKind,
+	getEffectiveReleaseLevel,
 } from "../../utilities/index.js";
 import {
-	type ApiItemTransformationConfiguration,
-	type DocumentationHierarchyConfiguration,
-	type DocumentHierarchyConfiguration,
 	FolderDocumentPlacement,
-	type FolderHierarchyConfiguration,
-	type HierarchyConfiguration,
 	HierarchyKind,
+	type ApiItemTransformationConfiguration,
+	type DocumentHierarchyConfiguration,
+	type FolderHierarchyConfiguration,
+	type DocumentationHierarchyConfiguration,
+	type HierarchyConfiguration,
 } from "../configuration/index.js";
 
 /**

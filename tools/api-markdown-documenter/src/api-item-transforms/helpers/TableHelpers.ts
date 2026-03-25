@@ -10,10 +10,10 @@ import {
 	type ApiPackage,
 	type ApiPropertyItem,
 	ApiReturnTypeMixin,
-	type ApiVariable,
 	type Excerpt,
 	type Parameter,
 	type TypeParameter,
+	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
 import type { PhrasingContent, Table, TableCell } from "mdast";
@@ -26,8 +26,8 @@ import {
 	getModifiers,
 	injectSeparator,
 } from "../../utilities/index.js";
-import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { transformTsdoc } from "../TsdocNodeTransforms.js";
+import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { getLinkForApiItem, mdastToHtml } from "../utilities/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
