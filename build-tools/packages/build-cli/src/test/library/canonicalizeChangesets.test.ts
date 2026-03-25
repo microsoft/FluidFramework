@@ -210,9 +210,9 @@ describe("canonicalizeChangesets", () => {
 	});
 
 	it("should write all changesets in parallel", async () => {
-		// Create multiple changesets sequentially (git operations can't be parallel)
+		// Create multiple changesets sequentially because `writeChangesetFile` calls git operations and can't be parallellized
 		for (let i = 0; i < 10; i++) {
-			// eslint-disable-next-line no-await-in-loop
+			// eslint-disable-next-line no-await-in-loop -- needs to be sequential because the method calls git operations
 			await writeChangesetFile(
 				`change-${i}.md`,
 				`---\n"@fluid/package-${i}": patch\n"__custom": "metadata"\n---\n\nChange ${i}\n\nDetailed description.\n`,
