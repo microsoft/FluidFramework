@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unused-imports/no-unused-imports, import-x/no-duplicates -- This import prevents a large number of type references in the API reports from showing up as *_2.
 import type {
+	// eslint-disable-next-line unused-imports/no-unused-imports, import-x/no-duplicates -- This import prevents a large number of type references in the API reports from showing up as *_2.
 	RestrictiveStringRecord as _RestrictiveStringRecord,
 	RestrictiveStringRecord,
 } from "../../util/index.js";
