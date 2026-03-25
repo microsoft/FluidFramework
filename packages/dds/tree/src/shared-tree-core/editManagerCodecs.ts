@@ -30,16 +30,28 @@ import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
 import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
+/**
+ * Context required for encoding/decoding the {@link EditManager}'s {@link SummaryData}.
+ */
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 }
 
+/**
+ * Codec name used to identify the {@link EditManager} codec, see {@link makeEditManagerCodecBuilder}.
+ */
 export const editManagerCodecName = "EditManager";
 
+/**
+ * Options for constructing an {@link EditManager} codec, see {@link makeEditManagerCodecBuilder}.
+ */
 interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
+	/** Codecs for encoding changesets. */
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>;
+	/** Maps each EditManager format version to the corresponding changeset format version. */
 	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>;
+	/** Codec for encoding revision tags within changesets. */
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -48,6 +60,9 @@ interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 	>;
 }
 
+/**
+ * Creates a {@link ClientVersionDispatchingCodecBuilder} encoding for {@link SummaryData}.
+ */
 export function makeEditManagerCodecBuilder<
 	TChangeset,
 >(): ClientVersionDispatchingCodecBuilder<
@@ -57,6 +72,7 @@ export function makeEditManagerCodecBuilder<
 	EditManagerFormatVersion,
 	typeof editManagerCodecName
 > {
+	// See EditManagerFormatVersion and its members for documentation on what changed in each version.
 	const versions: CodecVersion<
 		SummaryData<TChangeset>,
 		EditManagerEncodingContext,
@@ -121,6 +137,10 @@ export function makeEditManagerCodecBuilder<
 	return ClientVersionDispatchingCodecBuilder.build(editManagerCodecName, versions);
 }
 
+/**
+ * Returns a {@link CodecTree} for the EditManager format at the given client version,
+ * with the provided change codec tree as a child.
+ */
 export function getCodecTreeForEditManagerFormatWithChange(
 	clientVersion: MinimumVersionForCollab,
 	changeFormat: CodecTree,
