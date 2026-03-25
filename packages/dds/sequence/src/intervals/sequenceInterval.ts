@@ -7,13 +7,16 @@
 
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	Client,
 	ISegment,
 	LocalReferencePosition,
-	PropertiesManager,
 	PropertySet,
+	SequencePlace,
+} from "@fluidframework/merge-tree/internal";
+import {
+	PropertiesManager,
 	ReferenceType,
 	SlidingPreference,
 	compareReferencePositions,
@@ -24,7 +27,6 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-	SequencePlace,
 	Side,
 	endpointPosAndSide,
 	addProperties,
@@ -37,9 +39,8 @@ import { v4 as uuid } from "uuid";
 
 import type { ISharedSegmentSequence } from "../sequence.js";
 
+import type { ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
 import {
-	ISerializableInterval,
-	ISerializedInterval,
 	IntervalStickiness,
 	IntervalType,
 	computeStickinessFromSide,

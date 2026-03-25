@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import type * as git from "@fluidframework/gitresources";
 import { type IClient, type IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	type IRoom,
@@ -12,13 +10,9 @@ import {
 	createRuntimeMessage,
 } from "@fluidframework/server-lambdas";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { BasicRestWrapper, NetworkError } from "@fluidframework/server-services-client";
+import { NetworkError } from "@fluidframework/server-services-client";
 import type * as core from "@fluidframework/server-services-core";
-import {
-	Lumberjack,
-	getLumberBaseProperties,
-	getGlobalTelemetryContext,
-} from "@fluidframework/server-services-telemetry";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import {
 	throttle,
 	type IThrottleMiddlewareOptions,
@@ -26,14 +20,12 @@ import {
 	getBooleanFromConfig,
 	verifyToken,
 	verifyStorageToken,
-	logHttpMetrics,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import { type Request, Router, type Response } from "express";
 import type { Provider } from "nconf";
 import sillyname from "sillyname";
-import { v4 as uuid } from "uuid";
 import winston from "winston";
 
 import { Constants, getSessionFromCache } from "../../../utils";
@@ -43,7 +35,6 @@ import {
 	craftClientLeaveMessage,
 	craftMapSet,
 	craftOpMessage,
-	type IBlobData,
 	type IMapSetOperation,
 } from "./restHelper";
 
@@ -156,33 +147,6 @@ export function create(
 				200,
 				() => handlePatchRootSuccess(request, mapSetBuilder, producer),
 			);
-		},
-	);
-
-	router.post(
-		"/:tenantId/:id/blobs",
-		validateRequestParams("tenantId", "id"),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		denyListMiddleware(denyList),
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (request, response) => {
-			const tenantId = request.params.tenantId;
-			const blobData = request.body as IBlobData;
-			// TODO: why is this contacting external blob storage?
-			const externalHistorianUrl = config.get("worker:blobStorageUrl") as string;
-			const requestToken = fromUtf8ToBase64(tenantId);
-			const uri = `/repos/${tenantId}/git/blobs?token=${requestToken}`;
-			const requestBody: git.ICreateBlobParams = {
-				content: blobData.content,
-				encoding: "base64",
-			};
-			uploadBlob(externalHistorianUrl, uri, requestBody)
-				.then((data: git.ICreateBlobResponse) => {
-					response.status(200).json(data);
-				})
-				.catch((err) => {
-					response.status(400).end(err.toString());
-				});
 		},
 	);
 
@@ -397,33 +361,6 @@ async function checkDocumentExistence(
 		throw new Error("Cannot access document marked for deletion");
 	}
 }
-
-const uploadBlob = async (
-	baseUrl: string,
-	uri: string,
-	blobData: git.ICreateBlobParams,
-): Promise<git.ICreateBlobResponse> => {
-	const restWrapper = new BasicRestWrapper(
-		baseUrl,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		() =>
-			getGlobalTelemetryContext().getProperties().correlationId ??
-			uuid() /* getCorrelationId */,
-		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
-		undefined /* refreshTokenIfNeeded */,
-		logHttpMetrics /* logHttpMetrics */,
-		() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
-	);
-	return restWrapper.post(uri, blobData, undefined, {
-		"Content-Type": "application/json",
-	});
-};
 
 async function handleBroadcastSignal(
 	request: Request,
