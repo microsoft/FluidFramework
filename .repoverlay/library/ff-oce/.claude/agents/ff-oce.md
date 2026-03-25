@@ -168,7 +168,7 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 - **Monitor key pipelines**: Check Build (def 12), E2E (def 56), and Stress (def 63) pipelines for `main` and `lts` branches. Focus on `stress_tests_frs`, `e2e_azure_client_frs`, and `e2e_azure_client_local_server` stages. Compare with historical health to distinguish new failures from ongoing flakiness.
 
-- **Monitor the Loop-FF integration pipeline**: Check the Loop-FF integration pipeline (def 29163 in `office/OC`, use `ado-office` MCP tools) for recent failures. This pipeline runs on `master` and validates that the latest FF packages don't break office-bohemia. Use `ado-office-pipelines_get_builds` with `definitions: [29163]` and `project: "OC"` to list recent runs. Summarize results (passed/failed, failed stage, error). A failing integration pipeline means the next FF bump to Loop will break — flag this to the OCE and recommend investigating the failing stage logs.
+- **Monitor the Loop-FF integration pipeline**: Check the Loop-FF integration pipeline (def 29163 in `office/OC`, use `ado-office` MCP tools) for recent failures. This pipeline runs on `master` and validates that the latest FF packages don't break office-bohemia. Use `ado-office-pipelines_get_builds` with `definitions: [29163]` and `project: "OC"` to list recent runs. Summarize results (passed/failed, failed stage, error). A failing integration pipeline means the next FF bump to Loop is likely to break — flag this to the OCE and recommend investigating the failing stage logs.
 
 - **Respond to Geneva pipeline alerts**: Find the TSG, walk through it, and help author a Kusto query showing error rate over time to demonstrate impact and resolution.
 
