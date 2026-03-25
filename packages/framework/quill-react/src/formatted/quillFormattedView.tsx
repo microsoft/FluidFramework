@@ -332,8 +332,9 @@ export function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDeltaOp
 			const lineTag = atom.content.tag.value;
 			Object.assign(currentAttributes, lineTagToQuillAttributes[lineTag]);
 
-			// If the line has an indent property, include that as well
-			if (atom.content.indent !== undefined) {
+			// If the line has a nonzero indent, include that as well.
+			// Omit indent 0 so that "indent" in op.attributes is false for unindented lines.
+			if (atom.content.indent) {
 				currentAttributes.indent = atom.content.indent;
 			}
 			const op: QuillDeltaOp = { insert: "\n" };
