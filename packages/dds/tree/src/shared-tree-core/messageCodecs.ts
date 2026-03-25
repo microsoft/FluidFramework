@@ -21,6 +21,8 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
+	// This codec will be updated soon.
+	// eslint-disable-next-line import-x/no-deprecated
 	makeDiscontinuedCodecVersion,
 	makeVersionDispatchingCodec,
 } from "../codec/index.js";
@@ -140,6 +142,8 @@ export function makeMessageCodecs<TChangeset>(
 					version === unbrand(MessageFormatVersion.undefined) ? undefined : version;
 				return [
 					versionOrUndefined,
+					// This codec will be updated soon.
+					// eslint-disable-next-line import-x/no-deprecated
 					makeDiscontinuedCodecVersion(options, versionOrUndefined, "2.73.0"),
 				];
 			}
@@ -153,6 +157,8 @@ export function makeMessageCodecs<TChangeset>(
 				];
 			}
 			case unbrand(MessageFormatVersion.v5): {
+				// This codec will be updated soon.
+				// eslint-disable-next-line import-x/no-deprecated
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
 			}
 			case unbrand(MessageFormatVersion.vSharedBranches): {
