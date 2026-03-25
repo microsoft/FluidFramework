@@ -4897,11 +4897,7 @@ describe("Runtime", () => {
 				submittedOps.length = 0;
 
 				// Submit ops BEFORE entering staging mode
-				submitDataStoreOp(
-					runtime,
-					"pre1",
-					genTestDataStoreMessage("pre-staging-op"),
-				);
+				submitDataStoreOp(runtime, "pre1", genTestDataStoreMessage("pre-staging-op"));
 				await Promise.resolve();
 				assert.equal(submittedOps.length, 1, "Pre-staging op should be submitted");
 
