@@ -559,9 +559,9 @@ export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackag
  * - What should be included as children. For example should it include versioned codecs which dispatch base on the min version for collaboration? If so, what version of them should be used?
  * - What risks does having this mitigate?
  */
-export interface CodecTree {
+export interface CodecTree<TFormatVersion extends FormatVersion = FormatVersion> {
 	readonly name: string;
-	readonly version: FormatVersion;
+	readonly version: TFormatVersion;
 	readonly children?: readonly CodecTree[];
 }
 

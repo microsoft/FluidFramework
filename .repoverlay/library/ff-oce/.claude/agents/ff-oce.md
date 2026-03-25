@@ -206,7 +206,9 @@ This section covers the tasks you may perform. You are not limited to these — 
 
 - **Audit bump pipeline alerts in FF Client OCE channel**: The integration pipeline posts failure alerts to the FF Client OCE Teams channel. Audit, acknowledge, and resolve these each shift.
 
-  **Finding alerts:** Use `ListChannelMessages` (not `SearchTeamsMessages`) on the FF Client OCE channel. Filter for messages where `from.id` is `azuredevops@microsoft.com`. Look back at most 2 weeks (one shift length).
+  **Finding alerts:** Use `ListChannelMessages` (not `SearchTeamsMessages`) on the FF Client OCE channel **with `expand: "replies"`** to fetch threaded replies inline. Filter for messages where `from.displayName` is `"Azure DevOps"` or `from.id` is `azuredevops@microsoft.com`. Look back at most 2 weeks (one shift length).
+
+  **IMPORTANT — Fetching replies:** The Graph API returns `replies: null` by default. You **must** pass `expand: "replies"` to `ListChannelMessages` to get threaded replies. Without replies, you cannot determine acknowledgment status — do not classify alerts as unacknowledged based on missing reply data when `expand` was not set.
 
   **Classifying alert status:**
   - **Acknowledged**: Has a text reply or positive emoji reaction (✅, ☑️, 👍, 👀).

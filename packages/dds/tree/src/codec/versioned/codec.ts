@@ -12,13 +12,14 @@ import {
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { Type, type TSchema } from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 import { gt } from "semver-ts";
 
 import { pkgVersion } from "../../packageVersion.js";
-import type {
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlyObject,
+import {
+	JsonCompatibleReadOnlySchema,
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 } from "../../util/index.js";
 import {
 	type ICodecFamily,
@@ -117,8 +118,7 @@ function makeVersionedValidatedCodec<
 /**
  * Creates a codec which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
  *
- * TODO: {@link ClientVersionDispatchingCodecBuilder} should get support for extra decode only entries and/or unstable formats (codecs without a minVersionForCollab that will never be selected for write unless overridden).
- * Once done, users of this should migrate to ClientVersionDispatchingCodecBuilder and this function can be simplified.
+ * @deprecated Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} and use {@link makeDiscontinuedCodecAndSchema}.
  */
 export function makeDiscontinuedCodecVersion<
 	TDecoded,
@@ -129,16 +129,6 @@ export function makeDiscontinuedCodecVersion<
 	discontinuedVersion: FormatVersion,
 	discontinuedSince: SemanticVersion,
 ): IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> {
-	const schema = Type.Object(
-		{
-			version:
-				discontinuedVersion === undefined
-					? Type.Undefined()
-					: Type.Literal(discontinuedVersion),
-		},
-		// Using `additionalProperties: true` allows this schema to be used when loading data encoded by older versions even though they contain additional properties.
-		{ additionalProperties: true },
-	);
 	const codec: IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> = {
 		encode: (_: TDecoded): TEncoded => {
 			throw new UsageError(
@@ -147,11 +137,46 @@ export function makeDiscontinuedCodecVersion<
 		},
 		decode: (data: TEncoded): TDecoded => {
 			throw new UsageError(
-				`Cannot decode data to format ${data.version}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
+				`Cannot decode data in format ${data.version}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
 			);
 		},
 	};
-	return makeVersionedValidatedCodec(options, new Set([discontinuedVersion]), schema, codec);
+	return makeVersionedValidatedCodec(
+		options,
+		new Set([discontinuedVersion]),
+		JsonCompatibleReadOnlySchema,
+		codec,
+	);
+}
+
+/**
+ * Creates a codec version which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
+ */
+export function makeDiscontinuedCodecAndSchema<
+	TDecoded,
+	TContext,
+	TFormatVersion extends FormatVersion = FormatVersion,
+>(
+	discontinuedVersion: TFormatVersion,
+	discontinuedSince: SemanticVersion,
+): CodecVersion<TDecoded, TContext, TFormatVersion> {
+	return {
+		minVersionForCollab: undefined,
+		formatVersion: discontinuedVersion,
+		codec: {
+			schema: JsonCompatibleReadOnlySchema,
+			encode: (_data: TDecoded) => {
+				throw new UsageError(
+					`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
+				);
+			},
+			decode: (data: unknown) => {
+				throw new UsageError(
+					`Cannot decode data in format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
+				);
+			},
+		},
+	};
 }
 
 /**
@@ -220,7 +245,7 @@ export interface CodecVersion<
 	TDecoded,
 	TContext,
 	TFormatVersion extends FormatVersion,
-	TBuildOptions extends ICodecOptions,
+	TBuildOptions extends ICodecOptions = ICodecOptions,
 > extends CodecVersionBase<
 		| CodecAndSchema<TDecoded, TContext>
 		| ((options: TBuildOptions) => CodecAndSchema<TDecoded, TContext>),
@@ -454,7 +479,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		return this.buildDecoderInternal(options)[1];
 	}
 
-	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree {
+	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree<TFormatVersion> {
 		// TODO: add support for children codecs.
 		const selected = getWriteVersionNoOverrides(this.registry, clientVersion);
 		return {
