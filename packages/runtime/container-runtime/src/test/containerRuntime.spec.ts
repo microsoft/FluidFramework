@@ -665,7 +665,7 @@ describe("Runtime", () => {
 				compressor.finalizeCreationRange(submittedOps[0].contents);
 
 				// Both IDs should now be finalized (positive final IDs in op space).
-				// Without releaseUnfinalizedCreationRange, id1 would remain a local-only
+				// Without resetUnfinalizedCreationRange, id1 would remain a local-only
 				// ID (negative) that could never be shared with other clients.
 				const id1OpSpace = compressor.normalizeToOpSpace(id1);
 				const id2OpSpace = compressor.normalizeToOpSpace(id2);

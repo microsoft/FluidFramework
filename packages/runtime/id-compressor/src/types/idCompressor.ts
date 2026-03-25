@@ -99,15 +99,19 @@ export interface IIdCompressorCore {
 
 	/**
 	 * Resets the next creation range to include all unfinalized IDs.
-	 * After calling this, the next call to `takeNextCreationRange` will produce a range
-	 * covering all unfinalized IDs (equivalent to what `takeUnfinalizedCreationRange` would
+	 *
+	 * @remarks
+	 * IMPORTANT: This must only be called if it's CERTAIN that the unfinalized range will never be finalized as-is (e.g. by in-flight ops).
+	 *
+	 * After calling this, the next call to {@link IIdCompressorCore.takeNextCreationRange} will produce a range
+	 * covering all unfinalized IDs (equivalent to what {@link IIdCompressorCore.takeUnfinalizedCreationRange} would
 	 * have returned) plus any IDs generated after this call.
 	 *
-	 * Unlike `takeUnfinalizedCreationRange`, this method does not produce or return a range,
+	 * Unlike {@link IIdCompressorCore.takeUnfinalizedCreationRange}, this method does not produce or return a range,
 	 * and does not advance the internal range counter. It is useful when the caller wants to
-	 * defer the actual range submission to the next natural `takeNextCreationRange` call.
+	 * defer the actual range submission to the next natural {@link IIdCompressorCore.takeNextCreationRange} call.
 	 */
-	releaseUnfinalizedCreationRange(): void;
+	resetUnfinalizedCreationRange(): void;
 
 	/**
 	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).

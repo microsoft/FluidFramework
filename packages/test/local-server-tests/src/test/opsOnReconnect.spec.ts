@@ -270,7 +270,7 @@ describe("Ops on Reconnect", () => {
 			assert(compressor1 !== undefined, "IdCompressor must be enabled");
 
 			// Capture any container-closing error so we can surface it as the test failure.
-			// Without releaseUnfinalizedCreationRange, finalizeCreationRange throws
+			// Without resetUnfinalizedCreationRange, finalizeCreationRange throws
 			// "Ranges finalized out of order" during op processing, which closes the
 			// container. ensureSynchronized filters out closed containers and returns
 			// normally, so we need to re-throw the closing error ourselves.
@@ -307,19 +307,19 @@ describe("Ops on Reconnect", () => {
 			//      canSendOps is still false so nothing goes to the server.
 			//   2. canSendOps becomes true.
 			//   3. replayPendingStates() replays from PendingStateManager:
-			//		- releaseUnfinalizedCreationRange is called, which releases the range for id2
+			//		- resetUnfinalizedCreationRange is called, which releases the range for id2
 			// 		  back to the compressor to be included in the next creation range.
 			//      - IdAllocation ops are skipped during resubmit (by design).
 			//      - The DDS op is resubmitted, which calls submitIdAllocationOpIfNeeded
 			//        -> takeNextCreationRange. This range includes id2 (even though id2 itself may be unused).
-			//        NOTE: Without releaseUnfinalizedCreationRange, nextRangeBaseGenCount is already
+			//        NOTE: Without resetUnfinalizedCreationRange, nextRangeBaseGenCount is already
 			//        past id2 so count=0 and NO IdAllocation is emitted for the replayed batch.
 			await waitForContainerConnection(container1);
 
 			// Generate a third ID after reconnect and submit a DDS op.
 			// takeNextCreationRange produces a range starting at genCount 3. When the server
 			// sequences this IdAllocation, finalizeCreationRange checks that ranges are
-			// contiguous. Without releaseUnfinalizedCreationRange the genCount-2 range
+			// contiguous. Without resetUnfinalizedCreationRange the genCount-2 range
 			// was never re-sent, so finalizing the genCount-3 range throws
 			// "Ranges finalized out of order".
 			const id3 = compressor1.generateCompressedId();
@@ -329,7 +329,7 @@ describe("Ops on Reconnect", () => {
 
 			// If the container closed during op processing, surface its error as the
 			// test failure. This is what makes the test fail with "Ranges finalized
-			// out of order" when releaseUnfinalizedCreationRange is commented out.
+			// out of order" when resetUnfinalizedCreationRange is commented out.
 			if (containerCloseError !== undefined) {
 				throw containerCloseError as Error;
 			}

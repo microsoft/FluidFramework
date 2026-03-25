@@ -469,7 +469,7 @@ describe("IdCompressor", () => {
 				compressor.takeNextCreationRange();
 
 				// Reserve instead of take
-				compressor.releaseUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
 
 				// Next takeNextCreationRange should cover the unfinalized IDs
 				const range = compressor.takeNextCreationRange();
@@ -486,7 +486,7 @@ describe("IdCompressor", () => {
 				generateCompressedIds(compressor, 1);
 				compressor.takeNextCreationRange();
 
-				compressor.releaseUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
 				generateCompressedIds(compressor, 1);
 
 				const range = compressor.takeNextCreationRange();
@@ -503,7 +503,7 @@ describe("IdCompressor", () => {
 				generateCompressedIds(compressor, 1);
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 
-				compressor.releaseUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
 				const range = compressor.takeNextCreationRange();
 				assert.equal(range.ids, undefined);
 			});
@@ -513,9 +513,9 @@ describe("IdCompressor", () => {
 				generateCompressedIds(compressor, 2);
 				compressor.takeNextCreationRange();
 
-				compressor.releaseUnfinalizedCreationRange();
-				compressor.releaseUnfinalizedCreationRange();
-				compressor.releaseUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
 
 				const range = compressor.takeNextCreationRange();
 				assert.deepEqual(range.ids, {
@@ -538,7 +538,7 @@ describe("IdCompressor", () => {
 				generateCompressedIds(compressor, 1); // one local
 				compressor.takeNextCreationRange();
 
-				compressor.releaseUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
 				const range = compressor.takeNextCreationRange();
 				assert.deepEqual(range.ids?.firstGenCount, 2);
 				assert.deepEqual(range.ids?.count, 3);

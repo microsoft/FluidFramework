@@ -2711,9 +2711,9 @@ export class ContainerRuntime
 
 		try {
 			// Any ID Allocation ops that failed to submit need to have their ranges included
-			// in the next allocation op. Release the unfinalized ranges back so that the next
-			// call to takeNextCreationRange (during replay) will include them.
-			this._idCompressor?.releaseUnfinalizedCreationRange();
+			// in the next allocation op. Reset the compressor's unfinalized range cursor so that the next
+			// call to takeNextCreationRange (during replay) will include those unfinalized ranges.
+			this._idCompressor?.resetUnfinalizedCreationRange();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
