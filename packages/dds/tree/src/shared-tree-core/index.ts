@@ -75,6 +75,5 @@ export {
 } from "./messageCodecs.js";
 export {
 	MessageFormatVersion,
-	messageFormatVersions,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";
