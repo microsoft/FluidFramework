@@ -190,6 +190,8 @@ export class Outbox {
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
 	private readonly idAllocationBatch: BatchManager;
+	/** Content-derived batchId for the pending ID allocation batch, enabling fork detection */
+	private pendingIdAllocBatchId: BatchId | undefined;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
 
@@ -209,7 +211,7 @@ export class Outbox {
 		this.blobAttachBatch = new BatchManager({ canRebase: true });
 		this.idAllocationBatch = new BatchManager({
 			canRebase: false,
-			ignoreBatchId: true,
+			skipResubmit: true,
 		});
 	}
 
@@ -325,9 +327,10 @@ export class Outbox {
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
-	public submitIdAllocation(message: LocalBatchMessage): void {
+	public submitIdAllocation(message: LocalBatchMessage, batchId?: BatchId): void {
 		this.maybeFlushPartialBatch();
 
+		this.pendingIdAllocBatchId = batchId;
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
@@ -382,13 +385,17 @@ export class Outbox {
 			return;
 		}
 
-		// Don't use resubmittingBatchId for idAllocationBatch.
-		// ID Allocation messages are not directly resubmitted so don't pass the resubmitInfo
+		// ID Allocation messages are not directly resubmitted, so don't pass the resubmitInfo.
+		// Instead, pass the content-derived batchId computed when the ID allocation was submitted.
+		// This enables DuplicateBatchDetector to detect forked containers that rehydrate
+		// the same stashed state and submit duplicate ID allocation ops.
 		this.flushInternal({
 			batchManager: this.idAllocationBatch,
+			batchId: this.pendingIdAllocBatchId,
 			// Note: For now, we will never stage ID Allocation messages.
 			// They won't contain personal info and no harm in extra allocations in case of discarding the staged changes
 		});
+		this.pendingIdAllocBatchId = undefined;
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
 			disableGroupedBatching: true,
@@ -433,13 +440,14 @@ export class Outbox {
 		batchManager: BatchManager;
 		disableGroupedBatching?: boolean;
 		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
+		batchId?: BatchId; // explicit batchId (e.g. content-derived for ID allocation batches)
 	}): void {
 		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
+		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId ?? params.batchId);
 
 		// On resubmit we use the original batch's staged state, so these should match as well.
 		const staged = rawBatch.staged === true;
@@ -484,7 +492,7 @@ export class Outbox {
 			rawBatch.messages,
 			clientSequenceNumber,
 			staged,
-			batchManager.options.ignoreBatchId,
+			batchManager.options.skipResubmit,
 		);
 	}
 

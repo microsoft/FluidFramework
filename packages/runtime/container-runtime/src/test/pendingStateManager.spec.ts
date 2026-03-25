@@ -1633,4 +1633,177 @@ describe("Pending State Manager", () => {
 			);
 		});
 	});
+
+	describe("skipResubmit (formerly ignoreBatchId)", () => {
+		it("skipResubmit batches pass batchId=undefined to reSubmitBatch during replay", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Simulate a flushed ID allocation batch with skipResubmit
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("idalloc-content"),
+						referenceSequenceNumber: 0,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+				/* skipResubmit: */ true,
+			);
+
+			// Also add a normal data batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("data-content"),
+						referenceSequenceNumber: 0,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ 2,
+				/* staged: */ false,
+			);
+
+			// Change clientId to allow replay
+			stubs.clientId.returns("new-clientId");
+
+			psm.replayPendingStates();
+
+			// Both batches should be resubmitted
+			assert.strictEqual(stubs.reSubmitBatch.callCount, 2, "Expected 2 reSubmitBatch calls");
+
+			// First call (skipResubmit batch) should have batchId=undefined
+			const firstCallMetadata = stubs.reSubmitBatch.getCall(0).args[1];
+			assert.strictEqual(
+				firstCallMetadata.batchId,
+				undefined,
+				"skipResubmit batch should have batchId=undefined",
+			);
+
+			// Second call (normal batch) should have a real batchId
+			const secondCallMetadata = stubs.reSubmitBatch.getCall(1).args[1];
+			assert.notStrictEqual(
+				secondCallMetadata.batchId,
+				undefined,
+				"Normal batch should have a batchId",
+			);
+		});
+
+		it("remoteBatchMatchesPendingBatch skips skipResubmit messages", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add a skipResubmit batch first
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("idalloc-content"),
+						referenceSequenceNumber: 0,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+				/* skipResubmit: */ true,
+			);
+
+			// Add a normal data batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("data-content"),
+						referenceSequenceNumber: 0,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ 2,
+				/* staged: */ false,
+			);
+
+			// Simulate a remote batch that matches the data batch's batchId but not the idalloc batch.
+			// remoteBatchMatchesPendingBatch should skip the idalloc batch and compare against the data batch.
+			// The data batch's effective batchId is "clientId_[2]" (generated from clientId + batchStartCsn).
+			const remoteBatchMatchingData: InboundMessageResult = {
+				type: "fullBatch",
+				batchStart: {
+					batchId: undefined,
+					clientId: "clientId",
+					batchStartCsn: 2,
+					keyMessage: {
+						sequenceNumber: 10,
+						minimumSequenceNumber: 0,
+					} as ISequencedDocumentMessage,
+				},
+				messages: [
+					{
+						type: ContainerMessageType.FluidDataStoreOp,
+						contents: testAddressedDataStoreMessage,
+					} as InboundSequencedContainerRuntimeMessage,
+				],
+				length: 1,
+				groupedBatch: false,
+			};
+
+			// This should throw because the remote batch matches our pending batch (fork detected)
+			assert.throws(
+				() => psm.processInboundMessages(remoteBatchMatchingData, /* local: */ false),
+				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+				"Should detect forked container when remote batch matches pending data batch",
+			);
+		});
+
+		it("backward compat: ignoreBatchId in stashed state is migrated to skipResubmit", async () => {
+			const stubs = getStateHandlerStub();
+			stubs.isAttached.returns(true);
+			stubs.applyStashedOp.resolves(undefined);
+
+			// Create stashed state with old ignoreBatchId field
+			const stashedState: IPendingLocalState = {
+				pendingStates: [
+					{
+						type: "message",
+						referenceSequenceNumber: 0,
+						content: JSON.stringify({
+							type: ContainerMessageType.IdAllocation,
+							contents: "test-range",
+						}),
+						localOpMetadata: undefined,
+						opMetadata: undefined,
+						batchInfo: {
+							clientId: "old-client",
+							batchStartCsn: 1,
+							length: 1,
+							ignoreBatchId: true,
+							staged: false,
+						},
+					} as unknown as IPendingMessage, // Cast needed because ignoreBatchId is old field
+				],
+			};
+
+			const psm = newPendingStateManager(stubs, stashedState);
+
+			// Apply stashed ops - this should trigger patchbatchInfo migration
+			await psm.applyStashedOpsAt();
+
+			// Verify the migration: the pending message should now have skipResubmit instead of ignoreBatchId
+			const pendingMessage = psm.pendingMessages.peekFront();
+			assert(pendingMessage !== undefined, "Expected a pending message");
+			assert.strictEqual(
+				pendingMessage.batchInfo.skipResubmit,
+				true,
+				"ignoreBatchId should be migrated to skipResubmit",
+			);
+			assert.strictEqual(
+				(pendingMessage.batchInfo as Record<string, unknown>).ignoreBatchId,
+				undefined,
+				"Old ignoreBatchId field should be removed",
+			);
+		});
+	});
 });

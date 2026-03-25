@@ -237,6 +237,7 @@ import {
 } from "./messageTypes.js";
 import type { ISavedOpMetadata } from "./metadata.js";
 import {
+	type BatchId,
 	type LocalBatchMessage,
 	type BatchStartInfo,
 	DuplicateBatchDetector,
@@ -831,6 +832,17 @@ function canStageMessageOfType(
 		// These are typically sent shortly after boot and will not be common in Staging Mode, but it's possible.
 		type === ContainerMessageType.DocumentSchemaChange
 	);
+}
+
+/**
+ * Compute a deterministic batchId for an ID Allocation batch based on the IdCreationRange content.
+ * Both forked containers rehydrating from the same stashed state will produce identical
+ * IdCreationRange objects (same sessionId, firstGenCount, count, localIdRanges), so
+ * JSON.stringify produces the same string, yielding the same batchId.
+ * This enables DuplicateBatchDetector to detect the duplicate and throw a clear fork error.
+ */
+function computeIdAllocBatchId(idRange: IdCreationRange): BatchId {
+	return `idalloc_${JSON.stringify(idRange)}`;
 }
 
 /**
@@ -4678,7 +4690,12 @@ export class ContainerRuntime
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					staged,
 				};
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
+				// Compute a deterministic batchId from the ID range content.
+				// Two forked containers rehydrating from the same stashed state will produce
+				// identical IdCreationRange objects, yielding the same batchId. This enables
+				// DuplicateBatchDetector to detect the duplicate and throw a clear fork error.
+				const batchId = computeIdAllocBatchId(idRange);
+				this.outbox.submitIdAllocation(idAllocationBatchMessage, batchId);
 			}
 		}
 	}
