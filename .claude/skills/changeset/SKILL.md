@@ -27,7 +27,7 @@ If the diff is large or unclear, ask the user what the change does rather than g
 Only list packages where the change is **meaningful to consumers**.
 You don't need to list every package that was touched — only the ones where a changelog entry makes sense.
 
-For example, if you deprecate a class in `@fluidframework/tree` and update `@fluidframework/container-runtime` to stop using it, only `@fluidframework/tree` needs the changeset.
+For example, if you deprecate a class in `@fluidframework/container-interfaces` and update `@fluidframework/container-runtime` to stop using it, only `@fluidframework/container-interfaces` needs the changeset.
 
 **Important re-export rule**: The `fluid-framework` package re-exports from several packages including `@fluidframework/tree`, `@fluidframework/container-definitions`, `@fluidframework/container-loader`, and others.
 If a change affects the public API of a package that `fluid-framework` re-exports, include **both** the source package and `fluid-framework` in the changeset.
@@ -65,7 +65,7 @@ If the change is a significant highlight (important new feature, major breaking 
 Use a descriptive kebab-case name based on the change (e.g., `add-splice-to-array-nodes.md`, `fix-container-dispose-error.md`).
 
 ### Bump type
-Almost always `minor`. The actual bump type is determined by the branch, not the changeset. Use `minor` unless you have a specific reason not to.
+Almost always `minor`. The actual bump type is determined by the branch, not the changeset. Use `minor` unless you have a specific reason not to. Ask the user if unclear.
 
 ### Format
 
@@ -91,7 +91,7 @@ These are important — they directly affect how professional and readable the r
 - No period at the end
 - No backticks or code formatting (headings with lots of backticks become unreadable)
 - Don't mention package names (they appear in the "packages affected" section automatically)
-- For removals: use present perfect tense — "The deprecated `X` API has been removed"
+- For removals: use present perfect tense — "The deprecated X API has been removed"
 - For fixes: use present perfect tense — "Incorrect behavior when X has been fixed"
 
 **Body:**
