@@ -60,12 +60,15 @@ export function utf8Length(data: JsonCompatibleReadOnly): number {
 /**
  * Returns total op size in bytes, max individual op size in bytes, and total op count
  * for the given array of ops.
+ * @throws Errors if the input list is empty.
  */
-export function getOperationsStats(operations: ISequencedDocumentMessage[]): {
-	"Total Op Size (Bytes)": number;
-	"Max Op Size (Bytes)": number;
-	"Total Ops": number;
-} {
+export function getOperationsStats(
+	operations: ISequencedDocumentMessage[],
+): Record<string, number> {
+	if (operations.length === 0) {
+		throw new Error("No operations to calculate stats for.");
+	}
+
 	const lengths = operations.map((op) => utf8Length(op as unknown as JsonCompatibleReadOnly));
 	return {
 		"Total Op Size (Bytes)": lengths.reduce((a, b) => a + b, 0),
