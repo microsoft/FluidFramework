@@ -43,11 +43,9 @@ export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 export { type ChangeEnricher } from "./changeEnricher.js";
 
 export {
-	makeEditManagerCodec,
+	makeEditManagerCodecBuilder,
 	getCodecTreeForEditManagerFormatWithChange,
-	type EditManagerCodecOptions,
-	clientVersionToEditManagerFormatVersion,
-	editManagerFormatVersionSelectorForSharedBranches,
+	editManagerCodecName,
 } from "./editManagerCodecs.js";
 export {
 	EditManagerFormatVersion,

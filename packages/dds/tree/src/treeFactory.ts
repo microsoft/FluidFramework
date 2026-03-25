@@ -26,7 +26,8 @@ import {
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
 import {
-	editManagerFormatVersionSelectorForSharedBranches,
+	editManagerCodecName,
+	EditManagerFormatVersion,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
@@ -223,5 +224,8 @@ function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInte
 
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
-	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+	writeVersionOverrides: new Map([
+		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
+	]),
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };

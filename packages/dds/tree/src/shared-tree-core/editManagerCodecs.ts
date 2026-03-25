@@ -3,176 +3,131 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-} from "@fluidframework/runtime-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
+	ClientVersionDispatchingCodecBuilder,
 	type CodecTree,
-	type CodecWriteOptions,
+	type CodecVersion,
 	type DependentFormatVersion,
 	FluidClientVersion,
-	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
-	makeCodecFamily,
-	makeDiscontinuedCodecVersion,
+	makeDiscontinuedCodecAndSchema,
 } from "../codec/index.js";
-import { makeVersionDispatchingCodec } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, unbrand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
-import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
+import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
-import {
-	EditManagerFormatVersion,
-	editManagerFormatVersions,
-} from "./editManagerFormatCommons.js";
+import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 }
 
-/**
- * Convert a MinimumVersionForCollab to an EditManagerFormatVersion.
- * @param clientVersion - The MinimumVersionForCollab to convert.
- * @returns The EditManagerFormatVersion that corresponds to the provided MinimumVersionForCollab.
- */
-export function clientVersionToEditManagerFormatVersion(
-	clientVersion: MinimumVersionForCollab,
-	writeVersionOverride?: EditManagerFormatVersion,
-): EditManagerFormatVersion {
-	const compatibleVersion: EditManagerFormatVersion = brand(
-		getConfigForMinVersionForCollab(clientVersion, {
-			[lowestMinVersionForCollab]: EditManagerFormatVersion.v3,
-			[FluidClientVersion.v2_43]: EditManagerFormatVersion.v4,
-			[FluidClientVersion.v2_80]: EditManagerFormatVersion.v6,
-		}),
-	);
+export const editManagerCodecName = "EditManager";
 
-	return writeVersionOverride ?? compatibleVersion;
-}
-
-/**
- * Returns the version that should be used for testing shared branches.
- */
-export function editManagerFormatVersionSelectorForSharedBranches(
-	clientVersion: MinimumVersionForCollab,
-): EditManagerFormatVersion {
-	return brand(EditManagerFormatVersion.vSharedBranches);
-}
-
-export interface EditManagerCodecOptions {
-	readonly editManagerFormatSelector?: (
-		minVersionForCollab: MinimumVersionForCollab,
-	) => EditManagerFormatVersion;
-}
-
-function editManagerFormatVersionFromOptions(
-	options: EditManagerCodecOptions & CodecWriteOptions,
-): EditManagerFormatVersion {
-	const selector =
-		options.editManagerFormatSelector ?? clientVersionToEditManagerFormatVersion;
-	return selector(options.minVersionForCollab);
-}
-
-export function makeEditManagerCodec<TChangeset>(
-	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
-	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>,
+interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
+	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>;
+	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>;
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
 		ChangeEncodingContext
-	>,
-	options: EditManagerCodecOptions & CodecWriteOptions,
-): IJsonCodec<
+	>;
+}
+
+export function makeEditManagerCodecBuilder<
+	TChangeset,
+>(): ClientVersionDispatchingCodecBuilder<
+	EditManagerCodecOptions<TChangeset>,
 	SummaryData<TChangeset>,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	EditManagerEncodingContext
+	EditManagerEncodingContext,
+	EditManagerFormatVersion,
+	typeof editManagerCodecName
 > {
-	const family = makeEditManagerCodecs(
-		changeCodecs,
-		dependentChangeFormatVersion,
-		revisionTagCodec,
-		options,
-	);
-	const writeVersion = editManagerFormatVersionFromOptions(options);
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
-}
+	const versions: CodecVersion<
+		SummaryData<TChangeset>,
+		EditManagerEncodingContext,
+		EditManagerFormatVersion,
+		EditManagerCodecOptions<TChangeset>
+	>[] = [
+		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v1, "2.73.0"),
+		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v2, "2.73.0"),
+		{
+			minVersionForCollab: lowestMinVersionForCollab,
+			formatVersion: EditManagerFormatVersion.v3,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v3),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v3,
+				),
+		},
+		{
+			minVersionForCollab: FluidClientVersion.v2_43,
+			formatVersion: EditManagerFormatVersion.v4,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v4),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v4,
+				),
+		},
+		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v5, "2.74.0"),
+		{
+			minVersionForCollab: FluidClientVersion.v2_80,
+			formatVersion: EditManagerFormatVersion.v6,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v6),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v6,
+				),
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.vSharedBranches,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeSharedBranchesCodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(
+							EditManagerFormatVersion.vSharedBranches,
+						),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.vSharedBranches,
+				),
+		},
+	];
 
-export function makeEditManagerCodecs<TChangeset>(
-	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
-	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>,
-	revisionTagCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
-	options: ICodecOptions,
-): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	const registry: [
-		FormatVersion,
-		IJsonCodec<
-			SummaryData<TChangeset>,
-			JsonCompatibleReadOnly,
-			JsonCompatibleReadOnly,
-			EditManagerEncodingContext
-		>,
-	][] = Array.from(editManagerFormatVersions, (version) => {
-		switch (version) {
-			case unbrand(EditManagerFormatVersion.v1):
-			case unbrand(EditManagerFormatVersion.v2): {
-				return [version, makeDiscontinuedCodecVersion(options, version, "2.73.0")];
-			}
-			case unbrand(EditManagerFormatVersion.v3):
-			case unbrand(EditManagerFormatVersion.v4):
-			case unbrand(EditManagerFormatVersion.v6): {
-				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
-				return [
-					version,
-					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
-				];
-			}
-			case unbrand(EditManagerFormatVersion.v5): {
-				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
-			}
-			case unbrand(EditManagerFormatVersion.vSharedBranches): {
-				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
-				return [
-					version,
-					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
-				];
-			}
-			default: {
-				unreachableCase(version);
-			}
-		}
-	});
-	return makeCodecFamily(registry);
+	return ClientVersionDispatchingCodecBuilder.build(editManagerCodecName, versions);
 }
 
 export function getCodecTreeForEditManagerFormatWithChange(
 	clientVersion: MinimumVersionForCollab,
 	changeFormat: CodecTree,
 ): CodecTree {
+	const builder = makeEditManagerCodecBuilder();
 	return {
-		name: "EditManager",
-		version: clientVersionToEditManagerFormatVersion(clientVersion),
+		...builder.getCodecTree(clientVersion),
 		children: [changeFormat],
 	};
 }
