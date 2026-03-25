@@ -69,15 +69,17 @@ export type NodeChangedDataAlpha<TNode extends TreeNode = TreeNode> =
 			: NodeChangedDataProperties<TNode> | NodeChangedDataDelta;
 
 /**
- * Extensions to {@link TreeChangeEventsBeta} which are not yet stable.
+ * Extension of {@link TreeChangeEvents} with a richer `nodeChanged` event.
  * @remarks
- * Provides a richer `nodeChanged` event that includes a delta payload for array nodes.
+ * Provides a `nodeChanged` event that includes a delta payload for array nodes and
+ * requires `changedProperties` for object, map, and record nodes.
+ * Use via `TreeAlpha.on`.
  * @sealed @alpha
  */
 export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	extends TreeChangeEvents {
 	/**
-	 * Like {@link TreeChangeEventsBeta.nodeChanged}, but for array nodes the event data includes
+	 * Like `TreeChangeEventsBeta.nodeChanged`, but for array nodes the event data includes
 	 * a {@link NodeChangedDataDelta.delta | delta} payload describing the changes as a sequence
 	 * of {@link ArrayNodeDeltaOp} values.
 	 *
