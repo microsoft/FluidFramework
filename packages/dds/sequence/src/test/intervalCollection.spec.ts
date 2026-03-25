@@ -9,10 +9,10 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	ReferenceType,
-	SlidingPreference,
 	reservedRangeLabelsKey,
-	Side,
 	type SequencePlace,
+	Side,
+	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -27,7 +27,7 @@ import {
 import { ISequenceIntervalCollection } from "../intervalCollection.js";
 import type { SequenceIntervalIndex } from "../intervalIndex/index.js";
 import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
-import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { type SharedString, SharedStringFactory } from "../sequenceFactory.js";
 import { ISharedString, SharedStringClass } from "../sharedString.js";
 
 import { assertInterval } from "./intervalIndexTestUtils.js";

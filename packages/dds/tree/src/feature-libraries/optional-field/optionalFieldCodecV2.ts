@@ -15,8 +15,8 @@ import type {
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
-	EncodedNodeChangeset,
 	type EncodedChangeAtomId,
+	EncodedNodeChangeset,
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 

@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import {
+	DriverErrorTypes,
 	type IResolvedUrl,
 	type IUrlResolver,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 
 import { resolveWithLocationRedirectionHandling } from "../location-redirection-utilities/index.js";

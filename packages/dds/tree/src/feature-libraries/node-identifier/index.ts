@@ -7,8 +7,8 @@ export { MockNodeIdentifierManager } from "./mockNodeIdentifierManager.js";
 export {
 	compareLocalNodeIdentifiers,
 	type LocalNodeIdentifier,
-	type StableNodeIdentifier,
 	nodeKeyTreeIdentifier,
+	type StableNodeIdentifier,
 } from "./nodeIdentifier.js";
 export {
 	createNodeIdentifierManager,

@@ -10,12 +10,12 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
-	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import { compareSets } from "../../util/index.js";
 

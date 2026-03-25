@@ -28,13 +28,13 @@ import {
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers.js";
 import {
+	createHandleNode,
 	type FluidObjectNode,
 	type Primitive,
 	type RootHandleNode,
+	unknownObjectNode,
 	type VisualChildNode,
 	VisualNodeKind,
-	createHandleNode,
-	unknownObjectNode,
 } from "./VisualTree.js";
 
 // Ideas:

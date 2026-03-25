@@ -21,8 +21,8 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import {
-	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
 

@@ -26,11 +26,11 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
-	PerformanceEvent,
-	createChildMonitoringContext,
 	mixinMonitoringContext,
+	PerformanceEvent,
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

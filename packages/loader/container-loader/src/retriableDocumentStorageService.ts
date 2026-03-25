@@ -8,19 +8,19 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	GenericError,
+	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 

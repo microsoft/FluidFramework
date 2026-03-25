@@ -5,8 +5,8 @@
 
 import {
 	type AnchorNode,
-	type DetachedField,
 	anchorSlot,
+	type DetachedField,
 	getDetachedFieldContainingPath,
 	rootField,
 	type SchemaAndPolicy,

@@ -27,25 +27,25 @@
 /* eslint-disable @typescript-eslint/consistent-generic-constructors */
 
 import {
-	SchemaFactory,
-	type NodeFromSchema,
 	FieldKind,
 	FieldSchema,
+	type NodeFromSchema,
+	SchemaFactory,
 } from "@fluidframework/tree";
+import type {
+	ErasedNode,
+	ErasedSchema,
+	ErasedSchemaSubclassable,
+	ObjectNodeSchema,
+	ObjectNodeSchemaWorkaround,
+	TreeNodeSchema,
+} from "@fluidframework/tree/alpha";
 import {
 	allowUnused,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
 	SchemaFactoryAlpha,
 	TreeBeta,
-} from "@fluidframework/tree/alpha";
-import type {
-	ErasedSchema,
-	ErasedNode,
-	ErasedSchemaSubclassable,
-	TreeNodeSchema,
-	ObjectNodeSchema,
-	ObjectNodeSchemaWorkaround,
 } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { requireAssignableTo } from "@fluidframework/tree/internal";

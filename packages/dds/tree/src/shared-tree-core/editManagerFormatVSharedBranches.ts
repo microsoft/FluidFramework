@@ -8,7 +8,7 @@ import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
 
 import { SessionIdSchema } from "../core/index.js";
 
-import { EncodedSharedBranch, EditManagerFormatVersion } from "./editManagerFormatCommons.js";
+import { EditManagerFormatVersion, EncodedSharedBranch } from "./editManagerFormatCommons.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

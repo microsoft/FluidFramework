@@ -5,6 +5,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+
 import type { VersionBumpType } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";

@@ -32,7 +32,7 @@ import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { type INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
+import { createCacheSnapshotKey, type INewFileInfo } from "../odspUtils.js";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
 
 import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";

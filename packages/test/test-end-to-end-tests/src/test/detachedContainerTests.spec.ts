@@ -35,16 +35,16 @@ import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-	toIDeltaManagerFull,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

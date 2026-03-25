@@ -6,13 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	trackDirtyNodes,
 	type DirtyTreeStatus,
 	type ImplicitFieldSchema,
 	type InsertableField,
+	SchemaFactory,
 	type TreeNode,
+	TreeViewConfiguration,
+	trackDirtyNodes,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 

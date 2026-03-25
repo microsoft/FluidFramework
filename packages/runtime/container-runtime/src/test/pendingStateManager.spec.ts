@@ -13,14 +13,14 @@ import {
 	type IErrorBase,
 } from "@fluidframework/container-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	FluidDataStoreMessage,
 	IEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import type Deque from "double-ended-queue";
 import Sinon from "sinon";
 
@@ -32,18 +32,18 @@ import {
 import {
 	addBatchMetadata,
 	BatchManager,
+	type InboundMessageResult,
 	type LocalBatchMessage,
 	OpGroupingManager,
-	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
 	findFirstCharacterMismatched,
-	type IPendingMessage,
-	PendingStateManager,
 	type IPendingLocalState,
+	type IPendingMessage,
 	type IRuntimeStateHandler,
 	type PendingBatchResubmitMetadata,
 	type PendingMessageResubmitData,
+	PendingStateManager,
 } from "../pendingStateManager.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;

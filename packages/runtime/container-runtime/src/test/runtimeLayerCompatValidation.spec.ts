@@ -21,13 +21,13 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	isLayerIncompatibilityError,
-	mixinMonitoringContext,
 	MockLogger,
 	type MonitoringContext,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockDeltaManager,
 	MockAudience,
+	MockDeltaManager,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 import Sinon from "sinon";
@@ -35,12 +35,12 @@ import Sinon from "sinon";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
-	loaderSupportRequirementsForRuntime,
-	validateLoaderCompatibility,
-	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
-	runtimeCoreCompatDetails,
 	disableStrictLoaderLayerCompatibilityCheckKey,
+	loaderSupportRequirementsForRuntime,
+	runtimeCoreCompatDetails,
+	validateDatastoreCompatibility,
+	validateLoaderCompatibility,
 } from "../runtimeLayerCompatState.js";
 
 import { createLocalDataStoreContext } from "./dataStoreCreationHelper.js";

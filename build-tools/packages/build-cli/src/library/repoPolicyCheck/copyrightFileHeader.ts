@@ -4,6 +4,7 @@
  */
 
 import { EOL as newline } from "node:os";
+
 import { type Handler, readFile, writeFile } from "./common.js";
 
 const copyrightText = `Copyright (c) Microsoft Corporation and contributors. All rights reserved.${newline}Licensed under the MIT License.`;

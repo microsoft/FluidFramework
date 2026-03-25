@@ -4,9 +4,9 @@
  */
 
 export type {
-	ChangeFamily,
-	ChangeFamilyEditor,
 	ChangeEncodingContext,
+	ChangeFamily,
 	ChangeFamilyCodec,
+	ChangeFamilyEditor,
 } from "./changeFamily.js";
 export { EditBuilder } from "./editBuilder.js";

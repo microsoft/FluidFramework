@@ -6,13 +6,13 @@
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
-	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,
+	IOdspAuthRequestInfo,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
+	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver/internal";
 
 export class OdspUrlResolver implements IUrlResolver {

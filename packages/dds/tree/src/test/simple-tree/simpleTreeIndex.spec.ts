@@ -5,16 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { rootFieldKey, type FieldKey, type UpPath } from "../../core/index.js";
+import { type FieldKey, rootFieldKey, type UpPath } from "../../core/index.js";
 import { flexTreeSlot, type TreeIndexNodes } from "../../feature-libraries/index.js";
 import {
+	createTreeIndex,
 	type InsertableTypedNode,
 	SchemaFactory,
+	TreeIndexKey,
 	type TreeNode,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
-	createTreeIndex,
-	TreeIndexKey,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import { getView } from "../utils.js";

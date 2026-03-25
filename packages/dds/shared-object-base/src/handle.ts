@@ -6,7 +6,7 @@
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { isFluidHandle, asLegacyAlpha } from "@fluidframework/runtime-utils/internal";
+import { asLegacyAlpha, isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { ISharedObject } from "./types.js";
 

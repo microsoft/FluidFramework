@@ -10,8 +10,8 @@ import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
 import { brand } from "../../util/index.js";
 import {
 	type EncodedRevisionTag,
-	type RevisionTagCodec,
 	type RevisionTag,
+	type RevisionTagCodec,
 	RevisionTagSchema,
 } from "../rebase/index.js";
 

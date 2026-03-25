@@ -23,11 +23,11 @@ import type {
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	toIDeltaManagerFull,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {

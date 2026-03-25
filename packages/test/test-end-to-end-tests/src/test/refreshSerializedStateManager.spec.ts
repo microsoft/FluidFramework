@@ -21,13 +21,13 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	ITestFluidObject,
-	DataObjectFactoryType,
 	createAndAttachContainer,
 	createDocumentId,
-	waitForContainerConnection,
-	timeoutPromise,
+	DataObjectFactoryType,
+	ITestFluidObject,
 	timeoutAwait,
+	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";

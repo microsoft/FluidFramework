@@ -8,11 +8,11 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	type IOdspResolvedUrl,
 	type InstrumentedStorageTokenFetcher,
+	type IOdspResolvedUrl,
+	type IOdspUrlParts,
 	OdspErrorTypes,
 	type ShareLinkInfoType,
-	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -28,11 +28,11 @@ import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
 import { checkForKnownServerFarmType, getApiRoot } from "./../odspUrlHelper.js";
 import {
-	type INewFileInfo,
 	appendNavParam,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
+	type INewFileInfo,
 	snapshotWithLoadingGroupIdSupported,
 } from "./../odspUtils.js";
 import { pkgVersion as driverVersion } from "./../packageVersion.js";

@@ -8,8 +8,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { LocalClientId } from "./constants.js";
 import type { LocalReferenceCollection } from "./localReference.js";
 import type { MergeTree } from "./mergeTree.js";
-import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import type { ISegment, ISegmentLeaf, MergeBlock } from "./mergeTreeNodes.js";
+import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk.js";
 import type { IHasInsertionInfo, IHasRemovalInfo, IMergeNodeInfo } from "./segmentInfos.js";
 
 /**

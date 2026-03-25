@@ -5,18 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/tree/internal";
 import {
 	JsonAsTree,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TableSchema,
 	TreeViewConfiguration,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/tree/internal";
-import type {
-	areSafelyAssignable,
-	requireTrue,
-	requireAssignableTo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 

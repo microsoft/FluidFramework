@@ -14,9 +14,9 @@ import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import type { ReadBuffer } from "./ReadBufferUtils.js";
 
 // https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=/cobalt/Base/Property/BinaryEncodedPropertyReader.cs&version=GBmaster&_a=contents
 /**

@@ -15,11 +15,11 @@ import {
 	getKernel,
 	getOrCreateNodeFromInnerNode,
 	isTreeNode,
-	UnhydratedContext,
 	type NodeKind,
 	type TreeLeafValue,
 	type TreeNode,
 	type Unhydrated,
+	UnhydratedContext,
 	type WithType,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
@@ -29,12 +29,12 @@ import type {
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import {
-	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
 } from "../unhydratedFlexTreeFromInsertable.js";
 import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
-import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
+import { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";

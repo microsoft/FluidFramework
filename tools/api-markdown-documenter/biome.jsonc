@@ -3,6 +3,14 @@
 	"extends": "//",
 	"overrides": [
 		{
+			"assist": {
+				"enabled": false,
+				"actions": {
+					"source": {
+						"organizeImports": "off"
+					}
+				}
+			},
 			// JSONC WITHOUT TRAILING COMMAS
 			// JSONC is not a standard, and support for trailing commas is not universal. For
 			// simplicity and safety, we parse most JSONC files in a liberal way -- allowing comments and trailing commas, but

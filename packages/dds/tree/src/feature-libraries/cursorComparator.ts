@@ -4,10 +4,10 @@
  */
 
 import {
+	type ITreeCursorSynchronous,
+	inCursorField,
 	mapCursorField,
 	mapCursorFields,
-	inCursorField,
-	type ITreeCursorSynchronous,
 	type Value,
 } from "../core/index.js";
 /**

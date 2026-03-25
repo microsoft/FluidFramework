@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ChangeAtomId, type RevisionTag, makeAnonChange } from "../../../core/index.js";
+import { type ChangeAtomId, makeAnonChange, type RevisionTag } from "../../../core/index.js";
 import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
@@ -21,11 +21,11 @@ import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { mintRevisionTag } from "../../utils.js";
 
-import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
+import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import {
-	type RebaseConfig,
 	assertChangesetsEqual,
 	checkDeltaEquality,
+	type RebaseConfig,
 	testRebase as rebaseI,
 	rebaseOverChanges,
 	rebaseOverComposition,

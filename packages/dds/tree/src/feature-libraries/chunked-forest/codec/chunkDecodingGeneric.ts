@@ -11,9 +11,9 @@ import type { BrandedType } from "../../../util/index.js";
 
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	getChecked,
 	readStream,
+	type StreamCursor,
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
 import type { IncrementalDecoder } from "./codecs.js";

@@ -22,15 +22,15 @@ import {
 	type IJsonCodec,
 	makeCodecFamily,
 	makeDiscontinuedCodecVersion,
+	makeVersionDispatchingCodec,
 } from "../codec/index.js";
-import { makeVersionDispatchingCodec } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, unbrand, type JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly, unbrand } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";

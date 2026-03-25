@@ -13,11 +13,11 @@ import {
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedArrayBuilder, type ISharedArray } from "../../index.js";
+import { type ISharedArray, SharedArrayBuilder } from "../../index.js";
 import {
-	verifyEventsEmitted,
-	verifyEntries,
 	getRandomInt,
+	verifyEntries,
+	verifyEventsEmitted,
 	verifyIFluidHandleEntries,
 } from "../utilities.js";
 

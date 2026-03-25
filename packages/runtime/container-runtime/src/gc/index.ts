@@ -6,15 +6,17 @@
 export { GarbageCollector } from "./garbageCollection.js";
 export { computeTombstoneTimeout } from "./gcConfigs.js";
 export {
-	nextGCVersion,
 	defaultInactiveTimeoutMs,
-	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
-	GCNodeType,
-	gcTestModeKey,
-	gcGenerationOptionName,
+	defaultSweepGracePeriodMs,
+	disableThrowOnTombstoneLoadKey,
+	type GarbageCollectionMessage,
+	GarbageCollectionMessageType,
 	type GCFeatureMatrix,
+	GCNodeType,
 	type GCVersion,
+	gcGenerationOptionName,
+	gcTestModeKey,
 	gcVersionUpgradeToV4Key,
 	type IGarbageCollectionRuntime,
 	type IGarbageCollector,
@@ -25,17 +27,15 @@ export {
 	type IGCNodeUpdatedProps,
 	type IGCResult,
 	type IGCRuntimeOptions,
-	type IMarkPhaseStats,
-	type ISweepPhaseStats,
 	type IGCStats,
+	type IMarkPhaseStats,
+	type ISweepMessage,
+	type ISweepPhaseStats,
+	nextGCVersion,
 	oneDayMs,
 	runSessionExpiryKey,
 	stableGCVersion,
 	UnreferencedState,
-	disableThrowOnTombstoneLoadKey,
-	type GarbageCollectionMessage,
-	GarbageCollectionMessageType,
-	type ISweepMessage,
 } from "./gcDefinitions.js";
 export {
 	cloneGCData,
@@ -52,8 +52,8 @@ export type {
 	IGarbageCollectionSummaryDetailsLegacy,
 } from "./gcSummaryDefinitions.js";
 export {
-	gcStateBlobKey,
 	GCSummaryStateTracker,
+	gcStateBlobKey,
 	type IGCSummaryTrackingData,
 } from "./gcSummaryStateTracker.js";
 export { GCTelemetryTracker } from "./gcTelemetry.js";

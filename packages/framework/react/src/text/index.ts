@@ -4,12 +4,12 @@
  */
 
 export {
+	type FormattedEditorHandle,
 	FormattedMainView,
 	type FormattedMainViewProps,
-	type FormattedEditorHandle,
 } from "./formatted/index.js";
 export {
+	type MainViewProps as PlainMainViewProps,
 	PlainTextMainView,
 	QuillMainView as PlainQuillView,
-	type MainViewProps as PlainMainViewProps,
 } from "./plain/index.js";

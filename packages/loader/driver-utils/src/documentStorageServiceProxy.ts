@@ -6,13 +6,13 @@
 import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISnapshot,
 	ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";

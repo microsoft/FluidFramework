@@ -14,7 +14,7 @@ import type {
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
 import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
-import { type IEventSampler, createSampledLogger } from "../utils.js";
+import { createSampledLogger, type IEventSampler } from "../utils.js";
 
 describe("tagData", () => {
 	it("tagData with data", () => {

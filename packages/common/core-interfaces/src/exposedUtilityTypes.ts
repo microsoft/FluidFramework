@@ -14,6 +14,12 @@ export type {
 	DeepReadonlyOptions,
 	DeepReadonlySupportedGenericsDefault,
 } from "./deepReadonly.js";
+export type {
+	DeepReadonlyRecursionLimit,
+	// External name is qualified to avoid confusion with similarly named types in other packages.
+	InternalUtilityTypes as InternalCoreInterfacesUtilityTypes,
+	ReadonlySupportedGenerics,
+} from "./exposedInternalUtilityTypes.js";
 export type { JsonDeserialized, JsonDeserializedOptions } from "./jsonDeserialized.js";
 export type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
 export type {
@@ -31,10 +37,3 @@ export type {
 	ShallowReadonlyOptions,
 	ShallowReadonlySupportedGenericsDefault,
 } from "./shallowReadonly.js";
-
-export type {
-	DeepReadonlyRecursionLimit,
-	// External name is qualified to avoid confusion with similarly named types in other packages.
-	InternalUtilityTypes as InternalCoreInterfacesUtilityTypes,
-	ReadonlySupportedGenerics,
-} from "./exposedInternalUtilityTypes.js";

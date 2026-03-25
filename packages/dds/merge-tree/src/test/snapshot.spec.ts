@@ -12,7 +12,7 @@ import {
 import type { IMergeTreeOptionsInternal } from "../mergeTree.js";
 import { SnapshotV1 } from "../snapshotV1.js";
 
-import { TestString, loadSnapshot } from "./snapshot.utils.js";
+import { loadSnapshot, TestString } from "./snapshot.utils.js";
 
 function makeSnapshotSuite(options?: IMergeTreeOptionsInternal): void {
 	describe("from an empty initial state", () => {

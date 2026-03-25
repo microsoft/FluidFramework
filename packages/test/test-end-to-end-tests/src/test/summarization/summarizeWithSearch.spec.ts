@@ -10,25 +10,25 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	type ISummarizer,
-	SummaryCollection,
-	neverCancelledSummaryToken,
 	type ISummaryNackMessage,
+	neverCancelledSummaryToken,
+	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
-	MessageType,
 	ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	IFluidDataStoreFactory,
 	type IFluidDataStoreContext,
+	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestObjectProvider,
 	createSummarizerFromFactory,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

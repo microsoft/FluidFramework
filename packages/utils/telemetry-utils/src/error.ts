@@ -13,9 +13,9 @@ import {
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
+	isExternalError,
 	LoggingError,
 	NORMALIZED_ERROR_TYPE,
-	isExternalError,
 	normalizeError,
 	wrapError,
 } from "./errorLogging.js";

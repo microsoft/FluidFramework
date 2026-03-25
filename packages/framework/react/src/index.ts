@@ -9,26 +9,15 @@
  */
 
 export type {
-	IReactTreeDataObject,
-	TreeViewProps,
-	SchemaIncompatibleProps,
-} from "./reactSharedTreeView.js";
-export {
-	treeDataObject,
-	treeDataObjectInternal,
-	TreeViewComponent,
-} from "./reactSharedTreeView.js";
-export type { ObservationOptions } from "./useObservation.js";
-export type {
+	IsMappableObjectType,
 	NodeRecord,
 	PropTreeNode,
 	PropTreeNodeRecord,
 	PropTreeValue,
 	UnwrapPropTreeNode,
 	UnwrapPropTreeNodeRecord,
-	WrapPropTreeNodeRecord,
 	WrapNodes,
-	IsMappableObjectType,
+	WrapPropTreeNodeRecord,
 } from "./propNode.js";
 export {
 	toPropTreeNode,
@@ -36,22 +25,32 @@ export {
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,
 } from "./propNode.js";
+export type {
+	IReactTreeDataObject,
+	SchemaIncompatibleProps,
+	TreeViewProps,
+} from "./reactSharedTreeView.js";
 export {
-	useTree,
-	usePropTreeNode,
-	usePropTreeRecord,
-	useTreeObservations,
-	withTreeObservations,
-	withMemoizedTreeObservations,
-} from "./useTree.js";
+	TreeViewComponent,
+	treeDataObject,
+	treeDataObjectInternal,
+} from "./reactSharedTreeView.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
-
 export {
+	type FormattedEditorHandle,
 	FormattedMainView,
-	PlainTextMainView,
-	PlainQuillView,
 	type FormattedMainViewProps,
 	type PlainMainViewProps,
-	type FormattedEditorHandle,
+	PlainQuillView,
+	PlainTextMainView,
 } from "./text/index.js";
-export { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
+export { type UndoRedo, UndoRedoStacks } from "./undoRedo.js";
+export type { ObservationOptions } from "./useObservation.js";
+export {
+	usePropTreeNode,
+	usePropTreeRecord,
+	useTree,
+	useTreeObservations,
+	withMemoizedTreeObservations,
+	withTreeObservations,
+} from "./useTree.js";

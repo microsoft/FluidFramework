@@ -8,12 +8,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	BlobCore,
+	codeToBytesMap,
+	getValueSafely,
 	MarkerCodes,
 	MarkerCodesEnd,
 	MarkerCodesStart,
 	NodeCore,
-	codeToBytesMap,
-	getValueSafely,
 } from "./zipItDataRepresentationUtils.js";
 
 /**

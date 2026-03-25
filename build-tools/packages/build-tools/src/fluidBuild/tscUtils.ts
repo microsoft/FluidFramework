@@ -5,7 +5,9 @@
 
 import * as fs from "fs";
 import * as path from "path";
+
 import * as ts from "typescript";
+
 import { sha256 } from "./hash";
 
 const defaultTscUtil = createTscUtil(ts);

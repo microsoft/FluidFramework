@@ -13,9 +13,9 @@ import {
 	type IFluidDataStoreContext,
 	type IFluidDataStoreFactory,
 	type IFluidDataStoreRegistry,
+	type IRuntimeStorageService,
 	type NamedFluidDataStoreRegistryEntries,
 	type SummarizeInternalFn,
-	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {

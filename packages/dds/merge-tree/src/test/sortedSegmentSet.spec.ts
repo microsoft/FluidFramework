@@ -15,6 +15,7 @@ import { toMergeNodeInfo } from "../segmentInfos.js";
 import { SortedSegmentSet, type SortedSegmentSetItem } from "../sortedSegmentSet.js";
 
 import { TestClient } from "./testClient.js";
+
 const segmentCount = 15;
 
 function validateSorted<T extends SortedSegmentSetItem>(

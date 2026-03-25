@@ -13,14 +13,14 @@ import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../a
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 
 import {
+	generateClientNames,
 	type IConfigRange,
 	type IMergeTreeOperationRunnerConfig,
-	type TestOperation,
-	generateClientNames,
 	insert,
 	removeRange,
 	resolveRanges,
 	runMergeTreeOperationRunner,
+	type TestOperation,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";

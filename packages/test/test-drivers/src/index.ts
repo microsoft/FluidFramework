@@ -4,8 +4,8 @@
  */
 
 export {
-	createFluidTestDriver,
 	CreateFromEnvConfigParam,
+	createFluidTestDriver,
 	DriverApi,
 	DriverApiType,
 	FluidTestDriverConfig,

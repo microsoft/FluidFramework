@@ -605,19 +605,19 @@ export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.Inter
 
 declare namespace InternalTypes {
     export {
-        _InlineTrick,
-        FlattenKeys,
         ApplyKind,
         ApplyKindInput,
-        NodeBuilderData,
-        FieldHasDefault,
-        ScopedSchemaName,
         DefaultProvider,
-        typeNameSymbol,
-        InsertableObjectFromSchemaRecord,
+        ExtractItemType,
+        FieldHasDefault,
         FlexList,
         FlexListToUnion,
-        ExtractItemType
+        InsertableObjectFromSchemaRecord,
+        NodeBuilderData,
+        ScopedSchemaName,
+        typeNameSymbol,
+        _InlineTrick,
+        FlattenKeys
     }
 }
 export { InternalTypes }

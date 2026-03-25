@@ -10,12 +10,12 @@ import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { noop } from '../../Common.js';
 import { deepCompareNodes } from '../../EditUtilities.js';
 import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers.js';
+import { NodeData } from '../../persisted-types/index.js';
 import { SharedTree } from '../../SharedTree.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
-import { NodeData } from '../../persisted-types/index.js';
 
 import { expectDefined } from './TestCommon.js';
-import { TestTree, buildLeaf } from './TestNode.js';
+import { buildLeaf, TestTree } from './TestNode.js';
 import { setUpTestSharedTree, setUpTestTree, translateId } from './TestUtilities.js';
 
 /** Options used to generate a SharedTree undo/redo test suite. */

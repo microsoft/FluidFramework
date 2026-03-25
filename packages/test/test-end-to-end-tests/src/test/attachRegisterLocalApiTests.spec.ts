@@ -21,12 +21,12 @@ import {
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
+	createDocumentId,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-	createDocumentId,
 } from "@fluidframework/test-utils/internal";
 
 /*

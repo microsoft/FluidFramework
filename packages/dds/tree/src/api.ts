@@ -4,15 +4,15 @@
  */
 
 import type {
+	ImplicitAllowedTypes,
+	ImplicitFieldSchema,
+	TreeArrayNode,
+	TreeArrayNodeAlpha,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewBeta,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	TreeArrayNode,
-	TreeArrayNodeAlpha,
 } from "./simple-tree/index.js";
 
 /**

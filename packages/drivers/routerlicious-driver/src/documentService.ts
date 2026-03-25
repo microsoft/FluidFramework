@@ -7,19 +7,19 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IDocumentServiceEvents,
-	IDocumentServicePolicies,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	canRetryOnError,
 	NetworkErrorBasic,
 	RateLimiter,
-	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -33,7 +33,7 @@ import { ISnapshotTreeVersion } from "./definitions.js";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
 import { DocumentStorageService } from "./documentStorageService.js";
-import { RouterliciousErrorTypes, type IR11sError } from "./errorUtils.js";
+import { type IR11sError, RouterliciousErrorTypes } from "./errorUtils.js";
 import { GitManager } from "./gitManager.js";
 import { Historian } from "./historian.js";
 import { NullBlobStorageService } from "./nullBlobStorageService.js";

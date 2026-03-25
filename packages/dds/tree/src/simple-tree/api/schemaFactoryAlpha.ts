@@ -5,26 +5,26 @@
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import {
-	type NodeKind,
-	type TreeNodeSchemaClass,
 	type ImplicitAllowedTypes,
-	type WithType,
-	normalizeAllowedTypes,
 	isTreeNode,
+	type NodeKind,
+	normalizeAllowedTypes,
+	type TreeNodeSchemaClass,
+	type WithType,
 } from "../core/index.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 import {
-	type FieldProps,
-	type FieldSchemaAlpha,
-	type FieldPropsAlpha,
-	type FieldKind,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-	type FieldSchema,
-	getDefaultProvider,
 	createFieldSchema,
 	type DefaultProvider,
+	type FieldKind,
+	type FieldProps,
+	type FieldPropsAlpha,
+	type FieldSchema,
+	type FieldSchemaAlpha,
+	getDefaultProvider,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -39,16 +39,19 @@ import {
 	type RecordNodeCustomizableSchema,
 	recordSchema,
 } from "../node-kinds/index.js";
-import type { SchemaType, SimpleObjectNodeSchema } from "../simpleSchema.js";
-import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import type {
+	SchemaType,
+	SimpleLeafNodeSchema,
+	SimpleObjectNodeSchema,
+} from "../simpleSchema.js";
 import { unhydratedFlexTreeFromInsertableNode } from "../unhydratedFlexTreeFromInsertable.js";
 
 import {
 	defaultSchemaFactoryObjectOptions,
-	scoped,
 	type NodeSchemaOptionsAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ScopedSchemaName,
+	scoped,
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 import { schemaStatics } from "./schemaStatics.js";

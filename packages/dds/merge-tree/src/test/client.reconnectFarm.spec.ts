@@ -7,19 +7,19 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IRandom, describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { SegmentGroup } from "../mergeTreeNodes.js";
 import type { IMergeTreeOp } from "../ops.js";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
 	annotateRange,
 	applyMessages,
 	doOverRange,
 	generateClientNames,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	insert,
 	removeRange,
 	runMergeTreeOperationRunner,

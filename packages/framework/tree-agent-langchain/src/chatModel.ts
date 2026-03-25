@@ -7,9 +7,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	EditResult,
 	SharedTreeChatModel,
+	SharedTreeChatQuery, // eslint-disable-line import-x/no-deprecated
 	TreeAgentChatMessage,
 	TreeAgentChatResponse,
-	SharedTreeChatQuery, // eslint-disable-line import-x/no-deprecated
 } from "@fluidframework/tree-agent/alpha";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
 import type { BaseMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules

@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
-	SummaryType,
 	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
@@ -32,8 +32,8 @@ import {
 import {
 	EditManagerSummarizer,
 	makeEditManagerCodec,
-	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
+	summarizablesMetadataKey,
 } from "../../shared-tree-core/index.js";
 import { testChangeFamilyFactory } from "../testChange.js";
 import { testIdCompressor } from "../utils.js";

@@ -8,12 +8,18 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
-	mapCursorField,
 	type FieldKey,
 	type ITreeCursorSynchronous,
+	mapCursorField,
 } from "../core/index.js";
-import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
+import { buildNodeComparator, currentObserver } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
+import type {
+	InsertableTypedNode,
+	TreeNode,
+	TreeNodeFromImplicitAllowedTypes,
+	WithType,
+} from "../simple-tree/index.js";
 import {
 	enumFromStrings,
 	eraseSchemaDetails,
@@ -22,12 +28,6 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 	TreeBeta,
-} from "../simple-tree/index.js";
-import type {
-	InsertableTypedNode,
-	TreeNode,
-	TreeNodeFromImplicitAllowedTypes,
-	WithType,
 } from "../simple-tree/index.js";
 import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 

@@ -8,8 +8,8 @@ import type { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
@@ -34,24 +34,24 @@ import type {
 	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
 import {
+	type AdjustParams,
 	Client,
-	MergeTreeDeltaType,
 	createAnnotateRangeOp,
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
-	matchProperties,
-	type AdjustParams,
 	type InteriorSequencePlace,
 	type MapLike,
+	MergeTreeDeltaType,
+	matchProperties,
 } from "@fluidframework/merge-tree/internal";
 import type {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
@@ -64,9 +64,9 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
-	LoggingError,
 	createChildLogger,
 	createConfigBasedOptionsProxy,
+	LoggingError,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";

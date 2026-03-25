@@ -10,15 +10,15 @@ import {
 	type ApiEntryPoint,
 	ApiInterface,
 	type ApiItem,
+	ApiPropertyItem,
 	ApiReturnTypeMixin,
 	ApiTypeParameterListMixin,
+	ApiVariable,
 	type Excerpt,
 	ExcerptTokenKind,
 	type HeritageType,
 	type IResolveDeclarationReferenceResult,
 	type TypeParameter,
-	ApiPropertyItem,
-	ApiVariable,
 } from "@microsoft/api-extractor-model";
 import {
 	type DocNode,
@@ -43,22 +43,22 @@ import type { Logger } from "../../Logging.js";
 import type { Section, SectionContent, SectionHeading } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
-	injectSeparator,
-	getFileSafeNameForApiItem,
-	getSeeBlocks,
-	getThrowsBlocks,
+	getApiItemKind,
 	getDeprecatedBlock,
 	getExampleBlocks,
-	getReturnsBlock,
-	getApiItemKind,
-	type ValidApiItemKind,
+	getFileSafeNameForApiItem,
 	getFilteredParent,
+	getReturnsBlock,
+	getSeeBlocks,
+	getThrowsBlocks,
+	injectSeparator,
+	type ValidApiItemKind,
 } from "../../utilities/index.js";
-import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import {
-	HierarchyKind,
 	type ApiItemTransformationConfiguration,
+	HierarchyKind,
 } from "../configuration/index.js";
+import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import { doesItemKindRequireOwnDocument, getLinkForApiItem } from "../utilities/index.js";
 
 import {

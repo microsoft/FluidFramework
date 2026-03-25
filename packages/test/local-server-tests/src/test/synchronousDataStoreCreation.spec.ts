@@ -14,7 +14,7 @@ import {
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces/internal";
+import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {

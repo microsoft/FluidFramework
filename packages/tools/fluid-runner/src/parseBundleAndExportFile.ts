@@ -9,7 +9,7 @@ import * as path from "node:path";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
-import { type IExportFileResponse, createContainerAndExecute } from "./exportFile.js";
+import { createContainerAndExecute, type IExportFileResponse } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { ITelemetryOptions } from "./logger/fileLogger.js";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";

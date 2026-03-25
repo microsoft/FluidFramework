@@ -7,8 +7,8 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	GCNodeType,
 	GarbageCollector,
+	GCNodeType,
 	type IGarbageCollectionRuntime,
 	type IGarbageCollectionSnapshotData,
 	type IGarbageCollectionState,

@@ -4,10 +4,10 @@
  */
 
 import {
-	SharedNumberSequence,
-	SparseMatrix,
 	positionToRowCol,
 	rowColToPosition,
+	SharedNumberSequence,
+	SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";

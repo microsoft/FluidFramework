@@ -16,10 +16,10 @@ import type {
 	OptionalChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { type Mutable, brand } from "../../../util/index.js";
+import { brand, type Mutable } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
-import { Change, assertEqual } from "./optionalFieldUtils.js";
+import { assertEqual, Change } from "./optionalFieldUtils.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();

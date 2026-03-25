@@ -6,18 +6,18 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	IPersistedCache,
-	IFileEntry,
 	ICacheEntry,
+	IFileEntry,
+	IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getKeyForCacheEntry,
 	maximumCacheDurationMs,
 } from "@fluidframework/driver-utils/internal";
 import {
+	createChildLogger,
 	ITelemetryLoggerExt,
 	UsageError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { IDBPDatabase } from "idb";
 

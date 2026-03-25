@@ -9,9 +9,9 @@ import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/inter
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type AliasResult,
+	asLegacyAlpha,
 	type IDataStore,
 	type IFluidDataStoreChannel,
-	asLegacyAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryLoggerExt,

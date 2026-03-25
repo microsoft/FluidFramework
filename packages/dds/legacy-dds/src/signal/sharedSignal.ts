@@ -7,17 +7,17 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import type { ITree } from "@fluidframework/driver-definitions/internal";
+import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import type {
-	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";

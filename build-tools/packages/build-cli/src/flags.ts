@@ -29,6 +29,7 @@ import {
 	type VersionBumpType,
 	type VersionScheme,
 } from "@fluid-tools/version-tools";
+
 import type { DependencyUpdateType } from "./library/bump.js";
 import { isReleaseGroup, type ReleaseGroup } from "./releaseGroups.js";
 

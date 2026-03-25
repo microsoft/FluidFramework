@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IJsonCodec, makeCodecFamily, type ICodecFamily } from "../../codec/index.js";
+import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,

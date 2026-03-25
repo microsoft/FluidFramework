@@ -5,7 +5,7 @@
 
 import fetch from "isomorphic-fetch";
 
-import { type IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
+import { authRequestWithRetry, type IOdspAuthRequestInfo } from "./odspAuth.js";
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**

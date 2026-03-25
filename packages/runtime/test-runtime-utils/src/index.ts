@@ -4,33 +4,33 @@
  */
 
 export { deepFreeze } from "./deepFreeze.js";
-export { IInsecureUser } from "./insecureUsers.js";
 export { InsecureTokenProvider } from "./insecureTokenProvider.js";
-export { MockFluidDataStoreContext } from "./mocksDataStoreContext.js";
+export { IInsecureUser } from "./insecureUsers.js";
 export { MockDeltaManager, MockDeltaQueue } from "./mockDeltas.js";
 export { MockHandle } from "./mockHandle.js";
+export { MockStorage } from "./mockStorage.js";
 export {
-	IMockContainerRuntimePendingMessage,
-	MockContainerRuntime,
+	IInternalMockRuntimeMessage,
 	IMockContainerRuntimeOptions,
+	IMockContainerRuntimePendingMessage,
+	MockAudience,
+	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockDeltaConnection,
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockObjectStorageService,
 	MockQuorumClients,
-	MockAudience,
 	MockSharedObjectServices,
-	IInternalMockRuntimeMessage,
 } from "./mocks.js";
+export { MockFluidDataStoreContext } from "./mocksDataStoreContext.js";
 export {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 } from "./mocksForReconnection.js";
-export { MockStorage } from "./mockStorage.js";
 export {
 	validateAssertionError,
-	validateUsageError,
-	validateTypeError,
 	validateError,
+	validateTypeError,
+	validateUsageError,
 } from "./validateAssertionError.js";

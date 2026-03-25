@@ -6,15 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { SchemaFactory, type TreeNode } from "@fluidframework/tree";
-import { allowUnused } from "@fluidframework/tree/internal";
 import type { requireAssignableTo } from "@fluidframework/tree/internal";
+import { allowUnused } from "@fluidframework/tree/internal";
 
 import {
+	type IsMappableObjectType,
+	type PropTreeNode,
 	toPropTreeNode,
 	toPropTreeRecord,
 	unwrapPropTreeNode,
-	type IsMappableObjectType,
-	type PropTreeNode,
 	type WrapNodes,
 	type WrapPropTreeNodeRecord,
 } from "../propNode.js";

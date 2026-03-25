@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
+import { DBSchema, DeleteDBCallbacks, deleteDB, IDBPDatabase, openDB } from "idb";
 
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry.js";
 

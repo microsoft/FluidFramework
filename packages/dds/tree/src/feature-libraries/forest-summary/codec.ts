@@ -14,8 +14,8 @@ import {
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import {
-	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
+	fieldBatchCodecBuilder,
 } from "../chunked-forest/index.js";
 
 import { ForestFormatVersion, FormatCommon } from "./formatCommon.js";

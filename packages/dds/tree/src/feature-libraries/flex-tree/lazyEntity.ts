@@ -11,7 +11,7 @@ import {
 	ITreeSubscriptionCursorState,
 	TreeNavigationResult,
 } from "../../core/index.js";
-import { type IDisposable, disposeSymbol } from "../../util/index.js";
+import { disposeSymbol, type IDisposable } from "../../util/index.js";
 
 import type { Context } from "./context.js";
 import {

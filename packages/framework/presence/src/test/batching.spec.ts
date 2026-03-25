@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import { describe, it, after, afterEach, before, beforeEach } from "mocha";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
+import { after, afterEach, before, beforeEach, describe, it } from "mocha";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import type { NotificationsWorkspace, PresenceWithNotifications } from "../index.js";
 import { Notifications, StateFactory } from "../index.js";
@@ -17,8 +17,8 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
 	initialLocalClientConnectionId,
-	prepareConnectedPresence,
 	localAttendeeId,
+	prepareConnectedPresence,
 } from "./testUtils.js";
 
 describe("Presence", () => {

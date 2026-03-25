@@ -16,8 +16,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
-	IResolvedUrl,
 	IDocumentMessage,
+	IResolvedUrl,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 

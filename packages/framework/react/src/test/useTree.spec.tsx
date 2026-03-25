@@ -9,7 +9,7 @@ import { SchemaFactory } from "@fluidframework/tree";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 
-import { toPropTreeNode, type PropTreeNode } from "../propNode.js";
+import { type PropTreeNode, toPropTreeNode } from "../propNode.js";
 import { objectIdNumber } from "../simpleIdentifier.js";
 import {
 	usePropTreeNode,
