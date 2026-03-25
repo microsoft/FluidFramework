@@ -137,9 +137,6 @@ module.exports = {
 
 				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
 				"@cerner/duplicate-package-checker-webpack-plugin",
-
-				// socket.io-client is forced to avoid 4.8 to avoid https://github.com/socketio/socket.io/issues/5202
-				"socket.io-client",
 			],
 			packages: ["**"],
 			range: "~",
@@ -169,6 +166,15 @@ module.exports = {
 			dependencies: ["@types/node"],
 			packages: ["**"],
 			range: "~",
+		},
+
+		// eslint-config-fluid is an independent workspace linked via the link: protocol,
+		// which syncpack cannot resolve. Ignore it from semver range checks.
+		{
+			label: "Ignore eslint-config-fluid (independent workspace with link: protocol)",
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+			packages: ["**"],
+			isIgnored: true,
 		},
 
 		// All deps should use caret ranges unless previously overridden
@@ -216,6 +222,15 @@ module.exports = {
 			isIgnored: true,
 		},
 
+		// eslint-config-fluid is an independent workspace linked via the link: protocol,
+		// which syncpack cannot resolve. Ignore it from version matching.
+		{
+			label: "Ignore eslint-config-fluid (independent workspace with link: protocol)",
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
@@ -225,7 +240,8 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
-				// Temporarily disabled while eslint-config-fluid is part of the client release group
+				// Can be re-enabled once the package is using a proper feed dependency instead of a file:
+				// reference to the local package.
 				// "@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
