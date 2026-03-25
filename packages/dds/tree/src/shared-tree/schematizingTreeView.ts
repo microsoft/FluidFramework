@@ -27,7 +27,6 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	type TreeView,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
@@ -56,6 +55,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranch,
 	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
@@ -70,10 +70,13 @@ import { canInitialize, initialize, initializerFromChunk } from "./schematizeTre
 import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
- * exists and error if creating a second.
+ * Stores the {@link TreeBranch} associated with a checkout's anchor set.
+ *
+ * @remarks
+ * This is used to detect (and prevent) creating multiple tree views from the same checkout,
+ * and to retrieve the branch for root nodes in {@link (TreeAlpha:interface).parent2}.
  */
-export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
+export const ViewSlot = anchorSlot<TreeBranch>();
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
