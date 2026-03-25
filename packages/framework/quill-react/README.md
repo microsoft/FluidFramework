@@ -46,7 +46,7 @@ This package provides Quill-based views for both plain and formatted text editin
 
 ## Known Issues and Limitations
 
-Quill requires DOM access at import time, so this package should only be imported in browser environments or test environments with JSDOM set up before import.
+Applications utilizing Quill require DOM access at import time. This package contains all integrations of Fluid Framework with Quill/React. This package should only be imported in browser environments or test environments with JSDOM set up before import.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
