@@ -78,7 +78,7 @@ The `@rushstack/eslint-plugin-security` plugin has been removed from all configu
 
 #### Rule promotions
 
-The following rules have been added to the `minimal` config (in addition to `recommended`):
+The following rules, which were previously enabled only in the `recommended` config, are now also enabled in the `minimal` config:
 
 - `@typescript-eslint/explicit-function-return-type`
 - `@typescript-eslint/no-import-type-side-effects`
