@@ -972,7 +972,11 @@ export class AnchorSet implements AnchorLocator {
 				this.parentField = undefined;
 			},
 			fieldMarks(marks: readonly Delta.Mark[]): void {
-				if (this.parent !== undefined && this.parentField !== undefined) {
+				assert(
+					this.parentField !== undefined,
+					"fieldMarks called outside of a field",
+				);
+				if (this.parent !== undefined) {
 					const interned = this.anchorSet.internalizePath(this.parent);
 					if (interned instanceof PathNode) {
 						getOrCreate(this.storedFieldMarks, interned, () => new Map()).set(

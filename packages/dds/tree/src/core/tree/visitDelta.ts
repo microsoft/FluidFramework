@@ -373,12 +373,7 @@ interface PassConfig {
 	readonly rootDestructions: Delta.DetachedNodeDestruction[];
 }
 
-type Pass = (
-	key: FieldKey,
-	delta: Delta.FieldChanges,
-	visitor: DeltaVisitor,
-	config: PassConfig,
-) => void;
+type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
 
 function visitFieldMarks(
 	fields: Delta.FieldMap | undefined,
@@ -388,7 +383,7 @@ function visitFieldMarks(
 	if (fields !== undefined) {
 		for (const [key, field] of fields) {
 			visitor.enterField(key);
-			config.func(key, field, visitor, config);
+			config.func(field, visitor, config);
 			visitor.exitField(key);
 		}
 	}
@@ -413,7 +408,6 @@ function visitNode(
  * - Executes detaches (bottom-up)
  */
 function detachPass(
-	_key: FieldKey,
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
@@ -525,7 +519,6 @@ function collectDestroys(
  * - Executes attaches (top-down) applying nested changes on the attached nodes
  */
 function attachPass(
-	_key: FieldKey,
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
