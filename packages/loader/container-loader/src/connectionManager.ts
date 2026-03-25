@@ -344,6 +344,8 @@ export class ConnectionManager implements IConnectionManager {
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
+		private readonly maxConnectionAttempts?: number,
+		private readonly allowReconnect: boolean = true,
 	) {
 		this.clientDetails = this.client.details;
 		this.defaultReconnectionMode = this.client.mode;
@@ -621,6 +623,17 @@ export class ConnectionManager implements IConnectionManager {
 				);
 
 				lastError = origError;
+
+				// When maxConnectionAttempts is set, do not retry beyond the allowed attempts.
+				// The consumer will own the retry policy.
+				if (
+					this.maxConnectionAttempts !== undefined &&
+					connectRepeatCount >= this.maxConnectionAttempts
+				) {
+					const error = normalizeError(origError, { props: fatalConnectErrorProp });
+					this.props.closeHandler(error);
+					throw error;
+				}
 
 				// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
 				// so break out of the re-connecting while-loop after first attempt
@@ -969,6 +982,17 @@ export class ConnectionManager implements IConnectionManager {
 		assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
 		this.disconnectFromDeltaStream(reason);
+
+		// When allowReconnect is false, do not attempt to reconnect after a disconnect.
+		// Surface the error to the consumer who owns the retry policy.
+		if (!this.allowReconnect) {
+			if (reason.error === undefined) {
+				this.props.closeHandler();
+			} else {
+				this.props.closeHandler(normalizeError(reason.error));
+			}
+			return;
+		}
 
 		// We will always trigger reconnect, even if canRetry is false.
 		// Any truly fatal error state will result in container close upon attempted reconnect,
