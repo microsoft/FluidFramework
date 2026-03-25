@@ -14,7 +14,6 @@ import {
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import-x/no-internal-modules
 import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
 import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
@@ -32,12 +31,11 @@ import {
 } from "../../shared-tree-core/editManagerSummarizer.js";
 import {
 	EditManagerSummarizer,
-	makeEditManagerCodec,
+	makeEditManagerCodecBuilder,
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { testChangeFamilyFactory } from "../testChange.js";
+import { testChangeFamilyFactory, type TestChange } from "../testChange.js";
 import { testIdCompressor } from "../utils.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -55,9 +53,12 @@ function createEditManagerSummarizer(options?: {
 		Array.from(editManagerFormatVersions, (e) => [e, 1]),
 	);
 	const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_74;
-	const codec = makeEditManagerCodec(family.codecs, changeFormatVersion, revisionTagCodec, {
+	const codec = makeEditManagerCodecBuilder<TestChange>().build({
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab,
+		changeCodecs: family.codecs,
+		dependentChangeFormatVersion: changeFormatVersion,
+		revisionTagCodec,
 	});
 	const summarizer = new EditManagerSummarizer(
 		editManager,

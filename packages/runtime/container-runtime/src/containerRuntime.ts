@@ -2710,12 +2710,10 @@ export class ContainerRuntime
 		this.emitDirtyDocumentEvent = false;
 
 		try {
-			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
-			// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
-			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
-			// before staging mode so we can simply say staged: false.
-			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
-			this.scheduleFlush();
+			// Any ID Allocation ops that failed to submit need to have their ranges included
+			// in the next allocation op. Reset the compressor's unfinalized range cursor so that the next
+			// call to takeNextCreationRange (during replay) will include those unfinalized ranges.
+			this._idCompressor?.resetUnfinalizedCreationRange();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
@@ -5180,7 +5178,9 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
-				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const { pending } = this.pendingStateManager.getLocalState(
+					props?.snapshotSequenceNumber,
+				);
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 

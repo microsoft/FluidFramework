@@ -60,14 +60,12 @@ import {
 	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
-	makeSchemaCodec,
 	makeTreeChunker,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
-	clientVersionToEditManagerFormatVersion,
 	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
 	getCodecTreeForEditManagerFormatWithChange,
@@ -76,16 +74,15 @@ import {
 	MessageFormatVersion,
 	SharedTreeCore,
 	EditManagerFormatVersion,
+	makeEditManagerCodecBuilder,
 } from "../shared-tree-core/index.js";
 import {
-	type ITree,
 	type ImplicitFieldSchema,
 	NodeKind,
 	type ReadSchema,
 	type SimpleFieldSchema,
 	type SimpleTreeSchema,
 	type TreeView,
-	type TreeViewAlpha,
 	type TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 	type VerboseTree,
@@ -104,7 +101,7 @@ import {
 	throwIfBroken,
 } from "../util/index.js";
 
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -112,7 +109,7 @@ import {
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
+import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -230,7 +227,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options,
 		);
-		const schemaCodec = makeSchemaCodec(options);
+		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
 			{
@@ -403,7 +400,7 @@ export class SharedTreeKernel
 	}
 
 	private checkoutBranch(branchId: BranchId): TreeCheckout {
-		const checkout = this.checkout.branch();
+		const checkout = this.checkout.fork();
 		checkout.switchBranch(this.getSharedBranch(branchId));
 		this.registerSharedBranchForEditing(branchId, checkout);
 		this.registerCheckout(branchId, checkout);
@@ -503,45 +500,11 @@ export function persistedToSimpleSchema(
 }
 
 /**
- * Get a {@link BranchableTree} from a {@link ITree}.
- * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
- * @privateRemarks This function will be removed if/when the branching API becomes public,
- * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
- * @alpha
- * @deprecated This API is superseded by {@link TreeBranch}, which should be used instead.
- */
-export function getBranch(tree: ITree): BranchableTree;
-/**
- * Get a {@link BranchableTree} from a {@link TreeView}.
- * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
- * Branches are currently an unstable "alpha" API and are subject to change in the future.
- * @privateRemarks This function will be removed if/when the branching API becomes public,
- * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
- * @alpha
- * @deprecated This API is superseded by {@link TreeBranch}, which should be used instead.
- */
-export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	view: TreeViewAlpha<T>,
-): BranchableTree;
-export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	treeOrView: ITree | TreeViewAlpha<T>,
-): BranchableTree {
-	if (treeOrView instanceof SchematizingSimpleTreeView) {
-		return treeOrView.checkout as unknown as BranchableTree;
-	}
-	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
-	assert(kernel instanceof SharedTreeKernel, 0xb56 /* Invalid ITree */);
-	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return kernel.checkout as unknown as BranchableTree;
-}
-
-/**
  * Defines for each EditManagerFormatVersion the SharedTreeChangeFormatVersion to use.
  * This is an arbitrary mapping that is injected in the EditManger codec.
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs<
 	EditManagerFormatVersion,
 	SharedTreeChangeFormatVersion
@@ -569,9 +532,8 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 ]);
 
 function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
-	const change = changeFormatVersionForEditManager.lookup(
-		clientVersionToEditManagerFormatVersion(clientVersion),
-	);
+	const editManagerVersion = makeEditManagerCodecBuilder().getCodecTree(clientVersion).version;
+	const change = changeFormatVersionForEditManager.lookup(editManagerVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForEditManagerFormatWithChange(clientVersion, changeCodecTree);
 }
@@ -758,7 +720,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
 	writeVersionOverrides: new Map(),

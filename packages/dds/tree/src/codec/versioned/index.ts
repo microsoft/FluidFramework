@@ -7,6 +7,7 @@ export { Versioned, versionField } from "./format.js";
 export {
 	makeVersionDispatchingCodec,
 	makeDiscontinuedCodecVersion,
+	makeDiscontinuedCodecAndSchema,
 	ClientVersionDispatchingCodecBuilder,
 	type CodecVersion,
 	type CodecAndSchema,

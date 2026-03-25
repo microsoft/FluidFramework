@@ -4,17 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	BaseSegment,
-	IJSONSegment,
-	ISegment,
-	PropertySet,
-} from "@fluidframework/merge-tree/internal";
+import type { IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree/internal";
+import { BaseSegment } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence } from "./sequence.js";
 

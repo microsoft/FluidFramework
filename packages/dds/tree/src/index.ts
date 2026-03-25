@@ -71,9 +71,6 @@ export {
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
-	getBranch,
-	type BranchableTree,
-	type TreeBranchFork,
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
@@ -91,6 +88,7 @@ export {
 
 export {
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
@@ -284,6 +282,7 @@ export {
 	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	type MapNodeCustomizableSchema,

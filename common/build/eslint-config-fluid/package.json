@@ -1,7 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.92.0",
-	"private": true,
+	"version": "9.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,29 +77,28 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"serialize-javascript - CVE-2024-11831 impacts version 6.0.0 which is pinned by mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)",
 			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
 			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
-			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges."
+			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq and CVE-2024-11831. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
+			"brace-expansion: overridden to ^1.1.12 to resolve CVE-2025-5889."
 		],
 		"overrides": {
+			"brace-expansion@>=1 <2": "^1.1.12",
 			"diff@>=5 <6": "^5.2.2",
 			"js-yaml": "^4.1.1",
-			"mocha>serialize-javascript@6.0.0": "^6.0.2",
 			"minimatch@>=3 <4": "^3.1.5",
 			"minimatch@>=5 <6": "^5.1.9",
 			"minimatch@>=6 <7": "^6.2.3",
 			"minimatch@>=7 <8": "^7.4.9",
 			"minimatch@>=8 <9": "^8.0.7",
 			"minimatch@>=9 <10": "^9.0.9",
-			"minimatch@>=10 <11": "^10.2.4"
+			"minimatch@>=10 <11": "^10.2.4",
+			"serialize-javascript@>=6 <7": "^7.0.4"
 		},
 		"onlyBuiltDependencies": [
 			"esbuild",
 			"unrs-resolver"
 		]
-	},
-	"typeValidation": {
-		"disabled": true
 	}
 }

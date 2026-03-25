@@ -1301,7 +1301,9 @@ export class Container
 					});
 
 					// only enable the new behavior if the config is set
-					if (this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") !== true) {
+					if (
+						this.mc.config.getBoolean("Fluid.Container.DisableCloseOnAttachFailure") !== true
+					) {
 						attachP = attachP.catch((error) => {
 							throw normalizeErrorAndClose(error);
 						});
@@ -1547,6 +1549,12 @@ export class Container
 				service.on("metadataUpdate", this.metadataUpdateHandler);
 			}
 		} else {
+			// When DisableCloseOnAttachFailure is enabled, use no internal retries
+			// The consumer will own the retry policy
+			const disableCloseOnAttachFailure =
+				this.mc.config.getBoolean("Fluid.Container.DisableCloseOnAttachFailure") === true;
+			const maxRetries = disableCloseOnAttachFailure ? 0 : undefined;
+
 			service = await runWithRetry(
 				async () =>
 					this.serviceFactory.createContainer(
@@ -1560,6 +1568,7 @@ export class Container
 				{
 					cancel: this._deltaManager.closeAbortController.signal,
 				}, // progress
+				maxRetries,
 			);
 		}
 		return service;
