@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark, type BenchmarkTimingOptions } from "@fluid-tools/benchmark";
+import { type BenchmarkTimingOptions, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules

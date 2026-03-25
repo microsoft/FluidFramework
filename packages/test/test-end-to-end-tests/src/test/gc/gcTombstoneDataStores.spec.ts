@@ -9,10 +9,10 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
+	ITestDataObject,
 	itExpects,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
@@ -39,10 +39,10 @@ import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-bas
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	ITestContainerConfig,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

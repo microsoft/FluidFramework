@@ -7,27 +7,27 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
+	InteriorSequencePlace,
 	LocalReferencePosition,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaRevertible,
 	PropertySet,
-	InteriorSequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import {
-	MergeTreeDeltaType,
-	ReferenceType,
-	SlidingPreference,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	getSlideToSegoff,
+	type ISegment,
+	type ISegmentInternal,
 	isMergeTreeDeltaRevertible,
+	MergeTreeDeltaType,
+	ReferenceType,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
 	Side,
-	type ISegmentInternal,
-	segmentIsRemoved,
+	SlidingPreference,
 	SortedSegmentSet,
-	type ISegment,
+	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 
 import type { SequenceInterval } from "./intervals/index.js";

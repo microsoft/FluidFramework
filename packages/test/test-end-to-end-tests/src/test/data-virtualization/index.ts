@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { supportsDataVirtualization, clearCacheIfOdsp } from "./utils.js";
+export { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";

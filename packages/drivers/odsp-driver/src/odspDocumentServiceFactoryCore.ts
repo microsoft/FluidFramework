@@ -26,14 +26,14 @@ import {
 	type OdspResourceTokenFetchOptions,
 	SharingLinkRole,
 	SharingLinkScope,
-	type TokenFetchOptions,
 	type TokenFetcher,
+	type TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
-import { type ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
+import { createOdspCacheAndTracker, type ICacheAndTracker } from "./epochTracker.js";
 import {
 	type INonPersistentCache,
 	type IPrefetchSnapshotContents,
@@ -43,11 +43,11 @@ import {
 import { OdspDocumentService } from "./odspDocumentService.js";
 import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import {
-	type IExistingFileInfo,
-	type INewFileInfo,
 	createOdspLogger,
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,
+	type IExistingFileInfo,
+	type INewFileInfo,
 	isNewFileInfo,
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,

@@ -16,21 +16,21 @@ import type {
 	SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import {
-	PropertiesManager,
-	ReferenceType,
-	SlidingPreference,
+	addProperties,
 	compareReferencePositions,
 	createDetachedLocalReferencePosition,
 	createMap,
+	endpointPosAndSide,
 	getSlideToSegoff,
+	type ISegmentInternal,
 	maxReferencePosition,
 	minReferencePosition,
+	PropertiesManager,
+	ReferenceType,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	Side,
-	endpointPosAndSide,
-	addProperties,
-	type ISegmentInternal,
+	SlidingPreference,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
@@ -41,13 +41,13 @@ import type { ISharedSegmentSequence } from "../sequence.js";
 
 import type { ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
 import {
-	IntervalStickiness,
-	IntervalType,
 	computeStickinessFromSide,
 	endReferenceSlidingPreference,
-	startReferenceSlidingPreference,
 	type IInterval,
+	IntervalStickiness,
+	IntervalType,
 	type SerializedIntervalDelta,
+	startReferenceSlidingPreference,
 } from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {

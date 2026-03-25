@@ -7,29 +7,29 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
+	type DocEscapedText,
 	type DocFencedCode,
+	type DocHtmlEndTag,
+	type DocHtmlStartTag,
+	type DocInlineTag,
 	type DocLinkTag,
 	type DocNode,
 	DocNodeKind,
 	type DocParagraph,
 	type DocPlainText,
 	type DocSection,
-	type DocInlineTag,
-	type DocHtmlEndTag,
-	type DocHtmlStartTag,
-	type DocEscapedText,
 } from "@microsoft/tsdoc";
 import type {
-	Break,
 	BlockContent,
+	Break,
 	Code,
 	InlineCode,
+	Link,
 	List,
 	ListItem,
 	Paragraph,
 	PhrasingContent,
 	Text,
-	Link,
 } from "mdast";
 
 import type { LoggingConfiguration } from "../LoggingConfiguration.js";

@@ -12,16 +12,16 @@ import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	ITelemetryContext,
-	IGarbageCollectionData,
-	ISummaryTreeWithStats,
 	IFluidDataStoreContext,
+	IGarbageCollectionData,
 	IRuntimeMessageCollection,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {

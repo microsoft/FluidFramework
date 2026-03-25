@@ -12,7 +12,7 @@ import {
 	extractPersistedSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
-import { TreeViewConfigurationAlpha, type SchemaUpgrade } from "../../../simple-tree/index.js";
+import { type SchemaUpgrade, TreeViewConfigurationAlpha } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { testDocuments } from "../../testTrees.js";
 

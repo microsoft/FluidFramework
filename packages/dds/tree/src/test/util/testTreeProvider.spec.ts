@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { SharedTreeCore } from "../../shared-tree-core/index.js";
-import { SummarizeType, TestTreeProvider, spyOnMethod } from "../utils.js";
+import { SummarizeType, spyOnMethod, TestTreeProvider } from "../utils.js";
 
 describe("TestTreeProvider", () => {
 	it("can create 1", async () => {

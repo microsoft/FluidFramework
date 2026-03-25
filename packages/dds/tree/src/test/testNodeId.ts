@@ -15,7 +15,7 @@ import {
 import type { NodeId } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormatV1.js";
-import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import { TestChange } from "./testChange.js";
 

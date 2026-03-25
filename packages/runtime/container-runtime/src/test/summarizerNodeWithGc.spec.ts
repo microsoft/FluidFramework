@@ -7,30 +7,30 @@ import { strict as assert } from "node:assert";
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	channelsTreeName,
+	type IGarbageCollectionData,
 	type IGarbageCollectionDetailsBase,
 	type ISummarizeInternalResult,
 	type ISummarizerNodeConfig,
 	type ISummarizerNodeWithGC,
 	type SummarizeInternalFn,
-	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildLogger,
 	MockLogger,
 	TelemetryDataTag,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { cloneGCData } from "../gc/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
+	createRootSummarizerNodeWithGC,
 	type IRootSummarizerNodeWithGC,
 	type SummarizerNodeWithGC,
-	createRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc.js";
 

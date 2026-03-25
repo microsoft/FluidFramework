@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	asChangeAtomId,
 	type ChangeAtomId,
 	type ChangesetLocalId,
-	type RevisionTag,
-	asChangeAtomId,
 	offsetChangeAtomId,
+	type RevisionTag,
 } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -19,7 +19,7 @@ import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/s
 import * as SF from "../../../feature-libraries/sequence-field/types.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
-import { type Mutable, brand } from "../../../util/index.js";
+import { brand, type Mutable } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { mintRevisionTag } from "../../utils.js";

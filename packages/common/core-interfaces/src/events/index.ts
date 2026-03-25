@@ -9,10 +9,9 @@ export type {
 	MapGetSet,
 	NoListenersCallback,
 } from "./emitter.js";
-
 export type {
 	IsListener,
-	Listeners,
 	Listenable,
+	Listeners,
 	Off,
 } from "./listeners.js";

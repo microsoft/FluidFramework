@@ -6,8 +6,8 @@
 import {
 	type ApiCallSignature,
 	type ApiClass,
-	type ApiConstructSignature,
 	type ApiConstructor,
+	type ApiConstructSignature,
 	ApiDocumentedItem,
 	type ApiEntryPoint,
 	type ApiFunction,

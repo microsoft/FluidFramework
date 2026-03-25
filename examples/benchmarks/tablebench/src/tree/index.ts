@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Table, Row } from "./schema.js";
+export { Row, Table } from "./schema.js";

@@ -15,12 +15,12 @@ import type {
 	ReadonlyNonNullJsonObjectWith,
 } from "@fluidframework/core-interfaces/internal";
 import type {
-	JsonTypeWith,
 	InternalCoreInterfacesUtilityTypes as InternalUtilityTypes,
-	ReadonlyJsonTypeWith,
+	JsonTypeWith,
 	NonNullJsonObjectWith,
-	OpaqueJsonSerializable,
 	OpaqueJsonDeserialized,
+	OpaqueJsonSerializable,
+	ReadonlyJsonTypeWith,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";

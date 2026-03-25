@@ -10,13 +10,13 @@ export {
 	type InsertableObjectFromSchemaRecordAlpha,
 	type ObjectFromSchemaRecord,
 	objectSchema,
+	type SimpleKeyMap,
 	setField,
 	type TreeObjectNode,
-	type SimpleKeyMap,
 } from "./objectNode.js";
 export {
 	isObjectNodeSchema,
 	ObjectNodeSchema,
-	type ObjectNodeSchemaWorkaround,
 	type ObjectNodeSchemaPrivate,
+	type ObjectNodeSchemaWorkaround,
 } from "./objectNodeTypes.js";

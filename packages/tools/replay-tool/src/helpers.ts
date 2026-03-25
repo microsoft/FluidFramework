@@ -28,15 +28,15 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import {
-	type ISnapshotNormalizerConfig,
 	getNormalizedSnapshot,
+	type ISnapshotNormalizerConfig,
 } from "@fluidframework/tool-utils/internal";
 import stringify from "json-stable-stringify";
 
 import {
+	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
 	ReplayRuntimeFactory,
-	excludeChannelContentDdsFactories,
 } from "./replayFluidFactories.js";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject.js";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel.js";

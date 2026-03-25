@@ -7,28 +7,28 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type { HasListeners, Listenable, Off } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
-	fail,
 	debugAssert,
+	fail,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	anchorSlot,
 	type AnchorEvents,
 	type AnchorNode,
+	anchorSlot,
 	type FieldKey,
 	type TreeValue,
 } from "../../core/index.js";
-import { getOrCreateHydratedFlexTreeNode } from "../../feature-libraries/index.js";
 import {
 	ContextSlot,
+	type FlexTreeNode,
 	flexTreeSlot,
+	getOrCreateHydratedFlexTreeNode,
+	type HydratedFlexTreeNode,
 	LazyEntity,
 	TreeStatus,
 	treeStatusFromAnchorCache,
-	type FlexTreeNode,
-	type HydratedFlexTreeNode,
 } from "../../feature-libraries/index.js";
 
 import type { Context, HydratedContext } from "./context.js";

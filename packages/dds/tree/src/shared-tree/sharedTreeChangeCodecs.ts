@@ -18,17 +18,17 @@ import {
 } from "../codec/index.js";
 import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
-	ModularChangeFormatVersion,
-	type ModularChangeset,
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
+	ModularChangeFormatVersion,
+	type ModularChangeset,
 	makeSchemaChangeCodec,
 	schemaCodecBuilder,
 } from "../feature-libraries/index.js";
 import {
-	strictEnum,
 	type JsonCompatibleReadOnly,
 	type Mutable,
+	strictEnum,
 	type Values,
 } from "../util/index.js";
 

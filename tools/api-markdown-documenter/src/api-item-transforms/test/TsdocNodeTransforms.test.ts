@@ -9,8 +9,8 @@ import { expect } from "chai";
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import {
-	transformTsdocSection,
 	type TsdocNodeTransformOptions,
+	transformTsdocSection,
 } from "../TsdocNodeTransforms.js";
 
 const mockApiItem = {} as unknown as ApiItem;

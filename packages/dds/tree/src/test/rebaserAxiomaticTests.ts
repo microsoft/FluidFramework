@@ -6,11 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import {
+	makeAnonChange,
+	mapTaggedChange,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
-	makeAnonChange,
-	mapTaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../core/index.js";
@@ -21,9 +21,9 @@ import {
 	type BoundFieldChangeRebaser,
 	type ChildStateGenerator,
 	type FieldStateTree,
-	type NamedChangeset,
 	generatePossibleSequenceOfEdits,
 	makeIntentionMinter,
+	type NamedChangeset,
 } from "./exhaustiveRebaserUtils.js";
 import { defaultRevInfosFromChanges, defaultRevisionMetadataFromChanges } from "./utils.js";
 

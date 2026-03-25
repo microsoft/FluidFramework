@@ -6,18 +6,18 @@
 import { strict as assert } from "assert";
 
 import {
+	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
-	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	ITestObjectProvider,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
+	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

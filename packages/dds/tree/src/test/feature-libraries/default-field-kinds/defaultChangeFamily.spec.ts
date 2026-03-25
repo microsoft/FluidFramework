@@ -6,24 +6,24 @@
 import { strict as assert } from "node:assert";
 
 import {
+	applyDelta,
 	type DeltaRoot,
 	EmptyKey,
 	type FieldKey,
 	type IForestSubscription,
 	type JsonableTree,
-	type TaggedChange,
-	type UpPath,
-	applyDelta,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
+	type TaggedChange,
+	type UpPath,
 } from "../../../core/index.js";
 import {
+	cursorForJsonableTreeField,
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	DefaultEditBuilder,
-	cursorForJsonableTreeField,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";

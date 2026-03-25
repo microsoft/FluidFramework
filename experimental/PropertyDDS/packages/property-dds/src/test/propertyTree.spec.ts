@@ -18,8 +18,8 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	Loader as ContainerLoader,
-	loadExistingContainer,
 	type ILoaderProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -34,19 +34,20 @@ import {
 } from "@fluidframework/server-local-server";
 import {
 	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestObjectProvider,
 	createAndAttachContainerUsingProps,
 	createLoaderProps,
 	createSummarizer,
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
 	summarizeNow,
+	TestContainerRuntimeFactory,
+	TestFluidObjectFactory,
+	TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import lodash from "lodash";
+
 const { isEmpty, last } = lodash;
 
 import { SharedPropertyTree } from "../propertyTree.js";

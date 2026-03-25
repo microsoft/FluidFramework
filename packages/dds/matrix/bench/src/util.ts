@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import process from "process";
+
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
 import { insertFragmented } from "../../test/utils";
+
 import { SharedMatrix, SharedMatrixFactory } from "./imports";
 
 let count = 1;

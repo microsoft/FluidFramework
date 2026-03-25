@@ -14,10 +14,10 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {

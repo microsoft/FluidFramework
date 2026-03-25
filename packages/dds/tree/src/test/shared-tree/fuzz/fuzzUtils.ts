@@ -18,13 +18,13 @@ import {
 
 import {
 	type Anchor,
+	clonePath,
+	forEachNodeInSubtree,
+	moveToDetachedField,
 	type Revertible,
 	TreeNavigationResult,
 	type UpPath,
 	type Value,
-	clonePath,
-	forEachNodeInSubtree,
-	moveToDetachedField,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type {
@@ -37,12 +37,12 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
 import {
+	type NodeBuilderData,
 	SchemaFactory,
-	TreeViewConfiguration,
 	type TreeNodeSchema,
+	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 	type ViewableTree,
-	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { testSrcPath } from "../../testSrcPath.cjs";

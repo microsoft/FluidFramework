@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { debugAssert, assert } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 
 // TODO: ideally there would be a unit test which actually checks that this is omitted from production builds.
 // For now it can be manually verified in ../build/debugAssert.js,

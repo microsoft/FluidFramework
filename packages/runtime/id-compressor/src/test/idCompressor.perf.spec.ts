@@ -21,20 +21,20 @@ import type {
 import { createSessionId } from "../utilities.js";
 
 import {
+	buildHugeCompressor,
 	Client,
 	DestinationClient,
 	IdCompressorTestNetwork,
-	buildHugeCompressor,
 	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
 import {
 	type FinalCompressedId,
-	type LocalCompressedId,
 	fail,
 	isFinalId,
 	isLocalId,
+	type LocalCompressedId,
 } from "./testCommon.js";
 
 const initialClusterCapacity = 512;

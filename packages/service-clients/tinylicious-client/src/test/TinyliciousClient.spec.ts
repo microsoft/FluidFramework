@@ -20,7 +20,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver/internal";
 

@@ -8,6 +8,6 @@ export { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js"
 export { createLocalDocumentService, LocalDocumentService } from "./localDocumentService.js";
 export { LocalDocumentServiceFactory } from "./localDocumentServiceFactory.js";
 export { LocalDocumentStorageService } from "./localDocumentStorageService.js";
-export { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
 export { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
+export { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
 export { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { type TreeView, TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
@@ -15,21 +15,21 @@ import { createRef, type FC } from "react";
 
 import { toPropTreeNode } from "../../propNode.js";
 import {
+	buildDeltaFromTree,
 	clipboardFormatMatcher,
-	FormattedTextAsTree,
-	FormattedMainView,
 	type FormattedEditorHandle,
+	FormattedMainView,
+	FormattedTextAsTree,
 	parseCssFontFamily,
 	parseCssFontSize,
 	parseLineTag,
-	buildDeltaFromTree,
 	// Allow import of files being tested
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../text/formatted/quillFormattedView.js";
 import {
+	type MainViewProps,
 	PlainTextMainView,
 	QuillMainView,
-	type MainViewProps,
 	// Allow import of files being tested
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../text/plain/index.js";

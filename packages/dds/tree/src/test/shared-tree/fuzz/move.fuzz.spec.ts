@@ -6,11 +6,11 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	createDDSFuzzSuite,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 	type DDSFuzzTestState,
-	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";

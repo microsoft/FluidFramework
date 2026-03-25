@@ -4,7 +4,7 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger, type FluidObject } from "@fluidframework/core-interfaces";
+import { type FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,

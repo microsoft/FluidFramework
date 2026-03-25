@@ -14,10 +14,10 @@ import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import {
 	createSummarizer,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	summarizeNow,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";

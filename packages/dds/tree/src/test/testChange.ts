@@ -17,12 +17,12 @@ import {
 	type ChangeRebaser,
 	type DeltaFieldMap,
 	type DeltaRoot,
+	emptyDelta,
 	type FieldKey,
 	type RevisionTag,
 	type TaggedChange,
-	emptyDelta,
 } from "../core/index.js";
-import { type JsonCompatibleReadOnly, type RecursiveReadonly, brand } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly, type RecursiveReadonly } from "../util/index.js";
 
 export interface NonEmptyTestChange {
 	/**

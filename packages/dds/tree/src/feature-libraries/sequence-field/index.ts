@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export type { CellId } from "./types.js";
 export { sequence } from "./sequenceKind.js";
+export type { CellId } from "./types.js";

@@ -9,29 +9,29 @@ import type {
 	UnionToIntersection,
 } from "../../util/index.js";
 import type {
-	NodeKind,
-	WithType,
-	TreeNode,
-	Unhydrated,
-	InternalTreeNode,
-	TreeNodeSchema,
-	TreeNodeSchemaCore,
-	TreeNodeSchemaClass,
-	ImplicitAllowedTypes,
-	TreeLeafValue,
-	FlexListToUnion,
-	LazyItem,
 	AnnotatedAllowedType,
 	AnnotatedAllowedTypes,
+	FlexListToUnion,
+	ImplicitAllowedTypes,
+	InternalTreeNode,
+	LazyItem,
+	NodeKind,
+	TreeLeafValue,
+	TreeNode,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaCore,
+	Unhydrated,
+	WithType,
 } from "../core/index.js";
 import type {
 	ApplyKind,
 	ApplyKindInput,
 	DefaultProvider,
 	FieldKind,
+	FieldPropsAlpha,
 	FieldSchema,
 	FieldSchemaAlpha,
-	FieldPropsAlpha,
 } from "../fieldSchema.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
 import type {

@@ -4,23 +4,21 @@
  */
 
 export {
-	FieldKinds,
-	fieldKinds,
-	fieldKindConfigurations,
-	getCodecTreeForModularChangeFormat,
-	defaultSchemaPolicy,
-} from "./defaultFieldKinds.js";
-
-export {
-	type DefaultChangeset,
 	DefaultChangeFamily,
+	type DefaultChangeset,
 	DefaultEditBuilder,
 	type IDefaultEditBuilder,
-	type ValueFieldEditBuilder,
-	type OptionalFieldEditBuilder,
-	type SequenceFieldEditBuilder,
 	intoDelta,
+	type OptionalFieldEditBuilder,
 	relevantRemovedRoots,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "./defaultEditBuilder.js";
-
+export {
+	defaultSchemaPolicy,
+	FieldKinds,
+	fieldKindConfigurations,
+	fieldKinds,
+	getCodecTreeForModularChangeFormat,
+} from "./defaultFieldKinds.js";
 export { MappedEditBuilder } from "./mappedEditBuilder.js";

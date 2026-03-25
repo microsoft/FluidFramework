@@ -17,12 +17,12 @@ import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
 	currentObserver,
 	defaultSchemaPolicy,
+	FieldKinds,
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
-	TreeStatus,
 	type StableNodeIdentifier,
+	TreeStatus,
 } from "../../../feature-libraries/index.js";
-import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	TreeAlpha,
@@ -55,8 +55,6 @@ import {
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	toInitialSchema,
-	toStoredSchema,
 	type TransactionResult,
 	treeNodeApi as Tree,
 	TreeBeta,
@@ -64,8 +62,10 @@ import {
 	type TreeLeafValue,
 	type TreeNode,
 	TreeViewConfiguration,
-	unhydratedFlexTreeFromInsertable,
+	toInitialSchema,
+	toStoredSchema,
 	type UnsafeUnknownSchema,
+	unhydratedFlexTreeFromInsertable,
 	type VerboseTree,
 } from "../../../simple-tree/index.js";
 import {
@@ -76,7 +76,7 @@ import {
 	stringSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/leafNodeSchema.js";
-import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
+import { type areSafelyAssignable, brand, type requireTrue } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
 	testDocumentIndependentView,
@@ -88,9 +88,9 @@ import {
 	chunkFromJsonableTrees,
 	fieldCursorFromInsertable,
 	getView,
-	testIdCompressor,
 	TestTreeProviderLite,
 	type TreeStoredContentStrict,
+	testIdCompressor,
 } from "../../utils.js";
 import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
 

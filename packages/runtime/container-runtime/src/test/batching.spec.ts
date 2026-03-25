@@ -12,13 +12,13 @@ import {
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	type IFluidErrorBase,
 	MockLogger,
 	mixinMonitoringContext,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
@@ -26,7 +26,7 @@ import {
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { type SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+import { createSandbox, type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";

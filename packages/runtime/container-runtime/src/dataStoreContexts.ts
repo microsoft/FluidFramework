@@ -6,8 +6,8 @@
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";

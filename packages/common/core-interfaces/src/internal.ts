@@ -6,10 +6,8 @@
 // The "internal" exports are a superset of the standard ones. So, we want to export everything from the standard barrel file.
 // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-restricted-imports
 export * from "./index.js";
-
 export type { JsonString, JsonStringifyOptions } from "./jsonString.js";
-export { JsonStringify, JsonParse } from "./jsonString.js";
-
+export { JsonParse, JsonStringify } from "./jsonString.js";
 export type { JsonTypeToOpaqueJson, OpaqueJsonToJsonType } from "./jsonUtils.js";
 
 // Export set of utility types re-tagged as internal for FF client convenience.

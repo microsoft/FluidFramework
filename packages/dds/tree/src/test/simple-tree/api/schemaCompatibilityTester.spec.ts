@@ -16,10 +16,10 @@ import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompat
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
+	SchemaFactoryAlpha,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
-import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),

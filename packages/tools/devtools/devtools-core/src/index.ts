@@ -32,8 +32,9 @@ export type {
 export { EditType } from "./CommonInterfaces.js";
 export { ContainerStateChangeKind } from "./Container.js";
 export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
-export type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
+export type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
+export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
 export type {
 	FluidHandleNode,
 	FluidObjectNode,
@@ -44,20 +45,19 @@ export type {
 	Primitive,
 	RootHandleNode,
 	TreeNodeBase,
+	UnknownObjectNode,
 	ValueNodeBase,
 	VisualChildNode,
 	VisualNode,
 	VisualNodeBase,
 	VisualTreeNode,
 	VisualValueNode,
-	UnknownObjectNode,
 } from "./data-visualization/index.js";
 export { VisualNodeKind } from "./data-visualization/index.js";
 export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features.js";
-export type { IFluidDevtools } from "./IFluidDevtools.js";
-export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
 export type { FluidDevtoolsProps } from "./FluidDevtools.js";
 export { initializeDevtools, tryGetFluidDevtools } from "./FluidDevtools.js";
+export type { IFluidDevtools } from "./IFluidDevtools.js";
 export type {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -68,8 +68,8 @@ export type {
 	IDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	ISourcedDevtoolsMessage,
 	InboundHandlers,
+	ISourcedDevtoolsMessage,
 	MessageLoggingOptions,
 } from "./messaging/index.js";
 export {
@@ -83,8 +83,8 @@ export {
 	DataVisualization,
 	DevtoolsDisposed,
 	DevtoolsFeatures,
-	devtoolsMessageSource,
 	DisconnectContainer,
+	devtoolsMessageSource,
 	GetAudienceSummary,
 	GetContainerDevtoolsFeatures,
 	GetContainerList,
@@ -97,8 +97,8 @@ export {
 	handleIncomingWindowMessage,
 	isDevtoolsMessage,
 	RootDataVisualizations,
+	SetUnsampledTelemetry,
 	TelemetryEvent,
 	TelemetryHistory,
-	SetUnsampledTelemetry,
 } from "./messaging/index.js";
 export type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";

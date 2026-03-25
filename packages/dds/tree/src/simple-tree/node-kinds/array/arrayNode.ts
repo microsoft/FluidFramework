@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob, fail, assert } from "@fluidframework/core-utils/internal";
+import { assert, fail, Lazy, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
@@ -15,44 +15,44 @@ import type {
 import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
 	brand,
+	type JsonCompatibleReadOnlyObject,
 	validateIndex,
 	validateIndexRange,
-	type JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
 import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
+	AnnotatedAllowedTypesInternal,
 	CompatibilityLevel,
-	type WithType,
-	// eslint-disable-next-line import-x/no-deprecated
-	typeNameSymbol,
-	NodeKind,
-	type TreeNode,
-	type InternalTreeNode,
-	type TreeNodeSchema,
-	typeSchemaSymbol,
-	getOrCreateNodeFromInnerNode,
-	getSimpleNodeSchemaFromInnerNode,
-	getInnerNode,
-	type TreeNodeSchemaClass,
-	getKernel,
-	type UnhydratedFlexTreeNode,
-	UnhydratedSequenceField,
-	getOrCreateNodeFromInnerUnboxedNode,
-	normalizeAllowedTypes,
-	type ImplicitAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeSchemaMetadata,
-	type TreeLeafValue,
-	type TreeNodeFromImplicitAllowedTypes,
-	TreeNodeValid,
-	type MostDerivedData,
-	type TreeNodeSchemaInitializedData,
-	type TreeNodeSchemaCorePrivate,
-	privateDataSymbol,
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
+	getInnerNode,
+	getKernel,
+	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+	getSimpleNodeSchemaFromInnerNode,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type InternalTreeNode,
+	type MostDerivedData,
+	NodeKind,
+	type NodeSchemaMetadata,
+	normalizeAllowedTypes,
+	privateDataSymbol,
+	type TreeLeafValue,
+	type TreeNode,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaCorePrivate,
+	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
-	AnnotatedAllowedTypesInternal,
+	TreeNodeValid,
+	// eslint-disable-next-line import-x/no-deprecated
+	typeNameSymbol,
+	typeSchemaSymbol,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
+	type WithType,
 } from "../../core/index.js";
 import {
 	getTreeNodeSchemaInitializedData,

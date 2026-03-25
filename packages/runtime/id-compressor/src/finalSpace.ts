@@ -7,8 +7,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { FinalCompressedId } from "./identifiers.js";
 import {
-	type IdCluster,
 	clustersEqual,
+	type IdCluster,
 	lastAllocatedFinal,
 	lastFinalizedFinal,
 } from "./sessions.js";

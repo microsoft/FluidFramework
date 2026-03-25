@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { type ILayerCompatDetails, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
@@ -18,18 +18,18 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
-	debugAssert,
 	Deferred,
+	debugAssert,
 	LazyPromise,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelFactory,
-	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
+	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeAlpha,
+	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -40,61 +40,61 @@ import {
 } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentMessage,
-	ISnapshotTree,
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
-	type IGarbageCollectionData,
+	asLegacyAlpha,
 	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
+	encodeHandlesInContainerRuntime,
+	gcDataBlobKey,
 	type IAttachMessage,
 	type IEnvelope,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
-	VisibilityState,
-	gcDataBlobKey,
+	type IFluidDataStorePolicies,
+	type IGarbageCollectionData,
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	notifiesReadOnlyState,
-	encodeHandlesInContainerRuntime,
-	type IFluidDataStorePolicies,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
 	type MinimumVersionForCollab,
-	asLegacyAlpha,
-	currentSummarizeStepPrefix,
-	currentSummarizeStepPropertyName,
+	notifiesReadOnlyState,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	GCDataBuilder,
-	RequestParser,
-	SummaryTreeBuilder,
 	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
+	encodeCompactIdToString,
 	exceptionToResponse,
+	GCDataBuilder,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	RequestParser,
+	SummaryTreeBuilder,
+	toDeltaManagerErased,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
-	toDeltaManagerErased,
-	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	createChildMonitoringContext,
 	DataProcessingError,
+	generateStack,
+	type ITelemetryLoggerExt,
 	LoggingError,
 	type MonitoringContext,
-	UsageError,
-	createChildMonitoringContext,
-	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

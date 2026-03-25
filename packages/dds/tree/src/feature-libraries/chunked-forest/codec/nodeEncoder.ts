@@ -8,9 +8,9 @@ import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
+	forEachField,
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
-	forEachField,
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
@@ -19,10 +19,10 @@ import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import { type BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {
 	type EncoderContext,
+	encodeValue,
 	type FieldEncoder,
 	type KeyedFieldEncoder,
 	type NodeEncoder,
-	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
 

@@ -5,13 +5,13 @@
 
 import type { ISequencedClient } from "@fluidframework/driver-definitions";
 import {
-	type ISequencedDocumentMessage,
-	type IDocumentAttributes,
 	type IClientJoin,
 	type ICommittedProposal,
+	type IDocumentAttributes,
 	type IProcessMessageResult,
 	type IProposal,
 	type IQuorum,
+	type ISequencedDocumentMessage,
 	type ISequencedDocumentSystemMessage,
 	type ISequencedProposal,
 	MessageType,

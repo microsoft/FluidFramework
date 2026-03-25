@@ -5,11 +5,13 @@
 
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
+
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
 import { confirm, rawlist } from "@inquirer/prompts";
 import execa from "execa";
 import type { Machine } from "jssm";
+
 import {
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
@@ -30,6 +32,7 @@ import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/types.js";
 import { isReleaseGroup, type ReleaseSource } from "../releaseGroups.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
+
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 

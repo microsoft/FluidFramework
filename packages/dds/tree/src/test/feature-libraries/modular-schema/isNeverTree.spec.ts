@@ -9,13 +9,13 @@ import {
 	MapNodeStoredSchema,
 	type MutableTreeStoredSchema,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	TreeStoredSchemaRepository,
-	storedEmptyFieldSchema,
 } from "../../../core/index.js";
-import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import-x/no-internal-modules */
 import { allowsTreeSuperset } from "../../../feature-libraries/modular-schema/index.js";
 import {

@@ -7,12 +7,12 @@ import { strict as assert } from "node:assert";
 import { isNullOrUndefined } from "node:util";
 
 import {
-	IMergeTreeDeltaCallbackArgs,
-	PropertySet,
-	TextSegment,
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
+	IMergeTreeDeltaCallbackArgs,
+	PropertySet,
+	TextSegment,
 } from "@fluidframework/merge-tree/internal";
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
 

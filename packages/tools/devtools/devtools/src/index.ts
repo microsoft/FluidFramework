@@ -193,7 +193,7 @@ function mapContainerProps(
 // ContainerDevtoolsProps extends HasContainerKey, so it needs ContainerKey.
 export {
 	type ContainerKey,
-	type HasContainerKey,
 	createDevtoolsLogger,
+	type HasContainerKey,
 	type IDevtoolsLogger,
 } from "@fluidframework/devtools-core/internal";

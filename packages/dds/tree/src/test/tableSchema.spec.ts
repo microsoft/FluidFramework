@@ -16,14 +16,14 @@ import {
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
+	type ConciseTree,
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	TreeBeta,
-	TreeViewConfiguration,
-	type ConciseTree,
 	type TreeNode,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 import type {

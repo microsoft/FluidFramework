@@ -8,40 +8,40 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
-	TelemetryEventBatcher,
 	type ITelemetryLoggerExt,
+	TelemetryEventBatcher,
 } from "@fluidframework/telemetry-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
-	type GraphCommit,
-	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
+	type GraphCommit,
 	mintCommit,
 	type RebaseStatsWithDuration,
+	type RevisionTag,
 	tagChange,
 } from "../core/index.js";
-import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js";
+import { brand, getOrCreate, type Mutable, mapIterable } from "../util/index.js";
 
 import {
-	SharedTreeBranch,
+	type BranchId,
 	type BranchTrimmingEvents,
 	onForkTransitive,
-	type BranchId,
+	SharedTreeBranch,
 } from "./branch.js";
 import type {
 	Commit,
 	SeqNumber,
-	SequenceId,
 	SequencedCommit,
+	SequenceId,
 	SummarySessionBranch,
 } from "./editManagerFormatCommons.js";
 import {
-	getUpperBoundOfPreviousSequenceId,
 	equalSequenceIds,
+	getUpperBoundOfPreviousSequenceId,
 	maxSequenceId,
 	minSequenceId,
 	sequenceIdComparator,

@@ -8,7 +8,7 @@ import type {
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
-import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import { fluidHandleSymbol, IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,

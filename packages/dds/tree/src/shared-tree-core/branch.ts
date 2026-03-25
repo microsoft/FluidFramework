@@ -10,24 +10,24 @@ import type {
 	OpSpaceCompressedId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
-import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
+import { measure, type TelemetryEventBatcher } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type BranchRebaseResult,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
-	type GraphCommit,
-	type RevisionTag,
-	type TaggedChange,
 	findAncestor,
+	type GraphCommit,
 	makeAnonChange,
 	mintCommit,
-	rebaseBranch,
-	tagRollbackInverse,
 	type RebaseStatsWithDuration,
+	type RevisionTag,
+	rebaseBranch,
+	type TaggedChange,
+	tagRollbackInverse,
 } from "../core/index.js";
-import { hasSome, defineLazyCachedProperty } from "../util/index.js";
+import { defineLazyCachedProperty, hasSome } from "../util/index.js";
 
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;

@@ -4,8 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { Tree, TreeAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { FormattedTextAsTree, Tree, TreeAlpha } from "@fluidframework/tree/internal";
+
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
+
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
 import {

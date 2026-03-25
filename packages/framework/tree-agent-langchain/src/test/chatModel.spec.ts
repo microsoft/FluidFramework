@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import type { TreeAgentChatMessage } from "@fluidframework/tree-agent/alpha";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
-import { AIMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
 import type { BaseMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
+import { AIMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
 
 import { createLangchainChatModel } from "../chatModel.js";
 

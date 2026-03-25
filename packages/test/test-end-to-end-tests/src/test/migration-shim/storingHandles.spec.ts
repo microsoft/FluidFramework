@@ -27,8 +27,8 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
 	createSummarizerFromFactory,
+	type ITestObjectProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";

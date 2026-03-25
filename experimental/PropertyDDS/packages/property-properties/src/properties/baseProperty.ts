@@ -11,7 +11,7 @@ import {
 	SerializedChangeSet,
 	TypeIdHelper,
 } from "@fluid-experimental/property-changeset";
-import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
+import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import _ from "lodash";
 
 import { LazyLoadedProperties as Property } from "./lazyLoadedProperties";
