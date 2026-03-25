@@ -33,7 +33,7 @@ function initializeTextTree(
 	return view;
 }
 
-describe("TextDomain benchmarks", () => {
+describe("TextDomain integration benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("Plain text", () => {
