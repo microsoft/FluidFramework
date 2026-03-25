@@ -3779,6 +3779,9 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/azure-client
+      '@fluidframework/quill-react':
+        specifier: workspace:~
+        version: link:../../../packages/framework/quill-react
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
@@ -11719,6 +11722,112 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
+  packages/framework/quill-react:
+    dependencies:
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
+      quill:
+        specifier: ^2.0.3
+        version: 2.0.3
+      quill-delta:
+        specifier: ^5.1.0
+        version: 5.1.0
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.18.2
+        version: 0.18.2
+      '@biomejs/biome':
+        specifier: ~2.4.5
+        version: 2.4.5
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: catalog:buildTools
+        version: 0.64.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: catalog:buildTools
+        version: 0.64.0(@types/node@20.19.30)
+      '@fluidframework/eslint-config-fluid':
+        specifier: link:../../../common/build/eslint-config-fluid
+        version: link:../../../common/build/eslint-config-fluid
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../react
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../service-clients/tinylicious-client
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ~20.19.30
+        version: 20.19.30
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.1
+        version: 18.3.3(@types/react@18.3.15)
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      concurrently:
+        specifier: ^9.2.1
+        version: 9.2.1
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      eslint:
+        specifier: catalog:eslint
+        version: 9.39.1(jiti@2.6.1)
+      eslint-config-prettier:
+        specifier: catalog:eslint
+        version: 10.1.8(eslint@9.39.1(jiti@2.6.1))
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@26.1.0)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0
+      mocha:
+        specifier: ^11.7.5
+        version: 11.7.5
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@11.7.5)
+      rimraf:
+        specifier: ^6.1.3
+        version: 6.1.3
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   packages/framework/react:
     dependencies:
       '@fluidframework/aqueduct':
@@ -11745,12 +11854,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
-      quill:
-        specifier: ^2.0.3
-        version: 2.0.3
-      quill-delta:
-        specifier: ^5.1.0
-        version: 5.1.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
