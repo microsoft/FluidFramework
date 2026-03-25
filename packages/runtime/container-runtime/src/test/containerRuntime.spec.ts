@@ -98,11 +98,7 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
-import type {
-	IPendingLocalState,
-	IPendingMessage,
-	PendingStateManager,
-} from "../pendingStateManager.js";
+import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
@@ -552,88 +548,71 @@ describe("Runtime", () => {
 
 			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
 			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
-			for (const skipSafetyFlushDuringProcessStack of [true, undefined]) {
-				it(`Inbound (non-runtime) op triggers flush due to refSeq changing [skipSafetyFlush=${skipSafetyFlushDuringProcessStack}]`, async () => {
-					const submittedBatches: {
-						messages: IBatchMessage[];
-						referenceSequenceNumber: number;
-					}[] = [];
+			it("Inbound (non-runtime) op triggers flush due to refSeq changing", async () => {
+				const submittedBatches: {
+					messages: IBatchMessage[];
+					referenceSequenceNumber: number;
+				}[] = [];
 
-					const mockContext = getMockContext({
-						settings: {
-							"Fluid.ContainerRuntime.DisableFlushBeforeProcess":
-								skipSafetyFlushDuringProcessStack,
-						},
-					});
-					(
-						mockContext as { submitBatchFn: IContainerContext["submitBatchFn"] }
-					).submitBatchFn = (
-						messages: IBatchMessage[],
-						referenceSequenceNumber: number = -1,
-					) => {
+				const mockContext = getMockContext();
+				(mockContext as { submitBatchFn: IContainerContext["submitBatchFn"] }).submitBatchFn =
+					(messages: IBatchMessage[], referenceSequenceNumber: number = -1) => {
 						submittedOps.push(...messages); // Reusing submittedOps since submitFn won't be invoked due to submitBatchFn's presence
 						submittedBatches.push({ messages, referenceSequenceNumber });
 						return 999; // CSN not used in test asserts below
 					};
 
-					const containerRuntime = await ContainerRuntime.loadRuntime2({
-						context: mockContext as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						runtimeOptions: {},
-						provideEntryPoint: mockProvideEntryPoint,
-					});
-
-					// Submit the first message
-					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
-					assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
-
-					// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
-					// When [skipSafetyFlushDuringProcessStack: FALSE], this will trigger a flush, which allows us to safely submit more ops next
-					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
-					++mockDeltaManager.lastSequenceNumber;
-					mockDeltaManager.emit("op", {
-						clientId: mockClientId,
-						sequenceNumber: mockDeltaManager.lastSequenceNumber,
-						clientSequenceNumber: 1,
-						type: MessageType.ClientJoin,
-						contents: "test content",
-					});
-
-					const expectedSubmitCount = skipSafetyFlushDuringProcessStack === true ? 0 : 1;
-					assert.equal(
-						submittedOps.length,
-						expectedSubmitCount,
-						"Submitted op count wrong after first op",
-					);
-
-					// Submit the second message
-					// When [skipSafetyFlushDuringProcessStack: TRUE], this will trigger a flush via Outbox.maybeFlushPartialBatch
-					submitDataStoreOp(containerRuntime, "2", {
-						type: "op",
-						content: { address: "test-address", contents: "test-contents2" },
-					});
-					assert.equal(
-						submittedOps.length,
-						1,
-						"By now we expect the first op to have been submitted in both configurations",
-					);
-
-					// Wait for the next tick for the second message to be flushed
-					await Promise.resolve();
-
-					// Validate that the messages were submitted
-					assert.equal(submittedOps.length, 2, "Two messages should be submitted");
-					assert.deepEqual(
-						submittedBatches,
-						[
-							{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
-							{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The second op
-						],
-						"Two batches should be submitted with different refSeq",
-					);
+				const containerRuntime = await ContainerRuntime.loadRuntime2({
+					context: mockContext as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
 				});
-			}
+
+				// Submit the first message
+				submitDataStoreOp(containerRuntime, "1", testDataStoreMessage);
+				assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
+
+				// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
+				// This will trigger a flush, which allows us to safely submit more ops next
+				const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+				++mockDeltaManager.lastSequenceNumber;
+				mockDeltaManager.emit("op", {
+					clientId: mockClientId,
+					sequenceNumber: mockDeltaManager.lastSequenceNumber,
+					clientSequenceNumber: 1,
+					type: MessageType.ClientJoin,
+					contents: "test content",
+				});
+
+				assert.equal(submittedOps.length, 1, "Submitted op count wrong after first op");
+
+				// Submit the second message
+				submitDataStoreOp(containerRuntime, "2", {
+					type: "op",
+					content: { address: "test-address", contents: "test-contents2" },
+				});
+				assert.equal(
+					submittedOps.length,
+					1,
+					"Second op not yet submitted (scheduled for next microtask)",
+				);
+
+				// Wait for the next tick for the second message to be flushed
+				await Promise.resolve();
+
+				// Validate that the messages were submitted
+				assert.equal(submittedOps.length, 2, "Two messages should be submitted");
+				assert.deepEqual(
+					submittedBatches,
+					[
+						{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
+						{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The second op
+					],
+					"Two batches should be submitted with different refSeq",
+				);
+			});
 
 			it("IdAllocation op from replayPendingStates is flushed, preventing outboxSequenceNumberCoherencyCheck error", async () => {
 				// Start out disconnected since step 1 is to trigger ID Allocation op on reconnect
@@ -1736,10 +1715,10 @@ describe("Runtime", () => {
 				const state = pendingStateManager.getLocalState();
 
 				assert.notStrictEqual(state, undefined, "expect pending local state");
-				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
+				assert.strictEqual(state?.pending.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
+					JSON.parse(state?.pending.pendingStates?.[0].content).contents.contents,
 					{
 						type: "op",
 						content: { address: "test", contents: { prop1: 1 } },
@@ -1800,6 +1779,7 @@ describe("Runtime", () => {
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
 				createBlobPayloadPending: undefined,
+				disableSchemaUpgrade: false,
 			} as const satisfies ContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
@@ -1826,7 +1806,6 @@ describe("Runtime", () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 					"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 1337,
-					"Fluid.ContainerRuntime.DisableFlushBeforeProcess": true,
 				};
 				await ContainerRuntime.loadRuntime2({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1844,7 +1823,6 @@ describe("Runtime", () => {
 						idCompressorMode: "on",
 						featureGates: JSON.stringify({
 							closeSummarizerDelayOverride: 1337,
-							disableFlushBeforeProcess: true,
 						}),
 						groupedBatchingEnabled: true,
 					},
@@ -2175,7 +2153,9 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return () => undefined;
+									return () => ({
+										pending: { pendingStates: [] },
+									});
 								}
 								case "pendingMessagesCount": {
 									return 0;
@@ -2221,8 +2201,8 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return (): IPendingLocalState => ({
-										pendingStates,
+									return () => ({
+										pending: { pendingStates },
 									});
 								}
 								case "pendingMessagesCount": {
@@ -2292,8 +2272,8 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return (): IPendingLocalState => ({
-										pendingStates,
+									return () => ({
+										pending: { pendingStates },
 									});
 								}
 								case "pendingMessagesCount": {
@@ -3758,6 +3738,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3817,6 +3798,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3855,6 +3837,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: false,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3893,6 +3876,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3930,6 +3914,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -3975,6 +3960,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([
@@ -4006,6 +3992,7 @@ describe("Runtime", () => {
 						enableGroupedBatching: undefined,
 						compressionOptions: undefined,
 						explicitSchemaControl: undefined,
+						disableSchemaUpgrade: undefined,
 						createBlobPayloadPending: undefined,
 					},
 				},
@@ -4034,6 +4021,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 						enableGroupedBatching: true,
 						explicitSchemaControl: false,
+						disableSchemaUpgrade: false,
 					};
 
 					logger.assertMatchAny([
@@ -4074,6 +4062,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					disableSchemaUpgrade: false,
 				};
 
 				logger.assertMatchAny([

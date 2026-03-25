@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// For the time being, if exports are changed, additional files under entrypoints need updated.
+// Run `pnpm generate:entrypoint-sources` to update them.
+
 export {
 	ValueSchema,
 	type Revertible,
@@ -68,9 +71,6 @@ export {
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
-	getBranch,
-	type BranchableTree,
-	type TreeBranchFork,
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
@@ -88,6 +88,7 @@ export {
 
 export {
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
@@ -281,6 +282,7 @@ export {
 	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	type MapNodeCustomizableSchema,
@@ -369,6 +371,12 @@ import * as InternalTypes from "./internalTypes.js";
 /**
  * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
  * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ *
+ * @public
+ * @system
+ *
+ * @privateRemarks These TS-Docs are not recognized by API-Extractor, but the
+ * support level tag is recognized by flub entrypoint generation.
  */
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
 export { InternalTypes };

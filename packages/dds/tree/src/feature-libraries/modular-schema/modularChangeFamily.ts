@@ -3189,7 +3189,6 @@ export function normalizeFieldId(
 function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
 	let currentId = nodeId;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
 		if (dealiased === undefined) {

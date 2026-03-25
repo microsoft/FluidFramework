@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -90,7 +90,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -106,8 +106,8 @@
 		"cross-env": "^10.1.0",
 		"easy-table": "^1.2.0",
 		"env-cmd": "^10.1.0",
-		"eslint": "~9.39.1",
-		"eslint-config-prettier": "~10.1.8",
+		"eslint": "catalog:eslint",
+		"eslint-config-prettier": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",

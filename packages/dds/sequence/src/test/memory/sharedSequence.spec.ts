@@ -48,7 +48,7 @@ describe("SharedSequence memory usage", () => {
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[10];
 
-	numbersOfEntriesForTests.forEach((x) => {
+	for (const x of numbersOfEntriesForTests) {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				title = `Append and remove ${x} subsequences`;
@@ -96,5 +96,5 @@ describe("SharedSequence memory usage", () => {
 		//         }
 		//     },
 		// });
-	});
+	}
 });

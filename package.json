@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -79,7 +79,8 @@
 		"generate:packageList:internal-test": "flub list client --no-private --feed internal-test --outFile feeds/internal-test.txt",
 		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
 		"generate:packagesMd": "flub check layers --info layerInfo.json --md .",
-		"preinstall": "node scripts/only-pnpm.cjs",
+		"preinstall": "node scripts/only-pnpm.cjs && pnpm -C common/build/eslint-config-fluid install --frozen-lockfile",
+		"install:agency": "curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",
 		"lint:fix": "fluid-build --task lint:fix",
@@ -170,7 +171,7 @@
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "workspace:^",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/test-tools": "^2.0.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.12.0",
@@ -181,7 +182,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"danger": "^13.0.4",
-		"eslint": "~9.39.1",
+		"eslint": "catalog:eslint",
 		"jest": "^29.6.2",
 		"mocha": "^11.7.5",
 		"puppeteer": "^23.6.0",
@@ -352,6 +353,8 @@
 	},
 	"pnpm": {
 		"comments": [
+			"biome is overridden to make review of the upgrade easier. This can be removed once merged.",
+			"eslint-config-fluid is an independent package in a separate workspace; the override resolves it to the local copy for all client packages.",
 			"node types are forced to a consistent version to avoid conflicts between globals.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details. Note that using '-' to completely drop it, results in build failures complaining about nodegit not being there.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
@@ -362,10 +365,18 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"fast-xml-parser: overridden to ^4.5.4 to resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow). Stays within @langchain/anthropic's declared ^4.4.1 range.",
 			"systeminformation: overridden to ^5.31.0 to resolve command injection vulnerabilities.",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major.",
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support)."
 		],
 		"overrides": {
+			"@biomejs/biome": "~2.4.5",
+			"@fluidframework/eslint-config-fluid": "link:common/build/eslint-config-fluid",
 			"@types/node": "~20.19.30",
+			"diff@>=3 <4": "^4.0.4",
+			"diff@>=5 <6": "^5.2.2",
+			"diff@>=7 <8": "^8.0.3",
+			"diff@>=8 <9": "^8.0.3",
 			"fast-xml-parser": "^4.5.4",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.15.0",
@@ -377,7 +388,15 @@
 			"oclif>@aws-sdk/client-cloudfront": "-",
 			"oclif>@aws-sdk/client-s3": "-",
 			"axios@<0.30.0": "^0.30.0",
-			"tar": ">=7.5.7"
+			"tar": "^7.5.11",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=6 <7": "^6.2.3",
+			"minimatch@>=7 <8": "^7.4.9",
+			"minimatch@>=8 <9": "^8.0.7",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10 <11": "^10.2.4",
+			"serialize-javascript@>=6 <7": "^7.0.4"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
