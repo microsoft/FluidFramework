@@ -1,7 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.92.0",
-	"private": true,
+	"version": "9.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -99,8 +98,5 @@
 			"esbuild",
 			"unrs-resolver"
 		]
-	},
-	"typeValidation": {
-		"disabled": true
 	}
 }
