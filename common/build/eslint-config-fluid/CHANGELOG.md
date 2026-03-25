@@ -40,7 +40,7 @@ The `@rushstack/eslint-plugin-security` plugin has been removed from all configu
 - `react-hooks/set-state-in-render`
 - `react-hooks/use-memo`
 
-**React-hooks rules temporarily set to `"warn"`** (to allow time to address violations before the next major release):
+**`react-hooks` rules temporarily set to `"warn"`** (to allow time to address violations before the next major release):
 
 - `react-hooks/rules-of-hooks`: Changed from `"error"` to `"warn"`
 - `react-hooks/exhaustive-deps`: Changed from `"error"` to `"warn"`
