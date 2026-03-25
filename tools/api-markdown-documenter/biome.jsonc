@@ -4,7 +4,7 @@
 	"overrides": [
 		{
 			"assist": {
-				"enabled":false,
+				"enabled": false,
 				"actions": {
 					"source": {
 						"organizeImports": "off"
