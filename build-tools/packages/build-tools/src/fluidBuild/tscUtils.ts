@@ -59,6 +59,7 @@ const incrementalOptions = [
 	"declarationDir",
 	"useDefineForClassFields",
 	"preserveValueImports",
+	"allowJs",
 
 	// affectsSemanticDiagnostics === true
 	"noImplicitAny",
@@ -83,13 +84,12 @@ const incrementalOptions = [
 	"suppressExcessPropertyErrors",
 	"suppressImplicitAnyIndexErrors",
 	"noStrictGenericChecks",
-	"useDefineForClassFields",
 
 	"skipLibCheck",
-	"skipdefaultlibcheck",
 	"strict",
 	"strictBindCallApply",
 	"strictFunctionTypes",
+	"checkJs",
 ].sort(); // sort it so that the result of the filter is sorted as well.
 
 function filterIncrementalOptions(options: any): Record<string, unknown> {

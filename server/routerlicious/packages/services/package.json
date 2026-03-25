@@ -71,7 +71,7 @@
 		"lru-cache": "^6.0.0",
 		"mongodb": "^5.9.2",
 		"nconf": "^0.12.0",
-		"socket.io": "^4.8.0",
+		"socket.io": "^4.8.3",
 		"telegrafjs": "^0.1.3",
 		"uuid": "^11.1.0",
 		"winston": "^3.6.0"
