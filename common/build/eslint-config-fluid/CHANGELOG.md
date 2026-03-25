@@ -139,6 +139,13 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 - `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
 
+### New rules
+
+#### [@eslint-community/eslint-comments/require-description](https://mysticatea.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
+
+All `eslint-disable` comments must now include a description explaining why the rule is being disabled.
+This rule is enabled as a warning for the time being, but will be promoted to an error in the future.
+
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
