@@ -72,7 +72,6 @@ export function getOperationsStats(
 	const lengths = operations.map((op) => utf8Length(op as unknown as JsonCompatibleReadOnly));
 	return {
 		"Total Op Size (Bytes)": lengths.reduce((a, b) => a + b, 0),
-		"Max Op Size (Bytes)": Math.max(...lengths),
 		"Total Ops:": operations.length,
 	};
 }
