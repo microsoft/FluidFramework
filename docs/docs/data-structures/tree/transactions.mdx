@@ -176,9 +176,9 @@ view.runTransaction(
         view.root.content = "new value";
     },
     {
+        // `preconditions` applies to the transaction itself.
+        // Here we add a `nodeInDocument` constraint which will ensure that this transaction will only be applied if someNode is still in the document at the time this transaction is sequenced.
         preconditions: [
-            // preconditions applies to the transaction itself.
-            // Here we add a `nodeInDocument` constraint which will ensure that this transaction will only be applied if someNode is still in the document at the time this transaction is sequenced.
             { type: "nodeInDocument", node: someNode },
         ],
     },
@@ -189,7 +189,7 @@ view.runTransaction(
 view.runTransaction(() => {
     view.root.content = "updated";
     return {
-        // preconditionsOnRevert only applies if the transaction is reverted (e.g. via an undo operation).
+        // `preconditionsOnRevert` only applies if the transaction is reverted (e.g. via an undo operation).
         // Here we add a `nodeInDocument` constraint which will ensure that the changes made by this transaction can only be reverted if view.root is still in the document at the time of revert.
         preconditionsOnRevert: [
             { type: "nodeInDocument", node: view.root },
