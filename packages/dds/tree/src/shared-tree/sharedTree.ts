@@ -66,10 +66,10 @@ import {
 import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
-	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
+	makeMessageCodecBuilder,
 	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
 	SharedTreeCore,
@@ -539,9 +539,9 @@ function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab
 }
 
 function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): CodecTree {
-	const change = changeFormatVersionForMessage.lookup(
-		clientVersionToMessageFormatVersion(clientVersion),
-	);
+	const messageVersion = makeMessageCodecBuilder().getCodecTree(clientVersion).version;
+	assert(messageVersion !== undefined, "Deprecated 'undefined' version shouldn't be selected");
+	const change = changeFormatVersionForMessage.lookup(messageVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForMessageFormatWithChange(clientVersion, changeCodecTree);
 }
@@ -720,7 +720,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,

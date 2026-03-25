@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FluidClientVersion } from "./codec/index.js";
+import { FluidClientVersion, type FormatVersion } from "./codec/index.js";
 import {
 	SharedTreeKernel,
 	type ITreePrivate,
@@ -28,7 +28,8 @@ import {
 import {
 	editManagerCodecName,
 	EditManagerFormatVersion,
-	messageFormatVersionSelectorForSharedBranches,
+	messageCodecName,
+	MessageFormatVersion,
 } from "./shared-tree-core/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
@@ -223,9 +224,9 @@ function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInte
 }
 
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
-	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
-	writeVersionOverrides: new Map([
+	writeVersionOverrides: new Map<string, FormatVersion>([
 		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
+		[messageCodecName, MessageFormatVersion.vSharedBranches],
 	]),
 	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };

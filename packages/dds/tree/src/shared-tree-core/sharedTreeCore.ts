@@ -54,11 +54,7 @@ import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodecBuilder } from "./editManagerCodecs.js";
 import type { EditManagerFormatVersion, SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
-import {
-	type MessageCodecOptions,
-	type MessageEncodingContext,
-	makeMessageCodec,
-} from "./messageCodecs.js";
+import { type MessageEncodingContext, makeMessageCodecBuilder } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
@@ -77,9 +73,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
 
-export interface SharedTreeCoreOptionsInternal
-	extends CodecWriteOptions,
-		MessageCodecOptions {}
+export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {}
 
 export interface EnrichmentConfig<TChange> {
 	readonly enricher: ChangeEnricher<TChange>;
@@ -206,12 +200,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.messageCodec = makeMessageCodec(
-			changeFamily.codecs,
-			changeFormatVersionForMessage,
-			new RevisionTagCodec(idCompressor),
-			options,
-		);
+		this.messageCodec = makeMessageCodecBuilder<TChange>().build({
+			...options,
+			changeCodecs: changeFamily.codecs,
+			dependentChangeFormatVersion: changeFormatVersionForMessage,
+			revisionTagCodec: new RevisionTagCodec(idCompressor),
+		});
 
 		if (enrichmentConfig !== undefined) {
 			this.registerSharedBranchForEditing(
