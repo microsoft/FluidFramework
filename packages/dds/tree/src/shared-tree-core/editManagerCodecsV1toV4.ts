@@ -28,7 +28,7 @@ export interface EditManagerEncodingContext {
 }
 
 /**
- * Create the provided version of the EditManager codec.
+ * Create the provided version of the {@link EditManager} codec (which encodes it's {@link SummaryData}).
  * @remarks
  * The changeCodec and revisionTagCodec are not explicitly versioned, so the exact right version of them must be provided here
  * or data will be incompatible.
