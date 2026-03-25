@@ -971,11 +971,14 @@ export class AnchorSet implements AnchorLocator {
 			exitField(key: FieldKey): void {
 				this.parentField = undefined;
 			},
-			fieldMarks(key: FieldKey, marks: readonly Delta.Mark[]): void {
-				if (this.parent !== undefined) {
+			fieldMarks(marks: readonly Delta.Mark[]): void {
+				if (this.parent !== undefined && this.parentField !== undefined) {
 					const interned = this.anchorSet.internalizePath(this.parent);
 					if (interned instanceof PathNode) {
-						getOrCreate(this.storedFieldMarks, interned, () => new Map()).set(key, marks);
+						getOrCreate(this.storedFieldMarks, interned, () => new Map()).set(
+							this.parentField,
+							marks,
+						);
 					}
 				}
 			},

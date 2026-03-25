@@ -328,7 +328,7 @@ export interface DeltaVisitor {
 	 * detach pass ensures marks are always relative to the original array positions rather than an
 	 * intermediate partially-transformed state.
 	 */
-	fieldMarks?(key: FieldKey, marks: readonly Delta.Mark[]): void;
+	fieldMarks?(marks: readonly Delta.Mark[]): void;
 }
 
 interface PassConfig {
@@ -413,12 +413,12 @@ function visitNode(
  * - Executes detaches (bottom-up)
  */
 function detachPass(
-	key: FieldKey,
+	_key: FieldKey,
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
 ): void {
-	visitor.fieldMarks?.(key, fieldChanges.marks);
+	visitor.fieldMarks?.(fieldChanges.marks);
 	let index = 0;
 	for (const mark of fieldChanges.marks) {
 		if (mark.fields !== undefined) {
