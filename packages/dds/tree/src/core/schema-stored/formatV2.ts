@@ -73,7 +73,7 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 
 		// Data in common for all TreeNode schemas:
 		/**
-		 * Leaf node union member.
+		 * Persisted subset of metadata for this node schema.
 		 */
 		metadata: PersistedMetadataFormat,
 	},

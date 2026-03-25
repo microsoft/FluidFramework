@@ -248,6 +248,7 @@ export {
 export { tryGetTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	asIndex,
@@ -255,6 +256,7 @@ export {
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type MapNodeCustomizableSchema,
 	type MapNodePojoEmulationSchema,
 	MapNodeSchema,

@@ -98,11 +98,7 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
-import type {
-	IPendingLocalState,
-	IPendingMessage,
-	PendingStateManager,
-} from "../pendingStateManager.js";
+import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
@@ -1731,10 +1727,10 @@ describe("Runtime", () => {
 				const state = pendingStateManager.getLocalState();
 
 				assert.notStrictEqual(state, undefined, "expect pending local state");
-				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
+				assert.strictEqual(state?.pending.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
+					JSON.parse(state?.pending.pendingStates?.[0].content).contents.contents,
 					{
 						type: "op",
 						content: { address: "test", contents: { prop1: 1 } },
@@ -2169,7 +2165,9 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return () => undefined;
+									return () => ({
+										pending: { pendingStates: [] },
+									});
 								}
 								case "pendingMessagesCount": {
 									return 0;
@@ -2215,8 +2213,8 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return (): IPendingLocalState => ({
-										pendingStates,
+									return () => ({
+										pending: { pendingStates },
 									});
 								}
 								case "pendingMessagesCount": {
@@ -2286,8 +2284,8 @@ describe("Runtime", () => {
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
 								case "getLocalState": {
-									return (): IPendingLocalState => ({
-										pendingStates,
+									return () => ({
+										pending: { pendingStates },
 									});
 								}
 								case "pendingMessagesCount": {

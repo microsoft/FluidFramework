@@ -5178,7 +5178,9 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
-				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const { pending } = this.pendingStateManager.getLocalState(
+					props?.snapshotSequenceNumber,
+				);
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
