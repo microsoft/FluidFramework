@@ -11762,7 +11762,7 @@ importers:
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@20.19.30)
       '@fluidframework/eslint-config-fluid':
-        specifier: workspace:~
+        specifier: link:../../../common/build/eslint-config-fluid
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/react':
         specifier: workspace:~
@@ -11801,10 +11801,10 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       eslint:
-        specifier: ~9.39.1
+        specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
       eslint-config-prettier:
-        specifier: ~10.1.8
+        specifier: catalog:eslint
         version: 10.1.8(eslint@9.39.1(jiti@2.6.1))
       global-jsdom:
         specifier: ^26.0.0
