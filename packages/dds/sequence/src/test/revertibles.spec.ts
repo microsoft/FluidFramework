@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { Side } from "@fluidframework/merge-tree/internal";
@@ -201,7 +201,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(1, 1));
 		assertSequenceIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
 
-		const intervals = Array.from(collection);
+		const intervals = [...collection];
 		const removed = collection.removeIntervalById(intervals[0].getIntervalId());
 		assert(removed, "interval was not removed from the collection");
 
@@ -566,7 +566,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 		assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
-		const intervals = Array.from(collection);
+		const intervals = [...collection];
 		assert.equal(intervals[0].properties.foo, "one");
 	});
 	it("remote interval property change interacting with reverting an interval add", () => {
@@ -1226,7 +1226,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 		containerRuntimeFactory.processAllMessages();
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
-		const intervals = Array.from(collection);
+		const intervals = [...collection];
 		assert.equal(intervals.length, 1, `wrong number of intervals ${intervals.length}`);
 		const int = intervals[0];
 		assert.equal(
@@ -1255,7 +1255,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
-		const intervals = Array.from(collection);
+		const intervals = [...collection];
 		assert.equal(intervals.length, 1, `wrong number of intervals ${intervals.length}`);
 		const int = intervals[0];
 		assert.equal(
