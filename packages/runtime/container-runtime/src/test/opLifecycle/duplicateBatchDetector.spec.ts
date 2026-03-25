@@ -193,6 +193,36 @@ describe("DuplicateBatchDetector", () => {
 		);
 	});
 
+	it("ID Allocation batches with derived batchIds are detected as duplicates", () => {
+		// Simulates two forked containers submitting ID allocation batches with the same derived batchId
+		const derivedIdAllocBatchId = "idAlloc_[clientId_[2]]";
+
+		const inboundBatch1 = makeBatch({
+			sequenceNumber: seqNum++,
+			minimumSequenceNumber: 0,
+			batchId: derivedIdAllocBatchId,
+		});
+		const inboundBatch2 = makeBatch({
+			sequenceNumber: seqNum++,
+			minimumSequenceNumber: 0,
+			batchId: derivedIdAllocBatchId,
+		});
+
+		const result1 = detector.processInboundBatch(inboundBatch1);
+		assert.deepEqual(
+			result1,
+			{ duplicate: false },
+			"First ID alloc batch should not be a duplicate",
+		);
+
+		const result2 = detector.processInboundBatch(inboundBatch2);
+		assert.deepEqual(
+			result2,
+			{ duplicate: true, otherSequenceNumber: 1 },
+			"Second ID alloc batch with same derived batchId should be detected as a duplicate",
+		);
+	});
+
 	describe("getStateForSummary", () => {
 		it("If empty, return undefined", () => {
 			assert.equal(

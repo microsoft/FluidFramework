@@ -1785,6 +1785,11 @@ export class ContainerRuntime
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
+				setIdAllocationBatchId: (batchId: string) => {
+					if (this.batchIdTrackingEnabled) {
+						this.outbox.setIdAllocationBatchId(batchId);
+					}
+				},
 			},
 			pendingRuntimeState?.pending,
 			this.baseLogger,
