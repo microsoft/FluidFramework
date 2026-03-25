@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/react",
+	"name": "@fluidframework/quill-react",
 	"version": "2.92.0",
-	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
+	"description": "Utilities for integrating content powered by the Fluid Framework into React applications that utilize the Quill rich text editor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/framework/react"
+		"directory": "packages/framework/quill-react"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -95,14 +95,10 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"quill": "^2.0.3",
+		"quill-delta": "^5.1.0",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},
@@ -113,7 +109,8 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/react": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@testing-library/react": "^16.3.0",
