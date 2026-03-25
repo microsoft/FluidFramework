@@ -485,7 +485,7 @@ export interface ContainerRuntimeOptions {
 	 *
 	 * Set to Infinity to only break batches on system events (incoming ops).
 	 *
-	 * @defaultValue 1000
+	 * @defaultValue {@link largeBatchThreshold} (currently 1000)
 	 */
 	readonly stagingModeAutoFlushThreshold: number;
 
@@ -3655,9 +3655,7 @@ export class ContainerRuntime
 				PerformanceEvent.timedExec(
 					this.mc.logger,
 					{
-						eventName: "ExitStagingMode",
-						exitMethod,
-						autoFlushThreshold: this.stagingModeAutoFlushThreshold,
+						eventName: `ExitStagingMode_${exitMethod}`,
 					},
 					(event) => {
 						// Final flush of any last staged changes
@@ -3671,10 +3669,13 @@ export class ContainerRuntime
 						this.submitIdAllocationOpIfNeeded({ staged: false });
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
-							batches: batchInfos.length,
-							batchesAtOrOverThreshold: batchInfos.filter(
-								(b) => b.length >= this.stagingModeAutoFlushThreshold,
-							).length,
+							details: {
+								autoFlushThreshold: this.stagingModeAutoFlushThreshold,
+								batches: batchInfos.length,
+								batchesAtOrOverThreshold: batchInfos.filter(
+									(b) => b.length >= this.stagingModeAutoFlushThreshold,
+								).length,
+							},
 						});
 						this.channelCollection.notifyStagingMode(false);
 					},

@@ -4412,6 +4412,12 @@ describe("Runtime", () => {
 						0,
 						"No ops should be submitted while under threshold in staging mode",
 					);
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						5,
+						"All 5 ops should be in the outbox",
+					);
 
 					controls.commitChanges();
 					assert.equal(
@@ -4473,10 +4479,8 @@ describe("Runtime", () => {
 					controls.commitChanges();
 					logger.assertMatchAny([
 						{
-							eventName: "ContainerRuntime:ExitStagingMode_end",
+							eventName: "ContainerRuntime:ExitStagingMode_commit_end",
 							category: "performance",
-							exitMethod: "commit",
-							autoFlushThreshold: threshold,
 						},
 					]);
 				});
@@ -4587,6 +4591,12 @@ describe("Runtime", () => {
 						0,
 						"Default threshold should suppress turn-based flushing during staging mode",
 					);
+					assert.equal(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						2,
+						"Both ops should still be in the outbox (unflushed)",
+					);
 
 					controls.commitChanges();
 				});
@@ -4640,33 +4650,6 @@ describe("Runtime", () => {
 					);
 				});
 
-				it("enterStagingMode flushes any pending outbox contents as non-staged", async () => {
-					runtimeWithThreshold = await createRuntimeWithThreshold(Infinity);
-					stubChannelCollection(runtimeWithThreshold);
-					submittedOps.length = 0;
-
-					// Submit ops before entering staging mode (not yet flushed — still in outbox)
-					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("pre1"));
-					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("pre2"));
-					assert.equal(submittedOps.length, 0, "Ops not yet flushed");
-
-					// Enter staging mode — should flush pre-staging ops as non-staged
-					const controls = runtimeWithThreshold.enterStagingMode();
-					assert.equal(
-						submittedOps.length,
-						2,
-						"Pre-staging ops should be flushed on enterStagingMode",
-					);
-
-					// Submit more ops while in staging mode
-					submitDataStoreOp(runtimeWithThreshold, "3", genTestDataStoreMessage("staged1"));
-					runtimeWithThreshold.flush();
-					assert.equal(submittedOps.length, 2, "Staged ops should NOT be submitted to wire");
-
-					controls.commitChanges();
-					assert.equal(submittedOps.length, 3, "All ops should be submitted after commit");
-				});
-
 				it("config override takes precedence over runtime option", async () => {
 					const configThreshold = 5;
 					const runtimeOptionThreshold = 50;
@@ -4685,44 +4668,24 @@ describe("Runtime", () => {
 						},
 						provideEntryPoint: mockProvideEntryPoint,
 					})) as unknown as ContainerRuntime_WithPrivates;
-					stubChannelCollection(runtimeWithThreshold);
-					submittedOps.length = 0;
-
-					runtimeWithThreshold.enterStagingMode();
-
-					// Submit ops up to the config override threshold (5), not the runtime option (50)
-					for (let i = 0; i < configThreshold; i++) {
-						submitDataStoreOp(runtimeWithThreshold, `${i}`, genTestDataStoreMessage(`op${i}`));
-					}
-					// Threshold reached — scheduleFlush falls through, flush happens on next microtask
-					await Promise.resolve();
 
 					assert.equal(
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
-						0,
-						"Outbox should be empty — config override threshold (5) should win over runtime option (50)",
+						(runtimeWithThreshold as any).stagingModeAutoFlushThreshold,
+						configThreshold,
+						"Config override threshold (5) should win over runtime option (50)",
 					);
 				});
 
 				it("runtime option takes precedence over default", async () => {
 					const runtimeOptionThreshold = 5;
 					runtimeWithThreshold = await createRuntimeWithThreshold(runtimeOptionThreshold);
-					stubChannelCollection(runtimeWithThreshold);
-					submittedOps.length = 0;
-
-					runtimeWithThreshold.enterStagingMode();
-
-					for (let i = 0; i < runtimeOptionThreshold; i++) {
-						submitDataStoreOp(runtimeWithThreshold, `${i}`, genTestDataStoreMessage(`op${i}`));
-					}
-					await Promise.resolve();
 
 					assert.equal(
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
-						0,
-						"Outbox should be empty — runtime option (5) should win over default (1000)",
+						(runtimeWithThreshold as any).stagingModeAutoFlushThreshold,
+						runtimeOptionThreshold,
+						"Runtime option (5) should win over default (1000)",
 					);
 				});
 
@@ -4760,47 +4723,6 @@ describe("Runtime", () => {
 						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
 						0,
 						"Outbox should be empty — non-runtime op should break the batch",
-					);
-				});
-
-				it("reconnect breaks batch during staging mode", async () => {
-					mockContext = getMockContext() as IContainerContext;
-					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
-						context: mockContext as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						runtimeOptions: {
-							stagingModeAutoFlushThreshold: Infinity,
-							enableGroupedBatching: false,
-						},
-						provideEntryPoint: mockProvideEntryPoint,
-					})) as unknown as ContainerRuntime_WithPrivates;
-					stubChannelCollection(runtimeWithThreshold);
-					submittedOps.length = 0;
-
-					runtimeWithThreshold.enterStagingMode();
-
-					// Submit ops while connected (sitting in outbox under threshold)
-					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
-					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
-					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
-						2,
-						"2 ops in outbox before disconnect",
-					);
-
-					// Disconnect
-					changeConnectionState(runtimeWithThreshold, false, "disconnectedClientId");
-
-					// Reconnect — triggers flush and replayPendingStates
-					changeConnectionState(runtimeWithThreshold, true, mockClientId);
-
-					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
-						0,
-						"Outbox should be drained after reconnect",
 					);
 				});
 
@@ -4864,65 +4786,143 @@ describe("Runtime", () => {
 						"Should not throw coherency check — IdAllocation op should have been flushed by the 'op' handler",
 					);
 				});
+			});
 
-				it("reconnect resubmits pre-staged batches with threshold active", async () => {
-					mockContext = getMockContext() as IContainerContext;
-					runtimeWithThreshold = (await ContainerRuntime.loadRuntime2({
-						context: mockContext as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						runtimeOptions: {
-							stagingModeAutoFlushThreshold: Infinity,
-							enableGroupedBatching: false,
-						},
-						provideEntryPoint: mockProvideEntryPoint,
-					})) as unknown as ContainerRuntime_WithPrivates;
-					stubChannelCollection(runtimeWithThreshold);
-					submittedOps.length = 0;
+			it("enterStagingMode flushes any pending outbox contents as non-staged", async () => {
+				const context = getMockContext() as IContainerContext;
+				const runtime = (await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+				stubChannelCollection(runtime);
+				submittedOps.length = 0;
 
-					// Submit ops BEFORE entering staging mode
-					submitDataStoreOp(
-						runtimeWithThreshold,
-						"pre1",
-						genTestDataStoreMessage("pre-staging-op"),
-					);
-					await Promise.resolve();
-					assert.equal(submittedOps.length, 1, "Pre-staging op should be submitted");
+				// Submit ops before entering staging mode (not yet flushed — still in outbox)
+				submitDataStoreOp(runtime, "1", genTestDataStoreMessage("pre1"));
+				submitDataStoreOp(runtime, "2", genTestDataStoreMessage("pre2"));
+				assert.equal(submittedOps.length, 0, "Ops not yet flushed");
 
-					// Enter staging mode and submit more ops
-					const controls = runtimeWithThreshold.enterStagingMode();
-					submitDataStoreOp(
-						runtimeWithThreshold,
-						"staged1",
-						genTestDataStoreMessage("staged-op"),
-						"STAGED_META",
-					);
-					runtimeWithThreshold.flush();
-					assert.equal(submittedOps.length, 1, "Staged op should not be submitted to wire");
+				// Enter staging mode — should flush pre-staging ops as non-staged
+				const controls = runtime.enterStagingMode();
+				assert.equal(
+					submittedOps.length,
+					2,
+					"Pre-staging ops should be flushed on enterStagingMode",
+				);
 
-					// Disconnect
-					changeConnectionState(runtimeWithThreshold, false, "disconnectedClientId");
-					submittedOps.length = 0;
+				// Submit more ops while in staging mode
+				submitDataStoreOp(runtime, "3", genTestDataStoreMessage("staged1"));
+				runtime.flush();
+				assert.equal(submittedOps.length, 2, "Staged ops should NOT be submitted to wire");
 
-					// Reconnect — replayPendingStates resubmits all pending ops
-					changeConnectionState(runtimeWithThreshold, true, mockClientId);
-					await Promise.resolve();
+				controls.commitChanges();
+				assert.equal(submittedOps.length, 3, "All ops should be submitted after commit");
+				runtime.dispose();
+			});
 
-					// The pre-staging op should be resubmitted to the wire.
-					// The staged op stays in PSM as staged (not sent to wire).
-					assert(
-						submittedOps.length > 0,
-						"Pre-staging op should be resubmitted after reconnect",
-					);
-					const opsAfterReconnect = submittedOps.length;
+			it("reconnect breaks batch during staging mode", async () => {
+				const context = getMockContext() as IContainerContext;
+				const runtime = (await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+				stubChannelCollection(runtime);
+				submittedOps.length = 0;
 
-					// Verify we can still commit the staged changes
-					controls.commitChanges();
-					assert(
-						submittedOps.length > opsAfterReconnect,
-						"Staged op should be submitted after commitChanges",
-					);
-				});
+				runtime.enterStagingMode();
+
+				// Submit ops while connected (sitting in outbox under threshold)
+				submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
+				submitDataStoreOp(runtime, "2", genTestDataStoreMessage("op2"));
+				assert.equal(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(runtime as any).outbox.mainBatchMessageCount,
+					2,
+					"2 ops in outbox before disconnect",
+				);
+
+				// Disconnect
+				changeConnectionState(runtime, false, "disconnectedClientId");
+
+				// Reconnect — triggers flush and replayPendingStates
+				changeConnectionState(runtime, true, mockClientId);
+
+				assert.equal(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(runtime as any).outbox.mainBatchMessageCount,
+					0,
+					"Outbox should be drained after reconnect",
+				);
+				runtime.dispose();
+			});
+
+			it("reconnect resubmits pre-staged batches", async () => {
+				const context = getMockContext() as IContainerContext;
+				const runtime = (await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+				stubChannelCollection(runtime);
+				submittedOps.length = 0;
+
+				// Submit ops BEFORE entering staging mode
+				submitDataStoreOp(
+					runtime,
+					"pre1",
+					genTestDataStoreMessage("pre-staging-op"),
+				);
+				await Promise.resolve();
+				assert.equal(submittedOps.length, 1, "Pre-staging op should be submitted");
+
+				// Enter staging mode and submit more ops
+				const controls = runtime.enterStagingMode();
+				submitDataStoreOp(
+					runtime,
+					"staged1",
+					genTestDataStoreMessage("staged-op"),
+					"STAGED_META",
+				);
+				runtime.flush();
+				assert.equal(submittedOps.length, 1, "Staged op should not be submitted to wire");
+
+				// Disconnect
+				changeConnectionState(runtime, false, "disconnectedClientId");
+				submittedOps.length = 0;
+
+				// Reconnect — replayPendingStates resubmits all pending ops
+				changeConnectionState(runtime, true, mockClientId);
+				await Promise.resolve();
+
+				// The pre-staging op should be resubmitted to the wire.
+				// The staged op stays in PSM as staged (not sent to wire).
+				assert(
+					submittedOps.length > 0,
+					"Pre-staging op should be resubmitted after reconnect",
+				);
+				const opsAfterReconnect = submittedOps.length;
+
+				// Verify we can still commit the staged changes
+				controls.commitChanges();
+				assert(
+					submittedOps.length > opsAfterReconnect,
+					"Staged op should be submitted after commitChanges",
+				);
+				runtime.dispose();
 			});
 		});
 	});
