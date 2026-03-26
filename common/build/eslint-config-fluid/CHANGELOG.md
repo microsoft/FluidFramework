@@ -91,10 +91,10 @@ The following rules, which were previously enabled only in the `recommended` con
 
 #### Other new rules
 
-#### [@eslint-community/eslint-comments/require-description](https://mysticatea.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
+#### [@eslint-community/eslint-comments/require-description](https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
 
-All `eslint-disable` comments must now include a description explaining why the rule is being disabled.
-This rule is enabled as a warning for the time being, but will be promoted to an error in the future.
+We recommend that all `eslint-disable` comments include a description explaining why the rule is being disabled.
+This rule is currently configured at the `warn` level, so it will emit a warning (which may not fail CI), and is expected to be promoted to an error in the future.
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
 
