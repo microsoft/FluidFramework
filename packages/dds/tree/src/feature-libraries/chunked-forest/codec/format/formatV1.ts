@@ -100,6 +100,9 @@ export const EncodedValueShape = Type.Union([
 ]);
 export type EncodedValueShape = undefined | Static<typeof EncodedValueShape>;
 
+/**
+ * The encoded form of a {@link Shape} for a node.
+ */
 export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export const EncodedNodeShape = Type.Object(
 	{
@@ -123,6 +126,11 @@ export const EncodedNodeShape = Type.Object(
 	{ additionalProperties: false },
 );
 
+/**
+ * The chunk shapes supported by the V1 format.
+ * @remarks
+ * See {@link EncodedChunkShapeV1}.
+ */
 export const shapesV1 = {
 	/**
 	 * {@link EncodedNestedArrayShape} union member.
@@ -157,8 +165,8 @@ export const shapesV1 = {
  * to prevent a union with more options from being assignable to this one, we include Never.
  * This matters in this case because the V2 format only differs in that it has another entry in this Union.
  */
+export type EncodedChunkShapeV1 = Static<typeof EncodedChunkShapeV1>;
 export const EncodedChunkShapeV1 = Type.Object(
 	{ ...shapesV1, e: Type.Optional(Type.Never()) },
 	unionOptions,
 );
-export type EncodedChunkShapeV1 = Static<typeof EncodedChunkShapeV1>;

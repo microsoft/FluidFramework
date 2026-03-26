@@ -21,6 +21,7 @@ export const EncodedIncrementalChunkShape = Type.Literal(0);
  * @remarks
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
+export type EncodedChunkShapeV2 = Static<typeof EncodedChunkShapeV2>;
 export const EncodedChunkShapeV2 = Type.Object(
 	{
 		...shapesV1,
@@ -28,5 +29,3 @@ export const EncodedChunkShapeV2 = Type.Object(
 	},
 	unionOptions,
 );
-
-export type EncodedChunkShapeV2 = Static<typeof EncodedChunkShapeV2>;

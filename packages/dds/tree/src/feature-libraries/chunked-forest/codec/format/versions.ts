@@ -14,6 +14,7 @@ import { EncodedChunkShapeV2 } from "./formatV2.js";
 /**
  * The format version for the field batch.
  */
+export type FieldBatchFormatVersion = Values<typeof FieldBatchFormatVersion>;
 export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	/**
 	 * Initial version.
@@ -29,14 +30,23 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	 */
 	v2: 2,
 });
-export type FieldBatchFormatVersion = Values<typeof FieldBatchFormatVersion>;
 
+/**
+ * Encoded {@link FieldBatch} using V1 format.
+ * @remarks
+ * Does not support {@link EncodedIncrementalChunkShape}.
+ */
 export type EncodedFieldBatchV1 = Static<typeof EncodedFieldBatchV1>;
 export const EncodedFieldBatchV1 = EncodedFieldBatchGeneric(
 	FieldBatchFormatVersion.v1,
 	EncodedChunkShapeV1,
 );
 
+/**
+ * Encoded {@link FieldBatch} using V2 format.
+ * @remarks
+ * Adds support for {@link EncodedIncrementalChunkShape}.
+ */
 export type EncodedFieldBatchV2 = Static<typeof EncodedFieldBatchV2>;
 export const EncodedFieldBatchV2 = EncodedFieldBatchGeneric(
 	FieldBatchFormatVersion.v2,
