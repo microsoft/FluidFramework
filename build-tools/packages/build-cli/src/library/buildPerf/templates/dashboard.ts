@@ -234,7 +234,7 @@ function renderDashboard(mode: string, data: DashboardData): void {
 	}
 	const trendColor =
 		durationChange < 0 ? "#107c10" : durationChange > 0 ? "#d13438" : "#605e5c";
-	const trendSign = durationChange > 0 ? "+" : durationChange < 0 ? "" : "";
+	const trendSign = durationChange > 0 ? "+" : "";
 	const timestamp = data.generatedAt
 		? (() => {
 				const d = new Date(data.generatedAt);

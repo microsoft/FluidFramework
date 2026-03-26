@@ -120,12 +120,9 @@ Generate a standalone HTML dashboard artifact from processed metrics.
 
 ```
 USAGE
-  $ flub build-perf generate --mode public|internal --inputDir <value> --outputDir <value> [-v | --quiet] [--format
-  html]
+  $ flub build-perf generate --mode public|internal --inputDir <value> --outputDir <value> [-v | --quiet]
 
 FLAGS
-  --format=<option>    [default: html] Output format for the generated report.
-                       <options: html>
   --inputDir=<value>   (required) [env: DATA_DIR] Directory containing the data JSON files (public-data.json /
                        internal-data.json).
   --mode=<option>      (required) [env: MODE] Pipeline mode: "public" or "internal".

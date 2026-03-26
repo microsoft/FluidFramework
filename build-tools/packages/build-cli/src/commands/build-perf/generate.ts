@@ -31,11 +31,6 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 			required: true,
 			options: ["public", "internal"],
 		}),
-		format: Flags.string({
-			description: "Output format for the generated report.",
-			options: ["html"],
-			default: "html",
-		}),
 		inputDir: Flags.directory({
 			description:
 				"Directory containing the data JSON files (public-data.json / internal-data.json).",

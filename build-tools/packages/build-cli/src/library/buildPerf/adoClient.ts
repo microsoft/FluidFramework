@@ -86,11 +86,20 @@ async function getBuildApi(token: string, org: string): Promise<IBuildApi> {
  * Convert a raw ADO Build object to our AdoBuildRecord type.
  */
 function toAdoBuildRecord(build: Build): AdoBuildRecord {
+	let result: "succeeded" | "partiallySucceeded";
+	if (build.result === BuildResult.Succeeded) {
+		result = "succeeded";
+	} else if (build.result === BuildResult.PartiallySucceeded) {
+		result = "partiallySucceeded";
+	} else {
+		throw new Error(`Unexpected build result: ${build.result} for build ${build.id}`);
+	}
+
 	return {
 		id: build.id!,
 		startTime: build.startTime?.toISOString() ?? "",
 		finishTime: build.finishTime?.toISOString() ?? "",
-		result: build.result === BuildResult.Succeeded ? "succeeded" : "partiallySucceeded",
+		result,
 		sourceBranch: build.sourceBranch ?? "",
 		sourceVersion: build.sourceVersion,
 		parameters: build.parameters,
