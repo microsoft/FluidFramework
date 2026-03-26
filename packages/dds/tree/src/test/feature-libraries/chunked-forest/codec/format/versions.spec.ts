@@ -18,7 +18,7 @@ import {
 	type requireFalse,
 } from "../../../../../util/index.js";
 
-// Validate assignability of the various formats is working a expected.
+// Validate assignability of the various formats is working as expected.
 // This is to ensure that code using the TypeScript types for type safety is being constrained as expected.
 // This is not quite as trivial as it should be since the way we model unions is prone to this kind of issue,
 // so this validates that the fix for that (the Never added in EncodedChunkShapeV1) is working as intended.

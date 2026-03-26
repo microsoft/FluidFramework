@@ -297,7 +297,7 @@ type BasicFieldDecoder = (
 ) => [FieldKey, TreeChunk];
 
 /**
- * Get a decoder for fields of a provided (via `shape` and `context`) {@link EncodedChunkShapeV1}.
+ * Get a decoder for fields of a provided (via `shape` and `context`).
  */
 function fieldDecoder(
 	context: DecoderContext<EncodedChunkShapeV1OrV2>,
