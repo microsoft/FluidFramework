@@ -40,7 +40,7 @@ import {
 import type { IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShapeV1,
+	type EncodedChunkShapeV1OrV2,
 	type EncodedChunkShapeV2,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
@@ -77,8 +77,8 @@ export function decode(
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShapeV1 | EncodedChunkShapeV2,
-	[context: DecoderContext<EncodedChunkShapeV1 | EncodedChunkShapeV2>],
+	EncodedChunkShapeV1OrV2,
+	[context: DecoderContext<EncodedChunkShapeV1OrV2>],
 	ChunkDecoder
 >({
 	a(shape: EncodedNestedArrayShape, context): ChunkDecoder {
@@ -300,7 +300,7 @@ type BasicFieldDecoder = (
  * Get a decoder for fields of a provided (via `shape` and `context`) {@link EncodedChunkShapeV1}.
  */
 function fieldDecoder(
-	context: DecoderContext<EncodedChunkShapeV1 | EncodedChunkShapeV2>,
+	context: DecoderContext<EncodedChunkShapeV1OrV2>,
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
@@ -319,7 +319,7 @@ export class NodeDecoder implements ChunkDecoder {
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedNodeShape,
-		private readonly context: DecoderContext<EncodedChunkShapeV1 | EncodedChunkShapeV2>,
+		private readonly context: DecoderContext<EncodedChunkShapeV1OrV2>,
 	) {
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
 
