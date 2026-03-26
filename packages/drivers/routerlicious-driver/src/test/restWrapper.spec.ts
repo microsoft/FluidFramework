@@ -42,6 +42,8 @@ interface MockFetchEntry {
 
 	/** Assert that the request uses this HTTP method */
 	method?: string;
+	/** Assert that the request URL origin (protocol + host + port) matches this value */
+	origin?: string;
 	/** Assert that the request URL path (excluding query string) matches this value */
 	path?: string;
 	/** Assert that the request includes these headers with these exact values */
@@ -63,8 +65,15 @@ interface MockFetchEntry {
 	replyFn?: () => [number, string | object];
 }
 
-function createMockFetch(entries: MockFetchEntry[]): sinon.SinonStub {
+interface MockFetch {
+	stub: sinon.SinonStub;
+	/** Assert that all queued mock entries were consumed */
+	done: () => void;
+}
+
+function createMockFetch(entries: MockFetchEntry[]): MockFetch {
 	const queue = [...entries];
+	const entryCount = entries.length;
 	const stub = sinon.stub(globalThis, "fetch");
 	stub.callsFake(async (input: RequestInfo | URL, init?: RequestInit) => {
 		const entry = queue.shift();
@@ -80,6 +89,15 @@ function createMockFetch(entries: MockFetchEntry[]): sinon.SinonStub {
 		// Validate method if specified
 		if (entry.method) {
 			assert.strictEqual(init?.method?.toUpperCase(), entry.method.toUpperCase());
+		}
+
+		// Validate URL origin if specified
+		if (entry.origin) {
+			assert.strictEqual(
+				parsedUrl.origin,
+				entry.origin,
+				`Expected origin "${entry.origin}" but got "${parsedUrl.origin}"`,
+			);
 		}
 
 		// Validate URL path if specified
@@ -133,7 +151,16 @@ function createMockFetch(entries: MockFetchEntry[]): sinon.SinonStub {
 
 		return createMockResponse(entry.status ?? 200, entry.body);
 	});
-	return stub;
+	return {
+		stub,
+		done: () => {
+			assert.strictEqual(
+				stub.callCount,
+				entryCount,
+				`Expected ${entryCount} fetch calls but got ${stub.callCount}`,
+			);
+		},
+	};
 }
 
 describe("RouterliciousDriverRestWrapper", () => {
@@ -155,7 +182,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 		throttledAt = Date.now();
 	};
 	function replyWithThrottling(): [number, string | { retryAfter: number }] {
-		const retryAfterSeconds = (throttleDurationInMs - Date.now() - throttledAt) / 1000;
+		const retryAfterSeconds = (throttleDurationInMs - (Date.now() - throttledAt)) / 1000;
 		const throttled = retryAfterSeconds > 0;
 		if (throttled) {
 			return [429, { retryAfter: retryAfterSeconds }];
@@ -165,13 +192,13 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 	let restWrapper: RouterliciousOrdererRestWrapper;
 	const logger = new MockLogger();
-	let fetchStub: sinon.SinonStub;
+	let mockFetch: MockFetch;
 	beforeEach(() => {
 		// reset auth mocking
 		tokenQueue = [token1, token2, token3];
 		// reset throttling mocking
 		throttledAt = 0;
-		throttleDurationInMs = 50;
+		throttleDurationInMs = 10;
 		const tokenProvider = new DefaultTokenProvider("testtoken");
 		tokenProvider.fetchOrdererToken = async () => {
 			// Pop a token off tokenQueue
@@ -193,17 +220,19 @@ describe("RouterliciousDriverRestWrapper", () => {
 		);
 	});
 	afterEach(() => {
-		if (fetchStub) {
-			fetchStub.restore();
+		if (mockFetch) {
+			mockFetch.done();
+			mockFetch.stub.restore();
 		}
 		logger.assertMatchNone([{ category: "error" }]);
 	});
 
 	describe("get()", () => {
 		it("sends a request with auth headers", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 200,
@@ -212,15 +241,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.get(testUrl));
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -230,15 +261,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.get(testUrl));
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -251,7 +284,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a retriable error on 500", async () => {
-			fetchStub = createMockFetch([{ method: "GET", path: testPath, status: 500 }]);
+			mockFetch = createMockFetch([
+				{ method: "GET", origin: testHost, path: testPath, status: 500 },
+			]);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
@@ -259,10 +294,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
-			fetchStub = createMockFetch([
-				{ method: "GET", path: testPath, replyFn: replyWithThrottling },
+			mockFetch = createMockFetch([
+				{ method: "GET", origin: testHost, path: testPath, replyFn: replyWithThrottling },
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					expectAnyQuery: true,
 					replyFn: replyWithThrottling,
@@ -271,9 +307,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.get(testUrl));
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					status: 429,
 					body: { retryAfter: undefined },
@@ -285,16 +322,19 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
-			fetchStub = createMockFetch([{ method: "GET", path: testPath, status: 404 }]);
+			mockFetch = createMockFetch([
+				{ method: "GET", origin: testHost, path: testPath, status: 404 },
+			]);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: false,
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					networkError: { code: "ECONNRESET" },
 				},
@@ -307,10 +347,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 		it("retry query param is appended on subsequent api request - when retried from within request function", async () => {
 			let retryQueryParamTested = false;
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				// Fail first request with retriable error
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
@@ -318,6 +359,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				// Second request must contain the query param "retry=1"
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					queryCheck: (q) => {
 						assert(q.get("retry") === "1");
@@ -329,6 +371,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				// Third request must contain the query param "retry=2"
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					queryCheck: (q) => {
 						assert(q.get("retry") === "2");
@@ -344,12 +387,13 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 		it("retry query param is appended on subsequent api request - when request function is invoked multiple times externally on failure", async () => {
 			let isTestedSuccessfully = false;
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				// Fail first request with retriable error
-				{ method: "GET", path: testPath, status: 500 },
+				{ method: "GET", origin: testHost, path: testPath, status: 500 },
 				// Second request must contain the query param "retry=1"
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					queryCheck: (q) => {
 						assert(q.get("retry") === "1");
@@ -360,6 +404,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				// Third request must contain the query param "retry=2"
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					queryCheck: (q) => {
 						assert(q.get("retry") === "2");
@@ -370,6 +415,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				// Fourth request is emulated to have predefined query params
 				{
 					method: "GET",
+					origin: testHost,
 					path: testPath,
 					queryCheck: (q) => {
 						assert(q.get("retry") === null); // Check that original request's retry value is reset
@@ -395,9 +441,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 	describe("post()", () => {
 		it("sends a request with auth headers", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 200,
@@ -406,15 +453,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -424,15 +473,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -445,7 +496,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a retriable error on 500", async () => {
-			fetchStub = createMockFetch([{ method: "POST", path: testPath, status: 500 }]);
+			mockFetch = createMockFetch([
+				{ method: "POST", origin: testHost, path: testPath, status: 500 },
+			]);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
@@ -453,10 +506,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
-			fetchStub = createMockFetch([
-				{ method: "POST", path: testPath, replyFn: replyWithThrottling },
+			mockFetch = createMockFetch([
+				{ method: "POST", origin: testHost, path: testPath, replyFn: replyWithThrottling },
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					expectAnyQuery: true,
 					replyFn: replyWithThrottling,
@@ -465,9 +519,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					status: 429,
 					body: { retryAfter: undefined },
@@ -479,16 +534,19 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
-			fetchStub = createMockFetch([{ method: "POST", path: testPath, status: 404 }]);
+			mockFetch = createMockFetch([
+				{ method: "POST", origin: testHost, path: testPath, status: 404 },
+			]);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: false,
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "POST",
+					origin: testHost,
 					path: testPath,
 					networkError: { code: "ECONNRESET" },
 				},
@@ -502,9 +560,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 	describe("patch()", () => {
 		it("sends a request with auth headers", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 200,
@@ -513,15 +572,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -531,15 +592,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -552,7 +615,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a retriable error on 500", async () => {
-			fetchStub = createMockFetch([{ method: "PATCH", path: testPath, status: 500 }]);
+			mockFetch = createMockFetch([
+				{ method: "PATCH", origin: testHost, path: testPath, status: 500 },
+			]);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
@@ -560,10 +625,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
-			fetchStub = createMockFetch([
-				{ method: "PATCH", path: testPath, replyFn: replyWithThrottling },
+			mockFetch = createMockFetch([
+				{ method: "PATCH", origin: testHost, path: testPath, replyFn: replyWithThrottling },
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					expectAnyQuery: true,
 					replyFn: replyWithThrottling,
@@ -572,9 +638,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					status: 429,
 					body: { retryAfter: undefined },
@@ -586,16 +653,19 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
-			fetchStub = createMockFetch([{ method: "PATCH", path: testPath, status: 404 }]);
+			mockFetch = createMockFetch([
+				{ method: "PATCH", origin: testHost, path: testPath, status: 404 },
+			]);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: false,
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "PATCH",
+					origin: testHost,
 					path: testPath,
 					networkError: { code: "ECONNRESET" },
 				},
@@ -609,9 +679,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 	describe("delete()", () => {
 		it("sends a request with auth headers", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 200,
@@ -620,15 +691,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.delete(testUrl));
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -638,15 +711,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.delete(testUrl));
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token1}` },
 					status: 401,
 				},
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					reqheaders: { authorization: `Basic ${token2}` },
 					expectAnyQuery: true,
@@ -659,7 +734,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a retriable error on 500", async () => {
-			fetchStub = createMockFetch([{ method: "DELETE", path: testPath, status: 500 }]);
+			mockFetch = createMockFetch([
+				{ method: "DELETE", origin: testHost, path: testPath, status: 500 },
+			]);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
@@ -667,10 +744,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 		});
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
-			fetchStub = createMockFetch([
-				{ method: "DELETE", path: testPath, replyFn: replyWithThrottling },
+			mockFetch = createMockFetch([
+				{ method: "DELETE", origin: testHost, path: testPath, replyFn: replyWithThrottling },
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					expectAnyQuery: true,
 					replyFn: replyWithThrottling,
@@ -679,9 +757,10 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.doesNotReject(restWrapper.delete(testUrl));
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					status: 429,
 					body: { retryAfter: undefined },
@@ -693,16 +772,19 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws a non-retriable error on 404", async () => {
-			fetchStub = createMockFetch([{ method: "DELETE", path: testPath, status: 404 }]);
+			mockFetch = createMockFetch([
+				{ method: "DELETE", origin: testHost, path: testPath, status: 404 },
+			]);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: false,
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			fetchStub = createMockFetch([
+			mockFetch = createMockFetch([
 				{
 					method: "DELETE",
+					origin: testHost,
 					path: testPath,
 					networkError: { code: "ECONNRESET" },
 				},
