@@ -4,14 +4,6 @@
  */
 
 import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
-import {
-	exposeMethodsSymbol,
-	buildFunc,
-	typeFactory as tf,
-	type ExposedMethods,
-	type IExposedMethods,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/tree-agent-types/alpha";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -34,58 +26,8 @@ class TextNode
 	extends sf.object("Text", {
 		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 	})
-	implements TextAsTree.Members, IExposedMethods
+	implements TextAsTree.Members
 {
-	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(
-			TextNode,
-			"fullString",
-			buildFunc({
-				description: "Returns the complete text content as a single string.",
-				returns: tf.string(),
-			}),
-		);
-		methods.expose(
-			TextNode,
-			"characterCount",
-			buildFunc({
-				description:
-					"Returns the number of characters in the text. Counts Unicode codepoints, not UTF-16 code units.",
-				returns: tf.number(),
-			}),
-		);
-		methods.expose(
-			TextNode,
-			"insertAt",
-			buildFunc(
-				{
-					description:
-						"Insert text at the specified character index (Unicode codepoint index).",
-					returns: tf.void(),
-				},
-				["index", tf.number()],
-				["additionalCharacters", tf.string()],
-			),
-		);
-		methods.expose(
-			TextNode,
-			"removeRange",
-			buildFunc(
-				{
-					description:
-						"Remove characters from startIndex (inclusive) to endIndex (exclusive).",
-					returns: tf.void(),
-				},
-				["startIndex", tf.optional(tf.number())],
-				["endIndex", tf.optional(tf.number())],
-			),
-		);
-	}
-
-	public [exposeMethodsSymbol](methods: ExposedMethods): void {
-		TextNode[exposeMethodsSymbol](methods);
-	}
-
 	public insertAt(index: number, additionalCharacters: string): void {
 		this.content.insertAt(
 			index,

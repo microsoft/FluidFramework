@@ -9546,9 +9546,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      '@fluidframework/tree-agent-types':
-        specifier: workspace:~
-        version: link:../../framework/tree-agent-types
       '@sinclair/typebox':
         specifier: ^0.34.13
         version: 0.34.13

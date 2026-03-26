@@ -10,8 +10,6 @@ import {
 	independentView,
 	SchemaFactory,
 	TreeViewConfiguration,
-	TextAsTree,
-	FormattedTextAsTree,
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "@fluidframework/tree/internal";
@@ -316,68 +314,6 @@ type MapWithProperty = Map<string, string> & {
 		}
 		`,
 		);
-	});
-
-	describe("for TextAsTree schemas", () => {
-		it("exposes TextAsTree.Tree methods in generated types", () => {
-			class DocWithText extends sf.object("DocWithText", {
-				content: TextAsTree.Tree,
-			}) {}
-
-			const schemaText = getDomainSchemaString(DocWithText, {
-				content: TextAsTree.Tree.fromString("hello"),
-			});
-
-			assert.ok(
-				schemaText.includes("fullString(): string"),
-				`Expected fullString method, got:\n${schemaText}`,
-			);
-			assert.ok(
-				schemaText.includes("characterCount(): number"),
-				`Expected characterCount method, got:\n${schemaText}`,
-			);
-			assert.ok(
-				schemaText.includes("insertAt(index: number, additionalCharacters: string): void"),
-				`Expected insertAt method, got:\n${schemaText}`,
-			);
-			assert.ok(
-				schemaText.includes("removeRange(startIndex?: number, endIndex?: number): void"),
-				`Expected removeRange method, got:\n${schemaText}`,
-			);
-		});
-	});
-
-	describe("for FormattedTextAsTree schemas", () => {
-		it("exposes FormattedTextAsTree.Tree methods in generated types", () => {
-			class DocWithFormattedText extends sf.object("DocWithFormattedText", {
-				content: FormattedTextAsTree.Tree,
-			}) {}
-
-			const schemaText = getDomainSchemaString(DocWithFormattedText, {
-				content: FormattedTextAsTree.Tree.fromString("hello"),
-			});
-
-			assert.ok(
-				schemaText.includes("fullString(): string"),
-				`Expected fullString method, got:\n${schemaText}`,
-			);
-			assert.ok(
-				schemaText.includes("characterCount(): number"),
-				`Expected characterCount method, got:\n${schemaText}`,
-			);
-			assert.ok(
-				schemaText.includes("insertAt(index: number, additionalCharacters: string): void"),
-				`Expected insertAt method, got:\n${schemaText}`,
-			);
-			assert.ok(
-				schemaText.includes("removeRange(startIndex?: number, endIndex?: number): void"),
-				`Expected removeRange method, got:\n${schemaText}`,
-			);
-			assert.ok(
-				schemaText.includes("getString(startIndex: number, endIndex?: number): string"),
-				`Expected getString method, got:\n${schemaText}`,
-			);
-		});
 	});
 
 	it("handles schema short name collisions", () => {

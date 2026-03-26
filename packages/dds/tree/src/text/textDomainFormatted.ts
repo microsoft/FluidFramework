@@ -5,14 +5,6 @@
 
 import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
-	exposeMethodsSymbol,
-	buildFunc,
-	typeFactory as tf,
-	type ExposedMethods,
-	type IExposedMethods,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "@fluidframework/tree-agent-types/alpha";
 
 import {
 	EmptyKey,
@@ -47,71 +39,8 @@ class TextNode
 	extends sf.object("Text", {
 		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 	})
-	implements FormattedTextAsTree.Members, IExposedMethods
+	implements FormattedTextAsTree.Members
 {
-	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(
-			TextNode,
-			"fullString",
-			buildFunc({
-				description: "Returns the complete text content as a single string.",
-				returns: tf.string(),
-			}),
-		);
-		methods.expose(
-			TextNode,
-			"characterCount",
-			buildFunc({
-				description:
-					"Returns the number of characters in the text. Counts Unicode codepoints, not UTF-16 code units.",
-				returns: tf.number(),
-			}),
-		);
-		methods.expose(
-			TextNode,
-			"insertAt",
-			buildFunc(
-				{
-					description:
-						"Insert text at the specified character index. Uses the current defaultFormat for formatting.",
-					returns: tf.void(),
-				},
-				["index", tf.number()],
-				["additionalCharacters", tf.string()],
-			),
-		);
-		methods.expose(
-			TextNode,
-			"removeRange",
-			buildFunc(
-				{
-					description:
-						"Remove characters from startIndex (inclusive) to endIndex (exclusive).",
-					returns: tf.void(),
-				},
-				["startIndex", tf.optional(tf.number())],
-				["endIndex", tf.optional(tf.number())],
-			),
-		);
-		methods.expose(
-			TextNode,
-			"getString",
-			buildFunc(
-				{
-					description:
-						"Returns a substring from startIndex (inclusive) to endIndex (exclusive). Defaults to end of text if endIndex is omitted.",
-					returns: tf.string(),
-				},
-				["startIndex", tf.number()],
-				["endIndex", tf.optional(tf.number())],
-			),
-		);
-	}
-
-	public [exposeMethodsSymbol](methods: ExposedMethods): void {
-		TextNode[exposeMethodsSymbol](methods);
-	}
-
 	public defaultFormat: FormattedTextAsTree.CharacterFormat =
 		new FormattedTextAsTree.CharacterFormat(defaultFormat);
 
