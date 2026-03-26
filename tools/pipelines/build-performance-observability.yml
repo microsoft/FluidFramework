@@ -98,6 +98,19 @@ extends:
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+        - task: Bash@3
+          displayName: Debug network
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              echo "Resolving registry.npmjs.org..."
+              nslookup registry.npmjs.org || true
+              echo "Testing connectivity..."
+              curl -sv --max-time 10 https://registry.npmjs.org/ 2>&1 | head -30 || true
+              echo "Checking env vars..."
+              env | grep -i -E 'proxy|registry|corepack|npm' | sort || true
+
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: ${{ variables.FluidFrameworkDirectory }}
