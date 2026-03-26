@@ -127,9 +127,11 @@
 			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
 			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
-			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2."
+			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
+			"@azure/identity: overridden to ^4.13.0 to pull a patched @azure/msal-browser (no patched 3.x exists). Transitive dep of @azure/static-web-apps-cli; ^4.13.0 is API-compatible within the ^4.3.0 range it declares."
 		],
 		"overrides": {
+			"@azure/identity": "^4.13.0",
 			"@types/react": "^18.3.12",
 			"diff@>=5 <6": "^5.2.2",
 			"js-yaml@<4": "^3.14.2",
