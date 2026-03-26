@@ -3,12 +3,13 @@
 #
 # CI Readiness Check — quick pre-push sanity check for Fluid Framework.
 #
+# Usage: ci-readiness-check.sh [--quick] [base-branch]
+#
 # Detects which packages changed vs a base branch, then:
-#   1. Runs `fluid-build --task checks:fix` scoped to changed packages
-#      (auto-fixes formatting via Biome, policy via flub, syncpack, versions)
-#   2. Verifies checks pass after fixing
-#   3. Checks if a changeset is present
-#   4. Reports uncommitted changes, build status, and a summary
+#   --quick mode: formats changed files with Biome only (fast)
+#   default mode: runs full `fluid-build --task checks:fix` scoped to
+#     changed packages (formatting, policy, syncpack, versions) + verifies
+#   Both modes: check changeset, report uncommitted changes and build status
 #
 # Designed to be run by the ci-readiness-check skill, which handles
 # build-dependent checks (API reports, ESLint, type tests) after this script.
@@ -16,10 +17,18 @@
 # Exit on any error, undefined variable, or pipe failure.
 set -euo pipefail
 
-# Resolve the repo root (works from any directory) and accept an optional
-# base branch argument, defaulting to "main".
+# Resolve the repo root (works from any directory) and parse arguments.
+# Accepts an optional --quick flag and an optional base branch (default: main).
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-BASE_BRANCH="${1:-main}"
+QUICK_MODE=false
+BASE_BRANCH="main"
+
+for arg in "$@"; do
+    case "${arg}" in
+        --quick) QUICK_MODE=true ;;
+        *) BASE_BRANCH="${arg}" ;;
+    esac
+done
 
 # --- Output helpers ---
 # ANSI color codes for colored terminal output.
@@ -147,37 +156,67 @@ if [ ! -d "${REPO_ROOT}/node_modules" ]; then
     ok "Dependencies installed"
 fi
 
-# ---------- Phase 1: Auto-fix checks (format, policy, syncpack, versions) ----------
-section "Running checks:fix on changed packages"
-
-# Use fluid-build --task checks:fix scoped to just the changed packages.
-# This runs: biome format --write, flub check policy --fix, syncpack fix,
-# and buildVersion --fix — all in the correct dependency order.
-#
-# We build the package list as space-separated paths for fluid-build.
+# Build the package list as space-separated paths for fluid-build.
 PKG_ARGS=""
 for pkg in "${PACKAGES[@]}"; do
     PKG_ARGS="${PKG_ARGS} ${pkg}"
 done
 
 CHECKS_FIX_OK=true
-echo "Running: fluid-build --task checks:fix ${PKG_ARGS}"
-if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks:fix ${PKG_ARGS} 2>&1); then
-    ok "checks:fix completed"
-else
-    warn "checks:fix had issues (some fixes may still have been applied)"
-    CHECKS_FIX_OK=false
-fi
-
-# ---------- Phase 2: Verify checks pass ----------
-section "Verifying checks pass"
-
 CHECKS_OK=true
-if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks ${PKG_ARGS} 2>&1) >/dev/null 2>&1; then
-    ok "All checks pass"
+
+if [ "${QUICK_MODE}" = true ]; then
+    # ---------- Phase 1 (Quick): Format changed files only ----------
+    section "Formatting changed files (Quick mode)"
+
+    # Collect only formattable files from the changed list and run biome
+    # format --write on them directly. This avoids the slower repo-wide
+    # policy checks and lint that checks:fix would trigger.
+    FORMAT_FILES=()
+    while IFS= read -r file; do
+        case "${file}" in
+            *.ts|*.tsx|*.js|*.jsx|*.json|*.jsonc|*.css) FORMAT_FILES+=("${REPO_ROOT}/${file}") ;;
+        esac
+    done <<< "${CHANGED_FILES}"
+
+    if [ ${#FORMAT_FILES[@]} -gt 0 ]; then
+        echo "Formatting ${#FORMAT_FILES[@]} changed file(s) with Biome..."
+        if (cd "${REPO_ROOT}" && pnpm exec biome format --write "${FORMAT_FILES[@]}" 2>&1); then
+            ok "Formatting complete"
+        else
+            warn "Biome formatting had issues"
+            CHECKS_FIX_OK=false
+        fi
+    else
+        ok "No formattable files changed"
+    fi
+
+    echo ""
+    warn "Quick mode: skipped policy, syncpack, version checks, and lint"
 else
-    CHECKS_OK=false
-    fail "Some checks still failing after auto-fix. Re-run for details: pnpm exec fluid-build --task checks ${PKG_ARGS}"
+    # ---------- Phase 1 (Full/Thorough): Auto-fix all checks ----------
+    section "Running checks:fix on changed packages"
+
+    # Use fluid-build --task checks:fix scoped to just the changed packages.
+    # This runs: biome format --write, flub check policy --fix, syncpack fix,
+    # and buildVersion --fix — all in the correct dependency order.
+    echo "Running: fluid-build --task checks:fix ${PKG_ARGS}"
+    if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks:fix ${PKG_ARGS} 2>&1); then
+        ok "checks:fix completed"
+    else
+        warn "checks:fix had issues (some fixes may still have been applied)"
+        CHECKS_FIX_OK=false
+    fi
+
+    # ---------- Phase 2: Verify checks pass ----------
+    section "Verifying checks pass"
+
+    if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks ${PKG_ARGS} 2>&1) >/dev/null 2>&1; then
+        ok "All checks pass"
+    else
+        CHECKS_OK=false
+        fail "Some checks still failing after auto-fix. Re-run for details: pnpm exec fluid-build --task checks ${PKG_ARGS}"
+    fi
 fi
 
 # ---------- Phase 3: Changeset check ----------

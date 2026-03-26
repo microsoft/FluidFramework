@@ -24,9 +24,9 @@ Before doing anything, ask the user:
 > I'll run a CI readiness check on your branch. Pick a mode (fastest to slowest):
 >
 > 1. **Cancel** — never mind, don't run checks
-> 2. **Quick** — auto-fix formatting, policy, and lint; skip all build-dependent checks
-> 3. **Full** — Quick + build unbuilt packages + regenerate API reports and type tests
-> 4. **Thorough** — Full + run tests in changed packages
+> 2. **Quick** — auto-fix formatting only (Biome on changed files); skip all build-dependent checks (< 30 seconds)
+> 3. **Full** — Quick + build unbuilt packages + regenerate API reports and type tests (up to a minute)
+> 4. **Thorough** — Full + run tests in changed packages (fast for small packages, can take minutes for large ones)
 
 Wait for the user's response. If they say cancel (or anything clearly negative), stop here. Otherwise, note their choice and proceed.
 
@@ -35,20 +35,23 @@ Wait for the user's response. If they say cancel (or anything clearly negative),
 Run the bundled script from the repository root:
 
 ```bash
-bash .claude/skills/ci-readiness-check/ci-readiness-check.sh [base-branch]
+bash .claude/skills/ci-readiness-check/ci-readiness-check.sh [--quick] [base-branch]
 ```
 
 The base branch defaults to `main`. Pass a different branch if needed (e.g., `next`).
 
+Pass `--quick` for Quick mode. This skips the full `checks:fix` pipeline (policy is repo-wide and lint is too slow) and only runs Biome formatting on changed files.
+
 The script handles:
 - Detecting which packages have changes vs the base branch
 - Installing dependencies if `node_modules` is missing
-- Running `fluid-build --task checks:fix` scoped to changed packages, which auto-fixes:
+- **Quick mode:** Running `biome format --write` on changed files only
+- **Full/Thorough mode:** Running `fluid-build --task checks:fix` scoped to changed packages, which auto-fixes:
   - Formatting (Biome)
   - Policy violations (flub — copyright headers, package.json sorting, etc.)
   - Dependency version consistency (syncpack)
   - Build version consistency
-- Verifying all checks pass after auto-fix (`fluid-build --task checks`)
+- **Full/Thorough mode:** Verifying all checks pass after auto-fix (`fluid-build --task checks`)
 - Checking for a changeset (via `flub check changeset`)
 - Reporting uncommitted changes, categorized (API reports, type tests, other)
 - Reporting which changed packages are built vs not built
@@ -87,7 +90,7 @@ Steps 5 and 7 require judging whether a package's public API surface changed. Us
 - Only comments, documentation, or non-code files changed
 - Only a function body changed (not its signature)
 
-**Why be conservative:** There is a known bug in API Extractor where it non-deterministically reorders some generated types. The output differs between local and CI, producing bogus diffs that look like real changes but aren't. Running API Extractor unnecessarily can introduce these confusing phantom diffs. Only run it when you're confident the public API actually changed.
+**Why be conservative:** There is a known bug in API Extractor where it non-deterministically reorders some generated types in the `@fluidframework/tree` package specifically. The output differs between local and CI, producing bogus diffs that look like real changes but aren't. Running API Extractor unnecessarily on that package can introduce these confusing phantom diffs. Only run it when you're confident the public API actually changed.
 
 # Step 5: API reports and cross-package cascade (Full and Thorough only)
 
@@ -140,7 +143,7 @@ cd <package-dir> && pnpm run test:mocha
 cd <package-dir> && pnpm run test:jest
 ```
 
-Some packages have both, some have one, some have neither. Only run what exists. If tests fail, report the failures but continue with remaining packages — collect all results for the final report.
+Some packages have both, some have one, some have neither. Only run what exists. Skip performance tests (`test:benchmark`, `test:stress`) and real service tests (`test:realsvc`) — those are too slow and flaky for a pre-push check. If tests fail, report the failures but continue with remaining packages — collect all results for the final report.
 
 # Step 9: Final status
 
