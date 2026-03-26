@@ -64,11 +64,12 @@ function getLeafTextNode(root: DeepTextWrapper): TextAsTree.Tree {
  * Depths at which to place the text node within the wrapper tree.
  * A deeper text node results in a longer path in the generated op, which increases op size.
  */
-const nodeDepths = [
-	[1, BenchmarkType.Measurement],
-	[10, BenchmarkType.Perspective],
-	[100, BenchmarkType.Measurement],
-] as const;
+const nodeDepths = [1, 10, 100] as const;
+
+/**
+ * Numbers of characters to insert or remove in each benchmark.
+ */
+const charCounts = [1, 10, 100] as const;
 
 describe.only("TextDomain integration benchmarks", () => {
 	configureBenchmarkHooks();
@@ -88,55 +89,59 @@ describe.only("TextDomain integration benchmarks", () => {
 			currentTestOps.length = 0;
 		});
 
-		describe("Insert character", () => {
-			for (const [depth, benchmarkType] of nodeDepths) {
-				benchmarkCustom({
-					only: false,
-					type: benchmarkType,
-					title: `insert 1 character into empty string at depth ${depth}`,
-					run: async (reporter) => {
-						const tree = createConnectedTree();
-						registerOpListener(tree, currentTestOps);
-						const view = tree.viewWith(viewConfig);
-						view.initialize(makeDeepTextTree(depth, ""));
-						currentTestOps.length = 0; // discard initialization ops
+		describe("Insert characters", () => {
+			for (const depth of nodeDepths) {
+				for (const charCount of charCounts) {
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title: `insert ${charCount} character(s) into empty string at depth ${depth}`,
+						run: async (reporter) => {
+							const tree = createConnectedTree();
+							registerOpListener(tree, currentTestOps);
+							const view = tree.viewWith(viewConfig);
+							view.initialize(makeDeepTextTree(depth, ""));
+							currentTestOps.length = 0; // discard initialization ops
 
-						const textNode = getLeafTextNode(view.root);
-						textNode.insertAt(0, "a");
+							const textNode = getLeafTextNode(view.root);
+							textNode.insertAt(0, "a".repeat(charCount));
 
-						assert.equal(textNode.characterCount(), 1);
-						const opStats = getOperationsStats(currentTestOps);
-						for (const key of Object.keys(opStats)) {
-							reporter.addMeasurement(key, opStats[key]);
-						}
-					},
-				});
+							assert.equal(textNode.characterCount(), charCount);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
+					});
+				}
 			}
 		});
 
-		describe("Remove character", () => {
-			for (const [depth, benchmarkType] of nodeDepths) {
-				benchmarkCustom({
-					only: false,
-					type: benchmarkType,
-					title: `remove 1 character from string of 1000 characters at depth ${depth}`,
-					run: async (reporter) => {
-						const tree = createConnectedTree();
-						registerOpListener(tree, currentTestOps);
-						const view = tree.viewWith(viewConfig);
-						view.initialize(makeDeepTextTree(depth, "a".repeat(1000)));
-						currentTestOps.length = 0; // discard initialization ops
+		describe("Remove characters", () => {
+			for (const depth of nodeDepths) {
+				for (const charCount of charCounts) {
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title: `remove ${charCount} character(s) from string of 1000 characters at depth ${depth}`,
+						run: async (reporter) => {
+							const tree = createConnectedTree();
+							registerOpListener(tree, currentTestOps);
+							const view = tree.viewWith(viewConfig);
+							view.initialize(makeDeepTextTree(depth, "a".repeat(1000)));
+							currentTestOps.length = 0; // discard initialization ops
 
-						const textNode = getLeafTextNode(view.root);
-						textNode.removeRange(0, 1);
+							const textNode = getLeafTextNode(view.root);
+							textNode.removeRange(0, charCount);
 
-						assert.equal(textNode.characterCount(), 999);
-						const opStats = getOperationsStats(currentTestOps);
-						for (const key of Object.keys(opStats)) {
-							reporter.addMeasurement(key, opStats[key]);
-						}
-					},
-				});
+							assert.equal(textNode.characterCount(), 1000 - charCount);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
+					});
+				}
 			}
 		});
 	});
