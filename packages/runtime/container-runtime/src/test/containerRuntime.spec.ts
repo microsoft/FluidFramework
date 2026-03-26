@@ -113,6 +113,16 @@ type ContainerRuntime_WithPrivates = Patch<
 	{ flush: (resubmitInfo?: BatchResubmitInfo) => void; channelCollection: ChannelCollection }
 >;
 
+function getOutboxMainBatchMessageCount(runtime: ContainerRuntime_WithPrivates): number {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+	return (runtime as any).outbox.mainBatchMessageCount as number;
+}
+
+function getStagingModeAutoFlushThreshold(runtime: ContainerRuntime_WithPrivates): number {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+	return (runtime as any).stagingModeAutoFlushThreshold as number;
+}
+
 const testDataStoreMessage = {
 	type: "op",
 	content: { address: "test-address", contents: "test-contents" },
@@ -4429,8 +4439,7 @@ describe("Runtime", () => {
 						"No ops should be submitted while under threshold in staging mode",
 					);
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						5,
 						"All 5 ops should be in the outbox",
 					);
@@ -4467,8 +4476,7 @@ describe("Runtime", () => {
 					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
 					assert.equal(submittedOps.length, 0, "Under threshold, no flush yet");
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						2,
 						"2 ops in outbox",
 					);
@@ -4485,8 +4493,7 @@ describe("Runtime", () => {
 						"Ops should not be submitted to wire while in staging mode",
 					);
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						0,
 						"Outbox should be empty after threshold flush",
 					);
@@ -4512,8 +4519,7 @@ describe("Runtime", () => {
 					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
 					assert.equal(submittedOps.length, 0, "No ops submitted yet");
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						2,
 						"2 ops in outbox",
 					);
@@ -4539,8 +4545,7 @@ describe("Runtime", () => {
 						"Ops should not be submitted to wire while in staging mode",
 					);
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						0,
 						"Outbox should be empty after incoming op flush",
 					);
@@ -4608,8 +4613,7 @@ describe("Runtime", () => {
 						"Default threshold should suppress turn-based flushing during staging mode",
 					);
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						2,
 						"Both ops should still be in the outbox (unflushed)",
 					);
@@ -4637,8 +4641,7 @@ describe("Runtime", () => {
 						"META2",
 					);
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						2,
 						"2 ops in outbox before discard",
 					);
@@ -4647,8 +4650,7 @@ describe("Runtime", () => {
 
 					// Outbox should have been drained before rollback
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						0,
 						"Outbox should be empty after discard",
 					);
@@ -4686,8 +4688,7 @@ describe("Runtime", () => {
 					})) as unknown as ContainerRuntime_WithPrivates;
 
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).stagingModeAutoFlushThreshold,
+						getStagingModeAutoFlushThreshold(runtimeWithThreshold),
 						configThreshold,
 						"Config override threshold (5) should win over runtime option (50)",
 					);
@@ -4698,8 +4699,7 @@ describe("Runtime", () => {
 					runtimeWithThreshold = await createRuntimeWithThreshold(runtimeOptionThreshold);
 
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).stagingModeAutoFlushThreshold,
+						getStagingModeAutoFlushThreshold(runtimeWithThreshold),
 						runtimeOptionThreshold,
 						"Runtime option (5) should win over default (1000)",
 					);
@@ -4715,8 +4715,7 @@ describe("Runtime", () => {
 					submitDataStoreOp(runtimeWithThreshold, "1", genTestDataStoreMessage("op1"));
 					submitDataStoreOp(runtimeWithThreshold, "2", genTestDataStoreMessage("op2"));
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						2,
 						"2 ops in outbox",
 					);
@@ -4735,8 +4734,7 @@ describe("Runtime", () => {
 
 					assert.equal(submittedOps.length, 0, "No ops sent to wire during staging mode");
 					assert.equal(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(runtimeWithThreshold as any).outbox.mainBatchMessageCount,
+						getOutboxMainBatchMessageCount(runtimeWithThreshold),
 						0,
 						"Outbox should be empty — non-runtime op should break the batch",
 					);
@@ -4861,8 +4859,7 @@ describe("Runtime", () => {
 				submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
 				submitDataStoreOp(runtime, "2", genTestDataStoreMessage("op2"));
 				assert.equal(
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(runtime as any).outbox.mainBatchMessageCount,
+					getOutboxMainBatchMessageCount(runtime),
 					2,
 					"2 ops in outbox before disconnect",
 				);
@@ -4874,8 +4871,7 @@ describe("Runtime", () => {
 				changeConnectionState(runtime, true, mockClientId);
 
 				assert.equal(
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(runtime as any).outbox.mainBatchMessageCount,
+					getOutboxMainBatchMessageCount(runtime),
 					0,
 					"Outbox should be drained after reconnect",
 				);

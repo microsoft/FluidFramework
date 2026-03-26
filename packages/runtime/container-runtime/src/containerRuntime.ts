@@ -3666,13 +3666,18 @@ export class ContainerRuntime
 						// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
 						this.submitIdAllocationOpIfNeeded({ staged: false });
 						const batchInfos = discardOrCommit();
+						const autoFlushThreshold = this.stagingModeAutoFlushThreshold;
+						let batchesAtOrOverThreshold = 0;
+						for (const batchInfo of batchInfos) {
+							if (batchInfo.length >= autoFlushThreshold) {
+								batchesAtOrOverThreshold++;
+							}
+						}
 						event.reportProgress({
 							details: {
-								autoFlushThreshold: this.stagingModeAutoFlushThreshold,
+								autoFlushThreshold,
 								batches: batchInfos.length,
-								batchesAtOrOverThreshold: batchInfos.filter(
-									(b) => b.length >= this.stagingModeAutoFlushThreshold,
-								).length,
+								batchesAtOrOverThreshold,
 							},
 						});
 						this.channelCollection.notifyStagingMode(false);
