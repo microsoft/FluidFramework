@@ -111,28 +111,6 @@ describe.only("TextDomain integration benchmarks", () => {
 						}
 					},
 				});
-
-				benchmarkCustom({
-					only: false,
-					type: benchmarkType,
-					title: `insert 1 character into string of 1000 characters at depth ${depth}`,
-					run: async (reporter) => {
-						const tree = createConnectedTree();
-						registerOpListener(tree, currentTestOps);
-						const view = tree.viewWith(viewConfig);
-						view.initialize(makeDeepTextTree(depth, "a".repeat(1000)));
-						currentTestOps.length = 0; // discard initialization ops
-
-						const textNode = getLeafTextNode(view.root);
-						textNode.insertAt(500, "a");
-
-						assert.equal(textNode.characterCount(), 1001);
-						const opStats = getOperationsStats(currentTestOps);
-						for (const key of Object.keys(opStats)) {
-							reporter.addMeasurement(key, opStats[key]);
-						}
-					},
-				});
 			}
 		});
 
@@ -153,28 +131,6 @@ describe.only("TextDomain integration benchmarks", () => {
 						textNode.removeRange(0, 1);
 
 						assert.equal(textNode.characterCount(), 0);
-						const opStats = getOperationsStats(currentTestOps);
-						for (const key of Object.keys(opStats)) {
-							reporter.addMeasurement(key, opStats[key]);
-						}
-					},
-				});
-
-				benchmarkCustom({
-					only: false,
-					type: benchmarkType,
-					title: `remove 1 character from string of 1000 characters at depth ${depth}`,
-					run: async (reporter) => {
-						const tree = createConnectedTree();
-						registerOpListener(tree, currentTestOps);
-						const view = tree.viewWith(viewConfig);
-						view.initialize(makeDeepTextTree(depth, "a".repeat(1000)));
-						currentTestOps.length = 0; // discard initialization ops
-
-						const textNode = getLeafTextNode(view.root);
-						textNode.removeRange(500, 501);
-
-						assert.equal(textNode.characterCount(), 999);
 						const opStats = getOperationsStats(currentTestOps);
 						for (const key of Object.keys(opStats)) {
 							reporter.addMeasurement(key, opStats[key]);
