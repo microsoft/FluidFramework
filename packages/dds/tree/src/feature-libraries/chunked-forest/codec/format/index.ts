@@ -24,4 +24,8 @@ export {
 	type EncodedFieldBatchV1AndV2,
 	type EncodedChunkShapeV1OrV2,
 } from "./versions.js";
-export type { ShapeIndex, EncodedFieldBatchGeneric } from "./formatGeneric.js";
+export type {
+	ShapeIndex,
+	IdentifierOrIndex,
+	EncodedFieldBatchGeneric,
+} from "./formatGeneric.js";

@@ -31,9 +31,10 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
-import type {
-	ChunkReferenceId,
-	IncrementalDecoder,
+import {
+	fieldBatchCodecBuilder,
+	type ChunkReferenceId,
+	type IncrementalDecoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
@@ -44,10 +45,6 @@ import {
 	SpecialField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
-import {
-	validVersions,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format/versions.js";
 import {
 	emptyChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -101,7 +98,9 @@ describe("chunkDecoding", () => {
 	describe("decode", () => {
 		// Smoke test for top level decode function.
 		// All real functionality should be tested in more specific tests.
-		for (const version of validVersions) {
+		for (const version of fieldBatchCodecBuilder.registry.map(
+			(entry) => entry.formatVersion,
+		)) {
 			describe(`FieldBatchFormatVersion ${version}`, () => {
 				it("minimal", () => {
 					const result = decode(

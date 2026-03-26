@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	EncodedFieldBatchV1OrV2,
 	EncodedFieldBatchV1AndV2,
-	type EncodedFieldBatchV2,
-	type EncodedFieldBatchV1,
+	EncodedFieldBatchV2,
+	EncodedFieldBatchV1,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../../feature-libraries/chunked-forest/codec/format/versions.js";
 import { allowUnused } from "../../../../../simple-tree/index.js";

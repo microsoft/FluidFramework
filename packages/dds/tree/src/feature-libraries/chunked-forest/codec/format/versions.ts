@@ -31,8 +31,6 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 });
 export type FieldBatchFormatVersion = Values<typeof FieldBatchFormatVersion>;
 
-export const validVersions = new Set([...Object.values(FieldBatchFormatVersion)]);
-
 export type EncodedFieldBatchV1 = Static<typeof EncodedFieldBatchV1>;
 export const EncodedFieldBatchV1 = EncodedFieldBatchGeneric(
 	FieldBatchFormatVersion.v1,

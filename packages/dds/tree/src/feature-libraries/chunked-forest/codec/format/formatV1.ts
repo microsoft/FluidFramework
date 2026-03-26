@@ -40,13 +40,6 @@ export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 export const EncodedAnyShape = Type.Literal(0);
 
 /**
- * Encoded content is a {@link ChunkReferenceId}.
- * This represents the shape of a chunk that is encoded separately and is referenced by its {@link ChunkReferenceId}.
- */
-export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
-export const EncodedIncrementalChunkShape = Type.Literal(0);
-
-/**
  * Content of the encoded field is specified by the Shape referenced by the ShapeIndex.
  * This is a tuple for conciseness.
  */

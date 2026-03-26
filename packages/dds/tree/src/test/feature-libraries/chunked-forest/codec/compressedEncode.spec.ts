@@ -62,10 +62,6 @@ import {
 	FieldBatchFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
-import {
-	validVersions,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format/versions.js";
 import type {
 	ChunkReferenceId,
 	IncrementalDecoder,
@@ -87,6 +83,7 @@ import {
 	defaultIncrementalEncodingPolicy,
 	fieldKinds,
 	jsonableTreeFromFieldCursor,
+	fieldBatchCodecBuilder,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
@@ -144,7 +141,7 @@ const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion
 describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
-	for (const version of validVersions) {
+	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
 		describe(`schemaless test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-compressed-schemaless/V${version}`);
 			for (const [name, jsonable] of schemalessTestTrees) {
