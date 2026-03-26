@@ -21,8 +21,7 @@ import { createElement } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, type EntryPoint } from "./container/index.js";
-import { renderCursorPresence } from "./cursor.js";
+import { DiceRollerContainerRuntimeFactory, type IDiceRoller } from "./container/index.js";
 import { DiceRollerView } from "./view.js";
 
 const service = getSpecifiedServiceFromWebpack();
@@ -68,7 +67,7 @@ if (location.hash.length === 0) {
 		id = container.resolvedUrl.id;
 	}
 } else {
-	id = location.hash.substring(1);
+	id = location.hash.slice(1);
 	container = await loadExistingContainer({
 		request: await createLoadExistingRequest(id),
 		urlResolver,
@@ -77,16 +76,24 @@ if (location.hash.length === 0) {
 	});
 }
 
-const { diceRoller, presence } = (await container.getEntryPoint()) as EntryPoint;
+const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 
 // Render view
-const appDiv = document.getElementById("app") as HTMLDivElement;
+const appDiv = document.createElement("div");
+document.body.append(appDiv);
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(DiceRollerView, { diceRoller }));
-
-const cursorContentDiv = document.getElementById("cursor-position") as HTMLDivElement;
-renderCursorPresence(presence, cursorContentDiv);
 
 // Update url and tab title
 location.hash = id;
 document.title = id;
+
+// For testing purposes, we expose a way to load an additional instance of the container in the same page
+globalThis.loadAdditionalContainer = async () => {
+	return loadExistingContainer({
+		request: await createLoadExistingRequest(id),
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
+};

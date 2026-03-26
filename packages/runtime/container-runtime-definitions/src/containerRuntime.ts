@@ -150,6 +150,15 @@ export interface ISummarizerEvents extends IEvent {
 			props: { reason: SummarizerStopReason } & ISummarizerObservabilityProps,
 		) => void,
 	);
+	(
+		event: "summarizeTimeout",
+		listener: (
+			props: {
+				timeoutCount: number;
+				currentSummarizeStep: string;
+			} & ISummarizerObservabilityProps,
+		) => void,
+	);
 }
 
 /**

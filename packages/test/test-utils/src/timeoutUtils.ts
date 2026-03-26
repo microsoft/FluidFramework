@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
+// Warning: this module has load side effect of patching Mocha's timeout handling.
+// See globalThis.getMochaModule use below.
+
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+// Note that "@types/mocha" is only a devDependency of this package.
+// None of the mocha types are exposed through exports and thus it's reasonable
+// to leave mocha as a devDependency only. Further, the underlying code is only
+// used when @fluid-internal/mocha-test-setup is used and that package dictates
+// a mocha version.
 import type * as Mocha from "mocha";
 
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
@@ -19,31 +27,31 @@ class TestTimeout {
 	private deferred: Deferred<void> = new Deferred<void>();
 
 	private static instance: TestTimeout = new TestTimeout();
-	public static updateOnYield(runnable: Mocha.Runnable) {
+	public static updateOnYield(runnable: Mocha.Runnable): void {
 		TestTimeout.instance.clearTimer();
 		TestTimeout.instance.resetTimer(runnable);
 	}
 
-	public static reset() {
+	public static reset(): void {
 		TestTimeout.instance.clearTimer();
 		TestTimeout.instance = new TestTimeout();
 	}
 
-	public static getInstance() {
+	public static getInstance(): TestTimeout {
 		return TestTimeout.instance;
 	}
 
-	public async getPromise() {
+	public async getPromise(): Promise<void> {
 		return this.deferred.promise;
 	}
 
-	public getTimeout() {
+	public getTimeout(): number | undefined {
 		return this.timeout;
 	}
 
 	private constructor() {}
 
-	private resetTimer(runnable: Mocha.Runnable) {
+	private resetTimer(runnable: Mocha.Runnable): void {
 		assert(!this.timer, "clearTimer should have been called before reset");
 		assert(!this.deferred.isCompleted, "can't reset a completed TestTimeout");
 
@@ -61,7 +69,7 @@ class TestTimeout {
 			this.deferred.reject(this);
 		}, this.timeout);
 	}
-	private clearTimer() {
+	private clearTimer(): void {
 		if (this.timer) {
 			this.deferred = new Deferred();
 			clearTimeout(this.timer);
@@ -220,14 +228,14 @@ async function getTimeoutPromise<T = void>(
 	) => void,
 	timeoutOptions: TimeoutWithError | TimeoutWithValue<T>,
 	err: Error | undefined,
-) {
+): Promise<T> {
 	const timeout = timeoutOptions.durationMs ?? 0;
 	if (timeout <= 0 || !Number.isFinite(timeout)) {
 		return new Promise(executor);
 	}
 
 	return new Promise<T>((resolve, reject) => {
-		const timeoutRejections = () => {
+		const timeoutRejections = (): void => {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const errorObject = err!;
 			errorObject.message = `${errorObject.message} (${timeout}ms)`;

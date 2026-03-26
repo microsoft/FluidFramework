@@ -10,7 +10,7 @@ import { IDiceRoller } from "../dataObject.js";
  * @param diceRoller - The Data Object to be rendered
  * @param div - The div to render into
  */
-export function jsRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function jsRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement): void {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "center";
 	div.append(wrapperDiv);
@@ -31,7 +31,7 @@ export function jsRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement)
 	wrapperDiv.append(titleDiv, diceCharDiv, rollButton);
 
 	// Get the current value of the shared data to update the view whenever it changes.
-	const updateDiceChar = () => {
+	const updateDiceChar = (): void => {
 		// Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
 		diceCharDiv.textContent = String.fromCodePoint(0x267f + diceRoller.value);
 		diceCharDiv.style.color = `hsl(${diceRoller.value * 60}, 70%, 50%)`;

@@ -20,14 +20,13 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 	overrides: NestedOverrides<T>,
 ): T {
 	return new Proxy(obj, {
-		get: (target: T, property: string, r) => {
+		get: (target: T, property: string, r): any => {
 			const override = overrides[property as keyof T];
 			// check if the current property has an override
 			if (override) {
 				// check if the override is a function, which means it is factory
 				// in which case we called the factory to generate the property
 				if (typeof override === "function") {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					return override(target);
 				}
 
@@ -40,7 +39,7 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 				// call it, so whatever it returns can have
 				// the nested overrides applied to it
 				if (typeof real === "function") {
-					return (...args: any) => {
+					return (...args: any): any => {
 						const res = real.bind(target)(...args);
 						// unwrap promises to keep typing simple
 						if (isPromiseLike(res)) {
@@ -48,7 +47,6 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 							return res.then((v: any) => wrapObjectAndOverride(v, override));
 						}
 
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 						return wrapObjectAndOverride(res, override);
 					};
 				}

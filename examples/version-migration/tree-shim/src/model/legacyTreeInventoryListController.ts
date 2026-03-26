@@ -33,13 +33,13 @@ export class LegacyTreeInventoryItem
 	extends TypedEmitter<IInventoryItemEvents>
 	implements IInventoryItem
 {
-	public get id() {
+	public get id(): string {
 		return this._id;
 	}
-	public get name() {
+	public get name(): string {
 		return this._name;
 	}
-	public get quantity() {
+	public get quantity(): number {
 		return this._quantity;
 	}
 	public set quantity(newQuantity: number) {
@@ -53,7 +53,7 @@ export class LegacyTreeInventoryItem
 	 * available to the view.  Instead it is to be called by the backing data when the true value
 	 * of the data changes.
 	 */
-	public handleQuantityUpdate(newQuantity: number) {
+	public handleQuantityUpdate(newQuantity: number): void {
 		this._quantity = newQuantity;
 		this.emit("quantityChanged");
 	}
@@ -197,7 +197,7 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 		}
 	}
 
-	public readonly addItem = (name: string, quantity: number) => {
+	public readonly addItem = (name: string, quantity: number): void => {
 		const addedNode: BuildNode = {
 			definition: "inventoryItem",
 			traits: {
@@ -258,11 +258,11 @@ export class LegacyTreeInventoryListController extends EventEmitter implements I
 		const quantityNode = this._tree.currentView.getViewNode(quantityNodeId);
 		const quantity = quantityNode.payload as number;
 
-		const setQuantity = (newQuantity: number) => {
+		const setQuantity = (newQuantity: number): void => {
 			this._tree.applyEdit(Change.setPayload(quantityNodeId, newQuantity));
 		};
 
-		const deleteItem = () => {
+		const deleteItem = (): void => {
 			this._tree.applyEdit(Change.delete(StableRange.only(inventoryItemNode.identifier)));
 		};
 

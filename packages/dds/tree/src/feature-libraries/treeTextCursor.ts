@@ -94,13 +94,13 @@ export const adapter: CursorAdapter<JsonableTree> = {
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 	assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
 	const node: JsonableTree =
-		cursor.value !== undefined
+		cursor.value === undefined
 			? {
 					type: cursor.type,
-					value: cursor.value,
 				}
 			: {
 					type: cursor.type,
+					value: cursor.value,
 				};
 
 	// Normalize object by only including fields that are required.

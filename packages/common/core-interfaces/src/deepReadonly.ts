@@ -16,6 +16,7 @@ import type {
  * @privateRemarks
  * WeakRef should be added when lib is updated to ES2021 or later.
  *
+ * @beta
  * @system
  */
 export type DeepReadonlySupportedGenericsDefault =

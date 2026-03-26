@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import React, { useEffect, useRef, useState } from "react";
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
@@ -14,13 +14,13 @@ export interface IInventoryItemViewProps {
 	disabled?: boolean;
 }
 
-export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
+export const InventoryItemView: FC<IInventoryItemViewProps> = (
 	props: IInventoryItemViewProps,
 ) => {
 	const { inventoryItem, deleteItem, disabled } = props;
 	const quantityRef = useRef<HTMLInputElement>(null);
 	useEffect(() => {
-		const updateFromRemoteQuantity = () => {
+		const updateFromRemoteQuantity = (): void => {
 			if (quantityRef.current !== null) {
 				quantityRef.current.value = inventoryItem.quantity.toString();
 			}
@@ -32,8 +32,8 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
 		};
 	}, [inventoryItem]);
 
-	const inputHandler = (e) => {
-		const newValue = parseInt(e.target.value, 10);
+	const inputHandler = (e: FormEvent<HTMLInputElement>): void => {
+		const newValue = parseInt(e.currentTarget.value, 10);
 		inventoryItem.quantity = newValue;
 	};
 
@@ -68,12 +68,12 @@ interface IAddItemViewProps {
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
-const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
+const AddItemView: FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 	const { addItem } = props;
 	const nameRef = useRef<HTMLInputElement>(null);
 	const quantityRef = useRef<HTMLInputElement>(null);
 
-	const onAddItemButtonClick = () => {
+	const onAddItemButtonClick = (): void => {
 		if (nameRef.current === null || quantityRef.current === null) {
 			throw new Error("Couldn't get the new item info");
 		}
@@ -115,7 +115,7 @@ export interface IInventoryListViewProps {
 	disabled?: boolean;
 }
 
-export const InventoryListView: React.FC<IInventoryListViewProps> = (
+export const InventoryListView: FC<IInventoryListViewProps> = (
 	props: IInventoryListViewProps,
 ) => {
 	const { inventoryList, disabled } = props;
@@ -124,7 +124,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (
 		inventoryList.getItems(),
 	);
 	useEffect(() => {
-		const updateItems = () => {
+		const updateItems = (): void => {
 			setInventoryItems(inventoryList.getItems());
 		};
 		inventoryList.on("itemAdded", updateItems);
@@ -137,7 +137,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (
 	}, [inventoryList]);
 
 	const inventoryItemViews = inventoryItems.map((inventoryItem) => {
-		const deleteItem = () => inventoryList.deleteItem(inventoryItem.id);
+		const deleteItem = (): void => inventoryList.deleteItem(inventoryItem.id);
 		return (
 			<InventoryItemView
 				key={inventoryItem.id}

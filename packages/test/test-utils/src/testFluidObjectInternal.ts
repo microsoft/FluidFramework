@@ -35,7 +35,7 @@ import type {
  * @internal
  */
 export class TestFluidObjectInternal implements IFluidLoadable {
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
 
@@ -94,8 +94,8 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 			: create404Response(request);
 	}
 
-	public async initialize(existing: boolean) {
-		const doInitialization = async () => {
+	public async initialize(existing: boolean): Promise<void> {
+		const doInitialization = async (): Promise<void> => {
 			if (!existing) {
 				for (const [key, sharedObjectFactory] of this.initialSharedObjectsFactories) {
 					const channel = this.runtime.createChannel(key, sharedObjectFactory.type);

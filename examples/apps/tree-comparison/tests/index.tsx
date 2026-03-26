@@ -5,14 +5,14 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "../src/model/index.js";
 import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "../src/view/index.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -24,7 +24,9 @@ const updateTabForId = (id: string) => {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
 		new StaticCodeLoader(new InventoryListContainerRuntimeFactory()),
 	);
@@ -48,14 +50,14 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const render = (model: IInventoryListAppModel) => {
+	const render = (model: IInventoryListAppModel): void => {
 		ReactDOM.unmountComponentAtNode(appDiv);
-		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+		ReactDOM.render(createElement(InventoryListAppView, { model }), appDiv);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		ReactDOM.unmountComponentAtNode(debugDiv);
 		ReactDOM.render(
-			React.createElement(DebugView, {
+			createElement(DebugView, {
 				model,
 			}),
 			debugDiv,
@@ -77,7 +79,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup() {
+async function setup(): Promise<void> {
 	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
 	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");

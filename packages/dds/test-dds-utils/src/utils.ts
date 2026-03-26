@@ -32,7 +32,7 @@ export function reconnectAndSquash(
 	): (() => void) => {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		const originalReSubmit = runtime.reSubmit;
-		runtime.reSubmit = (content: unknown, localOpMetadata: unknown, squash?: boolean) =>
+		runtime.reSubmit = (content: unknown, localOpMetadata: unknown, squash: boolean) =>
 			originalReSubmit.call(runtime, content, localOpMetadata, options.squash);
 		return () => {
 			runtime.reSubmit = originalReSubmit;

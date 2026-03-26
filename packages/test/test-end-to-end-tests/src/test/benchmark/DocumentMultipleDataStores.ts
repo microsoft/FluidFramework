@@ -20,13 +20,18 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import {
+	type ISharedDirectory,
+	type ISharedMap,
+	SharedMap,
+} from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -51,11 +56,11 @@ const featureGates = {
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
 class TestDataObject extends DataObject {
-	public get _root() {
+	public get _root(): ISharedDirectory {
 		return this.root;
 	}
 
-	public get _context() {
+	public get _context(): IFluidDataStoreContext {
 		return this.context;
 	}
 
@@ -65,7 +70,7 @@ class TestDataObject extends DataObject {
 	private readonly sharedStringKey = "sharedString";
 	public sharedString!: SharedString;
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const sharedMap = SharedMap.create(this.runtime);
 		this.root.set(this.mapKey, sharedMap.handle);
 
@@ -73,7 +78,7 @@ class TestDataObject extends DataObject {
 		this.root.set(this.sharedStringKey, sharedString.handle);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 		assert(mapHandle !== undefined, "SharedMap not found");
 		this.map = await mapHandle.get();
@@ -100,7 +105,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	private readonly numberDataStoreCounts: number;
 	private readonly dsCountsPerIteration: number;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
-	public get dataObjectFactory() {
+	public get dataObjectFactory(): DataObjectFactory<TestDataObject> {
 		return this._dataObjectFactory;
 	}
 	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
@@ -114,7 +119,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	}
 
 	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
-		const resolveIfActive = (res: () => void) => {
+		const resolveIfActive = (res: () => void): void => {
 			if (container.deltaManager.active) {
 				res();
 			}
@@ -129,7 +134,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		}
 	}
 
-	private async createDataStores() {
+	private async createDataStores(): Promise<void> {
 		assert(
 			this._mainContainer !== undefined,
 			"Container should be initialized before creating data stores",
@@ -154,7 +159,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		}
 	}
 
-	private async waitForContainerSave(c: IContainer) {
+	private async waitForContainerSave(c: IContainer): Promise<void> {
 		if (!c.isDirty) {
 			return;
 		}

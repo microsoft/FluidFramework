@@ -16,8 +16,8 @@ import {
 	readStream,
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
-import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
 import type { IncrementalDecoder } from "./codecs.js";
+import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.

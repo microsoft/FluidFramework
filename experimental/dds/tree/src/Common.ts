@@ -5,6 +5,8 @@
 
 import { ITelemetryBaseEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+// eslint-disable-next-line import-x/no-internal-modules
+import { diffAgainst } from '@tylerbu/sorted-btree-es6/extended/diffAgainst';
 
 const defaultFailMessage = 'Assertion failed';
 
@@ -354,6 +356,8 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 }
 
 /**
+ * Returns an object indicating that iteration should break due to finding a difference.
+ *
  * @example
  *
  * ```typescript
@@ -375,8 +379,12 @@ function breakOnDifference(): { break: boolean } {
  * Helper that returns whether two b-trees are equal.
  * Accelerated when large portions of the tree are shared between the two.
  */
-export function compareBtrees<K, V>(treeA: BTree<K, V>, treeB: BTree<K, V>, compare: (valA: V, valB: V) => boolean) {
-	const diff = treeA.diffAgainst(treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
+export function compareBtrees<K, V>(
+	treeA: BTree<K, V>,
+	treeB: BTree<K, V>,
+	compare: (valA: V, valB: V) => boolean
+): boolean {
+	const diff = diffAgainst(treeA, treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
 		if (!compare(valA, valB)) {
 			return { break: true };
 		}
@@ -502,9 +510,8 @@ export type RecursiveMutable<T> = {
 };
 
 /** Type that produces a writeable map from a readonly map. */
-export type MutableMap<T extends ReadonlyMap<unknown, unknown>> = T extends ReadonlyMap<infer K, infer V>
-	? Map<K, V>
-	: never;
+export type MutableMap<T extends ReadonlyMap<unknown, unknown>> =
+	T extends ReadonlyMap<infer K, infer V> ? Map<K, V> : never;
 
 /** Type that includes the property K: V on T */
 export type With<T, K extends keyof never, V> = T & { [key in K]: V };

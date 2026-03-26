@@ -31,6 +31,7 @@ import sinon from "sinon";
 import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
+	LegacyTypeAwareRegistry,
 	type ISharedObjectRegistry,
 } from "../dataStoreRuntime.js";
 
@@ -249,7 +250,10 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 	const ack = ({
 		local,
 		messageCount,
-	}: { local: boolean; messageCount: number }): IRuntimeMessageCollection => ({
+	}: {
+		local: boolean;
+		messageCount: number;
+	}): IRuntimeMessageCollection => ({
 		envelope: {
 			type: "other", // allows us to test top-level logic of runtime.processMessages without actually providing a legit message
 		} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
@@ -318,7 +322,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		// Resubmit the op (simulating reconnect). Should still be dirty
-		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined, false);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -350,7 +354,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		// Resubmit the op (simulating reconnect). Should be clean since resubmit didn't result in a new op
-		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined, false);
 		assert.strictEqual(
 			runtime.isDirty,
 			false,
@@ -372,7 +376,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after attach op");
 
 		// Resubmit same attach op
-		runtime.reSubmit(DataStoreMessageType.Attach, attachMessage, undefined);
+		runtime.reSubmit(DataStoreMessageType.Attach, attachMessage, undefined, false);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -435,6 +439,102 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
+	});
+});
+
+describe("LegacyTypeAwareRegistry", () => {
+	/**
+	 * Returns a simple registry backed by a plain-object map.
+	 * Each value is used as the `type` property on the returned stub factory,
+	 * which is sufficient for asserting which factory was found.
+	 */
+	function makeBaseRegistry(entries: Record<string, string>): ISharedObjectRegistry {
+		return {
+			get(name) {
+				const type = entries[name];
+				if (type === undefined) return undefined;
+				return {
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: () => {
+						throw new Error("not implemented");
+					},
+					load: async () => {
+						throw new Error("not implemented");
+					},
+				};
+			},
+		};
+	}
+
+	// The expected decoded value of legacyTypeUrlPrefix.
+	const prefix = "https://graph.microsoft.com/types/";
+
+	it("returns factory when name matches directly", () => {
+		const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+		assert.strictEqual(r.get("map")?.type, "map");
+	});
+
+	it("returns undefined for a completely unknown name", () => {
+		const r = new LegacyTypeAwareRegistry(makeBaseRegistry({}));
+		assert.strictEqual(r.get("unknownType"), undefined);
+	});
+
+	describe("back-compat: old URL in document, new short name in registry", () => {
+		it("strips the URL prefix and finds the factory by path segment", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get(`${prefix}map`)?.type, "map");
+		});
+
+		it("returns undefined when the path segment is also unregistered", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ other: "other" }));
+			assert.strictEqual(r.get(`${prefix}unknown`), undefined);
+		});
+
+		it("works for a multi-word path segment (e.g. consensus-queue)", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ "consensus-queue": "cq" }));
+			assert.strictEqual(r.get(`${prefix}consensus-queue`)?.type, "cq");
+		});
+	});
+
+	describe("temporary compat: new short name in document, old URL in registry", () => {
+		it("prepends the URL prefix and finds the factory", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ [`${prefix}map`]: "map-url" }));
+			assert.strictEqual(r.get("map")?.type, "map-url");
+		});
+
+		it("returns undefined when neither the short name nor the prefixed form is registered", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ other: "other" }));
+			assert.strictEqual(r.get("unknownType"), undefined);
+		});
+	});
+
+	describe("reverse-proxy compat: mangled graph.microsoft URL in document", () => {
+		it("extracts the final path segment and finds the factory by short name", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(
+				r.get("https://graph.microsoft.proxy.contoso.com/types/map")?.type,
+				"map",
+			);
+		});
+
+		it("extracts the final path segment and finds the factory by legacy URL", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ [`${prefix}map`]: "map-url" }));
+			assert.strictEqual(
+				r.get("https://graph.microsoft.proxy.contoso.com/types/map")?.type,
+				"map-url",
+			);
+		});
+
+		it("returns undefined for a URL that does not contain 'graph.microsoft'", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get("https://otherdds.contoso.com/types/map"), undefined);
+		});
+
+		it("returns undefined for a URL whose final path segment is empty", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get("https://graph.microsoft.proxy.contoso.com/"), undefined);
+		});
 	});
 });
 

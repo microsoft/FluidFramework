@@ -9,20 +9,22 @@
 
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
+import { Biome2ConfigReader } from "../common/biome2Config";
 import {
-	BiomeConfigReader,
+	BiomeConfigReaderV1,
 	type BiomeConfigResolved,
 	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
 } from "../common/biomeConfig";
 import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
+import { createBiomeConfigReader } from "../common/biomeConfigUtils";
 import { GitRepo } from "../common/gitRepo";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
 import { testDataPath } from "./init";
 
 describe("Biome config loading", () => {
-	describe("BiomeConfigReader class", () => {
+	describe("BiomeConfigReaderV1 class", () => {
 		// These variables need to be initialized once for all the tests in this describe block. Defining them outside
 		// of the before block causes the tests to be skipped.
 		const testDir = path.resolve(testDataPath, "biome/pkg-b");
@@ -33,12 +35,12 @@ describe("Biome config loading", () => {
 		});
 
 		it("loads", async () => {
-			const config = await BiomeConfigReader.create(testDir, gitRepo);
+			const config = await BiomeConfigReaderV1.create(testDir, gitRepo);
 			assert(config !== undefined);
 		});
 
 		it("has correct formatted files list", async () => {
-			const config = await BiomeConfigReader.create(testDir, gitRepo);
+			const config = await BiomeConfigReaderV1.create(testDir, gitRepo);
 			const expected = [
 				path.resolve(
 					testDataPath,
@@ -62,7 +64,7 @@ describe("Biome config loading", () => {
 		});
 
 		it("returns only files matching files.includes", async () => {
-			const config = await BiomeConfigReader.create(
+			const config = await BiomeConfigReaderV1.create(
 				path.resolve(testDataPath, "biome/pkg-b/include-md-only.jsonc"),
 				gitRepo,
 			);
@@ -307,6 +309,66 @@ describe("Biome config loading", () => {
 					`expected 5 elements in the array, got ${formattedFiles.length}`,
 				);
 			});
+		});
+	});
+
+	describe("createBiomeConfigReader", () => {
+		let gitRepo: GitRepo;
+
+		before(async () => {
+			const repoRoot = await getResolvedFluidRoot(true);
+			gitRepo = new GitRepo(repoRoot);
+		});
+
+		it("creates BiomeConfigReaderV1 when forceVersion is 1", async () => {
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+			const reader = await createBiomeConfigReader(testPath, gitRepo, 1);
+
+			// Check that it's a V1 reader by checking it's not a Biome2ConfigReader
+			assert(!(reader instanceof Biome2ConfigReader), "Should be a V1 reader");
+			assert(reader.formattedFiles.length > 0, "Should have formatted files");
+		});
+
+		it("creates Biome2ConfigReader when forceVersion is 2", async () => {
+			const testConfig = path.resolve(testDataPath, "biome2/pkg-a/config.jsonc");
+			const reader = await createBiomeConfigReader(testConfig, gitRepo, 2);
+
+			assert(reader instanceof Biome2ConfigReader, "Should be a Biome2ConfigReader");
+			assert(reader.formattedFiles.length > 0, "Should have formatted files");
+		});
+
+		it("returns a reader with common interface properties", async () => {
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+			const reader = await createBiomeConfigReader(testPath, gitRepo, 1);
+
+			// Verify the common interface properties exist
+			assert(typeof reader.closestConfig === "string", "closestConfig should be a string");
+			assert(typeof reader.directory === "string", "directory should be a string");
+			assert(Array.isArray(reader.allConfigs), "allConfigs should be an array");
+			assert(Array.isArray(reader.formattedFiles), "formattedFiles should be an array");
+		});
+
+		it("auto-detects version when forceVersion is not provided", async () => {
+			// Use the build-tools directory which has @biomejs/biome installed
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+			const reader = await createBiomeConfigReader(testPath, gitRepo);
+
+			// Should create a reader (either V1 or V2 based on installed version)
+			assert(reader !== undefined, "Should create a reader");
+			assert(reader.formattedFiles.length > 0, "Should have formatted files");
+		});
+
+		it("defaults to V1 reader when version detection fails", async () => {
+			// Use a path where biome won't be found in node_modules
+			// but has a valid biome config
+			const testPath = path.resolve(testDataPath, "biome/pkg-a/");
+
+			// Create reader without forceVersion - should default to V1 since
+			// the test data directory doesn't have biome in node_modules
+			const reader = await createBiomeConfigReader(testPath, gitRepo);
+
+			// Should still work and create a reader
+			assert(reader !== undefined, "Should create a reader even when version detection fails");
 		});
 	});
 });

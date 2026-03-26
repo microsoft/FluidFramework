@@ -21,7 +21,14 @@ import type {
 } from "@fluidframework/tree/internal";
 
 import { Empty001, Empty020, largeUnion } from "../largeExport.js";
-import { BadArraySelf, GoodArraySelf, RecursiveMap, RecursiveRecord } from "../testExports.js";
+import {
+	BadArraySelf,
+	GoodArraySelf,
+	RecursiveMap,
+	RecursiveRecord,
+	Square,
+	SquareSubclassable,
+} from "../testExports.js";
 
 describe("import tests", () => {
 	it("recursive record", () => {
@@ -184,5 +191,27 @@ describe("import tests", () => {
 			// eslint-disable-next-line unicorn/no-null
 			x: new Empty020({ x: new Empty001({ x: null }) }),
 		});
+	});
+
+	it("erased", () => {
+		const schema = new SchemaFactory("com.example");
+
+		class Container extends schema.object("ObjectNode", { x: Square }) {}
+
+		const config = new TreeViewConfiguration({
+			schema: Container,
+			enableSchemaValidation: true,
+		});
+
+		const node = new Container({
+			x: Square.create(42),
+		});
+
+		class SquareSubclass extends SquareSubclassable {
+			public selected: boolean = false;
+		}
+
+		const square: SquareSubclass = SquareSubclass.create(10);
+		assert.equal(square.selected, false);
 	});
 });

@@ -443,7 +443,7 @@ export class SessionIdNormalizer<TRangeObject> {
 					return finalRangesA === finalRangesB;
 				}
 
-				const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>) => {
+				const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>): boolean => {
 					const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
 					const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
 					return (

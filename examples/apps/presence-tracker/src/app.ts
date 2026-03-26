@@ -11,9 +11,9 @@ import {
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
-import { EmptyDOEntry } from "./datastoreFactory.js";
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
+import { EmptyDOEntry } from "./datastoreFactory.js";
 import { initializeReactions } from "./reactions.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 

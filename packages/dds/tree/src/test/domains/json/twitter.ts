@@ -9,13 +9,14 @@ import {
 	makeRandom,
 } from "@fluid-private/stochastic-test-utils";
 
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+
 import {
 	createAlphabetFromUnicodeRange,
 	getRandomEnglishString,
 	getRandomNumberString,
 	getSizeInBytes,
 } from "./jsonGeneratorUtils.js";
-import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 // This file contains logic to generate a JSON file that is statistically similar to the well-known
 // json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
@@ -252,7 +253,7 @@ export function generateTwitterJsonByByteSize(
  * @param includeUnicode - true to include unicode in any strings within the json
  * @returns TwitterJson
  */
-export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) {
+export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1): Twitter {
 	const random = makeRandom(seed);
 	const textFieldMarkovChain = new SpaceEfficientWordMarkovChain(
 		random,
@@ -376,12 +377,12 @@ function generateTwitterStatus(
 	if (shouldAddInReplyToStatusId) {
 		const inReplyToStatusId = getRandomNumberString(random, 18, 18);
 		status.in_reply_to_status_id =
-			inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
+			inReplyToStatusId === null ? null : Number(inReplyToStatusId);
 		status.in_reply_to_status_id_str = inReplyToStatusId ?? null;
 	}
 	if (shouldAddInReplyToUserIdAndScreenName) {
 		const inReplyToUserId = getRandomNumberString(random, 10, 10);
-		status.in_reply_to_user_id = inReplyToUserId !== null ? Number(inReplyToUserId) : null;
+		status.in_reply_to_user_id = inReplyToUserId === null ? null : Number(inReplyToUserId);
 		status.in_reply_to_user_id_str = inReplyToUserId ?? null;
 		status.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
 	}
@@ -560,8 +561,8 @@ function getBasicJapaneseAlphabetString() {
 function getRandomDateString(random = makeRandom(), start: Date, end: Date) {
 	const dateS = new Date(random.integer(+start, +end)).toString();
 	return (
-		`${dateS.substring(0, 10)} ${dateS.substring(16, 24)} ` +
-		`${dateS.substring(28, 33)} ${dateS.substring(11, 15)}`
+		`${dateS.slice(0, 10)} ${dateS.slice(16, 24)} ` +
+		`${dateS.slice(28, 33)} ${dateS.slice(11, 15)}`
 	);
 }
 
@@ -570,7 +571,7 @@ function getRandomDateString(random = makeRandom(), start: Date, end: Date) {
 // unicode-range-for-japanese#:~:text=To%20summarize%20the%20ranges%3A,Katakana%20(%2030a0%20%2D%2030ff)
 // or more direct source:
 // http://www.localizingjapan.com/blog/2012/01/20/regular-expressions-for-japanese-text/
-export function isJapanese(ch: string) {
+export function isJapanese(ch: string): boolean {
 	// Japanese Hiragana
 	return (
 		(ch >= "\u3041" && ch <= "\u3096") ||
@@ -591,7 +592,7 @@ export function isJapanese(ch: string) {
 	);
 }
 
-export function isAlphaLatin(ch: string) {
+export function isAlphaLatin(ch: string): boolean {
 	// range 1: ABCDEFGHIJKLMNOPQRSTUVWXYZ
 	return (
 		(ch >= "\u0041" && ch <= "\u005A") ||
@@ -600,7 +601,7 @@ export function isAlphaLatin(ch: string) {
 	);
 }
 
-export function isSymbol(ch: string) {
+export function isSymbol(ch: string): boolean {
 	// range 1: !"#$%&'()*+,-./
 	return (
 		(ch >= "\u0021" && ch <= "\u002F") ||
@@ -609,11 +610,11 @@ export function isSymbol(ch: string) {
 	);
 }
 
-export function isEscapeChar(ch: string) {
+export function isEscapeChar(ch: string): boolean {
 	return (ch >= "\u0080" && ch <= "\u00A0") || (ch >= "\u0000" && ch <= "\u0010");
 }
 
-export function isJapaneseSymbolOrPunctuation(ch: string) {
+export function isJapaneseSymbolOrPunctuation(ch: string): boolean {
 	return ch >= "\u3000" && ch <= "\u303F";
 }
 
@@ -633,12 +634,12 @@ export function isJapaneseSymbolOrPunctuation(ch: string) {
  * 2b. If the characters are alpha latin, escapes or line breaks we will count it as part of a word,
  * adding each next chars until we get to either a Japanese character or a space.
  */
-export function parseSentencesIntoWords(inputSentences: string[]) {
+export function parseSentencesIntoWords(inputSentences: string[]): string[][] {
 	const outputSentences: string[][] = [];
-	inputSentences.forEach((inputSentence) => {
+	for (const inputSentence of inputSentences) {
 		const sentenceWords: string[] = [];
 		const spaceSeparatedWords: string[] = inputSentence.split(" ");
-		spaceSeparatedWords.forEach((potentialWord) => {
+		for (const potentialWord of spaceSeparatedWords) {
 			const innerWords: string[] = [];
 			let previousChar: string | undefined;
 			let currentWord = "";
@@ -671,11 +672,13 @@ export function parseSentencesIntoWords(inputSentences: string[]) {
 			if (currentWord.length > 0) {
 				innerWords.push(currentWord);
 			}
-			innerWords.forEach((word) => sentenceWords.push(word));
-		});
+			for (const word of innerWords) {
+				sentenceWords.push(word);
+			}
+		}
 
 		outputSentences.push(sentenceWords);
-	});
+	}
 
 	return outputSentences;
 }

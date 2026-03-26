@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ReleaseGroupDefinition, matchesReleaseGroupDefinition } from "./config.js";
+import { matchesReleaseGroupDefinition, type ReleaseGroupDefinition } from "./config.js";
 import type {
 	IPackage,
 	IReleaseGroup,

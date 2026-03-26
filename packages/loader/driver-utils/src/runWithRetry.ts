@@ -6,7 +6,11 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	isFluidError,
+	wrapError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -41,10 +45,12 @@ export interface IProgress {
 	 * as well as information provided by service (like 429 error asking to wait for some time before retry)
 	 * @param error - error object returned from the call.
 	 */
-	onRetry?(delayInMs: number, error: any): void;
+	onRetry?(delayInMs: number, error: unknown): void;
 }
 
 /**
+ * Runs the provided API call with automatic retry logic.
+ *
  * @internal
  */
 export async function runWithRetry<T>(
@@ -52,6 +58,7 @@ export async function runWithRetry<T>(
 	fetchCallName: string,
 	logger: ITelemetryLoggerExt,
 	progress: IProgress,
+	maxRetries?: number,
 ): Promise<T> {
 	let result: T | undefined;
 	let success = false;
@@ -59,14 +66,14 @@ export async function runWithRetry<T>(
 	let retryAfterMs = 500; // has to be positive!
 	let numRetries = 0;
 	const startTime = performanceNow();
-	let lastError: any;
+	let lastError: unknown;
 	do {
 		try {
 			result = await api(progress.cancel);
 			success = true;
-		} catch (err) {
+		} catch (error) {
 			// If it is not retriable, then just throw the error.
-			if (!canRetryOnError(err)) {
+			if (!canRetryOnError(error)) {
 				logger.sendTelemetryEvent(
 					{
 						eventName: `${fetchCallName}_cancel`,
@@ -74,21 +81,22 @@ export async function runWithRetry<T>(
 						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
-					err,
+					error,
 				);
-				throw err;
+				throw error;
 			}
 
 			if (progress.cancel?.aborted === true) {
+				const abortReason = progress.cancel.reason as string;
 				logger.sendTelemetryEvent(
 					{
 						eventName: `${fetchCallName}_runWithRetryAborted`,
 						retry: numRetries,
 						duration: performanceNow() - startTime,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						reason: abortReason,
 					},
-					err,
+					error,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
@@ -96,7 +104,7 @@ export async function runWithRetry<T>(
 					{
 						driverVersion: pkgVersion,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						reason: abortReason,
 					},
 				);
 			}
@@ -111,16 +119,45 @@ export async function runWithRetry<T>(
 						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
-					err,
+					error,
 				);
 			}
 
 			numRetries++;
-			lastError = err;
+
+			// Check if max retries limit has been reached
+			if (maxRetries !== undefined && numRetries > maxRetries) {
+				logger.sendTelemetryEvent(
+					{
+						eventName: `${fetchCallName}_maxRetriesExceeded`,
+						retry: numRetries - 1,
+						maxRetries,
+						duration: performanceNow() - startTime,
+						fetchCallName,
+					},
+					error,
+				);
+				// Wrap the original error to preserve its details while marking it non-retriable
+				throw wrapError(
+					error,
+					(message) =>
+						new NonRetryableError(
+							`runWithRetry failed after max retries: ${message}`,
+							DriverErrorTypes.genericError,
+							{
+								driverVersion: pkgVersion,
+								fetchCallName,
+								maxRetries,
+							},
+						),
+				);
+			}
+
+			lastError = error;
 			// Wait for the calculated time before retrying.
-			retryAfterMs = calculateMaxWaitTime(retryAfterMs, err);
+			retryAfterMs = calculateMaxWaitTime(retryAfterMs, error);
 			if (progress.onRetry) {
-				progress.onRetry(retryAfterMs, err);
+				progress.onRetry(retryAfterMs, error);
 			}
 			await delay(retryAfterMs);
 		}

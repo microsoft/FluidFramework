@@ -15,6 +15,8 @@ import {
 import { generateToken } from "./auth.js";
 
 /**
+ * Creates an {@link @fluidframework/core-interfaces#IRequest} for creating a new document with the local resolver.
+ *
  * @legacy @beta
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
@@ -84,7 +86,9 @@ export class LocalResolver implements IUrlResolver {
 			0x09a /* "'documentId' must be a defined, non-zero length string." */,
 		);
 
-		return `http://localhost:3000/${documentId}/${url}`;
+		return url
+			? `http://localhost:3000/${documentId}/${url}`
+			: `http://localhost:3000/${documentId}`;
 	}
 
 	public createCreateNewRequest(documentId: string): IRequest {

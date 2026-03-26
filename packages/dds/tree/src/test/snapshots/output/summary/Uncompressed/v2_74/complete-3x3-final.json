@@ -42,27 +42,33 @@
                             {
                               "schema": {
                                 "new": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.fluidframework.leaf.string": {
-                                      "leaf": 1
+                                      "kind": {
+                                        "leaf": 1
+                                      }
                                     },
                                     "test trees.Recursive Map": {
-                                      "map": {
-                                        "kind": "Optional",
-                                        "types": [
-                                          "test trees.Recursive Map",
-                                          "test trees.String Array"
-                                        ]
+                                      "kind": {
+                                        "map": {
+                                          "kind": "Optional",
+                                          "types": [
+                                            "test trees.Recursive Map",
+                                            "test trees.String Array"
+                                          ]
+                                        }
                                       }
                                     },
                                     "test trees.String Array": {
-                                      "object": {
-                                        "": {
-                                          "kind": "Sequence",
-                                          "types": [
-                                            "com.fluidframework.leaf.string"
-                                          ]
+                                      "kind": {
+                                        "object": {
+                                          "": {
+                                            "kind": "Sequence",
+                                            "types": [
+                                              "com.fluidframework.leaf.string"
+                                            ]
+                                          }
                                         }
                                       }
                                     }
@@ -76,7 +82,7 @@
                                   }
                                 },
                                 "old": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {},
                                   "root": {
                                     "kind": "Forbidden",
@@ -821,27 +827,33 @@
                             {
                               "schema": {
                                 "new": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.fluidframework.leaf.string": {
-                                      "leaf": 1
+                                      "kind": {
+                                        "leaf": 1
+                                      }
                                     },
                                     "test trees.Recursive Map": {
-                                      "map": {
-                                        "kind": "Optional",
-                                        "types": [
-                                          "test trees.Recursive Map",
-                                          "test trees.String Array"
-                                        ]
+                                      "kind": {
+                                        "map": {
+                                          "kind": "Optional",
+                                          "types": [
+                                            "test trees.Recursive Map",
+                                            "test trees.String Array"
+                                          ]
+                                        }
                                       }
                                     },
                                     "test trees.String Array": {
-                                      "object": {
-                                        "": {
-                                          "kind": "Sequence",
-                                          "types": [
-                                            "com.fluidframework.leaf.string"
-                                          ]
+                                      "kind": {
+                                        "object": {
+                                          "": {
+                                            "kind": "Sequence",
+                                            "types": [
+                                              "com.fluidframework.leaf.string"
+                                            ]
+                                          }
                                         }
                                       }
                                     }
@@ -855,27 +867,33 @@
                                   }
                                 },
                                 "old": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.fluidframework.leaf.string": {
-                                      "leaf": 1
+                                      "kind": {
+                                        "leaf": 1
+                                      }
                                     },
                                     "test trees.Recursive Map": {
-                                      "map": {
-                                        "kind": "Optional",
-                                        "types": [
-                                          "test trees.Recursive Map",
-                                          "test trees.String Array"
-                                        ]
+                                      "kind": {
+                                        "map": {
+                                          "kind": "Optional",
+                                          "types": [
+                                            "test trees.Recursive Map",
+                                            "test trees.String Array"
+                                          ]
+                                        }
                                       }
                                     },
                                     "test trees.String Array": {
-                                      "object": {
-                                        "": {
-                                          "kind": "Sequence",
-                                          "types": [
-                                            "com.fluidframework.leaf.string"
-                                          ]
+                                      "kind": {
+                                        "object": {
+                                          "": {
+                                            "kind": "Sequence",
+                                            "types": [
+                                              "com.fluidframework.leaf.string"
+                                            ]
+                                          }
                                         }
                                       }
                                     }
@@ -891,7 +909,7 @@
                               }
                             }
                           ],
-                          "revision": 3,
+                          "revision": 0,
                           "sequenceNumber": 2,
                           "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                         }
@@ -980,14 +998,14 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 2
+                      "version": 3
                     },
                     "encoding": "utf-8"
                   }
                 },
                 {
                   "type": "blob",
-                  "ForestTree": {
+                  "contents": {
                     "type": "blob",
                     "content": {
                       "keys": [
@@ -1696,7 +1714,7 @@
                           ]
                         ]
                       },
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }

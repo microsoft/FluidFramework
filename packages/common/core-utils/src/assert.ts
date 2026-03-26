@@ -36,8 +36,26 @@ export function assert(
 	debugMessageBuilder?: () => string,
 ): asserts condition {
 	if (!condition) {
-		fail(message, debugMessageBuilder);
+		failPrivate(message, debugMessageBuilder);
 	}
+}
+
+/**
+ * {@link fail}'s implementation, but extracted to avoid assert tagging trying to tag the use of it in `assert`.
+ */
+function failPrivate(message: string | number, debugMessageBuilder?: () => string): never {
+	let messageString =
+		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
+	skipInProduction(() => {
+		if (debugMessageBuilder !== undefined) {
+			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
+		}
+		// Using console.log instead of console.error or console.warn since the latter two may break downstream users.
+		console.log(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
+	});
+	const error = new Error(messageString);
+	onAssertionError(error);
+	throw error;
 }
 
 /**
@@ -57,18 +75,7 @@ export function assert(
  * @internal
  */
 export function fail(message: string | number, debugMessageBuilder?: () => string): never {
-	let messageString =
-		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
-	skipInProduction(() => {
-		if (debugMessageBuilder !== undefined) {
-			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
-		}
-		// Using console.log instead of console.error or console.warn since the latter two may break downstream users.
-		console.log(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
-	});
-	const error = new Error(messageString);
-	onAssertionError(error);
-	throw error;
+	failPrivate(message, debugMessageBuilder);
 }
 
 function onAssertionError(error: Error): void {
@@ -208,7 +215,7 @@ export function configureDebugAsserts(enabled: boolean): boolean {
  * More details on these annotations can be found at {@link  https://github.com/javascript-compiler-hints/compiler-notations-spec/tree/main}.
  * @privateRemarks
  * See {@link skipInProductionInner}.
- * @internal
+ * @alpha
  */
 export function nonProductionConditionalsIncluded(): boolean {
 	let included = false;
@@ -247,7 +254,7 @@ export function nonProductionConditionalsIncluded(): boolean {
  * The approach taken with `configureDebugAsserts` is a bit more flexible, allowing both opt in and opt out, but also more error prone.
  * This API, `emulateProductionBuild` provides a more restrictive but less error prone option targeted at being a final defense for detecting cases where production mode causes issues.
  * It catches some cases `configureDebugAsserts` can't, like dependency on side effects of failing asserts debug message callback.
- * @internal
+ * @alpha
  */
 export function emulateProductionBuild(enable = true): void {
 	emulateProductionBuildCount += enable ? 1 : -1;

@@ -81,7 +81,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Send a "disconnect" message on the socket.
 	 * @param disconnectReason - The reason of the disconnection.
 	 */
-	public disconnectClient(disconnectReason: string) {
+	public disconnectClient(disconnectReason: string): void {
 		this.socket.emit("disconnect", disconnectReason);
 	}
 
@@ -95,7 +95,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		code: number = 400,
 		type: NackErrorType = NackErrorType.ThrottlingError,
 		message: any,
-	) {
+	): void {
 		const nackMessage = {
 			operation: undefined,
 			sequenceNumber: -1,

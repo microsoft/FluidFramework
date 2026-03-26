@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { rootFieldKey } from "../../core/index.js";
-import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { TestAnchor } from "../testAnchor.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { TestAnchor } from "../testAnchor.js";
+import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
 
 const enableSchemaValidation = true;
 
@@ -266,7 +267,7 @@ describe("Repair Data", () => {
 			);
 
 			// create a fork before the creation of the repair data
-			const _ = view2.checkout.branch();
+			const _ = view2.checkout.fork();
 
 			// get an anchor on the peer to the node we're removing
 			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");

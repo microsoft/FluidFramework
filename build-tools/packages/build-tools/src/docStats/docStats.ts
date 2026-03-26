@@ -13,7 +13,7 @@ interface Record {
 	percent: number;
 }
 
-async function main() {
+async function main(): Promise<void> {
 	const dir = process.argv[2];
 	if (!dir) {
 		console.error("ERROR: Missing path argument");
@@ -29,7 +29,7 @@ async function main() {
 			}
 			let fileTotal = 0;
 			let fileDocTotal = 0;
-			const processMembers = (member: any) => {
+			const processMembers = (member: any): void => {
 				switch (member.kind) {
 					case "Package":
 					case "Class":
@@ -80,7 +80,7 @@ async function main() {
 			}
 		});
 
-	const print = (rec: Record) => {
+	const print = (rec: Record): void => {
 		console.log(
 			`${rec.name.padStart(50)}: ` +
 				`${rec.docTotal.toString().padStart(4)}/${rec.total.toString().padStart(4)} ` +
@@ -102,6 +102,7 @@ async function main() {
 	print({ name: "Total", total, docTotal, percent: (docTotal / total) * 100 });
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- This is a script entry point
 main().catch((e) => {
 	console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2));
 	if (e.stack) {

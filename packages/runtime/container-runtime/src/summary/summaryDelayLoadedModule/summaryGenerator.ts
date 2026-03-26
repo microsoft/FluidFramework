@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { ISummarizerEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { assert, type IPromiseTimer, Timer } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
+import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	isFluidError,
 	type ITelemetryLoggerExt,
@@ -40,8 +43,9 @@ const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 /**
  * This class generates and tracks a summary attempt.
  */
-export class SummaryGenerator {
+export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 	private readonly summarizeTimer: Timer;
+	private activeTelemetryContext?: TelemetryContext;
 	constructor(
 		private readonly pendingAckTimer: IPromiseTimer,
 		private readonly heuristicData: ISummarizeHeuristicData,
@@ -55,6 +59,7 @@ export class SummaryGenerator {
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
+		super();
 		this.summarizeTimer = new Timer(maxSummarizeTimeoutTime, () =>
 			this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
 		);
@@ -85,7 +90,16 @@ export class SummaryGenerator {
 		submitSummaryOptions: ISubmitSummaryOptions,
 		resultsBuilder: SummarizeResultBuilder,
 	): Promise<void> {
-		const { summaryLogger, cancellationToken, ...summarizeOptions } = submitSummaryOptions;
+		const {
+			summaryLogger,
+			cancellationToken,
+			telemetryContext = new TelemetryContext(),
+			...summarizeOptions
+		} = submitSummaryOptions;
+
+		telemetryContext.setCurrentSummarizeStep("submitSummary");
+		const submitOptions = { ...submitSummaryOptions, telemetryContext };
+		this.activeTelemetryContext = telemetryContext;
 
 		// Note: timeSinceLastAttempt and timeSinceLastSummary for the
 		// first summary are basically the time since the summarizer was loaded.
@@ -97,6 +111,8 @@ export class SummaryGenerator {
 			fullTree: summarizeOptions.fullTree ?? false,
 			timeSinceLastAttempt,
 			timeSinceLastSummary,
+			nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+			runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 		};
 
 		const summarizeEvent = PerformanceEvent.start(
@@ -115,7 +131,7 @@ export class SummaryGenerator {
 		 * For submit failures, submitFailureResult should be provided. For nack failures, nackSummaryResult should
 		 * be provided. For op broadcast failures, only errors / properties should be provided.
 		 */
-		const fail = (
+		const summaryFail = (
 			errorCode: SummarizeErrorCode,
 			error: IRetriableFailureError,
 			properties?: SummaryGeneratorTelemetry,
@@ -148,10 +164,12 @@ export class SummaryGenerator {
 		// Wait to generate and send summary
 		this.summarizeTimer.start();
 		try {
+			telemetryContext.setCurrentSummarizeStep("generateSummary");
 			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
 			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
 
-			summaryData = await this.submitSummaryCallback(submitSummaryOptions);
+			summaryData = await this.submitSummaryCallback(submitOptions);
+			telemetryContext.setCurrentSummarizeStep("submitSummaryOp");
 
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
@@ -173,7 +191,7 @@ export class SummaryGenerator {
 				const errorCode: SummarizeErrorCode = "submitSummaryFailure";
 				const retriableError =
 					summaryData.error ?? new RetriableSummaryError(getFailMessage(errorCode));
-				return fail(errorCode, retriableError, summarizeTelemetryProps, {
+				return summaryFail(errorCode, retriableError, summarizeTelemetryProps, {
 					stage: summaryData.stage,
 				});
 			}
@@ -189,6 +207,7 @@ export class SummaryGenerator {
 			 * exceed the number of ops since last summary + number of data store whose reference state changed.
 			 */
 			if (submitSummaryOptions.fullTree !== true) {
+				telemetryContext.setCurrentSummarizeStep("watchSummary");
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (
@@ -208,7 +227,7 @@ export class SummaryGenerator {
 			summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
 			resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
 		} catch (error) {
-			return fail(
+			return summaryFail(
 				"submitSummaryFailure",
 				wrapError(
 					error,
@@ -227,6 +246,8 @@ export class SummaryGenerator {
 			this.summarizeTimer.clear();
 		}
 
+		telemetryContext.setCurrentSummarizeStep("waitForSummaryAck");
+
 		try {
 			const pendingTimeoutP = this.pendingAckTimer.start();
 			const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
@@ -239,13 +260,13 @@ export class SummaryGenerator {
 			);
 			if (waitBroadcastResult.result === "cancelled") {
 				const errorCode: SummarizeErrorCode = "disconnect";
-				return fail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
+				return summaryFail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
 			}
 			if (waitBroadcastResult.result !== "done") {
 				// The summary op may not have been received within the timeout due to a transient error. So,
 				// fail with a retriable error to re-attempt the summary if possible.
 				const errorCode: SummarizeErrorCode = "summaryOpWaitTimeout";
-				return fail(
+				return summaryFail(
 					errorCode,
 					new RetriableSummaryError(getFailMessage(errorCode), 0 /* retryAfterSeconds */),
 				);
@@ -275,13 +296,13 @@ export class SummaryGenerator {
 			);
 			if (waitAckNackResult.result === "cancelled") {
 				const errorCode: SummarizeErrorCode = "disconnect";
-				return fail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
+				return summaryFail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
 			}
 			if (waitAckNackResult.result !== "done") {
 				const errorCode: SummarizeErrorCode = "summaryAckWaitTimeout";
 				// The summary ack may not have been received within the timeout due to a transient error. So,
 				// fail with a retriable error to re-attempt the summary if possible.
-				return fail(
+				return summaryFail(
 					errorCode,
 					new RetriableSummaryError(getFailMessage(errorCode), 0 /* retryAfterSeconds */),
 				);
@@ -300,6 +321,7 @@ export class SummaryGenerator {
 				...summarizeTelemetryProps,
 			};
 			if (ackNackOp.type === MessageType.SummaryAck) {
+				telemetryContext.setCurrentSummarizeStep("ackReceived");
 				this.heuristicData.markLastAttemptAsSuccessful();
 				this.successfulSummaryCallback();
 				summarizeEvent.end({
@@ -324,6 +346,7 @@ export class SummaryGenerator {
 			} else {
 				// Check for retryDelay in summaryNack response.
 				assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
+				telemetryContext.setCurrentSummarizeStep("nackReceived");
 				const summaryNack = ackNackOp.contents;
 				const errorMessage = summaryNack?.message;
 				const retryAfterSeconds = summaryNack?.retryAfter;
@@ -340,7 +363,7 @@ export class SummaryGenerator {
 					0x25f /* "retryAfterSeconds" */,
 				);
 				// This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
-				return fail(
+				return summaryFail(
 					errorCode,
 					error,
 					{ ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },
@@ -350,6 +373,7 @@ export class SummaryGenerator {
 			}
 		} finally {
 			this.pendingAckTimer.clear();
+			this.activeTelemetryContext = undefined;
 		}
 	}
 
@@ -390,8 +414,6 @@ export class SummaryGenerator {
 					clientSequenceNumber: summaryData.clientSequenceNumber,
 					hasMissingOpData: this.heuristicData.hasMissingOpData,
 					opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
-					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
-					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 				};
 			}
 
@@ -408,6 +430,13 @@ export class SummaryGenerator {
 			eventName: "SummarizeTimeout",
 			timeoutTime: time,
 			timeoutCount: count,
+			currentSummarizeStep: this.activeTelemetryContext?.getCurrentSummarizeStep(),
+		});
+		this.emit("summarizeTimeout", {
+			timeoutCount: count,
+			currentSummarizeStep: this.activeTelemetryContext?.getCurrentSummarizeStep(),
+			numUnsummarizedRuntimeOps: this.heuristicData.numRuntimeOps,
+			numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 		});
 		if (count < maxSummarizeTimeoutCount) {
 			// Double and start a new timer
@@ -420,5 +449,6 @@ export class SummaryGenerator {
 
 	public dispose(): void {
 		this.summarizeTimer.clear();
+		this.activeTelemetryContext = undefined;
 	}
 }

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	createAnnouncedVisitor,
 	CursorLocationType,
@@ -12,10 +13,11 @@ import {
 	type IEditableForest,
 	type UpPath,
 } from "../../core/index.js";
-import { TreeNode, treeNodeFromAnchor } from "../core/index.js";
-import type { TreeViewAlpha } from "./tree.js";
 import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import { TreeNode, treeNodeFromAnchor } from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
+
+import type { TreeViewAlpha } from "./tree.js";
 
 /**
  * The status of a node in a that has been {@link trackDirtyNodes | tracked for changes}.

@@ -57,6 +57,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		const id = versionId ? versionId : this.id;
 		const commits = await this.manager.getCommits(id, count);
 		return commits.map((commit) => ({
@@ -145,7 +146,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		tree: ISnapshotTreeEx,
 		loadingGroupIds: Set<string>,
 		blobContents: Map<string, ArrayBuffer>,
-	) {
+	): Promise<void> {
 		const groupId = await this.readGroupId(tree);
 		if (groupId === undefined || loadingGroupIds.has(groupId)) {
 			for (const id of Object.values(tree.blobs)) {
@@ -264,7 +265,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		);
 	}
 
-	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined) {
+	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined): void {
 		tree.blobs = {};
 		tree.groupId = groupId;
 		tree.trees = {};

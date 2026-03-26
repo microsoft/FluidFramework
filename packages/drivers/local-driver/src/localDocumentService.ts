@@ -52,7 +52,7 @@ export class LocalDocumentService
 		super();
 	}
 
-	public dispose() {}
+	public dispose(): void {}
 
 	/**
 	 * Creates and returns a document storage service for local use.

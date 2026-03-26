@@ -58,7 +58,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
+    // @deprecated
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -112,7 +112,6 @@ export class MockContainerRuntimeFactory {
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
     protected getFirstMessageToProcess(): ISequencedDocumentMessage;
-    // (undocumented)
     getMinSeq(): number;
     // (undocumented)
     protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -191,7 +190,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -376,7 +375,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
@@ -460,7 +459,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
+    // @deprecated
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)
@@ -490,7 +489,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)

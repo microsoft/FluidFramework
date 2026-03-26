@@ -5,6 +5,6 @@
 
 import { SharedTree } from "@fluid-experimental/tree";
 
-export function apisToBundle() {
+export function apisToBundle(): typeof SharedTree {
 	return SharedTree;
 }

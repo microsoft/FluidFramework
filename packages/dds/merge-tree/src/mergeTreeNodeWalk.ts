@@ -53,7 +53,6 @@ export function depthFirstNodeWalk(
 	let childCount = block.childCount;
 	let start: IMergeNode | undefined = startChild;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		// go down to the leaf level
 		let blockResult: NodeAction;

@@ -20,7 +20,7 @@ export function deltaForRootInitialization(content: TreeChunk): Root {
 	const delta: Root = {
 		build: [{ id: buildId, trees: content }],
 		fields: new Map<FieldKey, FieldChanges>([
-			[rootFieldKey, [{ count: content.topLevelLength, attach: buildId }]],
+			[rootFieldKey, { marks: [{ count: content.topLevelLength, attach: buildId }] }],
 		]),
 	};
 	return delta;

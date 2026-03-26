@@ -12,6 +12,7 @@ import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
 import { createTestDriver } from "./utils.js";
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: Add explicit return type
 const readRunOptions = () => {
 	commander
 		.version("0.0.1")
@@ -31,10 +32,6 @@ const readRunOptions = () => {
 			"Filter debug logging. If not provided, uses DEBUG env variable.",
 		)
 		.option("-v, --verbose", "Enables verbose logging")
-		.option(
-			"-b, --browserAuth",
-			"Enables browser auth which may require a user to open a url in a browser.",
-		)
 		.option("-m, --enableMetrics", "Enable capturing client & ops metrics")
 		.option(
 			"--createTestId",
@@ -51,7 +48,6 @@ const readRunOptions = () => {
 	const log: string | undefined = commander.log;
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed ?? Date.now();
-	const supportsBrowserAuth: boolean = commander.browserAuth ?? false;
 	const credFilePath: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
@@ -65,14 +61,13 @@ const readRunOptions = () => {
 		log,
 		verbose,
 		seed,
-		supportsBrowserAuth,
 		credFilePath,
 		enableMetrics,
 		createTestId,
 	};
 };
 
-const main = async () => {
+const main = async (): Promise<void> => {
 	const {
 		driver,
 		endpoint,
@@ -82,7 +77,6 @@ const main = async () => {
 		log,
 		verbose,
 		seed,
-		supportsBrowserAuth,
 		credFilePath,
 		enableMetrics,
 		createTestId,
@@ -97,7 +91,6 @@ const main = async () => {
 		endpoint,
 		seed,
 		undefined, // runId
-		supportsBrowserAuth,
 	);
 
 	const startTime = Date.now();

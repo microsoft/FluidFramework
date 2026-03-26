@@ -1,6 +1,65 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
 ## Unreleased
+
+### Native ESLint 9 Flat Config (No FlatCompat)
+
+The flat config implementation has been refactored to use native ESLint 9 flat config format, removing the dependency on `FlatCompat` from `@eslint/eslintrc`. This provides cleaner configuration and better compatibility with ESLint 9.
+
+#### Flat Config Exports
+
+The `flat.mts` module now exports four configurations:
+
+- `recommended` - The recommended configuration for most projects
+- `strict` - Stricter rules for production code
+- `minimalDeprecated` - Minimal configuration (deprecated, use recommended)
+- `strictBiome` - Strict configuration with Biome formatter compatibility
+
+#### Modular Structure
+
+The configuration is now organized into a modular structure under `library/`:
+
+- `library/constants.mts` - Shared constants (ignores, file patterns, import restrictions)
+- `library/settings.mts` - Plugin settings (import-x, jsdoc)
+- `library/rules/` - Rule definitions organized by config level (base, minimal-deprecated, recommended, strict)
+- `library/configs/` - Config builders and shared overrides
+
+### Removed Rushstack Dependencies
+
+The following packages have been removed from dependencies:
+
+- `@rushstack/eslint-patch`
+- `@rushstack/eslint-plugin-security`
+
+The `@rushstack/eslint-plugin-security` plugin has been removed from all configurations. The `patch/modern-module-resolution.js` file has also been removed as it was only needed to support the `@rushstack/eslint-patch` dependency.
 
 ### ESLint 9 Flat Config Support
 
@@ -14,6 +73,71 @@ Key features:
 - Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
 
 Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
+
+### ESLint Rule Changes
+
+**React Hooks plugin upgraded**: Upgraded from `~5.2.0` to `~7.0.1`, enabling several new React Hooks linting rules.
+
+**New react-hooks rules enabled as `"error"`**:
+
+- `react-hooks/component-hook-factories`
+- `react-hooks/config`
+- `react-hooks/error-boundaries`
+- `react-hooks/gating`
+- `react-hooks/globals`
+- `react-hooks/preserve-manual-memoization`
+- `react-hooks/purity`
+- `react-hooks/set-state-in-render`
+- `react-hooks/use-memo`
+
+**React-hooks rules temporarily downgraded to `"warn"`** (until ESLint 9 migration completes):
+
+- `react-hooks/rules-of-hooks`: Changed from `"error"` to `"warn"`
+- `react-hooks/exhaustive-deps`: Changed from `"error"` to `"warn"`
+- `react-hooks/immutability`: New rule set to `"warn"`
+- `react-hooks/incompatible-library`: New rule set to `"warn"`
+- `react-hooks/refs`: New rule set to `"warn"`
+- `react-hooks/set-state-in-effect`: New rule set to `"warn"`
+- `react-hooks/static-components`: New rule set to `"warn"`
+- `react-hooks/unsupported-syntax`: New rule set to `"warn"`
+
+**New unicorn rules** (enabled as `"error"` by default):
+
+- `unicorn/consistent-empty-array-spread`
+- `unicorn/no-anonymous-default-export`
+- `unicorn/no-await-in-promise-methods`
+- `unicorn/no-invalid-fetch-options`
+- `unicorn/no-magic-array-flat-depth`
+- `unicorn/no-negation-in-equality-check`
+- `unicorn/no-single-promise-in-promise-methods`
+- `unicorn/no-unnecessary-polyfills`
+
+**Unicorn rules disabled** (consider enabling in future):
+
+- `unicorn/import-style`: Changed from `"error"` to `"off"`
+- `unicorn/consistent-destructuring`: Changed from `"error"` to `"off"`
+- `unicorn/no-array-callback-reference`: Changed from `"error"` to `"off"`
+    - Yields false positives for calls to `map` methods on non-array types.
+
+**Unicorn rules changed to warnings** (to surface occurrences without breaking builds):
+
+- `unicorn/prefer-at`: Changed from `"off"` to `"warn"`
+- `unicorn/prefer-string-raw`: New rule set to `"warn"`
+- `unicorn/prefer-string-replace-all`: Changed from `"off"` to `"warn"`
+- `unicorn/prefer-structured-clone`: New rule set to `"warn"`
+
+#### Rule promotions
+
+**recommended -> minimal**
+
+- `@typescript-eslint/explicit-function-return-type`
+- `@typescript-eslint/no-import-type-side-effects`
+- `jsdoc/multiline-blocks`
+- `no-empty`
+
+#### Rule modifications
+
+- `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
 
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 

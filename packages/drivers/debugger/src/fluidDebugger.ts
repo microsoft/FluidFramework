@@ -39,6 +39,8 @@ export namespace FluidDebugger {
 	}
 
 	/**
+	 * Creates a document service factory wrapper that enables debugging with a debugger window.
+	 *
 	 * @legacy
 	 * @beta
 	 */
@@ -56,6 +58,6 @@ export namespace FluidDebugger {
 	 * Binds DebuggerUI & DebugReplayController together
 	 * These classes do not know each other and talk through interfaces
 	 */
-	const createFluidDebugger = () =>
+	const createFluidDebugger = (): DebugReplayController | null =>
 		DebugReplayController.create((controller) => DebuggerUI.create(controller));
 }

@@ -298,7 +298,7 @@ function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
 		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
 		compatVersion: CompatType,
-	) => {
+	): ((this: Mocha.Suite) => void) => {
 		switch (compatVersion) {
 			case "FullCompat":
 				return createCompatSuite(tests, undefined);

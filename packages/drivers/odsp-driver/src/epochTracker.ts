@@ -33,7 +33,6 @@ import {
 	normalizeError,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
 import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
@@ -140,6 +139,7 @@ export class EpochTracker implements IPersistedFileCache {
 			)) as IVersionedValueWithEpoch;
 			// Version mismatch between what the runtime expects and what it recieved.
 			// The cached value should not be used
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			if (value === undefined || value.version !== persistedCacheValueVersion) {
 				return undefined;
 			}
@@ -170,7 +170,6 @@ export class EpochTracker implements IPersistedFileCache {
 					return undefined;
 				}
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value.value;
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
@@ -295,13 +294,14 @@ export class EpochTracker implements IPersistedFileCache {
 			.catch(async (error) => {
 				// Get the server epoch from error in case we don't have it as if undefined we won't be able
 				// to mark it as epoch error.
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (epochFromResponse === undefined) {
 					epochFromResponse = (error as IOdspError).serverEpoch;
 				}
 				await this.checkForEpochError(error, epochFromResponse, fetchType);
 				throw error;
 			})
-			.catch((error) => {
+			.catch(async (error) => {
 				// If the error is about location redirection, then we need to generate new resolved url with correct
 				// location info.
 				if (
@@ -320,6 +320,9 @@ export class EpochTracker implements IPersistedFileCache {
 							{ driverVersion, redirectLocation },
 						);
 						locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
+						// Clear the cache for this file entry since the site/geo has moved.
+						// The cached snapshot was stored under the old siteUrl and is no longer valid.
+						await this.removeEntries();
 						throw locationRedirectionError;
 					}
 				}

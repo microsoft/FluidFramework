@@ -18,7 +18,7 @@ import { TableDocumentItem } from "../table.js";
 describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 	let tableDocument: TableDocument;
 
-	function makeId(type: string) {
+	function makeId(type: string): string {
 		const newId = Math.random().toString(36).substr(2);
 		return newId;
 	}
@@ -30,7 +30,7 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 		tableDocument = await getContainerEntryPointBackCompat<TableDocument>(container);
 	});
 
-	const extract = (table: TableDocument) => {
+	const extract = (table: TableDocument): TableDocumentItem[][] => {
 		const rows: TableDocumentItem[][] = [];
 		for (let r = 0; r < table.numRows; r++) {
 			const cols: TableDocumentItem[] = [];
@@ -42,7 +42,7 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 		return rows;
 	};
 
-	const expect = async (expected: readonly (readonly any[])[]) => {
+	const expect = async (expected: readonly (readonly any[])[]): Promise<void> => {
 		assert.strictEqual(tableDocument.numRows, expected.length);
 		assert.deepStrictEqual(extract(tableDocument), expected);
 
@@ -160,12 +160,10 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 				2,
 				2,
 			);
-			/* eslint-disable @typescript-eslint/no-unsafe-return */
 			assert.throws(() => slice.getCellValue(-1, 0));
 			assert.throws(() => slice.getCellValue(3, 0));
 			assert.throws(() => slice.getCellValue(0, -1));
 			assert.throws(() => slice.getCellValue(0, 3));
-			/* eslint-enable @typescript-eslint/no-unsafe-return */
 		});
 
 		it("Annotations work when proxied through table slice", async () => {

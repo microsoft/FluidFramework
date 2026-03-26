@@ -65,7 +65,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const setupContainers = async (
 		containerConfig: ITestContainerConfig,
 		featureGates: Record<string, ConfigTypes> = {},
-	) => {
+	): Promise<void> => {
 		const configWithFeatureGates = {
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
@@ -106,7 +106,9 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	};
 
-	const captureContainerCloseError = async (container: IContainer) =>
+	const captureContainerCloseError = async (
+		container: IContainer,
+	): Promise<IErrorBase | undefined> =>
 		new Promise<IErrorBase | undefined>((resolve) =>
 			container.once("closed", (error) => {
 				resolve(error);
@@ -467,7 +469,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const compressionSizeThreshold = 50 * bytesPerKB; // 50 KB;
 
-		const setup = async () => {
+		const setup = async (): Promise<void> => {
 			await setupContainers({
 				...containerConfigGroupedBatching,
 				runtimeOptions: {
@@ -572,7 +574,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		};
 
-		const sendAndAssertSynchronization = async (connection: Promise<void>) => {
+		const sendAndAssertSynchronization = async (connection: Promise<void>): Promise<void> => {
 			const largeString = generateRandomStringOfSize(messageSize);
 			setMapKeys(localMap, messagesInBatch, largeString);
 			await connection;
@@ -589,10 +591,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				container: IContainer,
 				shouldProcess: (op: ISequencedDocumentMessage) => boolean,
 				count: number,
-			) => {
+			): Promise<void> => {
 				let opsProcessed = 0;
 				return new Promise<void>((resolve) => {
-					const handler = (op) => {
+					const handler = (op): void => {
 						if (shouldProcess(op) && ++opsProcessed === count) {
 							container.disconnect();
 							container.once("connected", () => {
@@ -647,10 +649,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				container: IContainer,
 				shouldProcess: (batch: IDocumentMessage[]) => boolean,
 				count: number,
-			) => {
+			): Promise<void> => {
 				let batchesSent = 0;
 				return new Promise<void>((resolve) => {
-					const handler = (batch) => {
+					const handler = (batch): void => {
 						if (shouldProcess(batch) && ++batchesSent === count) {
 							container.disconnect();
 							container.once("connected", () => {

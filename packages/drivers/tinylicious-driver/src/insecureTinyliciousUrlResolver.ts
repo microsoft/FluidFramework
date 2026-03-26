@@ -44,6 +44,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 		let finalDocumentId: string = documentIdFromRequest;
 
 		// Special handling if the request is to create a new container
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 		if (request.headers && request.headers[DriverHeader.createNew] === true) {
 			// Use the document ID passed by the application via the create request;
 			// if none was passed, use the reserved keyword to let the driver generate the ID.
@@ -93,9 +94,37 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 /**
  * Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
+ * Detects the appropriate Tinylicious endpoint based on the environment.
+ * @returns In GitHub Codespaces, returns the forwarded port URL. Otherwise returns localhost.
+ * @remarks If using codespaces, set tinylicious (port 7070) visibility to "public" for this to work.
+ */
+function getTinyliciousEndpoint(): { endpoint: string; port: number } {
+	if (typeof window !== "undefined") {
+		// Detect GitHub Codespaces and use the forwarded port URL
+		// <codespace-name>-<fowarded-port>.<domain>
+		// e.g. my-codespace-7070.githubpreview.dev
+		// Capture Group 1: <codespace-name>
+		// Capture Group 2: <domain>
+		// reconstruct a hostname that fowards tinlicious's port via HTTPS.
+		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
+		if (match) {
+			// In Codespaces, the port is embedded in the hostname, use HTTPS port 443
+			return {
+				endpoint: `https://${match[1]}-${defaultTinyliciousPort}.${match[2]}`,
+				port: 443,
+			};
+		}
+	}
+	return { endpoint: defaultTinyliciousEndpoint, port: defaultTinyliciousPort };
+}
+
+/**
+ * Creates an insecure Tinylicious URL resolver for testing purposes.
+ * Automatically detects GitHub Codespaces and uses the appropriate endpoint.
  */
 export function createInsecureTinyliciousTestUrlResolver(): IUrlResolver {
-	return new InsecureTinyliciousUrlResolver();
+	const { endpoint, port } = getTinyliciousEndpoint();
+	return new InsecureTinyliciousUrlResolver(port, endpoint);
 }
 
 /**

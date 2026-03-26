@@ -26,6 +26,7 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
+import type { IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
@@ -36,7 +37,6 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
-import type { IncrementalEncoder } from "./codecs.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
@@ -484,10 +484,10 @@ export function encodeValue(
 	outputBuffer: BufferFormat,
 ): void {
 	if (shape === undefined) {
-		if (value !== undefined) {
-			outputBuffer.push(true, value);
-		} else {
+		if (value === undefined) {
 			outputBuffer.push(false);
+		} else {
+			outputBuffer.push(true, value);
 		}
 	} else {
 		if (shape === true) {
@@ -590,6 +590,7 @@ class LazyFieldEncoder implements FieldEncoder {
 	}
 
 	private get encoder(): FieldEncoder {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.encoderLazy === undefined) {
 			this.encoderLazy = this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
 		}

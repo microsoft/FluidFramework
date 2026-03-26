@@ -56,7 +56,7 @@ export class SnapshotStorageService
 /**
  * Removed null ids from the snapshot tree for ease of reading and comparison.
  */
-function removeNullTreeIds(tree: ITree) {
+function removeNullTreeIds(tree: ITree): void {
 	for (const node of tree.entries) {
 		if (node.type === TreeEntry.Tree) {
 			removeNullTreeIds(node.value);

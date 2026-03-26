@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IntervalType } from "@fluidframework/sequence-previous/internal";
@@ -15,7 +15,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
 import { IntervalOpType } from "../intervals/index.js";
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
@@ -27,7 +27,7 @@ const assertIntervals = (
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
-	const actual = Array.from(intervalCollection);
+	const actual = [...intervalCollection];
 	if (validateOverlapping && sharedString.getLength() > 0) {
 		const overlapping = intervalCollection.findOverlappingIntervals(
 			0,

@@ -7,11 +7,12 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
-	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
+	type Values,
 	brandConst,
 	invertMap,
+	strictEnum,
 } from "../../util/index.js";
 
 import {
@@ -33,17 +34,14 @@ import type { Multiplicity } from "./multiplicity.js";
 /**
  * The format version for the schema.
  */
-export const SchemaFormatVersion = {
+export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 	v1: 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
 	v2: 2,
-} as const;
-export type SchemaFormatVersion = Brand<
-	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
-	"SchemaFormatVersion"
->;
+});
+export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -255,7 +253,10 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	private encodeFieldsObject(
 		encodeFieldSchema: (storedFieldSchema: TreeFieldStoredSchema) => FieldSchemaFormat,
 	): Record<string, FieldSchemaFormat> {
-		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
+		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null) as Record<
+			string,
+			FieldSchemaFormat
+		>;
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
@@ -396,9 +397,9 @@ export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaF
 	const fieldSchema: FieldSchemaFormatV1 = encodeFieldSchemaV1(schema);
 
 	// Omit metadata from the output if it is undefined
-	return schema.persistedMetadata !== undefined
-		? { ...fieldSchema, metadata: schema.persistedMetadata }
-		: { ...fieldSchema };
+	return schema.persistedMetadata === undefined
+		? { ...fieldSchema }
+		: { ...fieldSchema, metadata: schema.persistedMetadata };
 }
 
 export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredSchema {

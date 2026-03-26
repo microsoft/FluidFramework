@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { IDebugViewProps, DebugView } from "./debugView.js";
-export { IInventoryListAppViewProps, InventoryListAppView } from "./appView.js";
+export { type IDebugViewProps, DebugView } from "./debugView.js";
+export { type IInventoryListAppViewProps, InventoryListAppView } from "./appView.js";

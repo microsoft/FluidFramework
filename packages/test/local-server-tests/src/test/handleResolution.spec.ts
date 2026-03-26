@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver/internal";
-import { type IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	LoaderContainerTracker,

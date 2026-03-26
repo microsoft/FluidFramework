@@ -42,10 +42,12 @@
                             {
                               "schema": {
                                 "new": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.fluidframework.leaf.number": {
-                                      "leaf": 0
+                                      "kind": {
+                                        "leaf": 0
+                                      }
                                     }
                                   },
                                   "root": {
@@ -56,7 +58,7 @@
                                   }
                                 },
                                 "old": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {},
                                   "root": {
                                     "kind": "Forbidden",
@@ -83,7 +85,7 @@
                               }
                             }
                           ],
-                          "revision": 2,
+                          "revision": 0,
                           "sequenceNumber": 2,
                           "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                         }
@@ -148,14 +150,14 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 2
+                      "version": 3
                     },
                     "encoding": "utf-8"
                   }
                 },
                 {
                   "type": "blob",
-                  "ForestTree": {
+                  "contents": {
                     "type": "blob",
                     "content": {
                       "keys": [],
@@ -174,7 +176,7 @@
                         ],
                         "data": []
                       },
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }

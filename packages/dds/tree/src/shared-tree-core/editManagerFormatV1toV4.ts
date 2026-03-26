@@ -7,6 +7,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
 
 import { SessionIdSchema } from "../core/index.js";
+
 import {
 	EditManagerFormatVersion,
 	type EncodedSummarySessionBranch,
@@ -26,7 +27,8 @@ export interface EncodedEditManager<TChangeset> {
 		| typeof EditManagerFormatVersion.v1
 		| typeof EditManagerFormatVersion.v2
 		| typeof EditManagerFormatVersion.v3
-		| typeof EditManagerFormatVersion.v4;
+		| typeof EditManagerFormatVersion.v4
+		| typeof EditManagerFormatVersion.v6;
 }
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
@@ -37,6 +39,7 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 				Type.Literal(EditManagerFormatVersion.v2),
 				Type.Literal(EditManagerFormatVersion.v3),
 				Type.Literal(EditManagerFormatVersion.v4),
+				Type.Literal(EditManagerFormatVersion.v6),
 			]),
 			trunk: Type.Array(SequencedCommit(tChange)),
 			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),

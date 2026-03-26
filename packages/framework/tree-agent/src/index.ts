@@ -12,8 +12,22 @@
 export {
 	SharedTreeSemanticAgent,
 	createContext,
+	createTreeAgent,
+	executeSemanticEditing,
 } from "./agent.js";
 export type {
+	// New API
+	TreeAgent,
+	TreeAgentChatMessage,
+	TreeAgentSystemMessage,
+	TreeAgentUserMessage,
+	TreeAgentAssistantMessage,
+	TreeAgentToolCallMessage,
+	TreeAgentToolResultMessage,
+	TreeAgentChatResponse,
+	TreeAgentOptions,
+	ExecuteSemanticEditingOptions,
+	// Existing API
 	EditResult,
 	SharedTreeChatModel,
 	SharedTreeChatQuery,
@@ -36,7 +50,6 @@ export {
 	type MethodKeys,
 	type BindableSchema,
 	type Ctor,
-	type Infer,
 	type IExposedMethods,
 } from "./methodBinding.js";
 export type {
@@ -44,9 +57,36 @@ export type {
 	PropertyDef,
 	ExposedProperties,
 	IExposedProperties,
-	ExposableKeys,
-	ReadOnlyRequirement,
-	ReadonlyKeys,
-	TypeMatchOrError,
-	IfEquals,
 } from "./propertyBinding.js";
+
+export {
+	typeFactory,
+	isTypeFactoryType,
+} from "./treeAgentTypes.js";
+
+export type {
+	TypeFactoryType,
+	TypeFactoryTypeKind,
+	TypeFactoryString,
+	TypeFactoryNumber,
+	TypeFactoryBoolean,
+	TypeFactoryDate,
+	TypeFactoryVoid,
+	TypeFactoryUndefined,
+	TypeFactoryNull,
+	TypeFactoryUnknown,
+	TypeFactoryArray,
+	TypeFactoryPromise,
+	TypeFactoryObject,
+	TypeFactoryRecord,
+	TypeFactoryMap,
+	TypeFactoryTuple,
+	TypeFactoryUnion,
+	TypeFactoryIntersection,
+	TypeFactoryLiteral,
+	TypeFactoryOptional,
+	TypeFactoryReadonly,
+	TypeFactoryFunction,
+	TypeFactoryFunctionParameter,
+	TypeFactoryInstanceOf,
+} from "./treeAgentTypes.js";

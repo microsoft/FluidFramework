@@ -34,7 +34,7 @@ function applyPairToPartial<T extends Record<string, any>>(
 	keyCount: number,
 	partials: PartialWithKeyCount<T>[],
 	pair: { iKey: keyof T; jKey: keyof T; iVal: any; jVal: any },
-) {
+): void {
 	const matchingPartials: PartialWithKeyCount<T>[] = [];
 	for (const partial of partials) {
 		// the pair exists, so nothing to do
@@ -77,6 +77,8 @@ function applyPairToPartial<T extends Record<string, any>>(
 }
 
 /**
+ * Generates test options using pairwise combinations of all property values from the options matrix.
+ *
  * @internal
  */
 export function generatePairwiseOptions<T extends Record<string, any>>(

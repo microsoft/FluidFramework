@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { describeHydration } from "../utils.js";
+import { Tree } from "../../../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
 	TreeBeta,
@@ -17,7 +18,7 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { describeHydration } from "../utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
@@ -448,7 +449,7 @@ describe("RecordNode", () => {
 					// @ts-expect-error: Intentionally setting a value of an incompatible type.
 					record.foo = new OtherRecursiveRecord({ x: 100 });
 				},
-				validateUsageError(/Invalid schema for this context/),
+				validateUsageError(/Expected insertable for/),
 			);
 		});
 

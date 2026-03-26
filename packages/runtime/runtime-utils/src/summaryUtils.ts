@@ -32,7 +32,11 @@ import type {
 	ISummarizeResult,
 	ITelemetryContextExt,
 } from "@fluidframework/runtime-definitions/internal";
-import { gcDataBlobKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
+	gcDataBlobKey,
+} from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -520,14 +524,18 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
+	 * Get the telemetry data being tracked
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
+	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
+	 * @returns undefined if item not found
 	 */
 	public get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.serialize}
+	 * Returns a serialized version of all the telemetry data.
+	 * Should be used when logging in telemetry events.
 	 */
 	public serialize(): string {
 		const jsonObject = {};
@@ -535,6 +543,14 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
 			jsonObject[key] = value;
 		}
 		return JSON.stringify(jsonObject);
+	}
+
+	public getCurrentSummarizeStep(): TelemetryEventPropertyTypeExt {
+		return this.get(currentSummarizeStepPrefix, currentSummarizeStepPropertyName);
+	}
+
+	public setCurrentSummarizeStep(value: TelemetryEventPropertyTypeExt): void {
+		this.set(currentSummarizeStepPrefix, currentSummarizeStepPropertyName, value);
 	}
 }
 

@@ -77,7 +77,7 @@ export class SummaryTreeAssembler {
 	/**
 	 * Add attachment to summary
 	 */
-	public addAttachment(id: string) {
+	public addAttachment(id: string): void {
 		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 }
@@ -108,7 +108,11 @@ export function convertSnapshotAndBlobsToSummaryTree(
 	return assembler.summary;
 }
 
-export function evalBlobsAndTrees(snapshot: INormalizedWholeSnapshot) {
+export function evalBlobsAndTrees(snapshot: INormalizedWholeSnapshot): {
+	trees: number;
+	numBlobs: number;
+	encodedBlobsSize: number;
+} {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
 	const numBlobs = snapshot.blobs.size;
 	let encodedBlobsSize = 0;
@@ -118,7 +122,7 @@ export function evalBlobsAndTrees(snapshot: INormalizedWholeSnapshot) {
 	return { trees, numBlobs, encodedBlobsSize };
 }
 
-export function validateBlobsAndTrees(snapshot: ISnapshotTree) {
+export function validateBlobsAndTrees(snapshot: ISnapshotTree): void {
 	assert(
 		snapshot.trees !== undefined,
 		0x5d0 /* Returned r11s snapshot is malformed. No trees! */,

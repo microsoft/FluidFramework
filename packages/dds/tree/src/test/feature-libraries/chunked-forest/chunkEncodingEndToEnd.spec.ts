@@ -4,10 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	type FieldKey,
@@ -29,12 +33,21 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+import type {
+	EncodedFieldBatch,
+	FieldBatchEncodingContext,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	TreeShape,
 	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -44,19 +57,30 @@ import {
 	buildChunkedForest,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	makeModularChangeCodecFamily,
 	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
 	defaultIncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
 	type ITreePrivate,
 } from "../../../shared-tree/index.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	TreeViewConfiguration,
+	toInitialSchema,
+} from "../../../simple-tree/index.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
+import { brand } from "../../../util/index.js";
+import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
@@ -65,35 +89,13 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";
-import {
-	numberSchema,
-	SchemaFactory,
-	stringSchema,
-	TreeViewConfiguration,
-	toInitialSchema,
-} from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/format.js";
-import type {
-	FieldBatchEncodingContext,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/index.js";
-import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { configuredSharedTree } from "../../../treeFactory.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const options: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
-const fieldBatchCodec = makeFieldBatchCodec(options);
+const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -165,9 +167,10 @@ describe("End to end chunked encoding", () => {
 			{ jsonValidator: FormatValidatorBasic },
 		);
 		const dummyEditor = new DefaultEditBuilder(
-			new DefaultChangeFamily(codec),
+			new DefaultChangeFamily(codec, options),
 			mintRevisionTag,
 			changeReceiver,
+			options,
 		);
 		const checkout = new MockTreeCheckout(forest, {
 			editor: dummyEditor as unknown as ISharedTreeEditor,
@@ -197,7 +200,6 @@ describe("End to end chunked encoding", () => {
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			context,
 			options,
 			idCompressor,
@@ -206,7 +208,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatV1).fields, {
+			const insertedChunk = decode((content as FormatCommon).fields as EncodedFieldBatch, {
 				idCompressor,
 				originatorId: idCompressor.localSessionId,
 			});
@@ -231,7 +233,6 @@ describe("End to end chunked encoding", () => {
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			context,
 			options,
 			idCompressor,
@@ -240,7 +241,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatV1).fields, {
+			const insertedChunk = decode((content as FormatCommon).fields as EncodedFieldBatch, {
 				idCompressor,
 				originatorId: idCompressor.localSessionId,
 			});
@@ -252,6 +253,11 @@ describe("End to end chunked encoding", () => {
 	});
 
 	describe("identifier field encoding", () => {
+		/** Shape of serialized tree content for these tests */
+		interface TreeContentFormat {
+			fields: { data: unknown[][] };
+		}
+
 		it("is encoded as compressed id when the identifier is a valid stable id.", () => {
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
@@ -260,7 +266,6 @@ describe("End to end chunked encoding", () => {
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
 				new RevisionTagCodec(testIdCompressor),
-				fieldBatchCodec,
 				encoderContext,
 				options,
 				testIdCompressor,
@@ -270,7 +275,7 @@ describe("End to end chunked encoding", () => {
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
-			const treeContent = JSON.parse(tree.content as string);
+			const treeContent = JSON.parse(tree.content as string) as TreeContentFormat;
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is compressed.
 			assert.equal(identifierValue, testIdCompressor.recompress(id));
@@ -288,7 +293,6 @@ describe("End to end chunked encoding", () => {
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
 				new RevisionTagCodec(testIdCompressor),
-				fieldBatchCodec,
 				encoderContext,
 				options,
 				testIdCompressor,
@@ -298,7 +302,7 @@ describe("End to end chunked encoding", () => {
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
-			const treeContent = JSON.parse(tree.content as string);
+			const treeContent = JSON.parse(tree.content as string) as TreeContentFormat;
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is the original uncompressed id.
 			assert.equal(identifierValue, id);
@@ -311,7 +315,6 @@ describe("End to end chunked encoding", () => {
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
 				new RevisionTagCodec(testIdCompressor),
-				fieldBatchCodec,
 				encoderContext,
 				options,
 				testIdCompressor,
@@ -321,7 +324,7 @@ describe("End to end chunked encoding", () => {
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
-			const treeContent = JSON.parse(tree.content as string);
+			const treeContent = JSON.parse(tree.content as string) as TreeContentFormat;
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is the original uncompressed id.
 			assert.equal(identifierValue, id);

@@ -471,9 +471,10 @@ export function checkChangeList(manager: TestEditManager, intentions: number[]):
 }
 
 export function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-	return manager
-		.getTrunkChanges("main")
-		.concat(manager.getLocalCommits("main").map((c) => c.change));
+	return [
+		...manager.getTrunkChanges("main"),
+		...manager.getLocalCommits("main").map((c) => c.change),
+	];
 }
 
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */

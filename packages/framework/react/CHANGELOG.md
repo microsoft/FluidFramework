@@ -1,5 +1,38 @@
 # @fluidframework/react
 
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+### Minor Changes
+
+- @fluidframework/react no longer supports CommonJS ([#26575](https://github.com/microsoft/FluidFramework/pull/26575)) [995c1e44aad](https://github.com/microsoft/FluidFramework/commit/995c1e44aad7368e4e59ac4ff3a7237280506cde)
+
+  CommonJS support has been removed from `@fluidframework/react`.
+  This package currently only has alpha APIs, so this opportunity was taken to simplify and modernize it while we still can.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
 ## 2.73.0
 
 Dependency updates only.

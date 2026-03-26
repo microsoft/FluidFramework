@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { shortCodeMap } from "./assertionShortCodesMap.js";
 
 /**

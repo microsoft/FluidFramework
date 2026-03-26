@@ -32,7 +32,7 @@ export type {
 	IPendingMessagesState,
 	PackagePath,
 } from "./dataStoreContext.js";
-export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
+export { FlushMode, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 export { IFluidDataStoreFactory } from "./dataStoreFactory.js";
 export type {
@@ -88,6 +88,8 @@ export {
 	blobCountPropertyName,
 	channelsTreeName,
 	CreateSummarizerNodeSource,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
 	totalBlobSizePropertyName,
 } from "./summary.js";
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";

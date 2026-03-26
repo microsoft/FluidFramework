@@ -46,7 +46,7 @@ import {
 	printStatus,
 } from "./utils.js";
 
-async function main() {
+async function main(): Promise<void> {
 	const parseIntArg = (value: any): number => {
 		if (isNaN(parseInt(value, 10))) {
 			throw new commander.InvalidArgumentError("Not a number.");
@@ -179,7 +179,12 @@ async function main() {
 	}
 }
 
-function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T) {
+function* factoryPermutations<T extends IDocumentServiceFactory>(
+	create: () => T,
+): Generator<{
+	documentServiceFactory: T;
+	headers: IRequestHeader;
+}> {
 	let counter = 0;
 	const factoryReused = create();
 
@@ -237,7 +242,6 @@ async function runnerProcess(
 		endpoint,
 		seed,
 		runConfig.runId,
-		false, // supportsBrowserAuth
 	);
 
 	// Cycle between creating new factory vs. reusing factory.
@@ -391,8 +395,8 @@ function scheduleFaultInjection(
 	runConfig: IRunConfig,
 	faultInjectionMinMs: number,
 	faultInjectionMaxMs: number,
-) {
-	const schedule = () => {
+): void {
+	const schedule = (): void => {
 		const { random } = runConfig;
 		const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs);
 		printStatus(
@@ -446,7 +450,7 @@ function scheduleContainerClose(
 	runConfig: IRunConfig,
 	faultInjectionMinMs: number,
 	faultInjectionMaxMs: number,
-) {
+): void {
 	new Promise<void>((resolve) => {
 		// wait for the container to connect write
 		container.once("closed", () => resolve());
@@ -461,7 +465,7 @@ function scheduleContainerClose(
 				return;
 			}
 			const quorum = container.getQuorum();
-			const scheduleLeave = () => {
+			const scheduleLeave = (): void => {
 				const clientId = container.clientId;
 				if (clientId !== undefined && quorum.getMembers().has(clientId)) {
 					// calculate the clients quorum position
@@ -578,11 +582,11 @@ async function setupOpsMetrics(
 	logger: ITelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
-) {
+): Promise<() => void> {
 	// Use map to cache userName instead of recomputing.
 	const clientIdUserNameMap: { [clientId: string]: string } = {};
 
-	const getUserName = (userContainer: IContainer) => {
+	const getUserName = (userContainer: IContainer): string | undefined => {
 		const clientId = userContainer.clientId;
 		if (clientId !== undefined && clientId.length > 0) {
 			const maybeUserName = clientIdUserNameMap[clientId];
@@ -632,7 +636,7 @@ async function setupOpsMetrics(
 	});
 
 	let t: NodeJS.Timeout | undefined;
-	const sendMetrics = () => {
+	const sendMetrics = (): void => {
 		if (submittedOps > 0) {
 			logger.send({
 				category: "metric",

@@ -116,6 +116,11 @@ appData.initialize(
 );
 ```
 
+:::warning
+Initialization can be complicated and it's easy to introduce race conditions.
+See the [Recommended Init Flow](../data-structures/tree/recommended-init-flow.mdx) guide for the recommended pattern to safely initialize SharedTree.
+:::
+
 ## Reading Data From Your Tree
 
 Data can be read from the tree using the `root` property of the `TreeView` that you obtained through the `viewWith` method.

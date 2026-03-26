@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
 	EmptyKey,
@@ -20,10 +21,7 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "../../feature-libraries/index.js";
-import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
-
 import { JsonAsTree } from "../../jsonDomainSchema.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	booleanSchema,
 	nullSchema,
@@ -31,6 +29,7 @@ import {
 	stringSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/leafNodeSchema.js";
+import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
@@ -41,13 +40,16 @@ const adapter: CursorAdapter<JsonCompatible> = {
 		const type = typeof node;
 
 		switch (type) {
-			case "number":
+			case "number": {
 				return brand(numberSchema.identifier);
-			case "string":
+			}
+			case "string": {
 				return brand(stringSchema.identifier);
-			case "boolean":
+			}
+			case "boolean": {
 				return brand(booleanSchema.identifier);
-			default:
+			}
+			default: {
 				if (node === null) {
 					return brand(nullSchema.identifier);
 				} else if (isReadonlyArray(node)) {
@@ -55,11 +57,12 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				} else {
 					return brand(JsonAsTree.JsonObject.identifier);
 				}
+			}
 		}
 	},
 	keysFromNode: (node: JsonCompatible): readonly FieldKey[] => {
 		switch (typeof node) {
-			case "object":
+			case "object": {
 				if (node === null) {
 					return [];
 				} else if (isReadonlyArray(node)) {
@@ -67,8 +70,10 @@ const adapter: CursorAdapter<JsonCompatible> = {
 				} else {
 					return Object.keys(node) as FieldKey[];
 				}
-			default:
+			}
+			default: {
 				return [];
+			}
 		}
 	},
 	getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
@@ -129,10 +134,11 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 	switch (type) {
 		case numberSchema.identifier:
 		case booleanSchema.identifier:
-		case stringSchema.identifier:
+		case stringSchema.identifier: {
 			assert(reader.value !== undefined, 0x84f /* out of schema: missing value */);
 			assert(!isFluidHandle(reader.value), 0x850 /* out of schema: unexpected FluidHandle */);
 			return reader.value;
+		}
 		case JsonAsTree.Array.identifier: {
 			reader.enterField(EmptyKey);
 			const result = mapCursorField(reader, cursorToJsonObject);

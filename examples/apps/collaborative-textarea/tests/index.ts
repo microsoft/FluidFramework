@@ -4,7 +4,7 @@
  */
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import {
@@ -17,7 +17,7 @@ import { CollaborativeTextView } from "../src/view";
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLElement) {
+async function createContainerAndRenderInElement(element: HTMLElement): Promise<void> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<ICollaborativeTextAppModel>(
 		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
 	);
@@ -43,7 +43,7 @@ async function createContainerAndRenderInElement(element: HTMLElement) {
 
 	// Render it
 	ReactDOM.render(
-		React.createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
+		createElement(CollaborativeTextView, { text: model.collaborativeText.text }),
 		element,
 	);
 
@@ -55,7 +55,7 @@ async function createContainerAndRenderInElement(element: HTMLElement) {
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup() {
+async function setup(): Promise<void> {
 	const leftElement = document.getElementById("sbs-left");
 	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");

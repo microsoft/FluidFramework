@@ -494,6 +494,7 @@ export class TaskManagerClass
 			}
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		const checkIfRolledBack = (eventTaskId: string): void => {
@@ -503,6 +504,7 @@ export class TaskManagerClass
 
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		setupListeners();
@@ -695,10 +697,7 @@ export class TaskManagerClass
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -904,6 +903,7 @@ export class TaskManagerClass
 		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
 		const pendingOpToRollback = latestPendingOps.pop();
 		assert(
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
 			0xc47 /* pending op mismatch */,
 		);

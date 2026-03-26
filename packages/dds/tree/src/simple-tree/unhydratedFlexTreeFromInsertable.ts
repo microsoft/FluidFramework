@@ -4,12 +4,11 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { filterIterable, hasSingle, oneFromIterable } from "../util/index.js";
 
-import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 import {
 	CompatibilityLevel,
 	getKernel,
@@ -22,6 +21,7 @@ import {
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
+import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 
 /**
  * Transforms an input {@link TypedNode} tree to an {@link UnhydratedFlexTreeNode}.
@@ -58,7 +58,9 @@ export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent |
 	if (data === undefined) {
 		// TODO: this code-path should support defaults
 		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
-			throw new UsageError("Got undefined for non-optional field.");
+			throw new UsageError(
+				`Got undefined for non-optional field expecting one of ${quotedAllowedTypesWithNames(normalizedFieldSchema.allowedTypeSet)}`,
+			);
 		}
 		return undefined as TIn extends undefined ? undefined : UnhydratedFlexTreeNode;
 	}
@@ -69,6 +71,47 @@ export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent |
 	);
 
 	return flexTree as TIn extends undefined ? undefined : UnhydratedFlexTreeNode;
+}
+
+/**
+ * Throw a usage error with a helpful message about `schema` not being in `allowedTypes` for insertable content.
+ */
+function allowedTypesInsertableSchemaError(
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	schema: TreeNodeSchema,
+): never {
+	debugAssert(
+		() =>
+			!allowedTypes.has(schema) ||
+			"This function should only be called if the schema is not in the allowed types.",
+	);
+	const map = new Map([...allowedTypes].map((s) => [s.identifier, s]));
+	const expected = map.get(schema.identifier);
+	if (expected !== undefined) {
+		throw new UsageError(
+			`A node with schema ${quotedSchemaIdentifierWithName(schema)} was provided where a node with that identifier is allowed, but the actual schema required (${quotedSchemaIdentifierWithName(expected)}) is not the same schema object.
+TreeNodeSchema have significant object identity and thus the exact same object must be used as the schema when defining what nodes are allowed and when constructing the node to use.`,
+		);
+	}
+	throw new UsageError(
+		`Expected insertable for one of ${quotedAllowedTypesWithNames(allowedTypes)}. Got node with schema ${quotedSchemaIdentifierWithName(schema)}.
+Nodes are valid insertable objects, but only if their schema are in the allowed list.`,
+	);
+}
+
+/**
+ * Gets a description of a schema for use in error messages.
+ */
+function quotedSchemaIdentifierWithName(schema: TreeNodeSchema): string {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+	return `${JSON.stringify(schema.identifier)} (name: ${JSON.stringify((schema as Function).name)})`;
+}
+
+/**
+ * Gets a description of an allowedTypes for use in error messages.
+ */
+function quotedAllowedTypesWithNames(allowedTypes: Iterable<TreeNodeSchema>): string {
+	return `[${[...allowedTypes].map(quotedSchemaIdentifierWithName).join(", ")}]`;
 }
 
 /**
@@ -83,10 +126,12 @@ export function unhydratedFlexTreeFromInsertableNode(
 		const inner = kernel.getInnerNodeIfUnhydrated();
 		if (inner === undefined) {
 			// The node is already hydrated, meaning that it already got inserted into the tree previously
-			throw new UsageError("A node may not be inserted into the tree more than once");
+			throw new UsageError(
+				`A node with schema ${quotedSchemaIdentifierWithName(kernel.schema)} was inserted into the tree more than once. This is not supported.`,
+			);
 		} else {
 			if (!allowedTypes.has(kernel.schema)) {
-				throw new UsageError("Invalid schema for this context.");
+				allowedTypesInsertableSchemaError(allowedTypes, kernel.schema);
 			}
 			return inner;
 		}
@@ -112,17 +157,13 @@ function getType(
 	const possibleTypes = getPossibleTypes(allowedTypes, data);
 	if (possibleTypes.length === 0) {
 		throw new UsageError(
-			`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ${JSON.stringify(
-				[...allowedTypes].map((schema) => schema.identifier),
-			)}.`,
+			`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ${quotedAllowedTypesWithNames(allowedTypes)}.`,
 		);
 	}
 	if (!hasSingle(possibleTypes)) {
 		throw new UsageError(
 			`The provided data is compatible with more than one type allowed by the schema.
-The set of possible types is ${JSON.stringify([
-				...possibleTypes.map((schema) => schema.identifier),
-			])}.
+The set of possible types is ${quotedAllowedTypesWithNames(possibleTypes)}.
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 		);

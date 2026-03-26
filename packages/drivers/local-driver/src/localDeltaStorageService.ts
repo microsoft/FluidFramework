@@ -31,7 +31,7 @@ export class LocalDeltaStorageService implements IDocumentDeltaStorageService {
 		return streamFromMessages(this.getCore(from, to));
 	}
 
-	private async getCore(from: number, to?: number) {
+	private async getCore(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
 		const query = { documentId: this.id, tenantId: this.tenantId };
 		query["operation.sequenceNumber"] = {};
 		query["operation.sequenceNumber"].$gt = from - 1; // from is inclusive

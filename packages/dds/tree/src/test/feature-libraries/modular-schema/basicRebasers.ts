@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type TUnsafe, Type } from "@sinclair/typebox";
 
-import { makeCodecFamily } from "../../../codec/index.js";
+import type { TUnsafe } from "@sinclair/typebox";
+
+import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {
 	makeDetachedNodeId,
 	Multiplicity,
@@ -21,7 +22,11 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { brandConst, type Mutable } from "../../../util/index.js";
+import {
+	brandConst,
+	JsonCompatibleReadOnlySchema,
+	type Mutable,
+} from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -85,10 +90,13 @@ export type ValueChangeset = ReplaceOp<number>;
 
 export const valueHandler = {
 	rebaser: replaceRebaser(),
-	codecsFactory: () =>
-		makeCodecFamily([
-			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
-		]),
+	codecsFactory: () => {
+		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
+			// As this is just a test rebaser, it is acceptable to not use a proper schema, and thus not detect invalid data here.
+			JsonCompatibleReadOnlySchema as TUnsafe<ValueChangeset>,
+		);
+		return makeCodecFamily([[1, eraseEncodedType(inner)]]);
+	},
 	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
 	intoDelta: (change): FieldChangeDelta => {
@@ -98,7 +106,7 @@ export const valueHandler = {
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			delta.local = [{ count: 1, attach, detach }];
+			delta.local = { marks: [{ count: 1, attach, detach }] };
 		}
 		return delta;
 	},

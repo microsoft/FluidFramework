@@ -56,7 +56,7 @@ const extractCoverageMetrics = (
 
 /**
  * Method that returns the coverage report for the build from the artifact.
- * @param baselineZip - zipped coverage files for the build
+ * @param artifactZip - zipped coverage files for the build
  * @param logger - The logger to log messages.
  * @returns an map of coverage metrics for build containing packageName, lineCoverage and branchCoverage
  */

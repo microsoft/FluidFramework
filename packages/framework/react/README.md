@@ -6,6 +6,8 @@ This package currently has some experimental APIs focused on integrating SharedT
 
 ## Known Issues and Limitations
 
+This package is currently ESM only and does not support CommonJS.
+
 These are a mix of issues that were encountered when authoring this package, as well as limitations of this package.
 
 Some of this logic would be useful for non-react applications: to avoid creating even more septate packages, that logic is not split into its own package.

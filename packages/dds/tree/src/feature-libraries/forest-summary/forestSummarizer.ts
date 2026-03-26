@@ -32,29 +32,34 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { idAllocatorFromMaxId, readAndParseSnapshotBlob } from "../../util/index.js";
+import {
+	idAllocatorFromMaxId,
+	readAndParseSnapshotBlob,
+	type JsonCompatibleReadOnly,
+} from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
-	type FieldBatchCodec,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
+import { forestCodecBuilder, type ForestCodec } from "./codec.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 } from "./incrementalSummaryBuilder.js";
 import {
-	forestSummaryContentKey,
+	ForestSummaryFormatVersion,
 	forestSummaryKey,
-	minVersionToForestSummaryFormatVersion,
 	supportedForestSummaryFormatVersions,
-	type ForestSummaryFormatVersion,
+} from "./summaryFormatCommon.js";
+import {
+	minVersionToForestSummaryFormatVersion,
+	getForestRootSummaryContentKey,
 } from "./summaryTypes.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -66,6 +71,7 @@ export class ForestSummarizer
 	private readonly codec: ForestCodec;
 
 	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
+	private readonly forestRootSummaryContentKey: string;
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
@@ -73,7 +79,6 @@ export class ForestSummarizer
 	public constructor(
 		private readonly forest: IEditableForest,
 		private readonly revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
@@ -87,11 +92,23 @@ export class ForestSummarizer
 			true /* supportPreVersioningFormat */,
 		);
 
-		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
-		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
+		this.codec = forestCodecBuilder.build(options);
+
+		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
+			options.minVersionForCollab,
+		);
+		this.forestRootSummaryContentKey = getForestRootSummaryContentKey(
+			summaryFormatWriteVersion,
+		);
+
+		// Incremental summary is supported in ForestSummaryFormatVersion.v3 onwards.
+		// Note that even in versions that support it, it is possible that the
+		// FieldBatchCodec will not use incremental encoding (for example if using its v1 formats which does not support it).
+		const enableIncrementalSummary =
+			summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&
+			encoderContext.encodeType === TreeCompressionStrategy.CompressedIncremental;
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
-			encoderContext.encodeType ===
-				TreeCompressionStrategy.CompressedIncremental /* enableIncrementalSummary */,
+			enableIncrementalSummary,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeIncrementally,
 			initialSequenceNumber,
@@ -149,11 +166,14 @@ export class ForestSummarizer
 					: undefined,
 		};
 		const encoded = this.codec.encode(fieldMap, encoderContext);
-		fieldMap.forEach((value) => value.free());
+		for (const value of fieldMap.values()) {
+			value.free();
+		}
 
 		this.incrementalSummaryBuilder.completeSummary({
 			incrementalSummaryContext,
-			forestSummaryContent: stringify(encoded),
+			forestSummaryRootContent: stringify(encoded),
+			forestSummaryRootContentKey: this.forestRootSummaryContentKey,
 			builder,
 		});
 	}
@@ -161,15 +181,17 @@ export class ForestSummarizer
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
+		version: ForestSummaryFormatVersion | undefined,
 	): Promise<void> {
-		// The contents of the top-level forest must be present under a summary blob named `forestSummaryContentKey`.
+		// Get the key of the summary blob where the top-level forest content is stored based on the summary format version.
 		// If the summary was generated as `ForestIncrementalSummaryBehavior.SingleBlob`, this blob will contain all
 		// of forest's contents.
 		// If the summary was generated as `ForestIncrementalSummaryBehavior.Incremental`, this blob will contain only
 		// the top-level forest node's contents.
 		// The contents of the incremental chunks will be in separate tree nodes and will be read later during decoding.
+		const forestSummaryRootContentKey = getForestRootSummaryContentKey(version);
 		assert(
-			await services.contains(forestSummaryContentKey),
+			await services.contains(forestSummaryRootContentKey),
 			0xc21 /* Forest summary content missing in snapshot */,
 		);
 
@@ -184,7 +206,12 @@ export class ForestSummarizer
 		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 		// forest summary format.
 		const fields = this.codec.decode(
-			await readAndParseSnapshotBlob(forestSummaryContentKey, services, parse),
+			(await readAndParseSnapshotBlob(
+				forestSummaryRootContentKey,
+				services,
+				parse,
+				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
+			)) as JsonCompatibleReadOnly,
 			{
 				...this.encoderContext,
 				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
@@ -203,7 +230,10 @@ export class ForestSummarizer
 				id: buildId,
 				trees: chunked,
 			});
-			fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
+			fieldChanges.push([
+				fieldKey,
+				{ marks: [{ count: chunked.topLevelLength, attach: buildId }] },
+			]);
 		}
 
 		assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

@@ -6,9 +6,11 @@
 import type { Test } from "mocha";
 
 import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
-import type { BenchmarkData, BenchmarkError, CustomData } from "../ResultTypes";
+import type { CustomData } from "../ResultTypes";
+import { captureResults } from "../ResultUtilities";
 import { prettyNumber } from "../RunnerUtilities";
-import { timer } from "../timer";
+
+import { emitResultsMocha } from "./runnerUtilities";
 
 /**
  * Options to configure a benchmark that reports custom measurements.
@@ -48,26 +50,14 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 			},
 		};
 
-		const startTime = timer.now();
-
-		try {
-			await options.run(reporter);
-		} catch (error) {
-			const benchmarkError: BenchmarkError = { error: (error as Error).message };
-
-			test.emit("benchmark end", benchmarkError);
-
-			throw error;
-		}
-
-		const elapsedSeconds = timer.toSeconds(startTime, timer.now());
-
-		const results: BenchmarkData = {
-			elapsedSeconds,
-			customData,
-		};
-
-		test.emit("benchmark end", results);
+		// Emits the "benchmark end" event with the result
+		await emitResultsMocha(
+			captureResults(async () => {
+				await options.run(reporter);
+				return customData;
+			}),
+			test,
+		);
 	});
 	return test;
 }

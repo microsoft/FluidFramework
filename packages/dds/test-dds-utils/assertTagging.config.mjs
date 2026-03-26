@@ -4,7 +4,7 @@
  */
 
 /**
- * @type {import("@fluid-tools/build-cli").AssertTaggingConfig}
+ * @type {import("@fluid-tools/build-cli").AssertTaggingPackageConfig}
  */
 export default {
 	// Disables assert tagging by listing an empty set of functions that should be tagged.

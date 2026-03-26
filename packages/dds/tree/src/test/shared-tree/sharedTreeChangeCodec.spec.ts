@@ -6,35 +6,41 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
-import { TreeStoredSchemaRepository } from "../../core/index.js";
+import { TreeStoredSchemaRepository, type ChangeEncodingContext } from "../../core/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
-import {
-	fieldKindConfigurations,
-	sequence,
+import type {
+	EncodedFieldBatch,
+	FieldBatchCodec,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+} from "../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	FieldBatchFormatVersion,
+	FieldKinds,
 	type ModularChangeset,
-	type SequenceField,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	makeModularChangeCodecFamily,
+	newChangeAtomIdBTree,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
-import { ajvValidator } from "../codec/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { brand, newTupleBTree } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import { brand } from "../../util/index.js";
+import { ajvValidator } from "../codec/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
@@ -42,8 +48,65 @@ const codecOptions: CodecWriteOptions = {
 };
 
 describe("sharedTreeChangeCodec", () => {
+	useSnapshotDirectory("sharedTreeChangeCodec");
+
+	// Dummy FieldBatchCodec codec which asserts when encoding or decoding.
+	const failFieldBatchCodec: FieldBatchCodec = {
+		encode: (): EncodedFieldBatch => assert.fail(),
+		decode: (): FieldBatch => assert.fail(),
+		writeVersion: FieldBatchFormatVersion.v2,
+	};
+
+	it("codec schema snapshot", () => {
+		const modularChangeCodecs = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
+			failFieldBatchCodec,
+			codecOptions,
+		);
+
+		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(
+			modularChangeCodecs,
+			codecOptions,
+		);
+
+		const formats = [...sharedTreeChangeCodec.getSupportedFormats()];
+		const schema = formats.map((format) => {
+			const codec = sharedTreeChangeCodec.resolve(format);
+			assert(codec.encodedSchema !== undefined);
+			return { version: format, schema: codec.encodedSchema };
+		});
+		// Capture the portion of the schema validated at the root.
+		// Currently this does not include the schema for the modular change which is validated separately in the modular change codec,
+		// but it does include the schema for the inner change wrapper.
+		takeJsonSnapshot(schema);
+	});
+
+	// This ensures that the schema for schema changes is getting included in the TreeChangeCodec's schema.
+	it("rejects malformed schema-change data", () => {
+		const modularChangeCodecs = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
+			failFieldBatchCodec,
+			{ jsonValidator: FormatValidatorBasic },
+		);
+		const codec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, codecOptions).resolve(
+			3,
+		);
+
+		assert.throws(
+			() =>
+				codec.decode(
+					// missing 'old' field
+					[{ schema: { new: {} } }],
+					{} as unknown as ChangeEncodingContext,
+				),
+			validateAssertionError(/must have required property 'old'/),
+		);
+	});
+
 	it("passes down the context's schema to the fieldBatchCodec", () => {
-		const dummyFieldBatchCodec = {
+		const dummyFieldBatchCodec: FieldBatchCodec = {
 			encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 				// Checks that the context's schema matches the schema passed into the sharedTreeChangeCodec.
 				assert.equal(context.schema?.schema, dummyTestSchema);
@@ -55,6 +118,7 @@ describe("sharedTreeChangeCodec", () => {
 					originatorId: context.originatorId,
 				}).map((chunk) => chunk.cursor());
 			},
+			writeVersion: FieldBatchFormatVersion.v2,
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -65,7 +129,7 @@ describe("sharedTreeChangeCodec", () => {
 		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(
 			modularChangeCodecs,
 			codecOptions,
-		).resolve(3).json;
+		).resolve(3);
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {
@@ -74,14 +138,14 @@ describe("sharedTreeChangeCodec", () => {
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};
-		const changeA: SequenceField.Changeset = [];
+		const changeA: Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
-			nodeChanges: newTupleBTree(),
+			nodeChanges: newChangeAtomIdBTree(),
 			fieldChanges: new Map([
-				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
+				[brand("fA"), { fieldKind: FieldKinds.sequence.identifier, change: brand(changeA) }],
 			]),
-			nodeToParent: newTupleBTree(),
-			nodeAliases: newTupleBTree(),
+			nodeToParent: newChangeAtomIdBTree(),
+			nodeAliases: newChangeAtomIdBTree(),
 			crossFieldKeys: newCrossFieldKeyTable(),
 		};
 		sharedTreeChangeCodec.encode(

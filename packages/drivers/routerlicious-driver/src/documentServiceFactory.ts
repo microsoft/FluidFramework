@@ -400,7 +400,7 @@ export class DocumentPostCreateError extends Error {
 
 	public readonly name = "DocumentPostCreateError";
 
-	public get stack() {
+	public get stack(): string | undefined {
 		return this.innerError.stack;
 	}
 }

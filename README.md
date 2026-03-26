@@ -197,7 +197,8 @@ This section contains common workflows and patterns to increase inner dev loop e
 ### Troubleshooting
 
 -   `pnpm clean` if random build failures, especially with no changes
--   `git clean -xdf` to remove extraneous files if debugging becomes slow or hangs.
+-   `git clean -Xdf` to remove extraneous files if debugging becomes slow or hangs.
+    -   `git clean -xdf` (lowercase `x`) can be used (after `-Xdf` for performance reasons) to clean up additional untracked (not staged) files, if there are any.
 
 ### Repo maintenance
 

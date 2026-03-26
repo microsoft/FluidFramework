@@ -58,7 +58,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		enableRuntimeIdCompressor: "on",
 	};
 
-	const waitForSummary = async (container) => {
+	const waitForSummary = async (container): Promise<void> => {
 		await timeoutPromise((resolve, reject) => {
 			let summarized = false;
 			container.on("op", (op) => {
@@ -149,7 +149,12 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 	it("snapshot was refreshed after some time", async function () {
 		const provider = getTestObjectProvider();
 		// TODO: This test is consistently failing when ran against AFR. See ADO:7893
-		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+		// For tinylicious failures, see AB#57757.
+		if (
+			(provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
+			provider.driver.type === "t9s" ||
+			provider.driver.type === "tinylicious"
+		) {
 			this.skip();
 		}
 		const getLatestSnapshotInfoP = new Deferred<void>();

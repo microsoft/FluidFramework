@@ -13,10 +13,9 @@ const enum ClipboardFormat {
 	text = "text/text",
 }
 
-export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
+export function paste(doc: FlowDocument, data: DataTransfer, position: number): void {
 	let content: string;
 
-	/* eslint-disable no-cond-assign */
 	if ((content = data.getData(ClipboardFormat.html))) {
 		debug("paste('text/html'): %s", content);
 		const root = document.createElement("span");
@@ -30,12 +29,11 @@ export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
 	} else {
 		debug("paste(%o): Unhandled clipboard type", data.types);
 	}
-	/* eslint-enable no-cond-assign */
 }
 
 const ignoredTags = [TagName.meta];
 
-function pasteChildren(doc: FlowDocument, root: Node, position: number) {
+function pasteChildren(doc: FlowDocument, root: Node, position: number): number {
 	let _position = position;
 
 	for (let child: Node | null = root.firstChild; child !== null; child = child.nextSibling) {

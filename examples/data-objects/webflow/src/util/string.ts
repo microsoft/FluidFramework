@@ -10,7 +10,7 @@
 export function areStringsEquivalent(
 	left: string | undefined | null,
 	right: string | undefined | null,
-) {
+): boolean {
 	return !left // If left any of { null, undefined, "" } ...
 		? !right //   ...true if right any of  { null, undefined, "" }
 		: left === right; //   ...otherwise only true if left === right.

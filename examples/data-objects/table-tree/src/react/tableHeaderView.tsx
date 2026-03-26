@@ -13,8 +13,8 @@ import {
 	Option,
 } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
-import React, { type DragEvent, useState } from "react";
 import { useTree } from "@fluidframework/react/alpha";
+import { type DragEvent, type FC, useState } from "react";
 
 import { Column, type Table } from "../schema.js";
 
@@ -55,7 +55,7 @@ export interface TableHeaderViewProps {
  * @param props - The props required to render and manage the table header view.
  * @returns A React element representing the table header.
  */
-export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
+export const TableHeaderView: FC<TableHeaderViewProps> = ({
 	table,
 	onColumnDragStart,
 	onColumnDragOver,
@@ -147,7 +147,7 @@ interface InsertColumnDialogueProps {
 	handleAppendColumn: (newColumn: Column) => void;
 }
 
-const InsertColumnDialogue: React.FC<InsertColumnDialogueProps> = ({
+const InsertColumnDialogue: FC<InsertColumnDialogueProps> = ({
 	columnCount,
 	handleAppendColumn,
 }) => {

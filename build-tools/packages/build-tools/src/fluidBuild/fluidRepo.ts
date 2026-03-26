@@ -16,7 +16,7 @@ import type { IFluidBuildDir, IFluidBuildDirEntry, IFluidBuildDirs } from "./flu
 export class FluidRepo {
 	private readonly _releaseGroups = new Map<string, MonoRepo>();
 
-	public get releaseGroups() {
+	public get releaseGroups(): Map<string, MonoRepo> {
 		return this._releaseGroups;
 	}
 
@@ -43,7 +43,7 @@ export class FluidRepo {
 				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
 			};
 		};
-		const loadOneEntry = (item: IFluidBuildDir, group: string) => {
+		const loadOneEntry = (item: IFluidBuildDir, group: string): Package[] => {
 			return Packages.loadDir(item.directory, group, item.ignoredDirs);
 		};
 
@@ -67,15 +67,15 @@ export class FluidRepo {
 		this.packages = new Packages(loadedPackages);
 	}
 
-	public createPackageMap() {
+	public createPackageMap(): Map<string, Package> {
 		return new Map<string, Package>(this.packages.packages.map((pkg) => [pkg.name, pkg]));
 	}
 
-	public reload() {
+	public reload(): void {
 		this.packages.packages.forEach((pkg) => pkg.reload());
 	}
 
-	public static async ensureInstalled(packages: Package[]) {
+	public static async ensureInstalled(packages: Package[]): Promise<boolean> {
 		const installedMonoRepo = new Set<MonoRepo>();
 		const installPromises: Promise<ExecAsyncResult>[] = [];
 		for (const pkg of packages) {
@@ -92,7 +92,7 @@ export class FluidRepo {
 		return !rets.some((ret) => ret.error);
 	}
 
-	public async install() {
+	public async install(): Promise<boolean> {
 		return FluidRepo.ensureInstalled(this.packages.packages);
 	}
 

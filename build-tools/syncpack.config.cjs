@@ -26,6 +26,20 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
@@ -66,21 +80,26 @@ module.exports = {
 			label: "Ignore unsupported pnpm override entries",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: [
+				"diff@>=4 <5",
+				"diff@>=7 <8",
+				"diff@>=8 <9",
+				"js-yaml@<4",
+				"js-yaml@>=4",
 				"json5@<1.0.2",
 				"json5@>=2.0.0 <2.2.2",
+				"minimatch@>=3 <4",
+				"minimatch@>=5 <6",
+				"minimatch@>=6 <7",
+				"minimatch@>=7 <8",
+				"minimatch@>=8 <9",
+				"minimatch@>=9 <10",
+				"minimatch@>=10 <11",
+				"serialize-javascript@>=6 <7",
 				"oclif>@aws-sdk/client*",
 				"@types/glob>@types/minimatch",
 			],
 			packages: ["build-tools-release-group-root"],
 			isIgnored: true,
-		},
-
-		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
-			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["**"],
-			packages: ["**"],
-			range: "^",
 		},
 
 		{
@@ -107,6 +126,14 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+		{
+			label: "Deps in pnpm overrides should use caret dependency ranges",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["**"],
+			packages: ["**"],
+			range: "^",
 		},
 
 		{
@@ -141,6 +168,20 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
 		{
 			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
 			dependencies: ["chalk"],
@@ -149,11 +190,7 @@ module.exports = {
 
 		{
 			label: "Versions of common Fluid packages should all match",
-			dependencies: [
-				"@fluidframework/build-common",
-				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
-			],
+			dependencies: ["@fluidframework/build-common", "@fluidframework/common-utils"],
 			packages: ["**"],
 		},
 

@@ -4,14 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { describeHydration, hydrate } from "../utils.js";
+
+import { asAlpha } from "../../../api.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
+	type TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
@@ -21,6 +25,8 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import type {
 	areSafelyAssignable,
 	Mutable,
@@ -28,9 +34,8 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { asIndex } from "../../../simple-tree/node-kinds/index.js";
 import { TestTreeProviderLite } from "../../utils.js";
+import { describeHydration, hydrate } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -232,6 +237,16 @@ describe("ArrayNode", () => {
 				});
 			});
 
+			it("insertAtStart, insertAtEnd, and push insert at expected positions", () => {
+				const array = init(schemaType, [2]);
+				array.insertAtStart(1);
+				assert.deepEqual([...array], [1, 2]);
+				array.insertAtEnd(3);
+				assert.deepEqual([...array], [1, 2, 3]);
+				array.push(4);
+				assert.deepEqual([...array], [1, 2, 3, 4]);
+			});
+
 			describe("removeRange", () => {
 				it("no arguments", () => {
 					const jsArray = [0, 1, 2];
@@ -325,6 +340,64 @@ describe("ArrayNode", () => {
 						),
 					);
 					assert.throws(() => list.removeRange(1.5, 1.5), validateUsageError(/integer/));
+				});
+			});
+
+			describe("splice", () => {
+				function buildAlphaArray(
+					initial: number[],
+				): TreeArrayNodeAlpha<typeof schemaFactory.number> {
+					const list = init(schemaType, initial);
+					return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+				}
+				it("splice first item", () => {
+					const initial = [0, 1, 2, 3];
+					const list = buildAlphaArray(initial);
+					const removed = list.splice(0, 1, 4);
+					assert.deepEqual(removed, initial.splice(0, 1, 4));
+					assert.deepEqual([...list], initial);
+				});
+				it("splice last two", () => {
+					const initial = [0, 1, 2, 3];
+					const list = buildAlphaArray(initial);
+					const removed = list.splice(2, 2, 4, 5, 6);
+					assert.deepEqual(removed, initial.splice(2, 2, 4, 5, 6));
+					assert.deepEqual([...list], initial);
+				});
+				it("splice last three with negative start index", () => {
+					const initial = [0, 1, 2, 3];
+					const list = buildAlphaArray(initial);
+					const removed = list.splice(-3);
+					assert.deepEqual(removed, initial.splice(-3));
+					assert.deepEqual([...list], initial);
+				});
+				it("splice with out-of-bounds index", () => {
+					const initial = [0, 1, 2, 3];
+					const list = buildAlphaArray(initial);
+					const removed = list.splice(5, 8);
+					assert.deepEqual(removed, initial.splice(5, 8));
+					assert.deepEqual([...list], initial);
+				});
+				it("splice single element array", () => {
+					const initial = [0];
+					const list = buildAlphaArray(initial);
+					const removed = list.splice(0, 1, 1, 2, 3);
+					assert.deepEqual(removed, initial.splice(0, 1, 1, 2, 3));
+					assert.deepEqual([...list], initial);
+				});
+				it("splice entire array", () => {
+					const initial = [0, 1, 2, 3];
+					const list = buildAlphaArray(initial);
+					const removed = list.splice(0);
+					assert.deepEqual(removed, initial.splice(0));
+					assert.deepEqual([...list], initial);
+				});
+				it("splice empty array", () => {
+					const initial: number[] = [];
+					const list = buildAlphaArray(initial);
+					const removed = list.splice(0, 1, 0, 1, 2, 3);
+					assert.deepEqual(removed, initial.splice(0, 1, 0, 1, 2, 3));
+					assert.deepEqual([...list], initial);
 				});
 			});
 
@@ -1035,6 +1108,51 @@ describe("ArrayNode", () => {
 			assert.equal(JSON.stringify(fromMap), json);
 			const fromIterable = new Schema(new Map(data).entries());
 			assert.equal(JSON.stringify(fromIterable), json);
+		});
+	});
+
+	describeHydration("createArrayInsertionAnchor", (init) => {
+		it("creates valid anchors", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+		});
+
+		it("updates anchors correctly", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			array.removeAt(0);
+			assert.equal(anchor.index, 0);
+			array.insertAtStart(4);
+			assert.equal(anchor.index, 1);
+		});
+
+		it("past end", () => {
+			const array = init(CustomizableNumberArray, [1]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			array.insertAt(anchor.index, 4);
+			assert.equal(anchor.index, 2);
+		});
+
+		it("empty array", () => {
+			const array = init(CustomizableNumberArray, []);
+			const anchor = createArrayInsertionAnchor(array, 0);
+			assert.equal(anchor.index, 0);
+			array.insertAt(anchor.index, 4);
+			assert.equal(anchor.index, 1);
+			array.insertAt(anchor.index, 5);
+			assert.equal(anchor.index, 2);
+		});
+
+		// This case sticks to the end of the array, which is not ideal, and will need to be fixed with a more sophisticated anchor implementation.
+		it("removed item", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			array.removeAt(1);
+			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
+			assert.equal(anchor.index, 2);
 		});
 	});
 });

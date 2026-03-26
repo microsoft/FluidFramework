@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/consistent-function-scoping */
+/* eslint-disable unicorn/consistent-function-scoping, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import {
 	TypedEventEmitter,
@@ -751,7 +751,7 @@ export class Container
 		validateDriverCompatibility(
 			maybeDriverCompatDetails.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
-			subLogger,
+			createChildMonitoringContext({ logger: subLogger, namespace: "Container" }),
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
@@ -1301,7 +1301,9 @@ export class Container
 					});
 
 					// only enable the new behavior if the config is set
-					if (this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") !== true) {
+					if (
+						this.mc.config.getBoolean("Fluid.Container.DisableCloseOnAttachFailure") !== true
+					) {
 						attachP = attachP.catch((error) => {
 							throw normalizeErrorAndClose(error);
 						});
@@ -1547,6 +1549,12 @@ export class Container
 				service.on("metadataUpdate", this.metadataUpdateHandler);
 			}
 		} else {
+			// When DisableCloseOnAttachFailure is enabled, use no internal retries
+			// The consumer will own the retry policy
+			const disableCloseOnAttachFailure =
+				this.mc.config.getBoolean("Fluid.Container.DisableCloseOnAttachFailure") === true;
+			const maxRetries = disableCloseOnAttachFailure ? 0 : undefined;
+
 			service = await runWithRetry(
 				async () =>
 					this.serviceFactory.createContainer(
@@ -1560,6 +1568,7 @@ export class Container
 				{
 					cancel: this._deltaManager.closeAbortController.signal,
 				}, // progress
+				maxRetries,
 			);
 		}
 		return service;
@@ -2440,10 +2449,7 @@ export class Container
 
 			// Validate that the Runtime is compatible with this Loader.
 			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-			validateRuntimeCompatibility(
-				maybeRuntimeCompatDetails.ILayerCompatDetails,
-				this.mc.logger,
-			);
+			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, this.mc);
 
 			this._runtime = runtime;
 			this._lifecycleEvents.emit("runtimeInstantiated");

@@ -26,8 +26,6 @@ resources:
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
 # Note that using this variable only works for non-1ES-template pipelines.
 - name: Codeql.SkipTaskAutoInjection
@@ -74,5 +72,4 @@ stages:
           - packages/dds/merge-tree
           testFileTarName: matrix
           testCommand: test:stress
-      testWorkspace: ${{ variables.testWorkspace }}
       stressMode: ${{ parameters.stressMode }}

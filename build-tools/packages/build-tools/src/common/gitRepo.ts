@@ -15,7 +15,7 @@ const traceGitRepo = registerDebug("fluid-build:gitRepo");
 export class GitRepo {
 	constructor(public readonly resolvedRoot: string) {}
 
-	private async getRemotes() {
+	private async getRemotes(): Promise<string[][]> {
 		const result = await this.exec(`remote -v`, `getting remotes`);
 		const remoteLines = result.split(/\r?\n/);
 		return remoteLines.map((line) => line.split(/\s+/));
@@ -26,7 +26,7 @@ export class GitRepo {
 	 * It will match the first remote that contains the partialUrl case insensitively
 	 * @param partialUrl partial url to match case insensitively
 	 */
-	public async getRemote(partialUrl: string) {
+	public async getRemote(partialUrl: string): Promise<string | undefined> {
 		const lowerPartialUrl = partialUrl.toLowerCase();
 		const remotes = await this.getRemotes();
 		for (const r of remotes) {
@@ -37,12 +37,12 @@ export class GitRepo {
 		return undefined;
 	}
 
-	public async getCurrentSha() {
+	public async getCurrentSha(): Promise<string> {
 		const result = await this.exec(`rev-parse HEAD`, `get current sha`);
 		return result.split(/\r?\n/)[0];
 	}
 
-	public async getShaForBranch(branch: string, remote?: string) {
+	public async getShaForBranch(branch: string, remote?: string): Promise<string | undefined> {
 		const refspec = remote ? `refs/remotes/${remote}/${branch}` : `refs/heads/${branch}`;
 		const result = await this.execNoError(`show-ref ${refspec}`);
 		if (result) {
@@ -54,18 +54,18 @@ export class GitRepo {
 		return undefined;
 	}
 
-	public async isBranchUpToDate(branch: string, remote: string) {
+	public async isBranchUpToDate(branch: string, remote: string): Promise<boolean> {
 		await this.fetchBranch(remote, branch);
 		const currentSha = await this.getShaForBranch(branch);
 		const remoteSha = await this.getShaForBranch(branch, remote);
 		return remoteSha === currentSha;
 	}
 
-	public async getStatus() {
+	public async getStatus(): Promise<string | undefined> {
 		return await this.execNoError(`status --porcelain`);
 	}
 
-	public async getShaForTag(tag: string) {
+	public async getShaForTag(tag: string): Promise<string | undefined> {
 		const result = await this.execNoError(`show-ref refs/tags/${tag}`);
 		if (result) {
 			const line = result.split(/\r?\n/)[0];
@@ -81,7 +81,7 @@ export class GitRepo {
 	 *
 	 * @param tag the tag to add
 	 */
-	public async addTag(tag: string) {
+	public async addTag(tag: string): Promise<void> {
 		await this.exec(`tag ${tag}`, `adding tag ${tag}`);
 	}
 
@@ -91,7 +91,7 @@ export class GitRepo {
 	 *
 	 * @param tag the tag to add
 	 */
-	public async deleteTag(tag: string) {
+	public async deleteTag(tag: string): Promise<void> {
 		await this.execNoError(`tag -d ${tag}`);
 	}
 
@@ -99,14 +99,14 @@ export class GitRepo {
 	 * Push a tag
 	 *
 	 */
-	public async pushTag(tag: string, remote: string) {
+	public async pushTag(tag: string, remote: string): Promise<void> {
 		await this.exec(`push ${remote} ${tag}`, `pushing tag`);
 	}
 
 	/**
 	 * Get the current git branch name
 	 */
-	public async getCurrentBranchName() {
+	public async getCurrentBranchName(): Promise<string> {
 		const revParseOut = await this.exec("rev-parse --abbrev-ref HEAD", "get current branch");
 		return revParseOut.split(/\r?\n/)[0];
 	}
@@ -116,7 +116,7 @@ export class GitRepo {
 	 *
 	 * @param branchName name of the new branch
 	 */
-	public async createBranch(branchName: string) {
+	public async createBranch(branchName: string): Promise<void> {
 		await this.exec(`checkout -b ${branchName}`, `create branch ${branchName}`);
 	}
 
@@ -124,7 +124,11 @@ export class GitRepo {
 	 * Push branch
 	 * @param branchName
 	 */
-	public async pushBranch(remote: string, fromBranchName: string, toBranchName: string) {
+	public async pushBranch(
+		remote: string,
+		fromBranchName: string,
+		toBranchName: string,
+	): Promise<void> {
 		await this.exec(
 			`push ${remote} ${fromBranchName}:${toBranchName}`,
 			`push branch ${fromBranchName}->${toBranchName} to ${remote}`,
@@ -137,7 +141,7 @@ export class GitRepo {
 	 *
 	 * @param branchName name of the new branch
 	 */
-	public async deleteBranch(branchName: string) {
+	public async deleteBranch(branchName: string): Promise<void> {
 		await this.execNoError(`branch -D ${branchName}`);
 	}
 
@@ -146,7 +150,7 @@ export class GitRepo {
 	 *
 	 * @param branchName name of the new branch
 	 */
-	public async switchBranch(branchName: string) {
+	public async switchBranch(branchName: string): Promise<void> {
 		await this.exec(`checkout ${branchName}`, `switch branch ${branchName}`);
 	}
 
@@ -155,14 +159,14 @@ export class GitRepo {
 	 *
 	 * @param message the commit message
 	 */
-	public async commit(message: string, error: string) {
+	public async commit(message: string, error: string): Promise<void> {
 		await this.exec(`commit -a -F -`, error, message);
 	}
 
 	/**
 	 * Fetch branch
 	 */
-	public async fetchBranch(remote: string, branchName: string) {
+	public async fetchBranch(remote: string, branchName: string): Promise<string> {
 		return await this.exec(
 			`fetch ${remote} ${branchName}`,
 			`fetch branch ${branchName} from remote ${remote}`,
@@ -172,7 +176,7 @@ export class GitRepo {
 	/**
 	 * Fetch Tags
 	 */
-	public async fetchTags() {
+	public async fetchTags(): Promise<string> {
 		return await this.exec(`fetch --tags --force`, `fetch tags`);
 	}
 
@@ -181,7 +185,7 @@ export class GitRepo {
 	 *
 	 * @param pattern pattern of tags to get
 	 */
-	public async getTags(pattern: string) {
+	public async getTags(pattern: string): Promise<string> {
 		return await this.exec(`tag -l ${pattern}`, `get tags ${pattern}`);
 	}
 
@@ -278,7 +282,7 @@ export class GitRepo {
 	 * @param gitRef - A reference to a git commit/tag/branch for which the commit date will be parsed.
 	 * @returns The commit date of the ref.
 	 */
-	public async getCommitDate(gitRef: string) {
+	public async getCommitDate(gitRef: string): Promise<Date> {
 		const result = (
 			await this.exec(`show -s --format=%cI "${gitRef}"`, `get commit date ${gitRef}`)
 		).trim();
@@ -286,11 +290,11 @@ export class GitRepo {
 		return date;
 	}
 
-	public async setUpstream(branchName: string, remote: string = "origin") {
+	public async setUpstream(branchName: string, remote: string = "origin"): Promise<string> {
 		return await this.exec(`push --set-upstream ${remote} ${branchName}`, `publish branch`);
 	}
 
-	public async addRemote(repoPath: string) {
+	public async addRemote(repoPath: string): Promise<string> {
 		return await this.exec(`remote add upstream ${repoPath}`, `set remote`);
 	}
 
@@ -300,7 +304,7 @@ export class GitRepo {
 	 * @param command the git command
 	 * @param error description of command line to print when error happens
 	 */
-	public async exec(command: string, error: string, pipeStdIn?: string) {
+	public async exec(command: string, error: string, pipeStdIn?: string): Promise<string> {
 		return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn, {
 			// Some git commands, like diff can have quite large output when there are very large changes like a pending merge with main.
 			// To mitigate this, increase the maxBuffer size from its default (1 mb at time of writing).
@@ -314,7 +318,7 @@ export class GitRepo {
 	 *
 	 * @param command the git command
 	 */
-	private async execNoError(command: string, pipeStdIn?: string) {
+	private async execNoError(command: string, pipeStdIn?: string): Promise<string | undefined> {
 		return execNoError(`git ${command}`, this.resolvedRoot, pipeStdIn);
 	}
 }

@@ -152,7 +152,7 @@ export class StaticStorageDocumentService
 		super();
 	}
 
-	public dispose() {}
+	public dispose(): void {}
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		return this.storage;

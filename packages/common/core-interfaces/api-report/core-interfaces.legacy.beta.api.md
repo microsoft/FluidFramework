@@ -4,6 +4,13 @@
 
 ```ts
 
+// @beta
+export class BrandedType<out Brand> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected constructor();
+    protected readonly brand: (dummy: never) => Brand;
+}
+
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -29,6 +36,7 @@ export const FluidErrorTypes: {
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy (undocumented)
@@ -295,6 +303,18 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 // @public @sealed
 export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
+}
+
+// @beta @legacy
+export interface ILayerIncompatibilityError extends IErrorBase {
+    readonly actualDifferenceInMonths: number;
+    readonly compatibilityRequirementsInMonths: number;
+    readonly details: string;
+    readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
+    readonly incompatibleLayer: string;
+    readonly incompatibleLayerVersion: string;
+    readonly layer: string;
+    readonly layerVersion: string;
 }
 
 // @beta @legacy

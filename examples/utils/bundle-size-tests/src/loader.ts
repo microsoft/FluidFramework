@@ -5,7 +5,7 @@
 
 import { Loader } from "@fluidframework/container-loader/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	new Loader({
 		codeLoader: {} as any,
 		documentServiceFactory: {} as any,

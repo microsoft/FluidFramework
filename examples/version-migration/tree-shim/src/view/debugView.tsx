@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { InventoryList } from "../model/inventoryList.js";
@@ -13,13 +13,13 @@ export interface IDebugViewProps {
 	model: IInventoryListAppModel;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps) => {
+export const DebugView: FC<IDebugViewProps> = ({ model }: IDebugViewProps) => {
 	// For demo purposes, we're just reaching in to grab a debug object - this shouldn't exist in a production app.
 	const DEBUG = (model.migratingInventoryList as InventoryList).DEBUG;
 
 	const [treeType, setTreeType] = useState(DEBUG.isMigrated() ? "New" : "Legacy");
 	useEffect(() => {
-		const onBackingDataChanged = () => {
+		const onBackingDataChanged = (): void => {
 			setTreeType(DEBUG.isMigrated() ? "New" : "Legacy");
 		};
 		model.migratingInventoryList.on("backingDataChanged", onBackingDataChanged);

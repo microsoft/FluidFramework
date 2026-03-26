@@ -14,7 +14,8 @@ export enum ConflictType {
 	COLLIDING_SET,
 	/** A deleted child node was modified */
 	ENTRY_MODIFIED_AFTER_REMOVE,
-	/** A child was modified after it had been removed and added.
+	/**
+	 * A child was modified after it had been removed and added.
 	 *
 	 * The modification can no longer be applied, since the affected object has changed and thus
 	 * the ChangeSet is no longer compatible.

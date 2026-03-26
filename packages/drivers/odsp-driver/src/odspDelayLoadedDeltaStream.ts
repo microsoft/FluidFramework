@@ -35,7 +35,6 @@ import {
 	type MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
@@ -417,8 +416,9 @@ export class OdspDelayLoadedDeltaStream {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
+		// Previous gate "Fluid.Driver.Odsp.setSensitivityLabelHeader" was removed because it was sensitive to a timestamp-related bug that was fixed by PR #26318; using this new gate ensures that the bug fix is present.
 		const setSensitivityLabelHeader = this.mc.config.getBoolean(
-			"Fluid.Driver.Odsp.setSensitivityLabelHeader",
+			"Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix",
 		);
 		const executeFetch = async (): Promise<{
 			entryTime: number;
@@ -513,8 +513,11 @@ export class OdspDelayLoadedDeltaStream {
 	private emitSensitivityLabelUpdateEvent(
 		sensitivityLabelsInfo: ISensitivityLabelsInfo,
 	): void {
-		const createdTimestamp = Date.parse(sensitivityLabelsInfo.timestamp);
-		assert(createdTimestamp > 0, 0x8e0 /* time should be positive */);
+		const createdTimestamp = sensitivityLabelsInfo.timestamp;
+		assert(
+			typeof createdTimestamp === "number" && createdTimestamp > 0,
+			0x8e0 /* time should be a positive number */,
+		);
 		if (createdTimestamp > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = createdTimestamp;
 			this.metadataUpdateHandler({

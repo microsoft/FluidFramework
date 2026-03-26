@@ -13,10 +13,7 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import {
-	FlushMode,
-	FlushModeExperimental,
-} from "@fluidframework/runtime-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
@@ -65,7 +62,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	const setupContainers = async (
 		containerConfig: ITestContainerConfig,
 		featureGates: Record<string, ConfigTypes> = {},
-	) => {
+	): Promise<void> => {
 		const configWithFeatureGates = {
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
@@ -108,13 +105,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 			flushMode: FlushMode.Immediate,
 			batchCount: 5,
 		},
-		{
-			flushMode: FlushModeExperimental.Async as unknown as FlushMode,
-			batchCount: 1,
-		},
 	].forEach((test) => {
 		it(`With runtime flushMode=FlushMode.${
-			FlushMode[test.flushMode] ?? FlushModeExperimental[test.flushMode]
+			FlushMode[test.flushMode]
 		}, ops across JS turns produce ${test.batchCount} batches`, async () => {
 			await setupContainers({
 				...testContainerConfig,
@@ -168,18 +161,6 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	];
 
 	itExpects(
-		"Reference sequence number mismatch when doing op reentry submits two batches",
-		expectedErrors,
-		async () => {
-			// By default, we would flush a batch when we detect a reference sequence number mismatch
-			await processOutOfOrderOp({
-				["Fluid.ContainerRuntime.DisableFlushBeforeProcess"]: true,
-			});
-			assert.strictEqual(capturedBatches.length, 2);
-		},
-	);
-
-	itExpects(
 		"Op reentry submits two batches due to flush before processing",
 		expectedErrors,
 		async () => {
@@ -195,7 +176,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	 *
 	 * @param containerConfig - the test container configuration
 	 */
-	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
+	const processOutOfOrderOp = async (
+		featureGates: Record<string, ConfigTypes> = {},
+	): Promise<void> => {
 		await setupContainers(testContainerConfig, featureGates);
 
 		// Force the containers into write-mode

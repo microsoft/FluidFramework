@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
@@ -49,7 +47,7 @@ async function runAndValidateBatch(
 	proxyDsf: IDocumentServiceFactory,
 	timeout: number,
 	runtimeOptions?: IContainerRuntimeOptionsInternal,
-) {
+): Promise<void> {
 	let containerUrl: string | undefined;
 	{
 		const loader = provider.createLoader([
@@ -211,7 +209,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 											...newMessages[batchStartIndex],
 											metadata: {
 												// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
-												// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 												...(newMessages[batchStartIndex].metadata as any),
 												batch: undefined,
 											},
@@ -253,7 +251,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 										...newMessages[batchEndIndex],
 										metadata: {
 											// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
-											// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 											...(newMessages[batchEndIndex].metadata as any),
 											batch: undefined,
 										},

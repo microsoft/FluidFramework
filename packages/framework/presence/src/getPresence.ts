@@ -20,12 +20,12 @@ import type {
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 
-import type { ExtensionHost, ExtensionRuntimeProperties } from "./internalTypes.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";
 import { createPresenceManager } from "./presenceManager.js";
 import type { SignalMessages } from "./protocol.js";
+import type { ExtensionHost, ExtensionRuntimeProperties } from "./runtimeTypes.js";
 
 const presenceCompatibility = {
 	generation: 1,
@@ -103,7 +103,7 @@ class ContainerPresenceManager
 		assertCompatibilityInvariants(newCompatibilityRequest);
 		// There have not yet been any changes that would require action to upgrade.
 		// But also mixed runtime versions are not yet expected.
-		fail("Presence is only expected to be accessed with a single version.");
+		fail(0xcb1 /* Presence is only expected to be accessed with a single version. */);
 	}
 
 	public onNewUse(): void {
@@ -140,7 +140,7 @@ const ContainerPresenceFactory = {
 		assertCompatibilityInvariants(existingInstantiation.compatibility);
 		// There have not yet been any changes that would require action to upgrade.
 		// But also mixed runtime versions are not yet expected.
-		fail("Presence is only expected to be accessed with a single version.");
+		fail(0xcb2 /* Presence is only expected to be accessed with a single version. */);
 	},
 
 	instantiateExtension(host: ExtensionHost): ContainerPresenceManager {

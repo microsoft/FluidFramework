@@ -9,7 +9,7 @@ const { merge } = require("webpack-merge");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const isProduction = env?.production;
+	const { production } = env;
 
 	return merge(
 		{
@@ -51,8 +51,9 @@ module.exports = (env) => {
 					process: "process/browser.js",
 				}),
 			],
+			mode: production ? "production" : "development",
+			devtool: production ? "source-map" : "inline-source-map",
 		},
-		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 		fluidRoute.devServerConfig(__dirname, env),
 	);
 };

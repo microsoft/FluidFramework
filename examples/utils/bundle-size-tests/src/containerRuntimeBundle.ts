@@ -5,7 +5,7 @@
 
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	// Pass through dummy parameters, this file is only used for bundle analysis
 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
 	loadContainerRuntime(undefined as any);

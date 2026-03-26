@@ -233,7 +233,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 
 			this._setDirty(in_reportToView);
 		} else {
-			throw new Error(MSG.REMOVED_NON_EXISTING_ENTRY + in_key);
+			console.warn(MSG.REMOVED_NON_EXISTING_ENTRY + in_key);
 		}
 	}
 

@@ -15,7 +15,7 @@ import { DeclarativeLeafTask } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
-import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
+import { EsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
 	DepCruiseTask,
@@ -39,7 +39,6 @@ const executableToLeafTask: {
 	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"fluid-tsc": TscTask,
-	"tslint": TsLintTask,
 	"eslint": EsLintTask,
 	"webpack": WebpackTask,
 	"parallel-webpack": WebpackTask,
@@ -87,7 +86,7 @@ function getLeafTaskForCommand(
 	context: BuildContext,
 	taskName?: string,
 	files?: TaskFileDependencies,
-) {
+): LeafTask {
 	// If the task has file dependencies specification, create a declarative task
 	if (files !== undefined) {
 		return new DeclarativeLeafTask(node, command, context, taskName, files);
@@ -228,7 +227,7 @@ export class TaskFactory {
 		node: BuildPackage,
 		context: BuildContext,
 		taskName: string | undefined,
-	) {
+	): GroupTask {
 		return new GroupTask(node, `fluid-build -t ${taskName}`, context, [], taskName);
 	}
 
@@ -238,7 +237,7 @@ export class TaskFactory {
 		scriptTask: Task,
 		preScriptTask?: Task,
 		postScriptTask?: Task,
-	) {
+	): Task {
 		if (preScriptTask === undefined && postScriptTask === undefined) {
 			return scriptTask;
 		}

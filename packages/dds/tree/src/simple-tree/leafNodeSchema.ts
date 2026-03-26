@@ -4,16 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type TreeValue, ValueSchema } from "../core/index.js";
+import { type FieldKey, type TreeValue, ValueSchema } from "../core/index.js";
 import {
 	type FlexTreeNode,
 	isFlexTreeNode,
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import {
 	NodeKind,
@@ -27,10 +28,10 @@ import {
 	type TreeNodeSchemaInitializedData,
 	CompatibilityLevel,
 	type FlexContent,
+	type UnhydratedFlexTreeField,
 } from "./core/index.js";
-import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
-import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 import { getTreeNodeSchemaInitializedData } from "./createContext.js";
+import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 import type { FactoryContent } from "./unhydratedFlexTreeFromInsertable.js";
 
 /**
@@ -185,7 +186,7 @@ export function leafToFlexContent(
 			value: mappedValue,
 			type: brand(mappedSchema.identifier),
 		},
-		new Map(),
+		new Map<FieldKey, UnhydratedFlexTreeField>(),
 	];
 
 	return result;
@@ -207,7 +208,9 @@ function mapValueWithFallbacks(
 				// Our serialized data format does not support -0.
 				// Map such input to +0.
 				return 0;
-			} else if (!Number.isFinite(value)) {
+			} else if (Number.isFinite(value)) {
+				return value;
+			} else {
 				// Our serialized data format does not support NaN nor +/-∞.
 				// If the schema supports `null`, fall back to that. Otherwise, throw.
 				// This is intended to match JSON's behavior for such values.
@@ -216,22 +219,23 @@ function mapValueWithFallbacks(
 				} else {
 					throw new UsageError(`Received unsupported numeric value: ${value}.`);
 				}
-			} else {
-				return value;
 			}
 		}
 		case "string":
 		// TODO:
 		// This should detect invalid strings. Something like @stdlib/regexp-utf16-unpaired-surrogate could be used to do this.
 		// See SchemaFactory.string for details.
-		case "boolean":
+		case "boolean": {
 			return value;
+		}
 		case "object": {
 			if (value === null || isFluidHandle(value)) {
 				return value;
 			}
 		}
-		default:
+		// fallthrough
+		default: {
 			throw new UsageError(`Received unsupported leaf value: ${value}.`);
+		}
 	}
 }

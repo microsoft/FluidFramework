@@ -1,5 +1,570 @@
 # fluid-framework
 
+## 2.91.0
+
+### Minor Changes
+
+- Adds withDefault API to allow defining default values for required and optional fields ([#26502](https://github.com/microsoft/FluidFramework/pull/26502)) [44fdd9421e4](https://github.com/microsoft/FluidFramework/commit/44fdd9421e4d0bfa3cdfa9ab3672ebf3c0ad20a6)
+
+  The `withDefault` API is now available on `SchemaFactoryAlpha`. It allows you to specify default values for fields,
+  making them optional in constructors even when the field is marked as required in the schema.
+  This provides a better developer experience by reducing boilerplate when creating objects.
+
+  The `withDefault` API wraps a field schema and defines a default value to use when the field is not provided during
+  construction. The default value must be of an allowed type of the field. You can provide defaults in two ways:
+  - **A value**: When a value is provided directly, the data is copied for each use to ensure independence between instances
+  - **A generator function**: A function that is called each time to produce a fresh value
+
+  Defaults are evaluated eagerly during node construction.
+
+  #### Required fields with defaults
+
+  ```typescript
+  import { SchemaFactoryAlpha, TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactoryAlpha("example");
+
+  class Person extends sf.objectAlpha("Person", {
+    name: sf.required(sf.string),
+    age: sf.withDefault(sf.required(sf.number), -1),
+    role: sf.withDefault(sf.required(sf.string), "guest"),
+  }) {}
+
+  // Before: all fields were required
+  // const person = new Person({ name: "Alice", age: -1, role: "guest" });
+
+  // After: fields with defaults are optional
+  const person = new Person({ name: "Alice" });
+  // person.age === -1
+  // person.role === "guest"
+
+  // You can still provide values to override the defaults
+  const admin = new Person({ name: "Bob", age: 30, role: "admin" });
+  ```
+
+  #### Optional fields with custom defaults
+
+  Optional fields (`sf.optional`) already default to `undefined`, but `withDefault` allows you to specify a different
+  default value:
+
+  ```typescript
+  class Config extends sf.object("Config", {
+    timeout: sf.withDefault(sf.optional(sf.number), 5000),
+    retries: sf.withDefault(sf.optional(sf.number), 3),
+  }) {}
+
+  // All fields are optional, using custom defaults when not provided
+  const config = new Config({});
+  // config.timeout === 5000
+  // config.retries === 3
+
+  const customConfig = new Config({ timeout: 10000 });
+  // customConfig.timeout === 10000
+  // customConfig.retries === 3
+  ```
+
+  #### Value defaults vs function defaults
+
+  When you provide a value directly, the data is copied for each use, ensuring each instance is independent:
+
+  ```typescript
+  class Metadata extends sf.object("Metadata", {
+    tags: sf.array(sf.string),
+    version: sf.number,
+  }) {}
+
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // a node is provided directly, it is copied for each use
+    metadata: sf.withDefault(
+      sf.optional(Metadata),
+      new Metadata({ tags: [], version: 1 }),
+    ),
+
+    // also works with arrays
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), []),
+  }) {}
+
+  const article1 = new Article({ title: "First" });
+  const article2 = new Article({ title: "Second" });
+
+  // each article gets its own independent copy
+  assert(article1.metadata !== article2.metadata);
+  article1.metadata.version = 2; // Doesn't affect article2
+  assert(article2.metadata.version === 1);
+  ```
+
+  Alternatively, you can use generator functions to explicitly create new instances:
+
+  ```typescript
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // generators are called each time to create a new instance
+    metadata: sf.withDefault(
+      sf.optional(Metadata),
+      () => new Metadata({ tags: [], version: 1 }),
+    ),
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), () => []),
+  }) {}
+  ```
+
+  Insertable object literals, arrays, and map objects can be used in place of node instances in both static defaults
+  and generator functions:
+
+  ```typescript
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // plain object literal instead of new Metadata(...)
+    metadata: sf.withDefault(sf.optional(Metadata), () => ({
+      tags: [],
+      version: 1,
+    })),
+
+    // plain array instead of new ArrayNode(...)
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), () => [
+      "anonymous",
+    ]),
+  }) {}
+  ```
+
+  ##### Dynamic defaults
+
+  Generator functions are called each time a new node is created, enabling dynamic defaults:
+
+  ```typescript
+  class Document extends sf.object("Document", {
+    id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),
+    title: sf.required(sf.string),
+  }) {}
+
+  const doc1 = new Document({ title: "First Document" });
+  const doc2 = new Document({ title: "Second Document" });
+  // doc1.id !== doc2.id (each gets a unique UUID)
+  ```
+
+  Generator functions also work with primitive types:
+
+  ```typescript
+  let counter = 0;
+
+  class GameState extends sf.object("GameState", {
+    playerId: sf.withDefault(
+      sf.required(sf.string),
+      () => `player-${counter++}`,
+    ),
+    score: sf.withDefault(sf.required(sf.number), () =>
+      Math.floor(Math.random() * 100),
+    ),
+    isActive: sf.withDefault(sf.required(sf.boolean), () => counter % 2 === 0),
+  }) {}
+  ```
+
+  #### Recursive types
+
+  `withDefaultRecursive` is available for use inside recursive schemas. Use `objectRecursiveAlpha` (rather than
+  `objectRecursive`) when defining recursive schemas with defaults, as it correctly makes defaulted fields optional in
+  the constructor for all field kinds including `requiredRecursive`. It works the same as `withDefault` but is
+  necessary to avoid TypeScript's circular reference limitations.
+
+  ```typescript
+  class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
+    value: sf.number,
+    label: SchemaFactoryAlpha.withDefaultRecursive(
+      sf.optional(sf.string),
+      "untitled",
+    ),
+    child: sf.optionalRecursive([() => TreeNode]),
+  }) {}
+
+  // `label` is optional in the constructor — the default is used when omitted
+  const leaf = new TreeNode({ value: 1 });
+  // leaf.label === "untitled"
+
+  const root = new TreeNode({ value: 0, label: "root", child: leaf });
+  // root.label === "root"
+  // root.child.label === "untitled"
+  ```
+
+  > **Warning:** Be careful about using the recursive type itself as a default value — this is likely to cause
+  > infinite recursion at construction time, since creating the default value would trigger the same default again.
+  > Instead, use a primitive or a separate node type as the default:
+  >
+  > ```typescript
+  > const DefaultTag = sf.objectRecursiveAlpha("Tag", {
+  >   id: sf.number,
+  >   child: sf.optionalRecursive([() => TreeNode]),
+  > });
+  >
+  > class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
+  >   value: sf.number,
+  >   // ✅ Safe: default is a non-recursive node
+  >   tag: SchemaFactoryAlpha.withDefaultRecursive(
+  >     sf.optional(DefaultTag),
+  >     () => new DefaultTag({ id: 0, child: new DefaultTag({ id: 1 }) }),
+  >   ),
+  >   child: sf.optionalRecursive([() => TreeNode]),
+  > }) {}
+  > ```
+  >
+  > The following definition for child would cause infinite recursion at construction time:
+  >
+  > ```typescript
+  > child: SchemaFactoryAlpha.withDefaultRecursive(
+  >   sf.optionalRecursive([() => TreeNode]),
+  >   () => new TreeNode({ value: 0 }),
+  > );
+  > ```
+
+  > The infinite recursion can be solved by passing in undefined explicitly but it is
+  > recommended to not use defaults in this case:
+  >
+  > ```typescript
+  > child: SchemaFactoryAlpha.withDefaultRecursive(
+  >   sf.optionalRecursive([() => TreeNode]),
+  >   () => new TreeNode({ value: 0, child: undefined }),
+  > );
+  > ```
+
+  #### Type safety
+
+  The default value (or the value returned by a generator function) must be of an allowed type for the field. TypeScript
+  enforces this at compile time:
+
+  ```typescript
+  // ✅ Valid: number default for number field
+  sf.withDefault(sf.optional(sf.number), 8080);
+
+  // ✅ Valid: generator returns string for string field
+  sf.withDefault(sf.optional(sf.string), () => "localhost");
+
+  // ❌ TypeScript error: string default for number field
+  sf.withDefault(sf.optional(sf.number), "8080");
+
+  // ❌ TypeScript error: generator returns number for string field
+  sf.withDefault(sf.optional(sf.string), () => 8080);
+  ```
+
+## 2.90.0
+
+### Minor Changes
+
+- Add alpha TextAsTree domain for collaboratively editable text ([#26568](https://github.com/microsoft/FluidFramework/pull/26568)) [06736bd81de](https://github.com/microsoft/FluidFramework/commit/06736bd81dea4c8e44cb13304f471a7b1bca42bd)
+
+  A newly exported `TextAsTree` alpha namespace has been added with an initial version of collaboratively editable text.
+  Users of SharedTree can add `TextAsTree.Tree` nodes to their tree to experiment with it.
+
+- Added new TreeAlpha.context(node) API ([#26432](https://github.com/microsoft/FluidFramework/pull/26432)) [ffa62f45e2c](https://github.com/microsoft/FluidFramework/commit/ffa62f45e2ca6c6106c67ed94f69359336823516)
+
+  This release introduces a node-scoped context that works for both hydrated and [unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class).
+  The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` methods and an `isBranch()` type guard.
+  `TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
+
+  #### Migration
+
+  If you previously used `TreeAlpha.branch(node)` to discover a branch, switch to `TreeAlpha.context(node)` and check `isBranch()`:
+
+  ```ts
+  import { TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const context = TreeAlpha.context(node);
+  if (context.isBranch()) {
+    // Same branch APIs as before
+    context.fork();
+  }
+  ```
+
+  `TreeAlpha.branch(node)` is now deprecated.
+  Prefer the context API above.
+
+  #### New transaction entry point
+
+  You can now run transactions from a node context, regardless of whether the node is hydrated:
+
+  ```ts
+  // A synchronous transaction without a return value
+  const context = TreeAlpha.context(node);
+  context.runTransaction(() => {
+    node.count += 1;
+  });
+  ```
+
+  ```ts
+  // An asynchronous transaction with a return value
+  const context = TreeAlpha.context(node);
+  const result = await context.runTransactionAsync(async () => {
+    await doWork(node);
+    return { value: node.foo };
+  });
+  ```
+
+- Promote checkSchemaCompatibilitySnapshots to beta ([#26288](https://github.com/microsoft/FluidFramework/pull/26288)) [eb4ef62672d](https://github.com/microsoft/FluidFramework/commit/eb4ef62672d33f6a903e3726b58d1f65c24d9150)
+
+  [`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
+  It is recommended that all SharedTree applications use this API to write schema compatibility tests.
+
+  Usage should look something like:
+
+  ```typescript
+  import fs from "node:fs";
+  import path from "node:path";
+
+  import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
+
+  // The TreeViewConfiguration the application uses, which contains the application's schema.
+  import { treeViewConfiguration } from "./schema.js";
+  // The next version of the application which will be released.
+  import { packageVersion } from "./version.js";
+
+  // Provide some way to run the check in "update" mode when updating snapshots is intended.
+  const regenerateSnapshots = process.argv.includes("--snapshot");
+
+  // Setup the actual test. In this case using Mocha syntax.
+  describe("schema", () => {
+    it("schema compatibility", () => {
+      // Select a path to save the snapshots in.
+      // This will depend on how your application organizes its test data.
+      const snapshotDirectory = path.join(
+        import.meta.dirname,
+        "../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
+      );
+      snapshotSchemaCompatibility({
+        snapshotDirectory,
+        fileSystem: { ...fs, ...path },
+        version: packageVersion,
+        minVersionForCollaboration: "2.0.0",
+        schema: treeViewConfiguration,
+        mode: regenerateSnapshots ? "update" : "assert",
+      });
+    });
+  });
+  ```
+
+## 2.83.0
+
+### Minor Changes
+
+- Fix false positive error from FormatValidator ([#26372](https://github.com/microsoft/FluidFramework/pull/26372)) [adad917d30](https://github.com/microsoft/FluidFramework/commit/adad917d30e251f4bfd510e7a1ebc4a73bd1f7ee)
+
+  Users of the alpha API [FormatValidatorBasic](https://fluidframework.com/docs/api/fluid-framework/#formatvalidatorbasic-variable)
+  could hit an "Invalid JSON." error when parsing data.
+  This would occur where the result of evaluating "[MinimumVersionForCollab](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) \< 2.74.0"
+  differed between the client encoding the data and the client decoding it.
+  For example opening an old document with a new client that sets `MinimumVersionForCollab = 2.74.0` would throw this error.
+  This has been fixed: this case will no longer throw.
+
+- New beta ExtensibleUnionNode API ([#26438](https://github.com/microsoft/FluidFramework/pull/26438)) [05f716ffb5](https://github.com/microsoft/FluidFramework/commit/05f716ffb56e280624e65853dd9291411ee752ff)
+
+  The new `ExtensibleUnionNode` API allows for creation of unions which can tolerate future additions not yet known to the current code.
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("extensibleUnionNodeExample.items");
+  class ItemA extends sf.object("A", { x: sf.string }) {}
+  class ItemB extends sf.object("B", { x: sf.number }) {}
+
+  class AnyItem extends ExtensibleUnionNode.createSchema(
+    [ItemA, ItemB], // Future versions may add more members here
+    sf,
+    "ExtensibleUnion",
+  ) {}
+  // Instances of the union are created using `create`.
+  const anyItem = AnyItem.create(new ItemA({ x: "hello" }));
+  // Reading the content from the union is done via the `union` property,
+  // which can be `undefined` to handle the case where a future version of this schema allows a type unknown to the current version.
+  const childNode: ItemA | ItemB | undefined = anyItem.union;
+  // To determine which member of the union was present, its schema can be inspected:
+  const aSchema = Tree.schema(childNode ?? assert.fail("No child"));
+  assert.equal(aSchema, ItemA);
+  ```
+
+- Improve error messages when failing to construct nodes ([#26433](https://github.com/microsoft/FluidFramework/pull/26433)) [8c612c6f2b](https://github.com/microsoft/FluidFramework/commit/8c612c6f2bc04a1fc1cdc54e620c2180eb73b107)
+
+  The error messages when constructing tree nodes have been improved.
+  Several cases now list not only the schema identifiers, but also schema names which can help when there are identifier collisions and make it easier to find the implementations.
+  Additionally some cases which did not include what schema were encountered and which were allowed now include both.
+
+## 2.82.0
+
+### Minor Changes
+
+- Promote MinimumVersionForCollab to beta ([#26342](https://github.com/microsoft/FluidFramework/pull/26342)) [2bb53c5c3f1](https://github.com/microsoft/FluidFramework/commit/2bb53c5c3f1aa9e3232d4a1f1e4a6a32d09248eb)
+
+  Promotes the [MinimumVersionForCollab](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) type to beta, and adds option to [configuredSharedTreeBeta](https://fluidframework.com/docs/api/fluid-framework#configuredsharedtreebeta-function) for specifying it when creating a new `SharedTree`.
+
+  This allows users to opt into new features and optimizations that are only available when certain minimum version thresholds are guaranteed.
+  For more details, see [FluidClientVersion](https://fluidframework.com/docs/api/fluid-framework#fluidclientversion-variable)
+
+  #### Example usage
+
+  ```typescript
+  // Configure SharedTree DDS to limit the features it requires of collaborators and future document users to only those available in version `2.80.0` and later, overriding the `MinimumVersionForCollab` provided by the runtime (default: "2.0.0").
+  // Edits made to this DDS by this client might cause clients older than the specified version to be unable to open the document and/or error out of collaboration sessions.
+  const SharedTree = configuredSharedTreeBeta({
+    minVersionForCollab: FluidClientVersion.v2_80,
+  });
+  ```
+
+- Add "push" as alias for insertAtEnd on TreeArrayNode ([#26260](https://github.com/microsoft/FluidFramework/pull/26260)) [e2ed71b014d](https://github.com/microsoft/FluidFramework/commit/e2ed71b014d44762e433841cada4667dd501e9c1)
+
+  Adds `push` as an alias to make the API more intuitive and reduce friction for both `LLM`-generated code and developers familiar with JavaScript array semantics.
+
+  #### Usage
+
+  ```typescript
+  import { TreeArrayNode } from "@fluidframework/tree";
+
+  // `inventory` is a TreeArrayNode from your schema.
+  inventory.push({ name: "Apples", quantity: 3 });
+
+  // Insert multiple items in one call.
+  inventory.push(
+    TreeArrayNode.spread([
+      { name: "Oranges", quantity: 2 },
+      { name: "Bananas", quantity: 5 },
+    ]),
+  );
+  ```
+
+- Promote TableSchema APIs to beta ([#26339](https://github.com/microsoft/FluidFramework/pull/26339)) [36a625a3058](https://github.com/microsoft/FluidFramework/commit/36a625a305878a267d2010ace377ff0d80d3367d)
+
+  Promotes the `SharedTree` [TableSchema](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace) from alpha to beta.
+  These APIs can now be imported via `@fluidframework/tree/beta`.
+  Documents from before this are not supported with the beta version of the schema to ensure orphan cell invariants can be guaranteed.
+
+- Fix bug in multi-step move of array elements ([#26344](https://github.com/microsoft/FluidFramework/pull/26344)) [1bca56c3fb2](https://github.com/microsoft/FluidFramework/commit/1bca56c3fb2ade3ad876e8761366053e5295490b)
+
+  A multi-step move can be authored by moving the same array element multiple times within the scope of a single transaction.
+  Such multi-step would lead to errors in the following scenarios:
+  - Reverting a multi-step move would fail with error code 0x92a on the peer attempting the revert, thus putting the peer in a broken read-only state without corrupting the document.
+  - If the set of pending edits generated by a peer included an edit with a multi-step move, followed by further edits to any of the moved items, reconciling these edits with concurrent edits sequenced earlier could lead to a document corruption with error code 0x9c7.
+
+  These operations are now safe.
+
+- Adds optional "label" parameter to runTransaction for grouping changes ([#25938](https://github.com/microsoft/FluidFramework/pull/25938)) [cca4db29c72](https://github.com/microsoft/FluidFramework/commit/cca4db29c722aca3fbfa5c0b45a852cd8499a17a)
+
+  Transaction labels can be used to group multiple changes for undo/redo, where groups of changes with the same label can be undone together. When multiple labels are used in nested transactions, only the outermost label will be used.
+
+  The following example demonstrates how to implement label-based undo/redo grouping. It listens to the `changed` event on the checkout to collect all commits with the same label into a group. When `undoLatestGroup()` is called, all transactions in that group are reverted together with a single operation.
+
+  ```typescript
+  interface LabeledGroup {
+    label: unknown;
+    revertibles: { revert(): void }[];
+  }
+
+  const undoGroups: LabeledGroup[] = [];
+
+  // The callback on the "changed" event can be used to group the commits.
+  view.checkout.events.on("changed", (meta, getRevertible) => {
+    // Only process local edits, not remote changes or Undo/Redo operations
+    if (getRevertible !== undefined && meta.kind === CommitKind.Default) {
+      const label = meta.label;
+      const revertible = getRevertible();
+
+      // Check if the latest group contains the same label.
+      const latestGroup = undoGroups[undoGroups.length - 1];
+      if (
+        label !== undefined &&
+        latestGroup !== undefined &&
+        label === latestGroup.label
+      ) {
+        latestGroup.revertibles.push(revertible);
+      } else {
+        undoGroups.push({ label, revertibles: [revertible] });
+      }
+    }
+  });
+
+  const undoLatestGroup = () => {
+    const latestGroup =
+      undoGroups.pop() ?? fail("There are currently no undo groups.");
+    for (const revertible of latestGroup.revertibles.reverse()) {
+      revertible.revert();
+    }
+  };
+
+  // Group multiple transactions with the same label
+  view.runTransaction(
+    () => {
+      view.root.content = 1;
+    },
+    { label: "EditGroup" },
+  );
+  view.runTransaction(
+    () => {
+      view.root.content = 2;
+    },
+    { label: "EditGroup" },
+  );
+  view.runTransaction(
+    () => {
+      view.root.content = 3;
+    },
+    { label: "EditGroup" },
+  );
+
+  // This would undo all three transactions together.
+  undoLatestGroup();
+  // view.root.content is now back to 0 (the initial state).
+  ```
+
+## 2.81.0
+
+### Minor Changes
+
+- directory: Path parameter added to `cleared` event ([#26112](https://github.com/microsoft/FluidFramework/pull/26112)) [1ded6bf755](https://github.com/microsoft/FluidFramework/commit/1ded6bf75526eefd4d4565f4f9f6c795b8a77acf)
+
+  The `clear` event for SharedDirectory did not include a `path` parameter indicating which directory was cleared. Therefore, the `clear` event is deprecated and will be removed in a future release. Instead use the `cleared` event.
+
+  **Before:**
+
+  ```typescript
+  sharedDirectory.on("clear", (local, target) => {
+    // No way to know which subdirectory was cleared
+  });
+  ```
+
+  **After:**
+
+  ```typescript
+  sharedDirectory.on("cleared", (path, local, target) => {
+    // path tells you which directory was cleared (e.g., "/", "/subdir1", "/subdir2")
+  });
+  ```
+
+  This change provides better observability by allowing listeners to distinguish between clear operations on different subdirectories within the SharedDirectory hierarchy.
+
+## 2.80.0
+
+### Minor Changes
+
+- TreeBranch operations throw when called during transactions ([#26097](https://github.com/microsoft/FluidFramework/pull/26097)) [33b1ec0827c](https://github.com/microsoft/FluidFramework/commit/33b1ec0827c433ce9afc126f26457a9245bd43eb)
+
+  This breaking change only affects the behavior of `TreeBranch` methods (currently released as beta).
+  - Invoking `TreeBranch.fork()` now throws an error if a transaction is ongoing on the branch.
+  - Invoking `TreeBranch.merge(sourceBranch)` now throws an error if a transaction is ongoing on the source branch.
+    As before, it also throws an error if a transaction is ongoing on the target (i.e., `this`) branch.
+  - Invoking `TreeBranch.rebaseOnto(targetBranch)` now throws an error if a transaction is ongoing on the target branch.
+    As before, it also throws an error if a transaction is ongoing on the source (i.e., `this`) branch.
+
+  These new restrictions insulate branches and their dependents from experiencing incomplete transaction changes.
+  This is important because incomplete transaction changes may not uphold application invariants.
+
+  In scenarios that experience the new errors, application authors should consider whether the ongoing transaction can safely be closed before invoking these methods.
+
+## 2.74.0
+
+### Minor Changes
+
+- Fixed bug in sending of revert edits after an aborted transaction ([#25978](https://github.com/microsoft/FluidFramework/pull/25978)) [93ec6c77dab](https://github.com/microsoft/FluidFramework/commit/93ec6c77dab27bd65c2b04862f578ac3876b2cbe)
+
+  Aborting a transaction used to put the tree in a state that would trigger an assert when sending some undo/redo edits to peers.
+  This would prevent some undo/redo edits from being sent and would put the tree in a broken state that prevented any further edits.
+  This issue could not have caused document corruption, so reopening the document was a possible remedy.
+  Aborting a transaction no longer puts the tree in such a state, so it is safe to perform undo/redo edits after that.
+
 ## 2.73.0
 
 ### Minor Changes

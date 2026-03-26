@@ -14,6 +14,8 @@ import {
 	ISummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
+import { ISharedDirectory } from "@fluidframework/map/internal";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
@@ -27,11 +29,11 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
-		public get containerRuntime() {
+		public get containerRuntime(): IContainerRuntimeBase {
 			return this.context.containerRuntime;
 		}
 	}
@@ -102,7 +104,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		referencedDataStoreCount: number,
 		message: string,
 		summarizer: boolean = false,
-	) {
+	): void {
 		mockLogger.assertMatch(
 			[
 				{
@@ -119,7 +121,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		);
 	}
 
-	beforeEach("setup", async function () {
+	beforeEach("setup", async function (): Promise<void> {
 		provider = getTestObjectProvider();
 		if (provider.driver.type === "odsp") {
 			this.skip();
@@ -148,7 +150,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		validateLoadStats(0, 0, 0, "First container stats incorrect");
 	});
 
-	it("should load summarizer with correct create stats", async function () {
+	it("should load summarizer with correct create stats", async function (): Promise<void> {
 		// Wait for summarizer to load and submit a summary. Validate that it loads from summaryNumber 1 and has
 		// 1 data store which is referenced.
 		await waitForSummary();
@@ -161,7 +163,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		);
 	});
 
-	it("should load container with correct create stats", async function () {
+	it("should load container with correct create stats", async function (): Promise<void> {
 		// Wait for summarizer to load and submit a summary. Validate that it loads from summaryNumber 1 and has
 		// 1 data store which is referenced.
 		const summaryVersion = await waitForSummary();
@@ -178,7 +180,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		validateLoadStats(2, 1, 1, "Second container should load with correct create stats");
 	});
 
-	it("should load container with correct data store load stats", async function () {
+	it("should load container with correct data store load stats", async function (): Promise<void> {
 		// Create another data store so that the data store stats are updated.
 		const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
 		mainDataStore._root.set("dataStore2", dataStore2.handle);
@@ -200,7 +202,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		validateLoadStats(2, 2, 2, "Second container should load with correct data store stats");
 	});
 
-	it("should load second summarizer with correct stats", async function () {
+	it("should load second summarizer with correct stats", async function (): Promise<void> {
 		// Wait for summarizer to load and submit a summary. Validate that it loads from summaryNumber 1.
 		const summaryVersion = await waitForSummary();
 		validateLoadStats(

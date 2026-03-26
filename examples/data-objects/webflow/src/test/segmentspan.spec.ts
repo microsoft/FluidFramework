@@ -18,13 +18,15 @@ import { SegmentSpan } from "../document/segmentspan.js";
 describeCompat("SegmentSpan", "LoaderCompat", (getTestObjectProvider) => {
 	let doc: FlowDocument;
 	let provider: ITestObjectProvider;
-	before(async () => {
+	before(async function () {
+		// Initialization of compat variants can take several seconds, especially with newer jsdom versions.
+		this.timeout(30000);
 		provider = getTestObjectProvider({ resetAfterEach: false });
 		const container = await provider.createContainer(FlowDocument.getFactory());
 		doc = await getContainerEntryPointBackCompat<FlowDocument>(container);
 	});
 
-	function setup(chunks: string[]) {
+	function setup(chunks: string[]): void {
 		// Remove all content from the previous test (also removes EOF marker).
 		doc.remove(0, doc.length);
 
@@ -34,7 +36,7 @@ describeCompat("SegmentSpan", "LoaderCompat", (getTestObjectProvider) => {
 		}
 	}
 
-	function test(chunks: string[], start: number, end: number) {
+	function test(chunks: string[], start: number, end: number): void {
 		const expected = chunks.join("").slice(start, end);
 
 		it(`${JSON.stringify(chunks)}: [${start}..${end}) -> ${JSON.stringify(expected)}`, () => {

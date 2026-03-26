@@ -545,7 +545,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
-		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive; modified in changeWriteFormat()
 		private writeFormat: WriteFormat,
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {
@@ -999,10 +998,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent.contents);
@@ -1106,7 +1102,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Updates SharedTree to the provided version if the version is a valid write version newer than the current version.
 	 * @param version - The version to update to.
 	 */
-	private processVersionUpdate(version: WriteFormat) {
+	private processVersionUpdate(version: WriteFormat): void {
 		if (isUpdateRequired(this.writeFormat, version)) {
 			PerformanceEvent.timedExec(
 				this.logger,
@@ -1219,7 +1215,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		edits: Iterable<Edit<InternalizedChange>>,
 		stableIdRemapper?: (id: StableNodeId) => StableNodeId
 	): EditId[] {
-		const idConverter = (id: NodeId) => {
+		const idConverter = (id: NodeId): NodeId => {
 			const stableId = other.convertToStableNodeId(id);
 			const convertedStableId = stableIdRemapper?.(stableId) ?? stableId;
 			return this.generateNodeId(convertedStableId);

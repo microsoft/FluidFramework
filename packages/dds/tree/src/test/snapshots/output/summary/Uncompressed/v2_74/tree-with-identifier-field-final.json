@@ -42,20 +42,24 @@
                             {
                               "schema": {
                                 "new": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.example.parent": {
-                                      "object": {
-                                        "identifier": {
-                                          "kind": "Identifier",
-                                          "types": [
-                                            "com.fluidframework.leaf.string"
-                                          ]
+                                      "kind": {
+                                        "object": {
+                                          "identifier": {
+                                            "kind": "Identifier",
+                                            "types": [
+                                              "com.fluidframework.leaf.string"
+                                            ]
+                                          }
                                         }
                                       }
                                     },
                                     "com.fluidframework.leaf.string": {
-                                      "leaf": 1
+                                      "kind": {
+                                        "leaf": 1
+                                      }
                                     }
                                   },
                                   "root": {
@@ -66,7 +70,7 @@
                                   }
                                 },
                                 "old": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {},
                                   "root": {
                                     "kind": "Forbidden",
@@ -140,20 +144,24 @@
                             {
                               "schema": {
                                 "new": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.example.parent": {
-                                      "object": {
-                                        "identifier": {
-                                          "kind": "Identifier",
-                                          "types": [
-                                            "com.fluidframework.leaf.string"
-                                          ]
+                                      "kind": {
+                                        "object": {
+                                          "identifier": {
+                                            "kind": "Identifier",
+                                            "types": [
+                                              "com.fluidframework.leaf.string"
+                                            ]
+                                          }
                                         }
                                       }
                                     },
                                     "com.fluidframework.leaf.string": {
-                                      "leaf": 1
+                                      "kind": {
+                                        "leaf": 1
+                                      }
                                     }
                                   },
                                   "root": {
@@ -164,20 +172,24 @@
                                   }
                                 },
                                 "old": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.example.parent": {
-                                      "object": {
-                                        "identifier": {
-                                          "kind": "Identifier",
-                                          "types": [
-                                            "com.fluidframework.leaf.string"
-                                          ]
+                                      "kind": {
+                                        "object": {
+                                          "identifier": {
+                                            "kind": "Identifier",
+                                            "types": [
+                                              "com.fluidframework.leaf.string"
+                                            ]
+                                          }
                                         }
                                       }
                                     },
                                     "com.fluidframework.leaf.string": {
-                                      "leaf": 1
+                                      "kind": {
+                                        "leaf": 1
+                                      }
                                     }
                                   },
                                   "root": {
@@ -190,7 +202,7 @@
                               }
                             }
                           ],
-                          "revision": 4,
+                          "revision": 1,
                           "sequenceNumber": 2,
                           "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                         }
@@ -267,14 +279,14 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 2
+                      "version": 3
                     },
                     "encoding": "utf-8"
                   }
                 },
                 {
                   "type": "blob",
-                  "ForestTree": {
+                  "contents": {
                     "type": "blob",
                     "content": {
                       "keys": [
@@ -312,7 +324,7 @@
                           ]
                         ]
                       },
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }

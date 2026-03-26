@@ -189,7 +189,7 @@ function invertMark(
 			if (mark.finalEndpoint !== undefined) {
 				moveIn.finalEndpoint = {
 					localId: mark.finalEndpoint.localId,
-					revision: mark.revision,
+					revision,
 				};
 			}
 			let effect: MarkEffect = moveIn;
@@ -228,7 +228,7 @@ function invertMark(
 			if (mark.finalEndpoint) {
 				invertedMark.finalEndpoint = {
 					localId: mark.finalEndpoint.localId,
-					revision: mark.revision,
+					revision,
 				};
 			}
 			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
@@ -303,8 +303,9 @@ function invertMark(
 
 			return inverses;
 		}
-		default:
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 
@@ -319,9 +320,9 @@ function applyMovedChanges(
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		const mark1WithChanges =
-			entry.value !== undefined
-				? withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value)
-				: mark1;
+			entry.value === undefined
+				? mark1
+				: withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value);
 
 		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
 	}

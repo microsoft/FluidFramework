@@ -26,7 +26,7 @@ const checkRequestedVersionSatisfies = (
 	requested,
 	adjustPublicMajor,
 	expectedVersion,
-) => {
+): void => {
 	try {
 		const version = getRequestedVersion(baseVersion, requested, adjustPublicMajor);
 		assert(
@@ -42,7 +42,12 @@ const checkRequestedVersionSatisfies = (
 
 describe("versionUtils", () => {
 	describe("getRequestedVersion", () => {
-		function createTest(baseVersion, requested, adjustPublicMajor, expectedVersion) {
+		function createTest(
+			baseVersion,
+			requested,
+			adjustPublicMajor,
+			expectedVersion,
+		): Mocha.Test {
 			return it(`${baseVersion}, ${requested}, ${adjustPublicMajor}, ${expectedVersion}`, () => {
 				checkRequestedVersionSatisfies(
 					baseVersion,

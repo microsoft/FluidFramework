@@ -12,7 +12,7 @@ describe("MergeTree snapshots", () => {
 	let summary: ISummaryTree | undefined;
 
 	for (const summarySize of [10, 50, 100, 500, 1000, 5000, 10_000]) {
-		benchmark({
+		const test = benchmark({
 			type: BenchmarkType.Measurement,
 			title: `load snapshot with ${summarySize} segments`,
 			category: "snapshot loading",
@@ -33,5 +33,11 @@ describe("MergeTree snapshots", () => {
 				summary = undefined;
 			},
 		});
+
+		if (summarySize > 5000) {
+			const currentTimeout = test.timeout();
+			// Default value of 2 seconds causes failure around P95 for large snapshot sizes.
+			test.timeout(currentTimeout === 0 ? 0 : Math.max(5000, currentTimeout));
+		}
 	}
 });

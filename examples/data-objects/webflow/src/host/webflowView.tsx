@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import React, { KeyboardEventHandler, useEffect, useRef, useState } from "react";
+import {
+	type FC,
+	type KeyboardEvent,
+	type KeyboardEventHandler,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { FlowDocument } from "../document/index.js";
 import { Editor } from "../editor/index.js";
@@ -18,13 +25,13 @@ import { debug } from "./debug.js";
 import "./index.css";
 import { SearchMenuView } from "./searchmenu/index.js";
 
-const always = () => true;
+const always = (): boolean => true;
 
 interface IWebflowViewProps {
 	docP: Promise<FlowDocument>;
 }
 
-export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProps) => {
+export const WebflowView: FC<IWebflowViewProps> = (props: IWebflowViewProps) => {
 	const { docP } = props;
 
 	const [flowDocument, setFlowDocument] = useState<FlowDocument | undefined>(undefined);
@@ -49,11 +56,11 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 		}
 
 		let editor = new Editor(flowDocument, slotElementRef.current, htmlFormatter);
-		const hasSelection = () => {
+		const hasSelection = (): boolean => {
 			const { start, end } = editor.selection;
 			return start < end;
 		};
-		const setFormat = (tag: TagName) => {
+		const setFormat = (tag: TagName): void => {
 			const { end } = editor.selection;
 
 			// Note that calling 'setFormat(..)' with the position of a paragraph marker will change the block
@@ -61,22 +68,22 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 			// the text on the previous line, hence the '- 1'.
 			flowDocument.setFormat(end - 1, tag);
 		};
-		const toggleSelection = (className: string) => {
+		const toggleSelection = (className: string): void => {
 			const { start, end } = editor.selection;
 			flowDocument.toggleCssClass(start, end, className);
 		};
-		const switchFormatter = (formatter: Readonly<RootFormatter<IFormatterState>>) => {
+		const switchFormatter = (formatter: Readonly<RootFormatter<IFormatterState>>): void => {
 			editor.remove();
 			if (slotElementRef.current === null) {
 				throw new Error("Null slot element");
 			}
 			editor = new Editor(flowDocument, slotElementRef.current, formatter);
 		};
-		const setStyle = (style: string) => {
+		const setStyle = (style: string): void => {
 			const { start, end } = editor.selection;
 			flowDocument.setCssStyle(start, end, style);
 		};
-		const toggleDebug = () => {
+		const toggleDebug = (): void => {
 			if (slotElementRef.current === null) {
 				throw new Error("Null slot element");
 			}
@@ -177,7 +184,7 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 		};
 	}, [flowDocument]);
 
-	const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e: React.KeyboardEvent) => {
+	const onKeyDown: KeyboardEventHandler<HTMLDivElement> = (e: KeyboardEvent): void => {
 		if (e.ctrlKey && e.key === "m") {
 			if (searchMenuRef.current === undefined) {
 				throw new Error("Undefined search menu view");
@@ -187,7 +194,7 @@ export const WebflowView: React.FC<IWebflowViewProps> = (props: IWebflowViewProp
 		}
 	};
 
-	const onComplete = (command?: ICommand) => {
+	const onComplete = (command?: ICommand): void => {
 		if (command) {
 			debug(`Execute Command: ${command.name}`);
 			command.exec();

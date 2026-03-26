@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { Side } from "@fluidframework/merge-tree/internal";
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test-runtime-utils/internal";
+
 import { IntervalStickiness } from "../intervals/index.js";
 
 import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";

@@ -11,6 +11,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
+import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
 import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
@@ -18,7 +19,6 @@ import {
 	SharedTreeFuzzTestFactory,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -106,7 +106,7 @@ describe("Fuzz - Top-Level", () => {
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
-			reconnectProbability: 0.0,
+			reconnectProbability: 0,
 			rollbackProbability: 0,
 			defaultTestCount: runsPerBatch,
 			rebaseProbability: 0.2,

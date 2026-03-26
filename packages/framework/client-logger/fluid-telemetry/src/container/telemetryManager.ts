@@ -58,6 +58,7 @@ export class ContainerTelemetryManager {
 	 */
 	private setupHeartbeatTelemetryEmission(): void {
 		setInterval(() => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState may not be typed precisely
 			if (this.container.connectionState === ConnectionState.Connected) {
 				const telemetry = this.telemetryProducer.produceHeartbeatTelemetry();
 				for (const consumer of this.telemetryConsumers) {

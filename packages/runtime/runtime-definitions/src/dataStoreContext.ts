@@ -72,22 +72,6 @@ export enum FlushMode {
 }
 
 /**
- * @internal
- */
-export enum FlushModeExperimental {
-	/**
-	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
-	 * batch when all micro-tasks are complete.
-	 *
-	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
-	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
-	 *
-	 * @experimental Not ready for use
-	 */
-	Async = 2,
-}
-
-/**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
  * @legacy @beta
@@ -319,11 +303,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  */
 export interface IFluidDataStorePolicies {
 	/**
-	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 * When set to true, the data store will appear readonly while in staging mode.
 	 *
 	 * @remarks
-	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
-	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 * In staging mode, operations are held locally until committed, so consensus-based operations
+	 * (e.g., `ConsensusRegisterCollection`, `ConsensusQueue`, `TaskManager`) won't resolve their promises until
+	 * staging mode exits. Set this to `true` for data stores that depend on consensus acknowledgments
+	 * to prevent modifications that would leave the data store in an unresponsive state.
 	 */
 	readonly readonlyInStagingMode: boolean;
 }
@@ -427,7 +413,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -487,6 +473,7 @@ export interface IPendingMessagesState {
  * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
@@ -635,6 +622,7 @@ export type PackagePath = readonly string[];
  * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
@@ -718,6 +706,7 @@ export interface FluidDataStoreContextInternal
 
 /**
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**

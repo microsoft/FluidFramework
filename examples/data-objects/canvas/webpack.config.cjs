@@ -12,7 +12,7 @@ const pkg = require("./package.json");
 const fluidPackageName = pkg.name.slice(1);
 
 module.exports = (env) => {
-	const isProduction = env?.production;
+	const { production } = env;
 
 	return merge(
 		{
@@ -82,8 +82,9 @@ module.exports = (env) => {
 			watchOptions: {
 				ignored: "**/node_modules/**",
 			},
+			mode: production ? "production" : "development",
+			devtool: production ? "source-map" : "inline-source-map",
 		},
-		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 		fluidRoute.devServerConfig(__dirname, env),
 	);
 };

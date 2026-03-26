@@ -3,22 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { Off } from "@fluidframework/core-interfaces";
 import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
-import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
-import {
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
-} from "../leafNodeSchema.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "@fluidframework/core-interfaces";
 import {
 	getKernel,
 	isTreeNode,
@@ -34,9 +26,18 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
 } from "../core/index.js";
-import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "../leafNodeSchema.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+
+import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -104,6 +105,9 @@ export interface TreeNodeApi {
 	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
+	 * @remarks
+	 * The returned unsubscribe function should be called any time the need for the `listener` callback ends before the node is {@link TreeStatus.Deleted | deleted} (Not just {@link TreeStatus.Removed | removed}).
+	 * Doing so removes the overhead of tracking and triggering the event, and also avoids leaking any memory retained by the callback.
 	 */
 	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,
@@ -203,8 +207,9 @@ export const treeNodeApi: TreeNodeApi = {
 			case "treeChanged": {
 				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
 			}
-			default:
+			default: {
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
+			}
 		}
 	},
 	status(node: TreeNode): TreeStatus {
@@ -238,12 +243,15 @@ export const treeNodeApi: TreeNodeApi = {
  */
 export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 	switch (typeof value) {
-		case "string":
+		case "string": {
 			return stringSchema;
-		case "number":
+		}
+		case "number": {
 			return numberSchema;
-		case "boolean":
+		}
+		case "boolean": {
 			return booleanSchema;
+		}
 		case "object": {
 			if (isTreeNode(value)) {
 				// TODO: This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
@@ -256,8 +264,9 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 				return handleSchema;
 			}
 		}
-		default:
+		default: {
 			return undefined;
+		}
 	}
 }
 
@@ -310,8 +319,9 @@ export function getIdentifierFromNode(
 	const identifierFieldKeys = schema.identifierFieldKeys;
 
 	switch (identifierFieldKeys.length) {
-		case 0:
+		case 0: {
 			return undefined;
+		}
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifierField = flexNode.tryGetField(key);
@@ -325,9 +335,9 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined
-							? extractFromOpaque(localNodeKey)
-							: identifierValue;
+						return localNodeKey === undefined
+							? identifierValue
+							: extractFromOpaque(localNodeKey);
 					} else {
 						return identifierValue;
 					}
@@ -336,7 +346,7 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+						return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 					} else {
 						return undefined;
 					}
@@ -344,14 +354,16 @@ export function getIdentifierFromNode(
 				case "uncompressed": {
 					return identifierValue;
 				}
-				default:
+				default: {
 					unreachableCase(compression);
+				}
 			}
 		}
-		default:
+		default: {
 			throw new UsageError(
-				"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
+				"The node has more than one identifier. Retrieve identifiers individually via their fields instead.",
 			);
+		}
 	}
 }
 

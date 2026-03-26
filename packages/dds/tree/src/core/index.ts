@@ -105,7 +105,7 @@ export {
 	tryGetChunk,
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
-	getCodecTreeForDetachedFieldIndexFormat,
+	detachedFieldIndexCodecBuilder,
 } from "./tree/index.js";
 
 export {
@@ -175,6 +175,11 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
+	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -203,22 +208,18 @@ export {
 	offsetChangeAtomId,
 	StableIdSchema,
 	subtractChangeAtomIds,
-	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	compareRevisions,
+	comparePartialRevisions,
+	compareChangesetLocalIds,
+	comparePartialChangesetLocalIds,
 	diffHistories,
+	type RevisionReplacer,
 } from "./rebase/index.js";
-
-export {
-	type Adapters,
-	AdaptedViewSchema,
-	type TreeAdapter,
-} from "./schema-view/index.js";
 
 export {
 	type Revertible,

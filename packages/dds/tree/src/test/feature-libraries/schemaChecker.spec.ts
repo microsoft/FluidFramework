@@ -7,19 +7,6 @@ import { strict as assert } from "node:assert";
 
 // Reaching into internal module just to test it
 import {
-	SchemaValidationError,
-	compliesWithMultiplicity,
-	isFieldInSchema,
-	isNodeInSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/schemaChecker.js";
-import {
-	cursorForJsonableTreeNode,
-	defaultSchemaPolicy,
-	FieldKinds,
-	mapTreeFromCursor,
-} from "../../feature-libraries/index.js";
-import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	Multiplicity,
@@ -35,6 +22,19 @@ import {
 	type TreeNodeStoredSchema,
 	type Value,
 } from "../../core/index.js";
+import {
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	FieldKinds,
+	mapTreeFromCursor,
+} from "../../feature-libraries/index.js";
+import {
+	SchemaValidationError,
+	compliesWithMultiplicity,
+	isFieldInSchema,
+	isNodeInSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/schemaChecker.js";
 import { brand } from "../../util/index.js";
 import { testTrees } from "../testTrees.js";
 import { testIdCompressor } from "../utils.js";

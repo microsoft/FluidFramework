@@ -57,7 +57,10 @@ export class TableDocument
 	extends DataObject<{ Events: ITableDocumentEvents }>
 	implements ITable
 {
-	public static getFactory() {
+	public static getFactory(): DataObjectFactory<
+		TableDocument,
+		{ Events: ITableDocumentEvents }
+	> {
 		return TableDocument.factory;
 	}
 
@@ -68,10 +71,10 @@ export class TableDocument
 		registryEntries: [TableSlice.getFactory().registryEntry],
 	});
 
-	public get numCols() {
+	public get numCols(): number {
 		return this.cols.getLength();
 	}
-	public get numRows() {
+	public get numRows(): number {
 		return this.matrix.numRows;
 	}
 
@@ -88,7 +91,7 @@ export class TableDocument
 		col: number,
 		value: TableDocumentItem,
 		properties?: PropertySet,
-	) {
+	): void {
 		this.matrix.setItems(row, col, [value], properties);
 	}
 
@@ -121,7 +124,7 @@ export class TableDocument
 		return component;
 	}
 
-	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet): void {
 		this.rows.annotateRange(startRow, endRow, properties);
 	}
 
@@ -129,7 +132,7 @@ export class TableDocument
 		return this.rows.getPropertiesAtPosition(row);
 	}
 
-	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet): void {
 		this.cols.annotateRange(startCol, endCol, properties);
 	}
 
@@ -137,7 +140,7 @@ export class TableDocument
 		return this.cols.getPropertiesAtPosition(col);
 	}
 
-	public annotateCell(row: number, col: number, properties: PropertySet) {
+	public annotateCell(row: number, col: number, properties: PropertySet): void {
 		this.matrix.annotatePosition(row, col, properties);
 	}
 
@@ -152,7 +155,7 @@ export class TableDocument
 		minCol: number,
 		maxRow: number,
 		maxCol: number,
-	) {
+	): void {
 		debug(`createInterval(${label}, ${minRow}:${minCol}..${maxRow}:${maxCol})`);
 		const start = rowColToPosition(minRow, minCol);
 		const end = rowColToPosition(maxRow, maxCol);
@@ -160,27 +163,27 @@ export class TableDocument
 		intervals.add({ start, end });
 	}
 
-	public insertRows(startRow: number, numRows: number) {
+	public insertRows(startRow: number, numRows: number): void {
 		this.matrix.insertRows(startRow, numRows);
 		this.rows.insert(startRow, new Array(numRows).fill(0));
 	}
 
-	public removeRows(startRow: number, numRows: number) {
+	public removeRows(startRow: number, numRows: number): void {
 		this.matrix.removeRows(startRow, numRows);
 		this.rows.remove(startRow, startRow + numRows);
 	}
 
-	public insertCols(startCol: number, numCols: number) {
+	public insertCols(startCol: number, numCols: number): void {
 		this.matrix.insertCols(startCol, numCols);
 		this.cols.insert(startCol, new Array(numCols).fill(0));
 	}
 
-	public removeCols(startCol: number, numCols: number) {
+	public removeCols(startCol: number, numCols: number): void {
 		this.matrix.removeCols(startCol, numCols);
 		this.cols.remove(startCol, startCol + numCols);
 	}
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const rows = SharedNumberSequence.create(this.runtime, "rows");
 		this.root.set("rows", rows.handle);
 
@@ -193,7 +196,7 @@ export class TableDocument
 		this.root.set(ConfigKey.docId, this.runtime.id);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.matrix = await this.root.get<IFluidHandle<SparseMatrix>>("matrix").get();
 		this.rows = await this.root.get<IFluidHandle<SharedNumberSequence>>("rows").get();
 		this.cols = await this.root.get<IFluidHandle<SharedNumberSequence>>("cols").get();
@@ -206,7 +209,9 @@ export class TableDocument
 		this.matrix.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
 	}
 
-	private readonly localRefToRowCol = (localRef: ReferencePosition) => {
+	private readonly localRefToRowCol = (
+		localRef: ReferencePosition,
+	): { row: number; col: number } => {
 		const position = this.matrix.localReferencePositionToPosition(localRef);
 		return positionToRowCol(position);
 	};

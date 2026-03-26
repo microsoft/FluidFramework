@@ -227,12 +227,13 @@ function init(state: UndoRedoFuzzTestState) {
 	state.unsubscribe = [];
 	for (const client of state.clients) {
 		const checkout = viewFromState(state, client).checkout;
-		const unsubscribe = checkout.events.on("changed", (commit, getRevertible) => {
-			if (getRevertible !== undefined) {
-				if (commit.kind === CommitKind.Undo) {
-					redoStack.push(getRevertible());
+		const unsubscribe = checkout.events.on("changed", ({ kind, getRevertible }) => {
+			const revertible = getRevertible?.();
+			if (revertible !== undefined) {
+				if (kind === CommitKind.Undo) {
+					redoStack.push(revertible);
 				} else {
-					undoStack.push(getRevertible());
+					undoStack.push(revertible);
 				}
 			}
 		});

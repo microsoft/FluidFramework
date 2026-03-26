@@ -6,11 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	normalizeFieldSchema,
-	SchemaFactoryAlpha,
-	type TreeNodeSchema,
-} from "../../simple-tree/index.js";
-import {
 	AnnotatedAllowedTypesInternal,
 	walkAllowedTypes,
 	type AllowedTypesFullEvaluated,
@@ -18,6 +13,11 @@ import {
 	type SchemaVisitor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
+import {
+	normalizeFieldSchema,
+	SchemaFactoryAlpha,
+	type TreeNodeSchema,
+} from "../../simple-tree/index.js";
 
 function makeAnnotated(
 	type: TreeNodeSchema,

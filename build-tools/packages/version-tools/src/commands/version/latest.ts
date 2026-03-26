@@ -15,7 +15,6 @@ import { getLatestReleaseFromList } from "../../schemes";
  * standard tools (e.g. `npm show versions`) don't fully work in that scenario because the Fluid internal version scheme
  * overloads the semver prerelease field.
  */
-// eslint-disable-next-line import-x/no-default-export
 export default class LatestCommand extends Command {
 	static readonly description =
 		"Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.";

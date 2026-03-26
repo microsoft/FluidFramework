@@ -8,18 +8,31 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentServiceEvents,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISnapshotFetchOptions,
+	type ConnectionMode,
 	DriverErrorTypes,
-	IDocumentMessage,
-	INack,
+	type IClientConfiguration,
+	type ICreateBlobResponse,
+	type IDocumentDeltaConnection,
+	type IDocumentDeltaConnectionEvents,
+	type IDocumentDeltaStorageService,
+	type IDocumentMessage,
+	type IDocumentService,
+	type IDocumentServiceEvents,
+	type IDocumentServiceFactory,
+	type IDocumentServicePolicies,
+	type IDocumentStorageService,
+	type IDocumentStorageServicePolicies,
+	type INack,
+	type IResolvedUrl,
+	type ISequencedDocumentMessage,
+	type ISignalClient,
+	type ISignalMessage,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
+	type ISnapshotTree,
+	type IStream,
+	type ITokenClaims,
+	type IVersion,
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
 import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
@@ -27,7 +40,7 @@ import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-u
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
-	public get documentServices() {
+	public get documentServices(): Map<IResolvedUrl, FaultInjectionDocumentService> {
 		return this._documentServices;
 	}
 
@@ -80,7 +93,7 @@ export class FaultInjectionDocumentService
 	private readonly internalEvents =
 		createEmitter<FaultInjectionDocumentServiceInternalEvents>();
 
-	public goOffline() {
+	public goOffline(): void {
 		assert(this.online, "must only go offline while online");
 		this.online = false;
 		assert(!!this._currentDeltaStream, "no delta stream");
@@ -90,7 +103,7 @@ export class FaultInjectionDocumentService
 		this._currentDeltaStorage?.goOffline();
 	}
 
-	public goOnline() {
+	public goOnline(): void {
 		assert(!this.online, "must only go online while offline");
 		this.online = true;
 		this.internalEvents.emit("online");
@@ -105,36 +118,38 @@ export class FaultInjectionDocumentService
 		super();
 	}
 
-	public get resolvedUrl() {
+	public get resolvedUrl(): IResolvedUrl {
 		return this.internal.resolvedUrl;
 	}
-	public get policies() {
+	public get policies(): IDocumentServicePolicies | undefined {
 		return this.internal.policies;
 	}
-	public get documentDeltaConnection() {
+	public get documentDeltaConnection(): FaultInjectionDocumentDeltaConnection | undefined {
 		return this._currentDeltaStream;
 	}
-	public get documentDeltaStorageService() {
+	public get documentDeltaStorageService():
+		| FaultInjectionDocumentDeltaStorageService
+		| undefined {
 		return this._currentDeltaStorage;
 	}
-	public get documentStorageService() {
+	public get documentStorageService(): FaultInjectionDocumentStorageService | undefined {
 		return this._currentStorage;
 	}
 
-	public dispose(error?: any) {
+	public dispose(error?: any): void {
 		this.online = false;
 		this.internalEvents.emit("disposed");
 		this.internal.dispose(error);
 	}
 
 	private readonly waitForOnline = async (): Promise<void> =>
-		new Promise<void>((resolve, reject) => {
-			const onOnline = () => {
+		new Promise<void>((resolve, reject): void => {
+			const onOnline = (): void => {
 				resolve();
 				this.internalEvents.off("online", onOnline);
 				this.internalEvents.off("disposed", onDisposed);
 			};
-			const onDisposed = (error?: any) => {
+			const onDisposed = (error?: any): void => {
 				reject(
 					wrapError(
 						error,
@@ -194,10 +209,10 @@ export class FaultInjectionDocumentDeltaConnection
 	private readonly events = new Map<any, () => void>();
 
 	// forward events from internal connection only if online
-	private forwardEvent(event: any) {
+	private forwardEvent(event: any): void {
 		const emitterEvents = ["newListener", "removeListener"];
 		if (!emitterEvents.includes(event) && !this.events.has(event)) {
-			const listener = (...args: any[]) => {
+			const listener = (...args: any[]): void => {
 				if (this.online) {
 					this.emit(event, ...args);
 				}
@@ -207,44 +222,44 @@ export class FaultInjectionDocumentDeltaConnection
 		}
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.internal.disposed;
 	}
 
-	public get clientId() {
+	public get clientId(): string {
 		return this.internal.clientId;
 	}
 
-	public get claims() {
+	public get claims(): ITokenClaims {
 		return this.internal.claims;
 	}
 
-	public get mode() {
+	public get mode(): ConnectionMode {
 		return this.internal.mode;
 	}
-	public get existing() {
+	public get existing(): boolean {
 		return this.internal.existing;
 	}
-	public get maxMessageSize() {
+	public get maxMessageSize(): number {
 		return this.internal.serviceConfiguration.maxMessageSize;
 	}
-	public get version() {
+	public get version(): string {
 		return this.internal.version;
 	}
-	public get initialMessages() {
+	public get initialMessages(): ISequencedDocumentMessage[] {
 		return this.internal.initialMessages;
 	}
 
-	public get initialSignals() {
+	public get initialSignals(): ISignalMessage[] {
 		return this.internal.initialSignals;
 	}
-	public get initialClients() {
+	public get initialClients(): ISignalClient[] {
 		return this.internal.initialClients;
 	}
-	public get serviceConfiguration() {
+	public get serviceConfiguration(): IClientConfiguration {
 		return this.internal.serviceConfiguration;
 	}
-	public get checkpointSequenceNumber() {
+	public get checkpointSequenceNumber(): number | undefined {
 		return this.internal.checkpointSequenceNumber;
 	}
 
@@ -276,7 +291,7 @@ export class FaultInjectionDocumentDeltaConnection
 		this.internal.dispose();
 	}
 
-	public injectNack(docId: string, canRetry: boolean | undefined) {
+	public injectNack(docId: string, canRetry: boolean | undefined): void {
 		// Cannot inject nack into closed delta connection. So don't do anything.
 		if (this.disposed) {
 			return;
@@ -291,7 +306,7 @@ export class FaultInjectionDocumentDeltaConnection
 		this.emit("nack", docId, [nack]);
 	}
 
-	public injectError(canRetry: boolean | undefined) {
+	public injectError(canRetry: boolean | undefined): void {
 		// Cannot inject error into closed delta connection. So don't do anything.
 		if (this.disposed) {
 			return;
@@ -304,7 +319,7 @@ export class FaultInjectionDocumentDeltaConnection
 		this.emit("error", new FaultInjectionError("FaultInjectionError", canRetry));
 	}
 
-	public injectDisconnect() {
+	public injectDisconnect(): void {
 		// Cannot inject disconnect into closed delta connection. So don't do anything.
 		if (this.disposed) {
 			return;
@@ -312,14 +327,14 @@ export class FaultInjectionDocumentDeltaConnection
 		this.emit("disconnect", "FaultInjectionDisconnect");
 	}
 
-	public goOffline() {
+	public goOffline(): void {
 		this.online = false;
 		if (!this.disposed) {
 			this.injectDisconnect();
 		}
 	}
 
-	public goOnline() {
+	public goOnline(): void {
 		this.online = true;
 	}
 }
@@ -331,14 +346,20 @@ export class FaultInjectionDocumentDeltaStorageService
 		private readonly internal: IDocumentDeltaStorageService,
 		private online: boolean,
 	) {}
-	public goOffline() {
+	public goOffline(): void {
 		this.online = false;
 	}
-	public goOnline() {
+	public goOnline(): void {
 		this.online = true;
 	}
 
-	public fetchMessages(from, to, abortSignal, cachedOnly, fetchReason) {
+	public fetchMessages(
+		from: number,
+		to: number | undefined,
+		abortSignal?: AbortSignal,
+		cachedOnly?: boolean,
+		fetchReason?: string,
+	): IStream<ISequencedDocumentMessage[]> {
 		if (!this.online) {
 			throwOfflineError();
 		}
@@ -352,29 +373,32 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 		private online: boolean,
 	) {}
 
-	public goOffline() {
+	public goOffline(): void {
 		this.online = false;
 	}
-	public goOnline() {
+	public goOnline(): void {
 		this.online = true;
 	}
 
-	private throwIfOffline() {
+	private throwIfOffline(): void {
 		if (!this.online) {
 			throwOfflineError();
 		}
 	}
 
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internal.policies;
 	}
 
-	public async getSnapshotTree(version, scenarioName?: string) {
+	public async getSnapshotTree(
+		version: any,
+		scenarioName?: string,
+	): Promise<ISnapshotTree | null> {
 		this.throwIfOffline();
 		return this.internal.getSnapshotTree(version, scenarioName);
 	}
 
-	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions) {
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		this.throwIfOffline();
 		if (this.internal.getSnapshot !== undefined) {
 			return this.internal.getSnapshot(snapshotFetchOptions);
@@ -382,12 +406,17 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 		throw new UsageError("GetSnapshotApi not present");
 	}
 
-	public async getVersions(versionId, count, scenarioName, fetchSource) {
+	public async getVersions(
+		versionId: any,
+		count: any,
+		scenarioName: any,
+		fetchSource: any,
+	): Promise<IVersion[]> {
 		this.throwIfOffline();
 		return this.internal.getVersions(versionId, count, scenarioName, fetchSource);
 	}
 
-	public async createBlob(file: ArrayBufferLike) {
+	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		this.throwIfOffline();
 		return this.internal.createBlob(file);
 	}

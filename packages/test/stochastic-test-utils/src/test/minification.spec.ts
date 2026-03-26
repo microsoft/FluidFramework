@@ -16,7 +16,7 @@ function requireLines(s: string, count = 1): void {
 describe("Minification", () => {
 	describe("extractMessage", () => {
 		it("non assert", () => {
-			function namedFunction() {
+			function namedFunction(): Error {
 				return new Error("message");
 			}
 			const e = namedFunction();
@@ -52,7 +52,7 @@ describe("Minification", () => {
 			const e = namedFunction();
 			assert(e.stack !== undefined);
 			const message = extractMessage(e.stack);
-			requireLines(message, 3);
+			requireLines(message, 2);
 			assert.match(message, /\nat namedFunction .*minification\.spec\.ts/);
 		});
 

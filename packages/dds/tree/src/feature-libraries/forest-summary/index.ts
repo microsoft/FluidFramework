@@ -4,6 +4,5 @@
  */
 
 export { ForestSummarizer } from "./forestSummarizer.js";
-export { getCodecTreeForForestFormat } from "./codec.js";
-export { ForestFormatVersion } from "./format.js";
-export { forestSummaryKey } from "./summaryTypes.js";
+export { forestCodecBuilder } from "./codec.js";
+export { ForestFormatVersion } from "./formatCommon.js";

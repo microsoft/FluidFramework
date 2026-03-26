@@ -35,11 +35,11 @@ export class FluidRepoBuild extends FluidRepo {
 		super(context.repoRoot, context.fluidBuildConfig.repoPackages);
 	}
 
-	public async clean() {
+	public async clean(): Promise<boolean> {
 		return Packages.clean(this.packages.packages, false);
 	}
 
-	public async uninstall() {
+	public async uninstall(): Promise<boolean> {
 		const cleanPackageNodeModules = this.packages.cleanNodeModules();
 		const removePromise: Promise<ExecAsyncResult>[] = [];
 		for (const g of this.releaseGroups.values()) {
@@ -50,7 +50,7 @@ export class FluidRepoBuild extends FluidRepo {
 		return r[0] && !r[1].some((ret) => ret?.error);
 	}
 
-	public setMatched(options: IPackageMatchedOptions) {
+	public setMatched(options: IPackageMatchedOptions): boolean {
 		const hasMatchArgs =
 			options.match.length || options.dirs.length || options.releaseGroups.length;
 
@@ -93,7 +93,7 @@ export class FluidRepoBuild extends FluidRepo {
 	/**
 	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
 	 */
-	public async depcheck(fix: boolean) {
+	public async depcheck(fix: boolean): Promise<void> {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific
 			let checkFiles: string[];
@@ -116,7 +116,7 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 	}
 
-	public createBuildGraph(buildTargetNames: string[]) {
+	public createBuildGraph(buildTargetNames: string[]): BuildGraph {
 		return new BuildGraph(
 			this.createPackageMap(),
 			this.getReleaseGroupPackages(),
@@ -131,7 +131,7 @@ export class FluidRepoBuild extends FluidRepo {
 		);
 	}
 
-	private getReleaseGroupPackages() {
+	private getReleaseGroupPackages(): Package[] {
 		const releaseGroupPackages: Package[] = [];
 		for (const releaseGroup of this.releaseGroups.values()) {
 			releaseGroupPackages.push(releaseGroup.pkg);
@@ -139,7 +139,7 @@ export class FluidRepoBuild extends FluidRepo {
 		return releaseGroupPackages;
 	}
 
-	private matchWithFilter(callback: (pkg: Package) => boolean) {
+	private matchWithFilter(callback: (pkg: Package) => boolean): boolean {
 		let matched = false;
 		this.packages.packages.forEach((pkg) => {
 			if (!pkg.matched && callback(pkg)) {
@@ -150,7 +150,7 @@ export class FluidRepoBuild extends FluidRepo {
 		return matched;
 	}
 
-	private setMatchedDir(dir: string, matchReleaseGroup: boolean) {
+	private setMatchedDir(dir: string, matchReleaseGroup: boolean): void {
 		const pkgDir = lookUpDirSync(dir, (currentDir) => {
 			return existsSync(path.join(currentDir, "package.json"));
 		});
@@ -190,11 +190,11 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 	}
 
-	private setMatchedReleaseGroup(monoRepo: MonoRepo) {
+	private setMatchedReleaseGroup(monoRepo: MonoRepo): void {
 		this.setMatchedPackage(monoRepo.pkg);
 	}
 
-	private setMatchedPackage(pkg: Package) {
+	private setMatchedPackage(pkg: Package): void {
 		traceInit(`${pkg.nameColored}: matched`);
 		pkg.setMatched();
 	}

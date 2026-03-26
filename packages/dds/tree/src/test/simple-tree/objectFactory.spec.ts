@@ -11,6 +11,7 @@ import {
 	SchemaFactory,
 	treeNodeApi as Tree,
 } from "../../simple-tree/index.js";
+
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {

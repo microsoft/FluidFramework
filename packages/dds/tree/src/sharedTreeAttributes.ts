@@ -12,6 +12,9 @@ import { pkgVersion } from "./packageVersion.js";
  * @beta
  * @legacy
  */
+// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+// export const SharedTreeFactoryType = "tree";
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 /**

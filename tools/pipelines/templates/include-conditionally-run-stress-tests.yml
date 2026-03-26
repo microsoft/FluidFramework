@@ -15,9 +15,6 @@ parameters:
 - name: packages
   type: object
 
-- name: testWorkspace
-  type: string
-
 - name: pool
   type: object
   default: Small-eastus2
@@ -75,10 +72,8 @@ stages:
         pipelineIdentifierForTelemetry: 'DdsStressService'
         condition: eq(dependencies.CheckAffectedPaths.outputs['Job.Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
         poolBuild: ${{ parameters.pool }}
-        loggerPackage: ''
         artifactBuildId: ${{ parameters.artifactBuildId }}
         testPackage: ${{ package.name }}
-        testWorkspace: ${{ parameters.testWorkspace }}
         timeoutInMinutes: 120
         testFileTarName: ${{ package.testFileTarName }}
         testCommand: ${{ package.testCommand }}

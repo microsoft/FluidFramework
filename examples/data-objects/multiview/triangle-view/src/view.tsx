@@ -4,8 +4,7 @@
  */
 
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
-import React from "react";
-
+import { createRef, type FC, useEffect } from "react";
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
@@ -35,8 +34,8 @@ interface ITriangleViewProps {
  * For now, it only renders out the triangle, but we could enhance it to allow manipulating the coordinates.
  * @internal
  */
-export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
-	const canvasRef = React.createRef<HTMLCanvasElement>();
+export const TriangleView: FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
+	const canvasRef = createRef<HTMLCanvasElement>();
 	const rerenderCanvas = (): void => {
 		if (canvasRef.current !== null) {
 			const ctx = canvasRef.current.getContext("2d");
@@ -46,7 +45,7 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
 		}
 	};
 
-	React.useEffect(() => {
+	useEffect((): (() => void) => {
 		if (canvasRef.current !== null) {
 			canvasRef.current.width = 100;
 			canvasRef.current.height = 100;

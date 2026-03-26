@@ -31,8 +31,7 @@ import type {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/legacy";
-import * as React from "react";
-
+import { createElement, type ReactElement } from "react";
 const codeMirrorFactory = new SmdeFactory();
 const proseMirrorFactory = new ProseMirrorFactory();
 
@@ -40,7 +39,9 @@ export interface ISingleHandleItem {
 	handle: IFluidHandle;
 }
 
-function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
+function createSingleHandleItem(
+	subFactory: IFluidDataStoreFactory,
+): (context: IFluidDataStoreContext) => Promise<ISingleHandleItem> {
 	return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
 		const packagePath = [...context.packagePath, subFactory.type];
 		const dataStore = await context.containerRuntime.createDataStore(packagePath);
@@ -52,18 +53,18 @@ function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
 
 const getClickerView = async (
 	serializableObject: ISingleHandleItem,
-): Promise<React.ReactElement> => {
+): Promise<ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<Clicker>;
 	const clicker = await handle.get();
-	return React.createElement(ClickerReactView, { clicker });
+	return createElement(ClickerReactView, { clicker });
 };
 
 const getCodeMirrorView = async (
 	serializableObject: ISingleHandleItem,
-): Promise<React.ReactElement> => {
+): Promise<ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<CodeMirrorComponent>;
 	const codeMirror = await handle.get();
-	return React.createElement(CodeMirrorReactView, {
+	return createElement(CodeMirrorReactView, {
 		text: codeMirror.text,
 		presenceManager: codeMirror.presenceManager,
 	});
@@ -71,28 +72,28 @@ const getCodeMirrorView = async (
 
 const getCollaborativeTextView = async (
 	serializableObject: ISingleHandleItem,
-): Promise<React.ReactElement> => {
+): Promise<ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<CollaborativeText>;
 	const collaborativeText = await handle.get();
-	return React.createElement(CollaborativeTextView, { text: collaborativeText.text });
+	return createElement(CollaborativeTextView, { text: collaborativeText.text });
 };
 
 const getProseMirrorView = async (
 	serializableObject: ISingleHandleItem,
-): Promise<React.ReactElement> => {
+): Promise<ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<ProseMirror>;
 	const proseMirror = await handle.get();
-	return React.createElement(ProseMirrorReactView, {
+	return createElement(ProseMirrorReactView, {
 		collabManager: proseMirror.collabManager,
 	});
 };
 
 const getSliderCoordinateView = async (
 	serializableObject: ISingleHandleItem,
-): Promise<React.ReactElement> => {
+): Promise<ReactElement> => {
 	const handle = serializableObject.handle as IFluidHandle<Coordinate>;
 	const model = await handle.get();
-	return React.createElement(SliderCoordinateView, { label: "Coordinate", model });
+	return createElement(SliderCoordinateView, { label: "Coordinate", model });
 };
 
 /**
@@ -102,7 +103,7 @@ export interface IDataObjectGridItemEntry<T = unknown> {
 	// Would be better if items to bring their own subregistries, and their own ability to create components
 	// This might be done by integrating these items with the data grid subcomponent registry?
 	create: (context: IFluidDataStoreContext) => Promise<Serializable<T>>;
-	getView: (serializableObject: Serializable<T>) => Promise<React.ReactElement>;
+	getView: (serializableObject: Serializable<T>) => Promise<ReactElement>;
 	friendlyName: string;
 	fabricIconName: string;
 }

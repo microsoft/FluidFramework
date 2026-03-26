@@ -12,6 +12,25 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { deepCopyMapTree, EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
+import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
+import {
+	CompatibilityLevel,
+	contentSchemaSymbol,
+	privateDataSymbol,
+	UnhydratedFlexTreeNode,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
+import {
+	createFieldSchema,
+	FieldKind,
+	getDefaultProvider,
+	type DefaultProvider,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/fieldSchema.js";
 import {
 	booleanSchema,
 	tryGetTreeNodeForField,
@@ -24,13 +43,8 @@ import {
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 	getKernel,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-import {
-	createFieldSchema,
-	FieldKind,
-	getDefaultProvider,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/fieldSchema.js";
 import {
 	getPossibleTypes,
 	unhydratedFlexTreeFromInsertable,
@@ -38,23 +52,8 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/unhydratedFlexTreeFromInsertable.js";
 import { brand } from "../../util/index.js";
-import {
-	MockNodeIdentifierManager,
-	type FlexTreeHydratedContextMinimal,
-} from "../../feature-libraries/index.js";
-import {
-	CompatibilityLevel,
-	contentSchemaSymbol,
-	privateDataSymbol,
-	UnhydratedFlexTreeNode,
-	type TreeNodeSchemaInitializedData,
-	type TreeNodeSchemaPrivateData,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../simple-tree/createContext.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
+import { createSnapshotCompressor, getView } from "../utils.js";
+
 import { hydrate } from "./utils.js";
 
 describe("unhydratedFlexTreeFromInsertable", () => {
@@ -574,24 +573,6 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				/The provided data is incompatible with all of the types allowed by the schema/,
 			);
 		});
-
-		it("Throws for structurally valid data, but created with a different schema.", () => {
-			const schemaFactory = new SchemaFactory("test");
-			class TestSchema extends schemaFactory.object("testObject", {
-				field: schemaFactory.string,
-			}) {}
-
-			class TestSchema2 extends schemaFactory.object("testObject", {
-				field: schemaFactory.string,
-			}) {}
-
-			const testData = new TestSchema2({ field: "test" });
-
-			assert.throws(
-				() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
-				validateUsageError("Invalid schema for this context."),
-			);
-		});
 	});
 
 	describe("record", () => {
@@ -776,19 +757,6 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 						schema,
 					),
 				/The provided data is incompatible with all of the types allowed by the schema/,
-			);
-		});
-
-		it("Throws for structurally valid data, but created with a different schema.", () => {
-			const schemaFactory = new SchemaFactoryAlpha("test");
-			class TestSchema extends schemaFactory.record("test-a", schemaFactory.string) {}
-			class TestSchema2 extends schemaFactory.record("test-b", schemaFactory.string) {}
-
-			const testData = new TestSchema2({ field: "test" });
-
-			assert.throws(
-				() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
-				validateUsageError("Invalid schema for this context."),
 			);
 		});
 	});
@@ -1012,44 +980,79 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
-		it("Populates identifier field with the default identifier provider", () => {
-			const nodeKeyManager = new MockNodeIdentifierManager();
+		// This checks that DefaultProvider is used correctly.
+		// Currently this mainly matters for identifiers, but this test validates that it works generally.
+		it("Uses default provider global and context", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.object("object", {
-				a: schemaFactory.identifier,
+
+			const log: string[] = [];
+
+			const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
+				(
+					context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
+				): UnhydratedFlexTreeNode[] => {
+					const s: string = context === "UseGlobalContext" ? "Global" : "Local";
+					log.push(s);
+					return [unhydratedFlexTreeFromInsertable(s, schemaFactory.string)];
+				},
+			);
+			const field = createFieldSchema(FieldKind.Identifier, schemaFactory.string, {
+				defaultProvider: defaultIdentifierProvider,
 			});
 
-			const tree = {};
+			class Schema extends schemaFactory.object("object", {
+				a: field,
+			}) {}
 
-			const actual = unhydratedFlexTreeFromInsertable(tree, schema);
-			const dummy = hydrate(schema, {});
-			const dummyContext = getKernel(dummy).context.flexContext;
-			assert(dummyContext.isHydrated());
-			// Do the default allocation using this context
-			const context: FlexTreeHydratedContextMinimal = {
-				checkout: dummyContext.checkout,
-				nodeKeyManager,
-			};
+			{
+				const node = new Schema({});
+				assert.deepEqual(log, []);
+				const id = node.a;
+				assert.deepEqual(log, ["Global"]);
+				assert.equal(id, "Global");
+				log.length = 0;
+			}
+			{
+				const node = new Schema({});
+				assert.deepEqual(log, []);
+				hydrate(Schema, node);
+				assert.deepEqual(log, ["Local"]);
+				const id = node.a;
+				assert.deepEqual(log, ["Local"]);
+				assert.equal(id, "Local");
+			}
+		});
 
-			prepareContentForHydration([actual], () => {}, context);
+		// This checks that identifiers are populated lazily from the view ensuring they can be compressed.
+		// This ensures the public facing part of this is working end to end.
+		it("Populates identifier field lazily with the view's compressor when inserting", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class Schema extends schemaFactory.object("object", {
+				a: schemaFactory.identifier,
+			}) {}
 
-			const expected: MapTree = {
-				type: brand("test.object"),
-				fields: new Map<FieldKey, MapTree[]>([
-					[
-						brand("a"),
-						[
-							{
-								type: brand(stringSchema.identifier),
-								value: nodeKeyManager.getId(0),
-								fields: new Map(),
-							},
-						],
-					],
-				]),
-			};
+			// Create the node, with the uninitialized identifier field.
+			// If accessed now, it would allocate a random v4 uuid.
+			const node = new Schema({});
 
-			assert.deepEqual(deepCopyMapTree(actual), expected);
+			const view = getView(
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(Schema) }),
+				{ idCompressor: createSnapshotCompressor() },
+			);
+
+			view.initialize(undefined);
+
+			// This should populate the identifier using the view's compressor.
+			view.root = node;
+
+			// If working correctly, the identifier is allocated from the view snapshot compressor and should be deterministic,
+			// and based off of snapshotSessionId.
+			// If it is instead allocated early without using the view, it will be a random v4 uuid and fail this check.
+			// Due to some other source of id allocation (like revision tags) there may be a small number of other ids allocated resulting in the last digit not being 1.
+			// Those should be deterministic, but might be impacted by some changes elsewhere.
+			// Since this test only cares that the id came from the view's compressor, we just check for the known prefix.
+			// This reduces the chance of unrelated changes breaking this test for no reason.
+			assert(view.root.a.includes("beefbeef-beef-4000-8000-0000000000"));
 		});
 
 		it("Populates optional field with the default optional provider.", () => {
@@ -1252,20 +1255,55 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
+	it("Structurally valid data, but created with a different schema object", () => {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		class TestSchema extends schemaFactory.map("a", schemaFactory.string) {}
+		class TestSchema2 extends schemaFactory.map("a", schemaFactory.string) {}
+
+		const testData = new TestSchema2({});
+
+		assert.throws(
+			() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
+			validateUsageError(`A node with schema "test.a" (name: "TestSchema2") was provided where a node with that identifier is allowed, but the actual schema required ("test.a" (name: "TestSchema")) is not the same schema object.
+TreeNodeSchema have significant object identity and thus the exact same object must be used as the schema when defining what nodes are allowed and when constructing the node to use.`),
+		);
+	});
+
+	it("Structurally valid data, but created with a different schema identifier", () => {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		class TestSchema extends schemaFactory.map("a", schemaFactory.string) {}
+		class TestSchema2 extends schemaFactory.map("b", schemaFactory.string) {}
+
+		const testData = new TestSchema2({});
+
+		assert.throws(
+			() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
+			validateUsageError(`Expected insertable for one of ["test.a" (name: "TestSchema")]. Got node with schema "test.b" (name: "TestSchema2").
+Nodes are valid insertable objects, but only if their schema are in the allowed list.`),
+		);
+	});
+
 	it("ambiguous unions", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const a = schemaFactory.object("a", { x: schemaFactory.string });
-		const b = schemaFactory.object("b", { x: schemaFactory.string });
-		const allowedTypes = [a, b];
+		class A extends schemaFactory.object("a", { x: schemaFactory.string }) {}
+		class B extends schemaFactory.object("b", { x: schemaFactory.string }) {}
+		const allowedTypes = [A, B];
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable({}, allowedTypes),
-			/\["test.a","test.b"]/,
+			validateUsageError(
+				`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ["test.a" (name: "A"), "test.b" (name: "B")].`,
+			),
 		);
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable({ x: "hello" }, allowedTypes),
-			/\["test.a","test.b"]/,
+			validateUsageError(`The provided data is compatible with more than one type allowed by the schema.
+The set of possible types is ["test.a" (name: "A"), "test.b" (name: "B")].
+Explicitly construct an unhydrated node of the desired type to disambiguate.
+For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`),
 		);
+
+		unhydratedFlexTreeFromInsertable(new A({ x: "hello" }), allowedTypes);
 	});
 
 	it("unambiguous unions", () => {

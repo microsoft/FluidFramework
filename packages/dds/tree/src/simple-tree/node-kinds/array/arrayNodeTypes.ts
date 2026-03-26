@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeArrayNode } from "./arrayNode.js";
 import { NodeKind } from "../../core/index.js";
 import type {
 	TreeNodeSchemaClass,
@@ -13,8 +12,9 @@ import type {
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
-
 import type { SchemaType, SimpleArrayNodeSchema } from "../../simpleSchema.js";
+
+import type { TreeArrayNode, TreeArrayNodeAlpha } from "./arrayNode.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.
@@ -29,6 +29,30 @@ export interface ArrayNodeCustomizableSchema<
 			TName,
 			NodeKind.Array,
 			TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+			ImplicitlyConstructable,
+			T,
+			undefined,
+			TCustomMetadata
+		>,
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
+
+/**
+ * A Schema for customizable {@link (TreeArrayNode:interface)}s with additional alpha APIs.
+ * @remarks
+ * Duplicates {@link ArrayNodeCustomizableSchema} with {@link TreeArrayNodeAlpha} as the node type,
+ * adding support for the alpha APIs on those nodes.
+ * @system @sealed @alpha
+ */
+export interface ArrayNodeCustomizableSchemaAlpha<
+	out TName extends string = string,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	out ImplicitlyConstructable extends boolean = true,
+	out TCustomMetadata = unknown,
+> extends TreeNodeSchemaClass<
+			TName,
+			NodeKind.Array,
+			TreeArrayNodeAlpha<T> & WithType<TName, NodeKind.Array, T>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,

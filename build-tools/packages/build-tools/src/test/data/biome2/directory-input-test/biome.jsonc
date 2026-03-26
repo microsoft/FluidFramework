@@ -1,0 +1,10 @@
+{
+	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"root": true,
+	"files": {
+		"includes": ["src/**"]
+	},
+	"formatter": {
+		"lineWidth": 80
+	}
+}

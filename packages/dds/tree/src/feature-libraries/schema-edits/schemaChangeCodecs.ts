@@ -4,76 +4,24 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	type CodecTree,
-	type CodecWriteOptions,
-	type ICodecFamily,
-	type IJsonCodec,
-	makeCodecFamily,
-	makeVersionDispatchingCodec,
-	withSchemaValidation,
-} from "../../codec/index.js";
-import { getCodecTreeForSchemaFormat, makeSchemaCodec } from "../schema-index/index.js";
+import type { CodecWriteOptions, JsonCodecPart } from "../../codec/index.js";
+import { schemaCodecBuilder } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
-import { SchemaFormatVersion } from "../../core/index.js";
-import { brand } from "../../util/index.js";
 
 /**
- * Create a family of schema change codecs.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @returns The composed codec family.
- */
-export function makeSchemaChangeCodecs(
-	options: CodecWriteOptions,
-): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([
-		[SchemaFormatVersion.v1, makeSchemaChangeCodecV1(options, brand(SchemaFormatVersion.v1))],
-		[SchemaFormatVersion.v2, makeSchemaChangeCodecV1(options, brand(SchemaFormatVersion.v2))],
-	]);
-}
-
-export function getCodecTreeForSchemaChangeFormat(
-	version: SchemaFormatVersion,
-	clientVersion: MinimumVersionForCollab,
-): CodecTree {
-	return {
-		name: "SchemaChange",
-		version,
-		children: [getCodecTreeForSchemaFormat(clientVersion)],
-	};
-}
-
-/**
- * Create a schema change codec.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @param writeVersion - The schema change write version.
- * @returns The composed codec.
+ * Creates a codec for schema changes.
+ * @param options - The codec options.
+ * @returns The composed schema change codec part.
  */
 export function makeSchemaChangeCodec(
 	options: CodecWriteOptions,
-	writeVersion: SchemaFormatVersion,
-): IJsonCodec<SchemaChange> {
-	const family = makeSchemaChangeCodecs(options);
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
-}
-
-/**
- * Compose the change codec using mostly v1 logic.
- * @param options - The codec options.
- * @param schemaWriteVersion - The schema write version.
- * @returns The composed schema change codec.
- */
-function makeSchemaChangeCodecV1(
-	options: CodecWriteOptions,
-	schemaWriteVersion: SchemaFormatVersion,
-): IJsonCodec<SchemaChange, EncodedSchemaChange> {
-	const schemaCodec = makeSchemaCodec(options, schemaWriteVersion);
-	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
-		encode: (schemaChange) => {
+): JsonCodecPart<SchemaChange, typeof EncodedSchemaChange> {
+	const schemaCodec = schemaCodecBuilder.build(options);
+	return {
+		encode: (schemaChange: SchemaChange): EncodedSchemaChange => {
 			assert(
 				!schemaChange.isInverse,
 				0x933 /* Inverse schema changes should never be transmitted */,
@@ -83,7 +31,7 @@ function makeSchemaChangeCodecV1(
 				old: schemaCodec.encode(schemaChange.schema.old),
 			};
 		},
-		decode: (encoded) => {
+		decode: (encoded: EncodedSchemaChange): SchemaChange => {
 			return {
 				schema: {
 					new: schemaCodec.decode(encoded.new),
@@ -94,6 +42,4 @@ function makeSchemaChangeCodecV1(
 		},
 		encodedSchema: EncodedSchemaChange,
 	};
-
-	return withSchemaValidation(EncodedSchemaChange, schemaChangeCodec, options.jsonValidator);
 }

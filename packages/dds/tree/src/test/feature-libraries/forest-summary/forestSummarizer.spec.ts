@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	SummaryType,
 	type ISummaryBlob,
@@ -16,35 +17,41 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
+import {
+	ForestSummaryFormatVersion,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatCommon.js";
+import {
+	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
+import {
+	summaryContentBlobKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
 import {
 	FieldBatchFormatVersion,
 	ForestFormatVersion,
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
-	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/format.js";
-import {
-	checkoutWithContent,
-	fieldCursorFromInsertable,
-	testIdCompressor,
-	testRevisionTagCodec,
-	type TreeStoredContentStrict,
-} from "../../utils.js";
-import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type ForestType,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
+import {
+	summarizablesMetadataKey,
+	type SharedTreeSummarizableMetadata,
+} from "../../../shared-tree-core/index.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
@@ -58,15 +65,14 @@ import {
 	type InsertableField,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
+import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
-	forestSummaryContentKey,
-	ForestSummaryFormatVersion,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryTypes.js";
-import {
-	summarizablesMetadataKey,
-	type SharedTreeSummarizableMetadata,
-} from "../../../shared-tree-core/index.js";
+	checkoutWithContent,
+	fieldCursorFromInsertable,
+	testIdCompressor,
+	testRevisionTagCodec,
+	type TreeStoredContentStrict,
+} from "../../utils.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
@@ -92,7 +98,6 @@ function createForestSummarizer(args: {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab,
 	};
-	const fieldBatchCodec = makeFieldBatchCodec(options);
 	const checkout = checkoutWithContent(initialContent, {
 		forestType,
 		shouldEncodeIncrementally,
@@ -108,7 +113,6 @@ function createForestSummarizer(args: {
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
 			testRevisionTagCodec,
-			fieldBatchCodec,
 			encoderContext,
 			options,
 			testIdCompressor,
@@ -157,29 +161,29 @@ function validateHandlesInForestSummary(
  * Validates that the handle path exists in `summaryTree`.
  */
 function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
-	/**
-	 * The handle path is split by "/" into pathParts where the first element should exist in the root
-	 * of the summary tree, the second element in the first element's subtree, and so on.
-	 */
-	const pathParts = handle.split("/").slice(1);
-	const currentPath = pathParts[0];
-	let found = false;
-	for (const [key, summaryObject] of Object.entries(summaryTree.tree)) {
-		if (key === currentPath) {
-			found = true;
-			if (pathParts.length > 1) {
-				assert(
-					summaryObject.type === SummaryType.Tree || summaryObject.type === SummaryType.Handle,
-					`Handle path ${currentPath} should be for a subtree or a handle`,
-				);
-				if (summaryObject.type === SummaryType.Tree) {
-					validateHandlePathExists(`/${pathParts.slice(1).join("/")}`, summaryObject);
-				}
-			}
-			break;
+	// The handle path is split by "/" into pathParts where the first element should exist in the root
+	// of the summary tree, the second element in the first element's subtree, and so on.
+	const pathParts = handle.split("/");
+	assert.equal(pathParts[0], "");
+	assert(pathParts.length > 1);
+	let currentObject: SummaryObject = summaryTree;
+	for (const part of pathParts.slice(1)) {
+		if (currentObject.type === SummaryType.Tree) {
+			currentObject =
+				currentObject.tree[part] ??
+				assert.fail(`Handle path ${handle} not found in summary tree`);
+		} else {
+			assert(
+				currentObject.type === SummaryType.Handle,
+				`Handle path ${handle} should be for a subtree or a handle`,
+			);
+			// This validation code currently can not validate paths that point inside a handle.
+			// Since it is currently not expected for this case to occur in these tests, fail to make sure we do not accidentally depend on this lack of validation.
+			assert.fail(
+				`Handle path ${handle} points inside a handle which is currently not supported by this validation code`,
+			);
 		}
 	}
-	assert(found, `Handle path ${currentPath} not found in summary tree`);
 }
 
 /**
@@ -198,7 +202,7 @@ function validateSummaryIsIncremental(summary: ISummaryTree, incrementalNodeCoun
 
 	let incrementalNodesFound = 0;
 	for (const [key, value] of Object.entries(summary.tree)) {
-		if (key === forestSummaryContentKey || key === summarizablesMetadataKey) {
+		if (key === summaryContentBlobKey || key === summarizablesMetadataKey) {
 			assert(value.type === SummaryType.Blob, "Forest summary blob not as expected");
 		} else {
 			assert(value.type === SummaryType.Tree, "Incremental summary node should be a tree");
@@ -360,7 +364,7 @@ describe("ForestSummarizer", () => {
 					"Summary tree should only contain two entries",
 				);
 				const forestContentsBlob: SummaryObject | undefined =
-					summary.summary.tree[forestSummaryContentKey];
+					summary.summary.tree[summaryContentBlobKeyV1ToV2];
 				assert(
 					forestContentsBlob?.type === SummaryType.Blob,
 					"Forest summary contents not found",
@@ -400,7 +404,7 @@ describe("ForestSummarizer", () => {
 					"Summary tree should only contain two entries",
 				);
 				const forestContentsBlob: SummaryObject | undefined =
-					summary.summary.tree[forestSummaryContentKey];
+					summary.summary.tree[summaryContentBlobKeyV1ToV2];
 				assert(
 					forestContentsBlob?.type === SummaryType.Blob,
 					"Forest summary contents not found",
@@ -812,6 +816,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -835,6 +840,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -858,6 +864,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			// Should load successfully with version 2
@@ -866,11 +873,11 @@ describe("ForestSummarizer", () => {
 
 		it("loads pre-versioning format with no metadata blob", async () => {
 			// Create data in v1 summary format.
-			const forestDataV1: FormatV1 = {
-				version: brand(ForestFormatVersion.v1),
+			const forestDataV1: FormatCommon = {
+				version: ForestFormatVersion.v1,
 				keys: [],
 				fields: {
-					version: brand(FieldBatchFormatVersion.v2),
+					version: FieldBatchFormatVersion.v2,
 					identifiers: [],
 					shapes: [],
 					data: [],
@@ -883,7 +890,7 @@ describe("ForestSummarizer", () => {
 			const summaryTree: ISummaryTree = {
 				type: SummaryType.Tree,
 				tree: {
-					[forestSummaryContentKey]: forestContentBlob,
+					[summaryContentBlobKeyV1ToV2]: forestContentBlob,
 				},
 			};
 
@@ -892,6 +899,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			await assert.doesNotReject(async () => forestSummarizer.load(mockStorage, JSON.parse));

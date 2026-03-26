@@ -5,12 +5,24 @@
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
 import type {
-	ClientRecord,
 	ValidatableValueDirectoryOrState,
 	ValidatableValueStructure,
-} from "./internalTypes.js";
-import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
+} from "./validatableTypes.js";
+
+/**
+ * Basic structure of set of {@link Attendee} records within Presence datastore
+ *
+ * @remarks
+ * This is commonly exists per named state in State Managers.
+ */
+export interface ClientRecord<TValue extends ValidatableValueDirectoryOrState<unknown>> {
+	// Caution: any particular item may or may not exist
+	// Typescript does not support absent keys without forcing type to also be undefined.
+	// See https://github.com/microsoft/TypeScript/issues/42810.
+	[AttendeeId: AttendeeId]: TValue;
+}
 
 // type StateDatastoreSchemaNode<
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
@@ -47,14 +59,14 @@ export interface LocalStateUpdateOptions {
  */
 export interface StateDatastore<
 	TKey extends string,
-	TUpdateValue extends InternalTypes.ValueDirectoryOrState<unknown>,
+	TLocalUpdateValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 	TStoredValue extends
-		ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TUpdateValue>,
+		ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TLocalUpdateValue>,
 > {
 	readonly presence: Presence;
 	localUpdate(
 		key: TKey,
-		value: TUpdateValue & {
+		value: TLocalUpdateValue & {
 			ignoreUnmonitored?: true;
 		},
 		options: LocalStateUpdateOptions,
@@ -89,7 +101,7 @@ export function handleFromDatastore<
  */
 export function datastoreFromHandle<
 	TKey extends string,
-	TValue extends InternalTypes.ValueDirectoryOrState<any>,
+	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 >(handle: InternalTypes.StateDatastoreHandle<TKey, TValue>): StateDatastore<TKey, TValue> {
 	return handle as unknown as StateDatastore<TKey, TValue>;
 }

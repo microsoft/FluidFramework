@@ -74,7 +74,7 @@
                               }
                             }
                           ],
-                          "revision": 5,
+                          "revision": 2,
                           "sequenceNumber": 6,
                           "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                         }
@@ -83,7 +83,7 @@
                         [
                           "8f95be09-8376-4ff7-8755-ccd7e8124b06",
                           {
-                            "base": 5,
+                            "base": 2,
                             "commits": []
                           }
                         ]
@@ -233,7 +233,7 @@
                       "version": 1,
                       "data": [
                         [
-                          5,
+                          2,
                           2,
                           2
                         ]

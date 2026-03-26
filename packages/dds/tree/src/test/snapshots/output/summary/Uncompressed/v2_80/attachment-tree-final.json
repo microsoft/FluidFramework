@@ -1,0 +1,203 @@
+{
+  "type": "tree",
+  "entries": [
+    {
+      "type": "blob",
+      ".metadata": {
+        "type": "blob",
+        "content": {
+          "version": 2
+        },
+        "encoding": "utf-8"
+      }
+    },
+    {
+      "type": "tree",
+      "indexes": {
+        "type": "tree",
+        "entries": [
+          {
+            "type": "tree",
+            "EditManager": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "String": {
+                    "type": "blob",
+                    "content": {
+                      "trunk": [],
+                      "branches": [],
+                      "version": 6
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "tree",
+            "Schema": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "SchemaString": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2,
+                      "nodes": {
+                        "attachment-tree.Array<[\"com.fluidframework.leaf.string\"]>": {
+                          "kind": {
+                            "object": {
+                              "": {
+                                "kind": "Sequence",
+                                "types": [
+                                  "com.fluidframework.leaf.string"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "com.fluidframework.leaf.string": {
+                          "kind": {
+                            "leaf": 1
+                          }
+                        }
+                      },
+                      "root": {
+                        "kind": "Value",
+                        "types": [
+                          "attachment-tree.Array<[\"com.fluidframework.leaf.string\"]>"
+                        ]
+                      }
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "tree",
+            "Forest": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 3
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "contents": {
+                    "type": "blob",
+                    "content": {
+                      "keys": [
+                        "rootFieldKey"
+                      ],
+                      "fields": {
+                        "version": 2,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1
+                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          [
+                            1,
+                            [
+                              "attachment-tree.Array<[\"com.fluidframework.leaf.string\"]>",
+                              false,
+                              [
+                                "",
+                                [
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "a",
+                                  [],
+                                  "com.fluidframework.leaf.string",
+                                  true,
+                                  "b",
+                                  []
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      },
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "tree",
+            "DetachedFieldIndex": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "DetachedFieldIndexBlob": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2,
+                      "data": [],
+                      "maxId": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

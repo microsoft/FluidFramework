@@ -79,7 +79,8 @@ describe('revert', () => {
 		expect(revertedChange.source.start.referenceSibling).to.deep.equal(firstNode.identifier);
 	});
 
-	/** This is a regression test for a bug where we make sure that any built/detached nodes are cleared when any
+	/**
+	 * This is a regression test for a bug where we make sure that any built/detached nodes are cleared when any
 	 * empty insert/detach change is skipped once encountered. The expected outcome is undefined, as during the second
 	 * empty insert (with the same DetachSequenceId), there should be no such node in the builtNodes.
 	 */

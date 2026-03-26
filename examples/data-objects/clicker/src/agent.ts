@@ -11,19 +11,19 @@ import { SharedCounter } from "@fluidframework/counter/legacy";
 export class ClickerAgent implements IFluidRunnable {
 	constructor(private readonly counter: SharedCounter) {}
 
-	public get IFluidRunnable() {
+	public get IFluidRunnable(): IFluidRunnable {
 		return this;
 	}
 
-	private readonly logIncrement = (incrementValue: number, currentValue: number) => {
+	private readonly logIncrement = (incrementValue: number, currentValue: number): void => {
 		console.log(`Incremented by ${incrementValue}. New value ${currentValue}`);
 	};
 
-	public async run() {
+	public async run(): Promise<void> {
 		this.counter.on("incremented", this.logIncrement);
 	}
 
-	public stop() {
+	public stop(): void {
 		this.counter.off("incremented", this.logIncrement);
 	}
 }

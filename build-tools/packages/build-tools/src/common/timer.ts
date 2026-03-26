@@ -12,7 +12,7 @@ export class Timer {
 	private totalTime: number = 0;
 
 	constructor(private enabled: boolean) {}
-	public time(msg?: string, print?: boolean) {
+	public time(msg?: string, print?: boolean): number {
 		const currTime = Date.now();
 		const diffTime = currTime - this.lastTime;
 		this.lastTime = currTime;
@@ -32,7 +32,7 @@ export class Timer {
 		return diffTimeInSeconds;
 	}
 
-	public getTotalTime() {
+	public getTotalTime(): number {
 		return this.totalTime;
 	}
 }

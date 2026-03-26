@@ -11,7 +11,6 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -49,7 +48,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let newContainer: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.setDDSesAsInitialObjectsForContainer,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -92,7 +91,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.changeDDSesWithinInitialObjectsValue,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -137,7 +136,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.setDataObjectsAsInitialObjectsForContainer,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -200,7 +199,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.useMultipleDataObjectsOfSameType,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -268,7 +267,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.changeDataObjectsWithinInitialObjectsValue,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -328,7 +327,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.createAddLoadableObjectsDynamically,
 					"test-user-id-1",
 					"test-user-name-1",

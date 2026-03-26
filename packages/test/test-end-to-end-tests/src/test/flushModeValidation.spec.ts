@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -43,7 +43,9 @@ describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider, apis
 		}
 	});
 
-	async function setupContainer(runtimeOptions?: IContainerRuntimeOptionsInternal) {
+	async function setupContainer(
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
+	): Promise<void> {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.

@@ -23,7 +23,7 @@ export class LocalServerTestDriver implements ITestDriver {
 	private readonly _server = LocalDeltaConnectionServer.create();
 	public readonly endpointName = "local";
 	public readonly type = "local";
-	public get version() {
+	public get version(): string {
 		return this.api.version;
 	}
 	public get server(): ILocalDeltaConnectionServer {
@@ -73,7 +73,7 @@ export class LocalServerTestDriver implements ITestDriver {
 	/**
 	 * Local server dispose flows are especially important to avoid leaking memory over the course of a test run.
 	 */
-	dispose() {
+	dispose(): void {
 		this._server.close().catch(() => {
 			// TODO: We may want to log the error in the future.
 		});

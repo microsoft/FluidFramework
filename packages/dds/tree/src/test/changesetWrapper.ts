@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	type ChangeAtomIdMap,
 	type RevisionTag,
@@ -20,6 +21,8 @@ import type {
 	NodeId,
 	ToDelta,
 } from "../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 import {
 	forEachInNestedMap,
 	nestedMapFromFlatList,
@@ -27,9 +30,8 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../util/index.js";
+
 import { TestChange } from "./testChange.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 export interface ChangesetWrapper<T> {
 	fieldChange: T;
@@ -107,22 +109,22 @@ function compose<T>(
 	const composedNodes: ChangeAtomIdMap<TestChange> = new Map();
 	const composeChild = (id1: NodeId | undefined, id2: NodeId | undefined): NodeId => {
 		let composedNode: TestChange;
-		if (id1 !== undefined) {
-			const node1 = tryGetFromNestedMap(change1.change.nodes, id1.revision, id1.localId);
-			assert(node1 !== undefined, "Unknown node ID");
-
-			if (id2 !== undefined) {
-				const node2 = tryGetFromNestedMap(change2.change.nodes, id2.revision, id2.localId);
-				assert(node2 !== undefined, "Unknown node ID");
-				composedNode = TestChange.compose(node1, node2);
-			} else {
-				composedNode = node1;
-			}
-		} else {
+		if (id1 === undefined) {
 			assert(id2 !== undefined, "Should not compose two undefined nodes");
 			const node2 = tryGetFromNestedMap(change2.change.nodes, id2.revision, id2.localId);
 			assert(node2 !== undefined, "Unknown node ID");
 			composedNode = node2;
+		} else {
+			const node1 = tryGetFromNestedMap(change1.change.nodes, id1.revision, id1.localId);
+			assert(node1 !== undefined, "Unknown node ID");
+
+			if (id2 === undefined) {
+				composedNode = node1;
+			} else {
+				const node2 = tryGetFromNestedMap(change2.change.nodes, id2.revision, id2.localId);
+				assert(node2 !== undefined, "Unknown node ID");
+				composedNode = TestChange.compose(node1, node2);
+			}
 		}
 
 		const id =
@@ -191,11 +193,11 @@ function prune<T>(
 	const pruneChild = (id: NodeId): NodeId | undefined => {
 		const node = tryGetFromNestedMap(change.nodes, id.revision, id.localId);
 		assert(node !== undefined, "Unknown node ID");
-		if (!TestChange.isEmpty(node)) {
+		if (TestChange.isEmpty(node)) {
+			return undefined;
+		} else {
 			setInNestedMap(prunedNodes, id.revision, id.localId, node);
 			return id;
-		} else {
-			return undefined;
 		}
 	};
 

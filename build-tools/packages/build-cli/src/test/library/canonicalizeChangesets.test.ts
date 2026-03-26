@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "mocha";
 import { simpleGit } from "simple-git";
-import { DEFAULT_CHANGESET_PATH, canonicalizeChangesets } from "../../library/changesets.js";
+import { canonicalizeChangesets, DEFAULT_CHANGESET_PATH } from "../../library/changesets.js";
 
 describe("canonicalizeChangesets", () => {
 	let testDir: string;

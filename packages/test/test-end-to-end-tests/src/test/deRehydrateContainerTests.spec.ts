@@ -21,7 +21,10 @@ import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
 	createDataStoreFactory,
@@ -143,18 +146,27 @@ describeCompat(
 			return subTree;
 		}
 
-		const assertChannelsTree = (rootOrDatastore: ISnapshotTree) =>
+		const assertChannelsTree = (rootOrDatastore: ISnapshotTree): ISnapshotTree =>
 			assertSubtree(rootOrDatastore, ".channels");
-		const assertProtocolTree = (root: ISnapshotTree) => assertSubtree(root, ".protocol");
+		const assertProtocolTree = (root: ISnapshotTree): ISnapshotTree =>
+			assertSubtree(root, ".protocol");
 
-		function assertChannelTree(rootOrDatastore: ISnapshotTree, key: string, msg?: string) {
+		function assertChannelTree(
+			rootOrDatastore: ISnapshotTree,
+			key: string,
+			msg?: string,
+		): { channelsTree: ISnapshotTree; datastoreTree: ISnapshotTree } {
 			const channelsTree = assertChannelsTree(rootOrDatastore);
 			return {
 				channelsTree,
 				datastoreTree: assertSubtree(channelsTree, key, msg ?? `${key} channel not present`),
 			};
 		}
-		const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
+		const assertDatastoreTree = (
+			root: ISnapshotTree,
+			key: string,
+			msg?: string,
+		): { channelsTree: ISnapshotTree; datastoreTree: ISnapshotTree } =>
 			assertChannelTree(root, key, `${key} datastore not present`);
 
 		function assertBlobContents<T>(
@@ -170,7 +182,10 @@ describeCompat(
 			return JSON.parse(contents) as T;
 		}
 
-		const assertProtocolAttributes = (s: ISnapshotTree, b: ISerializableBlobContents) =>
+		const assertProtocolAttributes = (
+			s: ISnapshotTree,
+			b: ISerializableBlobContents,
+		): IDocumentAttributes =>
 			assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), b, "attributes");
 
 		const codeDetails: IFluidCodeDetails = {
@@ -192,7 +207,10 @@ describeCompat(
 		let request: IRequest;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		async function createDetachedContainerAndGetEntryPoint() {
+		async function createDetachedContainerAndGetEntryPoint(): Promise<{
+			container: IContainer;
+			defaultDataStore: TestFluidObject;
+		}> {
 			const container: IContainer = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
 			const defaultDataStore =
@@ -241,7 +259,12 @@ describeCompat(
 			return testLoader;
 		}
 
-		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
+		const createPeerDataStore = async (
+			containerRuntime: IContainerRuntimeBase,
+		): Promise<{
+			peerDataStore: ITestFluidObject;
+			peerDataStoreRuntimeChannel: IFluidDataStoreChannel;
+		}> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
 			const peerDataStore =
 				await getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
@@ -251,7 +274,10 @@ describeCompat(
 			};
 		};
 
-		async function getDataObjectFromContainer(container: IContainer, key: string) {
+		async function getDataObjectFromContainer(
+			container: IContainer,
+			key: string,
+		): Promise<TestFluidObject> {
 			const entryPoint = await getContainerEntryPointBackCompat<TestFluidObject>(container);
 			const handle: IFluidHandle<TestFluidObject> | undefined = entryPoint.root.get(key);
 			assert(handle !== undefined, `handle for [${key}] must exist`);
@@ -291,7 +317,7 @@ describeCompat(
 			loaderContainerTracker.reset();
 		});
 
-		const tests = () => {
+		const tests = (): void => {
 			it("Dehydrated container snapshot", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();

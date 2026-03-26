@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
@@ -29,13 +30,12 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, unbrand, type JsonCompatibleReadOnly } from "../util/index.js";
 
-import type { DecodedMessage } from "./messageTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
 import { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";
+import type { DecodedMessage } from "./messageTypes.js";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;
@@ -55,6 +55,7 @@ export function clientVersionToMessageFormatVersion(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: MessageFormatVersion.v3,
 			[FluidClientVersion.v2_43]: MessageFormatVersion.v4,
+			[FluidClientVersion.v2_80]: MessageFormatVersion.v6,
 		}),
 	);
 	return writeVersionOverride ?? compatibleVersion;
@@ -130,41 +131,40 @@ export function makeMessageCodecs<TChangeset>(
 			JsonCompatibleReadOnly,
 			MessageEncodingContext
 		>,
-	][] = Array.from(messageFormatVersions).map((version) => {
+	][] = [...messageFormatVersions].map((version) => {
 		switch (version) {
-			case MessageFormatVersion.undefined:
-			case MessageFormatVersion.v1:
-			case MessageFormatVersion.v2: {
+			case unbrand(MessageFormatVersion.undefined):
+			case unbrand(MessageFormatVersion.v1):
+			case unbrand(MessageFormatVersion.v2): {
 				const versionOrUndefined =
-					version === MessageFormatVersion.undefined ? undefined : version;
+					version === unbrand(MessageFormatVersion.undefined) ? undefined : version;
 				return [
 					versionOrUndefined,
 					makeDiscontinuedCodecVersion(options, versionOrUndefined, "2.73.0"),
 				];
 			}
-			case MessageFormatVersion.v3:
-			case MessageFormatVersion.v4: {
-				const changeCodec = changeCodecs.resolve(
-					dependentChangeFormatVersion.lookup(version),
-				).json;
+			case unbrand(MessageFormatVersion.v3):
+			case unbrand(MessageFormatVersion.v4):
+			case unbrand(MessageFormatVersion.v6): {
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case MessageFormatVersion.v5:
+			case unbrand(MessageFormatVersion.v5): {
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
-			case MessageFormatVersion.vSharedBranches: {
-				const changeCodec = changeCodecs.resolve(
-					dependentChangeFormatVersion.lookup(version),
-				).json;
+			}
+			case unbrand(MessageFormatVersion.vSharedBranches): {
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			default:
+			default: {
 				unreachableCase(version);
+			}
 		}
 	});
 	return makeCodecFamily(registry);

@@ -30,8 +30,7 @@ export function idAllocatorFromMaxId(maxId: number | undefined = undefined): IdA
 
 export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
 	return {
-		allocate: (c?: number): number => {
-			const count = c ?? 1;
+		allocate: (count: number = 1): number => {
 			assert(count > 0, 0x5cf /* Must allocate at least one ID */);
 			const id: number = state.maxId + 1;
 			state.maxId += count;

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { BroadcastControls } from "./broadcastControls.js";
+import type { BroadcastControls } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { NotificationsManager } from "./notificationsManager.js";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { NotificationsManager } from "./notificationsManagerTypes.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 
 /**
@@ -46,12 +47,12 @@ export type StatesWorkspaceEntry<
  *
  * @beta
  */
-export interface StatesWorkspaceSchema {
+export type StatesWorkspaceSchema<Keys extends string = string> = {
 	/**
 	 * Key-value pairs of State objects registered with the {@link StatesWorkspace}.
 	 */
-	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
-}
+	[Key in Keys]: StatesWorkspaceEntry<Key, InternalTypes.ValueDirectoryOrState<unknown>>;
+};
 
 /**
  * Map of State objects registered with {@link StatesWorkspace}.
@@ -59,12 +60,15 @@ export interface StatesWorkspaceSchema {
  * @sealed
  * @beta
  */
-export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
+export type StatesWorkspaceEntries<
+	TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
+	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
+> = {
 	/**
 	 * Registered State objects.
 	 */
 	readonly [Key in keyof TSchema]: ReturnType<
-		TSchema[Key]
+		Exclude<TSchema[Key], undefined>
 	>["manager"] extends InternalTypes.StateValue<infer TManager>
 		? TManager
 		: never;
@@ -81,21 +85,23 @@ export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
  * @beta
  */
 export interface StatesWorkspace<
-	TSchema extends StatesWorkspaceSchema,
+	TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
 	TManagerConstraints = unknown,
+	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
 > {
 	/**
 	 * Registers a new State object with the {@link StatesWorkspace}.
 	 * @param key - new unique key for the State object within the workspace
-	 * @param manager - factory for creating a State object
+	 * @param configuration - factory/settings for creating a State object. Use
+	 * {@link StateFactory} to create.
 	 */
 	add<
 		TKey extends string,
-		TValue extends InternalTypes.ValueDirectoryOrState<any>,
+		TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 		TManager extends TManagerConstraints,
 	>(
 		key: TKey,
-		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
+		configuration: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
 	): asserts this is StatesWorkspace<
 		TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>,
 		TManagerConstraints
@@ -104,7 +110,7 @@ export interface StatesWorkspace<
 	/**
 	 * Registry of State objects.
 	 */
-	readonly states: StatesWorkspaceEntries<TSchema>;
+	readonly states: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
 
 	/**
 	 * Default controls for management of broadcast updates.
@@ -128,13 +134,13 @@ export interface StatesWorkspace<
  *
  * @alpha
  */
-export interface NotificationsWorkspaceSchema {
-	[key: string]: InternalTypes.ManagerFactory<
-		typeof key,
+export type NotificationsWorkspaceSchema<Keys extends string = string> = {
+	[Key in Keys]: InternalTypes.ManagerFactory<
+		Key,
 		InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
-		NotificationsManager<any>
+		NotificationsManager<InternalUtilityTypes.NotificationListeners<unknown>>
 	>;
-}
+};
 
 /**
  * `NotificationsWorkspace` maintains a registry of {@link NotificationsManager}s
@@ -149,7 +155,10 @@ export interface NotificationsWorkspaceSchema {
  * @sealed
  * @alpha
  */
-export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
+export interface NotificationsWorkspace<
+	TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>,
+	TSchemaKeys extends string & keyof TSchema = string & keyof TSchema,
+> {
 	/**
 	 * Registers a new `NotificationsManager` with the {@link NotificationsWorkspace}.
 	 * @param key - new unique key for the `NotificationsManager` within the workspace
@@ -157,8 +166,8 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	 */
 	add<
 		TKey extends string,
-		TValue extends InternalTypes.ValueDirectoryOrState<any>,
-		TManager extends NotificationsManager<any>,
+		TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
+		TManager extends NotificationsManager<InternalUtilityTypes.NotificationListeners<unknown>>,
 	>(
 		key: TKey,
 		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,
@@ -169,7 +178,7 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	/**
 	 * Registry of `NotificationsManager`s.
 	 */
-	readonly notifications: StatesWorkspaceEntries<TSchema>;
+	readonly notifications: StatesWorkspaceEntries<TSchema, TSchemaKeys>;
 
 	/**
 	 * Containing {@link PresenceWithNotifications}

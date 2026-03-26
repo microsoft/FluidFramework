@@ -19,8 +19,33 @@ const dockerUrls = {
 
 const defaultTinyliciousPort = 7070;
 
-export const tinyliciousUrls = (options: ITinyliciousRouteOptions) => {
+export const tinyliciousUrls = (
+	options: ITinyliciousRouteOptions,
+): {
+	deltaStreamUrl: string;
+	hostUrl: string;
+	ordererUrl: string;
+	storageUrl: string;
+} => {
 	const port = options.tinyliciousPort ?? defaultTinyliciousPort;
+
+	// Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
+	// Detects the appropriate Tinylicious endpoint based on the environment.
+	// In GitHub Codespaces, returns the forwarded port URL. Otherwise returns localhost.
+	// If using codespaces, set tinylicious (port 7070) visibility to "public" for this to work.
+	if (typeof window !== "undefined") {
+		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
+		if (match) {
+			// Detect GitHub Codespaces and use the forwarded port URL
+			// <codespace-name>-<fowarded-port>.<domain>
+			// e.g. my-codespace-7070.githubpreview.dev
+			// Capture Group 1: <codespace-name>
+			// Capture Group 2: <domain>
+			// reconstruct a hostname that fowards tinlicious's port via HTTPS.
+			const url = `https://${match[1]}-${port}.${match[2]}`;
+			return { deltaStreamUrl: url, hostUrl: url, ordererUrl: url, storageUrl: url };
+		}
+	}
 
 	return {
 		deltaStreamUrl: `http://localhost:${port}`,

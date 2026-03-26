@@ -5,6 +5,6 @@
 
 import { OdspClient } from "@fluidframework/odsp-client/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	new OdspClient({} as any);
 }

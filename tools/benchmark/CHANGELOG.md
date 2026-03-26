@@ -1,5 +1,10 @@
 # @fluid-tools/benchmark
 
+## 0.52.0
+
+-   Removed the production dependency on `chai`. The package now uses a minimal internal assertion utility instead.
+-   Fixed an issue where the "benchmark end" event was not emitted if an error was thrown by the runner.
+
 ## 0.51.0
 
 -   `BenchmarkTimer` (provided to `CustomBenchmark.benchmarkFnCustom`) now has a `timeBatch` utility to simplify its use in the common cases.

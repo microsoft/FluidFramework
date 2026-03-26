@@ -5,7 +5,10 @@
 
 import { CharCode } from "./charcode.js";
 
-export function findToken(tokenList: string, token: string) {
+export function findToken(
+	tokenList: string,
+	token: string,
+): { start: number; end: number } | undefined {
 	if (tokenList) {
 		for (let start = 0; start >= 0; start = tokenList.indexOf(" ", start + 1)) {
 			start = tokenList.indexOf(token, start);
@@ -30,7 +33,10 @@ export function findToken(tokenList: string, token: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace TokenList {
-	export function set(tokenList: string | undefined, token: string | undefined) {
+	export function set(
+		tokenList: string | undefined,
+		token: string | undefined,
+	): string | undefined {
 		return !tokenList // If the list is empty
 			? token // ...the token becomes the new list.
 			: !token || findToken(tokenList, token)
@@ -38,7 +44,7 @@ export namespace TokenList {
 				: `${tokenList} ${token}`; // ...otherwise append the token to the list.
 	}
 
-	export function unset(tokenList: string, token: string) {
+	export function unset(tokenList: string, token: string): string {
 		const span = findToken(tokenList, token);
 		if (!span) {
 			return tokenList;
@@ -55,7 +61,7 @@ export namespace TokenList {
 		tokenList: string | undefined,
 		toAdd: string[],
 		toRemove: Set<string>,
-	) {
+	): void {
 		if (!tokenList) {
 			// If the token list is empty, the 'toAdd' and 'toRemove'
 			return; // lists remain unchanged.

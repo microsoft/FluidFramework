@@ -11,7 +11,7 @@
  * interdependencies between packages across a BuildProject. It then provides APIs to select, filter, and work with
  * those package groups.
  *
- * @module default entrypoint
+ * @packageDocumentation
  */
 
 export {
@@ -19,42 +19,42 @@ export {
 	loadBuildProject,
 } from "./buildProject.js";
 export {
+	BUILDPROJECT_CONFIG_VERSION,
+	type BuildProjectConfig as BuildProjectLayout,
+	getBuildProjectConfig,
+	type IFluidBuildDir,
+	type IFluidBuildDirEntry,
+	type IFluidBuildDirs,
 	type ReleaseGroupDefinition,
 	type WorkspaceDefinition,
-	type IFluidBuildDir,
-	type IFluidBuildDirs,
-	type IFluidBuildDirEntry,
-	type BuildProjectConfig as BuildProjectLayout,
-	BUILDPROJECT_CONFIG_VERSION,
-	getBuildProjectConfig,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
 export {
-	getFiles,
 	findGitRootSync,
+	getChangedSinceRef,
+	getFiles,
 	getMergeBaseRemote,
 	getRemote,
-	getChangedSinceRef,
 } from "./git.js";
 export { PackageBase } from "./package.js";
 export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,
-	Installable,
 	IBuildProject,
+	Installable,
 	IPackage,
+	IPackageManager,
 	IReleaseGroup,
 	IWorkspace,
+	PackageDependency,
 	PackageJson,
 	PackageManagerName,
 	PackageName,
+	PnpmPackageJsonFields as FluidPackageJsonFields,
 	ReleaseGroupName,
 	Reloadable,
 	WorkspaceName,
-	PnpmPackageJsonFields as FluidPackageJsonFields,
-	PackageDependency,
-	IPackageManager,
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
 export { setVersion } from "./versions.js";

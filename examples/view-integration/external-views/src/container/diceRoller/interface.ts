@@ -4,7 +4,6 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import type { Presence } from "@fluidframework/presence/beta";
 
 /**
  * IDiceRollerEvents describes the events for an IDiceRoller.
@@ -31,12 +30,4 @@ export interface IDiceRoller {
 	 * Roll the dice.  Will cause a "diceRolled" event to be emitted.
 	 */
 	roll: () => void;
-}
-
-/**
- * The entry point interface for the Dice Roller container.
- */
-export interface EntryPoint {
-	readonly diceRoller: IDiceRoller;
-	readonly presence: Presence;
 }

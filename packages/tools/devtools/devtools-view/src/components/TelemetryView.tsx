@@ -33,7 +33,14 @@ import {
 	TelemetryHistory,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React, { useState, useRef } from "react";
+import {
+	type Dispatch,
+	type ReactElement,
+	type SetStateAction,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
@@ -41,6 +48,7 @@ import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
 import { SplitPane } from "./SplitPane.cjs";
 import { Waiting } from "./Waiting.js";
+import { ScreenReaderAnnouncement } from "./utility-components/index.js";
 
 /**
  * Set the default displayed size to 100.
@@ -69,13 +77,13 @@ const useTelemetryViewStyles = makeStyles({
  *
  * @remarks {@link MessageRelayContext} and {@link ThemeContext} must be set in order to use this component.
  */
-export function TelemetryView(): React.ReactElement {
+export function TelemetryView(): ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
 
 	const styles = useTelemetryViewStyles();
 
-	const [telemetryEvents, setTelemetryEvents] = React.useState<
+	const [telemetryEvents, setTelemetryEvents] = useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
 
@@ -85,12 +93,12 @@ export function TelemetryView(): React.ReactElement {
 	 * `bufferedEvents` transfers events to `telemetryEvents` in a FIFO (First In First Out) manner.
 	 * If `telemetryEvents` is full, new events accumulate in `bufferedEvents` until more space becomes available.
 	 */
-	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
-	const [maxEventsToDisplay, setMaxEventsToDisplay] =
-		React.useState<number>(DEFAULT_PAGE_SIZE);
-	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
+	const [bufferedEvents, setBufferedEvents] = useState<ITimestampedTelemetryEvent[]>([]);
+	const [maxEventsToDisplay, setMaxEventsToDisplay] = useState<number>(DEFAULT_PAGE_SIZE);
+	const [selectedIndex, setSelectedIndex] = useState<number | undefined>();
+	const [refreshStatusMessage, setRefreshStatusMessage] = useState("");
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to telemetry.
 		 */
@@ -128,7 +136,7 @@ export function TelemetryView(): React.ReactElement {
 		};
 	}, [messageRelay, setTelemetryEvents]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (
 			telemetryEvents &&
 			bufferedEvents.length > 0 &&
@@ -170,6 +178,9 @@ export function TelemetryView(): React.ReactElement {
 		const remainingBuffer = bufferedEvents.slice(newEvents.length);
 		setBufferedEvents(remainingBuffer);
 		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
+		setRefreshStatusMessage("Telemetry events refreshed");
+		// Clear the message after a delay so subsequent clicks trigger a new announcement
+		setTimeout(() => setRefreshStatusMessage(""), 1000);
 	};
 
 	return (
@@ -196,6 +207,7 @@ export function TelemetryView(): React.ReactElement {
 						Refresh
 					</Button>
 				</div>
+				<ScreenReaderAnnouncement message={refreshStatusMessage} />
 			</div>
 			{telemetryEvents === undefined ? (
 				<Waiting label={"Waiting for Telemetry events"} />
@@ -228,7 +240,7 @@ interface ListLengthSelectionProps {
 /**
  * A dropdown menu for selecting how many logs to display on the page.
  */
-function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElement {
+function ListLengthSelection(props: ListLengthSelectionProps): ReactElement {
 	const { currentLimit, onChangeSelection } = props;
 	const usageLogger = useLogger();
 
@@ -286,7 +298,7 @@ interface FilteredTelemetryViewProps {
 	/**
 	 * A setter use to update the selected row when filtering or refreshing event data.
 	 */
-	setIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
+	setIndex: Dispatch<SetStateAction<number | undefined>>;
 
 	/**
 	 * The selected index/row in the table. Undefined means no row is selected.
@@ -294,18 +306,18 @@ interface FilteredTelemetryViewProps {
 	index: number | undefined;
 }
 
-function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
+function FilteredTelemetryView(props: FilteredTelemetryViewProps): ReactElement {
 	const { telemetryEvents, setIndex, index } = props;
 	const usageLogger = useLogger();
 	const [selectedCategory, setSelectedCategory] = useState("");
-	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
+	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
 	/**
 	 * Used to store query for the searchable dropdown. The query is used to perform
 	 * partial match searches and will display all events if query is an empty string.
 	 */
-	const [customSearch, setCustomSearch] = React.useState("");
+	const [customSearch, setCustomSearch] = useState("");
 	/**
 	 * State holding a list of ALL unique event names.
 	 * An empty list means no telemetry events have come in.
@@ -315,16 +327,16 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	 * State holding the event names matching the currently applied filter.
 	 * Updated by the `onEventNameChange` handler
 	 */
-	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
+	const [matchingOptions, setMatchingOptions] = useState<string[]>([]);
 
-	const [selectedEvent, setSelectedEvent] = React.useState<Item>();
+	const [selectedEvent, setSelectedEvent] = useState<Item>();
 	const { themeInfo } = useThemeContext();
 	const eventNameOptionsRef = useRef<string[]>([]);
-	React.useEffect(() => {
+	useEffect(() => {
 		eventNameOptionsRef.current = eventNameOptions;
 	}, [eventNameOptions]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Filters all telemetry events based on category and event name
 		 * @returns filtered list of events
@@ -562,7 +574,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 
 			{/*
 				SplitPane fom the react-split-pane package is incompatible with _the types_ for React 18.
-				To fix it, the SplitPaneProps type in it should be updated to have a new property `children: React.ReactNode;`.
+				To fix it, the SplitPaneProps type in it should be updated to have a new property `children: ReactNode;`.
 				At runtime there are no issues, so just ignoring the TS error for now.
 				Note that ts-ignore does take "arguments" and only has an effect on the line right below it.
 				The error we want to ignore is TS2322 specifically but there is no way to only ignore specific TS errors.

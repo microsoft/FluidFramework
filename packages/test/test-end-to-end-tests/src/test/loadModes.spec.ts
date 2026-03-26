@@ -43,11 +43,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	class TestDataObject extends DataObject {
 		public static readonly type = "@fluid-example/test-dataObject";
 
-		public static getFactory() {
-			return TestDataObject.factory;
-		}
-
-		private static readonly factory = new DataObjectFactory({
+		public static readonly factory = new DataObjectFactory({
 			type: TestDataObject.type,
 			ctor: TestDataObject,
 		});
@@ -75,16 +71,16 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		/**
 		 * Increments the counter value by 1.
 		 */
-		public increment() {
+		public increment(): void {
 			this.counter.increment(1);
 		}
 
-		protected async initializingFirstTime() {
+		protected async initializingFirstTime(): Promise<void> {
 			const counter = SharedCounter.create(this.runtime);
 			this.root.set(counterKey, counter.handle);
 		}
 
-		protected async hasInitialized() {
+		protected async hasInitialized(): Promise<void> {
 			const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
 			assert(counterHandle);
 			this.counter = await counterHandle.get();

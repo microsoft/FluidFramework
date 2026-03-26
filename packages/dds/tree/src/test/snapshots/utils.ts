@@ -12,6 +12,8 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
+
 import { takeJsonSnapshot } from "./snapshotTools.js";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
@@ -57,7 +59,8 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 					typeof summaryObject.content === "string"
 						? {
 								type: "blob",
-								content: JSON.parse(summaryObject.content),
+								content: JSON.parse(summaryObject.content) as JsonCompatibleReadOnly,
+								// eslint-disable-next-line unicorn/text-encoding-identifier-case -- snapshot output format, not an encoding parameter
 								encoding: "utf-8",
 							}
 						: {
@@ -98,13 +101,13 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 				...baseEntry,
 				[encodeURIComponent(key)]: value,
 			};
-		} else if (id !== undefined) {
+		} else if (id === undefined) {
+			throw new Error(`Invalid tree entry for ${summaryObject.type}`);
+		} else {
 			entry = {
 				...baseEntry,
 				[encodeURIComponent(key)]: id,
 			};
-		} else {
-			throw new Error(`Invalid tree entry for ${summaryObject.type}`);
 		}
 		entries.push(entry);
 	}

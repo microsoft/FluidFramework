@@ -22,7 +22,7 @@ import {
 } from "../sparsematrix.js";
 
 describe("SparseMatrix", () => {
-	const extract = (matrix: SparseMatrix, numCols: number) => {
+	const extract = (matrix: SparseMatrix, numCols: number): SparseMatrixItem[][] => {
 		const rows: SparseMatrixItem[][] = [];
 		for (let r = 0; r < matrix.numRows; r++) {
 			const cols: SparseMatrixItem[] = [];
@@ -45,7 +45,7 @@ describe("SparseMatrix", () => {
 			matrix = SparseMatrix.create(dataStoreRuntime);
 		});
 
-		const expect = async (expected: readonly (readonly any[])[]) => {
+		const expect = async (expected: readonly (readonly any[])[]): Promise<void> => {
 			const expectedCols = expected.length > 0 ? expected[0].length : 0;
 
 			assert.strictEqual(matrix.numRows, expected.length);
@@ -113,13 +113,13 @@ describe("SparseMatrix", () => {
 		let matrix2: SparseMatrix;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-		const print = (matrix: SparseMatrix) => {
+		const print = (matrix: SparseMatrix): void => {
 			for (const row of extract(matrix, 10)) {
 				console.log(`[${row.join(",")}]`);
 			}
 		};
 
-		const assertMatrices = async (expected: readonly (readonly any[])[]) => {
+		const assertMatrices = async (expected: readonly (readonly any[])[]): Promise<void> => {
 			containerRuntimeFactory.processAllMessages();
 
 			print(matrix1);

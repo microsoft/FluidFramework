@@ -4,10 +4,10 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type ITree,
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
 	Tree,
 	TreeViewConfiguration,
@@ -54,13 +54,13 @@ class NewTreeInventoryItem
 	implements IInventoryItem
 {
 	private readonly _unregisterChangingEvent: () => void;
-	public get id() {
+	public get id(): string {
 		return this._inventoryItemNode.id;
 	}
-	public get name() {
+	public get name(): string {
 		return this._inventoryItemNode.name;
 	}
-	public get quantity() {
+	public get quantity(): number {
 		return this._inventoryItemNode.quantity;
 	}
 	public set quantity(newQuantity: number) {
@@ -80,7 +80,7 @@ class NewTreeInventoryItem
 			this.emit("quantityChanged");
 		});
 	}
-	public readonly deleteItem = () => {
+	public readonly deleteItem = (): void => {
 		// TODO: Maybe expose a public dispose() method for disposing the NewTreeInventoryItem without
 		// modifying the tree?
 		this._unregisterChangingEvent();
@@ -105,7 +105,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	}
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
-	public readonly addItem = (name: string, quantity: number) => {
+	public readonly addItem = (name: string, quantity: number): void => {
 		this.inventoryItemList.insertAtEnd({
 			// In a real-world scenario, this is probably a known unique inventory ID (rather than
 			// randomly generated).  Randomly generating here just for convenience.
@@ -166,13 +166,15 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			}
 
 			// Search for deleted inventory items to update our collection
-			const currentInventoryIds = this.inventoryItemList.map((inventoryItemNode) => {
-				return inventoryItemNode.id;
-			});
+			const currentInventoryIds = new Set(
+				this.inventoryItemList.map((inventoryItemNode) => {
+					return inventoryItemNode.id;
+				}),
+			);
 			for (const trackedItemId of this._inventoryItems.keys()) {
 				// If the tree doesn't contain the id of an item we're tracking, then it must have
 				// been deleted in this change.
-				if (!currentInventoryIds.includes(trackedItemId)) {
+				if (!currentInventoryIds.has(trackedItemId)) {
 					this._inventoryItems.delete(trackedItemId);
 					this.emit("itemDeleted");
 				}
@@ -189,7 +191,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	private makeInventoryItemFromInventoryItemNode(
 		inventoryItemNode: InventoryItem,
 	): NewTreeInventoryItem {
-		const removeItemFromTree = () => {
+		const removeItemFromTree = (): void => {
 			// We pass in the delete capability as a callback to withold this.inventory access from the
 			// inventory items.  AB#6015
 			this.inventoryItemList.removeAt(this.inventoryItemList.indexOf(inventoryItemNode));

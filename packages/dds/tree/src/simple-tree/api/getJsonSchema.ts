@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonTreeSchema } from "./jsonSchema.js";
 import type { ImplicitAllowedTypes } from "../core/index.js";
-import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
-import type { TreeParsingOptions } from "./customTree.js";
+
 import { TreeViewConfigurationAlpha } from "./configuration.js";
+import type { TreeParsingOptions } from "./customTree.js";
+import type { JsonTreeSchema } from "./jsonSchema.js";
+import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.

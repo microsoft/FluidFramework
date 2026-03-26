@@ -4,20 +4,17 @@
  */
 
 import { strict as assert } from "node:assert/strict";
-import { readFile, stat } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import ignore from "ignore";
-import * as JSON5 from "json5";
 import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 // Opaque is deprecated in newer type-fest versions (replaced by Tagged); we pin type-fest 2.x for current CommonJS
 import type { Opaque } from "type-fest";
 
 import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
+import { getClosestBiomeConfigPath, loadRawBiomeConfigFile } from "./biomeConfigUtils";
 import type { GitRepo } from "./gitRepo";
-
-// switch to regular import once building ESM
-const findUp = import("find-up");
 
 /**
  * Convenience type to represent a Biome config that has been loaded while following and merging the
@@ -30,9 +27,7 @@ export type BiomeConfigResolved = Opaque<BiomeConfigRaw, "BiomeConfigResolved">;
  * {@link loadBiomeConfigs} instead of this function.
  */
 async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfigRaw> {
-	const contents = await readFile(configPath, "utf8");
-	const config: BiomeConfigRaw = JSON5.parse(contents);
-	return config;
+	return loadRawBiomeConfigFile<BiomeConfigRaw>(configPath);
 }
 
 /**
@@ -110,26 +105,6 @@ export function getSettingValuesFromBiomeConfig(
 	const generalFiles = config.files?.[kind] ?? [];
 	const sectionFiles = config?.[section]?.[kind] ?? [];
 	return new Set([...generalFiles, ...sectionFiles]);
-}
-
-/**
- * Returns the absolute path to the closest Biome config file found from the current working directory up to the root
- * of the repo.
- *
- * @throws If a Biome config file cannot be found.
- */
-export async function getClosestBiomeConfigPath(
-	cwd: string,
-	stopAt?: string,
-): Promise<string> {
-	return (await findUp)
-		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
-		.then((config) => {
-			if (config === undefined) {
-				throw new Error(`Can't find biome config file`);
-			}
-			return config;
-		});
 }
 
 /**
@@ -214,12 +189,14 @@ export async function getBiomeFormattedFiles(
 }
 
 /**
- * A class used to simplify access to a Biome config when you want to just load a config and get the file list and
+ * A class used to simplify access to a Biome 1.x config when you want to just load a config and get the file list and
  * config details. Given a directory and a GitRepo instance, the class calculates and caches the configs and formatted
  * files. Using this class can be more convenient than using the free functions, especially when you need access to all
  * the configs and formatted files.
+ *
+ * For Biome 2.x configs, use {@link Biome2ConfigReader} instead.
  */
-export class BiomeConfigReader {
+export class BiomeConfigReaderV1 {
 	public get closestConfig(): string {
 		assert(
 			this.allConfigs.length > 0,
@@ -247,7 +224,7 @@ export class BiomeConfigReader {
 	public static async create(
 		directoryOrConfigFile: string,
 		gitRepo: GitRepo,
-	): Promise<BiomeConfigReader> {
+	): Promise<BiomeConfigReaderV1> {
 		/**
 		 * The repo root-relative path to the directory being used as the Biome working directory.
 		 */
@@ -264,6 +241,6 @@ export class BiomeConfigReader {
 		const allConfigs = await getAllBiomeConfigPaths(configFile);
 		const mergedConfig = await loadBiomeConfigs(allConfigs);
 		const files = await getBiomeFormattedFiles(mergedConfig, directory, gitRepo);
-		return new BiomeConfigReader(configFile, allConfigs, mergedConfig, files);
+		return new BiomeConfigReaderV1(configFile, allConfigs, mergedConfig, files);
 	}
 }

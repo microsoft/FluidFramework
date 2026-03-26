@@ -10,9 +10,9 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type RevisionInfo,
-	type RevisionTag,
 } from "../../core/index.js";
-import { brand, RangeMap, type Brand, type TupleBTree } from "../../util/index.js";
+import { brand, RangeMap, type Brand } from "../../util/index.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
@@ -60,6 +60,10 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * If this count is greater than 0, it will prevent the changeset from being applied.
 	 */
 	readonly constraintViolationCount?: number;
+	/** Constraint that the document must be in the same state before this change is applied as it was before this change was authored */
+	readonly noChangeConstraint?: NoChangeConstraint;
+	/** Constraint that the document must be in the same state before the revert of this change is applied as it was after this change was applied */
+	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
 	/**
 	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
 	 * prevent the changeset from being reverted or undone.
@@ -69,8 +73,6 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
-
-export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
 
 export type CrossFieldKeyTable = RangeMap<CrossFieldKey, FieldId>;
 
@@ -99,8 +101,8 @@ export interface CrossFieldKey extends ChangeAtomId {
 }
 
 export interface CrossFieldKeyRange {
-	key: CrossFieldKey;
-	count: number;
+	readonly key: CrossFieldKey;
+	readonly count: number;
 }
 
 export interface FieldId {
@@ -109,6 +111,13 @@ export interface FieldId {
 }
 
 export interface NodeExistsConstraint {
+	violated: boolean;
+}
+
+/**
+ * A constraint that is violated whenever the state of the document is different from when the change was authored.
+ */
+export interface NoChangeConstraint {
 	violated: boolean;
 }
 
@@ -131,7 +140,7 @@ export interface HasFieldChanges {
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
-	fieldKind: FieldKindIdentifier;
+	readonly fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
 

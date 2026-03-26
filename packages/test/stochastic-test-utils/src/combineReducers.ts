@@ -15,6 +15,8 @@ export interface BaseOperation {
 }
 
 /**
+ * Type guard to check if an operation matches a specific operation type.
+ *
  * @internal
  */
 export const isOperationType = <O extends BaseOperation>(
@@ -23,6 +25,8 @@ export const isOperationType = <O extends BaseOperation>(
 ): op is O => op.type === type;
 
 /**
+ * Combines multiple reducers into a single reducer that dispatches to the appropriate handler based on operation type.
+ *
  * @internal
  */
 export function combineReducers<
@@ -45,6 +49,8 @@ export function combineReducers<
 }
 
 /**
+ * Combines multiple async reducers into a single async reducer that dispatches to the appropriate handler based on operation type.
+ *
  * @internal
  */
 export function combineReducersAsync<

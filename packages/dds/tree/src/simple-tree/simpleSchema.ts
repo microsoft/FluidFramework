@@ -5,6 +5,7 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
+
 import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 

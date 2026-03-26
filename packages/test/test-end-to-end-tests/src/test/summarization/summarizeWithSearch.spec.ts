@@ -9,6 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
+	type ISummarizer,
 	SummaryCollection,
 	neverCancelledSummaryToken,
 	type ISummaryNackMessage,
@@ -19,7 +20,11 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import {
+	IFluidDataStoreFactory,
+	type IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
@@ -44,38 +49,41 @@ describeCompat(
 
 		function createDataStoreRuntime(
 			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-		) {
-			return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-				await DataObject.getDataObject(runtime);
-				return undefined;
-			}, factory);
+		): typeof FluidDataStoreRuntime {
+			return mixinSummaryHandler(
+				async (runtime: FluidDataStoreRuntime): Promise<undefined> => {
+					await DataObject.getDataObject(runtime);
+					return undefined;
+				},
+				factory,
+			);
 		}
 
 		class TestDataObject2 extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 		}
 
 		class TestDataObject1 extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
-			protected async initializingFirstTime() {
+			protected async initializingFirstTime(): Promise<void> {
 				const dataStore2 =
 					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
 				this.root.set("ds2", dataStore2.entryPoint);
 			}
 
-			protected async hasInitialized() {
+			protected async hasInitialized(): Promise<void> {
 				const dataStore2Handle = this.root.get<IFluidHandle<TestDataObject2>>("ds2");
 				await dataStore2Handle?.get();
 			}
@@ -114,7 +122,12 @@ describeCompat(
 		/**
 		 * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
 		 */
-		async function loadSummarizer(summaryVersion?: string) {
+		async function loadSummarizer(summaryVersion?: string): Promise<{
+			summarizer: ISummarizer;
+			containerRuntime: ContainerRuntime;
+			entryPoint: ReturnType<IFluidHandle<any>["get"]>;
+			summaryCollection: SummaryCollection;
+		}> {
 			const { summarizer, container } = await createSummarizerFromFactory(
 				provider,
 				mainContainer,
@@ -149,7 +162,7 @@ describeCompat(
 			};
 		}
 
-		async function waitForSummaryOp(containerRuntime: ContainerRuntime) {
+		async function waitForSummaryOp(containerRuntime: ContainerRuntime): Promise<void> {
 			await new Promise<void>((resolve) => {
 				containerRuntime.deltaManager.on("op", (op: ISequencedDocumentMessage) => {
 					if (op.type === MessageType.Summarize) {
@@ -285,7 +298,7 @@ describeCompat(
 				// Before refresh is called, request the second data store in the summarizer. This will create summarizer
 				// nodes for its child DDSes. The data store's summarizer node should update the pending used routes
 				// of the child's summarizer node.
-				const ds2MainDataStore = (await summarizer2.entryPoint) as TestDataObject1;
+				const ds2MainDataStore = (await await summarizer2.entryPoint) as TestDataObject1;
 				const ds2MainDataStoreHandle =
 					ds2MainDataStore._root.get<IFluidHandle<TestDataObject2>>("dataStore2");
 				assert(

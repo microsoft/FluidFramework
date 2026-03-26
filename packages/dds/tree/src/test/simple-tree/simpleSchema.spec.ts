@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { isAssignableTo, requireAssignableTo, requireFalse } from "../../util/index.js";
-
 import type {
 	SchemaType,
 	SimpleAllowedTypeAttributes,
 	SimpleNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/simpleSchema.js";
+import type { isAssignableTo, requireAssignableTo, requireFalse } from "../../util/index.js";
 
 // Verify the variance of SimpleAllowedTypeAttributes's "Type" parameter.
 // Due to the issue noted in its private remarks, this validation is important to ensure the mitigation is effective.

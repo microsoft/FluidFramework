@@ -27,6 +27,9 @@ import {
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	assertDeltaEqual,
@@ -37,11 +40,13 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { initializeForest } from "../initializeForest.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+const codecOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;
@@ -132,12 +137,17 @@ function initializeEditableForest(data?: JsonableTree): {
 		testRevisionTagCodec,
 		testIdCompressor,
 	);
-	const builder = new DefaultEditBuilder(family, mintRevisionTag, (taggedChange) => {
-		changes.push(taggedChange);
-		const delta = intoDelta(taggedChange);
-		deltas.push(delta);
-		applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
-	});
+	const builder = new DefaultEditBuilder(
+		family,
+		mintRevisionTag,
+		(taggedChange) => {
+			changes.push(taggedChange);
+			const delta = intoDelta(taggedChange);
+			deltas.push(delta);
+			applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
+		},
+		codecOptions,
+	);
 	return {
 		forest,
 		builder,
