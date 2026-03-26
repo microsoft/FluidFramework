@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/devtools-test-app",
-	"version": "2.90.0",
+	"version": "2.92.0",
 	"private": true,
 	"description": "An example application demonstrating how Fluid's devtools can be integrated into an application",
 	"homepage": "https://fluidframework.com",
@@ -73,10 +73,10 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/test-utils": "workspace:~",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^5.16.5",
@@ -89,8 +89,8 @@
 		"@types/testing-library__jest-dom": "^5.14.5",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~9.39.1",
-		"eslint-config-prettier": "~10.1.8",
+		"eslint": "catalog:eslint",
+		"eslint-config-prettier": "catalog:eslint",
 		"eslint-plugin-jest": "~29.5.0",
 		"eslint-plugin-react": "~7.37.5",
 		"eslint-plugin-react-hooks": "~7.0.1",

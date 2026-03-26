@@ -1,5 +1,347 @@
 # fluid-framework
 
+## 2.91.0
+
+### Minor Changes
+
+- Adds withDefault API to allow defining default values for required and optional fields ([#26502](https://github.com/microsoft/FluidFramework/pull/26502)) [44fdd9421e4](https://github.com/microsoft/FluidFramework/commit/44fdd9421e4d0bfa3cdfa9ab3672ebf3c0ad20a6)
+
+  The `withDefault` API is now available on `SchemaFactoryAlpha`. It allows you to specify default values for fields,
+  making them optional in constructors even when the field is marked as required in the schema.
+  This provides a better developer experience by reducing boilerplate when creating objects.
+
+  The `withDefault` API wraps a field schema and defines a default value to use when the field is not provided during
+  construction. The default value must be of an allowed type of the field. You can provide defaults in two ways:
+  - **A value**: When a value is provided directly, the data is copied for each use to ensure independence between instances
+  - **A generator function**: A function that is called each time to produce a fresh value
+
+  Defaults are evaluated eagerly during node construction.
+
+  #### Required fields with defaults
+
+  ```typescript
+  import { SchemaFactoryAlpha, TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactoryAlpha("example");
+
+  class Person extends sf.objectAlpha("Person", {
+    name: sf.required(sf.string),
+    age: sf.withDefault(sf.required(sf.number), -1),
+    role: sf.withDefault(sf.required(sf.string), "guest"),
+  }) {}
+
+  // Before: all fields were required
+  // const person = new Person({ name: "Alice", age: -1, role: "guest" });
+
+  // After: fields with defaults are optional
+  const person = new Person({ name: "Alice" });
+  // person.age === -1
+  // person.role === "guest"
+
+  // You can still provide values to override the defaults
+  const admin = new Person({ name: "Bob", age: 30, role: "admin" });
+  ```
+
+  #### Optional fields with custom defaults
+
+  Optional fields (`sf.optional`) already default to `undefined`, but `withDefault` allows you to specify a different
+  default value:
+
+  ```typescript
+  class Config extends sf.object("Config", {
+    timeout: sf.withDefault(sf.optional(sf.number), 5000),
+    retries: sf.withDefault(sf.optional(sf.number), 3),
+  }) {}
+
+  // All fields are optional, using custom defaults when not provided
+  const config = new Config({});
+  // config.timeout === 5000
+  // config.retries === 3
+
+  const customConfig = new Config({ timeout: 10000 });
+  // customConfig.timeout === 10000
+  // customConfig.retries === 3
+  ```
+
+  #### Value defaults vs function defaults
+
+  When you provide a value directly, the data is copied for each use, ensuring each instance is independent:
+
+  ```typescript
+  class Metadata extends sf.object("Metadata", {
+    tags: sf.array(sf.string),
+    version: sf.number,
+  }) {}
+
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // a node is provided directly, it is copied for each use
+    metadata: sf.withDefault(
+      sf.optional(Metadata),
+      new Metadata({ tags: [], version: 1 }),
+    ),
+
+    // also works with arrays
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), []),
+  }) {}
+
+  const article1 = new Article({ title: "First" });
+  const article2 = new Article({ title: "Second" });
+
+  // each article gets its own independent copy
+  assert(article1.metadata !== article2.metadata);
+  article1.metadata.version = 2; // Doesn't affect article2
+  assert(article2.metadata.version === 1);
+  ```
+
+  Alternatively, you can use generator functions to explicitly create new instances:
+
+  ```typescript
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // generators are called each time to create a new instance
+    metadata: sf.withDefault(
+      sf.optional(Metadata),
+      () => new Metadata({ tags: [], version: 1 }),
+    ),
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), () => []),
+  }) {}
+  ```
+
+  Insertable object literals, arrays, and map objects can be used in place of node instances in both static defaults
+  and generator functions:
+
+  ```typescript
+  class Article extends sf.object("Article", {
+    title: sf.required(sf.string),
+
+    // plain object literal instead of new Metadata(...)
+    metadata: sf.withDefault(sf.optional(Metadata), () => ({
+      tags: [],
+      version: 1,
+    })),
+
+    // plain array instead of new ArrayNode(...)
+    authors: sf.withDefault(sf.optional(sf.array(sf.string)), () => [
+      "anonymous",
+    ]),
+  }) {}
+  ```
+
+  ##### Dynamic defaults
+
+  Generator functions are called each time a new node is created, enabling dynamic defaults:
+
+  ```typescript
+  class Document extends sf.object("Document", {
+    id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),
+    title: sf.required(sf.string),
+  }) {}
+
+  const doc1 = new Document({ title: "First Document" });
+  const doc2 = new Document({ title: "Second Document" });
+  // doc1.id !== doc2.id (each gets a unique UUID)
+  ```
+
+  Generator functions also work with primitive types:
+
+  ```typescript
+  let counter = 0;
+
+  class GameState extends sf.object("GameState", {
+    playerId: sf.withDefault(
+      sf.required(sf.string),
+      () => `player-${counter++}`,
+    ),
+    score: sf.withDefault(sf.required(sf.number), () =>
+      Math.floor(Math.random() * 100),
+    ),
+    isActive: sf.withDefault(sf.required(sf.boolean), () => counter % 2 === 0),
+  }) {}
+  ```
+
+  #### Recursive types
+
+  `withDefaultRecursive` is available for use inside recursive schemas. Use `objectRecursiveAlpha` (rather than
+  `objectRecursive`) when defining recursive schemas with defaults, as it correctly makes defaulted fields optional in
+  the constructor for all field kinds including `requiredRecursive`. It works the same as `withDefault` but is
+  necessary to avoid TypeScript's circular reference limitations.
+
+  ```typescript
+  class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
+    value: sf.number,
+    label: SchemaFactoryAlpha.withDefaultRecursive(
+      sf.optional(sf.string),
+      "untitled",
+    ),
+    child: sf.optionalRecursive([() => TreeNode]),
+  }) {}
+
+  // `label` is optional in the constructor — the default is used when omitted
+  const leaf = new TreeNode({ value: 1 });
+  // leaf.label === "untitled"
+
+  const root = new TreeNode({ value: 0, label: "root", child: leaf });
+  // root.label === "root"
+  // root.child.label === "untitled"
+  ```
+
+  > **Warning:** Be careful about using the recursive type itself as a default value — this is likely to cause
+  > infinite recursion at construction time, since creating the default value would trigger the same default again.
+  > Instead, use a primitive or a separate node type as the default:
+  >
+  > ```typescript
+  > const DefaultTag = sf.objectRecursiveAlpha("Tag", {
+  >   id: sf.number,
+  >   child: sf.optionalRecursive([() => TreeNode]),
+  > });
+  >
+  > class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
+  >   value: sf.number,
+  >   // ✅ Safe: default is a non-recursive node
+  >   tag: SchemaFactoryAlpha.withDefaultRecursive(
+  >     sf.optional(DefaultTag),
+  >     () => new DefaultTag({ id: 0, child: new DefaultTag({ id: 1 }) }),
+  >   ),
+  >   child: sf.optionalRecursive([() => TreeNode]),
+  > }) {}
+  > ```
+  >
+  > The following definition for child would cause infinite recursion at construction time:
+  >
+  > ```typescript
+  > child: SchemaFactoryAlpha.withDefaultRecursive(
+  >   sf.optionalRecursive([() => TreeNode]),
+  >   () => new TreeNode({ value: 0 }),
+  > );
+  > ```
+
+  > The infinite recursion can be solved by passing in undefined explicitly but it is
+  > recommended to not use defaults in this case:
+  >
+  > ```typescript
+  > child: SchemaFactoryAlpha.withDefaultRecursive(
+  >   sf.optionalRecursive([() => TreeNode]),
+  >   () => new TreeNode({ value: 0, child: undefined }),
+  > );
+  > ```
+
+  #### Type safety
+
+  The default value (or the value returned by a generator function) must be of an allowed type for the field. TypeScript
+  enforces this at compile time:
+
+  ```typescript
+  // ✅ Valid: number default for number field
+  sf.withDefault(sf.optional(sf.number), 8080);
+
+  // ✅ Valid: generator returns string for string field
+  sf.withDefault(sf.optional(sf.string), () => "localhost");
+
+  // ❌ TypeScript error: string default for number field
+  sf.withDefault(sf.optional(sf.number), "8080");
+
+  // ❌ TypeScript error: generator returns number for string field
+  sf.withDefault(sf.optional(sf.string), () => 8080);
+  ```
+
+## 2.90.0
+
+### Minor Changes
+
+- Add alpha TextAsTree domain for collaboratively editable text ([#26568](https://github.com/microsoft/FluidFramework/pull/26568)) [06736bd81de](https://github.com/microsoft/FluidFramework/commit/06736bd81dea4c8e44cb13304f471a7b1bca42bd)
+
+  A newly exported `TextAsTree` alpha namespace has been added with an initial version of collaboratively editable text.
+  Users of SharedTree can add `TextAsTree.Tree` nodes to their tree to experiment with it.
+
+- Added new TreeAlpha.context(node) API ([#26432](https://github.com/microsoft/FluidFramework/pull/26432)) [ffa62f45e2c](https://github.com/microsoft/FluidFramework/commit/ffa62f45e2ca6c6106c67ed94f69359336823516)
+
+  This release introduces a node-scoped context that works for both hydrated and [unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class).
+  The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` methods and an `isBranch()` type guard.
+  `TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
+
+  #### Migration
+
+  If you previously used `TreeAlpha.branch(node)` to discover a branch, switch to `TreeAlpha.context(node)` and check `isBranch()`:
+
+  ```ts
+  import { TreeAlpha } from "@fluidframework/tree/alpha";
+
+  const context = TreeAlpha.context(node);
+  if (context.isBranch()) {
+    // Same branch APIs as before
+    context.fork();
+  }
+  ```
+
+  `TreeAlpha.branch(node)` is now deprecated.
+  Prefer the context API above.
+
+  #### New transaction entry point
+
+  You can now run transactions from a node context, regardless of whether the node is hydrated:
+
+  ```ts
+  // A synchronous transaction without a return value
+  const context = TreeAlpha.context(node);
+  context.runTransaction(() => {
+    node.count += 1;
+  });
+  ```
+
+  ```ts
+  // An asynchronous transaction with a return value
+  const context = TreeAlpha.context(node);
+  const result = await context.runTransactionAsync(async () => {
+    await doWork(node);
+    return { value: node.foo };
+  });
+  ```
+
+- Promote checkSchemaCompatibilitySnapshots to beta ([#26288](https://github.com/microsoft/FluidFramework/pull/26288)) [eb4ef62672d](https://github.com/microsoft/FluidFramework/commit/eb4ef62672d33f6a903e3726b58d1f65c24d9150)
+
+  [`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
+  It is recommended that all SharedTree applications use this API to write schema compatibility tests.
+
+  Usage should look something like:
+
+  ```typescript
+  import fs from "node:fs";
+  import path from "node:path";
+
+  import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
+
+  // The TreeViewConfiguration the application uses, which contains the application's schema.
+  import { treeViewConfiguration } from "./schema.js";
+  // The next version of the application which will be released.
+  import { packageVersion } from "./version.js";
+
+  // Provide some way to run the check in "update" mode when updating snapshots is intended.
+  const regenerateSnapshots = process.argv.includes("--snapshot");
+
+  // Setup the actual test. In this case using Mocha syntax.
+  describe("schema", () => {
+    it("schema compatibility", () => {
+      // Select a path to save the snapshots in.
+      // This will depend on how your application organizes its test data.
+      const snapshotDirectory = path.join(
+        import.meta.dirname,
+        "../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
+      );
+      snapshotSchemaCompatibility({
+        snapshotDirectory,
+        fileSystem: { ...fs, ...path },
+        version: packageVersion,
+        minVersionForCollaboration: "2.0.0",
+        schema: treeViewConfiguration,
+        mode: regenerateSnapshots ? "update" : "assert",
+      });
+    });
+  });
+  ```
+
 ## 2.83.0
 
 ### Minor Changes

@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
+import type { PropertyAction } from "@fluidframework/merge-tree/internal";
+import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { SequenceInterval, createTransientIntervalFromSequence } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
+import { createTransientIntervalFromSequence } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
-import { ISharedString } from "../sharedString.js";
+import type { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
-import {
-	HasComparisonOverride,
-	compareOverrideables,
-	forceCompare,
-} from "./intervalIndexUtils.js";
+import type { HasComparisonOverride } from "./intervalIndexUtils.js";
+import { compareOverrideables, forceCompare } from "./intervalIndexUtils.js";
 
 /**
  * Collection of intervals.

@@ -26,7 +26,7 @@ import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	isTreeValue,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	mapTreeFromCursor,
 	TreeCompressionStrategy,
 	type FieldBatch,
@@ -75,6 +75,7 @@ import {
 	toInitialSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
+	type TreeChangeEventsAlpha,
 	type ConciseTree,
 	importConcise,
 	exportConcise,
@@ -231,6 +232,23 @@ export interface TreeIdentifierUtils {
  * @sealed @alpha
  */
 export interface TreeAlpha {
+	/**
+	 * Register an event listener on the given node.
+	 * @param node - The node whose events should be subscribed to.
+	 * @param eventName - Which event to subscribe to.
+	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
+	 * @returns A callback function which will deregister the event.
+	 * This callback should be called only once.
+	 * @remarks
+	 * Provides a richer `nodeChanged` event than {@link (TreeBeta:interface).on} — for array nodes the
+	 * event data includes a {@link NodeChangedDataDelta.delta | delta} payload.
+	 */
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void;
+
 	/**
 	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
@@ -787,6 +805,14 @@ function trackObservations<TResult>(
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
+	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+		node: TNode,
+		eventName: K,
+		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+	): () => void {
+		return treeNodeApi.on(node, eventName, listener);
+	},
+
 	trackObservations<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
@@ -904,7 +930,7 @@ export const TreeAlpha: TreeAlpha = {
 		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const codec = makeFieldBatchCodec({
+		const codec = fieldBatchCodecBuilder.build({
 			jsonValidator: FormatValidatorNoOp,
 			minVersionForCollab: options.minVersionForCollab,
 		});
@@ -926,7 +952,8 @@ export const TreeAlpha: TreeAlpha = {
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
-		return result;
+		// TODO: codecs should better track which ones can contain handles, and which cannot. When done properly, casts like this can be removed.
+		return result as JsonCompatible<IFluidHandle>;
 	},
 
 	importCompressed<const TSchema extends ImplicitFieldSchema>(

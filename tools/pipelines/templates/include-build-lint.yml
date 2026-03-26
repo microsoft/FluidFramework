@@ -4,20 +4,20 @@
 # include-build-lint template for the Build and Lint step in client build and test stability pipeline
 
 parameters:
-- name: taskBuild 
-  type: string 
+- name: taskBuild
+  type: string
   default: ci:build
 
-- name: taskLint 
-  type: boolean 
+- name: taskLint
+  type: boolean
   default: true
 
 - name: taskLintName
   type: string
-  default: lint 
+  default: lint
 
 - name: buildDirectory
-  type: string 
+  type: string
 
 steps:
 - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -27,15 +27,22 @@ steps:
       # Set FLUB_TYPETEST_SKIP_VERSION_OUTPUT to 1 when building from test/* branches
       # This preserves existing version info in generated type test files
       FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
+      # Suppress "data is over two months old" warnings from baseline-browser-mapping,
+      # a transitive dependency of browserslist. Without this, the warning fires once
+      # per package during builds, producing 100+ identical warnings in build logs.
+      BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskBuild }}'
 
 - ${{ if ne(parameters.taskLint, false) }}:
   - task: Npm@1
     displayName: npm run ${{ parameters.taskLintName }}
+    env:
+      # Suppress baseline-browser-mapping staleness warnings during lint as well.
+      BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA: 1
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskLintName }}'

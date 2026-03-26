@@ -73,6 +73,8 @@ describe("Summary Manager", () => {
 	const mockRuntime = new MockRuntime(mockDeltaManager);
 	let summaryManager: SummaryManager;
 	let runningSummarizer: RunningSummarizer;
+	let testMinOpsForLastSummaryAttemptOverride: number | undefined;
+	let testMaxAckWaitTimeOverride: number | undefined;
 	// let runCount: number;
 	const summarizerClientId = "test";
 
@@ -135,6 +137,7 @@ describe("Summary Manager", () => {
 		public state: "notStarted" | "running" | "stopped" = "notStarted";
 		public readonly stopDeferred = new Deferred<string | undefined>();
 		public readonly runDeferred = new Deferred<void>();
+		public testStopReason: string | undefined;
 
 		constructor() {
 			super();
@@ -148,6 +151,7 @@ describe("Summary Manager", () => {
 		}
 		public close() {}
 		public stop(reason?: string): void {
+			this.testStopReason = reason;
 			this.stopDeferred.resolve(reason);
 		}
 		public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
@@ -161,6 +165,12 @@ describe("Summary Manager", () => {
 					...{
 						initialSummarizerDelayMs: 0,
 					},
+					...(testMinOpsForLastSummaryAttemptOverride === undefined
+						? {}
+						: { minOpsForLastSummaryAttempt: testMinOpsForLastSummaryAttemptOverride }),
+					...(testMaxAckWaitTimeOverride === undefined
+						? {}
+						: { maxAckWaitTime: testMaxAckWaitTimeOverride }),
 				},
 				// submitSummaryCallback
 				async (options) => {
@@ -179,6 +189,11 @@ describe("Summary Manager", () => {
 				(reason) => {},
 				mockRuntime as unknown as ISummarizerRuntime,
 			);
+			runningSummarizer.on("summarize", (...args) => {
+				// Forward event
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+				this.emit("summarize" as any, ...args);
+			});
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);
 			this.state = "stopped";
@@ -274,6 +289,11 @@ describe("Summary Manager", () => {
 		connectedState.removeAllListeners();
 		throttler.delayMs = 0;
 		mockDeltaManager.lastSequenceNumber = 0;
+		testMinOpsForLastSummaryAttemptOverride = undefined;
+		testMaxAckWaitTimeOverride = undefined;
+		if (summarizer !== undefined) {
+			summarizer.testStopReason = undefined;
+		}
 		requestCalls = 0;
 		clock.reset();
 
@@ -502,6 +522,45 @@ describe("Summary Manager", () => {
 			assertState(SummaryManagerState.Stopping, "Should be stopping");
 		});
 
+		it("Should honor pending stop requested before summarizer is created", async () => {
+			testMinOpsForLastSummaryAttemptOverride = 0;
+			testMaxAckWaitTimeOverride = 1;
+			throttler.delayMs = 0;
+			createSummaryManager({
+				opsToBypassInitialDelay: 0,
+				connected: true,
+			});
+			const summarizeEvents: { isLastSummary?: boolean }[] = [];
+			summaryManager.on("summarize", (event) => {
+				summarizeEvents.push(event as { isLastSummary?: boolean });
+			});
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "Summarizer should be starting");
+			assertRequests(1, "Should request summarizer");
+
+			// Request stop before createSummarizerFn resolves.
+			connectedState.disconnect();
+			await flushPromises();
+			assertState(SummaryManagerState.Stopping, "Should be stopping after disconnect");
+
+			completeSummarizerRequest();
+			await flushPromises();
+			assert.strictEqual(
+				summarizer.testStopReason,
+				"parentNotConnected",
+				"Should replay parent stop reason to late-created summarizer",
+			);
+
+			summarizer.runDeferred.resolve();
+			clock.tick(1);
+			await flushPromises();
+			assert(
+				summarizeEvents.some((event) => event.isLastSummary === true),
+				"Should emit summarize event with isLastSummary=true",
+			);
+		});
+
 		it("Should wait for throttler delay before starting summarizer", async () => {
 			throttler.delayMs = 100;
 			createSummaryManager({
@@ -562,6 +621,81 @@ describe("Summary Manager", () => {
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
+		});
+	});
+
+	describe("Stop Timeout", () => {
+		const summarizerCloseTimeoutMs = 2 * 60 * 1000; // matches production value
+
+		it("Should not assert when stop timeout fires before promise chain completes", async () => {
+			createSummaryManager({ opsToBypassInitialDelay: 0 });
+			connectedState.connect();
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "should request summarizer");
+			completeSummarizerRequest();
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "summarizer should be running");
+
+			// Disconnect triggers stop() which sets the 2-minute timeout
+			connectedState.disconnect();
+			await flushPromises();
+			assertState(SummaryManagerState.Stopping, "should be stopping after disconnect");
+
+			// Simulate the summarizer hanging: advance clock past the stop timeout
+			// WITHOUT resolving the summarizer's run deferred
+			clock.tick(summarizerCloseTimeoutMs);
+			await flushPromises();
+			assertState(SummaryManagerState.Off, "stop timeout should have cleaned up");
+
+			// Now the old summarizer's promise chain completes — this should NOT assert
+			summarizer.runDeferred.resolve();
+			await flushPromises();
+			assertState(SummaryManagerState.Off, "should remain off after old chain completes");
+		});
+
+		it("Should not corrupt new cycle when stop timeout fires and shouldSummarize is true", async () => {
+			createSummaryManager({ opsToBypassInitialDelay: 0 });
+			connectedState.connect();
+			clientElection.electClient(thisClientId);
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "should request summarizer");
+			assertRequests(1, "first summarizer request");
+			const firstSummarizer = summarizer;
+			completeSummarizerRequest();
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "summarizer should be running");
+
+			// Disconnect triggers stop
+			connectedState.disconnect();
+			await flushPromises();
+			assertState(SummaryManagerState.Stopping, "should be stopping after disconnect");
+
+			// Reconnect while stopping — refreshSummarizer can't act in Stopping state
+			connectedState.connect();
+			await flushPromises();
+			assertState(
+				SummaryManagerState.Stopping,
+				"should still be stopping, can't act while stopping",
+			);
+
+			// Stop timeout fires: cleanup → Off → shouldSummarize → startSummarization
+			clock.tick(summarizerCloseTimeoutMs);
+			await flushPromises();
+			assertRequests(2, "timeout cleanup should have triggered a new summarizer request");
+
+			// Old summarizer's promise chain completes — should NOT interfere with new cycle
+			firstSummarizer.runDeferred.resolve();
+			await flushPromises();
+			assertState(
+				SummaryManagerState.Running,
+				"new cycle should not be corrupted by old chain's cleanup",
+			);
+
+			// Complete the new cycle to verify it works end-to-end
+			completeSummarizerRequest();
+			await flushPromises();
+			assertState(SummaryManagerState.Running, "new summarizer should be running");
 		});
 	});
 });

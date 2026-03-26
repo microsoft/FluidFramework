@@ -58,15 +58,15 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-            parameters:
-              buildDirectory: $(Pipeline.Workspace)
-              enableCache: false
-
-          # We can use this step to add overrides that might be necessary to allow for a correct
-          # installation of build-tools from the tarball artifacts produced by the build stage.
-          # Since this is a lockfile-less install (ideally we should figure out how to change that),
-          # overrides is one recourse when a dependency releases a new version that causes build-tools installation to break.
+          # We can use this step for two things:
+          # - Pin pnpm to a specific version (usually keep it in line with the one we use in the package.json files
+          #   in the repo), to prevent breaks in a freshly release version from affecting us (like 10.31 did).
+          # - Add overrides that might be necessary to allow for a correct installation of build-tools
+          #   from the tarball artifacts produced by the build stage.
+          #   Since this is a lockfile-less install (ideally we should figure out how to change that),
+          #   overrides is one recourse when a dependency releases a new version that causes build-tools installation to break.
+          # Note that this step needs to run before we install + configure pnpm so the package.json with overrides
+          # is in place before we install/activate pnpm, or we try to install the packages from the tarballs.
           # Current overrides:
           # - Build-tools packages: map all versions to local tarballs so interdependencies resolve correctly.
           - task: Bash@3
@@ -103,6 +103,11 @@ jobs:
                   }' > package.json
 
                 cat package.json
+
+          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+            parameters:
+              buildDirectory: buildTools-zip/tarballs
+              enableCache: false
 
           - task: Bash@3
             name: InstallBuildToolsFromTarball

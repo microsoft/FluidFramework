@@ -73,10 +73,11 @@ function makeAudienceView(audience?: IAzureAudience): HTMLDivElement {
 			}
 		}
 
-		audienceDiv.innerHTML = `
-            Current User: ${self?.name} <br />
-            Other Users: ${memberStrings.join(", ")}
-        `;
+		const currentUserDiv = document.createElement("div");
+		currentUserDiv.textContent = `Current User: ${self?.name}`;
+		const otherUsersDiv = document.createElement("div");
+		otherUsersDiv.textContent = `Other Users: ${memberStrings.join(", ")}`;
+		audienceDiv.replaceChildren(currentUserDiv, otherUsersDiv);
 	};
 
 	onAudienceChanged();

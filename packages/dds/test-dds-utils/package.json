@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-dds-utils",
-	"version": "2.90.0",
+	"version": "2.92.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -97,12 +97,12 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
@@ -110,7 +110,7 @@
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"eslint": "~9.39.1",
+		"eslint": "catalog:eslint",
 		"execa": "^5.1.1",
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",

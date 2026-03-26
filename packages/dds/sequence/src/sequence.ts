@@ -4,19 +4,16 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import type { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	Client,
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -30,12 +27,15 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	MergeTreeDeltaType,
 	MergeTreeRevertibleDriver,
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
 	SlidingPreference,
+} from "@fluidframework/merge-tree/internal";
+import {
+	Client,
+	MergeTreeDeltaType,
 	createAnnotateRangeOp,
 	createGroupOp,
 	createInsertOp,
@@ -46,7 +46,7 @@ import {
 	type InteriorSequencePlace,
 	type MapLike,
 } from "@fluidframework/merge-tree/internal";
-import {
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IRuntimeMessageCollection,
@@ -57,12 +57,12 @@ import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
-import {
+import type {
 	IFluidSerializer,
+	ISharedObject,
 	ISharedObjectEvents,
-	SharedObject,
-	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	LoggingError,
 	createChildLogger,
@@ -72,12 +72,12 @@ import {
 import Deque from "double-ended-queue";
 
 import type { ISequenceIntervalCollection } from "./intervalCollection.js";
-import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
+import type { IMapOperation } from "./intervalCollectionMap.js";
+import { IntervalCollectionMap } from "./intervalCollectionMap.js";
 import type { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
+import type { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
 import {
-	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
-	SequenceMaintenanceEvent,
 	SequenceMaintenanceEventClass,
 } from "./sequenceDeltaEvent.js";
 
@@ -416,9 +416,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					break;
 				}
 
-				case MergeTreeDeltaType.INSERT:
+				case MergeTreeDeltaType.INSERT: {
 					ops.push(createInsertOp(r.position, r.segment.clone().toJSONObject()));
 					break;
+				}
 
 				case MergeTreeDeltaType.REMOVE: {
 					const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
@@ -831,7 +832,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			);
 
 			// process the catch up ops, and finishing the loading process
-			(await catchupOpsP).forEach((m) => {
+			for (const m of await catchupOpsP) {
 				const collabWindow = this.client.getCollabWindow();
 				if (
 					m.minimumSequenceNumber < collabWindow.minSeq ||
@@ -855,7 +856,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					);
 				}
 				this.processMergeTreeMsg(m);
-			});
+			}
 
 			// Initialize the interval collections
 			this.initializeIntervalCollections();
@@ -865,10 +866,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
-	 */
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
 			this.processMessage(envelope, messageContent, local);
@@ -949,9 +947,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.processMinSequenceNumberChanged(minSeq);
 
-		this.messagesSinceMSNChange.forEach((m) => {
+		for (const m of this.messagesSinceMSNChange) {
 			m.minimumSequenceNumber = minSeq;
-		});
+		}
 
 		return this.client.summarize(
 			this.runtime,
@@ -973,10 +971,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
-			if (needsTransformation) {
-				this.on("sequenceDelta", transformOps);
-			}
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true && needsTransformation) {
+			this.on("sequenceDelta", transformOps);
 		}
 
 		this.client.applyMsg(message, local);
@@ -989,7 +985,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
-					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
+					contents: ops.length === 1 ? ops[0] : createGroupOp(...ops),
 				};
 			}
 

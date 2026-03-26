@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-utils",
-	"version": "2.90.0",
+	"version": "2.92.0",
 	"description": "Utilities for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
@@ -134,18 +134,17 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"best-random": "^1.0.0",
 		"debug": "^4.3.4",
-		"mocha": "^11.7.5",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@2.83.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@2.91.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/debug": "^4.1.5",
 		"@types/diff": "^3.5.1",
@@ -155,9 +154,10 @@
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"diff": "^3.5.0",
-		"eslint": "~9.39.1",
+		"diff": "^4.0.4",
+		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"

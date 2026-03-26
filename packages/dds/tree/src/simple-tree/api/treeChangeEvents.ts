@@ -6,6 +6,9 @@
 /**
  * A collection of events that can be emitted by a {@link TreeNode}.
  *
+ * @remarks
+ * Access these events via the {@link (Tree:variable)}'s {@link TreeNodeApi.on} method.
+ *
  * @privateRemarks
  * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
  * Probably have object node and map node specific APIs for this.

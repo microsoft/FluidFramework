@@ -522,7 +522,11 @@ module.exports = {
 				// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react-hooks
 				"react-hooks",
 			],
-			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			extends: [
+				"plugin:react/recommended",
+				"plugin:react-hooks/recommended",
+				"plugin:react/jsx-runtime",
+			],
 			rules: {
 				// TODO: These rules should be re-enabled once we are on eslint 9
 				// and the react plugins are upgraded to more recent versions
