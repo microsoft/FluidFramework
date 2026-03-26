@@ -18,12 +18,14 @@ mkdir -p ./lib/entrypoints
 
 # 1. Generate entrypoint .d.ts files in lib/entrypoints.
 
-pnpm flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib/entrypoints
+export GENERATE_CL="flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib/entrypoints"
+pnpm $GENERATE_CL
 
 # 2. Copy generated .d.ts files to src/entrypoints as .ts files.
 # A bug in "flub generate entrypoints" requires "./index.js" to be replaced with
 # "../index.js" hence use of sed.
+# Additionally replace the generation header comment with "generate:entrypoint-sources".
 
 for tag in public beta alpha legacy; do
-	sed "s|\./|../|" "./lib/entrypoints/${tag}.d.ts" > "./src/entrypoints/${tag}.ts"
+	sed -e "s|${GENERATE_CL}\" in @fluid-tools/build-cli|generate:entrypoint-sources\"|" -e "s|\./|../|" "./lib/entrypoints/${tag}.d.ts" > "./src/entrypoints/${tag}.ts"
 done

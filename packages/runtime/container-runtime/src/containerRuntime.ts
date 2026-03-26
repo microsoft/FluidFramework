@@ -219,7 +219,6 @@ import {
 	type IGCRuntimeOptions,
 	type IGCStats,
 	type IGarbageCollector,
-	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
@@ -243,6 +242,7 @@ import {
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
 	type IBatchCheckpoint,
+	largeBatchThreshold,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -258,6 +258,7 @@ import {
 	type IPendingLocalState,
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
+	type IPendingMessage,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
@@ -475,6 +476,25 @@ export interface ContainerRuntimeOptions {
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
 	readonly createBlobPayloadPending: true | undefined;
+
+	/**
+	 * Controls automatic batch flushing during staging mode.
+	 * Normal turn-based/async flush scheduling is suppressed while in staging mode
+	 * until the accumulated batch reaches this many ops, at which point the batch
+	 * is flushed. Incoming ops always break the current batch regardless of this setting.
+	 *
+	 * Set to Infinity to only break batches on system events (incoming ops).
+	 *
+	 * @defaultValue `largeBatchThreshold` (currently 1000)
+	 */
+	readonly stagingModeAutoFlushThreshold: number;
+
+	/**
+	 * When this property is set to true, the runtime will never send DocumentSchemaChange ops
+	 * and will throw an error if any incoming DocumentSchemaChange ops are received.
+	 * This effectively freezes the document schema at whatever state it was in when the document was created.
+	 */
+	readonly disableSchemaUpgrade: boolean;
 }
 
 /**
@@ -606,6 +626,16 @@ const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconn
 const defaultMaxBatchSizeInBytes = 700 * 1024;
 
 const defaultChunkSizeInBytes = 204800;
+
+/**
+ * Default maximum ops per staging-mode batch before automatic flush scheduling resumes.
+ *
+ * Chosen based on production telemetry: copy-paste operations routinely produce batches
+ * of 1000+ ops (435K instances over 30 days), and receivers on modern Fluid versions
+ * handle them without issues. Uses {@link largeBatchThreshold} to stay aligned with
+ * the existing "large batch" telemetry threshold ({@link OpGroupingManager}).
+ */
+const defaultStagingModeAutoFlushThreshold = largeBatchThreshold;
 
 /**
  * The default time to wait for pending ops to be processed during summarization
@@ -961,6 +991,8 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
+			stagingModeAutoFlushThreshold: defaultStagingModeAutoFlushThreshold,
+			disableSchemaUpgrade: false,
 		};
 
 		const defaultConfigs = {
@@ -986,6 +1018,8 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
+			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1184,6 +1218,7 @@ export class ContainerRuntime
 			},
 			{ minVersionForCollab },
 			logger,
+			disableSchemaUpgrade,
 		);
 
 		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
@@ -1214,6 +1249,8 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			stagingModeAutoFlushThreshold,
+			disableSchemaUpgrade,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1392,6 +1429,7 @@ export class ContainerRuntime
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
+	private readonly stagingModeAutoFlushThreshold: number;
 	/**
 	 * BatchId tracking is needed whenever there's a possibility of a "forked Container",
 	 * where the same local state is pending in two different running Containers, each of
@@ -1532,13 +1570,6 @@ export class ContainerRuntime
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return runtimeCompatDetailsForLoader;
 	}
-
-	/**
-	 * If true, will skip Outbox flushing before processing an incoming message (and on DeltaManager "op" event for loader back-compat),
-	 * and instead the Outbox will check for a split batch on every submit.
-	 * This is a kill-bit switch for this simplification of logic, in case it causes unexpected issues.
-	 */
-	private readonly skipSafetyFlushDuringProcessStack: boolean;
 
 	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
 
@@ -1750,15 +1781,6 @@ export class ContainerRuntime
 				this.getConnectionState() === ConnectionState.CatchingUp
 			: undefined;
 
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GCFeatureMatrix",
-			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
-			inputs: JSON.stringify({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
-			}),
-		});
-
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
 
 		const opGroupingManager = new OpGroupingManager(
@@ -1840,6 +1862,10 @@ export class ContainerRuntime
 			this.closeFn(error);
 			throw error;
 		}
+		this.stagingModeAutoFlushThreshold =
+			this.mc.config.getNumber("Fluid.ContainerRuntime.StagingModeAutoFlushThreshold") ??
+			runtimeOptions.stagingModeAutoFlushThreshold ??
+			defaultStagingModeAutoFlushThreshold;
 		this.batchIdTrackingEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
@@ -1998,10 +2024,6 @@ export class ContainerRuntime
 
 		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
-		this.skipSafetyFlushDuringProcessStack =
-			// Keep the old flag name even though we renamed the class member (it shipped in 2.31.0)
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableFlushBeforeProcess") === true;
-
 		this.outbox = new Outbox({
 			shouldSend: () => this.shouldSendOps(),
 			pendingStateManager: this.pendingStateManager,
@@ -2012,8 +2034,6 @@ export class ContainerRuntime
 			config: {
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				// If we disable flush before process, we must be ready to flush partial batches
-				flushPartialBatches: this.skipSafetyFlushDuringProcessStack,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -2070,14 +2090,12 @@ export class ContainerRuntime
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
-		if (!this.skipSafetyFlushDuringProcessStack) {
-			// Reference Sequence Number may have just changed, and it must be consistent across a batch,
-			// so we should flush now to clear the way for the next ops.
-			// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
-			// But we need this coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
-			// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
-			this.deltaManager.on("op", () => this.flush());
-		}
+		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
+		// so we should flush now to clear the way for the next ops.
+		// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
+		// But we need this coverage for old loaders that don't call ContainerRuntime.process for non-runtime messages.
+		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
+		this.deltaManager.on("op", () => this.flush());
 
 		// logging hardware telemetry
 		this.baseLogger.send({
@@ -2093,7 +2111,9 @@ export class ContainerRuntime
 			summaryNumber: loadSummaryNumber,
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
+			// This is useful even for interactive clients since they track unreferenced nodes and log errors.
 			gcVersion: metadata?.gcFeature,
+			gcConfigs: this.garbageCollector.serializedConfigs,
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
@@ -2101,7 +2121,6 @@ export class ContainerRuntime
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
 				closeSummarizerDelayOverride,
-				disableFlushBeforeProcess: this.skipSafetyFlushDuringProcessStack,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -2723,12 +2742,10 @@ export class ContainerRuntime
 		this.emitDirtyDocumentEvent = false;
 
 		try {
-			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
-			// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
-			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
-			// before staging mode so we can simply say staged: false.
-			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
-			this.scheduleFlush();
+			// Any ID Allocation ops that failed to submit need to have their ranges included
+			// in the next allocation op. Reset the compressor's unfinalized range cursor so that the next
+			// call to takeNextCreationRange (during replay) will include those unfinalized ranges.
+			this._idCompressor?.resetUnfinalizedCreationRange();
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
@@ -3023,10 +3040,8 @@ export class ContainerRuntime
 
 		this.verifyNotClosed();
 
-		if (!this.skipSafetyFlushDuringProcessStack) {
-			// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
-			this.flush();
-		}
+		// Reference Sequence Number may be about to change, and it must be consistent across a batch, so flush now
+		this.flush();
 
 		this.ensureNoDataModelChanges(() => {
 			this.processInboundMessageOrBatch(messageCopy, local);
@@ -3630,20 +3645,39 @@ export class ContainerRuntime
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
-		const exitStagingMode = (discardOrCommit: () => void): void => {
+		const exitStagingMode = (
+			discardOrCommit: () => IPendingMessage["batchInfo"][],
+			exitMethod: "commit" | "discard",
+		): void => {
 			try {
-				// Final flush of any last staged changes
-				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
-				this.outbox.flush();
+				PerformanceEvent.timedExec(
+					this.mc.logger,
+					{
+						eventName: `ExitStagingMode_${exitMethod}`,
+					},
+					(event) => {
+						// Final flush of any last staged changes
+						// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
+						this.outbox.flush();
 
-				this.stageControls = undefined;
+						this.stageControls = undefined;
 
-				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-				discardOrCommit();
-
-				this.channelCollection.notifyStagingMode(false);
+						// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
+						// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
+						this.submitIdAllocationOpIfNeeded({ staged: false });
+						const batchInfos = discardOrCommit();
+						event.reportProgress({
+							details: {
+								autoFlushThreshold: this.stagingModeAutoFlushThreshold,
+								batches: batchInfos.length,
+								batchesAtOrOverThreshold: batchInfos.filter(
+									(b) => b.length >= this.stagingModeAutoFlushThreshold,
+								).length,
+							},
+						});
+						this.channelCollection.notifyStagingMode(false);
+					},
+				);
 			} catch (error) {
 				const normalizedError = normalizeError(error);
 				this.closeFn(normalizedError);
@@ -3655,21 +3689,24 @@ export class ContainerRuntime
 			discardChanges: () =>
 				exitStagingMode(() => {
 					// Pop all staged batches from the PSM and roll them back in LIFO order
-					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-						this.rollbackStagedChange(runtimeOp, localOpMetadata);
-					});
+					const batchInfos = this.pendingStateManager.popStagedBatches(
+						({ runtimeOp, localOpMetadata }) => {
+							this.rollbackStagedChange(runtimeOp, localOpMetadata);
+						},
+					);
 					this.updateDocumentDirtyState();
-				}),
+					return batchInfos;
+				}, "discard"),
 			commitChanges: (options) => {
 				const { squash } = { ...defaultStagingCommitOptions, ...options };
 				exitStagingMode(() => {
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
-					this.pendingStateManager.replayPendingStates({
+					return this.pendingStateManager.replayPendingStates({
 						committingStagedBatches: true,
 						squash,
 					});
-				});
+				}, "commit");
 			},
 		};
 
@@ -4800,6 +4837,20 @@ export class ContainerRuntime
 	}
 
 	private scheduleFlush(): void {
+		// During staging mode, suppress automatic flush scheduling until the main batch
+		// reaches or exceeds the threshold.
+		// Incoming ops still break the batch via direct this.flush() calls elsewhere
+		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
+		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
+		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
+		// sequence number changes and throws if unexpected changes are detected.
+		if (
+			this.inStagingMode &&
+			this.outbox.mainBatchMessageCount < this.stagingModeAutoFlushThreshold
+		) {
+			return;
+		}
+
 		if (this.flushScheduled) {
 			return;
 		}
@@ -5195,7 +5246,9 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
-				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const { pending } = this.pendingStateManager.getLocalState(
+					props?.snapshotSequenceNumber,
+				);
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 

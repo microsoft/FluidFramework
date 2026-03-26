@@ -28,6 +28,7 @@ export {
 	extractJsonValidator,
 	type CodecName,
 	eraseEncodedType,
+	type JsonCodecPart,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,
@@ -36,9 +37,7 @@ export {
 } from "./discriminatedUnions.js";
 export {
 	Versioned,
-	makeVersionedValidatedCodec,
-	makeVersionDispatchingCodec,
-	makeDiscontinuedCodecVersion,
+	makeDiscontinuedCodecAndSchema,
 	ClientVersionDispatchingCodecBuilder,
 	type CodecVersion,
 	type CodecAndSchema,

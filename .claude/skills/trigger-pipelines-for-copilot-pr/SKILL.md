@@ -26,7 +26,8 @@ Second comment:
 Posting those comments will trigger all our pipelines, which is necessary for PRs that are created by Copilot.
 
 To post the comments first check if the GitHub CLI is available,
-and if so use `gh pr comment <PULL_REQUEST_NUMBER> --repo microsoft/FluidFramework --body "<COMMENT_TEXT>"`.
+and if so use `MSYS_NO_PATHCONV=1 gh pr comment <PULL_REQUEST_NUMBER> --repo microsoft/FluidFramework --body "<COMMENT_TEXT>"`.
+Note: `MSYS_NO_PATHCONV=1` is required on Windows (Git Bash) to prevent `/azp` from being expanded to `C:/Program Files/Git/azp`.
 If `gh` is not available but `$GITHUB_TOKEN` is, you can try the GitHub REST API directly, e.g.:
 
 ```

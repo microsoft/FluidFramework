@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import fs from "fs";
-import path from "path";
+import { strict as assert } from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
 
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
@@ -26,8 +26,8 @@ function assertIntervalCollectionsAreEquivalent(
 	message: string,
 ): void {
 	assert.deepEqual(
-		Array.from(actual.getIntervalCollectionLabels()),
-		Array.from(expected.getIntervalCollectionLabels()),
+		[...actual.getIntervalCollectionLabels()],
+		[...expected.getIntervalCollectionLabels()],
 		message,
 	);
 
@@ -219,7 +219,7 @@ describe("SharedString Snapshot Version", () => {
 			rehydratedFromDenormalizedString,
 		]) {
 			assert.deepEqual(
-				Array.from(sharedString.getIntervalCollectionLabels()),
+				[...sharedString.getIntervalCollectionLabels()],
 				[collectionId],
 				`Unexpected labels for string "${sharedString.id}".`,
 			);

@@ -1,0 +1,13 @@
+/= Overlay configuration file.
+/= This file describes an overlay and how it should be applied.
+
+overlay =
+  /= name: Display name for this overlay.
+  /= Used in status output and when listing overlays.
+  name = nori
+
+/= mappings (optional): Remap file paths when applying the overlay.
+/= Keys are source paths (in the overlay), values are target paths (in the repo).
+/= Use this to rename files or place them in different locations.
+/= mappings =
+/=   .envrc.template = .envrc
