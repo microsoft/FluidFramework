@@ -103,6 +103,7 @@ import {
 	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
+	PendingStateLocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 	createAttributesBlob,
 } from "./dataStoreContext.js";
@@ -1701,19 +1702,15 @@ export class ChannelCollection
 			const [datastoreId, channelId, ...things] = (
 				path.startsWith("/") ? path.slice(1) : path
 			).split("/");
-			assert(things.length === 0, "these should never be");
+			assert(things.length === 0, "Handle paths deeper than datastoreId/channelId are not supported");
 
 			if (visitedDataStores.has(datastoreId)) continue;
 			visitedDataStores.add(datastoreId);
 			const context = this.contexts.get(datastoreId);
 			assert(context !== undefined, "must have context");
-			const summary = context.getAttachSummary();
 
-			if (this.contexts.isNotBound(datastoreId)) {
-				summaries ??= {};
-				summaries[datastoreId] = summary;
-				paths.push(...findAllHandlePaths(summary));
-			} else if (channelId) {
+			if (this.contexts.isNotBound(datastoreId) || channelId) {
+				const summary = context.getAttachSummary();
 				summaries ??= {};
 				summaries[datastoreId] = summary;
 				paths.push(...findAllHandlePaths(summary));
@@ -1744,8 +1741,8 @@ export class ChannelCollection
 				const blobs = new Map<string, ArrayBufferLike>();
 				const snapshotTree = buildSnapshotTree(itree.entries, blobs);
 
-				// Create a LocalFluidDataStoreContext for this datastore
-				const dataStoreContext = new LocalFluidDataStoreContext({
+				// Create a context for this datastore with Detached attach state
+				const dataStoreContext = new PendingStateLocalFluidDataStoreContext({
 					id,
 					pkg: undefined,
 					parentContext: this.wrapContextForInnerChannel(id),

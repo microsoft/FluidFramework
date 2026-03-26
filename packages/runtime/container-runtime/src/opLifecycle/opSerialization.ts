@@ -42,8 +42,8 @@ export function serializeOp(
 		| LocalContainerRuntimeMessage
 		| LocalContainerRuntimeMessage[],
 	staged?: boolean,
-): { content: string; stagedHandleCache: ReadonlySet<IFluidHandle> } {
-	const stagedHandleCache = new Set<IFluidHandle>();
+): { content: string; stagedHandleCache: ReadonlySet<IFluidHandle> | undefined } {
+	const stagedHandleCache = staged === true ? new Set<IFluidHandle>() : undefined;
 	return {
 		content: JSON.stringify(
 			toSerialize,
@@ -51,7 +51,7 @@ export function serializeOp(
 			(key, value: unknown) => {
 				// If 'value' is an IFluidHandle return its encoded form.
 				if (isFluidHandle(value)) {
-					if (staged === true) stagedHandleCache.add(value);
+					stagedHandleCache?.add(value);
 					return encodeHandleForSerialization(toFluidHandleInternal(value));
 				}
 				return value;

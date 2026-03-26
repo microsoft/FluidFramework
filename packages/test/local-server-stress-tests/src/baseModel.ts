@@ -195,7 +195,7 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "exitStagingMode",
 				commit: random.bool(),
 			}),
-			5,
+			25,
 			(state) =>
 				state.client.entryPoint.inStagingMode() &&
 				state.client.container.attachState !== AttachState.Detached,

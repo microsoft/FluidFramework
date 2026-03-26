@@ -1062,9 +1062,6 @@ export abstract class FluidDataStoreContext
 	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
 	 */
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
 			this.channel !== undefined,
@@ -1549,6 +1546,18 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(props);
+	}
+}
+
+/**
+ * Context for a datastore loaded from pendingAttachmentSummaries (pending local state).
+ * These datastores have snapshot data but were never attached on the original client,
+ * so _attachState must be Detached despite having a snapshotTree (existing = true).
+ */
+export class PendingStateLocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
+	constructor(props: ILocalFluidDataStoreContextProps) {
+		super(props);
+		this._attachState = AttachState.Detached;
 	}
 }
 

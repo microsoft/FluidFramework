@@ -829,13 +829,13 @@ export class FluidDataStoreRuntime
 	/**
 	 * Load pending channels from pending attachment summaries.
 	 * This is called during container load to rehydrate channels that were referenced but not yet attached.
-	 * @param pendingChannelSnapshots - Map of channel id to snapshot tree
+	 * @param channelsTree - Map of channel id to snapshot tree
 	 */
 	public loadPendingChannels(channelsTree: ISummaryTree): void {
 		for (const [channelId, summary] of Object.entries(channelsTree.tree)) {
 			assert(!this.contexts.has(channelId), "channel must not exist");
 			assert(summary.type === SummaryType.Tree, "must be a tree");
-			// Datastore doesn't exist yet - create it from the summary
+			// Channel doesn't exist yet - create it from the summary
 			// Convert the summary tree to an ITree, then to a snapshot tree
 			const itree = convertSummaryTreeToITree(summary);
 			const blobs = new Map<string, ArrayBufferLike>();
@@ -1274,7 +1274,10 @@ export class FluidDataStoreRuntime
 			visitedLength = visitedContexts.size;
 			for (const [contextId, context] of this.contexts) {
 				if (!(context instanceof LocalChannelContextBase)) {
-					continue;
+					if (runtimeExp.inStagingMode === true) {
+						continue;
+					}
+					throw new LoggingError("Should only be called with local channel handles");
 				}
 
 				if (
