@@ -10426,9 +10426,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      cross-fetch:
-        specifier: ^3.1.5
-        version: 3.1.8(encoding@0.1.13)
       json-stringify-safe:
         specifier: 5.0.1
         version: 5.0.1

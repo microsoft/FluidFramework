@@ -123,7 +123,6 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/server-services-client": "^7.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"cross-fetch": "^3.1.5",
 		"json-stringify-safe": "5.0.1",
 		"socket.io-client": "^4.8.3"
 	},
