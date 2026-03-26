@@ -47,6 +47,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
+	type ArrayNodeDeltaOp,
 	type InsertableField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	isTreeNode,
@@ -2618,10 +2619,14 @@ describe("treeNodeApi", () => {
 				return data.changedProperties;
 			}
 
+			function outDelta(data: { delta: readonly ArrayNodeDeltaOp[] | undefined }) {
+				return data.delta;
+			}
+
 			// Strong types work
 			TreeBeta.on(ab, "nodeChanged", out<"A" | "B">);
 			TreeBeta.on(ab, "nodeChanged", out<string>);
-			// Weakly typed (general) callback works
+			// Weakly typed (optional changedProperties) callback works
 			TreeBeta.on(ab, "nodeChanged", outOpt<string>);
 			TreeBeta.on(ab as TreeNode, "nodeChanged", outOpt<string>);
 
@@ -2639,9 +2644,13 @@ describe("treeNodeApi", () => {
 			// @ts-expect-error Check map is included
 			TreeBeta.on(oneOf(ab, map1), "nodeChanged", out<"A" | "B">);
 
-			// @ts-expect-error Array makes changedProperties optional
+			// Array nodes: TreeBeta.on gives the changedProperties-only type (delta not included)
+			// @ts-expect-error changedProperties is required for typed array node via TreeBeta
 			TreeBeta.on(array, "nodeChanged", out<string>);
 			TreeBeta.on(array, "nodeChanged", outOpt<string>);
+
+			// Use TreeAlpha.on to get the full delta-aware NodeChangedDataDelta for array nodes
+			TreeAlpha.on(array, "nodeChanged", outDelta);
 		});
 
 		it(`'nodeChanged' strong typing example`, () => {
@@ -2699,7 +2708,7 @@ describe("treeNodeApi", () => {
 			assert.deepEqual(eventLog, [new Set(["key1", "key2", "key3"])]);
 		});
 
-		it(`'nodeChanged' does not include the names of changed properties (arrayNode)`, () => {
+		it(`'nodeChanged' does not include changedProperties for arrayNode (provides delta instead)`, () => {
 			const sb = new SchemaFactory("test");
 			class TestNode extends sb.array("root", [sb.number]) {}
 
@@ -2707,8 +2716,13 @@ describe("treeNodeApi", () => {
 			view.initialize([1, 2]);
 			const root = view.root;
 
-			const eventLog: (ReadonlySet<string> | undefined)[] = [];
-			TreeBeta.on(root, "nodeChanged", (data) => eventLog.push(data.changedProperties));
+			let eventCount = 0;
+			TreeBeta.on(root, "nodeChanged", (data) => {
+				eventCount++;
+				// Array nodes provide delta, not changedProperties
+				assert.equal("changedProperties" in data, false);
+				assert.equal("delta" in data, true);
+			});
 
 			const { forkView, forkCheckout } = getViewForForkedBranch(view);
 
@@ -2720,7 +2734,135 @@ describe("treeNodeApi", () => {
 
 			view.checkout.merge(forkCheckout);
 
-			assert.deepEqual(eventLog, [undefined]);
+			assert.equal(eventCount, 1);
+		});
+
+		// TODO AB#63261: Once delta event support for unhydrated nodes is implemented, convert this
+		// describe block to describeWithHydration to cover both hydrated and unhydrated paths.
+		describe(`'nodeChanged' delta payload for array operations`, () => {
+			// These tests verify the concrete ArrayNodeDeltaOp values emitted for specific
+			// array mutations.  The delta follows Quill-style semantics:
+			//   retain  – elements that remain in place (leading unchanged elements)
+			//   insert  – elements added to the array
+			//   remove  – elements removed from the array
+			// Trailing unchanged elements are NOT represented by a trailing retain op.
+			const sb = new SchemaFactory("nodeChanged-delta-content");
+			class TestArray extends sb.array("TestArray", [sb.number]) {}
+
+			it(`insertAtEnd emits a leading retain followed by an insert`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
+				view.initialize([1, 2, 3]);
+				const root = view.root;
+
+				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+				root.insertAtEnd(4);
+
+				assert.deepEqual(deltas, [
+					[
+						{ type: "retain", count: 3 },
+						{ type: "insert", count: 1 },
+					],
+				]);
+			});
+
+			it(`insertAt(0) emits only an insert op (no leading retain)`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
+				view.initialize([1, 2, 3]);
+				const root = view.root;
+
+				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+				root.insertAt(0, 0);
+
+				assert.deepEqual(deltas, [[{ type: "insert", count: 1 }]]);
+			});
+
+			it(`removeAt(0) emits only a remove op (no leading retain)`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
+				view.initialize([1, 2, 3]);
+				const root = view.root;
+
+				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+				root.removeAt(0);
+
+				assert.deepEqual(deltas, [[{ type: "remove", count: 1 }]]);
+			});
+
+			it(`removeAt(end) emits a leading retain followed by a remove`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
+				view.initialize([1, 2, 3]);
+				const root = view.root;
+
+				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+				root.removeAt(2);
+
+				assert.deepEqual(deltas, [
+					[
+						{ type: "retain", count: 2 },
+						{ type: "remove", count: 1 },
+					],
+				]);
+			});
+
+			it(`moveRangeToEnd(0, 1) emits remove + retain + insert`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
+				view.initialize([1, 2, 3]);
+				const root = view.root;
+
+				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+				root.moveRangeToEnd(0, 1);
+
+				assert.deepEqual(deltas, [
+					[
+						{ type: "remove", count: 1 },
+						{ type: "retain", count: 2 },
+						{ type: "insert", count: 1 },
+					],
+				]);
+			});
+
+			it(`nested child modification alongside removal produces a retain op`, () => {
+				// When an element's nested properties change (but it is not itself
+				// inserted or removed) AND another element is removed in the same delta,
+				// the marks for the array field include a {fields} mark for the
+				// unchanged-at-array-level element. deltaMarksToArrayOps converts that
+				// to a "retain" op.
+				const sb2 = new SchemaFactory("retain-delta");
+				class RetainItem extends sb2.object("RetainItem", { value: sb2.number }) {}
+				class RetainArray extends sb2.array("RetainArray", [RetainItem]) {}
+
+				const view = getView(new TreeViewConfiguration({ schema: RetainArray }));
+				view.initialize([{ value: 1 }, { value: 2 }, { value: 3 }]);
+				const root = view.root;
+
+				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+				// Use a fork to compose two changes into a single delta: modify
+				// element 0's nested property and remove element 1. The merged
+				// delta's marks are [{count:1,fields:{...}}, {count:1,detach:id}],
+				// which produce [retain 1, remove 1].
+				const { forkView, forkCheckout } = getViewForForkedBranch(view);
+				forkView.root[0].value = 99;
+				forkView.root.removeAt(1);
+				view.checkout.merge(forkCheckout);
+
+				assert.deepEqual(deltas, [
+					[
+						{ type: "retain", count: 1 },
+						{ type: "remove", count: 1 },
+					],
+				]);
+			});
 		});
 
 		it(`'nodeChanged' uses property keys, not stored keys, for the list of changed properties`, () => {
