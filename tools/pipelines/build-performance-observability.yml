@@ -29,8 +29,6 @@ pr: none
 variables:
   # Provides ado-feeds-primary-registry for pnpm install
   - group: ado-feeds
-  - name: COREPACK_NPM_REGISTRY
-    value: $(ado-feeds-primary-registry)
   - name: FluidFrameworkDirectory
     value: s/FluidFramework
   # Number of recent builds to fetch
