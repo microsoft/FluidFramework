@@ -74,7 +74,7 @@ Before submitting changes, verify:
 |------|---------|
 | `package.json` | Root workspace config, scripts, dependencies |
 | `pnpm-workspace.yaml` | Workspace package locations |
-| `syncpack.config.cjs` | Dependency version synchronization rules |
+| `.syncpackrc.yml` | Dependency version synchronization rules |
 | `biome.jsonc` | Code formatting and organization (extends root) |
 | `commitlint.config.cjs` | Commit message format (conventional commits, sentence-case) |
 | `api-extractor-base.json` | Shared API Extractor configuration |
@@ -144,7 +144,7 @@ build-tools/
 │   ├── bundle-size-tools/  # Bundle analysis (CommonJS)
 │   └── version-tools/      # fluv CLI (CommonJS)
 ├── biome.jsonc             # Formatter config
-├── syncpack.config.cjs     # Dep version rules
+├── .syncpackrc.yml         # Dep version rules
 ├── DEV.md                  # Dependency upgrade blockers
 └── pnpm-workspace.yaml     # Workspace definition
 ```

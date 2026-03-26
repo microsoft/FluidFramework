@@ -115,7 +115,7 @@ export {
 	JsonCompatible, 
 	JsonCompatibleObject, 
 	KeyEncodingOptions, 
-	NodeChangedData, 
+	NodeChangedData,
 	ObjectSchemaOptions, 
 	PopUnion, 
 	RecordNodeInsertableData, 

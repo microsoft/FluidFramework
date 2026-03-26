@@ -30,6 +30,7 @@
 @fluidframework/synthesize
 @fluidframework/request-handler
 @fluidframework/react
+@fluidframework/quill-react
 @fluidframework/presence
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static
