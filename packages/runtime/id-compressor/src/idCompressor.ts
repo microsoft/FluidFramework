@@ -94,8 +94,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	// #region Final state
 
-	// The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
-	// This is updated to be equal to `generatedIdCount` + 1 each time it is called.
+	/**
+	 * The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
+	 * This is advanced to `generatedIdCount` + 1 each time it is called.
+	 * On the other hand, when `resetUnfinalizedCreationRange` is called,
+	 * this is moved back to the start of the unfinalized range, to ensure those IDs are included in the next range.
+	 */
 	private nextRangeBaseGenCount = 1;
 	private readonly sessions = new Sessions();
 	private readonly finalSpace = new FinalSpace();
@@ -244,35 +248,23 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public takeUnfinalizedCreationRange(): IdCreationRange {
+		this.resetUnfinalizedCreationRange();
+		return this.takeNextCreationRange();
+	}
+
+	public resetUnfinalizedCreationRange(): void {
+		assert(
+			!this.ongoingGhostSession,
+			"IdCompressor should not be operated normally when in a ghost session",
+		);
+
 		const lastLocalCluster = this.localSession.getLastCluster();
-		let count: number;
-		let firstGenCount: number;
-		if (lastLocalCluster === undefined) {
-			firstGenCount = 1;
-			count = this.localGenCount;
-		} else {
-			firstGenCount = genCountFromLocalId(
-				(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
-			);
-			count = this.localGenCount - firstGenCount + 1;
-		}
-
-		if (count === 0) {
-			return {
-				sessionId: this.localSessionId,
-			};
-		}
-
-		const range: IdCreationRange = {
-			ids: {
-				count,
-				firstGenCount,
-				localIdRanges: this.normalizer.getRangesBetween(firstGenCount, this.localGenCount),
-				requestedClusterSize: this.nextRequestedClusterSize,
-			},
-			sessionId: this.localSessionId,
-		};
-		return this.updateToRange(range);
+		this.nextRangeBaseGenCount =
+			lastLocalCluster === undefined
+				? 1
+				: genCountFromLocalId(
+						(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+					);
 	}
 
 	private updateToRange(range: IdCreationRange): IdCreationRange {

@@ -46,6 +46,7 @@ export interface ContainerRuntimeOptions {
     readonly gcOptions: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes: number;
+    readonly stagingModeAutoFlushThreshold: number;
     // (undocumented)
     readonly summaryOptions: ISummaryRuntimeOptions;
 }
