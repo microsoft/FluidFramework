@@ -13,6 +13,7 @@ import type {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type {
+	IFluidHandleContext,
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
@@ -59,6 +60,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
+	RemoteFluidObjectHandle,
 	RequestParser,
 	RuntimeHeaders,
 	SummaryTreeBuilder,
@@ -68,6 +70,7 @@ import {
 	create404Response,
 	createResponseError,
 	encodeCompactIdToString,
+	isFluidHandle,
 	isSerializedHandle,
 	processAttachMessageGCData,
 	responseToException,
@@ -317,6 +320,38 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
 }
 
 /**
+ * Recursively walks an object tree and replaces any {@link @fluidframework/runtime-utils#ISerializedHandle}
+ * objects with {@link RemoteFluidObjectHandle} instances bound to the given routeContext.
+ * Shallow-clones on mutation to avoid mutating the input. Returns the original input if no handles are found.
+ */
+function replaceSerializedHandles(input: unknown, routeContext: IFluidHandleContext): unknown {
+	if (input === null || input === undefined || typeof input !== "object") {
+		return input;
+	}
+	if (isSerializedHandle(input)) {
+		return new RemoteFluidObjectHandle(input.url, routeContext, input.payloadPending === true);
+	}
+	if (isFluidHandle(input)) {
+		return input;
+	}
+	let clone: Record<string, unknown> | undefined;
+	const record = input as Record<string, unknown>;
+	for (const key of Object.keys(record)) {
+		const value: unknown = record[key];
+		if (value !== null && value !== undefined && typeof value === "object") {
+			const replaced = replaceSerializedHandles(value, routeContext);
+			if (replaced !== value) {
+				clone ??= Array.isArray(input)
+					? ([...(input as unknown[])] as unknown as Record<string, unknown>)
+					: { ...record };
+				clone[key] = replaced;
+			}
+		}
+	}
+	return clone ?? input;
+}
+
+/**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
@@ -348,6 +383,44 @@ export class ChannelCollection
 
 	protected readonly contexts: DataStoreContexts;
 	private readonly aliasedDataStores: Set<string>;
+
+	/**
+	 * Handle context used when replacing serialized handles in stashed ops.
+	 * Resolves datastore/DDS handles directly against this.contexts (including unbound),
+	 * and delegates blob handles to the parent runtime.
+	 */
+	private readonly stashedOpHandleContext: IFluidHandleContext = {
+		get IFluidHandleContext(): IFluidHandleContext {
+			return this;
+		},
+		absolutePath: "",
+		routeContext: undefined,
+		isAttached: false,
+		attachGraph: () => {},
+		resolveHandle: async (request: IRequest): Promise<IResponse> => {
+			const parser = RequestParser.create(request);
+			const id = parser.pathParts[0];
+			// Blob handles delegate to the root (parent runtime)
+			if (id === "_blobs") {
+				return this.parentContext.IFluidHandleContext.resolveHandle(request);
+			}
+			// Datastore/DDS handles resolve from contexts (includes unbound)
+			const context = this.contexts.get(id);
+			if (context === undefined) {
+				return create404Response(request);
+			}
+			const channel = await context.realize();
+			const subRequest = parser.createSubRequest(1);
+			if (subRequest.url.length > 0) {
+				return channel.request(subRequest);
+			}
+			return {
+				mimeType: "fluid/object",
+				value: await channel.entryPoint.get(),
+				status: 200,
+			};
+		},
+	};
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
@@ -880,7 +953,14 @@ export class ChannelCollection
 			return undefined;
 		}
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
-		return context.applyStashedOp(envelope.contents);
+		// Replace serialized handles with real handles before passing down to the datastore.
+		// This allows handles to resolve to unbound/detached datastore contexts that exist
+		// in this.contexts but aren't yet bound/remoted.
+		const contentsWithHandles = replaceSerializedHandles(
+			envelope.contents,
+			this.stashedOpHandleContext,
+		);
+		return context.applyStashedOp(contentsWithHandles);
 	}
 
 	private async applyStashedAttachOp(message: IAttachMessage): Promise<void> {
@@ -1071,8 +1151,7 @@ export class ChannelCollection
 			);
 		}
 
-		const context =
-			this.contexts.get(id) ?? (await this.contexts.getBoundOrRemoted(id, headerData.wait));
+		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exist. Throw a 404 response exception.
 			const request: IRequest = { url: id };
@@ -1702,7 +1781,10 @@ export class ChannelCollection
 			const [datastoreId, channelId, ...things] = (
 				path.startsWith("/") ? path.slice(1) : path
 			).split("/");
-			assert(things.length === 0, "Handle paths deeper than datastoreId/channelId are not supported");
+			assert(
+				things.length === 0,
+				"Handle paths deeper than datastoreId/channelId are not supported",
+			);
 
 			if (visitedDataStores.has(datastoreId)) continue;
 			visitedDataStores.add(datastoreId);

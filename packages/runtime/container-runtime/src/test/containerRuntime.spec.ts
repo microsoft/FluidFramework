@@ -16,7 +16,6 @@ import {
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	FluidObject,
@@ -77,7 +76,6 @@ import { ChannelCollection } from "../channelCollection.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	type IContainerRuntimeOptions,
 	type IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
@@ -336,7 +334,7 @@ describe("Runtime", () => {
 		describe("IdCompressor", () => {
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -364,7 +362,7 @@ describe("Runtime", () => {
 
 		describe("Batching", () => {
 			it("Default flush mode", async () => {
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -379,7 +377,7 @@ describe("Runtime", () => {
 				const runtimeOptions: IContainerRuntimeOptionsInternal = {
 					flushMode: FlushMode.Immediate,
 				};
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -435,7 +433,7 @@ describe("Runtime", () => {
 				let batchBegin = 0;
 				let batchEnd = 0;
 				let callsToEnsure = 0;
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
 						settings: {
 							"Fluid.ContainerRuntime.enableBatchIdTracking": true,
@@ -562,7 +560,7 @@ describe("Runtime", () => {
 						return 999; // CSN not used in test asserts below
 					};
 
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -620,7 +618,7 @@ describe("Runtime", () => {
 				const mockContext = getMockContext({ connected }) as IContainerContext;
 				const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
 
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: mockContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -1206,7 +1204,7 @@ describe("Runtime", () => {
 
 			beforeEach(async () => {
 				containerErrors.length = 0;
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContextForPendingStateProgressTracking() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -1219,7 +1217,7 @@ describe("Runtime", () => {
 						},
 					},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 			});
 
 			function patchRuntime(
@@ -1474,14 +1472,14 @@ describe("Runtime", () => {
 				const runtimeOptions: IContainerRuntimeOptionsInternal = {
 					enableGroupedBatching: false,
 				};
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 			});
 
 			/**
@@ -1567,21 +1565,18 @@ describe("Runtime", () => {
 					methodReturn: T,
 				) =>
 					class MixinContainerRuntime extends Base {
-						public static async loadRuntime2(params: {
-							context: IContainerContext;
-							containerRuntimeCtor?: typeof ContainerRuntime;
-							provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-							existing: boolean;
-							runtimeOptions: IContainerRuntimeOptions;
-							registry: IFluidDataStoreRegistry;
-							containerScope: FluidObject;
-						}): Promise<ContainerRuntime> {
+						public static async loadRuntime2(
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							params: any,
+						): ReturnType<typeof Base.loadRuntime2> {
 							// Note: we're mutating the parameter object here, normally a no-no, but shouldn't be
 							// an issue in our tests.
+							/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 							params.containerRuntimeCtor =
 								params.containerRuntimeCtor ?? MixinContainerRuntime;
 							params.containerScope = params.containerScope ?? params.context.scope;
 							return Base.loadRuntime2(params);
+							/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 						}
 
 						public [methodName](): T {
@@ -1593,7 +1588,7 @@ describe("Runtime", () => {
 					myProp: "myValue",
 				};
 
-				const runtime = await makeMixin(
+				const { runtime } = await makeMixin(
 					makeMixin(ContainerRuntime, "method1", "mixed in return"),
 					"method2",
 					42,
@@ -1644,7 +1639,7 @@ describe("Runtime", () => {
 				const myEntryPoint: FluidObject = {
 					myProp: "myValue",
 				};
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
@@ -1671,7 +1666,7 @@ describe("Runtime", () => {
 					myProp: "myValue",
 				};
 
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					requestHandler: async (req, ctrRuntime) => myResponse,
 					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
@@ -1706,13 +1701,13 @@ describe("Runtime", () => {
 			let pendingStateManager: PendingStateManager;
 
 			beforeEach(async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				pendingStateManager = (containerRuntime as any).pendingStateManager;
 			});
@@ -1860,12 +1855,12 @@ describe("Runtime", () => {
 
 			beforeEach(async () => {
 				const settings = {};
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext(settings) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 			});
 
 			it("summary is submitted successfully", async () => {
@@ -2125,7 +2120,7 @@ describe("Runtime", () => {
 					mockStorage: new MockStorageService(),
 					loadedFromVersion: latestVersion,
 				});
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -2154,7 +2149,7 @@ describe("Runtime", () => {
 			it("No Props. No pending state", async () => {
 				const logger = new MockLogger();
 
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -2194,7 +2189,7 @@ describe("Runtime", () => {
 			it("No Props. Some pending state", async () => {
 				const logger = new MockLogger();
 
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -2244,7 +2239,7 @@ describe("Runtime", () => {
 			it("sessionExpiryTimerStarted. No pending state", async () => {
 				const logger = new MockLogger();
 
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -2265,7 +2260,7 @@ describe("Runtime", () => {
 			it("sessionExpiryTimerStarted. Some pending state", async () => {
 				const logger = new MockLogger();
 
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -2318,7 +2313,7 @@ describe("Runtime", () => {
 		describe("Duplicate Batch Detection", () => {
 			for (const enableBatchIdTracking of [undefined, true]) {
 				it(`DuplicateBatchDetector is disabled if Batch Id Tracking isn't needed (${enableBatchIdTracking === true ? "ENABLED" : "DISABLED"})`, async () => {
-					const containerRuntime = await ContainerRuntime.loadRuntime2({
+					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
 							settings: {
 								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking,
@@ -2370,7 +2365,7 @@ describe("Runtime", () => {
 				const settings_enableOfflineLoad = {
 					"Fluid.ContainerRuntime.enableBatchIdTracking": true,
 				};
-				const containerRuntime = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
 						settings: settings_enableOfflineLoad,
 					}) as IContainerContext,
@@ -2403,7 +2398,7 @@ describe("Runtime", () => {
 					// Hardcode readblob fn to return the blob contents put in the summary
 					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
 				};
-				const containerRuntime2 = await ContainerRuntime.loadRuntime2({
+				const { runtime: containerRuntime2 } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
 						settings: settings_enableOfflineLoad,
 						baseSnapshot: {
@@ -2628,7 +2623,7 @@ describe("Runtime", () => {
 				// but the "missingDataStore" is aliased, it fails if the snapshot for it does not have loadingGroupId to fetch
 				// the omitted snapshot contents.
 				createSnapshot(true /* addMissingDatastore */, false /* Don't set groupId property */);
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: containerContext,
 					registry: new FluidDataStoreRegistry([
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
@@ -2638,7 +2633,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
@@ -2658,7 +2653,7 @@ describe("Runtime", () => {
 				};
 				createSnapshot(true /* addMissingDatastore */);
 				containerContext.clientDetails.type = "summarizer";
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: containerContext,
 					registry: new FluidDataStoreRegistry([
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
@@ -2668,7 +2663,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
@@ -2708,7 +2703,7 @@ describe("Runtime", () => {
 					return snapshotWithContents;
 				};
 				createSnapshot(true /* addMissingDatastore */);
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: containerContext,
 					registry: new FluidDataStoreRegistry([
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
@@ -2718,7 +2713,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
@@ -2772,7 +2767,7 @@ describe("Runtime", () => {
 					return snapshotWithContents;
 				};
 				createSnapshot(true /* addMissingDatastore */);
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: containerContext,
 					registry: new FluidDataStoreRegistry([
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
@@ -2782,7 +2777,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
@@ -2817,7 +2812,7 @@ describe("Runtime", () => {
 					return snapshotWithContents;
 				};
 				createSnapshot(true /* addMissingDatastore */);
-				containerRuntime = await ContainerRuntime.loadRuntime2({
+				({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: containerContext,
 					registry: new FluidDataStoreRegistry([
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
@@ -2827,7 +2822,7 @@ describe("Runtime", () => {
 						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				}));
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
@@ -3484,7 +3479,7 @@ describe("Runtime", () => {
 					const runtimeOptions: IContainerRuntimeOptionsInternal = {
 						enableGroupedBatching: false,
 					};
-					remoteContainerRuntime = await ContainerRuntime.loadRuntime2({
+					({ runtime: remoteContainerRuntime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext(
 							{ logger: remoteLogger },
 							"remoteMockClientId",
@@ -3494,7 +3489,7 @@ describe("Runtime", () => {
 						requestHandler: undefined,
 						runtimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
-					});
+					}));
 					// Assert that clientId is not undefined
 					assert(
 						remoteContainerRuntime.clientId !== undefined,
