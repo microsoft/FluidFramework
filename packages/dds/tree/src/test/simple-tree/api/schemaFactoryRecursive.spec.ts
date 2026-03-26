@@ -165,12 +165,14 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 
 			type XSchema = typeof ObjectRecursive.info.x;
-			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
-				: "Not a FieldSchema";
-			type XTypes = XSchema extends System_Unsafe.FieldSchemaUnsafe<infer Kind, infer Types>
-				? Types
-				: "Not A System_Unsafe.FieldSchemaUnsafe";
+			type Field2 =
+				XSchema extends FieldSchema<infer Kind, infer Types>
+					? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+					: "Not a FieldSchema";
+			type XTypes =
+				XSchema extends System_Unsafe.FieldSchemaUnsafe<infer Kind, infer Types>
+					? Types
+					: "Not A System_Unsafe.FieldSchemaUnsafe";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
@@ -224,12 +226,14 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 
 			type XSchema = typeof ObjectRecursive.info.x;
-			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
-				: "Not a FieldSchema";
-			type XTypes = XSchema extends System_Unsafe.FieldSchemaUnsafe<infer Kind, infer Types>
-				? Types
-				: "Not A System_Unsafe.FieldSchemaUnsafe";
+			type Field2 =
+				XSchema extends FieldSchema<infer Kind, infer Types>
+					? ApplyKindInput<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+					: "Not a FieldSchema";
+			type XTypes =
+				XSchema extends System_Unsafe.FieldSchemaUnsafe<infer Kind, infer Types>
+					? Types
+					: "Not A System_Unsafe.FieldSchemaUnsafe";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive | number>>;
@@ -1046,7 +1050,6 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;

@@ -13,11 +13,11 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 describe("schema snapshots", () => {
 	useSnapshotDirectory("schema-files");
 
-	for (const [minVersionForCollab, schemaFormat] of schemaCodecBuilder.registry) {
+	for (const schemaFormat of schemaCodecBuilder.registry) {
 		for (const { name, schemaData } of testTrees) {
 			it(`${name} - schema v${schemaFormat.formatVersion}`, () => {
 				const encoded = schemaFormat
-					.codec({ jsonValidator: FormatValidatorBasic, minVersionForCollab })
+					.codec({ jsonValidator: FormatValidatorBasic })
 					.encode(schemaData);
 				takeJsonSnapshot(encoded);
 			});

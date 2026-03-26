@@ -6,8 +6,7 @@
 import { Button, Text, Tooltip, makeStyles, shorthands } from "@fluentui/react-components";
 import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-icons";
 import type { SharedCounter } from "@fluidframework/counter/internal";
-import React from "react";
-
+import { type ReactElement, useEffect, useState } from "react";
 // TODOs:
 // - This seems like it might be worth sharing somewhere more general?
 //   Common, simple widget for interacting with SharedCounter_s.
@@ -44,12 +43,12 @@ export interface CounterWidgetProps {
  * Affords simple incrementing and decrementing via buttons.
  * @internal
  */
-export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
+export function CounterWidget(props: CounterWidgetProps): ReactElement {
 	const { counter } = props;
 
-	const [counterValue, setCounterValue] = React.useState<number>(counter.value);
+	const [counterValue, setCounterValue] = useState<number>(counter.value);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		function updateCounterValue(delta: number, newValue: number): void {
 			setCounterValue(Math.max(newValue, 0));
 		}

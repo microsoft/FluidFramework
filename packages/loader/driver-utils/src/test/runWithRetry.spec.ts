@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -11,13 +11,14 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { runWithRetry } from "../runWithRetry.js";
 
 const _setTimeout = global.setTimeout;
-const fastSetTimeout: any = (
-	callback: (...cbArgs: any[]) => void,
+const fastSetTimeout = (
+	callback: (...cbArgs: unknown[]) => void,
 	ms: number,
-	...args: any[]
-) => _setTimeout(callback, ms / 1000.0, ...args);
+	...args: unknown[]
+): ReturnType<typeof setTimeout> =>
+	_setTimeout(callback, ms / 1000, ...args) as unknown as ReturnType<typeof setTimeout>;
 async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
-	global.setTimeout = fastSetTimeout;
+	global.setTimeout = fastSetTimeout as typeof setTimeout;
 	return callback().finally(() => {
 		global.setTimeout = _setTimeout;
 	});
@@ -55,7 +56,11 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throw error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+				(error as any).errorType = DriverErrorTypes.throttlingError;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).retryAfterSeconds = 10;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = true;
 				throw error;
 			}
@@ -82,8 +87,11 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throttle Error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).errorType = DriverErrorTypes.throttlingError;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).retryAfterSeconds = 400;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = true;
 				throw error;
 			}
@@ -101,6 +109,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const err = new Error("error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(err as any).canRetry = true;
 				throw err;
 			}
@@ -108,7 +117,7 @@ describe("runWithRetry Tests", () => {
 		};
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
-		} catch (error) {
+		} catch {
 			// Ignore the error
 		}
 		assert.strictEqual(retryTimes, 0, "Should retry");
@@ -122,6 +131,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = false;
 				throw error;
 			}
@@ -130,7 +140,7 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {
+		} catch {
 			// Ignore the error
 		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -151,7 +161,7 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {
+		} catch {
 			// Ignore the error
 		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -165,6 +175,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = true;
 				throw error;
 			}
@@ -179,7 +190,7 @@ describe("runWithRetry Tests", () => {
 				}),
 			);
 			assert.fail("Should not succeed");
-		} catch (error) {
+		} catch {
 			// Ignore the error
 		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -192,6 +203,7 @@ describe("runWithRetry Tests", () => {
 		const api = (): never => {
 			abortController.abort("Sample abort reason");
 			const error = new Error("aborted");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 			(error as any).canRetry = true;
 			throw error;
 		};
@@ -203,8 +215,106 @@ describe("runWithRetry Tests", () => {
 			);
 			assert.fail("Should not succeed");
 		} catch (error) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 			assert.strictEqual((error as any).message, "runWithRetry was Aborted");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 			assert.strictEqual((error as any).reason, "Sample abort reason");
 		}
+	});
+
+	it("Should stop retrying after maxRetries is exceeded", async () => {
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			const error = new Error("Throw error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+			(error as any).canRetry = true;
+			throw error;
+		};
+
+		try {
+			await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}, 3));
+			assert.fail("Should not succeed");
+		} catch (error) {
+			// Verify the wrapped error includes the original error message
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const errorMessage = (error as any).message;
+			assert.strictEqual(errorMessage, "runWithRetry failed after max retries: Throw error");
+			// Verify the original error is preserved in the cause property
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const causeMessage = (error as any).cause?.message;
+			assert.strictEqual(causeMessage, "Throw error");
+		}
+		// Initial call + maxRetries attempts
+		assert.strictEqual(retryTimes, 4, "Should retry exactly maxRetries times");
+	});
+
+	it("Should succeed before maxRetries is exceeded", async () => {
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			// Succeed on the 3rd attempt (after 2 failures)
+			if (retryTimes < 3) {
+				const error = new Error("Throw error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+				(error as any).canRetry = true;
+				throw error;
+			}
+			return true;
+		};
+
+		const success = await runWithFastSetTimeout(async () =>
+			runWithRetry(api, "test", logger, {}, 5),
+		);
+		assert.strictEqual(success, true, "Should succeed");
+		assert.strictEqual(retryTimes, 3, "Should take 3 attempts to succeed");
+	});
+
+	it("Should retry infinitely when maxRetries is undefined", async () => {
+		const totalRetries = 10;
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			if (retryTimes <= totalRetries) {
+				const error = new Error("Throw error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+				(error as any).canRetry = true;
+				throw error;
+			}
+			return true;
+		};
+
+		const success = await runWithFastSetTimeout(async () =>
+			runWithRetry(api, "test", logger, {}),
+		);
+		assert.strictEqual(success, true, "Should succeed");
+		assert.strictEqual(retryTimes, totalRetries + 1, "Should retry until success");
+	});
+
+	it("Should fail immediately with maxRetries set to 0", async () => {
+		let retryTimes = 0;
+		const api = async (): Promise<boolean> => {
+			retryTimes += 1;
+			const error = new Error("Throw error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+			(error as any).canRetry = true;
+			throw error;
+		};
+
+		try {
+			await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}, 0));
+			assert.fail("Should not succeed");
+		} catch (error) {
+			// Verify the wrapped error includes the original error message
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const errorMessage = (error as any).message;
+			assert.strictEqual(errorMessage, "runWithRetry failed after max retries: Throw error");
+			// Verify the original error is preserved in the cause property
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- TODO: use a real type
+			const causeMessage = (error as any).cause?.message;
+			assert.strictEqual(causeMessage, "Throw error");
+		}
+		// Only the initial call, no retries
+		assert.strictEqual(retryTimes, 1, "Should not retry at all");
 	});
 });

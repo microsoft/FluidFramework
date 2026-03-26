@@ -11,11 +11,16 @@ import path from "node:path";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
+import type {
+	ClientVersionDispatchingCodecBuilder,
+	ICodecOptions,
+} from "../../codec/index.js";
 import {
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import { ajvValidator } from "../codec/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";
 
 /**
@@ -35,10 +40,14 @@ function jsonCompare(actual: string, expected: string, message: string): void {
 }
 
 /**
+ * Save a snapshot to the current snapshot directory and compare against it in future runs.
+ *
  * @param data - content to save and compare. Must be deterministic.
  * @param suffix - appended to file name. For example ".txt" or ".json"
  * @param compare - given the before and after strings and throws an error if they differ.
  * This cannot be used to suppress errors for non-deterministic input: it can only be used to provide nicer error messages.
+ * @remarks
+ * See {@link useSnapshotDirectory}.
  *
  * Non-deterministic data is forbidden (and will error after compare is run) to prevent unneeded changes/churn of snapshot files when regenerating,
  * as well as to ensure that buggy compare functions can't falsy pass tests.
@@ -146,6 +155,13 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
 
 /**
  * Test schema snapshots for shared tree components which are part of this package.
+ * @param currentViewSchema - The current schema to test.
+ * @param minVersionForCollaboration - The minimum version which is required to be able to collaborate with `currentViewSchema`.
+ * @param domainName - The name of the domain for which snapshots are being tested.
+ * This is used to select the subdirectory within {@link schemaCompatibilitySnapshotsFolder} to use for snapshots.
+ * @param forceUpdate - If true, forces updating snapshots even if not in regenerate mode.
+ * Handy when initially writing a test to generate the snapshots.
+ * This fails the test to ensure it's never checked in unnoticed.
  * @remarks
  * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based on the provided `domainName`.
  */
@@ -153,14 +169,38 @@ export function testSchemaCompatibilitySnapshots(
 	currentViewSchema: TreeViewConfiguration,
 	minVersionForCollaboration: MinimumVersionForCollab,
 	domainName: string,
+	forceUpdate: boolean = false,
 ): void {
 	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
-	checkSchemaCompatibilitySnapshots({
+	snapshotSchemaCompatibility({
 		snapshotDirectory,
 		fileSystem: { ...fs, ...path },
 		version: cleanedPackageVersion,
 		schema: currentViewSchema,
 		minVersionForCollaboration,
-		mode: regenerateSnapshots ? "update" : "test",
+		mode: regenerateSnapshots || forceUpdate ? "update" : "assert",
 	});
+	assert(
+		forceUpdate === false,
+		"Forcing update of schema compatibility snapshots should not be checked in.",
+	);
+}
+
+/**
+ * Takes a snapshot (see {@link takeSnapshot}) of the provided codec's formats.
+ * @param codec - The codec whose formats should be snapshotted.
+ * @param options - The options to apply to the codec before snapshotting.
+ */
+export function snapshotCodecFormats<TBuildOptions extends Record<string, unknown>>(
+	codec: ClientVersionDispatchingCodecBuilder<TBuildOptions & ICodecOptions>,
+	options: TBuildOptions,
+): void {
+	const versions = codec
+		.applyOptions({ ...options, jsonValidator: ajvValidator })
+		.map((version) => ({
+			version: version.formatVersion,
+			minVersionForCollab: version.minVersionForCollab,
+			schema: version.codec.schema,
+		}));
+	takeJsonSnapshot(versions, `_${codec.name}_codec`);
 }

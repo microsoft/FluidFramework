@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+import { getTinyliciousEndpoint } from "@fluid-example/example-utils";
+import type { AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client";
 // eslint-disable-next-line import-x/no-internal-modules -- #26985: `test-runtime-utils` internal `InsecureTokenProvider` used in examples
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
@@ -20,7 +22,7 @@ const localConnectionConfig: AzureLocalConnectionConfig = {
 		id: userId,
 		name: `TestUser-${userId}`,
 	}),
-	endpoint: "http://localhost:7070",
+	endpoint: getTinyliciousEndpoint(),
 };
 
 const client = new AzureClient({ connection: localConnectionConfig });
@@ -35,21 +37,17 @@ export async function initFluid(): Promise<{ view: TreeView<typeof Table> }> {
 	let container;
 	let view: TreeView<typeof Table>;
 
-	if (!location.hash) {
+	if (location.hash) {
+		({ container } = await client.getContainer(location.hash.slice(1), containerSchema, "2"));
+		const { tree } = container.initialObjects;
+		view = tree.viewWith(config);
+	} else {
 		({ container } = await client.createContainer(containerSchema, "2"));
 		const { tree } = container.initialObjects;
 		view = tree.viewWith(config);
 		view.initialize(generateTable(10000));
 		// TODO: Waiting for 'attach()' is a work around for https://dev.azure.com/fluidframework/internal/_workitems/edit/6805
 		await container.attach().then((containerId: string) => (location.hash = containerId));
-	} else {
-		({ container } = await client.getContainer(
-			location.hash.substring(1),
-			containerSchema,
-			"2",
-		));
-		const { tree } = container.initialObjects;
-		view = tree.viewWith(config);
 	}
 
 	return { view };

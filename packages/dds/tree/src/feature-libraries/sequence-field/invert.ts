@@ -189,7 +189,7 @@ function invertMark(
 			if (mark.finalEndpoint !== undefined) {
 				moveIn.finalEndpoint = {
 					localId: mark.finalEndpoint.localId,
-					revision: mark.revision,
+					revision,
 				};
 			}
 			let effect: MarkEffect = moveIn;
@@ -228,7 +228,7 @@ function invertMark(
 			if (mark.finalEndpoint) {
 				invertedMark.finalEndpoint = {
 					localId: mark.finalEndpoint.localId,
-					revision: mark.revision,
+					revision,
 				};
 			}
 			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);

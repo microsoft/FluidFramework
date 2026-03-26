@@ -149,6 +149,11 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 				v.exitField(...args);
 			}
 		},
+		fieldMarks: (marks) => {
+			for (const v of allVisitors) {
+				v.fieldMarks?.(marks);
+			}
+		},
 	};
 }
 

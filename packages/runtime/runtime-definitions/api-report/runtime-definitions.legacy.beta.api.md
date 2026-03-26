@@ -389,7 +389,7 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @beta @legacy @input
+// @beta @input
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy

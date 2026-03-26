@@ -54,11 +54,7 @@ function flush(tree: SharedTree, containerRuntimeFactory: MockContainerRuntimeFa
 
 function itAggregates(
 	nameOfAggregatedData: string,
-	paramFunc: (params: {
-		tree: SharedTree;
-		testTree: TestTree;
-		concurrentTree: SharedTree;
-	}) => {
+	paramFunc: (params: { tree: SharedTree; testTree: TestTree; concurrentTree: SharedTree }) => {
 		edits: Change[][];
 		concurrentEdits?: Change[][];
 		action: (ITelemetryBaseEvent) => void;

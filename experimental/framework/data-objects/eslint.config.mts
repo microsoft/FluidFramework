@@ -4,12 +4,14 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
+			"@typescript-eslint/consistent-type-exports": "off",
+			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
 	},
@@ -22,15 +24,6 @@ const config: Linter.Config[] = [
 					"allow": ["assert"],
 				},
 			],
-		},
-	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
 		},
 	},
 ];

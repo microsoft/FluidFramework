@@ -36,10 +36,8 @@ export interface RequiredFieldEditor extends FieldEditor<OptionalChangeset> {
 
 export const requiredFieldEditor: RequiredFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: {
-		fill: ChangeAtomId;
-		detach: ChangeAtomId;
-	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
+	set: (ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset =>
+		optionalFieldEditor.set(false, ids),
 };
 
 export const requiredFieldChangeHandler: FieldChangeHandler<

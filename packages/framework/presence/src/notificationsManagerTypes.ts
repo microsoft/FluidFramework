@@ -5,6 +5,7 @@
 
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
 
+import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 
@@ -68,15 +69,18 @@ export interface NotificationListenable<
 }
 
 /**
- * Record of notification subscriptions.
+ * Record of notification subscription signatures transformed from listener emit signatures.
+ *
+ * @remarks
+ * Prepends the `sender: Attendee` parameter to each notification listener signature.
  *
  * @sealed
  * @alpha
  */
-export type NotificationSubscriptions<
+export type NotificationSubscriberSignatures<
 	E extends InternalUtilityTypes.NotificationListeners<E>,
 > = {
-	[K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (
+	[K in keyof InternalUtilityTypes.NotificationListeners<E>]: (
 		sender: Attendee,
 		...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>
 	) => void;
@@ -116,7 +120,7 @@ export interface NotificationEmitter<E extends InternalUtilityTypes.Notification
  * Provides notifications from this client to others and subscription
  * to their notifications.
  *
- * @remarks Create using {@link Notifications} registered to
+ * @remarks Create using {@link (Notifications:1)} registered to
  * {@link NotificationsWorkspace} or {@link StatesWorkspace}.
  *
  * @sealed
@@ -145,3 +149,54 @@ export interface NotificationsManager<
 	 */
 	readonly notifications: NotificationListenable<T>;
 }
+
+/**
+ * Type alias for the return type of {@link (Notifications:1)}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this Notification within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
+ * @alpha
+ * @sealed
+ */
+export type NotificationsConfiguration<
+	T extends InternalUtilityTypes.NotificationListeners<T>,
+	RegistrationKeyRestrictions extends string = string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKeyRestrictions,
+	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	NotificationsManager<T>
+>;
+
+/**
+ * Type alias for the return type of {@link (Notifications:2)}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this Notification within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
+ * @alpha
+ * @sealed
+ */
+export type NotificationsWithSubscriptionsConfiguration<
+	TSubscriptions extends
+		InternalUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>,
+	RegistrationKeyRestrictions extends string = string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKeyRestrictions,
+	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	NotificationsManager<
+		InternalUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>
+	>
+>;

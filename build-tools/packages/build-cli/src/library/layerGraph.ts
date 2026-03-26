@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Logger, Package } from "@fluidframework/build-tools";
+import registerDebug from "debug";
 import { readJsonSync } from "fs-extra/esm";
 
-import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

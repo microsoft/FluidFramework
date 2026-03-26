@@ -4,14 +4,19 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@rushstack/no-new-null": "off",
+			"@typescript-eslint/consistent-type-exports": "off",
+			"@typescript-eslint/consistent-type-imports": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"unicorn/no-null": "off",
+			"unicorn/prefer-date-now": "off",
 		},
 	},
 ];

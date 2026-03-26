@@ -23,7 +23,7 @@ import {
 /**
  * Rules from minimal-deprecated.js.
  */
-export const minimalDeprecatedRules: Linter.RulesRecord = {
+export const minimalDeprecatedRules = {
 	/**
 	 * Disable max-len as it conflicts with biome formatting.
 	 */
@@ -386,4 +386,4 @@ export const minimalDeprecatedRules: Linter.RulesRecord = {
 			allow: permittedImports,
 		},
 	],
-};
+} as const satisfies Linter.RulesRecord;

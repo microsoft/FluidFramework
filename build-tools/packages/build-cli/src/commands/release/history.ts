@@ -3,22 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { detectBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 import { table } from "table";
-
-import {
-	type ReleaseReport,
-	type VersionDetails,
-	getDisplayDate,
-	getDisplayDateRelative,
-	sortVersions,
-} from "../../library/index.js";
-
-import { detectBumpType } from "@fluid-tools/version-tools";
-
 import { findPackageOrReleaseGroup } from "../../args.js";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags.js";
+import type { VersionDetails } from "../../library/context.js";
+import { getDisplayDate, getDisplayDateRelative } from "../../library/dates.js";
+import { sortVersions } from "../../library/package.js";
+import type { ReleaseReport } from "../../library/release.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
 import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
 

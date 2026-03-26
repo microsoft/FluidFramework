@@ -8,6 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import type { TransactionLabels } from "../../core/index.js";
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -38,7 +39,6 @@ import {
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "../json/index.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import { testDocumentIndependentView } from "../testTrees.js";
@@ -1114,6 +1114,373 @@ describe("SchematizingSimpleTreeView", () => {
 
 				stack.unsubscribe();
 			});
+		});
+	});
+
+	describe("transaction labels", () => {
+		it("exposes label via CommitMetadataAlpha during commitApplied", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel = "testLabel";
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel]);
+		});
+
+		it("CommitMetadataAlpha.label is undefined for unlabeled transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const runTransactionResult = view.runTransaction(() => {
+				view.root.content = 0;
+			});
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 0);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [undefined]);
+		});
+
+		it("exposes the correct labels for multiple transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel1 = "testLabel1";
+			const runTransactionResult1 = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel1 },
+			);
+
+			// run second transaction with no label
+			const runTransactionResult2 = view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			const testLabel3 = "testLabel3";
+			const runTransactionResult3 = view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: testLabel3 },
+			);
+			// Check that transactions were applied.
+			assert.equal(runTransactionResult1.success, true);
+			assert.equal(runTransactionResult2.success, true);
+			assert.equal(runTransactionResult3.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel1, undefined, testLabel3]);
+		});
+
+		it("nested transactions only expose outer label", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const outerLabel = "outerLabel";
+			const innerLabel1 = "innerLabel1";
+			const innerLabel2 = "innerLabel2";
+
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 1;
+
+					// Nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: innerLabel1 },
+					);
+
+					view.root.content = 3;
+
+					// Another nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 4;
+						},
+						{ label: innerLabel2 },
+					);
+				},
+				{ label: outerLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 4);
+
+			// Check that only the outer label was exposed, not the inner labels
+			assert.deepEqual(labels, [outerLabel]);
+		});
+
+		it("separate views maintain independent transaction labels", () => {
+			const view1 = getTestObjectView();
+			const view2 = getTestObjectView();
+
+			const labels1: unknown[] = [];
+			const labels2: unknown[] = [];
+
+			view1.checkout.events.on("changed", (meta) => {
+				labels1.push(meta.label);
+			});
+
+			view2.checkout.events.on("changed", (meta) => {
+				labels2.push(meta.label);
+			});
+
+			const label1 = "view1Label";
+			const label2 = "view2Label";
+
+			// Start a transaction in view1 with label1
+			view1.runTransaction(
+				() => {
+					view1.root.content = 1;
+
+					// Nested transaction in view2 with label2 (within view1's transaction)
+					view2.runTransaction(
+						() => {
+							view2.root.content = 100;
+						},
+						{ label: label2 },
+					);
+
+					view1.root.content = 2;
+				},
+				{ label: label1 },
+			);
+
+			// Check that view1 only shows its label
+			assert.deepEqual(labels1, [label1]);
+
+			// Check that view2 shows its own label (not view1's label)
+			assert.deepEqual(labels2, [label2]);
+		});
+
+		it("composes a LabelTree from nested transaction labels", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle1" },
+					);
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: "middle2" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
+			assert.equal(receivedLabels.has("outer"), true);
+			assert.equal(receivedLabels.has("middle1"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("middle2"), true);
+			assert.equal(receivedLabels.size, 4);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle1");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "middle2");
+			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
+		});
+
+		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 42;
+				},
+				{ label: "single" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("single"), true);
+			assert.equal(receivedLabels.size, 1);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "single");
+			assert.equal(receivedLabels.tree.sublabels.length, 0);
+		});
+
+		it("labels is an empty set with no tree when no labels are provided", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.runTransaction(() => {
+					view.root.content = 99;
+				});
+			});
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.size, 0);
+			assert.equal(receivedLabels.tree, undefined);
+		});
+
+		it("aborted transaction labels are excluded and subsequent siblings are correctly placed", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					// Committed nested transactions — closes happen at multiple levels.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle" },
+					);
+					// Aborted subtree with its own nested commits.
+					// After abort, the previously-closed "middle" node is re-exposed on the right spine.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 2;
+								},
+								{ label: "abortedInner" },
+							);
+							return { rollback: true };
+						},
+						{ label: "abortedOuter" },
+					);
+					// This transaction runs after the abort. It should be a sibling of "middle"
+					// under "outer", not a descendant of "deep".
+					view.runTransaction(
+						() => {
+							view.root.content = 3;
+						},
+						{ label: "after" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
+			assert.equal(receivedLabels.has("middle"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("after"), true);
+			assert.equal(receivedLabels.has("abortedOuter"), false);
+			assert.equal(receivedLabels.has("abortedInner"), false);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "after");
+		});
+
+		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.runTransaction(
+					() => {
+						view.root.content = 1;
+					},
+					{ label: "inner" },
+				);
+			});
+
+			// When outer has no label but inner labels exist, the tree is present
+			// with an undefined root to surface the inner labels.
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("inner"), true);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, undefined);
+			assert.equal(receivedLabels.tree.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "inner");
 		});
 	});
 });

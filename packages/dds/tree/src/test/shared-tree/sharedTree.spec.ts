@@ -59,7 +59,6 @@ import {
 	ForestTypeExpensiveDebug,
 	ForestTypeOptimized,
 	ForestTypeReference,
-	getBranch,
 	type ITreePrivate,
 	Tree,
 	type TreeCheckout,
@@ -757,7 +756,7 @@ describe("SharedTree", () => {
 		);
 		view.initialize(["a"]);
 		// Create a branch to prevent the EditManager from evicting all of its commits - otherwise, the summary won't have these edits in the trunk.
-		getBranch(tree).branch();
+		asAlpha(view).fork();
 		view.root.insertAtEnd("b");
 
 		const treeSummarizeResult = await tree.summarize();
@@ -1616,7 +1615,7 @@ describe("SharedTree", () => {
 				provider.synchronizeMessages();
 
 				// fork the tree
-				const branch = resubmitter.checkout.branch();
+				const branch = resubmitter.checkout.fork();
 
 				// edit the removed tree on the fork
 				const branchView = new SchematizingSimpleTreeView(
@@ -2002,6 +2001,73 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("tolerates open async transactions in the face of inbound commits", () => {
+		it("committed transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const view1 = asAlpha(tree1.viewWith(config));
+			const view2 = tree2.viewWith(config);
+			view1.initialize(["A", "C", "E"]);
+			await provider.ensureSynchronized();
+
+			await view1.runTransactionAsync(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
+
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+			});
+			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+
+			await provider.ensureSynchronized();
+			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "D", "E"]);
+		});
+
+		it("aborted transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const view1 = asAlpha(tree1.viewWith(config));
+			const view2 = tree2.viewWith(config);
+			view1.initialize(["A", "C", "E"]);
+			await provider.ensureSynchronized();
+
+			await view1.runTransactionAsync(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
+
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				return { rollback: true };
+			});
+			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+
+			await provider.ensureSynchronized();
+			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
+			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+		});
+	});
+
 	describe("Anchors", () => {
 		it("Anchors can be created and dereferenced", () => {
 			const provider = new TestTreeProviderLite();
@@ -2151,7 +2217,7 @@ describe("SharedTree", () => {
 			Tree.runTransaction(parentView, () => {
 				parentView.root.insertAtStart("B");
 			});
-			const childCheckout = parentTree.kernel.checkout.branch();
+			const childCheckout = parentTree.kernel.checkout.fork();
 			const childView = new SchematizingSimpleTreeView(
 				childCheckout,
 				new TreeViewConfiguration({
@@ -2814,5 +2880,38 @@ describe("SharedTree", () => {
 				assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
 			});
 		}
+	});
+
+	it("Can process nested transactions from two different trees", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class TestObject extends schemaFactory.object("TestObject", {
+			content: schemaFactory.number,
+		}) {}
+
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+			}).getFactory(),
+		);
+		const [tree1, tree2] = provider.trees;
+
+		const config = new TreeViewConfiguration({ schema: TestObject, enableSchemaValidation });
+		const view1 = tree1.viewWith(config);
+		view1.initialize({ content: 0 });
+		const view2 = tree2.viewWith(config);
+		view2.initialize({ content: 0 });
+
+		provider.synchronizeMessages();
+
+		Tree.runTransaction(view1, () => {
+			view1.root.content = 1;
+			Tree.runTransaction(view2, () => {
+				view2.root.content = 2;
+			});
+		});
+
+		assert.equal(view1.root.content, 1);
+		assert.equal(view2.root.content, 2);
 	});
 });

@@ -17,7 +17,7 @@ import type { Linter } from "eslint";
 /**
  * Rules from strict.js.
  */
-export const strictRules: Linter.RulesRecord = {
+export const strictRules = {
 	/**
 	 * Require jsdoc/tsdoc comments on public/exported API items.
 	 */
@@ -54,12 +54,12 @@ export const strictRules: Linter.RulesRecord = {
 			exemptOverloadedImplementations: true,
 		},
 	],
-};
+} as const satisfies Linter.RulesRecord;
 
 /**
  * TypeScript-specific strict rules from strict.js.
  */
-export const strictTsRules: Linter.RulesRecord = {
+export const strictTsRules = {
 	"@typescript-eslint/explicit-member-accessibility": [
 		"error",
 		{
@@ -116,4 +116,4 @@ export const strictTsRules: Linter.RulesRecord = {
 	"@typescript-eslint/consistent-generic-constructors": "error",
 
 	"@typescript-eslint/no-redundant-type-constituents": "error",
-};
+} as const satisfies Linter.RulesRecord;

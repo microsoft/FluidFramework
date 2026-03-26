@@ -130,6 +130,14 @@ export interface AnchorEvents {
 	 */
 	childrenChangedAfterBatch(arg: {
 		changedFields: ReadonlySet<FieldKey>;
+		/**
+		 * The sequential delta marks for each changed field, keyed by field key.
+		 * @remarks
+		 * A field is absent from this map when no mark data was captured for it
+		 * (e.g. for unhydrated nodes, or when marks were invalidated by multiple
+		 * sequential batches touching the same field before the buffer was flushed).
+		 */
+		fieldMarks: ReadonlyMap<FieldKey, readonly Delta.Mark[]>;
 	}): void;
 
 	/**
@@ -729,6 +737,12 @@ export class AnchorSet implements AnchorLocator {
 			bufferedEvents: [] as BufferedEvent[],
 
 			/**
+			 * Field marks delivered via {@link DeltaVisitor.fieldMarks}, keyed by (PathNode, FieldKey).
+			 * @remarks Populated during the first (detach) pass and consumed during "free" when emitting events.
+			 */
+			storedFieldMarks: new Map<PathNode, Map<FieldKey, readonly Delta.Mark[]>>(),
+
+			/**
 			 * 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			 * subtreeChangedAfterBatch events.
 			 * The algorithm works as follows:
@@ -766,15 +780,31 @@ export class AnchorSet implements AnchorLocator {
 				}
 				this.anchorSet.activeVisitor = undefined;
 
-				// Aggregate changedFields by node.
+				// Aggregate changedFields and fieldMarks by node.
 				const eventsByNode: Map<PathNode, Set<FieldKey>> = new Map();
-				for (const { node, event, changedField } of this.bufferedEvents) {
+				const marksByNode: Map<PathNode, Map<FieldKey, readonly Delta.Mark[]>> = new Map();
+				for (const { node, event, changedField, fieldMarks } of this.bufferedEvents) {
 					if (event === "childrenChangedAfterBatch") {
-						const keys = getOrCreate(eventsByNode, node, () => new Set());
-						keys.add(
+						const resolvedField: FieldKey =
 							changedField ??
-								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
-						);
+							fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */);
+						const keys = getOrCreate(eventsByNode, node, () => new Set());
+						keys.add(resolvedField);
+						if (fieldMarks !== undefined) {
+							const nodeMarks = getOrCreate(marksByNode, node, () => new Map());
+							// First-wins is safe here because `fieldMarks` is called at most once per
+							// field per delta visit (the hook fires during the detach pass only).
+							// Within a single delta a field therefore produces at most one marks entry,
+							// so there is never a legitimate second entry to prefer over the first.
+							// If the same field is touched by two separate deltas before the buffer is
+							// flushed (e.g. because a schema change forced a second delta in the same
+							// batch), `KernelEventBuffer` detects the collision and removes the entry
+							// for that field entirely, so the consumer receives `undefined` rather than
+							// stale marks.
+							if (!nodeMarks.has(resolvedField)) {
+								nodeMarks.set(resolvedField, fieldMarks);
+							}
+						}
 					}
 				}
 
@@ -789,7 +819,9 @@ export class AnchorSet implements AnchorLocator {
 						const changedFields =
 							eventsByNode.get(node) ??
 							fail(0xaeb /* childrenChangedAfterBatch events should have changedFields */);
-						node.events.emit(event, { changedFields });
+						const fieldMarks: ReadonlyMap<FieldKey, readonly Delta.Mark[]> =
+							marksByNode.get(node) ?? new Map();
+						node.events.emit(event, { changedFields, fieldMarks });
 					} else {
 						node.events.emit(event);
 					}
@@ -802,17 +834,20 @@ export class AnchorSet implements AnchorLocator {
 				);
 			},
 			notifyChildrenChanged(): void {
+				const parentField = this.parentField;
 				this.maybeWithNode(
 					(p) => {
 						assert(
-							this.parentField !== undefined,
+							parentField !== undefined,
 							0xa24 /* Must be in a field to modify its contents */,
 						);
 						p.events.emit("childrenChanged", p);
+						const fieldMarks = this.storedFieldMarks.get(p)?.get(parentField);
 						this.bufferedEvents.push({
 							node: p,
 							event: "childrenChangedAfterBatch",
-							changedField: this.parentField,
+							changedField: parentField,
+							fieldMarks,
 						});
 					},
 					() => {},
@@ -935,6 +970,18 @@ export class AnchorSet implements AnchorLocator {
 			},
 			exitField(key: FieldKey): void {
 				this.parentField = undefined;
+			},
+			fieldMarks(marks: readonly Delta.Mark[]): void {
+				assert(this.parentField !== undefined, "fieldMarks called outside of a field");
+				if (this.parent !== undefined) {
+					const interned = this.anchorSet.internalizePath(this.parent);
+					if (interned instanceof PathNode) {
+						getOrCreate(this.storedFieldMarks, interned, () => new Map()).set(
+							this.parentField,
+							marks,
+						);
+					}
+				}
 			},
 		};
 		this.#events.emit("treeChanging", this);
@@ -1243,4 +1290,9 @@ interface BufferedEvent {
 	 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
 	 */
 	changedField?: FieldKey;
+	/**
+	 * The sequential delta marks for the impacted field, if available.
+	 * Populated from {@link DeltaVisitor.fieldMarks} during the first (detach) pass.
+	 */
+	fieldMarks?: readonly Delta.Mark[];
 }

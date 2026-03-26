@@ -650,7 +650,7 @@ export type TreeNodeFromImplicitAllowedTypes<
  * This type exists only to be linked from documentation to provide a single linkable place to document some details of
  * "Input" types and how they handle schema.
  *
- * When a schema is used to describe data which is an input into an API, the API is {@link https://en.wikipedia.org/wiki/Type_variance | contravariant}) over the schema.
+ * When a schema is used to describe data which is an input into an API, the API is {@link https://en.wikipedia.org/wiki/Type_variance | contravariant} over the schema.
  * (See also {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations | TypeScript Variance Annotations}).
  *
  * Since these schema are expressed using TypeScript types, it is possible for the user of the API to provide non-exact values of these types which has implications that depended on the variance.

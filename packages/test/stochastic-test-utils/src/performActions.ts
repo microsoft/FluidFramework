@@ -107,6 +107,8 @@ export async function performFuzzActionsAsync<
 	forceGlobalSeed?: boolean,
 ): Promise<TState>;
 /**
+ * Performs a sequence of async fuzz operations using the provided generator and reducer.
+ *
  * @internal
  */
 export async function performFuzzActionsAsync<
@@ -266,6 +268,8 @@ export function performFuzzActions<
 	saveInfo?: SaveInfo,
 ): TState;
 /**
+ * Performs a sequence of fuzz operations using the provided generator and reducer.
+ *
  * @internal
  */
 export function performFuzzActions<

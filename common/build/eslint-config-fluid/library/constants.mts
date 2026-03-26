@@ -19,28 +19,16 @@ import type { Linter } from "eslint";
 /**
  * Shared list of permitted imports for configuring the `import-x/no-internal-modules` rule.
  *
- * NOTE: The `/legacy` patterns below are an intentional enhancement over the legacy CJS config
- * (minimal-deprecated.js). They were added during the ESLint 9 flat config migration to support
- * backwards compatibility during API transitions. Many packages in the codebase import from
- * `/legacy` entry points (e.g., `@fluidframework/map/legacy`).
+ * @remarks
+ * All `@fluid-` scopes could probably allow `/**` as entrypoint structuring rules do
+ * NOT apply. Currently there are no known uses of structured imports from these scopes;
+ * so, no broad allowances are stated.
  */
 export const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
-	"@fluid-example/*/internal",
-	"@fluid-experimental/*/internal",
-	"@fluid-internal/*/internal",
-	"@fluid-private/*/internal",
-	"@fluid-tools/*/internal",
-	"@fluidframework/*/internal",
-
-	// Allow /legacy imports for backwards compatibility during API transition.
-	// This is an intentional enhancement over the legacy CJS config.
-	"@fluid-example/*/legacy",
-	"@fluid-experimental/*/legacy",
-	"@fluid-internal/*/legacy",
-	"@fluid-private/*/legacy",
-	"@fluid-tools/*/legacy",
-	"@fluidframework/*/legacy",
+	// Note that `/internal/test**` is still restricted (disallowed) but uses
+	// customCondition of "allow-ff-test-exports" for enforcement.
+	"@fluidframework/*/internal{,/**}",
 
 	// Experimental package APIs and exports are unknown, so allow any imports from them.
 	"@fluid-experimental/**",
@@ -49,7 +37,7 @@ export const permittedImports = [
 	// but not from cousin directories. Parent is allowed but only
 	// because there isn't a known way to deny it.
 	"*/index.js",
-];
+] as const;
 
 /**
  * Restricted import paths for all code.
@@ -67,7 +55,7 @@ export const restrictedImportPaths = [
 		importNames: ["default"],
 		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
 	},
-];
+] as const;
 
 /**
  * Restricted import patterns for production code.
@@ -80,17 +68,17 @@ export const restrictedImportPatternsForProductionCode = [
 		message:
 			"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
 	},
-];
+] as const;
 
 /**
  * Test file patterns for identifying test files.
  */
-export const testFilePatterns = ["*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"];
+export const testFilePatterns = ["*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"] as const;
 
 /**
  * Global ignore patterns for ESLint.
  */
-export const globalIgnores: Linter.Config = {
+export const globalIgnores = {
 	ignores: [
 		// Build output directories
 		"**/dist/**",
@@ -113,4 +101,4 @@ export const globalIgnores: Linter.Config = {
 		// Mocha config files (must be CommonJS, not compatible with TS-focused linting)
 		"**/.mocharc*.cjs",
 	],
-};
+} as const satisfies Linter.Config;

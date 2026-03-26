@@ -15,6 +15,8 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,
 	type EncodedRevisionTag,
@@ -31,7 +33,9 @@ export {
 	subtractChangeAtomIds,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	compareRevisions,
+	comparePartialRevisions,
+	compareChangesetLocalIds,
+	comparePartialChangesetLocalIds,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {

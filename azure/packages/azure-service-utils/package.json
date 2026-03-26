@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-service-utils",
-	"version": "2.82.0",
+	"version": "2.92.0",
 	"description": "Helper service-side utilities for connecting to Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
@@ -93,20 +93,20 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
-		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.63.0",
-		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@2.81.0",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@2.91.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/jsrsasign": "^10.5.12",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~9.39.1",
-		"eslint-config-prettier": "~10.1.8",
+		"eslint": "catalog:eslint",
+		"eslint-config-prettier": "catalog:eslint",
 		"jiti": "^2.6.1",
-		"rimraf": "^6.1.2",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

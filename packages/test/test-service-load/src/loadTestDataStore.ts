@@ -858,6 +858,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 
 	/**
+	 * Determines if a virtual data store should be created, based on op rate and client count.
+	 *
 	 * @param createRate - how often should a virtual data store be created, every so op count
 	 * @param jitter - how much jitter to add to the create rate. Jitter was added so creates didn't happen at the same time
 	 * @param opsSent - how many ops have been sent by the client
@@ -875,6 +877,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 
 	/**
+	 * Determines if a virtual data store should be loaded, based on op rate and client count.
 	 *
 	 * @param loadRate - how often should a virtual data store be loaded, every so op count
 	 * @param opsSent - how many ops have been sent by the client

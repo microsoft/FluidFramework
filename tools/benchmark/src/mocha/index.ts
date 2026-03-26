@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { benchmark } from "./runner";
+export { benchmark } from "./duration.js";
 export {
 	benchmarkMemory,
 	type IMemoryTestObject,

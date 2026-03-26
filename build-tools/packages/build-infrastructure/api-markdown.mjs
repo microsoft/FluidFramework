@@ -6,7 +6,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { MarkdownRenderer, loadModel } from "@fluid-tools/api-markdown-documenter";
+import { loadModel, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const inputDir = path.resolve(dirname, "_api-extractor-temp", "doc-models");

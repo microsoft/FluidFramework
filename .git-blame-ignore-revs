@@ -48,3 +48,9 @@ a33ffd0ca60351d694438281cb6879e71dcfac37
 45cd69ec472e35e4ed1a178f6fe764f0e66e9556
 be68e1b80389db0221158ff6362e75dcd895b07a
 38e1d64612ca1b65f5c1098a63b439afb53afd55
+
+# Biome enablement (replacing Prettier)
+c17c13634e32d8ddd33d0d4dfed71692f604c4a9
+
+# eslint-config-fluid printed config reformatting (spaces to tabs)
+dd1628e6d58424708d3bb7649d285f72f48a9b6b

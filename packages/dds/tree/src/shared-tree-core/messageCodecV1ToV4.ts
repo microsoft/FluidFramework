@@ -4,16 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type TAnySchema, Type } from "@sinclair/typebox";
 
-import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnlyObject,
+	JsonCompatibleReadOnlySchema,
+} from "../util/index.js";
 
 import type { MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
@@ -28,83 +30,67 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	options: ICodecOptions,
 	version:
 		| typeof MessageFormatVersion.v1
 		| typeof MessageFormatVersion.v2
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
 		| typeof MessageFormatVersion.v6,
-): IJsonCodec<
-	DecodedMessage<TChangeset>,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	MessageEncodingContext
-> {
-	return withSchemaValidation<
-		DecodedMessage<TChangeset>,
-		TAnySchema,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		MessageEncodingContext
-	>(
-		Message(changeCodec.encodedSchema ?? Type.Any()),
-		{
-			encode: (decoded: DecodedMessage<TChangeset>, context: MessageEncodingContext) => {
-				assert(decoded.type === "commit", 0xc68 /* Only commit messages are supported */);
-				assert(
-					decoded.branchId === "main",
-					0xc69 /* Only commit messages to main are supported */,
-				);
-				const { commit, sessionId: originatorId } = decoded;
-				const message: Message = {
-					revision: revisionTagCodec.encode(commit.revision, {
-						originatorId,
-						idCompressor: context.idCompressor,
-						revision: undefined,
-					}),
+): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext> {
+	const schema = Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
+	return {
+		schema,
+		encode: (
+			decoded: DecodedMessage<TChangeset>,
+			context: MessageEncodingContext,
+		): Message & JsonCompatibleReadOnlyObject & Versioned => {
+			assert(decoded.type === "commit", 0xc68 /* Only commit messages are supported */);
+			assert(
+				decoded.branchId === "main",
+				0xc69 /* Only commit messages to main are supported */,
+			);
+			const { commit, sessionId: originatorId } = decoded;
+			return {
+				revision: revisionTagCodec.encode(commit.revision, {
 					originatorId,
-					changeset: changeCodec.encode(commit.change, {
-						originatorId,
-						schema: context.schema,
-						idCompressor: context.idCompressor,
-						revision: commit.revision,
-					}),
-					version,
-				};
-				return message as unknown as JsonCompatibleReadOnly;
-			},
-			decode: (
-				encoded: JsonCompatibleReadOnly,
-				context: MessageEncodingContext,
-			): DecodedMessage<TChangeset> => {
-				const {
-					revision: encodedRevision,
-					originatorId,
-					changeset,
-				} = encoded as unknown as Message;
-
-				const revision = revisionTagCodec.decode(encodedRevision, {
-					originatorId,
-					revision: undefined,
 					idCompressor: context.idCompressor,
-				});
-
-				return {
-					branchId: "main",
-					type: "commit",
-					commit: {
-						revision,
-						change: changeCodec.decode(changeset, {
-							originatorId,
-							revision,
-							idCompressor: context.idCompressor,
-						}),
-					},
-					sessionId: originatorId,
-				};
-			},
+					revision: undefined,
+				}),
+				originatorId,
+				changeset: changeCodec.encode(commit.change, {
+					originatorId,
+					schema: context.schema,
+					idCompressor: context.idCompressor,
+					revision: commit.revision,
+				}),
+				version,
+			};
 		},
-		options.jsonValidator,
-	);
+		decode: (
+			encoded: Message & JsonCompatibleReadOnlyObject & Versioned,
+			context: MessageEncodingContext,
+		): DecodedMessage<TChangeset> => {
+			const { revision: encodedRevision, originatorId, changeset } = encoded;
+
+			const revision = revisionTagCodec.decode(encodedRevision, {
+				originatorId,
+				revision: undefined,
+				idCompressor: context.idCompressor,
+			});
+
+			return {
+				branchId: "main",
+				type: "commit",
+				commit: {
+					revision,
+					change: changeCodec.decode(changeset, {
+						originatorId,
+						revision,
+						idCompressor: context.idCompressor,
+					}),
+				},
+				sessionId: originatorId,
+			};
+		},
+	};
 }

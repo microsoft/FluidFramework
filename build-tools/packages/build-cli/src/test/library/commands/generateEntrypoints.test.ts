@@ -30,6 +30,19 @@ describe("generateEntrypoints", () => {
 			...optionDefaults,
 			outDir: "./lib",
 		});
+
+		// Does not support multi-args nor args that don't start
+		// with "out" (doesn't currently need to). Instead any
+		// such options passed in are preserved.
+		const argsReadFromUnsupportedCommandLine = readArgValues(
+			"--resolutionConditions first second --resolutionConditions third --mainEntrypoint xxx",
+			optionDefaults,
+		);
+		expect(argsReadFromUnsupportedCommandLine).to.deep.equal(optionDefaults);
+		expect(
+			// @ts-expect-error - mainEntrypoint is not supported by readArgValues, so not in return type (though it does exist at runtime)
+			argsReadFromUnsupportedCommandLine.mainEntrypoint,
+		).to.equal(optionDefaults.mainEntrypoint);
 	});
 
 	describe("generateNode10EntrypointFileContent", () => {
@@ -40,6 +53,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "./lib/legacy.d.ts";\n');
 			});
@@ -50,6 +64,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "rollups",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "../lib/legacy.d.ts";\n');
 			});
@@ -60,6 +75,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
 			});
@@ -70,6 +86,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: ".foo.d.ts",
 						isTypeOnly: true,
+						contentHeader: "",
 					}),
 				).to.contain('export type * from "./.foo.d.ts";\n');
 			});
@@ -82,6 +99,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "./lib/legacy.js";\n');
 			});
@@ -92,6 +110,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "rollups",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "../lib/legacy.js";\n');
 			});
@@ -102,6 +121,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "./lib/legacy/alpha.js";\n');
 			});
@@ -112,6 +132,7 @@ describe("generateEntrypoints", () => {
 						dirPath: "",
 						sourceTypeRelPath: ".foo.d.ts",
 						isTypeOnly: false,
+						contentHeader: "",
 					}),
 				).to.contain('export * from "./.foo.js";\n');
 			});

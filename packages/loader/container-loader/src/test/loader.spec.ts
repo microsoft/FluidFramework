@@ -98,7 +98,7 @@ describe("loader unit test", () => {
 			urlResolver: failProxy(),
 			configProvider: {
 				getRawConfig: (name): ConfigTypes =>
-					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+					name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 			},
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -136,7 +136,7 @@ describe("loader unit test", () => {
 			}),
 			configProvider: {
 				getRawConfig: (name): ConfigTypes =>
-					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+					name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 			},
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });

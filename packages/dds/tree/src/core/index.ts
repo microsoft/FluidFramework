@@ -178,6 +178,8 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -212,16 +214,12 @@ export {
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	compareRevisions,
+	comparePartialRevisions,
+	compareChangesetLocalIds,
+	comparePartialChangesetLocalIds,
 	diffHistories,
 	type RevisionReplacer,
 } from "./rebase/index.js";
-
-export {
-	type Adapters,
-	AdaptedViewSchema,
-	type TreeAdapter,
-} from "./schema-view/index.js";
 
 export {
 	type Revertible,

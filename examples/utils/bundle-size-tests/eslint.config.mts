@@ -4,17 +4,17 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
-		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
+		rules: {
+			"@typescript-eslint/consistent-type-imports": "off",
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"unicorn/text-encoding-identifier-case": "off",
 		},
 	},
 ];

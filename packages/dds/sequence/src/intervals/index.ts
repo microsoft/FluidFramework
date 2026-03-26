@@ -4,23 +4,25 @@
  */
 
 export {
-	IInterval,
-	ISerializedInterval,
-	ISerializableInterval,
+	type IInterval,
+	type ISerializedInterval,
+	type ISerializableInterval,
 	IntervalOpType,
 	IntervalType,
 	IntervalDeltaOpType,
 	IntervalStickiness,
-	SerializedIntervalDelta,
-	CompressedSerializedInterval,
+	type SerializedIntervalDelta,
+	type CompressedSerializedInterval,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 } from "./intervalUtils.js";
 export {
-	SequenceInterval,
+	type SequenceInterval,
 	SequenceIntervalClass,
+	BaseSequenceInterval,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
-	createTransientInterval,
+	createTransientIntervalFromSequence,
+	resolvePositionRef,
 	getSerializedProperties,
 } from "./sequenceInterval.js";

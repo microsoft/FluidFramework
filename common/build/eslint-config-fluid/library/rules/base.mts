@@ -19,7 +19,7 @@ import type { Linter } from "eslint";
  * Rules from eslint:recommended, @typescript-eslint/recommended-type-checked,
  * @typescript-eslint/stylistic-type-checked, import-x/recommended, import-x/typescript.
  */
-export const baseRules: Linter.RulesRecord = {
+export const baseRules = {
 	// Please keep entries alphabetized within a group
 
 	// #region Fluid Custom Rules
@@ -58,7 +58,10 @@ export const baseRules: Linter.RulesRecord = {
 	"@typescript-eslint/explicit-function-return-type": "off",
 	"@typescript-eslint/no-dynamic-delete": "error",
 	"@typescript-eslint/no-empty-function": "off",
-	"@typescript-eslint/no-empty-object-type": "error",
+	"@typescript-eslint/no-empty-object-type": [
+		"error",
+		{ allowInterfaces: "with-single-extends" },
+	],
 	"@typescript-eslint/no-explicit-any": "off",
 	"@typescript-eslint/no-extraneous-class": "error",
 	"@typescript-eslint/no-floating-promises": "error",
@@ -302,15 +305,15 @@ export const baseRules: Linter.RulesRecord = {
 	"yoda": "off",
 
 	// #endregion
-};
+} as const satisfies Linter.RulesRecord;
 
 /**
  * eslint-comments/recommended rules.
  */
-export const eslintCommentsRecommendedRules: Linter.RulesRecord = {
+export const eslintCommentsRecommendedRules = {
 	"@eslint-community/eslint-comments/disable-enable-pair": "error",
 	"@eslint-community/eslint-comments/no-aggregating-enable": "error",
 	"@eslint-community/eslint-comments/no-duplicate-disable": "error",
 	"@eslint-community/eslint-comments/no-unlimited-disable": "error",
 	"@eslint-community/eslint-comments/no-unused-enable": "error",
-};
+} as const satisfies Linter.RulesRecord;

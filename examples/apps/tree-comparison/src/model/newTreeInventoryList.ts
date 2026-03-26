@@ -4,10 +4,10 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type ITree,
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
 	Tree,
 	TreeViewConfiguration,
@@ -166,13 +166,15 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			}
 
 			// Search for deleted inventory items to update our collection
-			const currentInventoryIds = this.inventoryItemList.map((inventoryItemNode) => {
-				return inventoryItemNode.id;
-			});
+			const currentInventoryIds = new Set(
+				this.inventoryItemList.map((inventoryItemNode) => {
+					return inventoryItemNode.id;
+				}),
+			);
 			for (const trackedItemId of this._inventoryItems.keys()) {
 				// If the tree doesn't contain the id of an item we're tracking, then it must have
 				// been deleted in this change.
-				if (!currentInventoryIds.includes(trackedItemId)) {
+				if (!currentInventoryIds.has(trackedItemId)) {
 					this._inventoryItems.delete(trackedItemId);
 					this.emit("itemDeleted");
 				}

@@ -18,17 +18,14 @@ import {
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
-import {
-	addConstraintsToTransaction,
-	SchematizingSimpleTreeView,
-} from "./schematizingTreeView.js";
-import type { ITreeCheckout } from "./treeCheckout.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { addConstraintsToTransaction, type ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the {@link (Tree:variable)} export.
- * @system @sealed @public
+ * @sealed @public
  */
 export interface Tree extends TreeNodeApi {
 	/**

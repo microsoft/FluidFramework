@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "mocha";
 import { simpleGit } from "simple-git";
-import { DEFAULT_CHANGESET_PATH, canonicalizeChangesets } from "../../library/changesets.js";
+import { canonicalizeChangesets, DEFAULT_CHANGESET_PATH } from "../../library/changesets.js";
 
 describe("canonicalizeChangesets", () => {
 	let testDir: string;
@@ -207,34 +207,6 @@ describe("canonicalizeChangesets", () => {
 		assert.match(content, /"@fluid\/package-b": minor/);
 		assert.doesNotMatch(content, /__highlight/);
 		assert.doesNotMatch(content, /__section/);
-	});
-
-	it("should write all changesets in parallel", async () => {
-		// Create multiple changesets
-		const writePromises: Promise<void>[] = [];
-		for (let i = 0; i < 10; i++) {
-			writePromises.push(
-				writeChangesetFile(
-					`change-${i}.md`,
-					`---\n"@fluid/package-${i}": patch\n"__custom": "metadata"\n---\n\nChange ${i}\n\nDetailed description.\n`,
-				),
-			);
-		}
-		await Promise.all(writePromises);
-
-		await canonicalizeChangesets(testDir);
-
-		// Verify all were processed (custom metadata stripped)
-		const readPromises: Promise<void>[] = [];
-		for (let i = 0; i < 10; i++) {
-			readPromises.push(
-				readFile(path.join(changesetDir, `change-${i}.md`), "utf8").then((content) => {
-					assert.doesNotMatch(content, /__custom/);
-					assert.match(content, new RegExp(`Change ${i}`));
-				}),
-			);
-		}
-		await Promise.all(readPromises);
 	});
 
 	it("should throw error when directory doesn't have git repo", async () => {

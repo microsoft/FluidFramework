@@ -4,7 +4,7 @@
 
 ```ts
 
-// @beta @legacy (undocumented)
+// @beta @legacy
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest;
 
 // @beta @legacy

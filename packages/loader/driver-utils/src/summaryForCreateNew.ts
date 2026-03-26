@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	type ISummaryBlob,
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import type {
 	ICommittedProposal,
 	IDocumentAttributes,
 } from "@fluidframework/driver-definitions/internal";

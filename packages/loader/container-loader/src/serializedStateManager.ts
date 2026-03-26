@@ -344,6 +344,7 @@ export class SerializedStateManager implements IDisposable {
 			});
 			this.latestSnapshot = undefined;
 			this.snapshotRefresher?.clearLatestSnapshot();
+			this.snapshotRefresher?.restartTimer();
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
@@ -351,6 +352,7 @@ export class SerializedStateManager implements IDisposable {
 			this.snapshotInfo = this.latestSnapshot;
 			this.latestSnapshot = undefined;
 			this.snapshotRefresher?.clearLatestSnapshot();
+			this.snapshotRefresher?.restartTimer();
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
 				snapshotSequenceNumber,
