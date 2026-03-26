@@ -194,10 +194,8 @@ export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js"
 
 export {
 	type SchemaChange,
-	makeSchemaChangeCodecs,
+	makeSchemaChangeCodec,
 	EncodedSchemaChange,
-	getCodecTreeForSchemaChangeFormat,
-	SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

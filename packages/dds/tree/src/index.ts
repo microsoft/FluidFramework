@@ -88,6 +88,7 @@ export {
 
 export {
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
@@ -131,7 +132,14 @@ export {
 	normalizeFieldSchema,
 	type InternalTreeNode,
 	type WithType,
+	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
 	type NodeChangedData,
+	type NodeChangedDataAlpha,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
 	type SchemaUpgrade,
 	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
@@ -202,6 +210,7 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type TreeChangeEventsAlpha,
 	// Other
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
@@ -281,6 +290,7 @@ export {
 	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	type MapNodeCustomizableSchema,
