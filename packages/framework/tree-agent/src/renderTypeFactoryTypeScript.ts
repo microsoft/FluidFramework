@@ -5,7 +5,6 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeNodeSchema } from "@fluidframework/tree/alpha";
-
 import type {
 	TypeFactoryType,
 	TypeFactoryArray,
@@ -20,8 +19,9 @@ import type {
 	TypeFactoryUnion,
 	TypeFactoryIntersection,
 	TypeFactoryFunction,
-	TypeFactoryInstanceOf,
-} from "./treeAgentTypes.js";
+} from "@fluidframework/tree-agent-types/internal";
+
+import type { TypeFactoryInstanceOf } from "./treeAgentTypes.js";
 
 /**
  * Converts type factory type definitions into TypeScript declaration text.

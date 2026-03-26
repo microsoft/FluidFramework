@@ -112,6 +112,7 @@
 	"dependencies": {
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree-agent": "workspace:~",
+		"@fluidframework/tree-agent-types": "workspace:~",
 		"@langchain/core": "^0.3.80"
 	},
 	"devDependencies": {
