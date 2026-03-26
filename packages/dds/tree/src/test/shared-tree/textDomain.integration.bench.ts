@@ -8,8 +8,12 @@ import { strict as assert } from "node:assert";
 import { BenchmarkType, benchmarkCustom } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import type { ITreePrivate } from "../../shared-tree/index.js";
-import { TreeViewConfiguration, type TreeView } from "../../simple-tree/index.js";
+import { Tree } from "../../shared-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
+} from "../../simple-tree/index.js";
 import { TextAsTree } from "../../text/index.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
@@ -19,25 +23,59 @@ import {
 	registerOpListener,
 } from "./opBenchmarkUtilities.js";
 
-function createLongString(length: number = 1000): string {
-	return "a".repeat(length);
+const schemaFactory = new SchemaFactory("bench.textDepth");
+
+/**
+ * A recursive wrapper node used to place a text node at an arbitrary depth within a tree.
+ * The `child` field either contains another wrapper (for deeper nesting) or the leaf text node.
+ */
+class DeepTextWrapper extends schemaFactory.objectRecursive("DeepTextWrapper", {
+	child: [() => DeepTextWrapper, TextAsTree.Tree],
+}) {}
+{
+	type _check = ValidateRecursiveSchema<typeof DeepTextWrapper>;
 }
 
-function initializeTextTree(
-	tree: ITreePrivate,
-	initialContent: string,
-): TreeView<typeof TextAsTree.Tree> {
-	const config = new TreeViewConfiguration({ schema: TextAsTree.Tree });
-	const view = tree.viewWith(config);
-	view.initialize(TextAsTree.Tree.fromString(initialContent));
-	return view;
+/**
+ * Builds a {@link DeepTextWrapper} tree with the text node at the given depth.
+ * At depth 1, the root wrapper directly contains the text node as its child.
+ */
+function makeDeepTextTree(depth: number, textContent: string): DeepTextWrapper {
+	const textNode = TextAsTree.Tree.fromString(textContent);
+	let current: DeepTextWrapper = new DeepTextWrapper({ child: textNode });
+	for (let i = 1; i < depth; i++) {
+		current = new DeepTextWrapper({ child: current });
+	}
+	return current;
 }
 
-describe("TextDomain integration benchmarks", () => {
+/**
+ * Traverses a {@link DeepTextWrapper} tree to find the leaf {@link TextAsTree.Tree} node.
+ */
+function getLeafTextNode(root: DeepTextWrapper): TextAsTree.Tree {
+	let current: DeepTextWrapper | TextAsTree.Tree = root;
+	while (!Tree.is(current, TextAsTree.Tree)) {
+		current = current.child;
+	}
+	return current;
+}
+
+/**
+ * Depths at which to place the text node within the wrapper tree.
+ * A deeper text node results in a longer path in the generated op, which increases op size.
+ */
+const nodeDepths = [
+	[1, BenchmarkType.Measurement],
+	[10, BenchmarkType.Perspective],
+	[100, BenchmarkType.Measurement],
+] as const;
+
+describe.only("TextDomain integration benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("Plain text", () => {
 		const currentTestOps: ISequencedDocumentMessage[] = [];
+		const viewConfig = new TreeViewConfiguration({ schema: DeepTextWrapper });
 
 		beforeEach(() => {
 			currentTestOps.length = 0;
@@ -51,87 +89,99 @@ describe("TextDomain integration benchmarks", () => {
 		});
 
 		describe("Insert character", () => {
-			benchmarkCustom({
-				only: false,
-				type: BenchmarkType.Measurement,
-				title: "insert 1 character into empty string",
-				run: async (reporter) => {
-					const tree = createConnectedTree();
-					registerOpListener(tree, currentTestOps);
-					const view = initializeTextTree(tree, "");
-					currentTestOps.length = 0; // discard initialization ops
+			for (const [depth, benchmarkType] of nodeDepths) {
+				benchmarkCustom({
+					only: false,
+					type: benchmarkType,
+					title: `insert 1 character into empty string at depth ${depth}`,
+					run: async (reporter) => {
+						const tree = createConnectedTree();
+						registerOpListener(tree, currentTestOps);
+						const view = tree.viewWith(viewConfig);
+						view.initialize(makeDeepTextTree(depth, ""));
+						currentTestOps.length = 0; // discard initialization ops
 
-					view.root.insertAt(0, "a");
+						const textNode = getLeafTextNode(view.root);
+						textNode.insertAt(0, "a");
 
-					assert.equal(view.root.characterCount(), 1);
-					const opStats = getOperationsStats(currentTestOps);
-					for (const key of Object.keys(opStats)) {
-						reporter.addMeasurement(key, opStats[key]);
-					}
-				},
-			});
+						assert.equal(textNode.characterCount(), 1);
+						const opStats = getOperationsStats(currentTestOps);
+						for (const key of Object.keys(opStats)) {
+							reporter.addMeasurement(key, opStats[key]);
+						}
+					},
+				});
 
-			benchmarkCustom({
-				only: false,
-				type: BenchmarkType.Measurement,
-				title: "insert 1 character into long string (1000 characters)",
-				run: async (reporter) => {
-					const tree = createConnectedTree();
-					registerOpListener(tree, currentTestOps);
-					const view = initializeTextTree(tree, createLongString(1000));
-					currentTestOps.length = 0; // discard initialization ops
+				benchmarkCustom({
+					only: false,
+					type: benchmarkType,
+					title: `insert 1 character into string of 1000 characters at depth ${depth}`,
+					run: async (reporter) => {
+						const tree = createConnectedTree();
+						registerOpListener(tree, currentTestOps);
+						const view = tree.viewWith(viewConfig);
+						view.initialize(makeDeepTextTree(depth, "a".repeat(1000)));
+						currentTestOps.length = 0; // discard initialization ops
 
-					view.root.insertAt(500, "a");
+						const textNode = getLeafTextNode(view.root);
+						textNode.insertAt(500, "a");
 
-					assert.equal(view.root.characterCount(), 1001);
-					const opStats = getOperationsStats(currentTestOps);
-					for (const key of Object.keys(opStats)) {
-						reporter.addMeasurement(key, opStats[key]);
-					}
-				},
-			});
+						assert.equal(textNode.characterCount(), 1001);
+						const opStats = getOperationsStats(currentTestOps);
+						for (const key of Object.keys(opStats)) {
+							reporter.addMeasurement(key, opStats[key]);
+						}
+					},
+				});
+			}
 		});
 
 		describe("Remove character", () => {
-			benchmarkCustom({
-				only: false,
-				type: BenchmarkType.Measurement,
-				title: "remove 1 character from short string (1 character)",
-				run: async (reporter) => {
-					const tree = createConnectedTree();
-					registerOpListener(tree, currentTestOps);
-					const view = initializeTextTree(tree, "a");
-					currentTestOps.length = 0; // discard initialization ops
+			for (const [depth, benchmarkType] of nodeDepths) {
+				benchmarkCustom({
+					only: false,
+					type: benchmarkType,
+					title: `remove 1 character from string of 1 character at depth ${depth}`,
+					run: async (reporter) => {
+						const tree = createConnectedTree();
+						registerOpListener(tree, currentTestOps);
+						const view = tree.viewWith(viewConfig);
+						view.initialize(makeDeepTextTree(depth, "a"));
+						currentTestOps.length = 0; // discard initialization ops
 
-					view.root.removeRange(0, 1);
+						const textNode = getLeafTextNode(view.root);
+						textNode.removeRange(0, 1);
 
-					assert.equal(view.root.characterCount(), 0);
-					const opStats = getOperationsStats(currentTestOps);
-					for (const key of Object.keys(opStats)) {
-						reporter.addMeasurement(key, opStats[key]);
-					}
-				},
-			});
+						assert.equal(textNode.characterCount(), 0);
+						const opStats = getOperationsStats(currentTestOps);
+						for (const key of Object.keys(opStats)) {
+							reporter.addMeasurement(key, opStats[key]);
+						}
+					},
+				});
 
-			benchmarkCustom({
-				only: false,
-				type: BenchmarkType.Measurement,
-				title: "remove 1 character from long string (1000 characters)",
-				run: async (reporter) => {
-					const tree = createConnectedTree();
-					registerOpListener(tree, currentTestOps);
-					const view = initializeTextTree(tree, createLongString(1000));
-					currentTestOps.length = 0; // discard initialization ops
+				benchmarkCustom({
+					only: false,
+					type: benchmarkType,
+					title: `remove 1 character from string of 1000 characters at depth ${depth}`,
+					run: async (reporter) => {
+						const tree = createConnectedTree();
+						registerOpListener(tree, currentTestOps);
+						const view = tree.viewWith(viewConfig);
+						view.initialize(makeDeepTextTree(depth, "a".repeat(1000)));
+						currentTestOps.length = 0; // discard initialization ops
 
-					view.root.removeRange(500, 501);
+						const textNode = getLeafTextNode(view.root);
+						textNode.removeRange(500, 501);
 
-					assert.equal(view.root.characterCount(), 999);
-					const opStats = getOperationsStats(currentTestOps);
-					for (const key of Object.keys(opStats)) {
-						reporter.addMeasurement(key, opStats[key]);
-					}
-				},
-			});
+						assert.equal(textNode.characterCount(), 999);
+						const opStats = getOperationsStats(currentTestOps);
+						for (const key of Object.keys(opStats)) {
+							reporter.addMeasurement(key, opStats[key]);
+						}
+					},
+				});
+			}
 		});
 	});
 
