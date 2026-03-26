@@ -42,11 +42,9 @@ export interface NodeChangedDataDelta {
 	/**
 	 * The sequential operations describing what changed in the array node.
 	 * @remarks
-	 * The value may be `undefined` in two cases:
-	 * - The node was created locally and has not yet been inserted into a document tree (a known
-	 * temporary limitation, tracked in AB#63261).
-	 * - The document was updated in a way that required multiple internal change passes in a single
-	 * operation (for example, a data change combined with a schema upgrade).
+	 * The value may be `undefined` when the document was updated in a way that required multiple
+	 * internal changes pass in a single operation (for example, a data change combined with a
+	 * schema upgrade).
 	 *
 	 * See {@link ArrayNodeDeltaOp} for op semantics.
 	 */
