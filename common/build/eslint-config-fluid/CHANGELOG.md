@@ -141,7 +141,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 ### New rules
 
-#### [@eslint-community/eslint-comments/require-description](https://mysticatea.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
+#### [@eslint-community/eslint-comments/require-description](https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
 
 All `eslint-disable` comments must now include a description explaining why the rule is being disabled.
 This rule is enabled as a warning for the time being, but will be promoted to an error in the future.
