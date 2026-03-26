@@ -366,7 +366,11 @@ export function createRouteContext(
 	restTenantThrottlers: Map<string, IThrottler>,
 ): IHistorianRouteContext {
 	const router: Router = Router();
-	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec") as number | undefined;
+	const rawMaxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
+	const maxTokenLifetimeSec: number | undefined =
+		typeof rawMaxTokenLifetimeSec === "number" && Number.isFinite(rawMaxTokenLifetimeSec)
+			? rawMaxTokenLifetimeSec
+			: undefined;
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
@@ -436,9 +440,12 @@ export function verifyToken(
 				}
 			}
 
+			if (!claims.exp || !claims.iat) {
+				throw new NetworkError(403, "Invalid token expiry");
+			}
 			if (
 				maxTokenLifetimeSec !== undefined &&
-				(!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec)
+				claims.exp - claims.iat > maxTokenLifetimeSec
 			) {
 				throw new NetworkError(403, "Invalid token expiry");
 			}
