@@ -55,9 +55,11 @@
 			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
 			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
 			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
-			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support)."
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
+			"brace-expansion: overridden to ^1.1.12 to resolve CVE-2025-5889."
 		],
 		"overrides": {
+			"brace-expansion@>=1 <2": "^1.1.12",
 			"diff@>=5 <6": "^5.2.2",
 			"js-yaml": "^4.1.1",
 			"qs": "^6.15.0",

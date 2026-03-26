@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@fluidframework/eslint-config-fluid': link:../../common/build/eslint-config-fluid
+  express@>=4 <5: ^4.21.2
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
@@ -214,9 +215,6 @@ importers:
       '@fluidframework/server-services-utils':
         specifier: 8.0.0-347501
         version: 8.0.0-347501
-      '@types/ioredis-mock':
-        specifier: ^8.2.6
-        version: 8.2.6(ioredis@5.6.1)
       axios:
         specifier: ^1.8.4
         version: 1.12.2(debug@4.4.3)
@@ -281,6 +279,9 @@ importers:
       '@types/express-serve-static-core':
         specifier: ^4.17.32
         version: 4.17.34
+      '@types/ioredis-mock':
+        specifier: ^8.2.6
+        version: 8.2.6(ioredis@5.6.1)
       '@types/mocha':
         specifier: ^10.0.0
         version: 10.0.1

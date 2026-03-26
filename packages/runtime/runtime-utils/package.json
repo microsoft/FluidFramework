@@ -147,7 +147,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.83.0",
+		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.91.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
