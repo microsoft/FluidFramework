@@ -292,6 +292,7 @@ module.exports = {
 
 		// Independent packages
 		"build-common": "common/build/build-common",
+		"eslint-config-fluid": "common/build/eslint-config-fluid",
 		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
@@ -429,6 +430,8 @@ module.exports = {
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
 			],
+			// Packages that don't need type tests
+			"npm-package-types-field": ["common/build/eslint-config-fluid/package.json"],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
@@ -450,6 +453,7 @@ module.exports = {
 				"^build-tools/",
 				"^common/build/",
 				"^experimental/PropertyDDS/",
+				"^packages/framework/quill-react/",
 				"^tools/api-markdown-documenter/",
 			],
 			"npm-package-exports-field": [
@@ -487,9 +491,6 @@ module.exports = {
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"npm-private-packages": [
-				// TODO: Temporarily disabled for this package while it's a part of the client release group.
-				"^common/build/eslint-config-fluid/",
-
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
