@@ -10,7 +10,7 @@ description: Quick pre-push check that catches common CI failures before you pus
 2. Run the CI readiness script.
 3. Review script output and report results to the user.
 4. If the user chose Full or Thorough mode and there are unbuilt packages, build them.
-5. For each built changed package where the public API surface changed, regenerate API reports and check for downstream cascade.
+5. For each built changed package where the user-facing API surface changed, regenerate API reports and check for downstream cascade.
 6. For each built changed package, run ESLint auto-fix.
 7. For each built changed package where the user-facing API surface changed, regenerate type tests.
 8. If the user chose Thorough mode, run tests in changed packages.
