@@ -39,9 +39,6 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 		): TEditor => {
 			return unmitigatedChangeFamily.buildEditor(mintRevisionTag, changeReceiver);
 		},
-		unviolateNoChangeConstraint: (change: TChange): TChange => {
-			return unmitigatedChangeFamily.unviolateNoChangeConstraint(change);
-		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
 	};
@@ -76,8 +73,11 @@ export function makeMitigatedRebaser<TChange>(
 			change: TaggedChange<TChange>,
 			over: TaggedChange<TChange>,
 			revisionMetadata: RevisionMetadataSource,
+			ignoreNoChangeViolation?: boolean,
 		): TChange => {
-			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
+			return withFallback(() =>
+				unmitigatedRebaser.rebase(change, over, revisionMetadata, ignoreNoChangeViolation),
+			);
 		},
 		getRevisions: (change: TChange): Set<RevisionTag | undefined> => {
 			try {

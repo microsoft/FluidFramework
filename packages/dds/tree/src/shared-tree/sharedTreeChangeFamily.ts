@@ -94,24 +94,6 @@ export class SharedTreeChangeFamily
 		);
 	}
 
-	public unviolateNoChangeConstraint(change: SharedTreeChange): SharedTreeChange {
-		let changed = false;
-		const newChanges: Mutable<SharedTreeChange["changes"]> = change.changes.map((inner) => {
-			if (inner.type === "data") {
-				const updated = this.modularChangeFamily.unviolateNoChangeConstraint(
-					inner.innerChange,
-				);
-				if (updated !== inner.innerChange) {
-					changed = true;
-					return { type: "data", innerChange: updated };
-				}
-			}
-
-			return inner;
-		});
-		return changed ? { changes: newChanges } : change;
-	}
-
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
 		const newChanges: Mutable<SharedTreeChange["changes"]> = [];
 		const dataChangeRun: TaggedChange<ModularChangeset>[] = [];
@@ -186,6 +168,7 @@ export class SharedTreeChangeFamily
 		change: TaggedChange<SharedTreeChange>,
 		over: TaggedChange<SharedTreeChange>,
 		revisionMetadata: RevisionMetadataSource,
+		ignoreNoChangeViolation?: boolean,
 	): SharedTreeChange {
 		if (change.change.changes.length === 0 || over.change.changes.length === 0) {
 			return change.change;
@@ -222,6 +205,7 @@ export class SharedTreeChangeFamily
 						mapTaggedChange(change, dataChangeIntention.innerChange),
 						mapTaggedChange(over, dataChangeOver.innerChange),
 						revisionMetadata,
+						ignoreNoChangeViolation,
 					),
 				},
 			],

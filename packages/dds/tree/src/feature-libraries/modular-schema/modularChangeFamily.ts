@@ -125,21 +125,6 @@ export class ModularChangeFamily
 		this.fieldKinds = fieldKinds;
 	}
 
-	public unviolateNoChangeConstraint(change: ModularChangeset): ModularChangeset {
-		const constraint = change.noChangeConstraint;
-		if (constraint === undefined || constraint.violated === false) {
-			return change;
-		}
-
-		const updatedViolationCount = Math.max(0, (change.constraintViolationCount ?? 0) - 1);
-		return makeModularChangeset({
-			...change,
-			maxId: (change.maxId ?? -1) as number,
-			constraintViolationCount: updatedViolationCount,
-			noChangeConstraint: { violated: false },
-		});
-	}
-
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
 		return this;
 	}
@@ -897,6 +882,7 @@ export class ModularChangeFamily
 		taggedChange: TaggedChange<ModularChangeset>,
 		potentiallyConflictedOver: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
+		ignoreNoChangeViolation?: boolean,
 	): ModularChangeset {
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
@@ -958,9 +944,14 @@ export class ModularChangeFamily
 		);
 
 		let noChangeConstraint = change.noChangeConstraint;
-		if (noChangeConstraint !== undefined && !noChangeConstraint.violated) {
-			noChangeConstraint = { violated: true };
-			constraintState.violationCount += 1;
+		if (noChangeConstraint !== undefined) {
+			if (!noChangeConstraint.violated && ignoreNoChangeViolation !== true) {
+				noChangeConstraint = { violated: true };
+				constraintState.violationCount += 1;
+			} else if (noChangeConstraint.violated && ignoreNoChangeViolation === true) {
+				noChangeConstraint = { violated: false };
+				constraintState.violationCount -= 1;
+			}
 		}
 
 		this.updateConstraintsForFields(

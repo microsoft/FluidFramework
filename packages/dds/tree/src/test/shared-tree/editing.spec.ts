@@ -3444,7 +3444,7 @@ describe("Editing", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
-				const branch = tree.branch();
+				const branch = tree.fork();
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
 
 				branch.transaction.start();
@@ -3482,7 +3482,7 @@ describe("Editing", () => {
 				const tree = makeTreeFromJsonSequence([{ "A": 1, "B": 2, "C": 3 }], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
-				const branch = tree.branch();
+				const branch = tree.fork();
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
 
 				branch.transaction.start();
@@ -3524,6 +3524,43 @@ describe("Editing", () => {
 				undo2.revert();
 
 				expectJsonTree(branch, [{ "X": 1, "B": 2, "C": 3 }]);
+				unsubscribe();
+			});
+
+			it("Should not be violated when a non-constrained edit is reverted by a later edit", () => {
+				const tree = makeTreeFromJsonSequence([], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.fork();
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+
+				// Insert "B" with a no-change constraint on revert
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["B"]));
+				branch.transaction.commit();
+
+				// Insert "C" (no constraint)
+				branch.transaction.start();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["C"]));
+				branch.transaction.commit();
+
+				// Delete "C"
+				branch.transaction.start();
+				branch.editor.sequenceField(rootField).remove(1, 1);
+				branch.transaction.commit();
+
+				expectJsonTree(branch, ["B"]);
+
+				// Pop the non-constrained edits off the undo stack; we're looking for the insert of "B"
+				undoStack.pop();
+				undoStack.pop();
+
+				// Revert the constrained insert of "B"
+				const undo = undoStack.pop() ?? assert.fail("Missing undo");
+				undo.revert();
+
+				expectJsonTree(branch, []);
 				unsubscribe();
 			});
 		});

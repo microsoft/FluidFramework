@@ -35,10 +35,6 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 		assert.equal(changeReceiver, arg1);
 		throw new Error("buildEditor");
 	},
-	unviolateNoChangeConstraint: (change: string): string => {
-		assert.equal(change, arg1);
-		throw new Error("unviolateNoChangeConstraint");
-	},
 	rebaser: {
 		compose: (changes: TaggedChange<string>[]): string => {
 			assert.equal(changes, arg1);
@@ -74,10 +70,6 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 		assert.equal(mintRevisionTagArg, mintRevisionTag);
 		assert.equal(changeReceiver, arg1);
 		return "buildEditor" as unknown as ChangeFamilyEditor;
-	},
-	unviolateNoChangeConstraint: (change: string): string => {
-		assert.equal(change, arg1);
-		return "unviolateNoChangeConstraint";
 	},
 	rebaser: {
 		compose: (changes: TaggedChange<string>[]): string => {

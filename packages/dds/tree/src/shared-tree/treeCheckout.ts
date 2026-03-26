@@ -59,8 +59,7 @@ import {
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
-	type DeltaFieldMap,
-	type DeltaFieldChanges,
+	deltaFieldMapHasVisibleChanges,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1341,6 +1340,17 @@ export class TreeCheckout implements ITreeCheckout {
 		const headCommit = this.#transaction.activeBranch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
+			// The inverse may be rebased over newer commits which (despite being present in the history)
+			// have no net effect on the document state (e.g. an edit plus its undo).
+			// In that case, a no-change constraint should not be violated during rebase.
+			const diff = diffHistories(
+				this.changeFamily.rebaser,
+				commitToRevert,
+				headCommit,
+				this.mintRevisionTag,
+			);
+			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
+
 			change = tagChange(
 				rebaseChange(
 					this.changeFamily.rebaser,
@@ -1348,25 +1358,10 @@ export class TreeCheckout implements ITreeCheckout {
 					commitToRevert,
 					headCommit,
 					this.mintRevisionTag,
+					ignoreNoChangeViolation,
 				).change,
 				revisionForInvert,
 			);
-
-			// The inverse may have been rebased over newer commits which (despite being present in the history)
-			// have no net effect on the document state (e.g. an edit plus its undo).
-			// In that case, a no-change constraint should not remain violated.
-			const newerNetEffect = diffHistories(
-				this.changeFamily.rebaser,
-				commitToRevert,
-				headCommit,
-				this.mintRevisionTag,
-			);
-			if (!sharedTreeChangeHasNetEffect(newerNetEffect)) {
-				change = tagChange(
-					this.changeFamily.unviolateNoChangeConstraint(change.change),
-					revisionForInvert,
-				);
-			}
 		}
 
 		this.#transaction.activeBranch.apply(
@@ -1729,41 +1724,15 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	);
 }
 
-function sharedTreeChangeHasNetEffect(change: SharedTreeChange): boolean {
+function sharedTreeChangeHasVisibleChanges(change: SharedTreeChange): boolean {
 	for (const inner of change.changes) {
 		if (inner.type === "schema") {
 			return true;
 		}
 		const delta = intoDelta(tagChange(inner.innerChange, undefined));
-		if (deltaFieldMapHasNetEffect(delta.fields)) {
+		if (deltaFieldMapHasVisibleChanges(delta.fields)) {
 			return true;
 		}
 	}
-	return false;
-}
-
-function deltaFieldMapHasNetEffect(fields: DeltaFieldMap | undefined): boolean {
-	if (fields === undefined || fields.size === 0) {
-		return false;
-	}
-	for (const [, fieldChanges] of fields) {
-		if (deltaFieldChangesHaveNetEffect(fieldChanges)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-function deltaFieldChangesHaveNetEffect(fieldChanges: DeltaFieldChanges): boolean {
-	for (const mark of fieldChanges.marks) {
-		if (
-			mark.attach !== undefined ||
-			mark.detach !== undefined ||
-			deltaFieldMapHasNetEffect(mark.fields)
-		) {
-			return true;
-		}
-	}
-
 	return false;
 }
