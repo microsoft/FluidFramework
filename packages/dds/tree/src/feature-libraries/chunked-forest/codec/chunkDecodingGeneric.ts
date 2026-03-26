@@ -17,7 +17,8 @@ import {
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
 import type { IncrementalDecoder } from "./codecs.js";
-import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./format/formatGeneric.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.

@@ -36,11 +36,14 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	FieldBatchFormatVersion,
+	type EncodedFieldBatchV2,
 	SpecialField,
-	validVersions,
-	type EncodedFieldBatch,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
+import {
+	validVersions,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format/versions.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
@@ -361,7 +364,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");

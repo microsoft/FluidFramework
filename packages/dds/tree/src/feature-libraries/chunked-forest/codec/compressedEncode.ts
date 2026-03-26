@@ -30,13 +30,14 @@ import type { IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShape,
-	type EncodedFieldBatch,
+	type EncodedChunkShapeV1,
+	type EncodedChunkShapeV2,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	SpecialField,
-} from "./format.js";
+} from "./format/index.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
@@ -48,7 +49,7 @@ import {
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1OrV2 {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -60,8 +61,8 @@ export function compressedEncode(
 	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
 }
 
-export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
-export type Shape = ShapeGeneric<EncodedChunkShape>;
+export type BufferFormat = BufferFormatGeneric<EncodedChunkShapeV1 | EncodedChunkShapeV2>;
+export type Shape = ShapeGeneric<EncodedChunkShapeV1 | EncodedChunkShapeV2>;
 
 /**
  * Like {@link FieldEncoder}, except data will be prefixed with the key.
@@ -163,7 +164,7 @@ export function asNodesEncoder(encoder: NodeEncoder): NodesEncoder {
 /**
  * Encodes a chunk with {@link EncodedAnyShape} by prefixing the data with its shape.
  */
-export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
+export class AnyShape extends ShapeGeneric<EncodedChunkShapeV1 | EncodedChunkShapeV2> {
 	private constructor() {
 		super();
 	}
@@ -172,7 +173,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 | EncodedChunkShapeV2 {
 		const encodedAnyShape: EncodedAnyShape = 0;
 		return { d: encodedAnyShape };
 	}
@@ -268,7 +269,7 @@ export const anyFieldEncoder: FieldEncoder = {
  * which is an easy way to keep all the related code together without extra objects.
  */
 export class InlineArrayEncoder
-	extends ShapeGeneric<EncodedChunkShape>
+	extends ShapeGeneric<EncodedChunkShapeV1 | EncodedChunkShapeV2>
 	implements NodesEncoder, FieldEncoder
 {
 	public static readonly empty: InlineArrayEncoder = new InlineArrayEncoder(0, {
@@ -328,7 +329,7 @@ export class InlineArrayEncoder
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 {
 		return {
 			b: {
 				length: this.length,
@@ -352,7 +353,7 @@ export class InlineArrayEncoder
 /**
  * Encodes the shape for a nested array as {@link EncodedNestedArrayShape} shape.
  */
-export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
+export class NestedArrayShape extends ShapeGeneric<EncodedChunkShapeV1 | EncodedChunkShapeV2> {
 	/**
 	 * @param innerShape - The shape of each item in this nested array.
 	 */
@@ -363,7 +364,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 | EncodedChunkShapeV2 {
 		const shape: EncodedNestedArrayShape =
 			shapes.valueToIndex.get(this.innerShape) ??
 			fail(0xb4f /* index for shape not found in table */);
@@ -422,11 +423,11 @@ export class NestedArrayEncoder implements FieldEncoder {
 /**
  * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
  */
-export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShapeV2> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV2 {
 		return {
 			e: 0 /* EncodedIncrementalChunkShape */,
 		};

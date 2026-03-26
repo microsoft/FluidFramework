@@ -54,15 +54,18 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
-	type EncodedChunkShape,
-	EncodedFieldBatch,
+	type EncodedChunkShapeV1,
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
+import {
 	validVersions,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/versions.js";
 import type {
 	ChunkReferenceId,
 	IncrementalDecoder,
@@ -113,11 +116,14 @@ function makeFieldBatchCodec(
 			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: version,
 			codec: {
-				encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
+				encode: (
+					data: FieldBatch,
+					context: FieldBatchEncodingContext,
+				): EncodedFieldBatchV1OrV2 => {
 					return compressedEncode(data, encoderContext);
 				},
 				decode: (
-					data: EncodedFieldBatchV1 | EncodedFieldBatchV2,
+					data: EncodedFieldBatchV1OrV2,
 					fieldBatchContext: FieldBatchEncodingContext,
 				): FieldBatch => {
 					// TODO: consider checking data is in schema.
@@ -188,17 +194,18 @@ describe("compressedEncode", () => {
 	const mockHandle = new MockHandle("x");
 
 	describe("encodeValue", () => {
-		const testValues: [string, Value, EncodedValueShape, BufferFormat<EncodedChunkShape>][] = [
-			["none", undefined, false, []],
-			["optional none", undefined, undefined, [false]],
-			["optional some", 5, undefined, [true, 5]],
-			["handle", mockHandle, undefined, [true, mockHandle]],
-			["required", false, true, [false]],
-			["constant", 5, [5], []],
-		];
+		const testValues: [string, Value, EncodedValueShape, BufferFormat<EncodedChunkShapeV1>][] =
+			[
+				["none", undefined, false, []],
+				["optional none", undefined, undefined, [false]],
+				["optional some", 5, undefined, [true, 5]],
+				["handle", mockHandle, undefined, [true, mockHandle]],
+				["required", false, true, [false]],
+				["constant", 5, [5], []],
+			];
 		for (const [name, value, shape, encoded] of testValues) {
 			it(name, () => {
-				const buffer: BufferFormat<EncodedChunkShape> = [];
+				const buffer: BufferFormat<EncodedChunkShapeV1> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
 				const processed = updateShapesAndIdentifiersEncoding(fieldBatchVersion, [buffer]);

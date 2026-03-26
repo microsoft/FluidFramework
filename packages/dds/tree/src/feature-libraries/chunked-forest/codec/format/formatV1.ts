@@ -5,49 +5,21 @@
 
 import { type Static, Type } from "@sinclair/typebox";
 
-import { unionOptions } from "../../../codec/index.js";
-import { strictEnum, type Values } from "../../../util/index.js";
+import { unionOptions } from "../../../../codec/index.js";
 
-import {
-	Count,
-	EncodedFieldBatchGeneric,
-	IdentifierOrIndex,
-	ShapeIndex,
-} from "./formatGeneric.js";
-
-/**
- * The format version for the field batch.
- */
-export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
-	/**
-	 * Initial version.
-	 * @remarks
-	 * For simplicity of implementation the format for this version allows the same chunk shapes as v2, but must not use {@link EncodedIncrementalChunkShape}
-	 * as older clients will not know how to handle that shape but think they can handle this format.
-	 */
-	v1: 1,
-	/**
-	 * Adds support for incremental encoding of chunks.
-	 * @remarks
-	 * {@link EncodedIncrementalChunkShape} was added in this version.
-	 */
-	v2: 2,
-});
-export type FieldBatchFormatVersion = Values<typeof FieldBatchFormatVersion>;
-
-// Compatible versions used for format/version validation.
-// TODO: A proper version update policy will need to be documented.
-export const validVersions = new Set([...Object.values(FieldBatchFormatVersion)]);
+import { Count, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 
 /**
  * Top level length is implied from length of data array.
  * All content are of this shape.
  */
+export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
 export const EncodedNestedArrayShape = ShapeIndex;
 
 /**
  * Inline array.
  */
+export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
 export const EncodedInlineArrayShape = Type.Object(
 	{
 		length: Count,
@@ -64,18 +36,21 @@ export const EncodedInlineArrayShape = Type.Object(
  *
  * Used for polymorphism.
  */
+export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 export const EncodedAnyShape = Type.Literal(0);
 
 /**
  * Encoded content is a {@link ChunkReferenceId}.
  * This represents the shape of a chunk that is encoded separately and is referenced by its {@link ChunkReferenceId}.
  */
+export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 export const EncodedIncrementalChunkShape = Type.Literal(0);
 
 /**
  * Content of the encoded field is specified by the Shape referenced by the ShapeIndex.
  * This is a tuple for conciseness.
  */
+export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
 export const EncodedFieldShape = Type.Tuple([
 	/**
 	 * Field key for this field.
@@ -86,33 +61,6 @@ export const EncodedFieldShape = Type.Tuple([
 	 */
 	ShapeIndex,
 ]);
-
-export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
-
-enum CounterRelativeTo {
-	// Relative to previous node of same type in depth first pre-order traversal.
-	PreviousNodeOfType_DepthFirstPreOrder,
-	// TODO: add alternative relative mode relative to previous note at a path to allow delta encoded sequences (like points where x and y are delta encoded relative to previous points).
-}
-
-enum CounterMode {
-	Number,
-	// TODO: document wrap modes and bit skipping. Note UUID subVersion here (ex: UUIDv4)
-	UUID,
-}
-
-/**
- * Delta encoded value relative to a previous node's value.
- */
-export const EncodedCounter = Type.Object(
-	{
-		relativeTo: Type.Enum(CounterRelativeTo),
-		// If not provided, delta inline in data.
-		delta: Type.Optional(Type.Number()),
-		mode: Type.Enum(CounterMode),
-	},
-	{ additionalProperties: false },
-);
 
 /**
  * Used in {@link EncodedValueShape} for special field kind handling.
@@ -159,6 +107,7 @@ export const EncodedValueShape = Type.Union([
 ]);
 export type EncodedValueShape = undefined | Static<typeof EncodedValueShape>;
 
+export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export const EncodedNodeShape = Type.Object(
 	{
 		/**
@@ -181,6 +130,25 @@ export const EncodedNodeShape = Type.Object(
 	{ additionalProperties: false },
 );
 
+export const shapesV1 = {
+	/**
+	 * {@link EncodedNestedArrayShape} union member.
+	 */
+	a: Type.Optional(EncodedNestedArrayShape),
+	/**
+	 * {@link EncodedInlineArrayShape} union member.
+	 */
+	b: Type.Optional(EncodedInlineArrayShape),
+	/**
+	 * {@link EncodedNodeShape} union member.
+	 */
+	c: Type.Optional(EncodedNodeShape),
+	/**
+	 * {@link EncodedAnyShape} union member.
+	 */
+	d: Type.Optional(EncodedAnyShape),
+} as const;
+
 /**
  * Discriminated union that represents the shapes of chunks in the encoded data.
  * "Chunk" here refers to a chunk of tree data, rooted at a range of nodes, that is encoded as a
@@ -191,52 +159,13 @@ export const EncodedNodeShape = Type.Object(
  * This is similar to other such concepts in the system.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
+ * @privateRemarks
+ * Because the TypeScript types for how we model these unions don't require exactly one property,
+ * to prevent a union with more options from being assignable to this one, we include Never.
+ * This matters in this case because the V2 format only differs in that it has another entry in this Union.
  */
-export const EncodedChunkShape = Type.Object(
-	{
-		/**
-		 * {@link EncodedNestedArrayShape} union member.
-		 */
-		a: Type.Optional(EncodedNestedArrayShape),
-		/**
-		 * {@link EncodedInlineArrayShape} union member.
-		 */
-		b: Type.Optional(EncodedInlineArrayShape),
-		/**
-		 * {@link EncodedNodeShape} union member.
-		 */
-		c: Type.Optional(EncodedNodeShape),
-		/**
-		 * {@link EncodedAnyShape} union member.
-		 */
-		d: Type.Optional(EncodedAnyShape),
-		/**
-		 * {@link EncodedIncrementalChunkShape} union member.
-		 */
-		e: Type.Optional(EncodedIncrementalChunkShape),
-	},
+export const EncodedChunkShapeV1 = Type.Object(
+	{ ...shapesV1, e: Type.Optional(Type.Never()) },
 	unionOptions,
 );
-
-export type EncodedChunkShape = Static<typeof EncodedChunkShape>;
-
-export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
-export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
-export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
-export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
-export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
-
-export const EncodedFieldBatchV1 = EncodedFieldBatchGeneric(
-	FieldBatchFormatVersion.v1,
-	EncodedChunkShape,
-);
-export type EncodedFieldBatchV1 = Static<typeof EncodedFieldBatchV1>;
-
-export const EncodedFieldBatchV2 = EncodedFieldBatchGeneric(
-	FieldBatchFormatVersion.v2,
-	EncodedChunkShape,
-);
-export type EncodedFieldBatchV2 = Static<typeof EncodedFieldBatchV2>;
-
-export const EncodedFieldBatch = Type.Union([EncodedFieldBatchV1, EncodedFieldBatchV2]);
-export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;
+export type EncodedChunkShapeV1 = Static<typeof EncodedChunkShapeV1>;

@@ -5,7 +5,7 @@
 
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
-import type { FieldBatchFormatVersion } from "./format.js";
+import type { FieldBatchFormatVersion } from "./versions.js";
 
 /**
  * Identifier OR Index of an identifier in the identifier list.
