@@ -4,8 +4,9 @@
 # CI Readiness Check — quick pre-push sanity check for Fluid Framework.
 #
 # Detects which packages changed vs a base branch, then:
-#   1. Auto-fixes formatting (Biome) in each changed package
-#   2. Runs policy check (flub) scoped to changed packages, with auto-fix
+#   1. Runs `fluid-build --task checks:fix` scoped to changed packages
+#      (auto-fixes formatting via Biome, policy via flub, syncpack, versions)
+#   2. Verifies checks pass after fixing
 #   3. Checks if a changeset is present
 #   4. Reports uncommitted changes, build status, and a summary
 #
@@ -135,64 +136,55 @@ if [ ${#NOT_BUILT[@]} -gt 0 ]; then
     done
 fi
 
-# ---------- Phase 1: Format ----------
-section "Formatting changed packages"
-
-# For each changed package that has a "format" script in its package.json,
-# run it. This invokes Biome to auto-fix formatting issues in-place.
-FORMATTED=0
-FORMAT_ERRORS=0
-for pkg in "${PACKAGES[@]}"; do
-    pkg_dir="${REPO_ROOT}/${pkg}"
-    # Use node to check if the package.json has a "format" script.
-    has_format=$(cd "${pkg_dir}" && node -p "Boolean(require('./package.json').scripts?.format)" 2>/dev/null || echo "false")
-    if [ "${has_format}" = "true" ]; then
-        if (cd "${pkg_dir}" && pnpm run format 2>&1) >/dev/null 2>&1; then
-            ok "Formatted ${pkg}"
-            FORMATTED=$((FORMATTED + 1))
-        else
-            fail "Format failed in ${pkg}"
-            FORMAT_ERRORS=$((FORMAT_ERRORS + 1))
-        fi
-    fi
-done
-
-# If no packages had a format script at all, note that.
-if [ ${FORMATTED} -eq 0 ] && [ ${FORMAT_ERRORS} -eq 0 ]; then
-    ok "No packages have a format script"
+# ---------- Phase 0.5: Ensure dependencies are installed ----------
+if [ ! -d "${REPO_ROOT}/node_modules" ]; then
+    section "Installing dependencies"
+    warn "node_modules not found — running pnpm install"
+    (cd "${REPO_ROOT}" && pnpm install --frozen-lockfile 2>&1) || {
+        fail "pnpm install failed. Install dependencies manually and re-run."
+        exit 1
+    }
+    ok "Dependencies installed"
 fi
 
-# ---------- Phase 2: Policy check ----------
-section "Running policy check on changed packages"
+# ---------- Phase 1: Auto-fix checks (format, policy, syncpack, versions) ----------
+section "Running checks:fix on changed packages"
 
-# Build a regex that matches any of the changed package paths. This is passed
-# to flub's --path flag to scope the policy check to only these packages.
-PATH_REGEX=""
+# Use fluid-build --task checks:fix scoped to just the changed packages.
+# This runs: biome format --write, flub check policy --fix, syncpack fix,
+# and buildVersion --fix — all in the correct dependency order.
+#
+# We build the package list as space-separated paths for fluid-build.
+PKG_ARGS=""
 for pkg in "${PACKAGES[@]}"; do
-    if [ -n "${PATH_REGEX}" ]; then
-        PATH_REGEX="${PATH_REGEX}|"
-    fi
-    PATH_REGEX="${PATH_REGEX}${pkg}"
+    PKG_ARGS="${PKG_ARGS} ${pkg}"
 done
 
-# Run policy check with --fix first to auto-fix what it can (e.g., copyright
-# headers, package.json sorting), then run again without --fix to verify.
-POLICY_OK=true
-(cd "${REPO_ROOT}" && pnpm flub check policy --fix --path "${PATH_REGEX}" 2>&1) >/dev/null 2>&1 || true
-(cd "${REPO_ROOT}" && pnpm flub check policy --path "${PATH_REGEX}" 2>&1) >/dev/null 2>&1 || POLICY_OK=false
-
-if [ "${POLICY_OK}" = true ]; then
-    ok "Policy check passed"
+CHECKS_FIX_OK=true
+echo "Running: fluid-build --task checks:fix ${PKG_ARGS}"
+if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks:fix ${PKG_ARGS} 2>&1); then
+    ok "checks:fix completed"
 else
-    fail "Policy check has issues. Re-run for details: pnpm flub check policy --path \"${PATH_REGEX}\""
+    warn "checks:fix had issues (some fixes may still have been applied)"
+    CHECKS_FIX_OK=false
+fi
+
+# ---------- Phase 2: Verify checks pass ----------
+section "Verifying checks pass"
+
+CHECKS_OK=true
+if (cd "${REPO_ROOT}" && pnpm exec fluid-build --task checks ${PKG_ARGS} 2>&1) >/dev/null 2>&1; then
+    ok "All checks pass"
+else
+    CHECKS_OK=false
+    fail "Some checks still failing after auto-fix. Re-run for details: pnpm exec fluid-build --task checks ${PKG_ARGS}"
 fi
 
 # ---------- Phase 3: Changeset check ----------
 section "Checking for changeset"
 
-# Check if a changeset file exists for this branch. Changesets are required
-# when modifying published package source code. The check compares against
-# the base branch to see if any changeset files were added.
+# Changeset check is not part of the checks/checks:fix tasks, so run it
+# separately. Changesets are required when modifying published package source.
 CHANGESET_OK=true
 (cd "${REPO_ROOT}" && pnpm flub check changeset --branch "${BASE_BRANCH}" 2>&1) >/dev/null 2>&1 || CHANGESET_OK=false
 
@@ -247,8 +239,8 @@ else
     ok "No uncommitted changes"
 fi
 
-if [ "${POLICY_OK}" != true ]; then
-    fail "Policy check has remaining issues — see above"
+if [ "${CHECKS_OK}" != true ]; then
+    fail "Some checks still failing after auto-fix — see above"
 fi
 
 if [ "${CHANGESET_OK}" != true ]; then
