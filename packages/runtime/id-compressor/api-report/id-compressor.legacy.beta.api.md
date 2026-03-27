@@ -44,7 +44,7 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IIdCompressorCore {
     beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
     finalizeCreationRange(range: IdCreationRange): void;
@@ -74,6 +74,12 @@ export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
 export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
     readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
 };
+
+// @beta @legacy
+export function serializeIdCompressor(compressor: IIdCompressor, withSession: true): SerializedIdCompressorWithOngoingSession;
+
+// @beta @legacy
+export function serializeIdCompressor(compressor: IIdCompressor, withSession: false): SerializedIdCompressorWithNoSession;
 
 // @public
 export type SessionId = StableId & {

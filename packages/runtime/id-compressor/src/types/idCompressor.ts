@@ -75,6 +75,19 @@ import type {
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
+ *
+ * @privateremarks To be made internal in 2.100.0
+ *
+ * @deprecated `IIdCompressorCore` will be removed from the public API in 2.100.0.
+ *
+ * - If you use `serialize()`, use the free function
+ * {@link (serializeIdCompressor:1) | serializeIdCompressor(compressor, withSession)} instead.
+ *
+ * - `takeNextCreationRange`, `takeUnfinalizedCreationRange`, `finalizeCreationRange`, and
+ * `beginGhostSession` are internal runtime operations. External consumers should not call
+ * them directly. If you depend on these APIs, please file an issue on the FluidFramework
+ * repository describing your use case.
+ *
  * @legacy @beta
  */
 export interface IIdCompressorCore {
