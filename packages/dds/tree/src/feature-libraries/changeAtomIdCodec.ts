@@ -22,17 +22,23 @@ export function makeChangeAtomIdCodec(
 ): JsonCodecPart<ChangeAtomId, typeof EncodedChangeAtomId, ChangeEncodingContext> {
 	return {
 		encode(changeAtomId: ChangeAtomId, context: ChangeEncodingContext): EncodedChangeAtomId {
-			return changeAtomId.revision === undefined || changeAtomId.revision === context.revision
-				? changeAtomId.localId
-				: [changeAtomId.localId, revisionTagCodec.encode(changeAtomId.revision, context)];
+			const { localId, revision } = changeAtomId;
+			if (revision === undefined || revision === context.revision) {
+				return localId;
+			}
+
+			return [localId, revisionTagCodec.encode(revision, context)];
 		},
 		decode(changeAtomId: EncodedChangeAtomId, context: ChangeEncodingContext): ChangeAtomId {
-			return Array.isArray(changeAtomId)
-				? {
-						localId: changeAtomId[0],
-						revision: revisionTagCodec.decode(changeAtomId[1], context),
-					}
-				: { localId: changeAtomId, revision: context.revision };
+			if (Array.isArray(changeAtomId)) {
+				const [localId, encodedRevision] = changeAtomId;
+				return {
+					localId,
+					revision: revisionTagCodec.decode(encodedRevision, context),
+				};
+			}
+
+			return { localId: changeAtomId, revision: context.revision };
 		},
 		encodedSchema: EncodedChangeAtomId,
 	};

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type JsonCodecPart, makeCodecFamily, type ICodecFamily } from "../../codec/index.js";
+import { type ICodecFamily, type JsonCodecPart, makeCodecFamily } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	RevisionTag,
@@ -13,16 +13,17 @@ import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 
 import { makeV2Codec } from "./sequenceFieldCodecV2.js";
 import { makeV3Codec } from "./sequenceFieldCodecV3.js";
-import type { Changeset, MarkList } from "./types.js";
+import type { MarkList } from "./types.js";
 
-export const sequenceFieldChangeCodecFactory = (
+export function sequenceFieldChangeCodecFactory(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
-): ICodecFamily<MarkList, FieldChangeEncodingContext> =>
-	makeCodecFamily<Changeset, FieldChangeEncodingContext>([
+): ICodecFamily<MarkList, FieldChangeEncodingContext> {
+	return makeCodecFamily<MarkList, FieldChangeEncodingContext>([
 		[2, makeV2Codec(revisionTagCodec)],
 		[3, makeV3Codec(revisionTagCodec)],
 	]);
+}
