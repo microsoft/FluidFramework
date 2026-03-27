@@ -59,6 +59,7 @@ import {
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
+	deltaFieldMapHasVisibleChanges,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1339,14 +1340,23 @@ export class TreeCheckout implements ITreeCheckout {
 		const headCommit = this.#transaction.activeBranch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
+			// The inverse may be rebased over newer commits which (despite being present in the history)
+			// have no net effect on the document state (e.g. an edit plus its undo).
+			// In that case, a no-change constraint should not be violated during rebase.
+			const diff = diffHistories(
+				this.changeFamily.rebaser,
+				commitToRevert,
+				headCommit,
+				this.mintRevisionTag,
+			);
+			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
+
 			change = tagChange(
-				rebaseChange(
-					this.changeFamily.rebaser,
-					change,
-					commitToRevert,
-					headCommit,
-					this.mintRevisionTag,
-				).change,
+rebaseChangeOverChanges(
+this.changeFamily.rebaser,
+change,
+[diff],
+),
 				revisionForInvert,
 			);
 		}
@@ -1709,4 +1719,17 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 		isStableId(change.originatorId) &&
 		change.change !== undefined
 	);
+}
+
+function sharedTreeChangeHasVisibleChanges(change: SharedTreeChange): boolean {
+	for (const inner of change.changes) {
+		if (inner.type === "schema") {
+			return true;
+		}
+		const delta = intoDelta(tagChange(inner.innerChange, undefined));
+		if (deltaFieldMapHasVisibleChanges(delta.fields)) {
+			return true;
+		}
+	}
+	return false;
 }
