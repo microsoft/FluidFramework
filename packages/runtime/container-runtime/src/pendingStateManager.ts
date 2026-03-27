@@ -144,6 +144,8 @@ export interface IRuntimeStateHandler {
 	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
+	/** Set the derived batchId for the ID allocation batch before replay flushes it. */
+	setIdAllocationBatchId(batchId: string): void;
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
