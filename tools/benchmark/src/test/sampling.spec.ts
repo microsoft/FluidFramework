@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { getArrayStatistics } from "../sampling.js";
 
-describe("getArrayStatistics() function", () => {
+describe("getArrayStatistics", () => {
 	it("Throws if fractionOfSamplesToUse is out of range", () => {
 		const array = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 		assert.throws(

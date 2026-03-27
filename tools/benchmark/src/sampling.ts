@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { isInPerformanceTestingMode } from "./Configuration.js";
+
 /*
  * Common code for benchmarks which collect samples to approximate a value.
  * Typically this involves running the benchmark multiple times, and collecting many approximate values,
@@ -10,10 +12,7 @@
  */
 
 /**
- * Contains the samples of all measurements we track for a given benchmark (a test which was potentially iterated
- * several times). Each property is an array and all should be the same length, which is the number of iterations
- * done during the benchmark.
- * @public
+ * Statistics computed from a set of numeric samples.
  */
 export interface Stats {
 	/**
@@ -50,6 +49,16 @@ export interface Stats {
 	 * Variance.
 	 */
 	readonly variance: number;
+
+	/**
+	 * Maximum value in the sample.
+	 */
+	readonly max: number;
+
+	/**
+	 * Minimum value in the sample.
+	 */
+	readonly min: number;
 }
 
 /**
@@ -94,13 +103,10 @@ const tTable = {
  * Compute statistics for an array of numbers.
  * This assumes the data is a sample taken from an infinite population and thus reports sample variance.
  *
- * @param array - List of numbers for which to compute the statistics.
- * @param fractionOfSamplesToUse - Percentage of samples to use to get the statistics. The samples at the extremes
- * (lowest, highest) are the ones that get discarded. If an odd number of samples need to be discarded, 1 more sample
- * is discarded from the higher end than the lower end.
- *
- * @remarks
- * This outputs the same object that the Benchmark.js library does.
+ * @param array - Array of numbers for which to compute the statistics.
+ * @param fractionOfSamplesToUse - Fraction of samples to use. The samples at the extremes
+ * (lowest and highest) are discarded. If an odd number of samples must be discarded, one extra
+ * is dropped from the high end.
  */
 export function getArrayStatistics(array: number[], fractionOfSamplesToUse: number = 1): Stats {
 	if (fractionOfSamplesToUse < 0.1 || fractionOfSamplesToUse > 1) {
@@ -133,7 +139,7 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 	}
 	mean /= n;
 
-	// We want the the sample variance, not population variance (since the dataset is only a subset of the infinite population of possible samples).
+	// We want the sample variance, not population variance (since the dataset is only a subset of the infinite population of possible samples).
 	// Therefore there is additional variance due to how the population is sampled which is accounted for by using `n - 1` here,
 	// See https://en.wikipedia.org/wiki/Variance#Population_variance_and_sample_variance.
 	const variance = finalSamples.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / (n - 1);
@@ -143,7 +149,7 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 	const propName = df === 0 ? "1" : df.toString();
 	const critical = (tTable[propName] as number) ?? tTable.infinity;
 	const moe = sem * critical; // Margin of Error
-	const rme = (moe / Math.abs(mean)) * 100; // Relative Margin of Error
+	const marginOfErrorPercent = (moe / Math.abs(mean)) * 100; // Relative Margin of Error
 
 	return {
 		arithmeticMean: mean,
@@ -152,6 +158,15 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 		marginOfError: moe,
 		standardErrorOfMean: sem,
 		samples: finalSamples,
-		marginOfErrorPercent: rme,
+		marginOfErrorPercent,
+		max,
+		min,
 	};
+}
+
+export function brandMeasurementNameForMode(name: string): string {
+	if (isInPerformanceTestingMode) {
+		return name;
+	}
+	return `${name} (Inaccurate: not in Performance Testing Mode. Set --perfMode flag to enable accurate measurements.)`;
 }

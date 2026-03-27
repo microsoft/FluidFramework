@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/server-services-client";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
-import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
 import {
