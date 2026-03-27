@@ -12,8 +12,6 @@
 export {
 	buildFunc,
 	exposeMethodsSymbol,
-	FunctionWrapper,
-	type ArgsTuple,
 	type ExposedMethods,
 	type Arg,
 	type FunctionDef,
@@ -24,7 +22,6 @@ export {
 
 export {
 	exposePropertiesSymbol,
-	PropertyDef,
 	type ExposedProperties,
 	type IExposedProperties,
 } from "./propertyBinding.js";

@@ -8,7 +8,6 @@ import type { TreeNodeSchema } from "@fluidframework/tree";
 import { NodeKind } from "@fluidframework/tree";
 import {
 	exposeMethodsSymbol,
-	FunctionWrapper,
 	type Arg,
 	type Ctor,
 	type ExposedMethods,
@@ -17,6 +16,23 @@ import {
 	type MethodKeys,
 	type TypeFactoryType,
 } from "@fluidframework/tree-agent-types/internal";
+
+/**
+ * A class that implements the FunctionDef interface.
+ * @internal
+ */
+export class FunctionWrapper
+	implements FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>
+{
+	public constructor(
+		public readonly name: string,
+		public readonly description: string | undefined,
+		public readonly args: readonly Arg[],
+		// eslint-disable-next-line @rushstack/no-new-null
+		public readonly rest: TypeFactoryType | null,
+		public readonly returns: TypeFactoryType,
+	) {}
+}
 
 /**
  * A type that represents an object schema class.

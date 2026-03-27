@@ -7,7 +7,6 @@
 import type { TreeNodeSchema } from "@fluidframework/tree";
 import {
 	exposePropertiesSymbol,
-	PropertyDef,
 	isTypeFactoryType,
 	type Ctor,
 	type ExposedProperties,
@@ -16,6 +15,31 @@ import {
 } from "@fluidframework/tree-agent-types/internal";
 
 import type { BindableSchema } from "./methodBinding.js";
+
+/**
+ * A property definition class that describes the structure of the property
+ * @internal
+ */
+export class PropertyDef {
+	public constructor(
+		/**
+		 * The name of the property.
+		 */
+		public readonly name: string,
+		/**
+		 * Optional description of the property.
+		 */
+		public readonly description: string | undefined,
+		/**
+		 * The schema defining the property's type.
+		 */
+		public readonly schema: TypeFactoryType,
+		/**
+		 * Whether the property is readonly.
+		 */
+		public readonly readOnly: boolean,
+	) {}
+}
 
 class ExposedPropertiesI implements ExposedProperties {
 	private readonly properties: Record<string, PropertyDef> = {};

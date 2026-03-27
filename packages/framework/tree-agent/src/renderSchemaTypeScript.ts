@@ -15,15 +15,14 @@ import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal"
 import type { SimpleLeafNodeSchema } from "@fluidframework/tree/internal";
 import {
 	isTypeFactoryType,
-	type FunctionWrapper,
-	type PropertyDef,
 	type TypeFactoryOptional,
 	type TypeFactoryType,
 } from "@fluidframework/tree-agent-types/internal";
 
-import type { BindableSchema } from "./methodBinding.js";
+import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { fluidHandleTypeName } from "./prompt.js";
+import type { PropertyDef } from "./propertyBinding.js";
 import { getExposedProperties } from "./propertyBinding.js";
 import { renderTypeFactoryTypeScript } from "./renderTypeFactoryTypeScript.js";
 import {

@@ -11,9 +11,6 @@ type: T
 ];
 
 // @alpha
-export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
-
-// @alpha
 export function buildFunc<const Return extends TypeFactoryType, const Args extends readonly Arg[], const Rest extends TypeFactoryType | null = null>(def: {
     description?: string;
     returns: Return;
@@ -69,19 +66,6 @@ export function isTypeFactoryType(value: unknown): value is TypeFactoryType;
 export type MethodKeys<T> = {
     [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
 };
-
-// @alpha
-export class PropertyDef {
-    constructor(
-    name: string,
-    description: string | undefined,
-    schema: TypeFactoryType,
-    readOnly: boolean);
-    readonly description: string | undefined;
-    readonly name: string;
-    readonly readOnly: boolean;
-    readonly schema: TypeFactoryType;
-}
 
 // @alpha
 export const typeFactory: {

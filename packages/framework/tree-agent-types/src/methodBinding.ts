@@ -58,33 +58,6 @@ export interface FunctionDef<
 }
 
 /**
- * A class that implements the FunctionDef interface.
- * @internal
- */
-export class FunctionWrapper
-	implements FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>
-{
-	public constructor(
-		public readonly name: string,
-		public readonly description: string | undefined,
-		public readonly args: readonly Arg[],
-		// eslint-disable-next-line @rushstack/no-new-null
-		public readonly rest: TypeFactoryType | null,
-		public readonly returns: TypeFactoryType,
-	) {}
-}
-
-/**
- * A utility type that extracts the argument types from a function definition.
- * @alpha
- */
-export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg]
-	? [Single[1]]
-	: T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]]
-		? [Head[1], ...ArgsTuple<Tail>]
-		: never;
-
-/**
  * A utility function to build a function definition.
  * @alpha
  */

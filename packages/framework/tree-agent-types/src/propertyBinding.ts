@@ -17,31 +17,6 @@ export const exposePropertiesSymbol: unique symbol = Symbol.for(
 );
 
 /**
- * A property definition class that describes the structure of the property
- * @alpha
- */
-export class PropertyDef {
-	public constructor(
-		/**
-		 * The name of the property.
-		 */
-		public readonly name: string,
-		/**
-		 * Optional description of the property.
-		 */
-		public readonly description: string | undefined,
-		/**
-		 * The schema defining the property's type.
-		 */
-		public readonly schema: TypeFactoryType,
-		/**
-		 * Whether the property is readonly.
-		 */
-		public readonly readOnly: boolean,
-	) {}
-}
-
-/**
  * An interface for exposing properties of schema classes to an agent.
  * @alpha
  */
