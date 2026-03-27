@@ -11,7 +11,7 @@ import {
 	type SimpleClient,
 	type IBubble,
 } from "@fluid-example/bubblebench-common";
-import type { Change, SharedTree } from "@fluid-experimental/tree";
+import type { Change, ISharedTree } from "@fluid-experimental/tree";
 
 import { type TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
 
@@ -30,7 +30,7 @@ export class AppState implements IAppState {
 	private readonly deferredChanges: Change[] = [];
 
 	constructor(
-		private readonly tree: SharedTree,
+		private readonly tree: ISharedTree,
 		private _width: number,
 		private _height: number,
 		numBubbles: number,
