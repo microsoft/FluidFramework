@@ -19,7 +19,6 @@ import {
 
 /**
  * A class that implements the FunctionDef interface.
- * @internal
  */
 export class FunctionWrapper
 	implements FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>
