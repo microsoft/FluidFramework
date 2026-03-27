@@ -14,11 +14,16 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "@fluidframework/tree/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	exposePropertiesSymbol,
+	type ExposedMethods,
+	type ExposedProperties,
+} from "@fluidframework/tree-agent-types/alpha";
 
 import type { TreeView } from "../api.js";
-import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { fluidHandleTypeName, getPrompt } from "../prompt.js";
-import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
 import { typeFactory as tf } from "../treeAgentTypes.js";
 

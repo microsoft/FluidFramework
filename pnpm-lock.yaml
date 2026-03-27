@@ -12122,6 +12122,9 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
+      '@fluidframework/tree-agent-types':
+        specifier: workspace:~
+        version: link:../tree-agent-types
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -12225,6 +12228,9 @@ importers:
       '@fluidframework/tree-agent':
         specifier: workspace:~
         version: link:../tree-agent
+      '@fluidframework/tree-agent-types':
+        specifier: workspace:~
+        version: link:../tree-agent-types
       '@langchain/core':
         specifier: ^0.3.80
         version: 0.3.80(openai@5.12.2(ws@8.19.0)(zod@3.25.76))
@@ -12347,6 +12353,79 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ~20.19.30
+        version: 20.19.30
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      concurrently:
+        specifier: ^9.2.1
+        version: 9.2.1
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      eslint:
+        specifier: catalog:eslint
+        version: 9.39.1(jiti@2.6.1)
+      eslint-config-prettier:
+        specifier: catalog:eslint
+        version: 10.1.8(eslint@9.39.1(jiti@2.6.1))
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      mocha:
+        specifier: ^11.7.5
+        version: 11.7.5
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@11.7.5)
+      prettier:
+        specifier: ~3.6.2
+        version: 3.6.2
+      rimraf:
+        specifier: ^6.1.3
+        version: 6.1.3
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  packages/framework/tree-agent-types:
+    dependencies:
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.18.2
+        version: 0.18.2
+      '@biomejs/biome':
+        specifier: ~2.4.5
+        version: 2.4.5
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: catalog:buildTools
+        version: 0.64.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: catalog:buildTools
+        version: 0.64.0(@types/node@20.19.30)
+      '@fluidframework/eslint-config-fluid':
+        specifier: link:../../../common/build/eslint-config-fluid
+        version: link:../../../common/build/eslint-config-fluid
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)

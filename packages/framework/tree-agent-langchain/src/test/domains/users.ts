@@ -4,13 +4,13 @@
  */
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { typeFactory as tf } from "@fluidframework/tree-agent/alpha";
 import {
 	buildFunc,
 	exposeMethodsSymbol,
 	type ExposedMethods,
 	type IExposedMethods,
-	typeFactory as tf,
-} from "@fluidframework/tree-agent/alpha";
+} from "@fluidframework/tree-agent-types/alpha";
 
 // eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
