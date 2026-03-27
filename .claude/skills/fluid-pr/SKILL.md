@@ -6,11 +6,16 @@ description: Use when creating a pull request in the Fluid Framework repo. Compo
 <required>
 *CRITICAL* Add the following steps to your Todo list using TodoWrite:
 
-1. Confirm you are NOT on `main` or any release branch. If you are, stop and ask the user.
-2. Compose the PR title following Fluid Framework conventions.
-3. Compose the PR body following the official template.
-4. Present the proposed title and body to the user and ask: "Does this look right? Should I push and create the PR?"
-5. On confirmation: push the branch and create the PR with `gh pr create`.
+1. Confirm you are NOT on `main` or any release branch. If you are, stop and tell the user: you cannot create a PR from a protected branch — they need to create or switch to a feature branch first.
+2. Verify that the `origin` remote does not point to `microsoft/FluidFramework`. If it does, stop and tell the user: pushing a branch directly to the main repo is not allowed — they should push to their fork instead.
+3. Compose the PR title following Fluid Framework conventions.
+4. Compose the PR body following the official template.
+5. Print the proposed title and body as text, then immediately use the `AskUserQuestion` tool to let the user choose what to do next. Use these exact options:
+   - "Create PR" — Push the branch and open the pull request
+   - "Create draft PR" — Push the branch and open a draft pull request
+   - "Edit" — Revise the title or body before creating
+   - "Cancel" — Don't create a PR
+6. If the user picks "Edit", apply their edits and re-present (go back to step 5). If "Create PR" or "Create draft PR", push and create accordingly. If "Cancel", stop.
 </required>
 
 # PR Title Conventions
@@ -46,7 +51,7 @@ Short imperative or noun-phrase description
 
 **Never use** the `[bump]` prefix — that is reserved for automated bot PRs.
 
-If the title alone fully describes the change, the `## Description` body section can be omitted — but this is rare. Most changes warrant a Description section.
+Always include a `## Description` section, even if it is brief and somewhat redundant with the title.
 
 # PR Body Template
 
@@ -57,18 +62,37 @@ Read `.github/pull_request_template.md` from the repo root and use it as the sta
 ## Notes on body sections
 
 - **`## Description`**: Focus on *why* and *impact*, not just what lines changed. For bug fixes, include repro steps or a test that demonstrates the fix.
-- **`## Breaking Changes`**: Only include when a change removes or alters public API surface in a way that requires consumer migration. Link the wiki page.
+- **`## Breaking Changes`**: Only include when a change removes or alters public API surface or behavior in a way that requires consumer action (like migration or build-time updates). Link the wiki page.
 - **`## Reviewer Guidance`**: Always include the wiki link line. Add content if you have specific asks; delete the placeholder bullets if you don't. If design questions are unresolved, mark the PR as a draft.
-- **Azure DevOps work items**: Reference inline in the body as `AB#NNNNN` if applicable. No dedicated section needed.
+- **Azure DevOps work items**: Reference inline in the body as `AB#<item-id>` if applicable (e.g. `AB#12345`). No dedicated section needed.
 
 # Pushing and Creating the PR
+
+Before pushing, verify that `origin` does not point to `microsoft/FluidFramework`. Run:
+
+```bash
+git remote get-url origin
+```
+
+If the URL contains `microsoft/FluidFramework`, **stop** — pushing a branch directly to the main repo is almost certainly not intended. Tell the user they likely need to push to their fork instead. Do not proceed.
+
+Once the checks in steps 1–2 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 5. This is the only point where the skill asks the user a question.
 
 ```bash
 # Push branch (first time)
 git push -u origin <feature-branch>
 
-# Create PR
+# Create PR (option 1)
 gh pr create \
+  --title "<title>" \
+  --body "$(cat <<'EOF'
+<body>
+EOF
+)"
+
+# Create draft PR (option 2) — add the --draft flag
+gh pr create \
+  --draft \
   --title "<title>" \
   --body "$(cat <<'EOF'
 <body>
