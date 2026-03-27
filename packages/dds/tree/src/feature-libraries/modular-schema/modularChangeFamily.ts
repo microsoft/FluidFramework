@@ -944,14 +944,9 @@ export class ModularChangeFamily
 		);
 
 		let noChangeConstraint = change.noChangeConstraint;
-		if (noChangeConstraint !== undefined) {
-			if (!noChangeConstraint.violated && ignoreNoChangeViolation !== true) {
-				noChangeConstraint = { violated: true };
-				constraintState.violationCount += 1;
-			} else if (noChangeConstraint.violated && ignoreNoChangeViolation === true) {
-				noChangeConstraint = { violated: false };
-				constraintState.violationCount -= 1;
-			}
+		if (noChangeConstraint !== undefined && !noChangeConstraint.violated && ignoreNoChangeViolation !== true) {
+			noChangeConstraint = { violated: true };
+			constraintState.violationCount += 1;
 		}
 
 		this.updateConstraintsForFields(
