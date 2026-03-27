@@ -306,7 +306,7 @@ export interface KernelArgs {
 	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
