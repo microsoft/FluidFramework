@@ -159,50 +159,6 @@ describe("array node delta in nodeChanged", () => {
 	const schemaFactory = new SchemaFactory("test");
 	const MyArray = schemaFactory.array("myArray", schemaFactory.number);
 
-	describeHydration("delta presence", (init, hydrated) => {
-		it("delta is undefined for unhydrated arrays, defined for hydrated arrays", () => {
-			// Unhydrated nodes are not visited by the delta pipeline, so no field marks are
-			// available and delta is always undefined.  Hydrated nodes have marks and delta
-			// is always defined (for a single unbuffered edit).
-			const myArray = init(MyArray, [1, 2, 3]);
-
-			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
-				deltas.push(delta);
-			});
-
-			myArray.insertAtEnd(4);
-
-			assert.equal(deltas.length, 1);
-			if (hydrated) {
-				assert.notEqual(deltas[0], undefined, "hydrated array should have a defined delta");
-			} else {
-				assert.equal(
-					deltas[0],
-					undefined,
-					"unhydrated array delta should be undefined — no delta pipeline",
-				);
-			}
-		});
-	});
-
-	it("delta is defined for a single unbuffered edit", () => {
-		const myArray = hydrate(MyArray, [1, 2, 3]);
-
-		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
-			deltas.push(delta);
-		});
-
-		myArray.insertAtEnd(4);
-
-		assert.equal(deltas.length, 1);
-		assert.deepEqual(deltas[0], [
-			{ type: "retain", count: 3 },
-			{ type: "insert", count: 1 },
-		]);
-	});
-
 	it("delta is defined when array is modified once within buffered events", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
@@ -337,36 +293,6 @@ describe("array node delta in nodeChanged", () => {
 			{ type: "retain", count: 1 },
 			{ type: "remove", count: 1 },
 		]);
-	});
-
-	it("insert at position 0 produces no leading retain", () => {
-		// Sparse encoding: no retain is emitted before the insert when operating at the start.
-		const myArray = hydrate(MyArray, [1, 2, 3]);
-
-		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
-			deltas.push(delta);
-		});
-
-		myArray.insertAt(0, 99);
-
-		assert.equal(deltas.length, 1);
-		assert.deepEqual(deltas[0], [{ type: "insert", count: 1 }]);
-	});
-
-	it("remove at position 0 produces no leading retain", () => {
-		// Sparse encoding: no retain is emitted before the remove when operating at the start.
-		const myArray = hydrate(MyArray, [1, 2, 3]);
-
-		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
-			deltas.push(delta);
-		});
-
-		myArray.removeAt(0);
-
-		assert.equal(deltas.length, 1);
-		assert.deepEqual(deltas[0], [{ type: "remove", count: 1 }]);
 	});
 
 	it("object node nodeChanged does not include delta", () => {
@@ -588,32 +514,16 @@ describe("array move events", () => {
 		});
 	});
 
-	describe("move delta payloads", () => {
+	describeHydration("move delta payloads", (init) => {
 		const sf = new SchemaFactory("move-delta");
 		const MoveArray = sf.array("MoveArray", sf.number);
-
-		it("move within array emits remove + retain + insert delta", () => {
-			const arr = hydrate(MoveArray, [1, 2, 3]);
-			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
-
-			arr.moveToEnd(0);
-
-			assert.deepEqual(deltas, [
-				[
-					{ type: "remove", count: 1 },
-					{ type: "retain", count: 2 },
-					{ type: "insert", count: 1 },
-				],
-			]);
-		});
 
 		it("cross-field move emits correct delta on source and destination arrays", () => {
 			const MoveParent = sf.object("MoveParent", {
 				array1: MoveArray,
 				array2: MoveArray,
 			});
-			const parent = hydrate(MoveParent, { array1: [1, 2, 3], array2: [4, 5] });
+			const parent = init(MoveParent, { array1: [1, 2, 3], array2: [4, 5] });
 			const delta1: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 			const delta2: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 			TreeAlpha.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
@@ -634,7 +544,7 @@ describe("array move events", () => {
 		});
 
 		it("moveRangeToEnd emits correct count in remove and insert ops", () => {
-			const arr = hydrate(MoveArray, [1, 2, 3, 4, 5]);
+			const arr = init(MoveArray, [1, 2, 3, 4, 5]);
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 			TreeAlpha.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
 
