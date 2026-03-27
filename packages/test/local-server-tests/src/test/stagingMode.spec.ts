@@ -32,6 +32,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import {
 	asLegacyAlpha,
 	type IContainerRuntimeBase,
+	type StageControlsAlpha,
 	type StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -61,11 +62,20 @@ class DataObjectWithStagingMode extends DataObject {
 			: DataObjectWithStagingMode.instanceCount++;
 
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	private _rehydratedStageControls: StageControlsAlpha | undefined;
 	get DataObjectWithStagingMode(): this {
 		return this;
 	}
 	get containerRuntime(): IContainerRuntimeBase {
 		return this.context.containerRuntime;
+	}
+
+	public get rehydratedStageControls(): StageControlsAlpha | undefined {
+		return this._rehydratedStageControls;
+	}
+
+	public setRehydratedStageControls(controls: StageControlsAlpha | undefined): void {
+		this._rehydratedStageControls = controls;
 	}
 
 	private generateCompressedId(): SessionSpaceCompressedId {
@@ -168,7 +178,9 @@ const runtimeFactory: IRuntimeFactory = {
 		const runtimeOptions: IContainerRuntimeOptions = {
 			enableRuntimeIdCompressor: "on",
 		};
-		const { runtime } = await loadContainerRuntimeAlpha({
+		// eslint-disable-next-line prefer-const -- assigned after loadContainerRuntimeAlpha returns
+		let pendingStageControls: StageControlsAlpha | undefined;
+		const { runtime, stageControls } = await loadContainerRuntimeAlpha({
 			context,
 			existing,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
@@ -181,9 +193,18 @@ const runtimeFactory: IRuntimeFactory = {
 				}
 				const root = await rt.getAliasedDataStoreEntryPoint("default");
 				assert(root !== undefined, "default must exist");
-				return root.get() as FluidObject;
+				const entryPoint = await root.get();
+				const maybe = entryPoint as FluidObject<DataObjectWithStagingMode> | undefined;
+				if (
+					maybe?.DataObjectWithStagingMode !== undefined &&
+					pendingStageControls !== undefined
+				) {
+					maybe.DataObjectWithStagingMode.setRehydratedStageControls(pendingStageControls);
+				}
+				return entryPoint;
 			},
 		});
+		pendingStageControls = stageControls;
 		return runtime;
 	},
 };
@@ -764,6 +785,24 @@ describe("Staging Mode", () => {
 				originalData,
 				"Rehydrated container should have pending DDS",
 			);
+
+			// Commit the staged changes and verify a fresh container sees them
+			const stageControls = rehydratedDataObject.rehydratedStageControls;
+			assert(stageControls !== undefined, "rehydrated stageControls must exist");
+			stageControls.commitChanges();
+
+			const rehydrated = {
+				container: rehydratedContainer,
+				dataObject: rehydratedDataObject,
+			};
+			await waitForSave({ rehydrated, loaded: clients.loaded });
+
+			const verifyData = await clients.loaded.dataObject.enumerateDataWithHandlesResolved();
+			assert.deepEqual(
+				verifyData,
+				originalData,
+				"Fresh container should see committed data after rehydration",
+			);
 		});
 
 		it("rehydrates transitively referenced pending datastores", async () => {
@@ -823,6 +862,24 @@ describe("Staging Mode", () => {
 				rehydratedData,
 				originalData,
 				"Rehydrated container should have both transitively referenced datastores",
+			);
+
+			// Commit and verify a fresh container sees the transitive datastores
+			const stageControls = rehydratedDataObject.rehydratedStageControls;
+			assert(stageControls !== undefined, "rehydrated stageControls must exist");
+			stageControls.commitChanges();
+
+			const rehydrated = {
+				container: rehydratedContainer,
+				dataObject: rehydratedDataObject,
+			};
+			await waitForSave({ rehydrated, loaded: clients.loaded });
+
+			const verifyData = await clients.loaded.dataObject.enumerateDataWithHandlesResolved();
+			assert.deepEqual(
+				verifyData,
+				originalData,
+				"Fresh container should see both transitively referenced datastores after commit",
 			);
 		});
 
@@ -889,6 +946,24 @@ describe("Staging Mode", () => {
 				originalData,
 				"Rehydrated container should have handle to pending datastore",
 			);
+
+			// Commit and verify a fresh container sees the pending datastore
+			const stageControls = rehydratedDataObject.rehydratedStageControls;
+			assert(stageControls !== undefined, "rehydrated stageControls must exist");
+			stageControls.commitChanges();
+
+			const rehydrated = {
+				container: rehydratedContainer,
+				dataObject: rehydratedDataObject,
+			};
+			await waitForSave({ rehydrated, loaded: clients.loaded });
+
+			const verifyData = await clients.loaded.dataObject.enumerateDataWithHandlesResolved();
+			assert.deepEqual(
+				verifyData,
+				originalData,
+				"Fresh container should see pending datastore after commit",
+			);
 		});
 		it("rehydrates pending DDS added to remote datastore in staging mode", async () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -931,6 +1006,24 @@ describe("Staging Mode", () => {
 				rehydratedData,
 				originalData,
 				"Rehydrated container should have pending DDS in remote datastore",
+			);
+
+			// Commit and verify a fresh container sees the pending DDS
+			const stageControls = rehydratedDataObject.rehydratedStageControls;
+			assert(stageControls !== undefined, "rehydrated stageControls must exist");
+			stageControls.commitChanges();
+
+			const rehydrated = {
+				container: rehydratedContainer,
+				dataObject: rehydratedDataObject,
+			};
+			await waitForSave({ rehydrated, original: clients.original });
+
+			const verifyData = await clients.original.dataObject.enumerateDataWithHandlesResolved();
+			assert.deepEqual(
+				verifyData,
+				originalData,
+				"Fresh container should see pending DDS in remote datastore after commit",
 			);
 		});
 	});
