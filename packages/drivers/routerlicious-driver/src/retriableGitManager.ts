@@ -11,15 +11,15 @@ import type {
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { IWholeFlatSnapshot } from "./contracts.js";
-import { IR11sResponse } from "./restWrapper.js";
-import { IGitManager } from "./storageContracts.js";
+import type { IWholeFlatSnapshot } from "./contracts.js";
+import type { IR11sResponse } from "./restWrapper.js";
+import type { IGitManager } from "./storageContracts.js";
 
 export class RetriableGitManager implements IGitManager {
 	constructor(

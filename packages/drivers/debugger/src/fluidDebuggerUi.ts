@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IVersion,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -150,7 +150,7 @@ export class DebuggerUI {
 			typeof window !== "object" ||
 			window === null ||
 			typeof window.document !== "object" ||
-			window.document == null
+			window.document === null
 		) {
 			console.log("Can't create debugger window - not running in browser!");
 			return null;
@@ -218,16 +218,16 @@ export class DebuggerUI {
 			false,
 		);
 
-		this.selector = doc.getElementById("selector") as HTMLSelectElement;
+		this.selector = doc.querySelector("#selector") as HTMLSelectElement;
 
-		const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
-		buttonVers.onclick = () => {
+		const buttonVers = doc.querySelector("#buttonVers") as HTMLDivElement;
+		buttonVers.addEventListener("click", () => {
 			const index = this.selector!.selectedIndex;
 			// TODO Why are we non null asserting here
 			controller.onVersionSelection(this.versions[index]!);
-		};
+		});
 
-		const fileSnapshot = doc.getElementById("file") as HTMLInputElement;
+		const fileSnapshot = doc.querySelector("#file") as HTMLInputElement;
 		fileSnapshot.addEventListener(
 			"change",
 			() => {
@@ -240,11 +240,11 @@ export class DebuggerUI {
 			false,
 		);
 
-		const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
-		const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
+		const opDownloadButton = doc.querySelector("#downloadOps") as HTMLElement;
+		const anonymizeCheckbox = doc.querySelector("#anonymize") as HTMLInputElement;
 		this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
 
-		this.versionText = doc.getElementById("versionText") as HTMLDivElement;
+		this.versionText = doc.querySelector("#versionText") as HTMLDivElement;
 		this.versionText.textContent = "Fetching snapshots, please wait...";
 
 		controller.connectToUi(this);
@@ -269,9 +269,9 @@ export class DebuggerUI {
 			for (const version of versions) {
 				const option = document.createElement("option");
 				option.text =
-					version.date !== undefined
-						? `id = ${version.id},  time = ${version.date}`
-						: `id = ${version.id}`;
+					version.date === undefined
+						? `id = ${version.id}`
+						: `id = ${version.id},  time = ${version.date}`;
 				this.selector.add(option);
 			}
 		}
@@ -299,23 +299,23 @@ export class DebuggerUI {
 		doc.write(debuggerWindowHtml2);
 		doc.close();
 
-		this.lastOpText = doc.getElementById("lastOp") as HTMLDivElement;
-		this.text1 = doc.getElementById("text1") as HTMLDivElement;
-		this.text2 = doc.getElementById("text2") as HTMLDivElement;
-		this.text3 = doc.getElementById("text3") as HTMLDivElement;
+		this.lastOpText = doc.querySelector("#lastOp") as HTMLDivElement;
+		this.text1 = doc.querySelector("#text1") as HTMLDivElement;
+		this.text2 = doc.querySelector("#text2") as HTMLDivElement;
+		this.text3 = doc.querySelector("#text3") as HTMLDivElement;
 
-		const steps = doc.getElementById("steps") as HTMLInputElement;
-		this.buttonOps = doc.getElementById("buttonOps") as HTMLButtonElement;
+		const steps = doc.querySelector("#steps") as HTMLInputElement;
+		this.buttonOps = doc.querySelector("#buttonOps") as HTMLButtonElement;
 		this.buttonOps.disabled = true;
-		this.buttonOps.onclick = () => {
+		this.buttonOps.addEventListener("click", () => {
 			this.controller.onOpButtonClick(Number(steps.value));
-		};
+		});
 
-		this.versionText = doc.getElementById("versionText") as HTMLDivElement;
+		this.versionText = doc.querySelector("#versionText") as HTMLDivElement;
 		this.versionText.textContent = text;
 
-		const opDownloadButton = doc.getElementById("downloadOps") as HTMLElement;
-		const anonymizeCheckbox = doc.getElementById("anonymize") as HTMLInputElement;
+		const opDownloadButton = doc.querySelector("#downloadOps") as HTMLElement;
+		const anonymizeCheckbox = doc.querySelector("#anonymize") as HTMLInputElement;
 		this.attachDownloadOpsListener(opDownloadButton, anonymizeCheckbox);
 	}
 
@@ -361,10 +361,10 @@ export class DebuggerUI {
 		element.setAttribute("download", filename);
 
 		element.style.display = "none";
-		document.body.appendChild(element);
+		document.body.append(element);
 
 		element.click();
 
-		document.body.removeChild(element);
+		element.remove();
 	}
 }

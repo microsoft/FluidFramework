@@ -5,14 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { ISession } from "@fluidframework/server-services-client";
-import {
-	PerformanceEvent,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISession } from "@fluidframework/server-services-client";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
-import { RouterliciousOrdererRestWrapper } from "./restWrapper.js";
+import type { RouterliciousOrdererRestWrapper } from "./restWrapper.js";
 import { getDiscoveredFluidResolvedUrl } from "./urlUtils.js";
 
 /**
