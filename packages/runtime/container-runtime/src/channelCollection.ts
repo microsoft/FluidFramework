@@ -60,7 +60,6 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
-	RemoteFluidObjectHandle,
 	RequestParser,
 	RuntimeHeaders,
 	SummaryTreeBuilder,
@@ -321,15 +320,18 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
 
 /**
  * Recursively walks an object tree and replaces any {@link @fluidframework/runtime-utils#ISerializedHandle}
- * objects with {@link RemoteFluidObjectHandle} instances bound to the given routeContext.
+ * objects using the provided factory function.
  * Shallow-clones on mutation to avoid mutating the input. Returns the original input if no handles are found.
  */
-function replaceSerializedHandles(input: unknown, routeContext: IFluidHandleContext): unknown {
+function replaceSerializedHandles(
+	input: unknown,
+	handleFactory: (url: string, payloadPending: boolean) => IFluidHandleInternal,
+): unknown {
 	if (input === null || input === undefined || typeof input !== "object") {
 		return input;
 	}
 	if (isSerializedHandle(input)) {
-		return new RemoteFluidObjectHandle(input.url, routeContext, input.payloadPending === true);
+		return handleFactory(input.url, input.payloadPending === true);
 	}
 	if (isFluidHandle(input)) {
 		return input;
@@ -339,7 +341,7 @@ function replaceSerializedHandles(input: unknown, routeContext: IFluidHandleCont
 	for (const key of Object.keys(record)) {
 		const value: unknown = record[key];
 		if (value !== null && value !== undefined && typeof value === "object") {
-			const replaced = replaceSerializedHandles(value, routeContext);
+			const replaced = replaceSerializedHandles(value, handleFactory);
 			if (replaced !== value) {
 				clone ??= Array.isArray(input)
 					? ([...(input as unknown[])] as unknown as Record<string, unknown>)
@@ -421,6 +423,42 @@ export class ChannelCollection
 			};
 		},
 	};
+
+	/**
+	 * Creates a handle for a serialized handle found in a stashed op.
+	 * Unlike RemoteFluidObjectHandle, these handles have a working attachGraph() that
+	 * triggers makeDataStoreLocallyVisible for the referenced datastore, ensuring that
+	 * when staging mode commits and ops are resubmitted, the datastore gets an Attach op.
+	 */
+	private createStashedHandle(url: string): IFluidHandleInternal {
+		// Extract the top-level datastore ID from the path (e.g., "/datastoreId/ddsId" → "datastoreId")
+		const datastoreId = (url.startsWith("/") ? url.slice(1) : url).split("/")[0];
+		const routeContext: IFluidHandleContext = {
+			get IFluidHandleContext(): IFluidHandleContext {
+				return this;
+			},
+			absolutePath: url,
+			routeContext: this.stashedOpHandleContext,
+			isAttached: false,
+			attachGraph: () => {
+				if (this.contexts.isNotBound(datastoreId)) {
+					this.makeDataStoreLocallyVisible(datastoreId);
+				}
+			},
+			resolveHandle: async (request: IRequest): Promise<IResponse> => {
+				return this.stashedOpHandleContext.resolveHandle(request);
+			},
+		};
+		return new FluidObjectHandle(
+			new LazyPromise(async () => {
+				const response = await this.stashedOpHandleContext.resolveHandle({ url });
+				assert(response.status === 200, "handle must resolve");
+				return response.value as FluidObject;
+			}),
+			"",
+			routeContext,
+		);
+	}
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
@@ -953,11 +991,12 @@ export class ChannelCollection
 			return undefined;
 		}
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
-		// Handles must resolve to unbound/detached datastore contexts in this.contexts
-		// that aren't yet bound/remoted, so replace them using stashedOpHandleContext.
+		// Replace serialized handles with FluidObjectHandle instances that:
+		// 1. Resolve via stashedOpHandleContext (which can reach unbound datastores)
+		// 2. Have attachGraph() that properly triggers makeDataStoreLocallyVisible
 		const contentsWithHandles = replaceSerializedHandles(
 			envelope.contents,
-			this.stashedOpHandleContext,
+			(url: string, _payloadPending: boolean) => this.createStashedHandle(url),
 		);
 		return context.applyStashedOp(contentsWithHandles);
 	}
