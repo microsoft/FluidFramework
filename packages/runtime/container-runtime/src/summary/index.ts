@@ -44,11 +44,9 @@ export {
 	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
 export {
-	type IOrderedClientCollection,
 	type IOrderedClientElection,
 	type ISerializedElection,
 	type ITrackedClient,
-	OrderedClientCollection,
 	OrderedClientElection,
 } from "./orderedClientElection.js";
 export {

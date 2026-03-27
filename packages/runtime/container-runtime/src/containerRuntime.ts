@@ -303,7 +303,6 @@ import {
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
-	OrderedClientCollection,
 	OrderedClientElection,
 	recentBatchInfoBlobName,
 	RetriableSummaryError,
@@ -2279,14 +2278,10 @@ export class ContainerRuntime
 				logger: this.baseLogger,
 				namespace: "OrderedClientElection",
 			});
-			const orderedClientCollection = new OrderedClientCollection(
+			const orderedClientElectionForSummarizer = new OrderedClientElection(
 				orderedClientLogger,
 				this.innerDeltaManager,
 				this._quorum,
-			);
-			const orderedClientElectionForSummarizer = new OrderedClientElection(
-				orderedClientLogger,
-				orderedClientCollection,
 				this.electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
 				SummarizerClientElection.isClientEligible,
 				this.mc.config.getBoolean(
