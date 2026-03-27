@@ -16854,9 +16854,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../telemetry-utils
-      isomorphic-fetch:
-        specifier: ^3.0.0
-        version: 3.0.0(encoding@0.1.13)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -16885,9 +16882,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
-      '@types/isomorphic-fetch':
-        specifier: ^0.0.39
-        version: 0.0.39
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -19901,9 +19895,6 @@ packages:
     resolution: {integrity: sha512-5heqtZMvQ4nXARY0o8rc8cjkJjct2ScM12yCJ/h731S9He93a2cv+kAhwPCNwTKDfNH9gjRfLG4VpAEYJU0/gQ==}
     peerDependencies:
       ioredis: '>=5'
-
-  '@types/isomorphic-fetch@0.0.39':
-    resolution: {integrity: sha512-I0gou/ZdA1vMG7t7gMzL7VYu2xAKU78rW9U1l10MI0nn77pEHq3tQqHQ8hMmXdMpBlkxZOorjI4sO594Z3kKJw==}
 
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
@@ -32985,8 +32976,6 @@ snapshots:
   '@types/ioredis-mock@8.2.6(ioredis@5.6.1)':
     dependencies:
       ioredis: 5.6.1
-
-  '@types/isomorphic-fetch@0.0.39': {}
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
