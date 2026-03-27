@@ -29,6 +29,7 @@ export {
 	inCursorNode,
 	CursorMarker,
 	isCursor,
+	forEachNodeSubsequence,
 } from "./cursor.js";
 export type {
 	ProtoNodes,
