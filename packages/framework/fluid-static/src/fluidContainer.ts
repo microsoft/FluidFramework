@@ -341,7 +341,10 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	}
 
 	public get attachState(): AttachState {
-		return this.container.attachState;
+		// attachState can be undefined on IContainer while loading, but FluidContainer is only
+		// created after loading completes, so attachState is always defined here.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.container.attachState!;
 	}
 
 	public get disposed(): boolean {
