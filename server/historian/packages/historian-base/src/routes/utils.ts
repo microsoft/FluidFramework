@@ -366,11 +366,7 @@ export function createRouteContext(
 	restTenantThrottlers: Map<string, IThrottler>,
 ): IHistorianRouteContext {
 	const router: Router = Router();
-	const rawMaxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
-	const maxTokenLifetimeSec: number | undefined =
-		typeof rawMaxTokenLifetimeSec === "number" && Number.isFinite(rawMaxTokenLifetimeSec)
-			? rawMaxTokenLifetimeSec
-			: undefined;
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec") as number | undefined;
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
