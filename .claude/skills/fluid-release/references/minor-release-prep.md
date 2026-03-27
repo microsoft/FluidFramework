@@ -77,13 +77,28 @@ pnpm flub generate releaseNotes -g client -t minor --outFile RELEASE_NOTES/<VERS
 pnpm flub generate changelog -g client
 ```
 
-Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR. Must merge before the version bump PR.
+Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR (as draft, assigned to the release runner via `--assignee @me`). Must merge before the version bump PR.
 
-### If changeset edits are needed after generation
+### Announce merge freeze
 
-If feedback requires changeset wording changes:
+After opening the release notes PR, remind the user to post an announcement in the **"Fluid Framework All" Teams channel** telling the team to **avoid merging PRs to main until the version bump PR is merged**. Merges between the release notes PR and the version bump can cause conflicts or include unintended changes in the release. In autonomous mode, include this reminder in the phase completion report. Never auto-post to Teams.
+
+### If changesets change after release notes are merged
+
+If a release-blocking PR merges after the release notes PR (adding a new changeset), or if changeset wording changes are needed:
+
+1. Wait for the new PR to merge into `main`
+2. Create a new branch from `main`
+3. **Revert** the release notes commit (the one from the release notes PR that deleted changesets and generated changelogs)
+4. Regenerate release notes and changelogs — this will now include the new changeset(s)
+5. Commit, push, and open a PR
+6. Merge this PR before the version bump PR
+
+This revert-and-regenerate approach ensures all changes are captured in the release notes. Do not skip this — incomplete release notes cause confusion for users tracking what's in each release.
+
+If the changeset change is only a wording fix (no new changesets), an alternative lighter approach:
 1. Make changeset edits in a **separate PR**, merge it
-2. Regenerate release notes and changelogs
+2. Then revert and regenerate as above
 3. This ensures changeset changes have a commit in main (since changesets are deleted during changelog generation)
 
 ## Step 4: Bump Main to Next Version
@@ -114,6 +129,23 @@ pnpm install --no-frozen-lockfile
 
 Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
 
+**Never enable auto-merge on the version bump PR.** Always merge it manually. If a release-blocking PR lands with a new changeset between the release notes merge and the bump merge, you need to revert and regenerate release notes first. Auto-merge creates a race condition where the bump lands before you notice the new changeset, forcing a more complex recovery (downgrading the version on the release branch instead of simply cutting the branch from the right commit).
+
+## Pre-merge Gate: Blocker Re-check
+
+**Perform this check after Steps 1-4 are complete but before merging any PRs or proceeding to Step 5.**
+
+Re-check for release blockers. Late-breaking issues can appear between when the PRs were created and when they're ready to merge.
+
+```bash
+gh issue list --repo microsoft/FluidFramework --label release-blocking --state open
+gh pr list --repo microsoft/FluidFramework --label release-blocking --state open
+```
+
+If blockers are found, **stop and report them**. Do not merge the release-prep PRs until blockers are resolved.
+
+Also explicitly ask the user to check ADO for release-blocking issues and confirm there are none. Do not skip this — ADO issues cannot be queried via CLI and are easy to miss.
+
 ## Step 5: Create the Release Branch
 
 **CI note:** This step requires elevated permissions to create `release/` branches. In CI, skip this step and report it as a required human action.
@@ -127,7 +159,7 @@ gh issue list --repo microsoft/FluidFramework --label release-blocking --state o
 gh pr list --repo microsoft/FluidFramework --label release-blocking --state open
 ```
 
-If blockers are found, **stop and report them**. Do not create the release branch. Also remind the user to check ADO for release-blocking issues.
+If blockers are found, **stop and report them**. Do not create the release branch. Also explicitly ask the user to check ADO for release-blocking issues and confirm there are none before proceeding.
 
 **Autonomous mode:** In autonomous mode, the PRs have just been created but not yet merged. Stop here and report:
 

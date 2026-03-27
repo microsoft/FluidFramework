@@ -104,7 +104,7 @@ These steps require human action and should be clearly reported in CI workflow l
 1. **Merge release-prep PRs** in the correct order (version bump last) after CI creates them
 2. **Create the release branch** (Step 5) — requires elevated permissions on the `release/` branch prefix
 3. **Queue the ADO release build** (Step 6) — choose the "release" option in ADO
-4. **Announce the release** in the Fluid Framework "General" Teams channel
+4. **Announce the release** in the "Fluid Framework All" Teams channel
 
 ## Key Context
 
@@ -167,7 +167,9 @@ gh issue list --repo microsoft/FluidFramework --label release-blocking --state o
 gh pr list --repo microsoft/FluidFramework --label release-blocking --state open
 ```
 
-If either command returns results, **stop and report the blockers to the user**. In autonomous mode, do not proceed past this check if blockers exist. Also remind the user to check ADO for release-blocking issues (cannot be queried via CLI).
+If either command returns results, **stop and report the blockers to the user**. In autonomous mode, do not proceed past this check if blockers exist.
+
+**ADO blocker check (mandatory):** Release-blocking issues may also exist in ADO, which cannot be queried via CLI. You **must** explicitly ask the user to check ADO for release-blocking issues and confirm there are none before proceeding. Do not skip this step or bury it in a reminder — wait for the user's confirmation. In CI/autonomous mode, this is a hard stop: log the requirement and do not continue until a human has confirmed there are no ADO blockers.
 
 **Blocker handling (autonomous and CI):** If the agent is blocked at any point (release blockers, missing release tag, npm packages not available, permission errors, or any other issue that prevents progress), open a GitHub issue in `microsoft/FluidFramework` describing what was completed, what failed, and what human action is needed. Use the title format `Release <VERSION>: <brief description>` and label it with `release-blocking`. Include the exact commands remaining so a human can finish using the skill in interactive mode. Then exit gracefully.
 
@@ -182,6 +184,8 @@ For version bumps, use `flub bump` locally or CI-safe alternatives in CI (see [C
 ### PR Conventions
 
 Use the `build:` conventional commit prefix for all release PR titles (e.g., `build: tag untagged asserts for 2.90.0 release`).
+
+**All release PRs must be opened as drafts** and assigned to the person running the release. This signals to the team that these are release-infrastructure PRs, not regular feature work. Use `gh pr create --draft --assignee @me`.
 
 ### Checkpoints
 
