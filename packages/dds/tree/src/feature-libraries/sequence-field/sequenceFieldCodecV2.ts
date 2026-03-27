@@ -10,12 +10,14 @@ import {
 	DiscriminatedUnionDispatcher,
 	type DiscriminatedUnionLibrary,
 	type IJsonCodec,
+	type JsonCodecPart,
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	ChangesetLocalId,
 	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -43,10 +45,9 @@ import {
 import { isNoopMark, normalizeCellRename } from "./utils.js";
 
 export function makeV2CodecHelpers(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): SequenceCodecHelpers<MarkEffect, Encoded.MarkEffect> {
@@ -261,10 +262,9 @@ export function makeV2CodecHelpers(
 }
 
 export function makeV2Codec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
