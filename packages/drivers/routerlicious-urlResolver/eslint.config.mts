@@ -10,8 +10,6 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/consistent-type-exports": "off",
-			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
@@ -27,11 +25,7 @@ const config: Linter.Config[] = [
 					"ignore": [{}],
 				},
 			],
-			"unicorn/no-useless-promise-resolve-reject": "off",
-			"unicorn/prefer-export-from": "off",
 			"unicorn/prefer-node-protocol": "off",
-			"unicorn/prefer-set-has": "off",
-			"unicorn/prefer-string-slice": "off",
 		},
 	},
 	{

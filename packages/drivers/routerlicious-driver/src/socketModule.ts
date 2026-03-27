@@ -5,5 +5,5 @@
 
 import { io } from "socket.io-client";
 
-// Import is required for side-effects.
+// eslint-disable-next-line unicorn/prefer-export-from -- Import is required for side-effects.
 export const SocketIOClientStatic = io;

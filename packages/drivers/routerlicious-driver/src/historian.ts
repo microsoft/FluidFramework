@@ -12,16 +12,16 @@ import type {
 	IGitCreateTreeParams,
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 
-import { IWholeFlatSnapshot } from "./contracts.js";
+import type { IWholeFlatSnapshot } from "./contracts.js";
 import type { QueryStringType } from "./queryStringUtils.js";
-import { IR11sResponse } from "./restWrapper.js";
-import { RestWrapper } from "./restWrapperBase.js";
-import { IHistorian } from "./storageContracts.js";
+import type { IR11sResponse } from "./restWrapper.js";
+import type { RestWrapper } from "./restWrapperBase.js";
+import type { IHistorian } from "./storageContracts.js";
 
 export interface ICredentials {
 	user: string;
@@ -104,7 +104,7 @@ export class Historian implements IHistorian {
 		return this.restWrapper.post<IWriteSummaryResponse>(
 			`/git/summaries`,
 			summary,
-			this.getQueryString(initial !== undefined ? { initial } : undefined),
+			this.getQueryString(initial === undefined ? undefined : { initial }),
 		);
 	}
 

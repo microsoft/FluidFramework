@@ -206,4 +206,11 @@ export const recommendedRules = {
 	"@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "separate-type-imports" }],
 
 	// #endregion
+
+	/**
+	 * Requires eslint-disable comments to include a description explaining why the rule is being disabled.
+	 *
+	 * Docs: {@link https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html}
+	 */
+	"@eslint-community/eslint-comments/require-description": "warn",
 } as const satisfies Linter.RulesRecord;

@@ -10,6 +10,7 @@ export {
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
+	loadContainerRuntimeAlpha,
 	type LoadContainerRuntimeParams,
 	agentSchedulerId,
 	ContainerRuntime,

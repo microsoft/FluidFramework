@@ -3,113 +3,126 @@
  * Licensed under the MIT License.
  */
 
-import type { Test } from "mocha";
-
-import type { Titled, MochaExclusiveOptions } from "../Configuration";
-import { isParentProcess, isInPerformanceTestingMode } from "../Configuration";
-import type { BenchmarkResult } from "../ResultTypes";
+import { isChildProcess } from "../Configuration.js";
+import {
+	isResultError,
+	parseBenchmarkResult,
+	type BenchmarkResult,
+	type CollectedData,
+} from "../reportTypes.js";
+import { captureResults } from "../benchmarkAuthoringUtilities.js";
 import { fail } from "../assert.js";
 
-import { emitResultsMocha } from "./runnerUtilities";
+/**
+ * Wrapper for the contents of a mocha test that supports running in a child process and emitting results to the mocha reporter.
+ */
+export async function supportParentProcess(
+	testFullTitle: string,
+	isParentProcess: boolean,
+	run: () => CollectedData | Promise<CollectedData>,
+): Promise<{ result: BenchmarkResult; exception?: Error }> {
+	const inner = isParentProcess ? async () => await runTestInChildProcess(testFullTitle) : run;
+	return captureResults(inner, isChildProcess ? "Child Process Duration" : undefined);
+}
 
 /**
- * This is a wrapper for Mocha's it function that can run the body in a child process,
- * and write status from the run to the reporter.
- *
- * @public
+ * Runs the specified test in a child process and returns the results.
+ * @remarks
+ * The provided test must write a {@link BenchmarkResult} to stdout.
+ * See {@link recordTestResult} which does this for child processes.
  */
-export function supportParentProcess<
-	TArgs extends MochaExclusiveOptions & Titled & { run: () => Promise<BenchmarkResult> },
->(args: TArgs): Test {
-	const itFunction = args.only === true ? it.only : it;
-	const test = itFunction(args.title, async () => {
-		if (isParentProcess) {
-			await emitResultsMocha(async () => {
-				try {
-					// Instead of running the benchmark in this process, create a new process.
-					// See {@link isParentProcess} for why.
-					// Launch new process, with:
-					// - mocha filter to run only this test.
-					// - --parentProcess flag removed.
-					// - --childProcess flag added (so data will be returned via stdout as json)
+async function runTestInChildProcess(testFullTitle: string): Promise<CollectedData> {
+	// Instead of running the benchmark in this process, create a new process.
+	// See {@link isParentProcess} for why.
+	// Launch new process, with:
+	// - mocha filter to run only this test.
+	// - --childProcess flag added (so data will be returned via stdout as json)
 
-					// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
-					const command = process.argv0 ?? fail("there must be a command");
+	// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
+	const command = process.argv0 ?? fail("there must be a command");
 
-					// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
-					// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
-					// put in mocha's --node-option flag.
-					const childArgs = [...process.execArgv, ...process.argv.slice(1)];
-					const processFlagIndex = childArgs.indexOf("--parentProcess");
-					childArgs[processFlagIndex] = "--childProcess";
+	const reusedArgs = process.argv.slice(1);
 
-					// Remove arguments for any existing test filters.
-					for (const flag of ["--grep", "--fgrep"]) {
-						const flagIndex = childArgs.indexOf(flag);
-						if (flagIndex > 0) {
-							// Remove the flag, and the argument after it (all these flags take one argument)
-							childArgs.splice(flagIndex, 2);
-						}
-					}
+	// reusedArgs[0] should be the script for mocha thats currently running (.../node_modules/mocha/lib/cli/cli.js)
+	// But this is not the case for mocha parallel mode due to how it sets up its workers.
+	// This is one of the main reasons mocha parallel mode is not currently supported here.
 
-					// Add test filter so child process only run the current test.
-					childArgs.push("--fgrep", test.fullTitle());
+	// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
+	// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
+	// put in mocha's --node-option flag.
+	const childArgs = [...process.execArgv, ...reusedArgs];
+	childArgs.push("--childProcess");
 
-					// Remove arguments for debugging if they're present; in order to debug child processes we need
-					// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
-					// of scope for now.
-					let inspectArgIndex: number = -1;
-					while (
-						(inspectArgIndex = childArgs.findIndex((x) =>
-							x.match(/^(--inspect|--debug).*/),
-						)) >= 0
-					) {
-						childArgs.splice(inspectArgIndex, 1);
-					}
-
-					// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
-					const childProcess = await import("node:child_process");
-					const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
-
-					if (result.error) {
-						fail(`Child process reported an error: ${result.error.message}`);
-					}
-
-					if (result.stderr !== "") {
-						fail(`Child process logged errors: ${result.stderr}`);
-					}
-
-					// Find the json blob in the child's output.
-					const output =
-						result.stdout.split("\n").find((s) => s.startsWith("{")) ??
-						fail(`child process must output a json blob. Got:\n${result.stdout}`);
-
-					return { result: JSON.parse(output) as BenchmarkResult };
-				} catch (error) {
-					return {
-						result: { error: (error as Error).message },
-						exception: error as Error,
-					};
-				}
-			}, test);
-			return;
+	// Remove arguments for any existing test filters.
+	for (const flag of ["--grep", "--fgrep"]) {
+		const flagIndex = childArgs.indexOf(flag);
+		if (flagIndex > 0) {
+			// Remove the flag, and the argument after it (all these flags take one argument)
+			childArgs.splice(flagIndex, 2);
 		}
+	}
 
-		// Only emit results in perfMode
-		await (isInPerformanceTestingMode
-			? emitResultsMocha(
-					async () =>
-						args.run().then(
-							(result) => ({ result }),
-							(error) => ({
-								result: { error: (error as Error).message },
-								exception: error as Error,
-							}),
-						),
-					test,
-			  )
-			: // In non-perf mode, just run the function without emitting
-			  args.run());
-	});
-	return test;
+	// Add test filter so child process only run the current test.
+	childArgs.push("--fgrep", testFullTitle);
+
+	// Remove arguments for debugging if they're present; in order to debug child processes we need
+	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
+	// of scope for now.
+	let inspectArgIndex: number = -1;
+	while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
+		childArgs.splice(inspectArgIndex, 1);
+	}
+
+	// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
+	const childProcess = await import("node:child_process");
+	const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
+
+	// Find the BenchmarkResult in the child's output.
+	const output = result.stdout.split("\n").filter((s) => s.match(/^(\[.*\]|\{.*\})$/));
+
+	const throwChildProcessErrors = () => {
+		if (result.error) {
+			// If we did not find an error in the output, error if the child process reported other errors:
+			throw new Error(`Child process reported error: ${result.error.message}`);
+		}
+		if (result.stderr !== "") {
+			throw new Error(`Child process logged errors:\n${result.stderr}\n`);
+		}
+	};
+
+	if (output.length === 0) {
+		// Prioritize errors from child process over error that child process had no output
+		// since its likely that if such errors occurred, they caused the lack of output.
+		throwChildProcessErrors();
+		throw new Error(
+			`Child process must output a line with a json object or array. Got:\n${result.stdout}`,
+		);
+	}
+	if (output.length > 1) {
+		// Prioritize errors from child process over error that child process had invalid output
+		// since its likely that if such errors occurred, they caused the invalid output.
+		throwChildProcessErrors();
+		throw new Error(
+			`Child process must output a single json object or array. Found ${output.length}.
+This may be caused by there being multiple mocha tests with the same fullTitle: ${JSON.stringify(
+				testFullTitle,
+			)}
+Such tests are not supported by --parentProcess since there is no way to filter the child process to the correct test.
+The full output from the run was:
+${result.stdout}`,
+		);
+	}
+
+	const fromChild = parseBenchmarkResult(output[0]);
+	if (isResultError(fromChild)) {
+		// Caught by captureResults and converted back into error data.
+		// Prioritize this over ChildProcessErrors, since if we have structured error data, its likely that everything worked correctly except a test failed,
+		// and the output is much cleaner if we just propagate this error as if it were thrown in this process.
+		throw new Error(fromChild.error);
+	}
+
+	// Last chance to report errors from the child process even if the data looked good.
+	throwChildProcessErrors();
+
+	return fromChild;
 }
