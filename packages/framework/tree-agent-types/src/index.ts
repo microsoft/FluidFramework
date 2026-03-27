@@ -52,4 +52,5 @@ export type {
 	TypeFactoryReadonly,
 	TypeFactoryFunction,
 	TypeFactoryFunctionParameter,
+	TypeFactoryInstanceOf,
 } from "./treeAgentTypes.js";

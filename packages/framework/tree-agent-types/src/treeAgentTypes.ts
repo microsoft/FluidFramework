@@ -382,12 +382,26 @@ export interface TypeFactoryFunction extends TypeFactoryType {
 }
 
 /**
+ * Represents an instanceof type that references a schema class in the type factory system.
+ * @alpha
+ */
+export interface TypeFactoryInstanceOf extends TypeFactoryType {
+	/**
+	 * The kind of type this represents.
+	 */
+	readonly _kind: "instanceof";
+	/**
+	 * The schema class to reference.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly schema: new (
+		...args: any[]
+	) => unknown;
+}
+
+/**
  * Namespace containing type factory functions for building type definitions
  * that describe method signatures and property types to an LLM agent.
- *
- * @remarks
- * This namespace does not include `instanceOf` — that factory function requires
- * `@fluidframework/tree` types and is provided by `@fluidframework/tree-agent`.
  *
  * @internal
  */
@@ -571,5 +585,17 @@ export const typeFactory = {
 		return restParameter === undefined
 			? { _kind: "function", parameters, returnType }
 			: { _kind: "function", parameters, returnType, restParameter };
+	},
+
+	/**
+	 * Create an instanceOf type for a schema class.
+	 * @remarks
+	 * This is an untyped version. `@fluidframework/tree-agent` re-exports a
+	 * narrower override that constrains the schema to `ObjectNodeSchema`.
+	 * @internal
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	instanceOf(schema: new (...args: any[]) => unknown): TypeFactoryInstanceOf {
+		return { _kind: "instanceof", schema };
 	},
 };

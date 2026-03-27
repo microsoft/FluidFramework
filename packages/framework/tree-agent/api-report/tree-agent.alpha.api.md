@@ -171,12 +171,6 @@ export const typeFactory: {
 };
 
 // @alpha
-export interface TypeFactoryInstanceOf extends TypeFactoryType {
-    readonly _kind: "instanceof";
-    readonly schema: ObjectNodeSchema;
-}
-
-// @alpha
 export type ViewOrTree<TSchema extends ImplicitFieldSchema> = TreeView<TSchema> | (ReadableField<TSchema> & TreeNode);
 
 ```

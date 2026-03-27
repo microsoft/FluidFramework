@@ -19,9 +19,8 @@ import type {
 	TypeFactoryUnion,
 	TypeFactoryIntersection,
 	TypeFactoryFunction,
+	TypeFactoryInstanceOf,
 } from "@fluidframework/tree-agent-types/internal";
-
-import type { TypeFactoryInstanceOf } from "./treeAgentTypes.js";
 
 /**
  * Converts type factory type definitions into TypeScript declaration text.
@@ -152,7 +151,9 @@ export function renderTypeFactoryTypeScript(
 				return;
 			}
 			case "instanceof": {
-				append(getFriendlyName((type as TypeFactoryInstanceOf).schema));
+				append(
+					getFriendlyName((type as TypeFactoryInstanceOf).schema as unknown as TreeNodeSchema),
+				);
 				return;
 			}
 			default: {

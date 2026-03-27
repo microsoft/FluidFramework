@@ -95,6 +95,12 @@ export interface TypeFactoryFunction extends TypeFactoryType {
 export type TypeFactoryFunctionParameter = readonly [name: string, type: TypeFactoryType];
 
 // @alpha
+export interface TypeFactoryInstanceOf extends TypeFactoryType {
+    readonly _kind: "instanceof";
+    readonly schema: new (...args: any[]) => unknown;
+}
+
+// @alpha
 export interface TypeFactoryIntersection extends TypeFactoryType {
     readonly _kind: "intersection";
     readonly types: readonly TypeFactoryType[];

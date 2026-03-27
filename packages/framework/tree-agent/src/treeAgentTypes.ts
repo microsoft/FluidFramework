@@ -7,22 +7,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeNodeSchemaClass } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema } from "@fluidframework/tree/alpha";
 import { typeFactory as baseTypeFactory } from "@fluidframework/tree-agent-types/internal";
-import type { TypeFactoryType } from "@fluidframework/tree-agent-types/internal";
-
-/**
- * Represents an instanceof type that references a SharedTree schema class in the type factory system.
- * @alpha
- */
-export interface TypeFactoryInstanceOf extends TypeFactoryType {
-	/**
-	 * The kind of type this represents.
-	 */
-	readonly _kind: "instanceof";
-	/**
-	 * The SharedTree schema class to reference.
-	 */
-	readonly schema: ObjectNodeSchema;
-}
+import type { TypeFactoryInstanceOf } from "@fluidframework/tree-agent-types/internal";
 
 /**
  * Namespace containing type factory functions.
@@ -33,6 +18,8 @@ export const typeFactory = {
 
 	/**
 	 * Create an instanceOf type for a SharedTree schema class.
+	 * @remarks
+	 * This is a narrower override that constrains the schema to `ObjectNodeSchema`.
 	 * @alpha
 	 */
 	instanceOf<T extends TreeNodeSchemaClass>(schema: T): TypeFactoryInstanceOf {
@@ -42,10 +29,6 @@ export const typeFactory = {
 					`Pass a schema class that extends from an object schema (e.g., sf.object(...)), not primitive, array, or map schemas.`,
 			);
 		}
-		const instanceOfType: TypeFactoryInstanceOf = {
-			_kind: "instanceof",
-			schema,
-		};
-		return instanceOfType;
+		return { _kind: "instanceof", schema };
 	},
 };
