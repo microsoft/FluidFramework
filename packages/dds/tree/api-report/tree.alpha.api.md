@@ -1774,7 +1774,7 @@ export interface TreeIdentifierUtils {
 }
 
 // @alpha @sealed
-export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
+export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
     dispose(): void;
 }
 
@@ -1795,6 +1795,12 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
     keys(): IterableIterator<string>;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
+}
+
+// @alpha @sealed
+export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
+    delete(key: string): void;
+    set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
 }
 
 // @public @sealed

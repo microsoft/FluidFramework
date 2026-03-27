@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -150,6 +151,47 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
+}
+
+/**
+ * {@link TreeMapNode} with FluidReadonlyMap-based iteration.
+ *
+ * @remarks
+ * This is the same as {@link TreeMapNode} except that it extends FluidReadonlyMap
+ * instead of the built-in `ReadonlyMap`, insulating against breaking changes
+ * in TypeScript's standard library iterator types.
+ *
+ * @sealed @alpha
+ */
+export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
+	extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+		TreeNode {
+	/**
+	 * Adds or updates an entry in the map with a specified `key` and a `value`.
+	 *
+	 * @param key - The key of the element to add to the map.
+	 * @param value - The value of the element to add to the map.
+	 *
+	 * @remarks
+	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNodeAlpha.delete} with that key.
+	 */
+	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
+
+	/**
+	 * Removes the specified element from this map by its `key`.
+	 *
+	 * @remarks
+	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
+	 * deleted.
+	 *
+	 * @privateRemarks
+	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
+	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
+	 * is more likely to create issues / promote bad usage patterns than offer useful information.
+	 *
+	 * @param key - The key of the element to remove from the map.
+	 */
+	delete(key: string): void;
 }
 
 // TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.

@@ -27,6 +27,7 @@ export {
 	MapNodeSchema,
 	mapSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 } from "./map/index.js";
 
 export {
