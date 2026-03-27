@@ -1400,16 +1400,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	 * already-attached datastore may contain a not-yet-attached DDS created during staging.
 	 * In that case we need its attach summary to capture the pending DDS in pending local state.
 	 */
-	/**
-	 * Remote datastores normally cannot be attached. However, in staging mode an
-	 * already-attached datastore may contain a not-yet-attached DDS created during staging.
-	 * In that case we need its attach summary to capture the pending DDS in pending local state.
-	 */
-	/**
-	 * Remote datastores normally cannot be attached. However, in staging mode an
-	 * already-attached datastore may contain a not-yet-attached DDS created during staging.
-	 * In that case we need its attach summary to capture the pending DDS in pending local state.
-	 */
 	public override getAttachSummary(
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
