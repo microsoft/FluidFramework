@@ -899,10 +899,7 @@ export function toIdCompressorWithCore(
 	compressor: IIdCompressor,
 	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 ): IIdCompressor & IIdCompressorCore {
-	assert(
-		"serialize" in compressor,
-		"Expected compressor to implement IIdCompressorCore",
-	);
+	assert("serialize" in compressor, "Expected compressor to implement IIdCompressorCore");
 	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	return compressor as IIdCompressor & IIdCompressorCore;
 }
