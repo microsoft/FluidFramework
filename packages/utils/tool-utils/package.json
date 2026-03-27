@@ -113,7 +113,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@2.83.0",
+		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@2.91.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^10.0.10",
@@ -131,19 +131,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IResources": {
-				"backCompat": false
-			},
-			"Interface_IOdspTokenManagerCacheKey": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"TypeAlias_OdspTokenConfig": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "internal"
 	}
 }

@@ -241,7 +241,7 @@ module.exports = {
 		},
 		"syncpack lint-semver-ranges": {
 			inputGlobs: [
-				"syncpack.config.cjs",
+				".syncpackrc.yml",
 				"package.json",
 
 				...releaseGroupPackageJsonGlobs,
@@ -255,7 +255,7 @@ module.exports = {
 		},
 		"syncpack list-mismatches": {
 			inputGlobs: [
-				"syncpack.config.cjs",
+				".syncpackrc.yml",
 				"package.json",
 
 				...releaseGroupPackageJsonGlobs,
@@ -453,6 +453,7 @@ module.exports = {
 				"^build-tools/",
 				"^common/build/",
 				"^experimental/PropertyDDS/",
+				"^packages/framework/quill-react/",
 				"^tools/api-markdown-documenter/",
 			],
 			"npm-package-exports-field": [

@@ -50,7 +50,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
-		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.83.0",
+		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.91.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
