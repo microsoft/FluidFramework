@@ -137,9 +137,17 @@ class SharedObjectFromKernel<
 		// It's a follow-up to a pattern where the property (`minVersionForCollab`) existed on
 		// IFluidDataStoreRuntimeInternalConfig as optional, which allows us to avoid breaking changes to
 		// IFluidDataStoreRuntime by hiding internal members in a separate interface,
-		// but comes at the cost of less compile-time enforcement.
+        // but comes at the cost of less compile-time enforcement: there is no type-level guarantee that `runtime` is an instance
+		// of FluidDataStoreRuntime (for example, it could be a partial mock from a test). In the case where it is not,
+		// `minVersionForCollab` may be undefined and we have to assert that it is not undefined before using it.
+		//
+		// Note this may also happen if a version of the FluidDataStoreRuntime is used which does not have `minVersionForCollab`,
+		// but that should not be possible in production if the Runtime and Datastore layer versions are within the guaranteed
+		// compatibility window.
 		const minVersionForCollab: MinimumVersionForCollab = (runtime as FluidDataStoreRuntime)
 			.minVersionForCollab;
+
+		assert(minVersionForCollab !== undefined, "minVersionForCollab must be defined");
 
 		this.#kernelArgs = {
 			sharedObject: this,
