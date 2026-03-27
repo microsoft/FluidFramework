@@ -428,7 +428,7 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
- * Iterates over each node in the current field, invoking a callback for each.
+ * Iterates over a subrange of nodes in the current field, invoking a callback for each.
  *
  * @param cursor - cursor at a field whose nodes will be visited.
  * @param startIndex - index of first node to visit. Must be non-negative.
