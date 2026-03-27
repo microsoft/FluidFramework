@@ -60,9 +60,7 @@ steps:
     script: |
       set -eu -o pipefail
       echo "Using node $(node --version)"
-      PNPM_VERSION=$(node -e "const pkg = require('./package.json'); const m = pkg.packageManager?.match(/pnpm@([^+]+)/); if (m) console.log(m[1]); else { console.error('No pnpm packageManager in package.json'); process.exit(1); }")
-      echo "Installing pnpm@${PNPM_VERSION} from registry ${NPM_REGISTRY}"
-      npm install -g "pnpm@${PNPM_VERSION}" --registry "${NPM_REGISTRY}"
+      sudo corepack enable
       echo "Using pnpm $(pnpm -v)"
       # This ensures all subsequent tasks in this job will use the pnpm configuration set here.
       echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
@@ -80,6 +78,11 @@ steps:
   env:
     NPM_REGISTRY: ${{ parameters.primaryRegistry }}
     NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
+    # We should leverage the primary npm registry to install pnpm as well. However, ADO artifacts feeds do not implement
+    # the full npm registry API including a route that corepack uses to get package metadata--the version route here:
+    # https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
+    # Thus installing pnpm from an ADO feed using corepack is not possible at time of writing.
+    # COREPACK_NPM_REGISTRY: ${{ parameters.primaryRegistry }}
 
 # Authenticate to npm feed if required
 - task: npmAuthenticate@0

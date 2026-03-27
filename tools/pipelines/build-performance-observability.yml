@@ -98,9 +98,42 @@ extends:
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-          parameters:
-            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
+        - task: Bash@3
+          displayName: Configure npm registry
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              echo "registry=$(ado-feeds-primary-registry)" > .npmrc
+
+        - task: npmAuthenticate@0
+          displayName: Npm authenticate
+          retryCountOnTaskFailure: 1
+          inputs:
+            workingFile: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/.npmrc
+
+        - task: Bash@3
+          displayName: Install pnpm
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])")
+              npm install -g "$PNPM_VERSION" --userconfig "$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/.npmrc"
+
+        - task: Bash@3
+          displayName: Configure pnpm
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              echo "Using pnpm $(pnpm -v)"
+              pnpm config set store-dir $(Pipeline.Workspace)/.pnpm-store
+              pnpm config set -g workspace-concurrency 0
+              pnpm config set registry "$(ado-feeds-primary-registry)"
 
         - task: Bash@3
           displayName: Install root dependencies
