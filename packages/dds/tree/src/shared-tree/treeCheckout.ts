@@ -1352,14 +1352,11 @@ export class TreeCheckout implements ITreeCheckout {
 			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
 
 			change = tagChange(
-				rebaseChange(
-					this.changeFamily.rebaser,
-					change,
-					commitToRevert,
-					headCommit,
-					this.mintRevisionTag,
-					ignoreNoChangeViolation,
-				).change,
+rebaseChangeOverChanges(
+this.changeFamily.rebaser,
+change,
+[diff],
+),
 				revisionForInvert,
 			);
 		}
