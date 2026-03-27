@@ -23,7 +23,7 @@ import {
 } from "../../util/index.js";
 import type {
 	ChunkReferenceId,
-	EncodedFieldBatch,
+	EncodedFieldBatchV2,
 	IncrementalEncoderDecoder,
 	IncrementalEncodingPolicy,
 	TreeChunk,
@@ -48,7 +48,7 @@ interface ChunkLoadProperties {
 	/**
 	 * The encoded contents of the chunk.
 	 */
-	readonly encodedContents: EncodedFieldBatch;
+	readonly encodedContents: EncodedFieldBatchV2;
 	/**
 	 * The path for this chunk's contents in the summary tree relative to the forest's summary tree.
 	 * This path is used to generate a summary handle for the chunk if it doesn't change between summaries.
@@ -263,7 +263,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				}
 				const chunkContents = (await args.readAndParseChunk(
 					chunkContentsPath,
-				)) as EncodedFieldBatch; // TODO: this should use a codec to validate the data instead of just type casting.
+				)) as EncodedFieldBatchV2; // TODO: this should use a codec to validate the data instead of just type casting.
 				this.loadedChunksMap.set(chunkReferenceId, {
 					encodedContents: chunkContents,
 					summaryPath: chunkSubTreePath,
@@ -336,7 +336,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public encodeIncrementalField(
 		cursor: ITreeCursorSynchronous,
-		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
 	): ChunkReferenceId[] {
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
 		const trackedSummaryProperties = this.requireTrackingSummary();
@@ -478,7 +478,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public decodeIncrementalChunk(
 		referenceId: ChunkReferenceId,
-		chunkDecoder: (encoded: EncodedFieldBatch) => TreeChunk,
+		chunkDecoder: (encoded: EncodedFieldBatchV2) => TreeChunk,
 	): TreeChunk {
 		const ChunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
 		assert(ChunkLoadProperties !== undefined, 0xc86 /* Encoded incremental chunk not found */);
