@@ -6,17 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import {
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
-	type IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import type { Test } from "mocha";
 
 import {
 	Column,
 	Row,
-	type UndoRedoManager,
-	type Table,
 	type TableBenchmarkOptions,
 	createTableTree,
 } from "../tablePerformanceTestUtilities.js";
@@ -42,50 +40,35 @@ function runBenchmark({
 	operation,
 	afterOperation,
 }: TableBenchmarkOptions): Test {
-	return benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			public readonly title = title;
+	return benchmarkIt({
+		title,
+		...benchmarkMemoryUse({
+			// logProcessedData: true,
+			// warmUpIterations: 4,
+			// keepIterations: 4,
+			enableAsyncGC: true,
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					const { table, undoRedoStack, cleanUp } = createTableTree({
+						tableSize,
+						initialCellValue,
+					});
+					beforeOperation?.(table, undoRedoStack);
+					await state.beforeAllocation();
+					operation(table, undoRedoStack);
 
-			private table: Table | undefined;
-			private undoRedoStack: UndoRedoManager | undefined;
-			private cleanUp: (() => void) | undefined;
+					await state.whileAllocated();
 
-			public async run(): Promise<void> {
-				assert(this.table !== undefined, "table is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
-				operation(this.table, this.undoRedoStack);
-			}
-
-			public beforeIteration(): void {
-				const { table, undoRedoStack, cleanUp } = createTableTree({
-					tableSize,
-					initialCellValue,
-				});
-				this.table = table;
-				this.undoRedoStack = undoRedoStack;
-				this.cleanUp = cleanUp;
-
-				beforeOperation?.(this.table, this.undoRedoStack);
-			}
-
-			public afterIteration(): void {
-				assert(this.table !== undefined, "table is not initialized");
-				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
-				assert(this.cleanUp !== undefined, "cleanUp is not initialized");
-
-				afterOperation?.(this.table, this.undoRedoStack);
-
-				this.cleanUp();
-				this.undoRedoStack = undefined;
-				this.cleanUp = undefined;
-			}
-		})(),
-	);
+					afterOperation?.(table, undoRedoStack);
+					cleanUp();
+				}
+			},
+		}),
+	});
 }
 
 describe("SharedTree table APIs memory usage", () => {
-	// When run as benchmarks, these tests are very slow.
-	// This should speed them up a little, and make them a little more production like for better data.
+	// This is more because these tests are so slow than to make the data more production like.
 	configureBenchmarkHooks();
 
 	// The value to be set in the cells of the tree.

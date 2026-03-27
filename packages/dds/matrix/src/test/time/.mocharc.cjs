@@ -8,10 +8,10 @@
  */
 
 module.exports = {
-	"fgrep": ["@Benchmark", "@ExecutionTime"],
+	"fgrep": ["@Benchmark", "@Duration"],
 	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
 	"recursive": true,
-	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
+	"reporter": "@fluid-tools/benchmark/dist/mocha/Reporter.js",
 	"require": ["@fluid-internal/mocha-test-setup"],
 	"spec": ["dist/test/time/**/*.spec.*js", "--perfMode"],
 	"timeout": "15000",

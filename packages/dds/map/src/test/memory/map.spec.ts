@@ -4,8 +4,8 @@
  */
 
 import {
-	type IMemoryTestObject,
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -39,18 +39,22 @@ describe("SharedMap memory usage", () => {
 		// See the comment at the top of the test suite for more details.
 	});
 
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			public readonly title = "Create empty map";
-			public readonly minSampleCount = 500;
-
-			private map: ISharedMap = createLocalMap("testMap");
-
-			public async run(): Promise<void> {
-				this.map = createLocalMap("testMap");
-			}
-		})(),
-	);
+	benchmarkIt({
+		title: "Create empty map",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const map = createLocalMap("testMap");
+						await state.whileAllocated();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
 		? [1000, 10_000, 100_000]
@@ -58,39 +62,43 @@ describe("SharedMap memory usage", () => {
 			[10];
 
 	for (const x of numbersOfEntriesForTests) {
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Add ${x} integers to a local map`;
-				private map: ISharedMap = createLocalMap("testMap");
-
-				public async run(): Promise<void> {
-					for (let i = 0; i < x; i++) {
-						this.map.set(i.toString().padStart(6, "0"), i);
+		benchmarkIt({
+			title: `Add ${x} integers to a local map`,
+			...benchmarkMemoryUse({
+				benchmarkFn: async (state) => {
+					while (state.continue()) {
+						await state.beforeAllocation();
+						{
+							const map = createLocalMap("testMap");
+							for (let i = 0; i < x; i++) {
+								map.set(i.toString().padStart(6, "0"), i);
+							}
+							await state.whileAllocated();
+						}
+						await state.afterDeallocation();
 					}
-				}
+				},
+			}),
+		});
 
-				public beforeIteration(): void {
-					this.map = createLocalMap("testMap");
-				}
-			})(),
-		);
-
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Add ${x} integers to a local map, clear it`;
-				private map: ISharedMap = createLocalMap("testMap");
-
-				public async run(): Promise<void> {
-					for (let i = 0; i < x; i++) {
-						this.map.set(i.toString().padStart(6, "0"), i);
+		benchmarkIt({
+			title: `Add ${x} integers to a local map, clear it`,
+			...benchmarkMemoryUse({
+				benchmarkFn: async (state) => {
+					while (state.continue()) {
+						await state.beforeAllocation();
+						{
+							const map = createLocalMap("testMap");
+							for (let i = 0; i < x; i++) {
+								map.set(i.toString().padStart(6, "0"), i);
+							}
+							map.clear();
+							await state.whileAllocated();
+						}
+						await state.afterDeallocation();
 					}
-					this.map.clear();
-				}
-
-				public beforeIteration(): void {
-					this.map = createLocalMap("testMap");
-				}
-			})(),
-		);
+				},
+			}),
+		});
 	}
 });

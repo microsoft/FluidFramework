@@ -92,29 +92,52 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		spec: process.env.MOCHA_SPEC ?? defaultSpec,
 	};
 
+	if (process.env.FLUID_TEST_PERF_MODE !== undefined) {
+		if (!process.env.SILENT_TEST_OUTPUT) {
+			console.log(`Running performance tests...`);
+		}
+
+		// Some perf tests are often quite slow, and we don't want to lose the data by hitting a timeout.
+		// This is 1000 seconds, so ~16 minutes.
+		// This can be overridden by setting FLUID_TEST_TIMEOUT to a different value if desired.
+		config["timeout"] = 1_000_000;
+
+		// If there is no filter specified, limit to benchmarks.
+		// If mocha allowed multiple filters to all be applied th further narrow results, we would do this unconditionally.
+		if (!(process.argv.includes("--fgrep") || process.argv.includes("--grep"))) {
+			config["fgrep"] = ["@Benchmark"];
+		}
+
+		config["reporter"] = "@fluid-tools/benchmark/dist/mocha/Reporter.js";
+		if (!process.argv.includes("--reporterOptions")) {
+			// If report options were not specified, default to:
+			config["reporterOptions"] = ["reportFile=./benchmarkOutput.json"];
+		}
+	} else {
+		const packageJson = require(`${packageDir}/package.json`);
+		config["reporter"] = `mocha-multi-reporters`;
+		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
+		const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
+		if (!process.env.SILENT_TEST_OUTPUT) {
+			console.log(
+				`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
+			);
+		}
+		const suiteName =
+			testReportPrefix !== undefined
+				? `${packageJson.name} - ${testReportPrefix}`
+				: packageJson.name;
+		config["reporter-options"] = [
+			`configFile=${path.join(
+				__dirname,
+				"test-config.json",
+			)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+		];
+	}
+
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
 		config["timeout"] = process.env.FLUID_TEST_TIMEOUT;
 	}
-
-	const packageJson = require(`${packageDir}/package.json`);
-	config["reporter"] = `mocha-multi-reporters`;
-	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
-	const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
-	if (!process.env.SILENT_TEST_OUTPUT) {
-		console.log(
-			`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
-		);
-	}
-	const suiteName =
-		testReportPrefix !== undefined
-			? `${packageJson.name} - ${testReportPrefix}`
-			: packageJson.name;
-	config["reporter-options"] = [
-		`configFile=${path.join(
-			__dirname,
-			"test-config.json",
-		)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
-	];
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {
 		config["forbid-only"] = true;

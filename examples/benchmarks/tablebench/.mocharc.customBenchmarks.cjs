@@ -16,6 +16,6 @@ module.exports = {
 	...baseConfig,
 	"fgrep": ["@CustomBenchmark"],
 	"recursive": true,
-	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
+	"reporter": "@fluid-tools/benchmark/dist/mocha/Reporter.js",
 	"reporterOptions": ["reportDir=.customBenchmarksOutput/"],
 };

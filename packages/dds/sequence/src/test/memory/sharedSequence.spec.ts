@@ -4,8 +4,8 @@
  */
 
 import {
-	type IMemoryTestObject,
-	benchmarkMemory,
+	benchmarkIt,
+	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 
@@ -30,18 +30,22 @@ describe("SharedSequence memory usage", () => {
 		// See the comment at the top of the test suite for more details.
 	});
 
-	benchmarkMemory(
-		new (class implements IMemoryTestObject {
-			title = "Create empty SharedSequence";
-			minSampleCount = 500;
-
-			segment = new SubSequence<number>([]);
-
-			async run() {
-				this.segment = new SubSequence<number>([]);
-			}
-		})(),
-	);
+	benchmarkIt({
+		title: "Create empty SharedSequence",
+		...benchmarkMemoryUse({
+			benchmarkFn: async (state) => {
+				while (state.continue()) {
+					await state.beforeAllocation();
+					{
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+						const segment = new SubSequence<number>([]);
+						await state.whileAllocated();
+					}
+					await state.afterDeallocation();
+				}
+			},
+		}),
+	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
 		? [100, 1000, 10_000]
@@ -49,52 +53,24 @@ describe("SharedSequence memory usage", () => {
 			[10];
 
 	for (const x of numbersOfEntriesForTests) {
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				title = `Append and remove ${x} subsequences`;
-				private segment = new SubSequence<number>([]);
-
-				async run() {
-					for (let i = 0; i < x; i++) {
-						this.segment.append(new SubSequence<number>([i]));
-						this.segment.removeRange(0, 1);
+		benchmarkIt({
+			title: `Append and remove ${x} subsequences`,
+			...benchmarkMemoryUse({
+				benchmarkFn: async (state) => {
+					while (state.continue()) {
+						await state.beforeAllocation();
+						{
+							const segment = new SubSequence<number>([]);
+							for (let i = 0; i < x; i++) {
+								segment.append(new SubSequence<number>([i]));
+								segment.removeRange(0, 1);
+							}
+							await state.whileAllocated();
+						}
+						await state.afterDeallocation();
 					}
-				}
-				beforeIteration() {
-					this.segment = new SubSequence<number>([]);
-				}
-			})(),
-		);
-
-		// NOTE: This test is commented out because SharedSequence does not exist
-		// as an implementable standalone datastructure. In order to implement the
-		// test for it, we need to define a SharedSequenceFactory and implement the
-		// various functions within it to instantiate and process the different
-		// datatypes within the Sequence. However, as we are depracating
-		// SharedObjectSequence and SharedNumberSequence, and SharedString has it's
-		// own performance tests, it makes little sense to make up and implement a
-		// ShareSequence standalone factory to benchmark performance as is. So we
-		// are leaving this test skipped over for now until there is a reason to
-		// invest more effort into benchmarking it's performance.
-		//
-		//  function createLocalSharedSequence(id: string) {
-		//     return new SharedSequence<number>(
-		//         new MockFluidDataStoreRuntime(),
-		//         id,
-		//         SharedStringFactory.Attributes,
-		//         SharedStringFactory.segmentFromSpec
-		//     );
-		// }
-		// benchmarkMemory.skip({
-		//     title: `Insert and remove ${x} subsequences`,
-		//     benchmarkFn: async () => {
-		//         const sharedSequence = createLocalSharedSequence("subsequence");
-		//         sharedSequence.insert(0, [1]);
-		//         for (let i = 0; i < x; i++) {
-		//             sharedSequence.insert(0, [i]);
-		//             sharedSequence.remove(0, 1);
-		//         }
-		//     },
-		// });
+				},
+			}),
+		});
 	}
 });
