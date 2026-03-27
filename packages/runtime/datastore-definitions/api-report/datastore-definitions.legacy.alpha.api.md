@@ -24,14 +24,6 @@ export interface IChannelAttributes {
 }
 
 // @beta @legacy
-export interface IChannelFactory<out TChannel = unknown> {
-    readonly attributes: IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TChannel & IChannel>;
-    readonly type: string;
-}
-
-// @beta @legacy
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
