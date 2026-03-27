@@ -26,10 +26,7 @@ export {
 	type IExposedProperties,
 } from "./propertyBinding.js";
 
-export {
-	typeFactory,
-	isTypeFactoryType,
-} from "./treeAgentTypes.js";
+export { typeFactory, isTypeFactoryType } from "./treeAgentTypes.js";
 
 export type {
 	TypeFactoryType,

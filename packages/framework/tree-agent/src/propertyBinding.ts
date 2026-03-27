@@ -18,7 +18,7 @@ import type { BindableSchema } from "./methodBinding.js";
 
 /**
  * A property definition class that describes the structure of the property
- * @internal
+ * @alpha
  */
 export class PropertyDef {
 	public constructor(

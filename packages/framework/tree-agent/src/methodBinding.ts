@@ -35,6 +35,16 @@ export class FunctionWrapper
 }
 
 /**
+ * A utility type that extracts the argument types from a function definition.
+ * @alpha
+ */
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg]
+	? [Single[1]]
+	: T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]]
+		? [Head[1], ...ArgsTuple<Tail>]
+		: never;
+
+/**
  * A type that represents an object schema class.
  * @alpha
  */

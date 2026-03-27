@@ -389,7 +389,7 @@ export interface TypeFactoryFunction extends TypeFactoryType {
  * This namespace does not include `instanceOf` — that factory function requires
  * `@fluidframework/tree` types and is provided by `@fluidframework/tree-agent`.
  *
- * @alpha
+ * @internal
  */
 export const typeFactory = {
 	/**

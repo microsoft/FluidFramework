@@ -68,30 +68,6 @@ export type MethodKeys<T> = {
 };
 
 // @alpha
-export const typeFactory: {
-    string(): TypeFactoryString;
-    number(): TypeFactoryNumber;
-    boolean(): TypeFactoryBoolean;
-    date(): TypeFactoryDate;
-    void(): TypeFactoryVoid;
-    undefined(): TypeFactoryUndefined;
-    null(): TypeFactoryNull;
-    unknown(): TypeFactoryUnknown;
-    array(element: TypeFactoryType): TypeFactoryArray;
-    promise(innerType: TypeFactoryType): TypeFactoryPromise;
-    object(shape: Record<string, TypeFactoryType>): TypeFactoryObject;
-    record(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryRecord;
-    map(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryMap;
-    tuple(items: readonly TypeFactoryType[], rest?: TypeFactoryType): TypeFactoryTuple;
-    union(options: readonly TypeFactoryType[]): TypeFactoryUnion;
-    intersection(types: readonly TypeFactoryType[]): TypeFactoryIntersection;
-    literal(value: string | number | boolean): TypeFactoryLiteral;
-    optional(innerType: TypeFactoryType): TypeFactoryOptional;
-    readonly(innerType: TypeFactoryType): TypeFactoryReadonly;
-    function(parameters: readonly TypeFactoryFunctionParameter[], returnType: TypeFactoryType, restParameter?: TypeFactoryFunctionParameter): TypeFactoryFunction;
-};
-
-// @alpha
 export interface TypeFactoryArray extends TypeFactoryType {
     readonly element: TypeFactoryType;
     readonly _kind: "array";

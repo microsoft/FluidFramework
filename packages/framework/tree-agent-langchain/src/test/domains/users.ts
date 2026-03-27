@@ -4,10 +4,10 @@
  */
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { typeFactory as tf } from "@fluidframework/tree-agent/alpha";
 import {
 	buildFunc,
 	exposeMethodsSymbol,
-	typeFactory as tf,
 	type ExposedMethods,
 	type IExposedMethods,
 } from "@fluidframework/tree-agent-types/alpha";

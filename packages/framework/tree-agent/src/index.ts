@@ -40,5 +40,5 @@ export type {
 	Context,
 } from "./api.js";
 export { llmDefault } from "./utils.js";
-export { type BindableSchema } from "./methodBinding.js";
+export { type BindableSchema, type ArgsTuple } from "./methodBinding.js";
 export { typeFactory, type TypeFactoryInstanceOf } from "./treeAgentTypes.js";
