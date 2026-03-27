@@ -242,6 +242,8 @@ function toSerializableForm(message: IPendingMessage): IPendingMessage & {
 		localOpMetadata: undefined,
 		runtimeOp: undefined,
 		stagedHandleCache: undefined,
+		// Clear staged flag: on rehydration, enterStagingMode() is called separately
+		// by loadContainerRuntimeAlpha, so these ops should not individually carry the staged flag.
 		batchInfo: {
 			...message.batchInfo,
 			staged: false,
