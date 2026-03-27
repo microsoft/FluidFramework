@@ -886,7 +886,7 @@ export function serializeIdCompressor(
  * @remarks
  * Compressors returned by `createIdCompressor` and `deserializeIdCompressor`
  * always implement both {@link IIdCompressor} and {@link IIdCompressorCore}, but their
- * return types are narrowed to {@link IIdCompressor} to keep {@link IIdCompressorCore}
+ * return types will be narrowed to {@link IIdCompressor} to keep {@link IIdCompressorCore}
  * out of the `@legacy` API surface. Internal consumers that need access to core
  * compressor operations (serialization, range management, etc.) should use this function.
  *
@@ -901,7 +901,7 @@ export function toIdCompressorWithCore(
 ): IIdCompressor & IIdCompressorCore {
 	assert(
 		"serialize" in compressor,
-		0xcd7 /* Expected compressor to implement IIdCompressorCore */,
+		"Expected compressor to implement IIdCompressorCore",
 	);
 	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	return compressor as IIdCompressor & IIdCompressorCore;
