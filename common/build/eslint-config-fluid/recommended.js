@@ -179,6 +179,13 @@ module.exports = {
 		 */
 		"@typescript-eslint/no-unsafe-return": "error",
 
+		/**
+		 * Requires eslint-disable comments to include a description explaining why the rule is being disabled.
+		 *
+		 * Docs: {@link https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html}
+		 */
+		"@eslint-community/eslint-comments/require-description": "warn",
+
 		// #region eslint-plugin-jsdoc rules
 
 		/**
@@ -186,6 +193,8 @@ module.exports = {
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
 		 */
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+		// #endregion
 
 		/**
 		 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
@@ -211,8 +220,6 @@ module.exports = {
 			"error",
 			{ fixStyle: "separate-type-imports" },
 		],
-
-		// #endregion
 	},
 	overrides: [
 		{
