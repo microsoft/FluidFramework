@@ -1569,17 +1569,14 @@ describe("Runtime", () => {
 				) =>
 					class MixinContainerRuntime extends Base {
 						public static async loadRuntime2(
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							params: any,
+							params: Parameters<typeof Base.loadRuntime2>[0],
 						): ReturnType<typeof Base.loadRuntime2> {
 							// Note: we're mutating the parameter object here, normally a no-no, but shouldn't be
 							// an issue in our tests.
-							/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 							params.containerRuntimeCtor =
 								params.containerRuntimeCtor ?? MixinContainerRuntime;
 							params.containerScope = params.containerScope ?? params.context.scope;
 							return Base.loadRuntime2(params);
-							/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 						}
 
 						public [methodName](): T {
