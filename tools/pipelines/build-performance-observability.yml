@@ -146,9 +146,31 @@ extends:
               set -eu -o pipefail
               pnpm install --workspace-root --frozen-lockfile
 
-        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-          parameters:
-            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
+        - task: Bash@3
+          name: InstallBuildTools
+          displayName: Install Fluid Build Tools (from repo)
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/build-tools
+            script: |
+              set -eu -o pipefail
+              pnpm i --frozen-lockfile
+              pnpm build:compile
+              cd packages/build-cli
+              npm link
+              echo "which flub: $(which flub)"
+
+        - task: Bash@3
+          name: BuildToolsInstallCheck
+          displayName: Check Build Tools Installation
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              echo "which flub: $(which flub)"
+              flub --help
+              flub commands
 
         # Collect build data, fetch timelines, and process into aggregated metrics
         - task: Bash@3
