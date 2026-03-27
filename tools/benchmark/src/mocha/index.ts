@@ -3,14 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { benchmark } from "./duration.js";
-export {
-	benchmarkMemory,
-	type IMemoryTestObject,
-	type MemoryTestObjectProps,
-} from "./memoryTestRunner";
-export {
-	benchmarkCustom,
-	type CustomBenchmarkOptions,
-	type IMeasurementReporter,
-} from "./customOutputRunner";
+export { benchmarkIt } from "./benchmarkIt.js";
