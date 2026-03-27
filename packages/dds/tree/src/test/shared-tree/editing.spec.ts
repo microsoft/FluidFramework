@@ -3440,7 +3440,7 @@ describe("Editing", () => {
 				unsubscribe();
 			});
 
-			it("Should not be violated when there are multiple reverts", () => {
+			it("Should not be violated when there are multiple inserts reverted", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
