@@ -31,6 +31,10 @@ trustPolicy: no-downgrade
 strictDepBuilds: true
 
 catalogs:
+  # Benchmark package
+  benchmark:
+    "@fluid-tools/benchmark": ^0.52.0
+
   # Build-tools packages
   buildTools:
     "@fluid-tools/build-cli": ^0.64.0
