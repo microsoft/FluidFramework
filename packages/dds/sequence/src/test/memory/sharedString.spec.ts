@@ -178,5 +178,5 @@ describe("SharedString memory usage", () => {
 				},
 			}),
 		});
-	});
+	}
 });
