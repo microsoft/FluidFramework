@@ -442,7 +442,7 @@ export function forEachNodeSubsequence<TCursor extends ITreeCursor = ITreeCursor
 	endIndex: number,
 	f: (cursor: TCursor) => void,
 ): void {
-	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
 
 	assert(startIndex >= 0, "invalid startIndex");
 	assert(endIndex >= startIndex, "invalid endIndex");
