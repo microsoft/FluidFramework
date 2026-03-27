@@ -3527,7 +3527,7 @@ describe("Editing", () => {
 				unsubscribe();
 			});
 
-			it("Should not be violated when a non-constrained edit is reverted by a later edit", () => {
+			it("Should not be violated when a non-constrained edit is inserted but then removed by later edits", () => {
 				const tree = makeTreeFromJsonSequence([], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});

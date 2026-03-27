@@ -882,7 +882,7 @@ export class ModularChangeFamily
 		taggedChange: TaggedChange<ModularChangeset>,
 		potentiallyConflictedOver: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
-		ignoreNoChangeViolation?: boolean,
+		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
@@ -944,7 +944,11 @@ export class ModularChangeFamily
 		);
 
 		let noChangeConstraint = change.noChangeConstraint;
-		if (noChangeConstraint !== undefined && !noChangeConstraint.violated && ignoreNoChangeViolation !== true) {
+		if (
+			noChangeConstraint !== undefined &&
+			!noChangeConstraint.violated &&
+			ignoreNoChangeViolation !== true
+		) {
 			noChangeConstraint = { violated: true };
 			constraintState.violationCount += 1;
 		}

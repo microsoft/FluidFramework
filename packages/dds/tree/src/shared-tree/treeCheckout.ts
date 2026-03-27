@@ -1352,11 +1352,14 @@ export class TreeCheckout implements ITreeCheckout {
 			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
 
 			change = tagChange(
-rebaseChangeOverChanges(
-this.changeFamily.rebaser,
-change,
-[diff],
-),
+				rebaseChange(
+					this.changeFamily.rebaser,
+					change,
+					commitToRevert,
+					headCommit,
+					this.mintRevisionTag,
+					ignoreNoChangeViolation,
+				).change,
 				revisionForInvert,
 			);
 		}
@@ -1721,6 +1724,12 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	);
 }
 
+/**
+ * Enumerates through a shared tree change, looking for schema change and field changes that result in visible changes to the tree (e.g. an insert, move, delete)
+ *
+ * @param change - The change to analyze.
+ * @returns True if the change contains any schema changes or any field changes that result in visible changes to the tree, false otherwise.
+ */
 function sharedTreeChangeHasVisibleChanges(change: SharedTreeChange): boolean {
 	for (const inner of change.changes) {
 		if (inner.type === "schema") {
