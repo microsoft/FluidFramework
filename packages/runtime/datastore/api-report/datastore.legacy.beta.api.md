@@ -67,6 +67,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get isAttached(): boolean;
     readonly isReadOnly: () => boolean;
+    loadPendingChannels(channelsTree: ISummaryTree): void;
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;

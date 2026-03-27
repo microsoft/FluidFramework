@@ -128,6 +128,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    loadPendingChannels?(channelsTree: ISummaryTree): void;
     makeVisibleAndAttachGraph(): void;
     notifyReadOnlyState?(readonly: boolean): void;
     readonly policies?: IFluidDataStorePolicies;

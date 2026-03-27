@@ -10,17 +10,20 @@ import type {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type {
+	IFluidHandleContext,
 	IFluidHandleInternal,
 	ISignalEnvelope,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type {
-	ISnapshot,
-	ISnapshotTree,
-	ISequencedDocumentMessage,
+import {
+	type ISnapshot,
+	type ISnapshotTree,
+	type ISequencedDocumentMessage,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
@@ -57,6 +60,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
+	RemoteFluidObjectHandle,
 	RequestParser,
 	RuntimeHeaders,
 	SummaryTreeBuilder,
@@ -66,9 +70,11 @@ import {
 	create404Response,
 	createResponseError,
 	encodeCompactIdToString,
+	isFluidHandle,
 	isSerializedHandle,
 	processAttachMessageGCData,
 	responseToException,
+	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
 import {
@@ -84,6 +90,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { blobManagerBasePath } from "./blobManager/index.js";
 import {
 	DeletedResponseHeaderKey,
 	type RuntimeHeaderData,
@@ -100,6 +107,7 @@ import {
 	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
+	PendingStateLocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 	createAttributesBlob,
 } from "./dataStoreContext.js";
@@ -312,6 +320,38 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
 }
 
 /**
+ * Recursively walks an object tree and replaces any {@link @fluidframework/runtime-utils#ISerializedHandle}
+ * objects with {@link RemoteFluidObjectHandle} instances bound to the given routeContext.
+ * Shallow-clones on mutation to avoid mutating the input. Returns the original input if no handles are found.
+ */
+function replaceSerializedHandles(input: unknown, routeContext: IFluidHandleContext): unknown {
+	if (input === null || input === undefined || typeof input !== "object") {
+		return input;
+	}
+	if (isSerializedHandle(input)) {
+		return new RemoteFluidObjectHandle(input.url, routeContext, input.payloadPending === true);
+	}
+	if (isFluidHandle(input)) {
+		return input;
+	}
+	let clone: Record<string, unknown> | undefined;
+	const record = input as Record<string, unknown>;
+	for (const key of Object.keys(record)) {
+		const value: unknown = record[key];
+		if (value !== null && value !== undefined && typeof value === "object") {
+			const replaced = replaceSerializedHandles(value, routeContext);
+			if (replaced !== value) {
+				clone ??= Array.isArray(input)
+					? ([...(input as unknown[])] as unknown as Record<string, unknown>)
+					: { ...record };
+				clone[key] = replaced;
+			}
+		}
+	}
+	return clone ?? input;
+}
+
+/**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
@@ -343,6 +383,44 @@ export class ChannelCollection
 
 	protected readonly contexts: DataStoreContexts;
 	private readonly aliasedDataStores: Set<string>;
+
+	/**
+	 * Handle context used when replacing serialized handles in stashed ops.
+	 * Resolves datastore/DDS handles directly against this.contexts (including unbound),
+	 * and delegates blob handles to the parent runtime.
+	 */
+	private readonly stashedOpHandleContext: IFluidHandleContext = {
+		get IFluidHandleContext(): IFluidHandleContext {
+			return this;
+		},
+		absolutePath: "",
+		routeContext: undefined,
+		isAttached: false,
+		attachGraph: () => {},
+		resolveHandle: async (request: IRequest): Promise<IResponse> => {
+			const parser = RequestParser.create(request);
+			const id = parser.pathParts[0];
+			// Blob handles delegate to the root (parent runtime)
+			if (id === blobManagerBasePath) {
+				return this.parentContext.IFluidHandleContext.resolveHandle(request);
+			}
+			// Datastore/DDS handles resolve from contexts (includes unbound)
+			const context = this.contexts.get(id);
+			if (context === undefined) {
+				return create404Response(request);
+			}
+			const channel = await context.realize();
+			const subRequest = parser.createSubRequest(1);
+			if (subRequest.url.length > 0) {
+				return channel.request(subRequest);
+			}
+			return {
+				mimeType: "fluid/object",
+				value: await channel.entryPoint.get(),
+				status: 200,
+			};
+		},
+	};
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
@@ -875,7 +953,13 @@ export class ChannelCollection
 			return undefined;
 		}
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
-		return context.applyStashedOp(envelope.contents);
+		// Handles must resolve to unbound/detached datastore contexts in this.contexts
+		// that aren't yet bound/remoted, so replace them using stashedOpHandleContext.
+		const contentsWithHandles = replaceSerializedHandles(
+			envelope.contents,
+			this.stashedOpHandleContext,
+		);
+		return context.applyStashedOp(contentsWithHandles);
 	}
 
 	private async applyStashedAttachOp(message: IAttachMessage): Promise<void> {
@@ -1068,7 +1152,7 @@ export class ChannelCollection
 
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
-			// The requested data store does not exits. Throw a 404 response exception.
+			// The requested data store does not exist. Throw a 404 response exception.
 			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
@@ -1673,6 +1757,115 @@ export class ChannelCollection
 		);
 
 		return dataStore.request(subRequest);
+	}
+
+	/**
+	 * Recursively collects summaries for all referenced but not-yet-attached datastores.
+	 * Returns a map of datastore id to its summary.
+	 * This is used for pending local state serialization.
+	 */
+	public getPendingLocalState(
+		input: Set<IFluidHandle>,
+	): Record<string, ISummaryTreeWithStats> | undefined {
+		const paths: string[] = [...input]
+			.filter((h) => !h.isAttached)
+			.map((h) => toFluidHandleInternal(h).absolutePath);
+		const visitedDataStores: Set<string> = new Set([blobManagerBasePath]);
+
+		let summaries: Record<string, ISummaryTreeWithStats> | undefined;
+
+		for (const path of paths) {
+			const [datastoreId, channelId] = (path.startsWith("/") ? path.slice(1) : path).split(
+				"/",
+			);
+
+			if (visitedDataStores.has(datastoreId)) continue;
+			visitedDataStores.add(datastoreId);
+			const context = this.contexts.get(datastoreId);
+			assert(context !== undefined, "must have context");
+
+			if (this.contexts.isNotBound(datastoreId) || channelId) {
+				const summary = context.getAttachSummary();
+				summaries ??= {};
+				summaries[datastoreId] = summary;
+				// Use GC data to discover transitive handle references in DDS data.
+				// This finds handles inside serialized blob content that findAllHandlePaths cannot.
+				const gcData = context.getAttachGCData();
+				for (const outboundRoutes of Object.values(gcData.gcNodes)) {
+					paths.push(...outboundRoutes);
+				}
+			}
+		}
+		return summaries;
+	}
+
+	/**
+	 * Load pending attachment summaries from pending state.
+	 * This is called during container load to rehydrate datastores that were referenced but not yet attached.
+	 * This must be called before ops are applied to ensure the datastores are available.
+	 */
+	public async loadPendingAttachmentSummaries(
+		pendingAttachmentSummaries: Record<string, ISummaryTreeWithStats> | undefined,
+	): Promise<void> {
+		if (pendingAttachmentSummaries === undefined) {
+			return;
+		}
+
+		for (const [id, summary] of Object.entries(pendingAttachmentSummaries)) {
+			const existingContext = this.contexts.get(id);
+
+			if (existingContext === undefined) {
+				// Datastore doesn't exist yet - create it from the summary
+				// Convert the summary tree to an ITree, then to a snapshot tree
+				const itree = convertSummaryTreeToITree(summary.summary);
+				const blobs = new Map<string, ArrayBufferLike>();
+				const snapshotTree = buildSnapshotTree(itree.entries, blobs);
+
+				// Create a parent context that uses our stashedOpHandleContext for handle resolution.
+				// This ensures that when DDSes in this datastore decode serialized handles
+				// (via FluidSerializer), the resulting RemoteFluidObjectHandle instances resolve
+				// against this.contexts (which includes unbound/detached datastores) rather than
+				// going through the standard getDataStore path that requires bound contexts.
+				const innerContext = this.wrapContextForInnerChannel(id);
+				const parentContext = Object.create(innerContext) as typeof innerContext;
+				Object.defineProperty(parentContext, "IFluidHandleContext", {
+					value: this.stashedOpHandleContext,
+					writable: false,
+					enumerable: true,
+					configurable: true,
+				});
+
+				// Create a context for this datastore with Detached attach state
+				const dataStoreContext = new PendingStateLocalFluidDataStoreContext({
+					id,
+					pkg: undefined,
+					parentContext,
+					storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, blobs),
+					scope: this.parentContext.scope,
+					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
+						type: CreateSummarizerNodeSource.Local,
+					}),
+					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
+					snapshotTree,
+				});
+
+				// Add it to the contexts as unbound (not yet attached)
+				this.contexts.addUnbound(dataStoreContext);
+			} else {
+				// Datastore already exists - it has pending channels that need to be added
+				// Get the .channels subtree which contains the DDSes
+				const channelsTree = summary.summary.tree[channelsTreeName];
+				assert(channelsTree?.type === SummaryType.Tree, "must have channels tree");
+
+				// Realize the datastore runtime and load the pending channels into it
+				const channel = await existingContext.realize();
+				assert(
+					channel.loadPendingChannels !== undefined,
+					"loadPendingChannels must be implemented to rehydrate pending channels",
+				);
+				channel.loadPendingChannels(channelsTree);
+			}
+		}
 	}
 }
 

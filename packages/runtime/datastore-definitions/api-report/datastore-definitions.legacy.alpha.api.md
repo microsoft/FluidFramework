@@ -35,6 +35,7 @@ export interface IChannelFactory<out TChannel = unknown> {
 export interface IChannelServices {
     // (undocumented)
     deltaConnection: IDeltaConnection;
+    loadingFromPendingState?: boolean;
     // (undocumented)
     objectStorage: IChannelStorageService;
 }
