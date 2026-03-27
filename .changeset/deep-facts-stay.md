@@ -9,7 +9,7 @@
 ---
 minVersionForCollab is now non-optional
 
-This change is a follow-up for [!25130](https://github.com/microsoft/FluidFramework/pull/25130)
+This change is a follow-up for [pull request 25130](https://github.com/microsoft/FluidFramework/pull/25130)
 which was released as part of [2.61.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.61.0).
 
 The `minVersionForCollab` property has been made non-optional in the following `@legacy` interfaces in the Runtime layer:
