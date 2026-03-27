@@ -54,6 +54,6 @@
 }
 
 // Applies text-decoration to all links in markdown/MDX content
-main a {
+main a:not(.breadcrumbs__link) {
 	text-decoration: underline;
 }
