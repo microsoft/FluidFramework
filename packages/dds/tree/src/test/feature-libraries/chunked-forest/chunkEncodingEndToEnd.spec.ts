@@ -37,7 +37,7 @@ import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunked
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
-	EncodedFieldBatch,
+	EncodedFieldBatchV1OrV2,
 	FieldBatchEncodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
@@ -208,10 +208,13 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatCommon).fields as EncodedFieldBatch, {
-				idCompressor,
-				originatorId: idCompressor.localSessionId,
-			});
+			const insertedChunk = decode(
+				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				{
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+				},
+			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
@@ -241,10 +244,13 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringify(content: unknown) {
-			const insertedChunk = decode((content as FormatCommon).fields as EncodedFieldBatch, {
-				idCompressor,
-				originatorId: idCompressor.localSessionId,
-			});
+			const insertedChunk = decode(
+				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
+				{
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+				},
+			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
