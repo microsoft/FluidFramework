@@ -548,7 +548,7 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	idCompressorFactory?: (
 		summary?: FuzzSerializedIdCompressor,
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	) => IIdCompressor & IIdCompressorCore;
 
 	/**
