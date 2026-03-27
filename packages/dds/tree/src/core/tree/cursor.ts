@@ -134,7 +134,7 @@ export interface ITreeCursor {
 	getFieldKey(): FieldKey;
 
 	/**
-	 * @returns the number of immediate children in the current field.
+	 * Returns the number of immediate children in the current field.
 	 *
 	 * Allowed when `mode` is `Fields`, and not `pending`.
 	 */
@@ -334,6 +334,8 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 }
 
 /**
+ * Applies a mapping function to each field of the current node, returning the results as an array.
+ *
  * @param cursor - tree whose fields will be visited.
  * @param f - builds output from field, which will be selected in cursor when cursor is provided.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
@@ -353,6 +355,8 @@ export function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * Iterates over each field of the current node, invoking a callback for each.
+ *
  * @param cursor - cursor at a node whose fields will be visited.
  * @param f - For on each field.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
@@ -368,6 +372,8 @@ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * Applies a mapping function to each node of the current field, returning the results as an array.
+ *
  * @param cursor - tree whose field will be visited.
  * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
@@ -386,6 +392,8 @@ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * Lazily iterates over each node in the current field, yielding the result of applying a mapping function to each.
+ *
  * @param cursor - The tree whose field will be visited.
  * @param f - Builds output from field member, which will be selected in cursor when cursor is provided.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
@@ -403,6 +411,8 @@ export function* iterateCursorField<T, TCursor extends ITreeCursor = ITreeCursor
 }
 
 /**
+ * Iterates over each node in the current field, invoking a callback for each.
+ *
  * @param cursor - cursor at a field whose nodes will be visited.
  * @param f - For on each node.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
@@ -418,6 +428,47 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * Iterates over a subrange of nodes in the current field, invoking a callback for each.
+ * See {@link forEachNode} for a version that visits all nodes in the field.
+ *
+ * @param cursor - cursor at a field whose nodes will be visited.
+ * @param startIndex - index of first node to visit. Must be non-negative.
+ * @param endIndex - index of first node to NOT visit. Must be greater than or equal to `startIndex`.
+ * @param f - For on each node.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ */
+export function forEachNodeSubsequence<TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	startIndex: number,
+	endIndex: number,
+	f: (cursor: TCursor) => void,
+): void {
+	assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+
+	assert(startIndex >= 0, "invalid startIndex");
+	assert(endIndex >= startIndex, "invalid endIndex");
+	const outputLength = endIndex - startIndex;
+	if (outputLength === 0) {
+		// Avoids out of bounds index on cursor.enterNode when requesting 0 length subarray at end of array.
+		return;
+	}
+
+	cursor.enterNode(startIndex);
+	for (let i = 0; i < outputLength; i++) {
+		f(cursor);
+		const hasNext = cursor.nextNode();
+		if (!hasNext) {
+			assert(i === outputLength - 1, "requested endIndex is out of bounds");
+			return;
+		}
+	}
+	cursor.exitNode();
+}
+
+/**
+ * Deeply iterates over each node in the current subtree (rooted at a node or field),
+ * invoking a callback for each.
+ *
  * @param cursor - cursor at a field or node.
  * @param f - Function to invoke for each node.
  * If `f` moves the cursor, it must put it back to where it was at the beginning of `f` before returning.
