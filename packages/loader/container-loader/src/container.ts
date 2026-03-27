@@ -1610,7 +1610,11 @@ export class Container
 			this.connectToDeltaStream(connectionArgs);
 		}
 
-		this.storageAdapter.connectToService(this.service);
+		// When DisableLoadConnectionRetries is enabled, use no internal retries.
+		// The consumer will own the retry policy.
+		const disableLoadRetries =
+			this.mc.config.getBoolean("Fluid.Container.DisableLoadConnectionRetries") === true;
+		this.storageAdapter.connectToService(this.service, disableLoadRetries ? 0 : undefined);
 
 		this.attachmentData = {
 			state: AttachState.Attached,
@@ -1995,6 +1999,8 @@ export class Container
 
 	private createDeltaManager(): DeltaManager<ConnectionManager> {
 		const serviceProvider = (): IDocumentService | undefined => this.service;
+		const disableLoadConnectionRetries =
+			this.mc.config.getBoolean("Fluid.Container.DisableLoadConnectionRetries") === true;
 		const deltaManager = new DeltaManager<ConnectionManager>(
 			serviceProvider,
 			createChildLogger({ logger: this.subLogger, namespace: "DeltaManager" }),
@@ -2007,6 +2013,8 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
+					disableLoadConnectionRetries ? 1 : undefined,
+					!disableLoadConnectionRetries,
 				),
 		);
 
