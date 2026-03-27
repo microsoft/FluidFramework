@@ -131,6 +131,8 @@ extends:
             script: |
               set -eu -o pipefail
               echo "Using pnpm $(pnpm -v)"
+              # Point all npm/pnpm commands at the authenticated .npmrc
+              echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/.npmrc"
               pnpm config set store-dir $(Pipeline.Workspace)/.pnpm-store
               pnpm config set -g workspace-concurrency 0
               pnpm config set registry "$(ado-feeds-primary-registry)"
