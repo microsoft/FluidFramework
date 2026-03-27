@@ -255,7 +255,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public resetUnfinalizedCreationRange(): void {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0xcec /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 
 		const lastLocalCluster = this.localSession.getLastCluster();

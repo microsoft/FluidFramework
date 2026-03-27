@@ -540,7 +540,10 @@ function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab
 
 function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): CodecTree {
 	const messageVersion = makeMessageCodecBuilder().getCodecTree(clientVersion).version;
-	assert(messageVersion !== undefined, "Deprecated 'undefined' version shouldn't be selected");
+	assert(
+		messageVersion !== undefined,
+		0xce3 /* Deprecated 'undefined' version shouldn't be selected */,
+	);
 	const change = changeFormatVersionForMessage.lookup(messageVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForMessageFormatWithChange(clientVersion, changeCodecTree);
