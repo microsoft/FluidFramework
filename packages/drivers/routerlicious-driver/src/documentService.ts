@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceEvents,
 	IDocumentServicePolicies,
 	IDocumentDeltaConnection,
@@ -21,15 +21,12 @@ import {
 	RateLimiter,
 	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	wrapError,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
 
-import { ICache } from "./cache.js";
-import { INormalizedWholeSnapshot } from "./contracts.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
+import type { ICache } from "./cache.js";
+import type { INormalizedWholeSnapshot } from "./contracts.js";
+import type { ISnapshotTreeVersion } from "./definitions.js";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
 import { DocumentStorageService } from "./documentStorageService.js";
@@ -38,16 +35,16 @@ import { GitManager } from "./gitManager.js";
 import { Historian } from "./historian.js";
 import { NullBlobStorageService } from "./nullBlobStorageService.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
+import type { TokenFetcher } from "./restWrapper.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
-	TokenFetcher,
 } from "./restWrapper.js";
-import { RestWrapper } from "./restWrapperBase.js";
+import type { RestWrapper } from "./restWrapperBase.js";
 import type { IGetSessionInfoResponse } from "./sessionInfoManager.js";
 import { SocketIOClientStatic } from "./socketModule.js";
-import { ITokenProvider } from "./tokens.js";
+import type { ITokenProvider } from "./tokens.js";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected

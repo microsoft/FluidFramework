@@ -80,6 +80,13 @@ export const minimalDeprecatedRules = {
 		},
 	],
 
+	/**
+	 * Requires eslint-disable comments to include a description explaining why the rule is being disabled.
+	 *
+	 * Docs: {@link https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html}
+	 */
+	"@eslint-community/eslint-comments/require-description": "warn",
+
 	"@typescript-eslint/dot-notation": "error",
 	"@typescript-eslint/no-non-null-assertion": "error",
 	"@typescript-eslint/no-unnecessary-type-assertion": "error",

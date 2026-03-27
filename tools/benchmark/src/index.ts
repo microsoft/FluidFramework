@@ -18,48 +18,61 @@
 export {
 	BenchmarkType,
 	type MochaExclusiveOptions,
-	type HookFunction,
-	type HookArguments,
 	isInPerformanceTestingMode,
 	qualifiedTitle,
 	type Titled,
 	type BenchmarkDescription,
 	TestType,
-} from "./Configuration";
-export {
-	type BenchmarkArguments,
-	type BenchmarkSyncArguments,
-	type BenchmarkAsyncArguments,
+	type BenchmarkFunction,
 	type BenchmarkOptions,
-	validateBenchmarkArguments,
+} from "./Configuration.js";
+export {
+	type DurationBenchmarkSync,
+	type DurationBenchmarkAsync,
+	type DurationBenchmark,
 	type BenchmarkTimingOptions,
-	type BenchmarkRunningOptions,
-	type BenchmarkSyncFunction,
-	type BenchmarkAsyncFunction,
 	type OnBatch,
-	type CustomBenchmark,
+	type HookFunction,
+	type HookArguments,
 	type BenchmarkTimer,
-	type CustomBenchmarkArguments,
+	type DurationBenchmarkCustom,
 	Phase,
-	runBenchmark,
-} from "./durationBenchmarking/index";
+	collectDurationData,
+	runBenchmarkSync,
+	benchmarkDuration,
+} from "./durationBenchmarking/index.js";
+export { benchmarkIt } from "./mocha/index.js";
 export {
-	benchmark,
-	benchmarkMemory,
-	benchmarkCustom,
-	type IMemoryTestObject,
-	type MemoryTestObjectProps,
-	type CustomBenchmarkOptions,
-	type IMeasurementReporter,
-} from "./mocha";
-export { prettyNumber, geometricMean } from "./RunnerUtilities";
-export { BenchmarkReporter } from "./Reporter";
+	formatResultArrayTable,
+	finishLoggingReport,
+	recordTestResult,
+	type ReportPath,
+	type ReportSuiteWithPath,
+	type SuiteData,
+} from "./reporterUtilities.js";
 export {
-	type BenchmarkData,
+	isSuiteNode,
+	parseBenchmarkResult,
+	parseReport,
 	type BenchmarkError,
 	type BenchmarkResult,
-	type CustomData,
-	isResultError,
-} from "./ResultTypes";
-export type { Stats } from "./sampling";
-export type { Timer } from "./timer";
+	type CollectedData,
+	type PrimaryMeasurement,
+	type Measurement,
+	type Significance,
+	ValueType,
+	type ReportEntry,
+	type ReportArray,
+	type ReportSuite,
+} from "./reportTypes.js";
+export { timer, type Timer } from "./timer.js";
+export { captureResults } from "./benchmarkAuthoringUtilities.js";
+
+export {
+	type MemoryUseBenchmark,
+	type MemoryUseCallbacks,
+	benchmarkMemoryUse,
+	collectMemoryUseData,
+} from "./memoryBenchmarking/index.js";
+
+export { benchmark, benchmarkCustom } from "./legacy.js";

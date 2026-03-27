@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
@@ -39,12 +39,12 @@ describe("MapWithExpiration", () => {
 	): void {
 		const actualValues: string[] = [];
 		const expectedValues: string[] = [];
-		actual.forEach((value, key) => {
+		for (const [key, value] of actual.entries()) {
 			actualValues[key] = value;
-		});
-		expected.forEach((value, key) => {
+		}
+		for (const [key, value] of expected.entries()) {
 			expectedValues[key] = value;
-		});
+		}
 		assert.equal(
 			actualValues.join(","),
 			expectedValues.join(","),
@@ -106,7 +106,7 @@ describe("MapWithExpiration", () => {
 	 * They need to be tested independently since these all have side effects
 	 */
 	function test(testName: string, testCallback: (assertFn) => void): void {
-		[
+		for (const [assertFn, caseName] of [
 			[assertSize, "check size"] as const,
 			[assertForEach, "check forEach"] as const,
 			[assertEntries, "check entries"] as const,
@@ -116,11 +116,11 @@ describe("MapWithExpiration", () => {
 			[assertIterator, "check Iterator"] as const,
 			[assertHas, "check has"] as const,
 			[assertGet, "check get"] as const,
-		].forEach(([assertFn, caseName]) => {
+		]) {
 			it(`${testName} (${caseName})`, () => {
 				testCallback(assertFn);
 			});
-		});
+		}
 	}
 
 	test("Basic expiry", (assertMatches: (

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base/internal";
-import {
+import type {
 	IDeltaStorageService,
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
@@ -18,13 +18,11 @@ import {
 	requestOps,
 	streamObserver,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
-import { DocumentStorageService } from "./documentStorageService.js";
-import { RestWrapper } from "./restWrapperBase.js";
+import type { DocumentStorageService } from "./documentStorageService.js";
+import type { RestWrapper } from "./restWrapperBase.js";
 
 /**
  * Maximum number of ops we can fetch at a time. This should be kept at 2k, as
@@ -78,7 +76,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				: [];
 			this.logtailSha = undefined;
 
-			if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
+			if (this.snapshotOps !== undefined && this.snapshotOps.length > 0) {
 				const messages = this.snapshotOps.filter(
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);

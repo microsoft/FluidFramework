@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import chalk from "chalk";
+
 /**
  * Asserts the specified condition.
- *
- * @param condition - The condition that should be true, if the condition is false an error will be thrown.
- * Only use this API when `false` indicates a logic error in the problem and thus a bug that should be fixed.
+ * @param condition - The condition that should be true. An error is thrown if it is false.
  * @param message - The message to include in the error when the condition does not hold.
  * @remarks
+ * Only use this for logic errors in the code (i.e., bugs), not for invalid user input or runtime conditions.
  * Use this instead of the node 'assert' package, which requires polyfills to run in browser environments.
  */
 export function assert(condition: boolean, message: string): asserts condition {
@@ -24,5 +25,24 @@ export function assert(condition: boolean, message: string): asserts condition {
  * Use this instead of the node 'assert' package, which requires polyfills to run in browser environments.
  */
 export function fail(message: string): never {
-	throw new Error(`Failed assertion in @fluid-tools/benchmark: ${message}`);
+	const fullMessage = `Failed assertion in @fluid-tools/benchmark: ${message}`;
+	// Many places in the reporter don't report exceptions well, so log the error here to help ensure it gets seen.
+	console.error(chalk.red(fullMessage));
+	throw new Error(fullMessage);
+}
+
+/**
+ * Throws error about invalid use of the benchmark package if the condition is false.
+ */
+export function assertProperUse(condition: boolean, message: string): asserts condition {
+	if (!condition) {
+		failProperUse(message);
+	}
+}
+
+/**
+ * Throws error about invalid use of the benchmark package.
+ */
+export function failProperUse(message: string): never {
+	throw new Error(`Invalid use of @fluid-tools/benchmark: ${message}`);
 }

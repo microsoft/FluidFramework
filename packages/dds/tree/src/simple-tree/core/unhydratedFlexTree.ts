@@ -271,7 +271,11 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public emitChangedEvent(key: FieldKey): void {
-		this._events.emit("childrenChangedAfterBatch", { changedFields: new Set([key]) });
+		this._events.emit("childrenChangedAfterBatch", {
+			changedFields: new Set([key]),
+			// Unhydrated nodes are not visited by the delta pipeline, so no field marks are available.
+			fieldMarks: new Map(),
+		});
 
 		// Also emit subtree changed event for this node and all ancestors.
 		this.#emitSubtreeChangedEvents();

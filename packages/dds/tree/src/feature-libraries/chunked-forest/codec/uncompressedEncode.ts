@@ -12,15 +12,15 @@ import { brand } from "../../../util/index.js";
 import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import type { FieldBatch } from "./fieldBatch.js";
-import {
-	FieldBatchFormatVersion,
-	type EncodedFieldBatch,
-	type EncodedFieldBatchV1,
-	type EncodedFieldBatchV2,
-	type EncodedNestedArrayShape,
-	type EncodedNodeShape,
-} from "./format.js";
-import type { ShapeIndex } from "./formatGeneric.js";
+import type {
+	EncodedFieldBatchV1,
+	EncodedFieldBatchV1AndV2,
+	EncodedFieldBatchV2,
+	EncodedNestedArrayShape,
+	EncodedNodeShape,
+	ShapeIndex,
+} from "./format/index.js";
+import { FieldBatchFormatVersion } from "./format/index.js";
 
 /**
  * Encode data from `cursor` in the simplest way supported by `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -49,7 +49,7 @@ export function uncompressedEncodeV2(batch: FieldBatch): EncodedFieldBatchV2 {
 function uncompressedEncode(
 	batch: FieldBatch,
 	version: FieldBatchFormatVersion,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1AndV2 {
 	const rootFields = batch.map(encodeSequence);
 	return {
 		version,

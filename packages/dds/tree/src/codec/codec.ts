@@ -203,6 +203,27 @@ export interface IJsonCodec<
 }
 
 /**
+ * Part of a codec.
+ * @remarks
+ * Encode and decode logic and schema for some chunk of data.
+ * Can be composed into larger codecs, and eventually versioned at the top level using
+ * {@link VersionDispatchingCodecBuilder}.
+ *
+ * This portion of a codec is not responsible for managing versioning or validation of the data against the schema.
+ */
+export interface JsonCodecPart<TDecoded, TEncodedSchema extends TAnySchema, TContext = void>
+	extends IEncoder<TDecoded, Static<TEncodedSchema>, TContext>,
+		IDecoder<TDecoded, Static<TEncodedSchema>, TContext> {
+	/**
+	 * TypeBox schema which describes the encoded format for this chunk of data.
+	 * @remarks
+	 * The user of this codec can use this to build its own larger schema,
+	 * until eventually it is provided to the {@link VersionDispatchingCodecBuilder}.
+	 */
+	encodedSchema: TEncodedSchema;
+}
+
+/**
  * Type erase the more detailed encoded type from a codec.
  */
 export function eraseEncodedType<
@@ -398,6 +419,7 @@ export function withSchemaValidation<
 			}
 			return codec.decode(encoded, context);
 		},
+		encodedSchema: schema,
 	};
 }
 
@@ -529,9 +551,17 @@ export const FluidClientVersion = {
  */
 export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
 
-export interface CodecTree {
+/**
+ * TODO:
+ * This needs to be documented.
+ * Its documentation should cover at least the following:
+ * - Is this used for anything other than testing.
+ * - What should be included as children. For example should it include versioned codecs which dispatch base on the min version for collaboration? If so, what version of them should be used?
+ * - What risks does having this mitigate?
+ */
+export interface CodecTree<TFormatVersion extends FormatVersion = FormatVersion> {
 	readonly name: string;
-	readonly version: FormatVersion;
+	readonly version: TFormatVersion;
 	readonly children?: readonly CodecTree[];
 }
 
