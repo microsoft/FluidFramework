@@ -2,16 +2,64 @@
 # Licensed under the MIT License.
 
 # build-performance-observability pipeline
+# This pipeline collects build metrics using ADO REST APIs and generates an HTML dashboard.
+# When run from the "public" project: collects PR build metrics
+# When run from the "internal" project: collects internal build metrics
+
+parameters:
+- name: forceAlertFailure
+  displayName: Force threshold failure (for testing)
+  type: boolean
+  default: false
 
 name: $(Build.BuildId)
+
+schedules:
+- cron: "0 2 * * *"
+  displayName: Daily build metrics collection
+  branches:
+    include:
+    - main
+  always: true
 
 trigger: none
 
 pr: none
 
 variables:
-  - name: foo
-    value: 'bar'
+  # Provides ado-feeds-primary-registry for pnpm install
+  - group: ado-feeds
+  - name: FluidFrameworkDirectory
+    value: s/FluidFramework
+  # Number of recent builds to fetch
+  - name: buildCount
+    value: 500
+  # Organization
+  - name: organization
+    value: fluidframework
+  # Mode: public = PR builds, internal = internal builds
+  - name: runMode
+    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+      value: public
+    ${{ else }}:
+      value: internal
+  # Build definition ID (public=PR builds, internal=internal builds)
+  - name: buildDefinitionId
+    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+      value: 11
+    ${{ else }}:
+      value: 12
+  # Project to query (same as where pipeline runs)
+  - name: targetProject
+    value: $(System.TeamProject)
+  # Max concurrent API requests when fetching timeline data
+  - name: parallelJobs
+    value: 20
+  # Alert thresholds
+  - name: avgDurationThreshold
+    value: 90  # Maximum acceptable average build duration in minutes
+  - name: changePeriodThreshold
+    value: 15  # Maximum acceptable percentage change (3-day for public, 7-day for internal)
 
 resources:
   repositories:
@@ -38,18 +86,144 @@ extends:
         os: windows
 
     stages:
-    - stage: example_stage
-      displayName: Example Stage
+    - stage: collect_metrics
+      displayName: Collect Build Metrics
       jobs:
-      - job: example_job
-        displayName: Example Job
+      - job: collect
+        displayName: Collect and Process Metrics
         steps:
-        - checkout: none
+        - checkout: self
+          clean: true
+          path: ${{ variables.FluidFrameworkDirectory }}
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - task: Bash@3
-          displayName: Example step
+          displayName: Configure npm registry
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              echo "registry=$(ado-feeds-primary-registry)" > .npmrc
+
+        - task: npmAuthenticate@0
+          displayName: Npm authenticate
+          retryCountOnTaskFailure: 1
+          inputs:
+            workingFile: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/.npmrc
+
+        - task: Bash@3
+          displayName: Install pnpm
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])")
+              npm install -g "$PNPM_VERSION" --userconfig "$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/.npmrc"
+
+        - task: Bash@3
+          displayName: Configure pnpm
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              echo "Using pnpm $(pnpm -v)"
+              # Point all npm/pnpm commands at the authenticated .npmrc
+              echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/.npmrc"
+              pnpm config set store-dir $(Pipeline.Workspace)/.pnpm-store
+              pnpm config set -g workspace-concurrency 0
+              pnpm config set registry "$(ado-feeds-primary-registry)"
+
+        - task: Bash@3
+          displayName: Install root dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              pnpm install --workspace-root --frozen-lockfile
+
+        - task: Bash@3
+          name: InstallBuildTools
+          displayName: Install Fluid Build Tools (from repo)
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/build-tools
+            script: |
+              set -eu -o pipefail
+              pnpm i --frozen-lockfile
+              pnpm build:compile
+              cd packages/build-cli
+              npm link
+              echo "which flub: $(which flub)"
+
+        - task: Bash@3
+          name: BuildToolsInstallCheck
+          displayName: Check Build Tools Installation
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              echo "which flub: $(which flub)"
+              flub --help
+              flub commands
+
+        # Collect build data, fetch timelines, and process into aggregated metrics
+        - task: Bash@3
+          displayName: Collect build data and generate metrics
+          env:
+            ADO_API_TOKEN: $(System.AccessToken)
+            ORG: $(organization)
+            PROJECT: $(targetProject)
+            MODE: $(runMode)
+            BUILD_COUNT: $(buildCount)
+            BUILD_DEF_ID: $(buildDefinitionId)
+            PARALLEL_JOBS: $(parallelJobs)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)/data
           inputs:
             targetType: 'inline'
             script: |
-              echo "Hello world"
-              echo "Variable value: $(foo)"
+              flub build-perf collect
+
+        - task: Bash@3
+          displayName: Generate HTML dashboard artifact
+          env:
+            MODE: $(runMode)
+            DATA_DIR: $(Build.ArtifactStagingDirectory)/data
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)/dashboard
+          inputs:
+            targetType: 'inline'
+            script: |
+              flub build-perf generate
+
+        - task: Bash@3
+          name: checkThresholds
+          displayName: Check performance thresholds
+          env:
+            MODE: $(runMode)
+            DATA_DIR: $(Build.ArtifactStagingDirectory)/data
+            AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
+            CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
+            FORCE_FAILURE: ${{ parameters.forceAlertFailure }}
+          inputs:
+            targetType: 'inline'
+            script: |
+              flub build-perf check
+
+        templateContext:
+          outputParentDirectory: $(Build.ArtifactStagingDirectory)
+          outputs:
+          - output: pipelineArtifact
+            displayName: Publish data artifact
+            targetPath: $(Build.ArtifactStagingDirectory)/data
+            artifactName: data
+            publishLocation: pipeline
+          - output: pipelineArtifact
+            displayName: Publish HTML dashboard artifact
+            targetPath: $(Build.ArtifactStagingDirectory)/dashboard
+            artifactName: dashboard
+            publishLocation: pipeline
