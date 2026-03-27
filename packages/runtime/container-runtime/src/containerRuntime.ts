@@ -130,6 +130,7 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
+	ContainerRuntimeBaseAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -834,6 +835,24 @@ export async function loadContainerRuntime(
 	return ContainerRuntime.loadRuntime(params);
 }
 
+/**
+ * Alpha variant of {@link loadContainerRuntime} that returns the runtime in an
+ * extendable object, allowing additional properties to be added in the future.
+ *
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns An object containing the runtime.
+ *
+ * @legacy @alpha
+ */
+export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+}> {
+	return ContainerRuntime.loadRuntime2({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+	});
+}
+
 const defaultMaxConsecutiveReconnects = 7;
 
 /**
@@ -909,14 +928,15 @@ export class ContainerRuntime
 		return ContainerRuntime.loadRuntime2({
 			...params,
 			registry: new FluidDataStoreRegistry(params.registryEntries),
-		});
+		}).then((r) => r.runtime);
 	}
 
 	/**
-	 * Load the stores from a snapshot and returns the runtime.
+	 * Load the stores from a snapshot and returns an object containing the runtime.
 	 * @remarks
 	 * Same as {@link ContainerRuntime.loadRuntime},
 	 * but with `registry` instead of `registryEntries` and more `runtimeOptions`.
+	 * Returns `{ runtime }` to allow future extensions (e.g. staging mode controls).
 	 */
 	public static async loadRuntime2(
 		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
@@ -935,7 +955,7 @@ export class ContainerRuntime
 			 */
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
-	): Promise<ContainerRuntime> {
+	): Promise<{ runtime: ContainerRuntime }> {
 		const {
 			context,
 			registry,
@@ -1286,7 +1306,7 @@ export class ContainerRuntime
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
-		return runtime;
+		return { runtime };
 	}
 
 	public readonly options: Record<string | number, unknown>;
