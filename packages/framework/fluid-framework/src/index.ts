@@ -82,6 +82,36 @@ export * from "@fluidframework/tree/alpha";
 // #endregion Basic re-exports
 // ---------------------------------------------------------------
 // #region Custom re-exports
+/* eslint-disable import-x/order */
+
+import {
+	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+	getPresence as getPresenceDeprecated,
+	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+	getPresenceAlpha as getPresenceAlphaDeprecated,
+	// eslint-disable-next-line import-x/no-internal-modules -- presence has no /internal export, which would be allowed
+} from "@fluidframework/presence/alpha";
+
+/**
+ * {@inheritdoc @fluidframework/presence#getPresence}
+ *
+ * @beta
+ */
+// eslint-disable-next-line unicorn/prefer-export-from, import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+export const getPresence = getPresenceDeprecated;
+
+/**
+ * {@inheritdoc @fluidframework/presence#getPresenceAlpha}
+ *
+ * @alpha
+ */
+export const getPresenceAlpha: (
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- complicated redeclaration required to satisfy api-extractor
+	fluidContainer: import("@fluidframework/fluid-static").IFluidContainer,
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- complicated redeclaration required to satisfy api-extractor
+) => import("@fluidframework/presence/alpha").PresenceWithNotifications =
+	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+	getPresenceAlphaDeprecated;
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
@@ -132,6 +162,7 @@ export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKi
 	return originalConfiguredSharedTree(options);
 }
 
+/* eslint-enable import-x/order */
 // #endregion Custom re-exports
 // #endregion
 
