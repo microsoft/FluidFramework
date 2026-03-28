@@ -11,7 +11,12 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 
-import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
+import {
+	ChildLogger,
+	createChildLogger,
+	createMultiSinkLogger,
+	LogLevelValue,
+} from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 
 describe("ChildLogger", () => {
@@ -32,7 +37,11 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger1.send({ category: "generic", eventName: "test1" });
+		childLogger1.send({
+			category: "generic",
+			eventName: "test1",
+			logLevel: LogLevelValue.info,
+		});
 		assert(sent, "event should be sent");
 
 		sent = false;
@@ -65,7 +74,11 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({
+			category: "generic",
+			eventName: "testEvent",
+			logLevel: LogLevelValue.info,
+		});
 		assert(sent, "event should be sent");
 	});
 
@@ -94,7 +107,11 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({
+			category: "generic",
+			eventName: "testEvent",
+			logLevel: LogLevelValue.info,
+		});
 		assert(sent, "event should be sent");
 	});
 
@@ -123,7 +140,11 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({
+			category: "generic",
+			eventName: "testEvent",
+			logLevel: LogLevelValue.info,
+		});
 		assert(sent, "event should be sent");
 	});
 
@@ -142,7 +163,11 @@ describe("ChildLogger", () => {
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1, namespace: "test2" });
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({
+			category: "generic",
+			eventName: "testEvent",
+			logLevel: LogLevelValue.info,
+		});
 		assert(sent, "event should be sent");
 	});
 

@@ -7,6 +7,7 @@ import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
+import { LogLevelValue } from "./logger.js";
 import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
@@ -123,6 +124,8 @@ export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics e
  * The `duration` field in the telemetry event this class generates is the duration of the latest execution (sample)
  * of the specified code block.
  * See the documentation of the `includeAggregateMetrics` parameter for additional details that can be included.
+ * Telemetry events emitted by this class (both at the sample threshold and on dispose) are sent with
+ * {@link (LogLevelValue:variable).info}.
  *
  * @typeParam TMeasurementReturn - The return type (in a vacuum) of the code block that will be measured, ignoring
  * any custom metric data that might be required by this class. E.g., the code might just return a boolean.
@@ -291,6 +294,7 @@ export class SampledTelemetryHelper<
 				...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
 				...measurements,
 				...processedCustomData,
+				logLevel: LogLevelValue.info,
 			};
 
 			this.logger.sendPerformanceEvent(telemetryEvent);

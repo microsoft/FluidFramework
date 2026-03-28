@@ -5,13 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 
 import {
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
+	LogLevelValue,
 	TelemetryLogger,
 	convertToBasePropertyType,
+	createChildLogger,
 } from "../logger.js";
 import type { TelemetryEventPropertyTypeExt } from "../telemetryTypes.js";
 
@@ -94,10 +100,10 @@ describe("TelemetryLogger", () => {
                          actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`,
 					);
 				}
-				// +2 for category and event name
+				// +3 for category, event name, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 2,
+					propsKeys.length + 3,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,
@@ -127,10 +133,10 @@ describe("TelemetryLogger", () => {
                          actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`,
 					);
 				}
-				// +2 for category and event name
+				// +3 for category, event name, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 2,
+					propsKeys.length + 3,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,
@@ -165,10 +171,10 @@ describe("TelemetryLogger", () => {
                          actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`,
 					);
 				}
-				// +4 for category, event name, message and stack
+				// +5 for category, event name, message, stack, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 4,
+					propsKeys.length + 5,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,
@@ -186,10 +192,10 @@ describe("TelemetryLogger", () => {
 				assert.strictEqual(event.eventName, "namespace:whatever");
 				const eventKeys = Object.keys(event);
 				const propsKeys = Object.keys(props?.all ?? {});
-				// +2 for category and event name
+				// +3 for category, event name, and logLevel
 				assert.strictEqual(
 					eventKeys.length,
-					propsKeys.length + 2,
+					propsKeys.length + 3,
 					`actual:\n${JSON.stringify(event)}\nexpected:${
 						props ? JSON.stringify(props) : "undefined"
 					}`,
@@ -428,5 +434,85 @@ describe("convertToBasePropertyType", () => {
 			const expected = "INVALID PROPERTY (typed as symbol)";
 			assert.deepStrictEqual(converted, expected);
 		});
+	});
+});
+
+describe.only("LogLevelValue-based sampling", () => {
+	/**
+	 * Example implementation of ITelemetryBaseLogger that uses LogLevelValue
+	 * to filter events. Events with a logLevel below the configured sampling
+	 * threshold are dropped; the rest are kept.
+	 */
+	class ExampleSamplingLogger implements ITelemetryBaseLogger {
+		public events: ITelemetryBaseEvent[] = [];
+
+		public constructor(
+			private readonly samplingThreshold: LogLevelValue = LogLevelValue.essential,
+		) {}
+
+		public send(event: ITelemetryBaseEvent): void {
+			const eventLogLevel = (event.logLevel as number) ?? LogLevelValue.essential;
+			if (eventLogLevel >= this.samplingThreshold) {
+				this.events.push(event);
+			}
+		}
+	}
+
+	it("filters events by logLevel when using the default (essential) threshold", () => {
+		const baseLogger = new ExampleSamplingLogger();
+		const childLogger = createChildLogger({ logger: baseLogger });
+
+		// Send events at each log level, plus one with no level specified
+		childLogger.sendTelemetryEvent({
+			eventName: "VerboseEvent",
+			logLevel: LogLevelValue.verbose,
+		});
+		childLogger.sendTelemetryEvent({
+			eventName: "InfoEvent",
+			logLevel: LogLevelValue.info,
+		});
+		childLogger.sendTelemetryEvent({
+			eventName: "EssentialEvent",
+			logLevel: LogLevelValue.essential,
+		});
+		childLogger.sendTelemetryEvent({ eventName: "DefaultLevelEvent" });
+
+		// With the default threshold (essential), only essential-and-above events are kept
+		assert.strictEqual(
+			baseLogger.events.length,
+			2,
+			"Only essential-level events should be logged",
+		);
+		assert.strictEqual(baseLogger.events[0].eventName, "EssentialEvent");
+		assert.strictEqual(baseLogger.events[1].eventName, "DefaultLevelEvent");
+	});
+
+	it("allows more events through with a lower sampling threshold", () => {
+		const baseLogger = new ExampleSamplingLogger(LogLevelValue.info);
+		const childLogger = createChildLogger({ logger: baseLogger });
+
+		childLogger.sendTelemetryEvent({
+			eventName: "VerboseEvent",
+			logLevel: LogLevelValue.verbose,
+		});
+		childLogger.sendTelemetryEvent({
+			eventName: "InfoEvent",
+			logLevel: LogLevelValue.info,
+		});
+		childLogger.sendTelemetryEvent({
+			eventName: "EssentialEvent",
+			logLevel: LogLevelValue.essential,
+		});
+		childLogger.sendTelemetryEvent({ eventName: "DefaultLevelEvent" });
+
+		// With an info threshold, verbose is dropped but info and essential are kept
+		assert.strictEqual(
+			baseLogger.events.length,
+			3,
+			"Info-level and above events should be logged",
+		);
+		assert.strictEqual(baseLogger.events[0].eventName, "InfoEvent");
+		assert.strictEqual(baseLogger.events[1].eventName, "EssentialEvent");
+		assert.strictEqual(baseLogger.events[2].eventName, "DefaultLevelEvent");
 	});
 });

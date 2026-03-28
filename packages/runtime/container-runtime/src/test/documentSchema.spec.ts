@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import {
 	createMockLoggerExt,
+	LogLevelValue,
 	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { lt } from "semver-ts";
@@ -754,6 +755,7 @@ describe("Runtime", () => {
 		const expectedEvent = {
 			category: "generic",
 			eventName: "MinVersionForCollabWarning",
+			logLevel: LogLevelValue.essential,
 			message: `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${documentMinVersionForCollab} or later to ensure compatibility.`,
 		};
 		const event = logger.events().find((e) => e.eventName === "MinVersionForCollabWarning");
