@@ -916,7 +916,27 @@ export class ChannelCollection
 			});
 		}
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
-		context.reSubmit(envelope.contents, localOpMetadata, squash);
+		// Replace serialized handles with canonical pending handles so that bindHandles
+		// during submitLocalMessage can find them and trigger proper attachment.
+		const contentsWithHandles =
+			this.pendingHandles.size > 0
+				? (replaceSerializedHandles(
+						envelope.contents,
+						(url: string, payloadPending: boolean) => {
+							const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+							const pendingHandle = this.pendingHandles.get(normalizedUrl);
+							if (pendingHandle !== undefined) {
+								return pendingHandle;
+							}
+							return new RemoteFluidObjectHandle(
+								url,
+								this.stashedOpHandleContext,
+								payloadPending,
+							);
+						},
+					) as FluidDataStoreMessage)
+				: envelope.contents;
+		context.reSubmit(contentsWithHandles, localOpMetadata, squash);
 	};
 
 	public readonly rollbackDataStoreOp = (
