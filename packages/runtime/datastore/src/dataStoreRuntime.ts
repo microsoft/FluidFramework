@@ -862,6 +862,10 @@ export class FluidDataStoreRuntime
 			// Add to local channel context queue since it's not yet globally visible
 			this.localChannelContextQueue.set(channelId, channelContext);
 
+			// Add to notBoundedChannelContextSet so bindChannel() works when the
+			// handle's attachGraph() is called during staging commit resubmission.
+			this.notBoundedChannelContextSet.add(channelId);
+
 			// Eagerly load the channel so its handle is available for binding.
 			// makeChannelLocallyVisible needs a loaded IChannel and attachGraph() is sync.
 			const channel = await channelContext.getChannel();
