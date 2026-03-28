@@ -442,8 +442,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Load pending channels from pending attachment summaries.
 	 * Called during container load to rehydrate channels that were referenced but not yet attached.
 	 * @param channelsTree - The summary tree containing the pending channels to load.
+	 * @returns A map of absolute handle path to the canonical handle for each loaded channel.
 	 */
-	loadPendingChannels?(channelsTree: ISummaryTree): void;
+	loadPendingChannels?(
+		channelsTree: ISummaryTree,
+	): Promise<Map<string, IFluidHandleInternal>>;
 }
 
 /**

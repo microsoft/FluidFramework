@@ -60,6 +60,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
+	RemoteFluidObjectHandle,
 	RequestParser,
 	RuntimeHeaders,
 	SummaryTreeBuilder,
@@ -387,6 +388,14 @@ export class ChannelCollection
 	private readonly aliasedDataStores: Set<string>;
 
 	/**
+	 * Map of absolute handle path to canonical handle for pending (not yet attached) objects.
+	 * Populated during {@link ChannelCollection.loadPendingAttachmentSummaries} and used by
+	 * {@link ChannelCollection.applyStashedChannelChannelOp} to replace serialized handles
+	 * in stashed ops with handles that support proper binding/attachment.
+	 */
+	private readonly pendingHandles = new Map<string, IFluidHandleInternal>();
+
+	/**
 	 * Handle context used when replacing serialized handles in stashed ops.
 	 * Resolves datastore/DDS handles directly against this.contexts (including unbound),
 	 * and delegates blob handles to the parent runtime.
@@ -423,42 +432,6 @@ export class ChannelCollection
 			};
 		},
 	};
-
-	/**
-	 * Creates a handle for a serialized handle found in a stashed op.
-	 * Unlike RemoteFluidObjectHandle, these handles have a working attachGraph() that
-	 * triggers makeDataStoreLocallyVisible for the referenced datastore, ensuring that
-	 * when staging mode commits and ops are resubmitted, the datastore gets an Attach op.
-	 */
-	private createStashedHandle(url: string): IFluidHandleInternal {
-		// Extract the top-level datastore ID from the path (e.g., "/datastoreId/ddsId" → "datastoreId")
-		const datastoreId = (url.startsWith("/") ? url.slice(1) : url).split("/")[0];
-		const routeContext: IFluidHandleContext = {
-			get IFluidHandleContext(): IFluidHandleContext {
-				return this;
-			},
-			absolutePath: url,
-			routeContext: this.stashedOpHandleContext,
-			isAttached: false,
-			attachGraph: () => {
-				if (this.contexts.isNotBound(datastoreId)) {
-					this.makeDataStoreLocallyVisible(datastoreId);
-				}
-			},
-			resolveHandle: async (request: IRequest): Promise<IResponse> => {
-				return this.stashedOpHandleContext.resolveHandle(request);
-			},
-		};
-		return new FluidObjectHandle(
-			new LazyPromise(async () => {
-				const response = await this.stashedOpHandleContext.resolveHandle({ url });
-				assert(response.status === 200, "handle must resolve");
-				return response.value as FluidObject;
-			}),
-			"",
-			routeContext,
-		);
-	}
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
@@ -991,12 +964,18 @@ export class ChannelCollection
 			return undefined;
 		}
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
-		// Replace serialized handles with FluidObjectHandle instances that:
-		// 1. Resolve via stashedOpHandleContext (which can reach unbound datastores)
-		// 2. Have attachGraph() that properly triggers makeDataStoreLocallyVisible
+		// Replace serialized handles with canonical handles from pendingHandles map.
+		// These handles support proper binding (attachGraph) for both datastores and DDSes.
+		// Handles not in the map are replaced with RemoteFluidObjectHandle for resolution only.
 		const contentsWithHandles = replaceSerializedHandles(
 			envelope.contents,
-			(url: string, _payloadPending: boolean) => this.createStashedHandle(url),
+			(url: string, payloadPending: boolean) => {
+				const pendingHandle = this.pendingHandles.get(url);
+				if (pendingHandle !== undefined) {
+					return pendingHandle;
+				}
+				return new RemoteFluidObjectHandle(url, this.stashedOpHandleContext, payloadPending);
+			},
 		);
 		return context.applyStashedOp(contentsWithHandles);
 	}
@@ -1890,6 +1869,11 @@ export class ChannelCollection
 
 				// Add it to the contexts as unbound (not yet attached)
 				this.contexts.addUnbound(dataStoreContext);
+
+				// Realize the datastore to get its entryPoint handle for the pending handles map.
+				const channel = await dataStoreContext.realize();
+				const entryHandle = toFluidHandleInternal(channel.entryPoint);
+				this.pendingHandles.set(entryHandle.absolutePath, entryHandle);
 			} else {
 				// Datastore already exists - it has pending channels that need to be added
 				// Get the .channels subtree which contains the DDSes
@@ -1902,7 +1886,10 @@ export class ChannelCollection
 					channel.loadPendingChannels !== undefined,
 					"loadPendingChannels must be implemented to rehydrate pending channels",
 				);
-				channel.loadPendingChannels(channelsTree);
+				const ddsHandles = await channel.loadPendingChannels(channelsTree);
+				for (const [path, handle] of ddsHandles) {
+					this.pendingHandles.set(path, handle);
+				}
 			}
 		}
 	}

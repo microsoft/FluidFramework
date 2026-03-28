@@ -829,9 +829,14 @@ export class FluidDataStoreRuntime
 	/**
 	 * Load pending channels from pending attachment summaries.
 	 * This is called during container load to rehydrate channels that were referenced but not yet attached.
-	 * @param channelsTree - Map of channel id to snapshot tree
+	 * @param channelsTree - The summary tree containing the pending channels to load.
+	 * @returns A map of absolute handle path to the canonical handle for each loaded channel.
+	 * These handles support proper binding (attachGraph) for use during stashed op resubmission.
 	 */
-	public loadPendingChannels(channelsTree: ISummaryTree): void {
+	public async loadPendingChannels(
+		channelsTree: ISummaryTree,
+	): Promise<Map<string, IFluidHandleInternal>> {
+		const handleMap = new Map<string, IFluidHandleInternal>();
 		for (const [channelId, summary] of Object.entries(channelsTree.tree)) {
 			assert(!this.contexts.has(channelId), "channel must not exist");
 			assert(summary.type === SummaryType.Tree, "must be a tree");
@@ -856,7 +861,16 @@ export class FluidDataStoreRuntime
 
 			// Add to local channel context queue since it's not yet globally visible
 			this.localChannelContextQueue.set(channelId, channelContext);
+
+			// Eagerly load the channel so its handle is available for binding.
+			// makeChannelLocallyVisible needs a loaded IChannel and attachGraph() is sync.
+			const channel = await channelContext.getChannel();
+			handleMap.set(
+				toFluidHandleInternal(channel.handle).absolutePath,
+				toFluidHandleInternal(channel.handle),
+			);
 		}
+		return handleMap;
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string): void {
