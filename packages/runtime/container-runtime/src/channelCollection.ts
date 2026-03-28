@@ -970,7 +970,9 @@ export class ChannelCollection
 		const contentsWithHandles = replaceSerializedHandles(
 			envelope.contents,
 			(url: string, payloadPending: boolean) => {
-				const pendingHandle = this.pendingHandles.get(url);
+				// Normalize path for lookup — serialized handles may or may not have a leading slash
+				const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+				const pendingHandle = this.pendingHandles.get(normalizedUrl);
 				if (pendingHandle !== undefined) {
 					return pendingHandle;
 				}
@@ -1873,7 +1875,10 @@ export class ChannelCollection
 				// Realize the datastore to get its entryPoint handle for the pending handles map.
 				const channel = await dataStoreContext.realize();
 				const entryHandle = toFluidHandleInternal(channel.entryPoint);
-				this.pendingHandles.set(entryHandle.absolutePath, entryHandle);
+				const entryPath = entryHandle.absolutePath.startsWith("/")
+					? entryHandle.absolutePath
+					: `/${entryHandle.absolutePath}`;
+				this.pendingHandles.set(entryPath, entryHandle);
 			} else {
 				// Datastore already exists - it has pending channels that need to be added
 				// Get the .channels subtree which contains the DDSes
@@ -1888,7 +1893,8 @@ export class ChannelCollection
 				);
 				const ddsHandles = await channel.loadPendingChannels(channelsTree);
 				for (const [path, handle] of ddsHandles) {
-					this.pendingHandles.set(path, handle);
+					const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+					this.pendingHandles.set(normalizedPath, handle);
 				}
 			}
 		}
