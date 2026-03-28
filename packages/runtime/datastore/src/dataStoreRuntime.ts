@@ -756,8 +756,6 @@ export class FluidDataStoreRuntime
 	 * @param channel - channel to be registered.
 	 */
 	public bindChannel(channel: IChannel): void {
-		// eslint-disable-next-line no-console
-		console.log(`[BIND] bindChannel("${channel.id}") isAttached=${this.isAttached} inNotBounded=${this.notBoundedChannelContextSet.has(channel.id)}`);
 		assert(
 			this.notBoundedChannelContextSet.has(channel.id),
 			0x17b /* "Channel to be bound should be in not bounded set" */,
@@ -800,8 +798,6 @@ export class FluidDataStoreRuntime
 	 * globally visible.
 	 */
 	public makeVisibleAndAttachGraph(): void {
-		// eslint-disable-next-line no-console
-		console.log(`[VISIBLE] makeVisibleAndAttachGraph() id=${this.id} visibilityState=${this.visibilityState} pendingHandles=${this.pendingHandlesToMakeVisible.size}`);
 		if (this.visibilityState !== VisibilityState.NotVisible) {
 			return;
 		}
@@ -811,8 +807,6 @@ export class FluidDataStoreRuntime
 			handle.attachGraph();
 		}
 		this.pendingHandlesToMakeVisible.clear();
-		// eslint-disable-next-line no-console
-		console.log(`[VISIBLE] calling makeLocallyVisible for ${this.id}`);
 		this.dataStoreContext.makeLocallyVisible();
 	}
 
@@ -1340,8 +1334,6 @@ export class FluidDataStoreRuntime
 	 */
 	private makeChannelLocallyVisible(channel: IChannel): void {
 		this.verifyNotClosed();
-		// eslint-disable-next-line no-console
-		console.log(`[DDS_ATTACH] makeChannelLocallyVisible("${channel.id}") isAttached=${channel.handle.isAttached}`);
 		// If this handle is already attached no need to attach again.
 		if (channel.handle.isAttached) {
 			return;
