@@ -1861,6 +1861,12 @@ export class ChannelCollection
 			return;
 		}
 
+		// Track pending datastore contexts and their GC data for second pass (populating transitive handles).
+		const pendingDatastoreContexts: {
+			context: FluidDataStoreContext;
+			gcData: IGarbageCollectionData;
+		}[] = [];
+
 		for (const [id, summary] of Object.entries(pendingAttachmentSummaries)) {
 			const existingContext = this.contexts.get(id);
 
@@ -1904,15 +1910,22 @@ export class ChannelCollection
 
 				// Realize the datastore to get its entryPoint handle for the pending handles map.
 				const channel = await dataStoreContext.realize();
-				// The runtime sets visibilityState to LocallyVisible for existing+Detached datastores,
-				// but pending-state datastores were never actually visible. Reset to NotVisible so that
-				// attachGraph() during staging commit properly triggers makeLocallyVisible/Attach op.
-				(channel as unknown as { visibilityState: string }).visibilityState = "NotVisible"; // VisibilityState.NotVisible
+				// Load the entry point to ensure DDSes are initialized (needed for GC data).
+				await channel.entryPoint.get();
 				const entryHandle = toFluidHandleInternal(channel.entryPoint);
 				const entryPath = entryHandle.absolutePath.startsWith("/")
 					? entryHandle.absolutePath
 					: `/${entryHandle.absolutePath}`;
 				this.pendingHandles.set(entryPath, entryHandle);
+				// Track for second pass: populate pendingHandlesToMakeVisible.
+				// Get GC data now while visibilityState is still LocallyVisible (set by realize).
+				pendingDatastoreContexts.push({
+					context: dataStoreContext,
+					gcData: dataStoreContext.getAttachGCData(),
+				});
+				// Now reset visibilityState to NotVisible so that attachGraph() during staging
+				// commit properly triggers makeLocallyVisible/Attach op.
+				(channel as unknown as { visibilityState: string }).visibilityState = "NotVisible"; // VisibilityState.NotVisible
 			} else {
 				// Datastore already exists - it has pending channels that need to be added
 				// Get the .channels subtree which contains the DDSes
@@ -1929,6 +1942,38 @@ export class ChannelCollection
 				for (const [path, handle] of ddsHandles) {
 					const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 					this.pendingHandles.set(normalizedPath, handle);
+				}
+			}
+		}
+
+		// Second pass: for each pending datastore, use its GC data to find transitive
+		// handle references to other pending objects. Add those handles to the runtime's
+		// pendingHandlesToMakeVisible so they get attached when this datastore becomes visible.
+		for (const { context, gcData } of pendingDatastoreContexts) {
+			// eslint-disable-next-line no-console
+			console.log(
+				`[GC_PASS] context=${context.id} gcNodes=${JSON.stringify(gcData.gcNodes)} pendingKeys=[${[...this.pendingHandles.keys()].join(",")}]`,
+			);
+			const pendingHandlesToMakeVisible = (
+				context as unknown as {
+					channel?: { pendingHandlesToMakeVisible?: Set<IFluidHandleInternal> };
+				}
+			).channel?.pendingHandlesToMakeVisible;
+			// eslint-disable-next-line no-console
+			console.log(
+				`[GC_PASS] pendingHandlesToMakeVisible exists=${pendingHandlesToMakeVisible !== undefined}`,
+			);
+			if (pendingHandlesToMakeVisible !== undefined) {
+				for (const routes of Object.values(gcData.gcNodes)) {
+					for (const route of routes) {
+						const normalizedRoute = route.startsWith("/") ? route : `/${route}`;
+						const handle = this.pendingHandles.get(normalizedRoute);
+						if (handle !== undefined) {
+							// eslint-disable-next-line no-console
+							console.log(`[GC_PASS] adding pending handle for route="${normalizedRoute}"`);
+							pendingHandlesToMakeVisible.add(handle);
+						}
+					}
 				}
 			}
 		}
