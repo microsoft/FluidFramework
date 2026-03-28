@@ -368,7 +368,8 @@
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
 			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major.",
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
-			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2."
+			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
+			"node-forge: overridden to ^1.4.0 to resolve known security vulnerabilities."
 		],
 		"overrides": {
 			"@biomejs/biome": "~2.4.5",
@@ -379,6 +380,7 @@
 			"diff@>=7 <8": "^8.0.3",
 			"diff@>=8 <9": "^8.0.3",
 			"fast-xml-parser": "^4.5.4",
+			"node-forge": "^1.4.0",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
