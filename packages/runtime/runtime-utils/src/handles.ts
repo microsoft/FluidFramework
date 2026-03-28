@@ -8,7 +8,7 @@ import type {
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
-import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import { type IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
@@ -98,21 +98,7 @@ export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISer
 }
 
 /**
- * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed (Fluid Framework client 2.0.0-rc.3.0.0 and earlier).
- *
- * Some code which uses this library might dynamically load multiple versions of it,
- * as well as old or duplicated versions of packages which produce or implement handles.
- * To correctly interoperate with this old packages and object produced by them, the old in-memory format for handles, without the symbol, are explicitly supported.
- *
- * This setting mostly exists as a way to easily find any code that only exists to provide this compatibility and clarify how to remove that compatibility.
- * At some point this might be removed or turned into an actual configuration option, but for now its really just documentation.
- */
-const enableBackwardsCompatibility = true;
-
-/**
  * Check if a value is an {@link @fluidframework/core-interfaces#IFluidHandle}.
- * @remarks
- * Objects which have a field named `IFluidHandle` can in some cases produce a false positive.
  * @public
  */
 export function isFluidHandle(value: unknown): value is IFluidHandle {
@@ -120,20 +106,7 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 	if (typeof value !== "object" || value === null) {
 		return false;
 	}
-	if (fluidHandleSymbol in value) {
-		return true;
-	}
-	// If enableBackwardsCompatibility, run check for FluidHandles predating use of fluidHandleSymbol.
-	if (enableBackwardsCompatibility && IFluidHandle in value) {
-		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
-		// Type assertion is needed for backward compatibility with old FluidHandle format
-		const inner = value[IFluidHandle] as IFluidHandle;
-		if (typeof inner !== "object" || inner === null) {
-			return false;
-		}
-		return IFluidHandle in inner;
-	}
-	return false;
+	return fluidHandleSymbol in value;
 }
 
 /**
@@ -153,18 +126,14 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
  * @legacy @beta
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
-	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
-		if (enableBackwardsCompatibility && IFluidHandle in handle) {
-			// Type assertion needed for backward compatibility with old handle format
-			return handle[IFluidHandle] as IFluidHandleInternal<T>;
-		}
-		throw new TypeError("Invalid IFluidHandle");
+	if (fluidHandleSymbol in handle) {
+		// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
+		// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
+		// Type assertion is safe as fluidHandleSymbol is guaranteed to contain an IFluidHandleInternal
+		return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
 	}
 
-	// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
-	// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
-	// Type assertion is safe as fluidHandleSymbol is guaranteed to contain an IFluidHandleInternal
-	return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
+	throw new TypeError("Invalid IFluidHandle");
 }
 
 /**
