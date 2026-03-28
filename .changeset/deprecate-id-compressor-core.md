@@ -3,7 +3,7 @@
 "__section": deprecation
 ---
 
-Deprecated `IIdCompressorCore` interface
+Deprecated IIdCompressorCore interface
 
 The `IIdCompressorCore` interface is deprecated and will be removed from the public API surface in 2.100.0. This also affects the return types of `createIdCompressor` and `deserializeIdCompressor`, which currently return `IIdCompressor & IIdCompressorCore` but will be narrowed to `IIdCompressor`.
 
