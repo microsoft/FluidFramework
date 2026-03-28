@@ -327,7 +327,6 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
 function replaceSerializedHandles(
 	input: unknown,
 	handleFactory: (url: string, payloadPending: boolean) => IFluidHandleInternal,
-	pendingHandles?: Map<string, IFluidHandleInternal>,
 ): unknown {
 	if (input === null || input === undefined || typeof input !== "object") {
 		return input;
@@ -336,18 +335,14 @@ function replaceSerializedHandles(
 		return handleFactory(input.url, input.payloadPending === true);
 	}
 	if (isFluidHandle(input)) {
-		// Check if this handle should be replaced with a canonical pending handle.
-		const path = toFluidHandleInternal(input).absolutePath;
-		const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-		const replacement = pendingHandles?.get(normalizedPath);
-		return replacement ?? input;
+		return input;
 	}
 	let clone: Record<string, unknown> | undefined;
 	const record = input as Record<string, unknown>;
 	for (const key of Object.keys(record)) {
 		const value: unknown = record[key];
 		if (value !== null && value !== undefined && typeof value === "object") {
-			const replaced = replaceSerializedHandles(value, handleFactory, pendingHandles);
+			const replaced = replaceSerializedHandles(value, handleFactory);
 			if (replaced !== value) {
 				clone ??= Array.isArray(input)
 					? ([...(input as unknown[])] as unknown as Record<string, unknown>)
@@ -1889,32 +1884,6 @@ export class ChannelCollection
 					enumerable: true,
 					configurable: true,
 				});
-				// Override submitMessage to replace serialized handles and RemoteFluidObjectHandle
-				// instances with canonical pending handles. This ensures transitive handles
-				// (e.g., B's handle inside A's DDS) get proper binding during submission.
-				const originalSubmitMessage = parentContext.submitMessage.bind(parentContext);
-				parentContext.submitMessage = (
-					type: string,
-					content: unknown,
-					localOpMetadata: unknown,
-				): void => {
-					if (this.pendingHandles.size > 0) {
-						const replaced = replaceSerializedHandles(
-							content,
-							(url: string, payloadPending: boolean) => {
-								const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
-								return (
-									this.pendingHandles.get(normalizedUrl) ??
-									new RemoteFluidObjectHandle(url, this.stashedOpHandleContext, payloadPending)
-								);
-							},
-							this.pendingHandles,
-						);
-						originalSubmitMessage(type, replaced, localOpMetadata);
-					} else {
-						originalSubmitMessage(type, content, localOpMetadata);
-					}
-				};
 
 				// Create a context for this datastore with Detached attach state
 				const dataStoreContext = new PendingStateLocalFluidDataStoreContext({
