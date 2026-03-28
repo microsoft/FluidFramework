@@ -73,20 +73,22 @@ export function renderSchemaTypeScript(
 	const allSchemas = [...definitions];
 	let hasHelperMethods = false;
 
-	// Resolve short name collisions
-	const resolver = new IdentifierCollisionResolver();
+	// Resolve short name collisions, pre-claiming built-in primitive type names
+	const reservedNames = ["string", "number", "boolean", "null", fluidHandleTypeName];
+	const resolver = new IdentifierCollisionResolver(reservedNames);
 	for (const schema of allSchemas) {
-		resolver.resolve(schema);
+		if (isNamedSchema(schema)) {
+			resolver.resolve(schema);
+		}
 	}
 
 	const declarations: string[] = [];
 	for (const schema of allSchemas) {
-		const identifier = schema.identifier;
-		if (!isNamedSchema(identifier)) {
+		if (!isNamedSchema(schema)) {
 			continue;
 		}
 		const friendlyName = resolver.resolve(schema);
-		const rendered = renderNamedSchema(identifier, friendlyName, schema);
+		const rendered = renderNamedSchema(schema.identifier, friendlyName, schema);
 		if (rendered === undefined) {
 			continue;
 		}
@@ -330,7 +332,7 @@ export function renderSchemaTypeScript(
 	}
 
 	function renderTypeReference(schema: TreeNodeSchema): TypeExpression {
-		if (isNamedSchema(schema.identifier)) {
+		if (isNamedSchema(schema)) {
 			return {
 				precedence: TypePrecedence.Object,
 				text: resolver.resolve(schema),
