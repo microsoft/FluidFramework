@@ -10,7 +10,7 @@ import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 
-import type { OdspConnectionConfig } from "../interfaces.js";
+import type { OdspConnectionConfig, OdspContainerAttachProps } from "../interfaces.js";
 import { OdspClient } from "../odspClient.js";
 
 import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
@@ -113,5 +113,36 @@ describe("OdspClient", () => {
 			expectedConfigs,
 			"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 		);
+	});
+
+	describe("OdspContainerAttachProps", () => {
+		it("accepts file conversion properties (itemId and eTag)", () => {
+			// This test verifies that the OdspContainerAttachProps interface
+			// correctly accepts the itemId and eTag properties for file conversion.
+			// Actual file conversion requires a real ODSP service and cannot be tested here.
+			const attachProps: OdspContainerAttachProps = {
+				filePath: "/test/path",
+				fileName: "test.fluid",
+				itemId: "test-item-id",
+				eTag: "test-etag",
+			};
+
+			assert.strictEqual(attachProps.itemId, "test-item-id");
+			assert.strictEqual(attachProps.eTag, "test-etag");
+			assert.strictEqual(attachProps.filePath, "/test/path");
+			assert.strictEqual(attachProps.fileName, "test.fluid");
+		});
+
+		it("allows itemId and eTag to be undefined", () => {
+			// When itemId and eTag are not provided, the attach operation
+			// creates a new file instead of converting an existing one.
+			const attachProps: OdspContainerAttachProps = {
+				filePath: "/test/path",
+				fileName: "test.fluid",
+			};
+
+			assert.strictEqual(attachProps.itemId, undefined);
+			assert.strictEqual(attachProps.eTag, undefined);
+		});
 	});
 });

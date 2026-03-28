@@ -206,12 +206,25 @@ export class OdspClient {
 		const attach = async (
 			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
 		): Promise<string> => {
-			const createNewRequest: IRequest = createOdspCreateContainerRequest(
-				connection.siteUrl,
-				connection.driveId,
-				odspProps?.filePath ?? "",
-				odspProps?.fileName ?? uuid(),
-			);
+			const createNewRequest: IRequest =
+				odspProps?.eTag !== undefined && odspProps?.itemId !== undefined
+					? {
+							url: createOdspUrl({
+								siteUrl: connection.siteUrl,
+								driveId: connection.driveId,
+								itemId: odspProps.itemId,
+								dataStorePath: "",
+							}),
+							headers: {
+								eTag: odspProps.eTag,
+							},
+						}
+					: createOdspCreateContainerRequest(
+							connection.siteUrl,
+							connection.driveId,
+							odspProps?.filePath ?? "",
+							odspProps?.fileName ?? uuid(),
+						);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
