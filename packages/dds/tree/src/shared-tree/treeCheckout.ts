@@ -61,6 +61,7 @@ import {
 	type TaggedChange,
 } from "../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
 	allowsRepoSuperset,
@@ -745,13 +746,22 @@ export class TreeCheckout implements ITreeCheckout {
 					kind,
 					isLocal: true,
 					getChange: () => {
+						// Give all serialized changes a revision of "root" by convention.
+						// This is not necessary for correctness - changes are "copied" when later applied and will be given a different revision at that time.
+						const replacer = new DefaultRevisionReplacer(
+							"root",
+							this.changeFamily.rebaser.getRevisions(change),
+						);
+						const root = this.changeFamily.rebaser.changeRevision(change, replacer);
 						const context: ChangeEncodingContext = {
 							idCompressor: this.idCompressor,
 							originatorId: this.idCompressor.localSessionId,
-							revision,
+							revision: "root",
+							// By not passing the schema, we avoid compressing identifiers in identifier fields.
+							// This ensures the change is self-contained - it does not rely on the ID compressor at application time to know about IDs from the compressor at encode time.
+							schema: undefined,
 						};
-						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
-
+						const encodedChange = this.changeFamily.codecs.resolve(4).encode(root, context);
 						assert(
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
@@ -810,19 +820,25 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
 		const { revision, originatorId, change } = serializedChange;
-		if (originatorId !== this.idCompressor.localSessionId) {
-			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-			);
-		}
+		assert(revision === "root", `Malformed serialized change, revision should be "root"`);
 		const context: ChangeEncodingContext = {
 			idCompressor: this.idCompressor,
-			originatorId: this.idCompressor.localSessionId,
+			originatorId,
 			revision,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+
+		// Extract the inner data change from the SharedTreeChange envelope.
+		// Serialized changes are always single data changes (not schema changes).
+		const innerChange = decodedChange.changes[0];
+		assert(
+			decodedChange.changes.length === 1 && innerChange?.type === "data",
+			0x1b2 /* Expected a single data change in serialized change */,
+		);
+
+		// Delegate to the editor, which will replace the revision, shift local IDs to avoid
+		// collisions with other changes in the same transaction, and apply the change.
+		this.#transaction.activeBranchEditor.applyExternalChange(innerChange.innerChange);
 	}
 
 	// #region TreeBranchAlpha
