@@ -5,8 +5,9 @@
 
 import { assertNotUndefined } from './Common.js';
 import { SharedTreeEvent } from './EventTypes.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { EditId } from './Identifiers.js';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
+import { EditCommittedEventArguments } from './SharedTree.js';
 
 // TODO: We temporarily duplicate these contracts from 'framework/undo-redo' to unblock development
 // while we decide on the correct layering for undo.
@@ -56,7 +57,7 @@ export class SharedTreeUndoRedoHandler {
 	 * Attach a shared tree to this handler. Each edit from the tree will invoke `this.stackManager`'s
 	 * {@link IUndoConsumer.pushToCurrentOperation} method with an associated {@link IRevertible}.
 	 */
-	public attachTree(tree: SharedTree): void {
+	public attachTree(tree: ISharedTree): void {
 		tree.on(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
 	}
 
@@ -64,7 +65,7 @@ export class SharedTreeUndoRedoHandler {
 	 * Detach a shared tree from this handler. Edits from the tree will no longer cause `this.stackManager`'s
 	 * {@link IUndoConsumer.pushToCurrentOperation} to be called.
 	 */
-	public detachTree(tree: SharedTree): void {
+	public detachTree(tree: ISharedTree): void {
 		tree.off(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
 	}
 
@@ -91,7 +92,7 @@ export class SharedTreeUndoRedoHandler {
 export class SharedTreeRevertible implements IRevertible {
 	constructor(
 		private readonly editId: EditId,
-		private readonly tree: SharedTree
+		private readonly tree: ISharedTree
 	) {}
 
 	public revert(): void {

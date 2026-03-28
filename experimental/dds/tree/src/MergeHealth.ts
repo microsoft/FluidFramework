@@ -8,7 +8,8 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { assertNotUndefined, fail } from './Common.js';
 import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';
-import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree.js';
+import type { ISharedTree } from './ISharedTree.js';
+import { SequencedEditAppliedEventArguments } from './SharedTree.js';
 import { TransactionInternal } from './TransactionInternal.js';
 import { EditStatus } from './persisted-types/index.js';
 
@@ -18,7 +19,7 @@ import { EditStatus } from './persisted-types/index.js';
  * @param tree - The tree for which to log the telemetry.
  * @internal
  */
-export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: () => void } {
+export function useFailedSequencedEditTelemetry(tree: ISharedTree): { disable: () => void } {
 	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments): void {
 		if (wasLocal && outcome.status !== EditStatus.Applied) {
 			logger.send({
@@ -210,14 +211,14 @@ export interface MergeHealthStats {
  */
 export class SharedTreeMergeHealthTelemetryHeartbeat {
 	private heartbeatTimerId = 0;
-	private readonly treeData = new Map<SharedTree, { tally: MergeHealthStats; logger?: ITelemetryLoggerExt }>();
+	private readonly treeData = new Map<ISharedTree, { tally: MergeHealthStats; logger?: ITelemetryLoggerExt }>();
 
 	/**
 	 * Adds a tree to the set of tree to log merge health telemetry for.
 	 * Noop if such a tree was already in the set.
 	 * @param tree - The tree to log merge health telemetry for.
 	 */
-	public attachTree(tree: SharedTree): void {
+	public attachTree(tree: ISharedTree): void {
 		if (this.treeData.has(tree) === false) {
 			this.resetTreeData(tree);
 			tree.on(SharedTreeEvent.SequencedEditApplied, this.sequencedEditHandler);
@@ -229,7 +230,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	 * Noop if such a tree was never in the set.
 	 * @param tree - The tree to stop logging merge health telemetry for.
 	 */
-	public detachTree(tree: SharedTree): void {
+	public detachTree(tree: ISharedTree): void {
 		if (this.treeData.has(tree)) {
 			tree.off(SharedTreeEvent.SequencedEditApplied, this.sequencedEditHandler);
 			this.treeData.delete(tree);
@@ -241,7 +242,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	 * @param tree - The tree to get stats for.
 	 * @returns Aggregated statistics about merge health for the given tree.
 	 */
-	public getStats(tree: SharedTree): MergeHealthStats {
+	public getStats(tree: ISharedTree): MergeHealthStats {
 		return assertNotUndefined(this.treeData.get(tree), 'No such tree was attached to the logger').tally;
 	}
 
@@ -258,7 +259,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	 * Resets the aggregated merge health data for the given tree.
 	 * @param tree - The tree to reset the merge health data for.
 	 */
-	public resetTreeData(tree: SharedTree): void {
+	public resetTreeData(tree: ISharedTree): void {
 		this.treeData.set(tree, {
 			tally: {
 				maxAttemptCount: 0,
