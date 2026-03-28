@@ -7,7 +7,12 @@
  * Exports for `id-compressor`
  */
 
-export { createIdCompressor, deserializeIdCompressor } from "./idCompressor.js";
+export {
+	createIdCompressor,
+	deserializeIdCompressor,
+	serializeIdCompressor,
+	toIdCompressorWithCore,
+} from "./idCompressor.js";
 export {
 	createSessionId,
 	assertIsStableId,
