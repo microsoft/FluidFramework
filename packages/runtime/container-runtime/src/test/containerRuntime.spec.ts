@@ -16,7 +16,6 @@ import {
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	FluidObject,
@@ -77,7 +76,6 @@ import { ChannelCollection } from "../channelCollection.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	type IContainerRuntimeOptions,
 	type IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
@@ -1570,15 +1568,9 @@ describe("Runtime", () => {
 					methodReturn: T,
 				) =>
 					class MixinContainerRuntime extends Base {
-						public static async loadRuntime2(params: {
-							context: IContainerContext;
-							containerRuntimeCtor?: typeof ContainerRuntime;
-							provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-							existing: boolean;
-							runtimeOptions: IContainerRuntimeOptions;
-							registry: IFluidDataStoreRegistry;
-							containerScope: FluidObject;
-						}): Promise<{ runtime: ContainerRuntime }> {
+						public static async loadRuntime2(
+							params: Parameters<typeof Base.loadRuntime2>[0],
+						): ReturnType<typeof Base.loadRuntime2> {
 							// Note: we're mutating the parameter object here, normally a no-no, but shouldn't be
 							// an issue in our tests.
 							params.containerRuntimeCtor =

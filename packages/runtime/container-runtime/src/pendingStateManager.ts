@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IDisposable,
+	IFluidHandle,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -46,6 +50,7 @@ export interface IPendingMessage {
 	 * Serialized copy of runtimeOp
 	 */
 	content: string;
+	stagedHandleCache?: ReadonlySet<IFluidHandle> | undefined;
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
 	 * Unless this pending message came from stashed content, in which case this is undefined at first and then deserialized from the contents string
@@ -227,13 +232,22 @@ export function findFirstCharacterMismatched(
  * Returns a shallow copy of the given message with the non-serializable properties removed.
  * Note that the runtimeOp's data has already been serialized in the content property.
  */
-function toSerializableForm(
-	message: IPendingMessage,
-): IPendingMessage & { runtimeOp: undefined; localOpMetadata: undefined } {
+function toSerializableForm(message: IPendingMessage): IPendingMessage & {
+	runtimeOp: undefined;
+	localOpMetadata: undefined;
+	stagedHandleCache: undefined;
+} {
 	return {
 		...message,
 		localOpMetadata: undefined,
 		runtimeOp: undefined,
+		stagedHandleCache: undefined,
+		// Clear staged flag: on rehydration, enterStagingMode() is called separately
+		// by loadContainerRuntimeAlpha, so these ops should not individually carry the staged flag.
+		batchInfo: {
+			...message.batchInfo,
+			staged: false,
+		},
 	};
 }
 
@@ -337,6 +351,7 @@ export class PendingStateManager implements IDisposable {
 
 	public getLocalState(snapshotSequenceNumber?: number): {
 		pending: IPendingLocalState;
+		stagedHandleCache: Set<IFluidHandle>;
 	} {
 		assert(
 			this.initialMessages.isEmpty(),
@@ -360,13 +375,19 @@ export class PendingStateManager implements IDisposable {
 				throw new LoggingError("trying to stash ops older than our latest snapshot");
 			}
 		}
+		const stagedHandleCache = new Set<IFluidHandle>();
 		return {
 			pending: {
 				pendingStates: [
 					...newSavedOps,
-					...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
+					...this.pendingMessages.toArray().map((message) => {
+						if (message.stagedHandleCache)
+							for (const h of message.stagedHandleCache) stagedHandleCache.add(h);
+						return toSerializableForm(message);
+					}),
 				],
 			},
+			stagedHandleCache,
 		};
 	}
 
@@ -442,7 +463,7 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content: serializeOp(runtimeOp).content,
+				...serializeOp(runtimeOp, staged),
 				runtimeOp,
 				localOpMetadata,
 				opMetadata,

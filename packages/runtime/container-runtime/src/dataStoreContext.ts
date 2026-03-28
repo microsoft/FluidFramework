@@ -71,7 +71,7 @@ import type {
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import { asLegacyAlpha, channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -1062,17 +1062,44 @@ export abstract class FluidDataStoreContext
 	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
 	 */
-	public abstract getAttachSummary(
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats;
+	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		assert(
+			this.channel !== undefined,
+			0x14f /* "There should be a channel when generating attach message" */,
+		);
+		assert(
+			this.pkg !== undefined,
+			0x150 /* "pkg should be available in local data store context" */,
+		);
+
+		const attachSummary = this.channel.getAttachSummary(telemetryContext);
+
+		// Wrap dds summaries in .channels subtree.
+		wrapSummaryInChannelsTree(attachSummary);
+
+		// Add data store's attributes to the summary.
+		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
+		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			attachSummary.summary.groupId = this.loadingGroupId;
+		}
+
+		return attachSummary;
+	}
 
 	/**
 	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's
 	 * outbound routes.
 	 */
-	public abstract getAttachGCData(
-		telemetryContext?: ITelemetryContext,
-	): IGarbageCollectionData;
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		assert(
+			this.channel !== undefined,
+			0x9a6 /* There should be a channel when generating attach GC data */,
+		);
+		return this.channel.getAttachGCData(telemetryContext);
+	}
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -1369,17 +1396,32 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	}
 
 	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
+	 * Remote datastores normally cannot be attached. However, in staging mode an
+	 * already-attached datastore may contain a not-yet-attached DDS created during staging.
+	 * In that case we need its attach summary to capture the pending DDS in pending local state.
 	 */
-	public getAttachSummary(): ISummaryTreeWithStats {
-		throw new Error("Cannot attach remote store");
+	public override getAttachSummary(
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
+		assert(
+			asLegacyAlpha(this.runtime).inStagingMode === true,
+			"Cannot get attach summary for remote store outside of staging mode",
+		);
+		return super.getAttachSummary(telemetryContext);
 	}
 
 	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
+	 * See {@link RemoteFluidDataStoreContext.getAttachSummary} for why this is
+	 * allowed in staging mode.
 	 */
-	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
-		throw new Error("Cannot attach remote store");
+	public override getAttachGCData(
+		telemetryContext?: ITelemetryContext,
+	): IGarbageCollectionData {
+		assert(
+			asLegacyAlpha(this.runtime).inStagingMode === true,
+			"Cannot get attach GC data for remote store outside of staging mode",
+		);
+		return super.getAttachGCData(telemetryContext);
 	}
 }
 
@@ -1451,47 +1493,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		}
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
-	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		assert(
-			this.channel !== undefined,
-			0x14f /* "There should be a channel when generating attach message" */,
-		);
-		assert(
-			this.pkg !== undefined,
-			0x150 /* "pkg should be available in local data store context" */,
-		);
-
-		const attachSummary = this.channel.getAttachSummary(telemetryContext);
-
-		// Wrap dds summaries in .channels subtree.
-		wrapSummaryInChannelsTree(attachSummary);
-
-		// Add data store's attributes to the summary.
-		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
-		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
-
-		// Add loadingGroupId to the summary
-		if (this.loadingGroupId !== undefined) {
-			attachSummary.summary.groupId = this.loadingGroupId;
-		}
-
-		return attachSummary;
-	}
-
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
-	 */
-	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
-		assert(
-			this.channel !== undefined,
-			0x9a6 /* There should be a channel when generating attach GC data */,
-		);
-		return this.channel.getAttachGCData(telemetryContext);
-	}
-
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
@@ -1560,6 +1561,18 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(props);
+	}
+}
+
+/**
+ * Context for a datastore loaded from pendingAttachmentSummaries (pending local state).
+ * These datastores have snapshot data but were never attached on the original client,
+ * so _attachState must be Detached despite having a snapshotTree (existing = true).
+ */
+export class PendingStateLocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
+	constructor(props: ILocalFluidDataStoreContextProps) {
+		super(props);
+		this._attachState = AttachState.Detached;
 	}
 }
 

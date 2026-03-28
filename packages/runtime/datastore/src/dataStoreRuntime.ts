@@ -65,6 +65,7 @@ import {
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
 	asLegacyAlpha,
+	type IContainerRuntimeBaseInternal,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -732,6 +733,7 @@ export class FluidDataStoreRuntime
 		id: string,
 		tree: ISnapshotTree,
 		flatBlobs?: Map<string, ArrayBufferLike>,
+		loadingFromPendingState?: boolean,
 	): RehydratedLocalChannelContext {
 		return new RehydratedLocalChannelContext(
 			id,
@@ -744,6 +746,7 @@ export class FluidDataStoreRuntime
 			(address: string) => this.setChannelDirty(address),
 			tree,
 			flatBlobs,
+			loadingFromPendingState,
 		);
 	}
 
@@ -821,6 +824,57 @@ export class FluidDataStoreRuntime
 			return;
 		}
 		this.pendingHandlesToMakeVisible.add(toFluidHandleInternal(handle));
+	}
+
+	/**
+	 * Load pending channels from pending attachment summaries.
+	 * This is called during container load to rehydrate channels that were referenced but not yet attached.
+	 * @param channelsTree - The summary tree containing the pending channels to load.
+	 * @returns A map of absolute handle path to the canonical handle for each loaded channel.
+	 * These handles support proper binding (attachGraph) for use during stashed op resubmission.
+	 */
+	public async loadPendingChannels(
+		channelsTree: ISummaryTree,
+	): Promise<Map<string, IFluidHandleInternal>> {
+		const handleMap = new Map<string, IFluidHandleInternal>();
+		for (const [channelId, summary] of Object.entries(channelsTree.tree)) {
+			assert(!this.contexts.has(channelId), "channel must not exist");
+			assert(summary.type === SummaryType.Tree, "must be a tree");
+			// Channel doesn't exist yet - create it from the summary
+			// Convert the summary tree to an ITree, then to a snapshot tree
+			const itree = convertSummaryTreeToITree(summary);
+			const blobs = new Map<string, ArrayBufferLike>();
+			const snapshotTree = buildSnapshotTree(itree.entries, blobs);
+
+			// Create a RehydratedLocalChannelContext for this pending channel.
+			// Pass loadingFromPendingState=true so the channel knows it was never attached
+			// and should report isAttached()=false.
+			const channelContext = this.createRehydratedLocalChannelContext(
+				channelId,
+				snapshotTree,
+				blobs,
+				true, // loadingFromPendingState
+			);
+
+			// Add it to the contexts
+			this.contexts.set(channelId, channelContext);
+
+			// Add to local channel context queue since it's not yet globally visible
+			this.localChannelContextQueue.set(channelId, channelContext);
+
+			// Add to notBoundedChannelContextSet so bindChannel() works when the
+			// handle's attachGraph() is called during staging commit resubmission.
+			this.notBoundedChannelContextSet.add(channelId);
+
+			// Eagerly load the channel so its handle is available for binding.
+			// makeChannelLocallyVisible needs a loaded IChannel and attachGraph() is sync.
+			const channel = await channelContext.getChannel();
+			handleMap.set(
+				toFluidHandleInternal(channel.handle).absolutePath,
+				toFluidHandleInternal(channel.handle),
+			);
+		}
+		return handleMap;
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string): void {
@@ -1145,28 +1199,30 @@ export class FluidDataStoreRuntime
 		this.visitLocalBoundContextsDuringAttach(
 			(contextId: string, context: LocalChannelContextBase) => {
 				let summaryTree: ISummaryTreeWithStats;
-				if (context.isLoaded) {
-					const contextSummary = context.getAttachSummary(telemetryContext);
-					assert(
-						contextSummary.summary.type === SummaryType.Tree,
-						0x180 /* "getAttachSummary should always return a tree" */,
-					);
+				if (!context.isGloballyVisible) {
+					if (context.isLoaded) {
+						const contextSummary = context.getAttachSummary(telemetryContext);
+						assert(
+							contextSummary.summary.type === SummaryType.Tree,
+							0x180 /* "getAttachSummary should always return a tree" */,
+						);
 
-					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-				} else {
-					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
-					// it was created as it is detached container. So just use the previous snapshot.
-					assert(
-						!!this.dataStoreContext.baseSnapshot,
-						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-					);
-					summaryTree = convertSnapshotTreeToSummaryTree(
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						this.dataStoreContext.baseSnapshot.trees[contextId]!,
-					);
+						summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+					} else {
+						// If this channel is not yet loaded, then there should be no changes in the snapshot from which
+						// it was created as it is detached container. So just use the previous snapshot.
+						assert(
+							!!this.dataStoreContext.baseSnapshot,
+							0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+						);
+						summaryTree = convertSnapshotTreeToSummaryTree(
+							// TODO why are we non null asserting here?
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							this.dataStoreContext.baseSnapshot.trees[contextId]!,
+						);
+					}
+					summaryBuilder.addWithStats(contextId, summaryTree);
 				}
-				summaryBuilder.addWithStats(contextId, summaryTree);
 			},
 		);
 
@@ -1216,8 +1272,12 @@ export class FluidDataStoreRuntime
 	private visitLocalBoundContextsDuringAttach(
 		visitor: (contextId: string, context: LocalChannelContextBase) => void,
 	): void {
+		const runtimeExp: IContainerRuntimeBaseInternal = asLegacyAlpha(
+			this.dataStoreContext.containerRuntime,
+		);
 		assert(
-			this.visibilityState === VisibilityState.LocallyVisible,
+			runtimeExp.inStagingMode === true ||
+				this.visibilityState === VisibilityState.LocallyVisible,
 			0xc2c /* The data store should be locally visible when generating attach summary */,
 		);
 
@@ -1232,12 +1292,16 @@ export class FluidDataStoreRuntime
 			visitedLength = visitedContexts.size;
 			for (const [contextId, context] of this.contexts) {
 				if (!(context instanceof LocalChannelContextBase)) {
+					if (runtimeExp.inStagingMode === true) {
+						continue;
+					}
 					throw new LoggingError("Should only be called with local channel handles");
 				}
 
 				if (
 					!visitedContexts.has(contextId) &&
-					!this.notBoundedChannelContextSet.has(contextId)
+					(runtimeExp.inStagingMode === true ||
+						!this.notBoundedChannelContextSet.has(contextId))
 				) {
 					visitor(contextId, context);
 					visitedContexts.add(contextId);
