@@ -23,7 +23,7 @@ Consumers of Fluid aren't expected to implement these interfaces directly, so no
 Additionally the following properties now always return a value, rather than possibly returning `undefined`:
 
 - `FluidDataStoreRuntime.minVersionForCollab` in `@fluidframework/datastore`.
-Note that our tools flag this as a breaking change as FluidDataStoreRuntime is beta + legacy and non-sealed
+Note that API Extractor shows this as a breaking change since FluidDataStoreRuntime is beta + legacy and non-sealed.
 However, FluidDataStoreRuntime is not intended to be extended directly outside of a known legacy use-case.
 - `MockFluidDataStoreRuntime.minVersionForCollab` in `@fluidframework/test-runtime-utils`.
 - `IDataObjectProps.context.minVersionForCollab` in `@fluidframework/aqueduct`.
