@@ -748,6 +748,10 @@ export class ChannelCollection
 	 */
 	private makeDataStoreLocallyVisible(id: string): void {
 		const localContext = this.contexts.getUnbound(id);
+		// eslint-disable-next-line no-console
+		console.log(
+			`[DS_ATTACH] makeDataStoreLocallyVisible("${id}") unbound=${localContext !== undefined} attachState=${this.parentContext.attachState}`,
+		);
 		assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
 
 		/**
@@ -756,6 +760,8 @@ export class ChannelCollection
 		 * If the container is detached, this data store will be part of the summary that makes the container attached.
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
+			// eslint-disable-next-line no-console
+			console.log(`[DS_ATTACH] submitting attach op for "${id}"`);
 			this.submitAttachChannelOp(localContext);
 			localContext.setAttachState(AttachState.Attaching);
 		}
@@ -925,6 +931,10 @@ export class ChannelCollection
 						(url: string, payloadPending: boolean) => {
 							const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
 							const pendingHandle = this.pendingHandles.get(normalizedUrl);
+							// eslint-disable-next-line no-console
+							console.log(
+								`[RESUBMIT_HANDLE] url="${normalizedUrl}" found=${pendingHandle !== undefined}`,
+							);
 							if (pendingHandle !== undefined) {
 								return pendingHandle;
 							}
@@ -1894,6 +1904,10 @@ export class ChannelCollection
 
 				// Realize the datastore to get its entryPoint handle for the pending handles map.
 				const channel = await dataStoreContext.realize();
+				// The runtime sets visibilityState to LocallyVisible for existing+Detached datastores,
+				// but pending-state datastores were never actually visible. Reset to NotVisible so that
+				// attachGraph() during staging commit properly triggers makeLocallyVisible/Attach op.
+				(channel as unknown as { visibilityState: string }).visibilityState = "NotVisible"; // VisibilityState.NotVisible
 				const entryHandle = toFluidHandleInternal(channel.entryPoint);
 				const entryPath = entryHandle.absolutePath.startsWith("/")
 					? entryHandle.absolutePath
