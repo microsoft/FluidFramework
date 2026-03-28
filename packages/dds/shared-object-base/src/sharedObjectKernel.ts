@@ -137,7 +137,7 @@ class SharedObjectFromKernel<
 		// It's a follow-up to a pattern where the property (`minVersionForCollab`) existed on
 		// IFluidDataStoreRuntimeInternalConfig as optional, which allows us to avoid breaking changes to
 		// IFluidDataStoreRuntime by hiding internal members in a separate interface,
-        // but comes at the cost of less compile-time enforcement: there is no type-level guarantee that `runtime` is an instance
+		// but comes at the cost of less compile-time enforcement: there is no type-level guarantee that `runtime` is an instance
 		// of FluidDataStoreRuntime (for example, it could be a partial mock from a test). In the case where it is not,
 		// `minVersionForCollab` may be undefined and we have to assert that it is not undefined before using it.
 		//
