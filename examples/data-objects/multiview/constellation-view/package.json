@@ -64,20 +64,6 @@
 			}
 		}
 	},
-	"fluidBuild": {
-		"tasks": {
-			"eslint": [
-				"@fluid-example/multiview-coordinate-interface#build:esnext",
-				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
-				"^tsc"
-			],
-			"build:esnext": [
-				"@fluid-example/multiview-coordinate-interface#build:esnext",
-				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
-				"^tsc"
-			]
-		}
-	},
 	"typeValidation": {
 		"disabled": true
 	}

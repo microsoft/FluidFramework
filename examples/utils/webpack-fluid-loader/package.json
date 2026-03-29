@@ -140,10 +140,15 @@
 	"fluidBuild": {
 		"_tasksComment1": "webpack-fluid-loader injects a script tag pointing at its own bundle (/code/fluid-loader.bundle.js) into the page. This bundle must remain up to date for webpack-fluid-loader users.",
 		"_tasksComment2": "Using build:esnext over something like compile guarantees that this happens, since the build:esnext target depends on all transitive dependencies' build:esnext targets.",
+		"_tasksComment3": "The webpack task is then set to depend on ^build:esnext overriding default that also include ^tsc",
 		"tasks": {
 			"build:esnext": [
 				"...",
 				"webpack"
+			],
+			"webpack": [
+				"^api-extractor:esnext",
+				"^build:esnext"
 			]
 		}
 	},
