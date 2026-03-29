@@ -368,7 +368,8 @@
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
 			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x have no fix in their major range so they are bumped to the nearest patched major.",
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
-			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2."
+			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
 		],
 		"overrides": {
 			"@biomejs/biome": "~2.4.5",
@@ -398,7 +399,9 @@
 			"minimatch@>=9 <10": "^9.0.9",
 			"minimatch@>=10 <11": "^10.2.4",
 			"serialize-javascript@>=6 <7": "^7.0.4",
-			"express@>=4 <5": "^4.22.1"
+			"express@>=4 <5": "^4.22.1",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",

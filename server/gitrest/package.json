@@ -87,7 +87,8 @@
 			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport).",
 			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
-			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2."
+			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
 		],
 		"overrides": {
 			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
@@ -114,7 +115,9 @@
 			"minimatch@>=9 <10": "^9.0.9",
 			"minimatch@>=10 <11": "^10.2.4",
 			"serialize-javascript@>=6 <7": "^7.0.4",
-			"express@>=4 <5": "^4.22.1"
+			"express@>=4 <5": "^4.22.1",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"onlyBuiltDependencies": [
 			"core-js",
