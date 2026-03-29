@@ -58,13 +58,13 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces";
 import { LogLevel } from "@fluidframework/core-interfaces";
-import type{
-	 IFluidHandleContext,
-	 IFluidHandleInternal,
-	 IProvideFluidHandleContext,
-	 ISignalEnvelope,
-	 OpaqueJsonDeserialized,
-	 TypedMessage,
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+	IProvideFluidHandleContext,
+	ISignalEnvelope,
+	OpaqueJsonDeserialized,
+	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
