@@ -32,8 +32,8 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 // @beta @legacy
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
+    readonly sendPerformanceEvent: (event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: LogLevel) => void;
+    readonly sendTelemetryEvent: (event: ITelemetryGenericEventExt, error?: unknown, logLevel?: LogLevel) => void;
 }
 
 // @beta @legacy (undocumented)
