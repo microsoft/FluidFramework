@@ -90,6 +90,8 @@ semverGroups:
       - "minimatch@>=9 <10"
       - "minimatch@>=10 <11"
       - "serialize-javascript@>=6 <7"
+      - "picomatch@>=2 <3"
+      - "picomatch@>=4 <5"
       - "oclif>@aws-sdk/client*"
       - "@types/glob>@types/minimatch"
     packages:
