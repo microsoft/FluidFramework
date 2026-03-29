@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 
 import { loggerToMonitoringContext } from "./config.js";
 import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
@@ -72,7 +73,7 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.send(event);
+				logger.send(event, LogLevel.essential);
 			}
 		},
 		sendTelemetryEvent: (event: ITelemetryGenericEventExt): void => {
@@ -80,7 +81,7 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.sendTelemetryEvent(event);
+				logger.sendTelemetryEvent(event, undefined, LogLevel.essential);
 			}
 		},
 		sendErrorEvent: (event: ITelemetryGenericEventExt): void => {
@@ -96,7 +97,7 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.sendPerformanceEvent(event);
+				logger.sendPerformanceEvent(event, undefined, LogLevel.essential);
 			}
 		},
 		isSamplingDisabled,

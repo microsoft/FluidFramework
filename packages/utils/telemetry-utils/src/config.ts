@@ -8,6 +8,7 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
@@ -246,14 +247,17 @@ export class CachedConfigProvider implements IConfigProvider {
 				const parsed = stronglyTypedParse(provider?.getRawConfig(name));
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
-					this.logger?.send({
-						category: "generic",
-						eventName: "ConfigRead",
-						...tagCodeArtifacts({
-							configName: name,
-							configValue: JSON.stringify(parsed),
-						}),
-					});
+					this.logger?.send(
+						{
+							category: "generic",
+							eventName: "ConfigRead",
+							...tagCodeArtifacts({
+								configName: name,
+								configValue: JSON.stringify(parsed),
+							}),
+						},
+						LogLevel.essential,
+					);
 					return parsed;
 				}
 			}

@@ -57,13 +57,14 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
-import type {
-	IFluidHandleContext,
-	IFluidHandleInternal,
-	IProvideFluidHandleContext,
-	ISignalEnvelope,
-	OpaqueJsonDeserialized,
-	TypedMessage,
+import { LogLevel } from "@fluidframework/core-interfaces";
+import type{
+	 IFluidHandleContext,
+	 IFluidHandleInternal,
+	 IProvideFluidHandleContext,
+	 ISignalEnvelope,
+	 OpaqueJsonDeserialized,
+	 TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -2118,35 +2119,42 @@ export class ContainerRuntime
 		this.deltaManager.on("op", () => this.flush());
 
 		// logging hardware telemetry
-		this.baseLogger.send({
-			category: "generic",
-			eventName: "DeviceSpec",
-			...getDeviceSpec(),
-		});
+		this.baseLogger.send(
+			{
+				category: "generic",
+				eventName: "DeviceSpec",
+				...getDeviceSpec(),
+			},
+			LogLevel.essential,
+		);
 
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "ContainerLoadStats",
-			...this.createContainerMetadata,
-			...this.channelCollection.containerLoadStats,
-			summaryNumber: loadSummaryNumber,
-			summaryFormatVersion: metadata?.summaryFormatVersion,
-			disableIsolatedChannels: metadata?.disableIsolatedChannels,
-			// This is useful even for interactive clients since they track unreferenced nodes and log errors.
-			gcVersion: metadata?.gcFeature,
-			gcConfigs: this.garbageCollector.serializedConfigs,
-			options: JSON.stringify(runtimeOptions),
-			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
-			idCompressorMode: this.sessionSchema.idCompressorMode,
-			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
-			featureGates: JSON.stringify({
-				...featureGatesForTelemetry,
-				closeSummarizerDelayOverride,
-			}),
-			telemetryDocumentId: this.telemetryDocumentId,
-			groupedBatchingEnabled: this.groupedBatchingEnabled,
-			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
-			minVersionForCollab: this.minVersionForCollab,
-		});
+		this.mc.logger.sendTelemetryEvent(
+			{
+				eventName: "ContainerLoadStats",
+				...this.createContainerMetadata,
+				...this.channelCollection.containerLoadStats,
+				summaryNumber: loadSummaryNumber,
+				summaryFormatVersion: metadata?.summaryFormatVersion,
+				disableIsolatedChannels: metadata?.disableIsolatedChannels,
+				// This is useful even for interactive clients since they track unreferenced nodes and log errors.
+				gcVersion: metadata?.gcFeature,
+				gcConfigs: this.garbageCollector.serializedConfigs,
+				options: JSON.stringify(runtimeOptions),
+				idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
+				idCompressorMode: this.sessionSchema.idCompressorMode,
+				sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
+				featureGates: JSON.stringify({
+					...featureGatesForTelemetry,
+					closeSummarizerDelayOverride,
+				}),
+				telemetryDocumentId: this.telemetryDocumentId,
+				groupedBatchingEnabled: this.groupedBatchingEnabled,
+				initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+				minVersionForCollab: this.minVersionForCollab,
+			},
+			undefined,
+			LogLevel.essential,
+		);
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
 		BindBatchTracker(this, this.baseLogger);

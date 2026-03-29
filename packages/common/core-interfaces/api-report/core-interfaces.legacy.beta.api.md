@@ -424,6 +424,8 @@ export type Listeners<T extends object> = {
 // @public
 export const LogLevel: {
     readonly verbose: 10;
+    readonly info: 20;
+    readonly essential: 30;
     readonly default: 20;
     readonly error: 30;
 };

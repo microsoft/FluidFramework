@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { LogLevel } from "@fluidframework/core-interfaces";
 import {
 	type ISharedDirectory,
 	MapFactory,
@@ -57,12 +58,15 @@ export abstract class DataObject<
 			// DataObject which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
 			// SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
 			if (this.internalRoot.attributes.type === MapFactory.Type) {
-				this.runtime.logger.send({
-					category: "generic",
-					eventName: "MapDataObject",
-					message:
-						"Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
-				});
+				this.runtime.logger.send(
+					{
+						category: "generic",
+						eventName: "MapDataObject",
+						message:
+							"Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
+					},
+					LogLevel.essential,
+				);
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
