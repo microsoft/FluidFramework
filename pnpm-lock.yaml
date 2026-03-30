@@ -54,6 +54,7 @@ overrides:
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
   serialize-javascript@>=6 <7: ^7.0.4
+  express@>=4 <5: ^4.22.1
 
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
@@ -4254,8 +4255,8 @@ importers:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.103.0)
       express:
-        specifier: ^4.21.2
-        version: 4.21.2
+        specifier: ^4.22.1
+        version: 4.22.1
       lodash.isequal:
         specifier: ^4.5.0
         version: 4.5.0
@@ -5389,8 +5390,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       express:
-        specifier: ^4.21.2
-        version: 4.21.2
+        specifier: ^4.22.1
+        version: 4.22.1
       isomorphic-fetch:
         specifier: ^3.0.0
         version: 3.0.0(encoding@0.1.13)
@@ -10429,9 +10430,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      cross-fetch:
-        specifier: ^3.1.5
-        version: 3.1.8(encoding@0.1.13)
       json-stringify-safe:
         specifier: 5.0.1
         version: 5.0.1
@@ -10469,9 +10467,6 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ~20.19.30
         version: 20.19.30
@@ -10502,9 +10497,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)
-      nock:
-        specifier: ^13.3.3
-        version: 13.5.6
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -16853,9 +16845,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../telemetry-utils
-      isomorphic-fetch:
-        specifier: ^3.0.0
-        version: 3.0.0(encoding@0.1.13)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -16884,9 +16873,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
-      '@types/isomorphic-fetch':
-        specifier: ^0.0.39
-        version: 0.0.39
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -19901,9 +19887,6 @@ packages:
     peerDependencies:
       ioredis: '>=5'
 
-  '@types/isomorphic-fetch@0.0.39':
-    resolution: {integrity: sha512-I0gou/ZdA1vMG7t7gMzL7VYu2xAKU78rW9U1l10MI0nn77pEHq3tQqHQ8hMmXdMpBlkxZOorjI4sO594Z3kKJw==}
-
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
 
@@ -21325,10 +21308,6 @@ packages:
   cookie-signature@1.0.6:
     resolution: {integrity: sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==}
 
-  cookie@0.7.1:
-    resolution: {integrity: sha512-6DnInpx7SJ2AK3+CTUE/ZM0vWTUboZCegxhC2xiIydHR9jNuTAASBrfEpHhiGOZw/nX51bHt6YQl8jsGo4y/0w==}
-    engines: {node: '>= 0.6'}
-
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
@@ -22250,8 +22229,8 @@ packages:
   exponential-backoff@3.1.1:
     resolution: {integrity: sha512-dX7e/LHVJ6W3DE1MHWi9S1EYzDESENfLrYohG2G++ovZrYOkm4Knwa0mc1cn84xJOR4KEU0WSchhLbd0UklbHw==}
 
-  express@4.21.2:
-    resolution: {integrity: sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==}
+  express@4.22.1:
+    resolution: {integrity: sha512-F2X8g9P1X7uCPZMA3MVf9wcTqlyNp7IhH5qPCI0izhaOIYXaW9L535tGA3qmjRzpH+bZczqq7hVKxTR4NWnu+g==}
     engines: {node: '>= 0.10.0'}
 
   extend-shallow@2.0.1:
@@ -30953,7 +30932,7 @@ snapshots:
       body-parser: 1.20.3
       debug: 4.4.3(supports-color@8.1.1)
       events: 3.3.0
-      express: 4.21.2
+      express: 4.22.1
       fast-redact: 3.5.0
       ioredis: 5.6.1
       lodash: 4.17.21
@@ -30985,7 +30964,7 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
       debug: 4.4.3(supports-color@8.1.1)
-      express: 4.21.2
+      express: 4.22.1
       ioredis: 5.6.1
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
@@ -32989,8 +32968,6 @@ snapshots:
     dependencies:
       ioredis: 5.6.1
 
-  '@types/isomorphic-fetch@0.0.39': {}
-
   '@types/istanbul-lib-coverage@2.0.6': {}
 
   '@types/istanbul-lib-report@3.0.3':
@@ -34597,8 +34574,6 @@ snapshots:
 
   cookie-signature@1.0.6: {}
 
-  cookie@0.7.1: {}
-
   cookie@0.7.2: {}
 
   cookiejar@2.1.4: {}
@@ -35637,14 +35612,14 @@ snapshots:
 
   exponential-backoff@3.1.1: {}
 
-  express@4.21.2:
+  express@4.22.1:
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
       body-parser: 1.20.3
       content-disposition: 0.5.4
       content-type: 1.0.5
-      cookie: 0.7.1
+      cookie: 0.7.2
       cookie-signature: 1.0.6
       debug: 2.6.9
       depd: 2.0.0
@@ -41413,7 +41388,7 @@ snapshots:
       cookie-parser: 1.4.7
       cors: 2.8.5
       detect-port: 1.6.1
-      express: 4.21.2
+      express: 4.22.1
       isomorphic-git: 1.27.2
       json-stringify-safe: 5.0.1
       level: 8.0.1
@@ -42197,7 +42172,7 @@ snapshots:
       compression: 1.7.5
       connect-history-api-fallback: 2.0.0
       default-gateway: 6.0.3
-      express: 4.21.2
+      express: 4.22.1
       graceful-fs: 4.2.11
       html-entities: 2.6.0
       http-proxy-middleware: 2.0.9(@types/express@4.17.21)(debug@4.4.3)
@@ -42238,7 +42213,7 @@ snapshots:
       compression: 1.7.5
       connect-history-api-fallback: 2.0.0
       default-gateway: 6.0.3
-      express: 4.21.2
+      express: 4.22.1
       graceful-fs: 4.2.11
       html-entities: 2.6.0
       http-proxy-middleware: 2.0.9(@types/express@4.17.21)(debug@4.4.3)

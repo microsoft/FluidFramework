@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ICollection, IDb } from "@fluidframework/server-services-core";
-import { ITestDbFactory } from "@fluidframework/server-test-utils";
+import type { ICollection, IDb } from "@fluidframework/server-services-core";
+import type { ITestDbFactory } from "@fluidframework/server-test-utils";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -44,18 +44,18 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		function getValueByKey(propertyBag, key: string): any {
 			const keys = key.split(".");
 			let value = propertyBag;
-			keys.forEach((splitKey) => {
+			for (const splitKey of keys) {
 				value = value[splitKey];
-			});
+			}
 			return value;
 		}
 
 		// getting keys of the query we are trying to find
 		const queryKeys = Object.keys(query);
 		let filteredCollection = this.getAllInternal();
-		queryKeys.forEach((key) => {
+		for (const key of queryKeys) {
 			if (!query[key]) {
-				return;
+				continue;
 			}
 			if (query[key].$gt > 0 || query[key].$lt > 0) {
 				if (query[key].$gt > 0) {
@@ -73,7 +73,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 					(value) => getValueByKey(value, key) === query[key],
 				);
 			}
-		});
+		}
 
 		if (sort && Object.keys(sort).length === 1) {
 			function compare(a, b): number {
@@ -115,13 +115,13 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 */
 	public async update(query: any, set: any, addToSet: any): Promise<void> {
 		const value = this.findOneInternal(query);
-		if (!value) {
-			throw new Error("Not found");
-		} else {
+		if (value) {
 			for (const key of Object.keys(set)) {
 				value[key] = set[key];
 			}
 			this.insertInternal(value);
+		} else {
+			throw new Error("Not found");
 		}
 	}
 
@@ -133,13 +133,13 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 */
 	public async upsert(query: any, set: any, addToSet: any): Promise<void> {
 		const value = this.findOneInternal(query);
-		if (!value) {
-			this.insertInternal(set);
-		} else {
+		if (value) {
 			for (const key of Object.keys(set)) {
 				value[key] = set[key];
 			}
 			this.insertInternal(value);
+		} else {
+			this.insertInternal(set);
 		}
 	}
 

@@ -11,8 +11,6 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@rushstack/no-new-null": "off",
-			"@typescript-eslint/consistent-type-exports": "off",
-			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"unicorn/no-null": "off",
 		},
