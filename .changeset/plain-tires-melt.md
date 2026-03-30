@@ -4,7 +4,7 @@
 "__section": tree
 ---
 
-Adds TreeArrayNodeAlpha with a new splice method
+Add TreeArrayNodeAlpha with a new splice method
 
 Adds a `splice` method on `TreeArrayNodeAlpha` that supports removing and inserting items in a single operation to align with JavaScript's Array splice API.
 Returns the removed items as an array.
