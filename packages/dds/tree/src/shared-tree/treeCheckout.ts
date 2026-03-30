@@ -1725,7 +1725,8 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 }
 
 /**
- * Enumerates through a shared tree change, looking for schema change and field changes that result in visible changes to the tree (e.g. an insert, move, delete)
+ * Enumerates through a shared tree change, looking for schema change and field changes that result in visible changes to the tree (e.g. an insert, move, delete).
+ * This function also considers changes to detached roots to be visible changes, but not renames of roots or builds of new roots.
  *
  * @param change - The change to analyze.
  * @returns True if the change contains any schema changes or any field changes that result in visible changes to the tree, false otherwise.

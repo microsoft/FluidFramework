@@ -947,7 +947,7 @@ export class ModularChangeFamily
 		if (
 			noChangeConstraint !== undefined &&
 			!noChangeConstraint.violated &&
-			ignoreNoChangeViolation !== true
+			!ignoreNoChangeViolation
 		) {
 			noChangeConstraint = { violated: true };
 			constraintState.violationCount += 1;
