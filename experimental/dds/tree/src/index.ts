@@ -141,10 +141,10 @@ export {
 	EditCommittedEventArguments,
 	SequencedEditAppliedEventArguments,
 	EditApplicationOutcome,
-	ISharedTreeEvents,
+	ISharedTreeInternalEvents,
 	StashedLocalOpMetadata,
 } from './SharedTree.js';
-export type { ISharedTree } from './ISharedTree.js';
+export type { ISharedTree, ISharedTreeEvents } from './ISharedTree.js';
 export { StringInterner } from './StringInterner.js';
 export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 
