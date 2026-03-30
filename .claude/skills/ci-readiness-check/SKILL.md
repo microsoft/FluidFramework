@@ -24,9 +24,9 @@ Before doing anything, ask the user:
 > I'll run a CI readiness check on your branch. Pick a mode (fastest to slowest):
 >
 > 1. **Cancel** — never mind, don't run checks
-> 2. **Quick** — auto-fix formatting only (Biome on changed files); skip all build-dependent checks (< 30 seconds)
-> 3. **Full** — Quick + build unbuilt packages + regenerate API reports and type tests (up to a minute)
-> 4. **Thorough** — Full + run tests in changed packages (fast for small packages, can take minutes for large ones)
+> 2. **Quick** — auto-fix formatting only (Biome on changed files); skip all build-dependent checks (~15–20 seconds)
+> 3. **Full** — Quick + build unbuilt packages + regenerate API reports and type tests (~30 seconds – 2 minutes depending on package size)
+> 4. **Thorough** — Full + run tests in changed packages (~30 seconds – 5+ minutes; dominated by test suite size)
 
 Wait for the user's response. If they say cancel (or anything clearly negative), stop here. Otherwise, note their choice and proceed.
 
@@ -100,7 +100,7 @@ For each built changed package that has a `build:api-reports` script, and where 
 cd <package-dir> && pnpm run build:api-reports
 ```
 
-If API Extractor fails with `ae-missing-release-tag`, the new export needs a TSDoc release tag (`@alpha`, `@beta`, `@public`, or `@internal`). Add the appropriate tag to the function/class/interface, rebuild the package, then retry `build:api-reports`. Check other exports in the same package to see which tag is conventional — most public exports use `@public`.
+If API Extractor fails with `ae-missing-release-tag` (most commonly in `@fluidframework/tree`), the new export needs a TSDoc release tag (`@alpha`, `@beta`, `@public`, or `@internal`). Add the appropriate tag to the function/class/interface, rebuild the package, then retry `build:api-reports`. Check other exports in the same package to see which tag is conventional — most public exports use `@public`.
 
 **Cross-package cascade:** After regenerating API reports for a package, check if any "aggregator" packages re-export from it. If so, their API reports are now stale too.
 
@@ -117,12 +117,14 @@ Only do this if the source package's reports actually changed (check `git diff` 
 
 # Step 6: ESLint auto-fix (Full and Thorough only)
 
-For each built changed package:
+For each built changed package, check its `package.json` for the available lint fix script and run it:
 ```bash
-cd <package-dir> && pnpm run eslint:fix
+# Check which script exists — packages use different names
+cd <package-dir> && node -p "Object.keys(require('./package.json').scripts || {}).filter(s => /eslint.fix|lint.fix/.test(s))"
+cd <package-dir> && pnpm run <script-name>
 ```
 
-If `eslint:fix` fails due to non-auto-fixable errors, note them but do not block — CI will catch those.
+Common script names: `eslint:fix`, `lint:fix`. Only run what exists. If the script fails due to non-auto-fixable errors, note them but do not block — CI will catch those.
 
 # Step 7: Type test regeneration (Full and Thorough only)
 

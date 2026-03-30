@@ -52,25 +52,30 @@ get_pkg_name() {
 }
 
 # ---------- Phase 0: Detect changed files and packages ----------
-section "Detecting changed packages (vs ${BASE_BRANCH})"
 
 # Verify the base branch exists. Try the bare name first, then origin/<name>.
-if ! git rev-parse --verify "${BASE_BRANCH}" &>/dev/null; then
-    if ! git rev-parse --verify "origin/${BASE_BRANCH}" &>/dev/null; then
-        fail "Base branch '${BASE_BRANCH}' not found locally or as origin/${BASE_BRANCH}"
-        exit 1
-    fi
-    BASE_BRANCH="origin/${BASE_BRANCH}"
+# BASE_BRANCH_NAME stays as the bare name (for flub, which prepends origin/ internally).
+# BASE_BRANCH_REF is the resolved git ref (for git diff/merge-base).
+BASE_BRANCH_NAME="${BASE_BRANCH}"
+if git rev-parse --verify "${BASE_BRANCH}" &>/dev/null; then
+    BASE_BRANCH_REF="${BASE_BRANCH}"
+elif git rev-parse --verify "origin/${BASE_BRANCH}" &>/dev/null; then
+    BASE_BRANCH_REF="origin/${BASE_BRANCH}"
+else
+    fail "Base branch '${BASE_BRANCH}' not found locally or as origin/${BASE_BRANCH}"
+    exit 1
 fi
+
+section "Detecting changed packages (vs ${BASE_BRANCH_NAME})"
 
 # Find the common ancestor between HEAD and the base branch, then list all
 # files that were Added, Copied, Modified, or Renamed since that point.
-MERGE_BASE="$(git merge-base HEAD "${BASE_BRANCH}" 2>/dev/null || echo "${BASE_BRANCH}")"
+MERGE_BASE="$(git merge-base HEAD "${BASE_BRANCH_REF}" 2>/dev/null || echo "${BASE_BRANCH_REF}")"
 CHANGED_FILES="$(git diff "${MERGE_BASE}" --name-only --diff-filter=ACMR)"
 
 # If nothing changed, there's nothing to check.
 if [ -z "${CHANGED_FILES}" ]; then
-    ok "No files changed vs ${BASE_BRANCH}. Nothing to check."
+    ok "No files changed vs ${BASE_BRANCH_NAME}. Nothing to check."
     exit 0
 fi
 
@@ -225,7 +230,7 @@ section "Checking for changeset"
 # Changeset check is not part of the checks/checks:fix tasks, so run it
 # separately. Changesets are required when modifying published package source.
 CHANGESET_OK=true
-(cd "${REPO_ROOT}" && pnpm flub check changeset --branch "${BASE_BRANCH}" 2>&1) >/dev/null 2>&1 || CHANGESET_OK=false
+(cd "${REPO_ROOT}" && pnpm flub check changeset --branch "${BASE_BRANCH_NAME}" 2>&1) >/dev/null 2>&1 || CHANGESET_OK=false
 
 if [ "${CHANGESET_OK}" = true ]; then
     ok "Changeset check passed (changeset present or not required)"
@@ -290,5 +295,13 @@ if [ ${#NOT_BUILT[@]} -gt 0 ]; then
     warn "${#NOT_BUILT[@]} package(s) not built — build-dependent checks (API reports, ESLint, type tests) require a build first"
 fi
 
+# Exit non-zero if checks or formatting failed, so this script can be used
+# in automation (e.g. pre-push hooks). Missing changeset is a warning only.
+EXIT_CODE=0
+if [ "${CHECKS_FIX_OK}" != true ] || [ "${CHECKS_OK}" != true ]; then
+    EXIT_CODE=1
+fi
+
 echo ""
 echo "Script complete. The agent will now handle build-dependent checks (API reports, ESLint, type tests)."
+exit "${EXIT_CODE}"
