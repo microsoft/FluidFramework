@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/merge-tree/internal";
+import type { ISegment } from "@fluidframework/merge-tree/internal";
 
-import { SequenceInterval } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
 
 import type { ISequenceOverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 

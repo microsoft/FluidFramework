@@ -43,11 +43,9 @@ export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 export { type ChangeEnricher } from "./changeEnricher.js";
 
 export {
-	makeEditManagerCodec,
+	makeEditManagerCodecBuilder,
 	getCodecTreeForEditManagerFormatWithChange,
-	type EditManagerCodecOptions,
-	clientVersionToEditManagerFormatVersion,
-	editManagerFormatVersionSelectorForSharedBranches,
+	editManagerCodecName,
 } from "./editManagerCodecs.js";
 export {
 	EditManagerFormatVersion,
@@ -71,13 +69,11 @@ export type {
 export type { DecodedMessage } from "./messageTypes.js";
 export {
 	getCodecTreeForMessageFormatWithChange,
-	clientVersionToMessageFormatVersion,
-	messageFormatVersionSelectorForSharedBranches,
-	makeMessageCodec,
+	makeMessageCodecBuilder,
+	messageCodecName,
 	type MessageEncodingContext,
 } from "./messageCodecs.js";
 export {
 	MessageFormatVersion,
-	messageFormatVersions,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";

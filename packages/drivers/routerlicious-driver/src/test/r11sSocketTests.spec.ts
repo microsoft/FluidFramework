@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -137,7 +137,7 @@ describe("Routerlicious Socket Error Handling", () => {
 	});
 
 	describe("on 'connect_document_error'", () => {
-		errorScenarios.forEach((scenario) => {
+		for (const scenario of errorScenarios) {
 			it(`when ${scenario.name} error occurs, connectToDeltaStream rejects with ${scenario.expectedErrorType}`, async () => {
 				const socket = new ClientSocketMock({
 					connect_document: {
@@ -156,7 +156,7 @@ describe("Routerlicious Socket Error Handling", () => {
 					"Connection should have been rejected with the correct error details.",
 				);
 			});
-		});
+		}
 	});
 
 	describe("disconnectCore behavior", () => {
@@ -228,7 +228,7 @@ describe("Routerlicious Socket Error Handling", () => {
 	});
 
 	describe("on post-connection 'error' event", () => {
-		errorScenarios.forEach((scenario) => {
+		for (const scenario of errorScenarios) {
 			it(`when ${scenario.name} error occurs after connection, emits disconnect event with ${scenario.expectedErrorType}`, async () => {
 				const socket = new ClientSocketMock({
 					connect_document: { eventToEmit: "connect_document_success" },
@@ -261,6 +261,6 @@ describe("Routerlicious Socket Error Handling", () => {
 					`Internal error code should be ${scenario.expectedInternalErrorCode}`,
 				);
 			});
-		});
+		}
 	});
 });

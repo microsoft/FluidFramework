@@ -14,6 +14,7 @@ This skill provides a comprehensive reference for Fluid Framework telemetry inve
 
 - **Cluster:** `https://kusto.aria.microsoft.com`
 - **Primary database:** `Office Fluid`
+- **Database ID:** `6a8929bcfc6d44e9b13fee392ada9cf0` (use this, not the pretty name, as the `database` parameter in `kusto_query`)
 - **Retention:** ~28 days
 - **VPN:** Required (Microsoft internal network)
 - **Access requirement:** M365HeartbeatTenantUsers group membership

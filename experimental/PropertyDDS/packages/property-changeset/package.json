@@ -103,7 +103,7 @@
 		"chai": "^4.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"eslint": "~9.39.1",
+		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",

@@ -31,6 +31,7 @@ overrides:
   minimatch@>=8 <9: ^8.0.7
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
+  serialize-javascript@>=6 <7: ^7.0.4
 
 importers:
 
@@ -183,6 +184,9 @@ importers:
       debug:
         specifier: ^4.4.3
         version: 4.4.3(supports-color@8.1.1)
+      ejs:
+        specifier: ^3.1.10
+        version: 3.1.10
       execa:
         specifier: ^5.1.1
         version: 5.1.1
@@ -325,6 +329,9 @@ importers:
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.13
+      '@types/ejs':
+        specifier: ^3.1.5
+        version: 3.1.5
       '@types/eslint':
         specifier: ^9.6.1
         version: 9.6.1
@@ -545,9 +552,6 @@ importers:
       '@manypkg/get-packages':
         specifier: ^2.2.2
         version: 2.2.2
-      '@types/glob':
-        specifier: ^7.2.0
-        version: 7.2.0
       async:
         specifier: ^3.2.6
         version: 3.2.6
@@ -633,6 +637,9 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
+      '@types/glob':
+        specifier: ^7.2.0
+        version: 7.2.0
       '@types/lodash.isequal':
         specifier: ^4.5.8
         version: 4.5.8
@@ -2686,6 +2693,9 @@ packages:
 
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
+
+  '@types/ejs@3.1.5':
+    resolution: {integrity: sha512-nv+GSx77ZtXiJzwKdsASqi+YQ5Z7vwHsTP0JY2SiQgjGckkBRKZnk8nIM+7oUZ1VCtuTz0+By4qVR7fqzp/Dfg==}
 
   '@types/eslint-scope@3.7.7':
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
@@ -5878,9 +5888,6 @@ packages:
   ramda@0.27.1:
     resolution: {integrity: sha512-PgIdVpn5y5Yns8vqb8FzBUEYn98V3xcPgawAkkgj0YJ0qDsnHCiNmZYfOGMgOvoB0eWFLpYbhxUR3mxfDIMvpw==}
 
-  randombytes@2.1.0:
-    resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
-
   rc-config-loader@4.1.4:
     resolution: {integrity: sha512-3GiwEzklkbXTDp52UR5nT8iXgYAx1V9ZG/kDZT7p60u2GCv2XTwQq4NzinMoMpNtXhmt3WkhYXcj6HH8HdwCEQ==}
 
@@ -6167,8 +6174,9 @@ packages:
   sentence-case@3.0.4:
     resolution: {integrity: sha512-8LS0JInaQMCRoQ7YUytAo/xUu5W2XnQxV2HI/6uM6U7CITS1RqPElr30V6uIqyMKM9lJGRVFy5/4CuzcixNYSg==}
 
-  serialize-javascript@6.0.2:
-    resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
+  serialize-javascript@7.0.4:
+    resolution: {integrity: sha512-DuGdB+Po43Q5Jxwpzt1lhyFSYKryqoNjQSA9M92tyw0lyHIOur+XCalOUe0KTJpyqzT8+fQ5A0Jf7vCx/NKmIg==}
+    engines: {node: '>=20.0.0'}
 
   set-blocking@2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
@@ -9410,6 +9418,8 @@ snapshots:
 
   '@types/deep-eql@4.0.2': {}
 
+  '@types/ejs@3.1.5': {}
+
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 9.6.1
@@ -12554,7 +12564,7 @@ snapshots:
       minimatch: 9.0.9
       ms: 2.1.3
       picocolors: 1.1.1
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.4
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
       workerpool: 9.3.4
@@ -13164,10 +13174,6 @@ snapshots:
 
   ramda@0.27.1: {}
 
-  randombytes@2.1.0:
-    dependencies:
-      safe-buffer: 5.2.1
-
   rc-config-loader@4.1.4:
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
@@ -13495,9 +13501,7 @@ snapshots:
       tslib: 2.8.1
       upper-case-first: 2.0.2
 
-  serialize-javascript@6.0.2:
-    dependencies:
-      randombytes: 2.1.0
+  serialize-javascript@7.0.4: {}
 
   set-blocking@2.0.0: {}
 
