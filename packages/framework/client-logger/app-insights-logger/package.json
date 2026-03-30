@@ -88,8 +88,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@microsoft/applicationinsights-web": "^2.8.11",
-		"@ungap/structured-clone": "^1.2.0"
+		"@microsoft/applicationinsights-web": "^2.8.11"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
@@ -103,7 +102,6 @@
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
 		"@types/sinon": "^17.0.3",
-		"@types/ungap__structured-clone": "^1.2.0",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
