@@ -1761,6 +1761,26 @@ export namespace ChangeSetArrayFunctions {
 
 		let currentIndexOffset = 0;
 		const segment: OperationRangeRemove | OperationRangeInsert = {};
+		let skipIteratorBOperation;
+		const opB = iteratorB.opDescription;
+
+		const advanceRebaseIteratorB = () => {
+			if (
+				(opB as any).removeInsertOperation &&
+				segment.op !== undefined &&
+				skipIteratorBOperation === undefined &&
+				segment.op.operation === (opB as any).removeInsertOperation
+			) {
+				skipIteratorBOperation = segment.op.operation;
+			} else {
+				iteratorB.next();
+				if (skipIteratorBOperation && opB.operation === skipIteratorBOperation) {
+					iteratorB.next();
+				}
+				skipIteratorBOperation = undefined;
+				getRangeForAppliedOperation(opB, rangeB, undefined, in_options);
+			}
+		};
 
 		// create ranges for A and B: A is the current state and B is the change set to be applied
 		while (!iteratorA.atEnd() || !iteratorB.atEnd()) {
@@ -1795,8 +1815,7 @@ export namespace ChangeSetArrayFunctions {
 				segment.flag === ArrayChangeSetRangeType.completeB ||
 				segment.flag === ArrayChangeSetRangeType.completeBpartOfA
 			) {
-				iteratorB.next();
-				getRangeForAppliedOperation(iteratorB.opDescription, rangeB, undefined, in_options);
+				advanceRebaseIteratorB();
 			}
 			if (segment.flag === ArrayChangeSetRangeType.completeAcompleteB) {
 				iteratorA.next();
@@ -1806,8 +1825,7 @@ export namespace ChangeSetArrayFunctions {
 					ArrayChangeSetRangeType.completeA,
 					in_options,
 				);
-				iteratorB.next();
-				getRangeForAppliedOperation(iteratorB.opDescription, rangeB, undefined, in_options);
+				advanceRebaseIteratorB();
 			}
 
 			if (opA.offset !== undefined) {
