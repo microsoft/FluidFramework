@@ -469,7 +469,10 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     // (undocumented)
     next(): {
         value: T;
-        done?: boolean;
+        done?: false;
+    } | {
+        value: undefined;
+        done: true;
     };
 }
 
