@@ -603,7 +603,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'FF Pipeline Authentication'
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
@@ -621,7 +621,7 @@ stages:
               script: |
                 set -eu -o pipefail
 
-                pnpm exec trips-cleanup --reservationId=$(stringBearerToken)
+                pnpm exec trips-cleanup --useFic
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
