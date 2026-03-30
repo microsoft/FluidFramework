@@ -10,8 +10,6 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
-			"@typescript-eslint/consistent-type-exports": "off",
-			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
@@ -24,7 +22,6 @@ const config: Linter.Config[] = [
 			],
 			"jsdoc/require-description": "off",
 			"unicorn/no-null": "off",
-			"unicorn/prefer-date-now": "off",
 			"unicorn/prefer-node-protocol": "off",
 			"unicorn/prefer-spread": "off",
 			"unicorn/text-encoding-identifier-case": "off",

@@ -109,6 +109,7 @@ export {
 	areDetachedNodeIdsEqual,
 	deltaFieldMapHasVisibleChanges,
 	deltaFieldChangesHaveVisibleChanges,
+	forEachNodeSubsequence,
 } from "./tree/index.js";
 
 export {
