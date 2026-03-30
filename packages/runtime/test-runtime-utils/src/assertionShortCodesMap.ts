@@ -1595,7 +1595,6 @@ export const shortCodeMap = {
 	"0xb52": "missing FieldKind",
 	"0xb53": "missing node schema",
 	"0xb54": "unsupported node kind",
-	"0xb56": "Invalid ITree",
 	"0xb57": "childrenChangedAfterBatch events should have a changedField",
 	"0xb58": "Cannot skip last navigation if length is 0 and thus last navigation already occurred.",
 	"0xb59": "Should be in nodes mode if not past end",
@@ -1797,7 +1796,6 @@ export const shortCodeMap = {
 	"0xc4d": "Expected node",
 	"0xc4e": "attach should happen in a node",
 	"0xc4f": "Should not have a dispose function without listeners",
-	"0xc50": "childrenChangedAfterBatch should have arg",
 	"0xc51": "Event handler disposed.",
 	"0xc52": "Buffered kernel events should have been flushed before disposing.",
 	"0xc53": "Couldn't find a matching storage ID",
@@ -1939,5 +1937,15 @@ export const shortCodeMap = {
 	"0xcdf": "Expected retain count to be a number",
 	"0xce0": "batchIdToSeqNum and seqNumToBatchId should be in sync for duplicate",
 	"0xce1": "seqNumToBatchId and batchIdToSeqNum should be in sync",
-	"0xce2": "expected at most one line tag (header or list), but received both"
+	"0xce2": "expected at most one line tag (header, list, blockquote, or codeblock), but received multiple",
+	"0xce3": "Deprecated 'undefined' version shouldn't be selected",
+	"0xce4": "fieldMarks called outside of a field",
+	"0xce5": "should be in fields",
+	"0xce6": "invalid startIndex",
+	"0xce7": "invalid endIndex",
+	"0xce8": "requested endIndex is out of bounds",
+	"0xce9": "expected at least one node for each key in the index",
+	"0xcea": "childrenChangedAfterBatch requires arg",
+	"0xceb": "local schema change messages should never be generated when disableSchemaUpgrade is enabled",
+	"0xcec": "IdCompressor should not be operated normally when in a ghost session"
 };
