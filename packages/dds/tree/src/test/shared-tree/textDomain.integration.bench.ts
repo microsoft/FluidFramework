@@ -25,40 +25,46 @@ import {
 
 const schemaFactory = new SchemaFactory("bench.textDepth");
 
-/**
- * A recursive wrapper node used to place a text node at an arbitrary depth within a tree.
- * The `child` field either contains another wrapper (for deeper nesting) or the leaf text node.
- */
-class DeepTextWrapper extends schemaFactory.objectRecursive("DeepTextWrapper", {
-	child: [() => DeepTextWrapper, TextAsTree.Tree],
+// String literal types for 10- and 100-character "a" key names.
+type A10 = "aaaaaaaaaa";
+type A100 = `${A10}${A10}${A10}${A10}${A10}${A10}${A10}${A10}${A10}${A10}`;
+
+const key1 = "a" as const;
+const key10 = "a".repeat(10) as A10;
+const key100 = "a".repeat(100) as A100;
+
+// #region Schema definitions
+// Each wrapper schema places a TextAsTree.Tree node under a property key of a fixed length.
+// The key length affects op size because property names appear in encoded tree paths.
+
+class WrapperKeyLen1 extends schemaFactory.objectRecursive("bench.textDepth.WrapperKeyLen1", {
+	[key1]: [() => WrapperKeyLen1, TextAsTree.Tree],
 }) {}
 {
-	type _check = ValidateRecursiveSchema<typeof DeepTextWrapper>;
+	type _check = ValidateRecursiveSchema<typeof WrapperKeyLen1>;
 }
 
-/**
- * Builds a {@link DeepTextWrapper} tree with the text node at the given depth.
- * At depth 1, the root wrapper directly contains the text node as its child.
- */
-function makeDeepTextTree(depth: number, textContent: string): DeepTextWrapper {
-	const textNode = TextAsTree.Tree.fromString(textContent);
-	let current: DeepTextWrapper = new DeepTextWrapper({ child: textNode });
-	for (let i = 1; i < depth; i++) {
-		current = new DeepTextWrapper({ child: current });
-	}
-	return current;
+class WrapperKeyLen10 extends schemaFactory.objectRecursive(
+	"bench.textDepth.WrapperKeyLen10",
+	{
+		[key10]: [() => WrapperKeyLen10, TextAsTree.Tree],
+	},
+) {}
+{
+	type _check = ValidateRecursiveSchema<typeof WrapperKeyLen10>;
 }
 
-/**
- * Traverses a {@link DeepTextWrapper} tree to find the leaf {@link TextAsTree.Tree} node.
- */
-function getLeafTextNode(root: DeepTextWrapper): TextAsTree.Tree {
-	let current: DeepTextWrapper | TextAsTree.Tree = root;
-	while (!Tree.is(current, TextAsTree.Tree)) {
-		current = current.child;
-	}
-	return current;
+class WrapperKeyLen100 extends schemaFactory.objectRecursive(
+	"bench.textDepth.WrapperKeyLen100",
+	{
+		[key100]: [() => WrapperKeyLen100, TextAsTree.Tree],
+	},
+) {}
+{
+	type _check = ValidateRecursiveSchema<typeof WrapperKeyLen100>;
 }
+
+// #endregion
 
 /**
  * Depths at which to place the text node within the wrapper tree.
@@ -71,12 +77,81 @@ const nodeDepths = [1, 10, 100] as const;
  */
 const charCounts = [1, 10, 100] as const;
 
+/**
+ * One entry per wrapper schema variant. Each bundle captures the view config, a factory for
+ * building wrapper trees of a given depth, and a helper for finding the leaf text node.
+ *
+ * `getLeaf` accepts `unknown` so that the heterogeneous array can be iterated uniformly;
+ * each implementation casts `root` to its specific wrapper type before traversal.
+ */
+const testSchemaConfigurations = [
+	{
+		keyLength: 1,
+		viewConfig: new TreeViewConfiguration({ schema: WrapperKeyLen1 }),
+		makeTree(depth: number, text: string): WrapperKeyLen1 {
+			const textNode = TextAsTree.Tree.fromString(text);
+			let current: WrapperKeyLen1 = new WrapperKeyLen1({ a: textNode });
+			for (let i = 1; i < depth; i++) {
+				current = new WrapperKeyLen1({ a: current });
+			}
+			return current;
+		},
+		getLeaf(root: unknown): TextAsTree.Tree {
+			assert(Tree.is(root, WrapperKeyLen1));
+			let current: WrapperKeyLen1 | TextAsTree.Tree = root;
+			while (!Tree.is(current, TextAsTree.Tree)) {
+				current = current.a;
+			}
+			return current;
+		},
+	},
+	{
+		keyLength: 10,
+		viewConfig: new TreeViewConfiguration({ schema: WrapperKeyLen10 }),
+		makeTree(depth: number, text: string): WrapperKeyLen10 {
+			const textNode = TextAsTree.Tree.fromString(text);
+			let current: WrapperKeyLen10 = new WrapperKeyLen10({ [key10]: textNode });
+			for (let i = 1; i < depth; i++) {
+				current = new WrapperKeyLen10({ [key10]: current });
+			}
+			return current;
+		},
+		getLeaf(root: unknown): TextAsTree.Tree {
+			assert(Tree.is(root, WrapperKeyLen10));
+			let current: WrapperKeyLen10 | TextAsTree.Tree = root;
+			while (!Tree.is(current, TextAsTree.Tree)) {
+				current = current[key10];
+			}
+			return current;
+		},
+	},
+	{
+		keyLength: 100,
+		viewConfig: new TreeViewConfiguration({ schema: WrapperKeyLen100 }),
+		makeTree(depth: number, text: string): WrapperKeyLen100 {
+			const textNode = TextAsTree.Tree.fromString(text);
+			let current: WrapperKeyLen100 = new WrapperKeyLen100({ [key100]: textNode });
+			for (let i = 1; i < depth; i++) {
+				current = new WrapperKeyLen100({ [key100]: current });
+			}
+			return current;
+		},
+		getLeaf(root: unknown): TextAsTree.Tree {
+			assert(Tree.is(root, WrapperKeyLen100));
+			let current: WrapperKeyLen100 | TextAsTree.Tree = root;
+			while (!Tree.is(current, TextAsTree.Tree)) {
+				current = current[key100];
+			}
+			return current;
+		},
+	},
+];
+
 describe.only("TextDomain integration benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("Plain text", () => {
 		const currentTestOps: ISequencedDocumentMessage[] = [];
-		const viewConfig = new TreeViewConfiguration({ schema: DeepTextWrapper });
 
 		beforeEach(() => {
 			currentTestOps.length = 0;
@@ -91,56 +166,68 @@ describe.only("TextDomain integration benchmarks", () => {
 
 		describe("Insert characters", () => {
 			for (const depth of nodeDepths) {
-				for (const charCount of charCounts) {
-					benchmarkCustom({
-						only: false,
-						type: BenchmarkType.Measurement,
-						title: `insert ${charCount} character(s) into empty string at depth ${depth}`,
-						run: async (reporter) => {
-							const tree = createConnectedTree();
-							registerOpListener(tree, currentTestOps);
-							const view = tree.viewWith(viewConfig);
-							view.initialize(makeDeepTextTree(depth, ""));
-							currentTestOps.length = 0; // discard initialization ops
+				for (const testSchemaConfiguration of testSchemaConfigurations) {
+					for (const charCount of charCounts) {
+						benchmarkCustom({
+							only: false,
+							type: BenchmarkType.Measurement,
+							title: `insert ${charCount} character(s) into empty string at depth ${depth} with key length ${testSchemaConfiguration.keyLength}`,
+							run: async (reporter) => {
+								const tree = createConnectedTree();
+								registerOpListener(tree, currentTestOps);
+								// view.initialize and view.root types are schema-specific; cast to a
+								// common interface since the bundle array is heterogeneous.
+								const view = tree.viewWith(
+									testSchemaConfiguration.viewConfig as unknown as TreeViewConfiguration<typeof WrapperKeyLen1>,
+								) as unknown as { initialize(data: unknown): void; root: unknown };
+								view.initialize(testSchemaConfiguration.makeTree(depth, ""));
+								currentTestOps.length = 0; // discard initialization ops
 
-							const textNode = getLeafTextNode(view.root);
-							textNode.insertAt(0, "a".repeat(charCount));
+								const textNode = testSchemaConfiguration.getLeaf(view.root);
+								textNode.insertAt(0, "a".repeat(charCount));
 
-							assert.equal(textNode.characterCount(), charCount);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
-						},
-					});
+								assert.equal(textNode.characterCount(), charCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const key of Object.keys(opStats)) {
+									reporter.addMeasurement(key, opStats[key]);
+								}
+							},
+						});
+					}
 				}
 			}
 		});
 
 		describe("Remove characters", () => {
 			for (const depth of nodeDepths) {
-				for (const charCount of charCounts) {
-					benchmarkCustom({
-						only: false,
-						type: BenchmarkType.Measurement,
-						title: `remove ${charCount} character(s) from string of 1000 characters at depth ${depth}`,
-						run: async (reporter) => {
-							const tree = createConnectedTree();
-							registerOpListener(tree, currentTestOps);
-							const view = tree.viewWith(viewConfig);
-							view.initialize(makeDeepTextTree(depth, "a".repeat(1000)));
-							currentTestOps.length = 0; // discard initialization ops
+				for (const testSchemaConfiguration of testSchemaConfigurations) {
+					for (const charCount of charCounts) {
+						benchmarkCustom({
+							only: false,
+							type: BenchmarkType.Measurement,
+							title: `remove ${charCount} character(s) from string of 1000 characters at depth ${depth} with key length ${testSchemaConfiguration.keyLength}`,
+							run: async (reporter) => {
+								const tree = createConnectedTree();
+								registerOpListener(tree, currentTestOps);
+								// view.initialize and view.root types are schema-specific; cast to a
+								// common interface since the bundle array is heterogeneous.
+								const view = tree.viewWith(
+									testSchemaConfiguration.viewConfig as unknown as TreeViewConfiguration<typeof WrapperKeyLen1>,
+								) as unknown as { initialize(data: unknown): void; root: unknown };
+								view.initialize(testSchemaConfiguration.makeTree(depth, "a".repeat(1000)));
+								currentTestOps.length = 0; // discard initialization ops
 
-							const textNode = getLeafTextNode(view.root);
-							textNode.removeRange(0, charCount);
+								const textNode = testSchemaConfiguration.getLeaf(view.root);
+								textNode.removeRange(0, charCount);
 
-							assert.equal(textNode.characterCount(), 1000 - charCount);
-							const opStats = getOperationsStats(currentTestOps);
-							for (const key of Object.keys(opStats)) {
-								reporter.addMeasurement(key, opStats[key]);
-							}
-						},
-					});
+								assert.equal(textNode.characterCount(), 1000 - charCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const key of Object.keys(opStats)) {
+									reporter.addMeasurement(key, opStats[key]);
+								}
+							},
+						});
+					}
 				}
 			}
 		});
