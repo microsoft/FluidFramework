@@ -50,6 +50,7 @@ import {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	type IIdCompressorCore,
 	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
@@ -869,6 +870,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
@@ -938,6 +940,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;

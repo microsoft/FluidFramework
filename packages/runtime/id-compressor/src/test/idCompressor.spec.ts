@@ -9,7 +9,12 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import {
+	IdCompressor,
+	createIdCompressor,
+	deserializeIdCompressor,
+	serializeIdCompressor,
+} from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -1148,6 +1153,25 @@ describe("IdCompressor", () => {
 			mockLogger.assertMatchAny([
 				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
 			]);
+		});
+	});
+
+	describe("serializeIdCompressor", () => {
+		it("produces the same result as the underlying serialize(true)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			const direct = compressor.serialize(true);
+			const wrapper = serializeIdCompressor(compressor, true);
+			assert.deepStrictEqual(wrapper, direct);
+		});
+
+		it("produces the same result as the underlying serialize(false)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			const direct = compressor.serialize(false);
+			const wrapper = serializeIdCompressor(compressor, false);
+			assert.deepStrictEqual(wrapper, direct);
 		});
 	});
 
