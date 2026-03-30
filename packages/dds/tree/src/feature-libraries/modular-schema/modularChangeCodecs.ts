@@ -8,13 +8,13 @@ import { fail } from "@fluidframework/core-utils/internal";
 import {
 	type ICodecFamily,
 	type ICodecOptions,
-	type IJsonCodec,
+	type JsonCodecPart,
 	makeCodecFamily,
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import { strictEnum, type Values } from "../../util/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
@@ -27,10 +27,9 @@ import type { ModularChangeset } from "./modularChangeTypes.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<ModularChangeFormatVersion, FieldKindConfiguration>,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,

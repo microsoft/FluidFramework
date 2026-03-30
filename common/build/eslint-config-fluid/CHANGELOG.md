@@ -89,6 +89,13 @@ The following rules, which were previously enabled only in the `recommended` con
 
 - `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
 
+#### Other new rules
+
+#### [@eslint-community/eslint-comments/require-description](https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
+
+We recommend that all `eslint-disable` comments include a description explaining why the rule is being disabled.
+This rule is currently configured at the `warn` level, so it will emit a warning (which may not fail CI), and is expected to be promoted to an error in the future.
+
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
 
 The package now uses rules from

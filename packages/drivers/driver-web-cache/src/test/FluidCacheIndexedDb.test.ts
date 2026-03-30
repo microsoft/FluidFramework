@@ -30,7 +30,7 @@ const getUpgradeTestCases = (versionsArray: string[]): any[] => {
 	versionsArray.map((value: string) => {
 		testCases.push([
 			`upgrades successfully without an error for version number ${value}`,
-			{ oldVersionNumber: parseInt(value, 10 /* base10 */) },
+			{ oldVersionNumber: Number.parseInt(value, 10 /* base10 */) },
 		]);
 	});
 	return testCases;

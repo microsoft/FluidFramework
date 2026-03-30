@@ -7,6 +7,4 @@
 // It is written using ESM module syntax, making it compatible with both ESM and CJS module.
 // This compatibility allows for flexible usage of the 'Provider' named export from the 'nconf' module across different module systems without modification.
 
-import { Provider } from "nconf";
-
-export { Provider };
+export { Provider } from "nconf";

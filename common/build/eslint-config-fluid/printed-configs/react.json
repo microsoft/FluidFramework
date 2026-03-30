@@ -57,6 +57,9 @@
 		"@eslint-community/eslint-comments/no-unused-enable": [
 			"error"
 		],
+		"@eslint-community/eslint-comments/require-description": [
+			"warn"
+		],
 		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
 			"error"
 		],

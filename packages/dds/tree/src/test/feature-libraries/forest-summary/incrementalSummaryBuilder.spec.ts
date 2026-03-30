@@ -15,7 +15,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import {
-	type EncodedFieldBatch,
+	type EncodedFieldBatchV1OrV2,
 	type ChunkReferenceId,
 	type TreeChunk,
 	defaultIncrementalEncodingPolicy,
@@ -97,7 +97,7 @@ const testCursor = { getFieldLength: () => 1 } as unknown as ITreeCursorSynchron
 
 const stringify = JSON.stringify;
 const mockForestSummaryRootContent = "test-summary-content";
-const mockEncodedChunk = {} as unknown as EncodedFieldBatch;
+const mockEncodedChunk = {} as unknown as EncodedFieldBatchV1OrV2;
 const initialSequenceNumber = 0;
 
 describe("ForestIncrementalSummaryBuilder", () => {

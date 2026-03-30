@@ -59,7 +59,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 	};
 }
 
-[true, false].forEach((immediateClose) => {
+for (const immediateClose of [true, false]) {
 	function getFluidCache(config?: {
 		maxCacheItemAge?: number;
 
@@ -296,4 +296,4 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			expect(result).toEqual(undefined);
 		});
 	});
-});
+}
