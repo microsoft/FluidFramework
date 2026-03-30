@@ -6,9 +6,9 @@
 import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "./telemetryTypes.js";
+} from "./undeprecated.js";
 
 /**
  * Telemetry class that accumulates measurements which are eventually logged in a telemetry event through the provided
@@ -46,7 +46,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 		/**
 		 * The logger to use to write the telemetry performance event.
 		 */
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 
 		/**
 		 * The number of logs to accumulate before sending the data to the logger.

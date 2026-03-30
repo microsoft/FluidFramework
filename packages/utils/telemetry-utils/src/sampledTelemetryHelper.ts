@@ -10,9 +10,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "./telemetryTypes.js";
+} from "./undeprecated.js";
 
 /**
  * @privateRemarks
@@ -163,7 +163,7 @@ export class SampledTelemetryHelper<
 	 */
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEventExt,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),

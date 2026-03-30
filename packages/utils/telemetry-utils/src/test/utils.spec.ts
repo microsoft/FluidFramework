@@ -13,7 +13,7 @@ import type {
 
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
-import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import type { ITelemetryGenericEventExt, TelemetryLoggerExt } from "../telemetryTypes.js";
 import { type IEventSampler, createSampledLogger } from "../utils.js";
 
 describe("tagData", () => {
@@ -59,8 +59,8 @@ describe("Sampling", () => {
 
 	function getMockLoggerExtWithConfig(
 		configDictionary?: Record<string, ConfigTypes>,
-	): ITelemetryLoggerExt {
-		const logger: ITelemetryLoggerExt = {
+	): TelemetryLoggerExt {
+		const logger: TelemetryLoggerExt = {
 			send(event: ITelemetryBaseEvent): void {
 				events.push(event);
 			},
