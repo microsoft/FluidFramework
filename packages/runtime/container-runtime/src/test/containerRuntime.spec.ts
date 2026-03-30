@@ -670,9 +670,13 @@ describe("Runtime", () => {
 
 				// Let the Outbox flush so we can check submittedOps length
 				await Promise.resolve();
-				assert(
-					submittedOps.length === 2,
-					"Expected 2 ops to be submitted (1 JIT ID Allocation + 1 data, in one batch)",
+				assert.strictEqual(submittedOps.length, 1, "Expected a single grouped batch op");
+				const { type, contents } = submittedOps[0] as { type: string; contents: unknown[] }; // See IGroupedBatchMessageContents
+				assert.strictEqual(type, "groupedBatch", "Expected a groupedBatch op");
+				assert.strictEqual(
+					contents.length,
+					2,
+					"Expected 2 messages in the grouped batch (1 JIT ID Allocation + 1 data)",
 				);
 			});
 		});

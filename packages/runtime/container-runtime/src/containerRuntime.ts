@@ -2741,7 +2741,6 @@ export class ContainerRuntime
 			// unfinalized range (instead of incremental). The range will be prepended to the
 			// first replayed batch, preserving batch structure for fork detection.
 			this.outbox.requestUnfinalizedIdRanges();
-			//* CLAUDE: We need to handle the case where replayPendingStates submits to ops.
 
 			// replay the ops
 			this.pendingStateManager.replayPendingStates();
