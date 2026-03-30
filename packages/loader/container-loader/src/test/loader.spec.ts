@@ -19,6 +19,7 @@ import {
 	wrapConfigProviderWithDefaults,
 	mixinMonitoringContext,
 	createChildLogger,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -187,7 +188,7 @@ describe("loader unit test", () => {
 			codeLoader: createTestCodeLoaderProxy(),
 			options: {},
 			scope: {},
-			subLogger: logger.logger,
+			subLogger: toITelemetryLoggerExt(logger.logger),
 		});
 	});
 

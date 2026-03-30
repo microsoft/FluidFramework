@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Extract and return the w3c data.
@@ -126,7 +126,7 @@ export function validateMessages(
 	reason: string,
 	messages: ISequencedDocumentMessage[],
 	from: number,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	strict: boolean = true,
 ): void {
 	if (messages.length !== 0) {

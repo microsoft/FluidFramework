@@ -67,6 +67,7 @@ import {
 	LoggingError,
 	createChildLogger,
 	createConfigBasedOptionsProxy,
+	extractTelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
@@ -501,7 +502,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				: createReentrancyDetector((depth) => {
 						if (totalReentrancyLogs > 0) {
 							totalReentrancyLogs--;
-							this.logger.sendTelemetryEvent(
+							extractTelemetryLoggerExt(this.logger).sendTelemetryEvent(
 								{ eventName: "LocalOpReentry", depth },
 								new LoggingError(reentrancyErrorMessage),
 							);
@@ -860,7 +861,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			// Initialize the interval collections
 			this.initializeIntervalCollections();
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
+			extractTelemetryLoggerExt(this.logger).sendErrorEvent(
+				{ eventName: "SequenceLoadFailed" },
+				error,
+			);
 			throw error;
 		}
 	}

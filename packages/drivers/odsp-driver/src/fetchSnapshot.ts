@@ -24,7 +24,7 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	wrapError,
@@ -88,7 +88,7 @@ export async function fetchSnapshot(
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	snapshotDownloader: (url: string) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
@@ -115,7 +115,7 @@ export async function fetchSnapshotWithRedeem(
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
@@ -208,7 +208,7 @@ export async function fetchSnapshotWithRedeem(
 async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): Promise<void> {
 	await PerformanceEvent.timedExecAsync(
 		logger,
@@ -275,7 +275,7 @@ async function fetchLatestSnapshotCore(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,

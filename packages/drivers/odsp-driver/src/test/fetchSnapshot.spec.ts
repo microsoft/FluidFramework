@@ -13,12 +13,12 @@ import {
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
-	MockLogger,
-	createChildLogger,
+import type {
+	IFluidErrorBase,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { stub } from "sinon";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
@@ -84,7 +84,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	const resolver = new OdspDriverUrlResolver();
 	const nonPersistentCache = new NonPersistentCache();
-	let logger: ITelemetryLoggerExt;
+	let logger: TelemetryLoggerExt & ITelemetryLoggerExt;
 	let mockLogger: MockLogger;
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 

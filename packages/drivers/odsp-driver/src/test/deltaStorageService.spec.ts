@@ -5,17 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type {
 	IDeltasFetchResult,
 	IFileEntry,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	type ITelemetryLoggerExt,
-	MockLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -30,9 +27,8 @@ import { mockFetchOk } from "./mockFetch.js";
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache(2000);
 const createUtEpochTracker = (
 	fileEntry: IFileEntry,
-	logger: ITelemetryBaseLogger,
-): EpochTracker =>
-	new EpochTracker(createUtLocalCache(), fileEntry, logger as ITelemetryLoggerExt);
+	logger: ITelemetryLoggerExt,
+): EpochTracker => new EpochTracker(createUtLocalCache(), fileEntry, logger);
 
 describe("DeltaStorageService", () => {
 	/*
@@ -54,17 +50,18 @@ describe("DeltaStorageService", () => {
 	const fileEntry = { docId: "docId", resolvedUrl, fileVersion: undefined };
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
-		const logger = new MockLogger();
+		const loggerMock = new MockLogger();
+		const logger = loggerMock.toTelemetryLogger();
 		const deltaStorageService = new OdspDeltaStorageService(
 			testDeltaStorageUrl,
 			async (_refresh) => "?access_token=123",
 			createUtEpochTracker(fileEntry, logger),
-			logger.toTelemetryLogger(),
+			logger,
 		);
 		const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
 		const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
 		assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
-		logger.assertMatchNone([{ category: "error" }]);
+		loggerMock.assertMatchNone([{ category: "error" }]);
 	});
 
 	describe("Get Returns Response With Op Envelope", () => {
@@ -104,17 +101,18 @@ describe("DeltaStorageService", () => {
 		};
 
 		let deltaStorageService: OdspDeltaStorageService;
-		const logger = new MockLogger();
+		const loggerMock = new MockLogger();
+		const logger = loggerMock.toTelemetryLogger();
 		before(() => {
 			deltaStorageService = new OdspDeltaStorageService(
 				testDeltaStorageUrl,
 				async (_refresh) => "",
 				createUtEpochTracker(fileEntry, logger),
-				logger.toTelemetryLogger(),
+				logger,
 			);
 		});
 		afterEach(() => {
-			logger.assertMatchNone([{ category: "error" }]);
+			loggerMock.assertMatchNone([{ category: "error" }]);
 		});
 
 		it("Should deserialize the delta feed response correctly", async () => {
@@ -173,17 +171,18 @@ describe("DeltaStorageService", () => {
 		};
 
 		let deltaStorageService: OdspDeltaStorageService;
-		const logger = new MockLogger();
+		const loggerMock = new MockLogger();
+		const logger = loggerMock.toTelemetryLogger();
 		before(() => {
 			deltaStorageService = new OdspDeltaStorageService(
 				testDeltaStorageUrl,
 				async (_refresh) => "",
 				createUtEpochTracker(fileEntry, logger),
-				logger.toTelemetryLogger(),
+				logger,
 			);
 		});
 		afterEach(() => {
-			logger.assertMatchNone([{ category: "error" }]);
+			loggerMock.assertMatchNone([{ category: "error" }]);
 		});
 
 		it("Should deserialize the delta feed response correctly", async () => {
@@ -212,9 +211,10 @@ describe("DeltaStorageService", () => {
 	});
 
 	describe("DeltaStorageServiceWith Cache Tests", () => {
-		const logger = new MockLogger();
+		const loggerMock = new MockLogger();
+		const logger = loggerMock.toTelemetryLogger();
 		afterEach(() => {
-			logger.assertMatchNone([{ category: "error" }]);
+			loggerMock.assertMatchNone([{ category: "error" }]);
 		});
 
 		it("FirstCacheMiss should update to first miss op seq number correctly", async () => {
@@ -244,7 +244,7 @@ describe("DeltaStorageService", () => {
 			};
 			const odspDeltaStorageServiceWithCache = new OdspDeltaStorageWithCache(
 				[],
-				logger.toTelemetryLogger(),
+				logger,
 				1000,
 				1,
 				async (from, to, props, reason) => deltasFetchResult,

@@ -13,7 +13,7 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -66,7 +66,7 @@ export class ParallelRequests<T> {
 		from: number,
 		private to: number | undefined,
 		private readonly payloadSize: number,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly requestCallback: (
 			request: number,
 			from: number,
@@ -420,7 +420,7 @@ async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>,
 	props: ITelemetryBaseProperties,
 	strongTo: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[] }> {
@@ -549,7 +549,7 @@ export function requestOps(
 	fromTotal: number,
 	toTotal: number | undefined,
 	payloadSize: number,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): IStream<ISequencedDocumentMessage[]> {
