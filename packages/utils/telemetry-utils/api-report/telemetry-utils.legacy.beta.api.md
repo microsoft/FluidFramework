@@ -30,13 +30,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 }
 
 // @beta @sealed @legacy
-export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
-    // @deprecated
-    sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
-    // @deprecated
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: LogLevel): void;
-    // @deprecated
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: LogLevel): void;
+export interface ITelemetryLoggerExt extends ErasedType<"TelemetryLoggerExt">, ITelemetryBaseLogger {
 }
 
 // @beta @legacy (undocumented)
