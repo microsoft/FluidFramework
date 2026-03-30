@@ -368,6 +368,9 @@
 				"build:esnext"
 			]
 		},
+		"test": {
+			"dependsOn": ["test:unit"]
+		},
 		"test:cjs": {
 			"dependsOn": ["test:unit:cjs"]
 		},

@@ -10,6 +10,9 @@
 		"check:format": {
 			"executor": "nx:noop"
 		},
+		"eslint": {
+			"executor": "nx:noop"
+		},
 		"format": {
 			"executor": "nx:noop"
 		},
