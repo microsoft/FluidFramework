@@ -761,7 +761,7 @@ export class DocumentsSchemaController {
 		if (this.disableSchemaUpgrade) {
 			assert(
 				!local,
-				"local schema change messages should never be generated when disableSchemaUpgrade is enabled",
+				0xceb /* local schema change messages should never be generated when disableSchemaUpgrade is enabled */,
 			);
 			// Clients with disableSchemaUpgrade enabled should never generate schema change messages, but they
 			// may receive them from misconfigured clients. In such case, throw on any incoming schema change ops

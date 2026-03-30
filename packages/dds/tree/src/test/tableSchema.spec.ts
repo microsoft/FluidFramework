@@ -2507,5 +2507,61 @@ describe("TableFactory unit tests", () => {
 
 			unsubscribe();
 		});
+
+		it("multiple inserts should be undoable if no concurrent modifications occurred", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [],
+					rows: [{ id: "row-0", cells: {} }],
+				}),
+			);
+
+			view.root.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
+			});
+
+			view.root.insertColumns({
+				columns: [{ id: "column-1", props: {} }],
+			});
+
+			view.root.insertColumns({
+				columns: [{ id: "column-2", props: {} }],
+			});
+
+			// No changes happened concurrently, so we should be able to revert all of these changes.
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 3);
+			revertible.revert();
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 2);
+			revertible.revert();
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 1);
+			revertible.revert();
+
+			assert.equal(view.root.columns.length, 0);
+
+			unsubscribe();
+		});
 	});
 });

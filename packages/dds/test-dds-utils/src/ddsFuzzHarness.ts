@@ -46,6 +46,7 @@ import type {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	isISharedObjectHandle,
@@ -547,6 +548,7 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	idCompressorFactory?: (
 		summary?: FuzzSerializedIdCompressor,
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	) => IIdCompressor & IIdCompressorCore;
 
 	/**
@@ -1486,6 +1488,7 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 }
 
 function finalizeAllocatedIds(client: {
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	dataStoreRuntime: { idCompressor?: IIdCompressorCore };
 }): void {
 	const compressor = client.dataStoreRuntime.idCompressor;
