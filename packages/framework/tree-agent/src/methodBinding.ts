@@ -15,7 +15,7 @@ import {
 	type IExposedMethods,
 	type MethodKeys,
 	type TypeFactoryType,
-} from "@fluidframework/tree-agent-types/internal";
+} from "@fluidframework/type-factory/internal";
 
 /**
  * A class that implements the FunctionDef interface.
@@ -83,7 +83,7 @@ class ExposedMethodsI implements ExposedMethods {
 
 	public constructor(private readonly schemaClass: BindableSchema) {}
 
-	public expose<
+	public exposeMethod<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
 		S extends Ctor & IExposedMethods,
 		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,

@@ -6,8 +6,8 @@
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeNodeSchemaClass } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema } from "@fluidframework/tree/alpha";
-import { typeFactory as baseTypeFactory } from "@fluidframework/tree-agent-types/internal";
-import type { TypeFactoryInstanceOf } from "@fluidframework/tree-agent-types/internal";
+import { typeFactory as baseTypeFactory } from "@fluidframework/type-factory/internal";
+import type { TypeFactoryInstanceOf } from "@fluidframework/type-factory/internal";
 
 /**
  * Namespace containing type factory functions.
@@ -29,6 +29,6 @@ export const typeFactory = {
 					`Pass a schema class that extends from an object schema (e.g., sf.object(...)), not primitive, array, or map schemas.`,
 			);
 		}
-		return { _kind: "instanceof", schema };
+		return { _kind: "instanceof", constructor: schema };
 	},
 };

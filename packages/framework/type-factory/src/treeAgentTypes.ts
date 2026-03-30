@@ -382,7 +382,7 @@ export interface TypeFactoryFunction extends TypeFactoryType {
 }
 
 /**
- * Represents an instanceof type that references a schema class in the type factory system.
+ * Represents an instanceof type that references a class in the type factory system.
  * @alpha
  */
 export interface TypeFactoryInstanceOf extends TypeFactoryType {
@@ -391,10 +391,10 @@ export interface TypeFactoryInstanceOf extends TypeFactoryType {
 	 */
 	readonly _kind: "instanceof";
 	/**
-	 * The schema class to reference.
+	 * The constructor to reference.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly schema: new (
+	readonly constructor: new (
 		...args: any[]
 	) => unknown;
 }
@@ -588,14 +588,14 @@ export const typeFactory = {
 	},
 
 	/**
-	 * Create an instanceOf type for a schema class.
+	 * Create an instanceOf type for a class.
 	 * @remarks
 	 * This is an untyped version. `@fluidframework/tree-agent` re-exports a
-	 * narrower override that constrains the schema to `ObjectNodeSchema`.
+	 * narrower override that constrains the constructor to `ObjectNodeSchema`.
 	 * @internal
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	instanceOf(schema: new (...args: any[]) => unknown): TypeFactoryInstanceOf {
-		return { _kind: "instanceof", schema };
+	instanceOf(constructor: new (...args: any[]) => unknown): TypeFactoryInstanceOf {
+		return { _kind: "instanceof", constructor };
 	},
 };

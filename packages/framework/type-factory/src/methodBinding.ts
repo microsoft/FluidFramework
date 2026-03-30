@@ -78,28 +78,28 @@ export function buildFunc<
 }
 
 /**
- * An interface for exposing methods of schema classes to an agent.
+ * An interface for exposing methods of classes to an agent.
  * @alpha
  */
 export interface ExposedMethods {
 	/**
 	 * Expose a method with type factory types.
 	 */
-	expose<
+	exposeMethod<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
 		S extends Ctor & IExposedMethods,
 		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,
-	>(schema: S, methodName: K, tfFunction: Z): void;
+	>(constructor: S, methodName: K, tfFunction: Z): void;
 }
 
 /**
  * A symbol used to expose methods to the LLM.
  * @alpha
  */
-export const exposeMethodsSymbol: unique symbol = Symbol("run");
+export const exposeMethodsSymbol: unique symbol = Symbol("Type factory expose method/symbol");
 
 /**
- * An interface that SharedTree schema classes should implement to expose their methods to the LLM.
+ * An interface that classes should implement to expose their methods to the LLM.
  *
  * @remarks
  * The `getExposedMethods` free function will cause the method here to be called on the class passed to it.
@@ -114,7 +114,7 @@ export const exposeMethodsSymbol: unique symbol = Symbol("run");
  */
 export interface IExposedMethods {
 	/**
-	 * Static method that exposes methods of this schema class to an agent.
+	 * Static method that exposes methods of this class to an agent.
 	 */
 	[exposeMethodsSymbol](methods: ExposedMethods): void;
 }

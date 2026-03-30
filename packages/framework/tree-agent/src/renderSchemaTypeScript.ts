@@ -17,7 +17,7 @@ import {
 	isTypeFactoryType,
 	type TypeFactoryOptional,
 	type TypeFactoryType,
-} from "@fluidframework/tree-agent-types/internal";
+} from "@fluidframework/type-factory/internal";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";

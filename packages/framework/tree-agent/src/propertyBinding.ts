@@ -12,7 +12,7 @@ import {
 	type ExposedProperties,
 	type IExposedProperties,
 	type TypeFactoryType,
-} from "@fluidframework/tree-agent-types/internal";
+} from "@fluidframework/type-factory/internal";
 
 import type { BindableSchema } from "./methodBinding.js";
 

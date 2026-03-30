@@ -1,4 +1,4 @@
-# @fluidframework/tree-agent-types
+# @fluidframework/type-factory
 
 Shared types for exposing schema methods and properties to an LLM agent.
 
@@ -25,7 +25,7 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluidframework/tree-agent-types
+npm i @fluidframework/type-factory
 ```
 
 ## Importing from this package
@@ -33,13 +33,13 @@ npm i @fluidframework/tree-agent-types
 This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
 For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/tree-agent-types` like normal.
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/type-factory` like normal.
 
-To access the `alpha` APIs, import via `@fluidframework/tree-agent-types/alpha`.
+To access the `alpha` APIs, import via `@fluidframework/type-factory/alpha`.
 
 ## API Documentation
 
-API documentation for **@fluidframework/tree-agent-types** is available at <https://fluidframework.com/docs/apis/tree-agent-types>.
+API documentation for **@fluidframework/type-factory** is available at <https://fluidframework.com/docs/apis/type-factory>.
 
 <!-- prettier-ignore-end -->
 
