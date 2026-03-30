@@ -537,6 +537,9 @@ importers:
 
   packages/build-tools:
     dependencies:
+      '@fluid-tools/build-infrastructure':
+        specifier: workspace:~
+        version: link:../build-infrastructure
       '@fluid-tools/version-tools':
         specifier: workspace:~
         version: link:../version-tools

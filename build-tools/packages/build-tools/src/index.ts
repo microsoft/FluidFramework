@@ -24,8 +24,10 @@ export type {
 } from "./common/typeCompatibility";
 export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
 export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
+export { FluidBuildPackage } from "./fluidBuild/fluidBuildPackage";
 export { type IFluidCompatibilityMetadata } from "./fluidBuild/fluidCompatMetadata";
 export { FluidRepo } from "./fluidBuild/fluidRepo";
+export { FluidRepoBuild, type IPackageMatchedOptions } from "./fluidBuild/fluidRepoBuild";
 // For repo policy check
 export {
 	getTaskDefinitions,

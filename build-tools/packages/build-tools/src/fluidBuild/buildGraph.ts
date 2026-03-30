@@ -11,12 +11,12 @@ import { Spinner } from "picospinner";
 import * as semver from "semver";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
-import type { Package } from "../common/npmPackage";
 import type { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
 import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
+import type { FluidBuildPackage } from "./fluidBuildPackage";
 import {
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
@@ -53,7 +53,7 @@ class BuildGraphContext implements BuildContext {
 	public readonly repoRoot: string;
 	public readonly gitRepo: GitRepo;
 	constructor(
-		public readonly repoPackageMap: Map<string, Package>,
+		public readonly repoPackageMap: Map<string, FluidBuildPackage>,
 		readonly buildContext: BuildContext,
 		public readonly workerPool?: WorkerPool,
 	) {
@@ -81,7 +81,7 @@ export class BuildPackage {
 
 	constructor(
 		public readonly context: BuildGraphContext,
-		public readonly pkg: Package,
+		public readonly pkg: FluidBuildPackage,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
 		this._taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions, {
@@ -480,16 +480,16 @@ export class BuildPackage {
  */
 export class BuildGraph {
 	private matchedPackages = 0;
-	private readonly buildPackages = new Map<Package, BuildPackage>();
+	private readonly buildPackages = new Map<FluidBuildPackage, BuildPackage>();
 	private readonly context: BuildGraphContext;
 
 	public constructor(
-		packages: Map<string, Package>,
-		releaseGroupPackages: Package[],
+		packages: Map<string, FluidBuildPackage>,
+		releaseGroupPackages: FluidBuildPackage[],
 		buildContext: BuildContext,
 		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
-		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
+		getDepFilter: (pkg: FluidBuildPackage) => (dep: FluidBuildPackage) => boolean,
 	) {
 		this.context = new BuildGraphContext(
 			packages,
@@ -609,7 +609,7 @@ export class BuildGraph {
 	}
 
 	private getBuildPackage(
-		pkg: Package,
+		pkg: FluidBuildPackage,
 		globalTaskDefinitions: TaskDefinitions,
 		pendingInitDep: BuildPackage[],
 	): BuildPackage {
@@ -631,10 +631,10 @@ export class BuildGraph {
 	}
 
 	private initializePackages(
-		packages: Map<string, Package>,
-		releaseGroupPackages: Package[],
+		packages: Map<string, FluidBuildPackage>,
+		releaseGroupPackages: FluidBuildPackage[],
 		globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
-		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
+		getDepFilter: (pkg: FluidBuildPackage) => (dep: FluidBuildPackage) => boolean,
 	): void {
 		const globalTaskDefinitions = normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk);
 		const pendingInitDep: BuildPackage[] = [];
@@ -661,13 +661,15 @@ export class BuildGraph {
 			if (node === undefined) {
 				break;
 			}
-			if (node.pkg.isReleaseGroupRoot) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				for (const dep of node.pkg.monoRepo!.packages) {
-					traceGraph(`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`);
-					node.dependentPackages.push(
-						this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
-					);
+			if (node.pkg.isReleaseGroupRoot && node.pkg.releaseGroupObj) {
+				for (const innerPkg of node.pkg.releaseGroupObj.packages) {
+					const dep = packages.get(innerPkg.name);
+					if (dep && dep !== node.pkg) {
+						traceGraph(`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`);
+						node.dependentPackages.push(
+							this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
+						);
+					}
 				}
 				continue;
 			}

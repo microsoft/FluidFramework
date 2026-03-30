@@ -6,9 +6,9 @@
 import * as assert from "assert";
 import { type AsyncPriorityQueue, priorityQueue } from "async";
 import registerDebug from "debug";
-import type { Package } from "../../common/npmPackage";
 import type { BuildContext } from "../buildContext";
 import type { BuildPackage } from "../buildGraph";
+import type { FluidBuildPackage } from "../fluidBuildPackage";
 import { BuildResult } from "../buildResult";
 import { options } from "../options";
 import type { LeafTask } from "./leaf/leafTask";
@@ -63,7 +63,7 @@ export abstract class Task {
 		}
 	}
 
-	public get package(): Package {
+	public get package(): FluidBuildPackage {
 		return this.node.pkg;
 	}
 

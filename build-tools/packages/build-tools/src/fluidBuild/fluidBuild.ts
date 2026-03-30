@@ -31,8 +31,12 @@ async function main(): Promise<void> {
 		: "";
 	log(`Build Root: ${resolvedRoot}${suffix}`);
 
+	// Load the repo layout from build-infrastructure (async for CJS/ESM interop)
+	const { loadBuildProjectAsync } = await import("./buildInfraTypes.js");
+	const buildProject = await loadBuildProjectAsync(resolvedRoot);
+
 	// Load the packages
-	const repo = new FluidRepoBuild({
+	const repo = new FluidRepoBuild(buildProject, {
 		repoRoot: resolvedRoot,
 		gitRepo: new GitRepo(resolvedRoot),
 		fluidBuildConfig: fluidConfig,
