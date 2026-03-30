@@ -6,8 +6,12 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	BaseContainerRuntimeFactoryAlpha,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
@@ -15,7 +19,10 @@ import {
 	type ContainerRuntimeBaseAlpha,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
+	type IFluidDataStoreFactory,
 	type IFluidDataStorePolicies,
+	type IStagingController,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getContainerEntryPointBackCompat,
@@ -24,13 +31,36 @@ import {
 import * as semver from "semver";
 
 /**
- * Test-only type for accessing staging mode methods on ContainerRuntime.
- * These are private on ContainerRuntime but exist at runtime. We use this
- * narrow type rather than `any` to keep the test type-safe.
+ * Local factory that extends BaseContainerRuntimeFactoryAlpha to expose
+ * IStagingController. Mirrors the default-data-store setup from
+ * ContainerRuntimeFactoryWithDefaultDataStore.
  */
-interface ContainerRuntime_WithStagingMode {
-	enterStagingMode(): void;
-	exitStagingMode(action: "commit" | "discard"): void;
+class TestContainerRuntimeFactory extends BaseContainerRuntimeFactoryAlpha {
+	private readonly defaultFactory: IFluidDataStoreFactory;
+
+	public constructor(
+		defaultFactory: IFluidDataStoreFactory,
+		registryEntries: NamedFluidDataStoreRegistryEntries,
+	) {
+		super({
+			registryEntries,
+			provideEntryPoint: async (runtime) => {
+				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
+			},
+		});
+		this.defaultFactory = defaultFactory;
+	}
+
+	protected override async containerInitializingFirstTime(
+		runtime: IContainerRuntime,
+	): Promise<void> {
+		const dataStore = await runtime.createDataStore(this.defaultFactory.type);
+		await dataStore.trySetAlias("default");
+	}
 }
 
 describeCompat(
@@ -84,32 +114,34 @@ describeCompat(
 					readonlyInStagingMode,
 				},
 			});
-			const container = await provider.createContainer(
-				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
-					defaultFactory,
-					registryEntries: new Map([[defaultFactory.type, defaultFactory]]),
-				}),
+
+			const runtimeFactory = new TestContainerRuntimeFactory(
+				defaultFactory,
+				new Map([[defaultFactory.type, defaultFactory]]),
 			);
+			const container = await provider.createContainer(runtimeFactory);
 			const { _context, _runtime, _root } =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 
 			const containerRuntime = asLegacyAlpha(_context.containerRuntime);
 
-			// In cross-version compat tests the container may be created with an older runtime
-			// that predates the staging mode feature. Skip if the runtime is not ContainerRuntime
-			// (i.e. it's from a version that doesn't have enterStagingMode/exitStagingMode).
-			const { ContainerRuntime } = apis.containerRuntime;
-			if (!(_context.containerRuntime instanceof ContainerRuntime)) {
+			// Skip if the runtime doesn't support staging mode — IStagingController is only
+			// available from factories that use loadContainerRuntimeAlpha, which in turn
+			// requires a runtime new enough to support staging mode.
+			const stagingController: IStagingController | undefined =
+				runtimeFactory.stagingController;
+			if (stagingController === undefined) {
 				test.skip();
+				// Unreachable at runtime (test.skip() throws), but needed for TypeScript narrowing.
+				return undefined as never;
 			}
-			const runtimeWithStaging =
-				_context.containerRuntime as unknown as ContainerRuntime_WithStagingMode;
+
 			return {
 				container,
 				containerRuntime,
-				enterStagingMode: () => runtimeWithStaging.enterStagingMode(),
+				enterStagingMode: () => stagingController.enterStagingMode(),
 				exitStagingMode: (action: "commit" | "discard") =>
-					runtimeWithStaging.exitStagingMode(action),
+					stagingController.exitStagingMode(action),
 				dsRuntime: _runtime as unknown as IFluidDataStoreChannel & IFluidDataStoreRuntime,
 				shareDir: _root,
 			};
