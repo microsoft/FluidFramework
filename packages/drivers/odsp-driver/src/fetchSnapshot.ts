@@ -6,7 +6,12 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverErrorTypes,
+	type ILocationRedirectionError,
+	type ISnapshot,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type DriverErrorTelemetryProps,
 	NonRetryableError,
@@ -54,6 +59,7 @@ import {
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
+	getOdspResolvedUrl,
 	getWithRetryForTokenRefreshRepeat,
 	isSnapshotFetchForLoadingGroup,
 	measure,
@@ -183,6 +189,32 @@ export async function fetchSnapshotWithRedeem(
 					putInCache,
 					loadingGroupIds,
 				);
+			} else if (
+				isLocationRedirectionError(error) &&
+				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
+			) {
+				try {
+					// The redirect itself is handled earlier, but we need to redeem the sharing link
+					// now against the redirected URL rather than waiting until the next API call retries
+					// with the redirect URL applied. After this point the sharing link is removed from
+					// the resolved URL, so we wouldn't be able to redeem during a later failure.
+					const redirectedResolvedUrl: IOdspResolvedUrl = {
+						...getOdspResolvedUrl(error.redirectUrl),
+						shareLinkInfo: odspResolvedUrl.shareLinkInfo,
+					};
+
+					await redeemSharingLink(redirectedResolvedUrl, storageTokenFetcher, logger);
+					logger.sendTelemetryEvent(
+						{
+							eventName: "RedirectRedeemFallback",
+							errorType: error.errorType,
+						},
+						error,
+					);
+				} catch (redeemError) {
+					logger.sendErrorEvent({ eventName: "RedirectRedeemFallbackError" }, redeemError);
+				}
+				throw error;
 			} else {
 				throw error;
 			}
@@ -790,6 +822,15 @@ export const downloadSnapshot = mockify(
 		};
 	},
 );
+
+function isLocationRedirectionError(error: unknown): error is ILocationRedirectionError {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		(error as Partial<IOdspError>).errorType === DriverErrorTypes.locationRedirection &&
+		(error as Partial<ILocationRedirectionError>).redirectUrl !== undefined
+	);
+}
 
 function isRedeemSharingLinkError(
 	odspResolvedUrl: IOdspResolvedUrl,
