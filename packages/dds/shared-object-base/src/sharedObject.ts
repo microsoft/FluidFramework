@@ -41,7 +41,6 @@ import {
 	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	type MonitoringContext,
@@ -52,7 +51,10 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 	LoggingError,
+	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
@@ -162,7 +164,7 @@ export abstract class SharedObjectCore<
 
 		this.handle = new SharedObjectHandle(this, id, runtime);
 
-		this.logger = createChildLogger({
+		const internalLogger = createChildLogger({
 			logger: runtime.logger,
 			properties: {
 				all: {
@@ -173,7 +175,8 @@ export abstract class SharedObjectCore<
 				},
 			},
 		});
-		this.mc = loggerToMonitoringContext(this.logger);
+		this.logger = internalLogger;
+		this.mc = loggerToMonitoringContext(internalLogger);
 
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
@@ -206,7 +209,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsOpProcessing",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
 			new Map<string, ITelemetryBaseProperties>([
@@ -219,7 +222,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsEventCallbacks",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
 			true,
 		);

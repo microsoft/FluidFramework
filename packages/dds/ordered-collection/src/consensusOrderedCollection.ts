@@ -22,6 +22,7 @@ import {
 	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -257,7 +258,10 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				extractTelemetryLoggerExt(this.logger).sendErrorEvent(
+					{ eventName: "ConsensusQueue_release" },
+					error,
+				);
 			});
 		}
 	}

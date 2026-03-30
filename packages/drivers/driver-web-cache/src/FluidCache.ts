@@ -14,7 +14,7 @@ import {
 	getKeyForCacheEntry,
 	maximumCacheDurationMs,
 } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IDBPDatabase } from "idb";
 
@@ -74,7 +74,7 @@ export interface FluidCacheConfig {
  * @legacy @beta
  */
 export class FluidCache implements IPersistedCache {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	private readonly partitionKey: string | null;
 

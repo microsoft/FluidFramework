@@ -6,11 +6,14 @@
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	LoggingError,
 	createChildLogger,
+	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 
 import { FinalSpace } from "./finalSpace.js";
 import {
@@ -127,7 +130,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: TelemetryLoggerExt | undefined,
 	) {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
@@ -620,13 +623,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		params:
 			| {
 					serialized: SerializedIdCompressorWithOngoingSession;
-					logger?: ITelemetryLoggerExt | undefined;
+					logger?: TelemetryLoggerExt | undefined;
 					newSessionId?: never;
 			  }
 			| {
 					serialized: SerializedIdCompressorWithNoSession;
 					newSessionId: SessionId;
-					logger?: ITelemetryLoggerExt | undefined;
+					logger?: TelemetryLoggerExt | undefined;
 			  },
 	): IdCompressor {
 		const { serialized, newSessionId, logger } = params;
@@ -653,7 +656,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	static deserialize2_0(
 		index: Index,
 		sessionId: SessionId | undefined,
-		logger: ITelemetryLoggerExt | undefined,
+		logger: TelemetryLoggerExt | undefined,
 	): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
@@ -799,7 +802,7 @@ export function deserializeIdCompressor(
 	if (typeof sessionIdOrLogger === "string") {
 		return IdCompressor.deserialize({
 			serialized: serialized as SerializedIdCompressorWithNoSession,
-			logger: loggerOrUndefined,
+			logger: extractTelemetryLoggerExt<{ PossiblyUndefined: true }>(loggerOrUndefined),
 			newSessionId: sessionIdOrLogger,
 		});
 	}
@@ -810,6 +813,6 @@ export function deserializeIdCompressor(
 	);
 	return IdCompressor.deserialize({
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
-		logger: sessionIdOrLogger,
+		logger: extractTelemetryLoggerExt<{ PossiblyUndefined: true }>(sessionIdOrLogger),
 	});
 }

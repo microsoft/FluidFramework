@@ -31,9 +31,10 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import {
 	createChildMonitoringContext,
-	type ITelemetryLoggerExt,
+	extractTelemetryLoggerExt,
 	type MonitoringContext,
 	UsageError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
@@ -429,7 +430,7 @@ export class SharedDirectory
 		this.runtime,
 		this.serializer,
 		posix.sep,
-		this.logger,
+		extractTelemetryLoggerExt(this.logger),
 	);
 
 	/**
@@ -766,7 +767,7 @@ export class SharedDirectory
 							this.runtime,
 							this.serializer,
 							posix.join(currentSubDir.absolutePath, subdirName),
-							this.logger,
+							extractTelemetryLoggerExt(this.logger),
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
 					}
@@ -1154,7 +1155,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	) {
 		super();
 		this.mc = createChildMonitoringContext({ logger, namespace: "Directory" });
