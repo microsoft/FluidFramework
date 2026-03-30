@@ -532,7 +532,7 @@ stages:
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
-                pnpm exec trips-cleanup --reservationId=$(stringBearerToken) --odspEndpoint=${{ parameters.odspTenantType }} --useFic
+                pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures
