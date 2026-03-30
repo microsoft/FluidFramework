@@ -84,7 +84,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type TelemetryEventCategory,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
 	type IFluidErrorBase,
@@ -94,6 +94,7 @@ import {
 	connectedEventName,
 	createChildLogger,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	formatTick,
 	normalizeError,
 	raiseConnectedEvent,
@@ -430,7 +431,7 @@ export class Container
 	private readonly codeLoader: ICodeDetailsLoader;
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
-	private readonly subLogger: ITelemetryLoggerExt;
+	private readonly subLogger: TelemetryLoggerExt;
 	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: InternalProtocolHandlerBuilder;
 	private readonly signalAudience = new Audience();
@@ -859,7 +860,7 @@ export class Container
 				logger: this.mc.logger,
 				// WARNING: logger on this context should not including getters like containerConnectionState above (on this.subLogger),
 				// as that will result in attempt to dereference this.connectionStateHandler from this call while it's still undefined.
-				mc: loggerToMonitoringContext(subLogger),
+				mc: loggerToMonitoringContext(extractTelemetryLoggerExt(subLogger)),
 				connectionStateChanged: (value, oldState, reason) => {
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this.loaded) {
