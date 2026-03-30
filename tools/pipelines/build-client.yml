@@ -100,7 +100,7 @@ trigger:
     - README.md
     - scripts/*
     - SECURITY.md
-    - syncpack.config.cjs
+    - .syncpackrc.yml
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
@@ -167,7 +167,7 @@ pr:
     - README.md
     - scripts/*
     - SECURITY.md
-    - syncpack.config.cjs
+    - .syncpackrc.yml
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml

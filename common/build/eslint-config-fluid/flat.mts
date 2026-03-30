@@ -17,16 +17,17 @@
  * @see lib/configs/factory.mts for the main config assembly logic
  */
 
+import { baseConfig } from "./library/configs/base.mjs";
+import { sharedConfigs } from "./library/configs/overrides.mjs";
 import {
-	fullMinimalDeprecatedConfig,
 	fullRecommendedConfig,
 	fullStrictBiomeConfig,
 	fullStrictConfig,
 } from "./library/configs/factory.mjs";
 
-const minimalDeprecated = [...fullMinimalDeprecatedConfig] as const;
+const base = [...baseConfig, ...sharedConfigs] as const;
 const recommended = [...fullRecommendedConfig] as const;
 const strict = [...fullStrictConfig] as const;
 const strictBiome = [...fullStrictBiomeConfig] as const;
 
-export { recommended, strict, minimalDeprecated, strictBiome };
+export { base, recommended, strict, strictBiome };

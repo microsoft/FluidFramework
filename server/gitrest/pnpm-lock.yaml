@@ -29,6 +29,7 @@ overrides:
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
   serialize-javascript@>=6 <7: ^7.0.4
+  express@>=4 <5: ^4.22.1
 
 importers:
 
@@ -137,8 +138,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.3(supports-color@8.1.1)
       express:
-        specifier: ^4.21.2
-        version: 4.21.2
+        specifier: ^4.22.1
+        version: 4.22.1
       isomorphic-git:
         specifier: ^1.25.10
         version: 1.25.10
@@ -261,8 +262,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.3(supports-color@8.1.1)
       express:
-        specifier: ^4.21.2
-        version: 4.21.2
+        specifier: ^4.22.1
+        version: 4.22.1
       ioredis:
         specifier: ^5.6.1
         version: 5.6.1
@@ -1920,10 +1921,6 @@ packages:
   cookie-signature@1.0.6:
     resolution: {integrity: sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==}
 
-  cookie@0.7.1:
-    resolution: {integrity: sha512-6DnInpx7SJ2AK3+CTUE/ZM0vWTUboZCegxhC2xiIydHR9jNuTAASBrfEpHhiGOZw/nX51bHt6YQl8jsGo4y/0w==}
-    engines: {node: '>= 0.6'}
-
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
@@ -2303,8 +2300,8 @@ packages:
     resolution: {integrity: sha512-h2z5mrROTxce56S+pnvAV890uu7ls7f1kEvVGJbw1OlFH3/mlJ5bkXu0KRyW94v37zzHPiUd55iLn3DA7TjWpw==}
     engines: {node: '>=0.8'}
 
-  express@4.21.2:
-    resolution: {integrity: sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==}
+  express@4.22.1:
+    resolution: {integrity: sha512-F2X8g9P1X7uCPZMA3MVf9wcTqlyNp7IhH5qPCI0izhaOIYXaW9L535tGA3qmjRzpH+bZczqq7hVKxTR4NWnu+g==}
     engines: {node: '>= 0.10.0'}
 
   extend-shallow@2.0.1:
@@ -5346,7 +5343,7 @@ snapshots:
       body-parser: 1.20.3
       debug: 4.4.3(supports-color@8.1.1)
       events: 3.3.0
-      express: 4.21.2
+      express: 4.22.1
       fast-redact: 3.3.0
       ioredis: 5.6.1
       lodash: 4.17.21
@@ -5378,7 +5375,7 @@ snapshots:
       '@fluidframework/server-services-core': 8.0.0-366087
       '@fluidframework/server-services-telemetry': 8.0.0-366087
       debug: 4.4.3(supports-color@8.1.1)
-      express: 4.21.2
+      express: 4.22.1
       ioredis: 5.6.1
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
@@ -7022,8 +7019,6 @@ snapshots:
 
   cookie-signature@1.0.6: {}
 
-  cookie@0.7.1: {}
-
   cookie@0.7.2: {}
 
   cookiejar@2.1.4: {}
@@ -7394,14 +7389,14 @@ snapshots:
 
   exit-on-epipe@1.0.1: {}
 
-  express@4.21.2:
+  express@4.22.1:
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
       body-parser: 1.20.3
       content-disposition: 0.5.4
       content-type: 1.0.5
-      cookie: 0.7.1
+      cookie: 0.7.2
       cookie-signature: 1.0.6
       debug: 2.6.9
       depd: 2.0.0

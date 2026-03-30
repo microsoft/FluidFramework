@@ -967,6 +967,12 @@ describe("textEditor", () => {
 				assert.ok(result, "Expected a line tag for header 5");
 				assert.equal(result.value, "h5", "Expected tag to be h5 for unsupported header level");
 			});
+			it("parseLineTag handles null attribute alongside active tag", () => {
+				// eslint-disable-next-line unicorn/no-null -- quill sends null for attributes that are being removed
+				const result = parseLineTag({ list: null, blockquote: true });
+				assert(result !== undefined);
+				assert.equal(result.value, "blockquote");
+			});
 		});
 		// tests quillFormattedview conversion that feeds into quill delta generation,
 		// specifically for line atoms which have special handling for headers and lists.
@@ -980,6 +986,7 @@ describe("textEditor", () => {
 					new FormattedTextAsTree.StringAtom({
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("h1"),
+							indent: 0,
 						}),
 						format: createPlainFormat(),
 					}),
@@ -996,6 +1003,7 @@ describe("textEditor", () => {
 					new FormattedTextAsTree.StringAtom({
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("li"),
+							indent: 0,
 						}),
 						format: createPlainFormat(),
 					}),
@@ -1009,6 +1017,44 @@ describe("textEditor", () => {
 					lineOp,
 					"Expected { insert : `\\n`, attributes: { list: 'bullet' } } in delta",
 				);
+			});
+			it("includes indent when present in line atom", () => {
+				const { tree } = createFormattedTreeView("abc");
+				tree.insertWithFormattingAt(3, [
+					new FormattedTextAsTree.StringAtom({
+						content: new FormattedTextAsTree.StringLineAtom({
+							tag: FormattedTextAsTree.LineTag("ol"),
+							indent: 2,
+						}),
+						format: createPlainFormat(),
+					}),
+				]);
+
+				const ops = buildDeltaFromTree(tree);
+				const lineOp = ops.find(
+					(op) => op.insert === "\n" && op.attributes?.list === "ordered",
+				);
+				assert(lineOp !== undefined);
+				assert.equal(lineOp.attributes?.indent, 2);
+			});
+			it("indent is omitted when 0 in line atom", () => {
+				const { tree } = createFormattedTreeView("abc");
+				tree.insertWithFormattingAt(3, [
+					new FormattedTextAsTree.StringAtom({
+						content: new FormattedTextAsTree.StringLineAtom({
+							tag: FormattedTextAsTree.LineTag("ol"),
+							indent: 0,
+						}),
+						format: createPlainFormat(),
+					}),
+				]);
+
+				const ops = buildDeltaFromTree(tree);
+				const lineOp = ops.find(
+					(op) => op.insert === "\n" && op.attributes?.list === "ordered",
+				);
+				assert(lineOp !== undefined);
+				assert.equal("indent" in (lineOp.attributes ?? {}), false);
 			});
 		});
 	});
