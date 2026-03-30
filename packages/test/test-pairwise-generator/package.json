@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-pairwise-generator",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,6 +32,9 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -87,7 +90,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
@@ -95,23 +98,11 @@
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"eslint": "~9.39.1",
+		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:esnext": [
-				"...",
-				"typetests:gen"
-			],
-			"tsc": [
-				"...",
-				"typetests:gen"
-			]
-		}
 	},
 	"typeValidation": {
 		"disabled": true

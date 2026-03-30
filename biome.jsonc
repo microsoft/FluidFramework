@@ -70,6 +70,9 @@
 			// TODO: why does examples/apps/tree-cli-app/*.json not work?
 			"!**/data/**/*.json",
 
+			// tree entrypoint files are generated and may not conform to formatting rules
+			"!**/packages/dds/tree/src/entrypoints/*.ts",
+
 			// Generated type-tests
 			"!**/*.generated.ts",
 

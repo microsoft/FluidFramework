@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/import-testing",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"private": true,
 	"description": "import-testing",
 	"homepage": "https://fluidframework.com",
@@ -30,12 +30,8 @@
 		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.node16.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "npm run build:test:cjs:main && npm run build:test:cjs:crossPackage",
-		"build:test:cjs:crossPackage": "fluid-tsc commonjs --project ./src/test/tsconfig.crossPackageConsumer.cjs.json",
-		"build:test:cjs:main": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "npm run build:test:esm:main && npm run build:test:esm:crossPackage",
-		"build:test:esm:crossPackage": "tsc --project ./src/test/tsconfig.crossPackageConsumer.json",
-		"build:test:esm:main": "tsc --project ./src/test/tsconfig.json",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -67,13 +63,13 @@
 		"@fluid-example/typescript-versions-host": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"eslint": "~9.39.1",
+		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
@@ -82,7 +78,7 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:esnext:main": [
+			"build:esnext:crossPackage:bundler": [
 				"^api-extractor:esnext",
 				"^build:esnext"
 			],
@@ -90,15 +86,18 @@
 				"^api-extractor:esnext",
 				"^build:esnext"
 			],
-			"build:esnext:crossPackage:bundler": [
+			"build:esnext:main": [
 				"^api-extractor:esnext",
 				"^build:esnext"
 			],
-			"build:test:esm:main": [
-				"build:esnext"
+			"build:test:cjs": [
+				"tsc:crossPackage:node16",
+				"tsc:main"
 			],
-			"build:test:esm:crossPackage": [
-				"build:esnext"
+			"build:test:esm": [
+				"build:esnext:crossPackage:bundler",
+				"build:esnext:crossPackage:node16",
+				"build:esnext:main"
 			],
 			"tsc:crossPackage:node16": [
 				"^api-extractor:commonjs",
@@ -107,13 +106,6 @@
 			"tsc:main": [
 				"^api-extractor:commonjs",
 				"^tsc"
-			],
-			"build:test:cjs:main": [
-				"tsc:main",
-				"tsc:crossPackage:node16"
-			],
-			"build:test:cjs:crossPackage": [
-				"tsc:crossPackage:node16"
 			]
 		}
 	},

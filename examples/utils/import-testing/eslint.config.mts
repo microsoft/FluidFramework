@@ -20,7 +20,6 @@ const config: Linter.Config[] = [
 				project: [
 					"./tsconfig.json",
 					"./tsconfig.crossPackage.node16.json",
-					"./src/test/tsconfig.crossPackageConsumer.json",
 					"./src/test/tsconfig.json",
 				],
 			},

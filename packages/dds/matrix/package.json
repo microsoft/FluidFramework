@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/matrix",
-	"version": "2.91.0",
+	"version": "2.92.0",
 	"description": "Distributed matrix",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -60,7 +60,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
 		"bench:profile": "cd bench && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
@@ -160,8 +160,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/matrix-previous": "npm:@fluidframework/matrix@2.83.0",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/matrix-previous": "npm:@fluidframework/matrix@2.91.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@tiny-calc/micro": "0.0.0-alpha.5",
@@ -173,7 +173,7 @@
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"eslint": "~9.39.1",
+		"eslint": "catalog:eslint",
 		"hotloop": "^1.2.0",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",

@@ -1938,5 +1938,6 @@ export const shortCodeMap = {
 	"0xcde": "Unsupported node type in text array",
 	"0xcdf": "Expected retain count to be a number",
 	"0xce0": "batchIdToSeqNum and seqNumToBatchId should be in sync for duplicate",
-	"0xce1": "seqNumToBatchId and batchIdToSeqNum should be in sync"
+	"0xce1": "seqNumToBatchId and batchIdToSeqNum should be in sync",
+	"0xce2": "expected at most one line tag (header or list), but received both"
 };

@@ -5,17 +5,8 @@
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	FluidClientVersion,
-	FormatValidatorNoOp,
-	type ICodecOptions,
-} from "../../codec/index.js";
-import { SchemaFormatVersion } from "../../core/index.js";
-import { makeSchemaCodec } from "../../feature-libraries/index.js";
-import type {
-	FormatV1,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/schema-index/index.js";
+import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
+import { schemaCodecBuilder } from "../../feature-libraries/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
@@ -63,7 +54,10 @@ export function extractPersistedSchema(
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, { includeStaged });
-	const codec = makeSchemaCodec({ minVersionForCollab, jsonValidator: FormatValidatorNoOp });
+	const codec = schemaCodecBuilder.build({
+		minVersionForCollab,
+		jsonValidator: FormatValidatorNoOp,
+	});
 	return codec.encode(stored) as JsonCompatible;
 }
 
@@ -102,13 +96,8 @@ export function comparePersistedSchema(
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-	// Any version can be passed down to makeSchemaCodec here.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec(
-		{ ...options, minVersionForCollab: FluidClientVersion.v2_0 },
-		SchemaFormatVersion.v1,
-	);
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+	const stored = schemaCodec.decode(persisted);
 	const config = new TreeViewConfigurationAlpha({
 		schema: normalizeFieldSchema(view),
 	});
