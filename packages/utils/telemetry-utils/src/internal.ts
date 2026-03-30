@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// The "internal" exports are a superset of the standard ones. So, we want to export everything from the standard barrel file.
+// eslint-disable-next-line no-restricted-syntax
+export * from "./main.js";
+
 export {
 	createChildMonitoringContext,
 	type MonitoringContext,
@@ -40,7 +44,6 @@ export {
 	wrapError,
 	wrapErrorAndLog,
 } from "./errorLogging.js";
-export { EventEmitterWithErrorHandling } from "./eventEmitterWithErrorHandling.js";
 export {
 	connectedEventName,
 	disconnectedEventName,
@@ -57,10 +60,9 @@ export {
 	eventNamespaceSeparator,
 	createChildLogger,
 	createMultiSinkLogger,
+	extractTelemetryLoggerExt,
 	formatTick,
 	type IPerformanceEventMarkers,
-	type ITelemetryLoggerPropertyBag,
-	type ITelemetryLoggerPropertyBags,
 	type MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
@@ -68,7 +70,7 @@ export {
 	tagData,
 	tagCodeArtifacts,
 	TelemetryDataTag,
-	type TelemetryEventPropertyTypes,
+	toITelemetryLoggerExt,
 } from "./logger.js";
 export {
 	createMockLoggerExt,
@@ -89,14 +91,27 @@ export {
 	measure,
 } from "./utils.js";
 export type {
-	TelemetryEventPropertyTypeExt,
 	ITelemetryEventExt,
+	TelemetryLoggerExt,
+} from "./telemetryTypes.js";
+export type {
 	ITelemetryGenericEventExt,
 	ITelemetryErrorEventExt,
 	ITelemetryPerformanceEventExt,
-	ITelemetryLoggerExt,
-	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
-} from "./telemetryTypes.js";
+} from "./undeprecated.js";
 export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
 export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
+
+import type { TelemetryLoggerExt } from "./telemetryTypes.js";
+
+/**
+ * Renamed version of TelemetryLoggerExt for convenience of internal use.
+ * Where "`ITelemetryLoggerExt`" is exposed in customer API surface, true
+ * `ITelemetryLoggerExt` (that is an erased type) must be used. To access
+ * use `@fluidframework/telemetry-utils/legacy` import spec. All internal
+ * usages should be promoted to `TelemetryLoggerExt` naming.
+ *
+ * @internal
+ */
+export type ITelemetryLoggerExt = TelemetryLoggerExt;

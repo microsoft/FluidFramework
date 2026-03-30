@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ErasedType,
+	ITelemetryBaseLogger,
+	LogLevel,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 
 /**
  * The categories FF uses when instrumenting the code.
@@ -13,6 +18,7 @@ import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/cor
  * error - Error log event, ideally 0 of these are logged during a session
  *
  * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
+ * @deprecated This type is being removed without a replacement.
  * @legacy @beta
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
@@ -65,6 +71,7 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 /**
  * Informational (non-error) telemetry event
  * @remarks Maps to category = "generic"
+ * @deprecated This type is being removed without a replacement.
  * @legacy @beta
  */
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
@@ -83,6 +90,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 /**
  * Error telemetry event.
  * @remarks Maps to category = "error"
+ * @deprecated This type is being removed without a replacement.
  * @legacy @beta
  */
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
@@ -95,6 +103,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 /**
  * Performance telemetry event.
  * @remarks Maps to category = "performance"
+ * @deprecated This type is being removed without a replacement.
  * @legacy @beta
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
@@ -105,14 +114,29 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 }
 
 /**
+ * Handle for an extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} used internally within the Fluid Framework.
+ *
+ * @remarks
+ * `ITelemetryBaseLogger` should be used when loggers are passed between layers. This interface exists
+ * to patch cases where `ITelemetryLoggerExt` leaked out.
+ *
+ * @sealed
+ * @legacy
+ * @beta
+ */
+export interface ITelemetryLoggerExt
+	extends ErasedType<"TelemetryLoggerExt">,
+		ITelemetryBaseLogger {}
+
+/**
  * An extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} which allows for more lenient event types.
  *
  * @remarks
  * This interface is meant to be used internally within the Fluid Framework,
  * and `ITelemetryBaseLogger` should be used when loggers are passed between layers.
- * @legacy @beta
+ * @internal
  */
-export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+export interface TelemetryLoggerExt extends ITelemetryBaseLogger {
 	/**
 	 * Send an information telemetry event.
 	 * @param event - Event to send.
