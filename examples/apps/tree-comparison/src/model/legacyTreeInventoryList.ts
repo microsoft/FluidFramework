@@ -196,8 +196,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(legacySharedTreeKey)!.get();
 
 		// We must use a checkout in order to get "viewChange" events - it doesn't change any of the rest of our usage though.
-		// eslint-disable-next-line import-x/no-deprecated
-		const checkout = new EagerCheckout(this._tree as LegacySharedTree);
+		const checkout = new EagerCheckout(this._tree);
 		// This event handler fires for any change to the tree, so it needs to handle all possibilities (change, add, remove).
 		checkout.on("viewChange", (before: TreeView, after: TreeView) => {
 			const { changed, added, removed } = before.delta(after);
