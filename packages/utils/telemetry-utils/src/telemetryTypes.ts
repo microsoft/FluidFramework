@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ErasedType,
-	ITelemetryBaseLogger,
-	LogLevel,
-	Tagged,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
 
 /**
  * The categories FF uses when instrumenting the code.
@@ -114,7 +109,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 }
 
 /**
- * Handle for an extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} used internally within the Fluid Framework.
+ * An extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} which allows for more lenient event types.
  *
  * @remarks
  * `ITelemetryBaseLogger` should be used when loggers are passed between layers. This interface exists
@@ -124,9 +119,41 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
  * @legacy
  * @beta
  */
-export interface ITelemetryLoggerExt
-	extends ErasedType<"TelemetryLoggerExt">,
-		ITelemetryBaseLogger {}
+export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+	/**
+	 * Send an information telemetry event.
+	 * @param event - Event to send.
+	 * @param error - Optional error object to log.
+	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.essential}.
+	 * @deprecated This method is being removed without a replacement.
+	 */
+	sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: unknown,
+		logLevel?: LogLevel,
+	): void;
+
+	/**
+	 * Send an error telemetry event.
+	 * @param event - Event to send.
+	 * @param error - Optional error object to log.
+	 * @deprecated This method is being removed without a replacement.
+	 */
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
+
+	/**
+	 * Send a performance telemetry event.
+	 * @param event - Event to send
+	 * @param error - Optional error object to log.
+	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.essential}.
+	 * @deprecated This method is being removed without a replacement.
+	 */
+	sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: unknown,
+		logLevel?: LogLevel,
+	): void;
+}
 
 /**
  * An extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} which allows for more lenient event types.
