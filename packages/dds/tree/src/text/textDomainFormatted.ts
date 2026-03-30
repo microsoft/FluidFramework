@@ -6,8 +6,13 @@
 import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
-import { currentObserver } from "../feature-libraries/index.js";
+import {
+	EmptyKey,
+	forEachNodeSubsequence,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+} from "../core/index.js";
+import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
@@ -24,7 +29,7 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	WithType,
 } from "../simple-tree/index.js";
-import { mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
+import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
 import { charactersFromString, type TextAsTree } from "./textDomain.js";
 
@@ -172,6 +177,12 @@ class TextNode
 			});
 		}
 	}
+	public getUniformRun(startIndex: number, endIndex?: number): number {
+		return this.content.getUniformRun(startIndex, endIndex);
+	}
+	public getString(startIndex: number, endIndex?: number): string {
+		return this.content.getString(startIndex, endIndex);
+	}
 }
 
 const defaultFormat = {
@@ -181,6 +192,8 @@ const defaultFormat = {
 	size: 12,
 	font: "Arial",
 } as const;
+
+const formatKey: FieldKey = brand("format");
 
 function textAtomsFromString(
 	value: string,
@@ -210,9 +223,10 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 		return result;
 	}
 
-	public charactersCopy(): string[] {
-		return this.withBorrowedSequenceCursor((cursor) =>
-			mapCursorField(cursor, () => {
+	private getCharactersSubarray(startIndex: number, endIndex: number): string[] {
+		return this.withBorrowedSequenceCursor((cursor) => {
+			const result: string[] = [];
+			forEachNodeSubsequence(cursor, startIndex, endIndex, () => {
 				debugAssert(
 					() =>
 						cursor.type === FormattedTextAsTree.StringAtom.identifier ||
@@ -243,13 +257,79 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 				}
 				cursor.exitNode();
 				cursor.exitField();
-				return content;
-			}),
-		);
+				result.push(content);
+			});
+			return result;
+		});
+	}
+
+	public charactersCopy(): string[] {
+		return this.getCharactersSubarray(0, this.length);
 	}
 
 	public fullString(): string {
 		return this.charactersCopy().join("");
+	}
+
+	public getString(startIndex: number, endIndex: number = this.length): string {
+		validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getString");
+		return this.getCharactersSubarray(startIndex, endIndex).join("");
+	}
+
+	public getUniformRun(startIndex: number, endIndex: number = this.length): number {
+		validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getUniformRun");
+		if (endIndex === startIndex) {
+			throw new UsageError("endIndex must be greater than startIndex for getUniformRun.");
+		}
+		const arrayLength = this.length;
+		return this.withBorrowedSequenceCursor((cursor) => {
+			cursor.enterNode(startIndex);
+
+			// Capture the content type of the first atom
+			cursor.enterField(EmptyKey);
+			cursor.enterNode(0);
+			const contentType = cursor.type;
+			cursor.exitNode();
+			cursor.exitField();
+
+			// Build a comparator from the format subtree of the first atom
+			// This compares by field key
+			cursor.enterField(formatKey);
+			cursor.enterNode(0);
+			const formatComparator = buildNodeComparator(cursor);
+			cursor.exitNode();
+			cursor.exitField();
+
+			let runLength = 1;
+			const limit = Math.min(endIndex, arrayLength) - startIndex;
+
+			while (runLength < limit && cursor.nextNode()) {
+				// Compare atom type
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				const typeMatches = cursor.type === contentType;
+				cursor.exitNode();
+				cursor.exitField();
+				if (!typeMatches) {
+					break;
+				}
+
+				// Compare format subtree using the compiled comparator
+				cursor.enterField(formatKey);
+				cursor.enterNode(0);
+				const formatMatches = formatComparator(cursor);
+				cursor.exitNode();
+				cursor.exitField();
+
+				if (formatMatches !== true) {
+					break;
+				}
+
+				runLength++;
+			}
+			cursor.exitNode();
+			return runLength;
+		});
 	}
 }
 
@@ -305,6 +385,11 @@ export namespace FormattedTextAsTree {
 		"h4",
 		"h5",
 		"li",
+		"ol",
+		"checked",
+		"unchecked",
+		"blockquote",
+		"codeBlock",
 	]);
 	/**
 	 * {@inheritdoc FormattedTextAsTree.(LineTag:variable)}
@@ -316,12 +401,16 @@ export namespace FormattedTextAsTree {
 	 * Unit in the string representing a new line character with line formatting.
 	 * @remarks
 	 * This aligns with how Quill represents line formatting.
-	 * Note that not all new lines will use this,
-	 * but only ones using this can have line specific formatting.
+	 * Quill formats line attributes (headers, list, blockquote, etc... ) on the newline character
+	 * and only lines using this atom can have line-specific formatting.
+	 * The optional indent level mirrors Quill's indent attribute,
+	 * which is applies to the line before the line break.
+	 * Any tagged line can be indented independently.
 	 * @internal
 	 */
 	export class StringLineAtom extends sf.object("StringLineAtom", {
 		tag: LineTag.schema,
+		indent: SchemaFactory.number,
 	}) {
 		public readonly content = "\n";
 	}
@@ -427,6 +516,19 @@ export namespace FormattedTextAsTree {
 			endIndex: number | undefined,
 			format: Partial<CharacterFormat>,
 		): void;
+
+		/**
+		 * Returns the length of the run of characters starting at `startIndex` which have the same formatting and atom type, up to `endIndex`.
+		 * @param startIndex - The starting index of the run.
+		 * @param endIndex - The ending index (exclusive) of the run. Defaults to the end of the text.
+		 */
+		getUniformRun(startIndex: number, endIndex?: number): number;
+		/**
+		 * Returns a substring of the text from `startIndex` to `endIndex`
+		 * @param startIndex - starting index (inclusive)
+		 * @param endIndex - Optional ending index (exclusive). Defaults to the end of the text.
+		 */
+		getString(startIndex: number, endIndex?: number): string;
 	}
 
 	/**

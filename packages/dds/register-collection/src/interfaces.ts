@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type {
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";

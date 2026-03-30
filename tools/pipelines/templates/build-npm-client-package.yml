@@ -184,6 +184,9 @@ extends:
       # Tentative workaround for the occasional Credscan failures
       credscan:
         batchSize: 4
+      # Workaround for "Binary Analysis Scan Optimization (Expand Archives)" timing out.
+      binaryAnalysisCaching:
+        enableExpandArchives: false
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true

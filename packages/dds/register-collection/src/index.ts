@@ -9,8 +9,8 @@ export {
 	ConsensusRegisterCollection,
 } from "./consensusRegisterCollectionFactory.js";
 export {
-	IConsensusRegisterCollection,
-	IConsensusRegisterCollectionEvents,
-	IConsensusRegisterCollectionFactory,
+	type IConsensusRegisterCollection,
+	type IConsensusRegisterCollectionEvents,
+	type IConsensusRegisterCollectionFactory,
 	ReadPolicy,
 } from "./interfaces.js";

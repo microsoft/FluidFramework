@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.64.0",
+	"version": "0.65.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -43,10 +43,10 @@
 		"policy-check": "node packages/build-cli/bin/dev check policy",
 		"policy-check:asserts": "node packages/build-cli/bin/dev check policy --handler assert-short-codes --fix",
 		"policy-check:fix": "node packages/build-cli/bin/dev check policy --excludeHandler assert-short-codes --fix",
-		"syncpack:deps": "syncpack lint-semver-ranges --config syncpack.config.cjs",
-		"syncpack:deps:fix": "syncpack set-semver-ranges --config syncpack.config.cjs",
-		"syncpack:versions": "syncpack list-mismatches --config syncpack.config.cjs",
-		"syncpack:versions:fix": "syncpack fix-mismatches --config syncpack.config.cjs",
+		"syncpack:deps": "syncpack lint-semver-ranges --config .syncpackrc.yml",
+		"syncpack:deps:fix": "syncpack set-semver-ranges --config .syncpackrc.yml",
+		"syncpack:versions": "syncpack list-mismatches --config .syncpackrc.yml",
+		"syncpack:versions:fix": "syncpack fix-mismatches --config .syncpackrc.yml",
 		"test": "npm run test:mocha",
 		"test:bail": "npm run test:mocha:bail",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
@@ -154,10 +154,16 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability (unsanitized class attribute injection).",
-			"simple-git: overridden to ^3.32.3 to resolve a CG alert."
+			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
+			"diff: overridden to patched versions to resolve a known ReDoS vulnerability. diff@7.x has no fix so it is bumped to 8.0.3.",
+			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport).",
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support)."
 		],
 		"overrides": {
 			"@types/glob>@types/minimatch": "~5.1.2",
+			"diff@>=4 <5": "^4.0.4",
+			"diff@>=7 <8": "^8.0.3",
+			"diff@>=8 <9": "^8.0.3",
 			"@types/node": "^22.19.1",
 			"eslint": "~9.39.2",
 			"json5@<1.0.2": "^1.0.2",
@@ -171,7 +177,16 @@
 			"oclif>@aws-sdk/client-s3": "-",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
-			"sharp": "^0.34.5"
+			"sharp": "^0.34.5",
+			"tar": "^7.5.11",
+			"minimatch@>=3 <4": "^3.1.5",
+			"minimatch@>=5 <6": "^5.1.9",
+			"minimatch@>=6 <7": "^6.2.3",
+			"minimatch@>=7 <8": "^7.4.9",
+			"minimatch@>=8 <9": "^8.0.7",
+			"minimatch@>=9 <10": "^9.0.9",
+			"minimatch@>=10 <11": "^10.2.4",
+			"serialize-javascript@>=6 <7": "^7.0.4"
 		},
 		"updateConfig": {
 			"ignoreDependencies": [

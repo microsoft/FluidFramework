@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { IAlfredUser, IConfig, RouterliciousUrlResolver } from "./urlResolver.js";
+export { type IAlfredUser, type IConfig, RouterliciousUrlResolver } from "./urlResolver.js";

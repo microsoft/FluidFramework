@@ -29,6 +29,7 @@ import {
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	arraySchema,
 	type MapNodeCustomizableSchema,
 	mapSchema,
@@ -518,14 +519,24 @@ export class SchemaFactoryAlpha<
 		name: Name,
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
+	): ArrayNodeCustomizableSchemaAlpha<
+		ScopedSchemaName<TScope, Name>,
+		T,
+		true,
+		TCustomMetadata
+	> {
 		return arraySchema(
 			scoped<TScope, TName, Name>(this, name),
 			allowedTypes,
 			true,
 			true,
 			options ?? {},
-		);
+		) as unknown as ArrayNodeCustomizableSchemaAlpha<
+			ScopedSchemaName<TScope, Name>,
+			T,
+			true,
+			TCustomMetadata
+		>;
 	}
 
 	/**
