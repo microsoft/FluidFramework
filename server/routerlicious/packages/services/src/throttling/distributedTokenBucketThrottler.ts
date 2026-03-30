@@ -217,22 +217,24 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 			`Token bucket for ${id} is exhausted`,
 			retryAfterInSeconds,
 		);
-		if (this.config.enableEnhancedTelemetry) {
-			const telemetryProperties = getThrottlingBaseTelemetryProperties(id);
-			this.logger?.warn(`Token bucket for ${id} is exhausted`, {
+		const telemetryProperties = getThrottlingBaseTelemetryProperties(id);
+		this.logger?.warn(`Token bucket for ${id} is exhausted`, {
+			...telemetryProperties.baseLumberjackProperties,
+			retryAfterInSeconds,
+			localRetryAfterInMs: timeUntilLocalTokensCanBeConsumedMs,
+			distributedRetryAfterInMs: timeUntilDistributedTokensCanBeConsumedMs,
+			error: throttlingError,
+		});
+		Lumberjack.warning(
+			`Token bucket for ${id} is exhausted`,
+			{
 				...telemetryProperties.baseLumberjackProperties,
 				retryAfterInSeconds,
-				error: throttlingError,
-			});
-			Lumberjack.warning(
-				`Token bucket for ${id} is exhausted`,
-				{
-					...telemetryProperties.baseLumberjackProperties,
-					retryAfterInSeconds,
-				},
-				throttlingError,
-			);
-		}
+				localRetryAfterInMs: timeUntilLocalTokensCanBeConsumedMs,
+				distributedRetryAfterInMs: timeUntilDistributedTokensCanBeConsumedMs,
+			},
+			throttlingError,
+		);
 		throw throttlingError;
 	}
 
