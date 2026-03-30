@@ -515,7 +515,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'FF Pipeline Authentication'
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
