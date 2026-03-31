@@ -28,10 +28,12 @@
 			"settings": {
 				"workbench.startupEditor": "none"
 			}
+		},
+		"codespaces": {
+			"openFiles": [
+				".devcontainer/ai-agent/GETTING_STARTED.md"
+			]
 		}
-	},
-	"postAttachCommand": {
-		"open-getting-started": "command -v code >/dev/null 2>&1 && code .devcontainer/ai-agent/GETTING_STARTED.md || true"
 	},
 	"containerEnv": {
 		"NODE_VERSION_OVERRIDE": "24"
