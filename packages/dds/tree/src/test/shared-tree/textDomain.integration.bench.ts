@@ -275,4 +275,6 @@ describe("TextDomain encoding benchmarks", () => {
 			});
 		}
 	});
+
+	// TODO: formatted text benchmarks.
 });
