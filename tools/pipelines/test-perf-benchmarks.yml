@@ -548,6 +548,7 @@ stages:
               token__package__import__location: $(token__package__import__location)
               login__odsp__fic__test__users: $(login__odsp__fic__test__users)
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ else }}:
               login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ if eq( endpointObject.endpointName, 'frs' ) }}:
