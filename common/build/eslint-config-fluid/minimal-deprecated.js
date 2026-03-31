@@ -167,6 +167,13 @@ module.exports = {
 			},
 		],
 
+		/**
+		 * Requires eslint-disable comments to include a description explaining why the rule is being disabled.
+		 *
+		 * Docs: {@link https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html}
+		 */
+		"@eslint-community/eslint-comments/require-description": "warn",
+
 		// #region ENABLED INTENTIONALLY
 
 		// Note: will be promoted to an error in the future.
