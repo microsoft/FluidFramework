@@ -106,6 +106,16 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 		) as TRoot;
 	}
 
+	/**
+	 * Subscribes to change events on the underlying tree.
+	 * @returns An unsubscribe function that removes the listener.
+	 */
+	public onTreeChanged(listener: () => void): () => void {
+		return this.viewOrTree instanceof TreeNode
+			? Tree.on(this.viewOrTree, "treeChanged", listener)
+			: this.viewOrTree.events.on("changed", listener);
+	}
+
 	public fork(): Subtree<TRoot> {
 		if (this.viewOrTree instanceof TreeNode) {
 			const branch =

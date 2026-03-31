@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
 /**
  * an array of nodes that is guaranteed to have at least one element
  *
@@ -13,25 +11,25 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
 /**
- * Value that may be used as keys in a {@link TreeIndex}.
- *
+ * An index allows lookup content from a tree using keys.
+ * @remarks
+ * The index will be kept up to date with the {@link TreeBranchAlpha} it is associated with.
+ * Keeping an index up to date incurs overhead.
+ * Therefore, indexes should only be created when needed and disposed when no longer needed.
  * @privateRemarks
- * no-new-null is disabled for this type so that it supports the TreeValue type.
- *
+ * We have various disposable interfaces. Perhaps this should extend one.
+ * Currently all of these indexes are generated on load and exist only in memory (do not persist anything to the document).
+ * In the future, we may want to support indexes which persist some content, allowing them to be kept up to date when when only loading part of a tree.
+ * Since currently partially loading a tree is not supported, there is no need for this.
+ * At some point the low level shared tree index type for persisted indexes could be leveraged to provide user facing extensible sets of persisted indexes.
+ * @sealed
  * @alpha
  */
-// eslint-disable-next-line @rushstack/no-new-null
-export type TreeIndexKey = number | string | boolean | IFluidHandle | null;
-
-/**
- * A index where values are keyed on {@link TreeIndexKey}s.
- *
- * @alpha
- */
-export interface TreeIndex<TKey extends TreeIndexKey, TValue>
-	extends ReadonlyMap<TKey, TValue> {
+export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
 	/**
-	 * Disposes the index such that it can no longer be used and receives no updates from the forest
+	 * Disposes the index such that it can no longer be used and receives no updates for changes in the tree.
+	 * @remarks
+	 * An index may not be used after it is disposed.
 	 */
 	dispose(): void;
 }

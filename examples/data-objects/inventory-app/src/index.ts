@@ -5,7 +5,7 @@
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import type { IReactTreeDataObject } from "@fluidframework/react/alpha";
-import * as React from "react";
+import { createElement } from "react";
 
 import { InventoryListFactory } from "./inventoryList.js";
 import type { Inventory } from "./schema.js";
@@ -14,5 +14,5 @@ import { MainView } from "./view/index.js";
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
 	(tree: IReactTreeDataObject<typeof Inventory>) =>
-		React.createElement(tree.TreeViewComponent, { viewComponent: MainView }),
+		createElement(tree.TreeViewComponent, { viewComponent: MainView }),
 );

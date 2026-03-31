@@ -3927,7 +3927,6 @@ describe("Async validation", function () {
 				try {
 					resolve(PropertyFactory.inheritsFrom(child, ancestor));
 				} catch (error) {
-					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 					reject(error);
 				}
 			}, 0);

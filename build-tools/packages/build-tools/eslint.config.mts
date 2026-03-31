@@ -13,6 +13,9 @@ export default [
 	},
 	{
 		rules: {
+			// build-tools uses some template-like tokens for use in configs
+			"no-template-curly-in-string": "off",
+
 			// TODO: AB#58049 Enable these type-safety rules ASAP and fix violations
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
@@ -21,9 +24,6 @@ export default [
 			"@typescript-eslint/no-unsafe-member-access": "off",
 
 			"@typescript-eslint/no-non-null-assertion": "error",
-
-			// Allow empty object types for extending interfaces
-			"@typescript-eslint/no-empty-object-type": "off",
 
 			// Allow require imports for dynamic loading
 			"@typescript-eslint/no-require-imports": "off",

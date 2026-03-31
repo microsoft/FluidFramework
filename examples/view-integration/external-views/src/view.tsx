@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import type { IDiceRoller } from "./container/index.js";
 
@@ -21,7 +21,7 @@ export const DiceRollerView: FC<IDiceRollerViewProps> = ({
 			setDiceValue(diceRoller.value);
 		};
 		diceRoller.events.on("diceRolled", onDiceRolled);
-		return () => {
+		return (): void => {
 			diceRoller.events.off("diceRolled", onDiceRolled);
 		};
 	}, [diceRoller]);

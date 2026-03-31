@@ -2,6 +2,8 @@
 
 This package contains utilities for writing end-to-end tests in Fluid Framework. It helps in the creation of a simple hosting application to test Fluid objects and other functionalities of the system.
 
+Internal note: Currently, it also has a load side-effect when loaded under mocha where `@fluid-internal/mocha-test-setup` is used. The side-effect will attempt to inject an error 15ms before a test case would otherwise timeout.
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->

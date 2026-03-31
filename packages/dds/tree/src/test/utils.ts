@@ -119,7 +119,6 @@ import {
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
-	SchemaFormatVersion,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -138,7 +137,7 @@ import {
 	defaultChunkPolicy,
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
-	makeSchemaCodec,
+	schemaCodecBuilder,
 	mapTreeWithField,
 	type MinimalMapTreeNodeView,
 	jsonableTreeFromCursor,
@@ -165,7 +164,6 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	type ITreeCheckoutFork,
 	independentView,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
@@ -180,6 +178,7 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 	type TreeView,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
@@ -191,6 +190,7 @@ import {
 	toInitialSchema,
 	toStoredSchema,
 	type SnapshotFileSystem,
+	type TreeViewAlpha,
 } from "../simple-tree/index.js";
 import {
 	configuredSharedTree,
@@ -263,6 +263,8 @@ export enum SummarizeType {
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link TestTreeProvider.create} and satisfy the {@link ITestObjectProvider} interface.
+ * @remarks
+ * When possible, prefer {@link TestTreeProviderLite} which is simpler and has lower overhead.
  */
 export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
@@ -675,13 +677,10 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
-const schemaCodec = makeSchemaCodec(
-	{
-		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: currentVersion,
-	},
-	SchemaFormatVersion.v2,
-);
+const schemaCodec = schemaCodecBuilder.build({
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: currentVersion,
+});
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
@@ -1129,9 +1128,9 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// This block makes sure we still validate the encoded data schema for codecs following the latter
 			// pattern.
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
 					describe(
@@ -1149,16 +1148,6 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 							}
 						},
 					);
-				}
-			});
-
-			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of successes) {
-					it(name, () => {
-						const encoded = codec.binary.encode(data, context);
-						const decoded = codec.binary.decode(encoded, context);
-						assertEquivalent(decoded, data);
-					});
 				}
 			});
 
@@ -1197,9 +1186,9 @@ export function makeDiscontinuedEncodingTestSuite(
 		describe(`${version} (discontinued)`, () => {
 			const codec = family.resolve(version);
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			it("throws when encoding", () => {
 				assert.throws(
 					() => jsonCodec.encode({}, {}),
@@ -1209,7 +1198,7 @@ export function makeDiscontinuedEncodingTestSuite(
 			it("throws when decoding", () => {
 				assert.throws(
 					() => jsonCodec.decode({ version }, {}),
-					validateUsageError(/Cannot decode data to format/),
+					validateUsageError(/Cannot decode data in format/),
 				);
 			});
 		});
@@ -1476,14 +1465,33 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 
-	public branch(): ITreeCheckoutFork {
-		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
+	public disposed = false;
+	public fork(): ITreeCheckout {
+		throw new Error("Method 'branch' not implemented in MockTreeCheckout.");
+	}
+	public isBranch(): this is TreeBranchAlpha {
+		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");
+	}
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
+		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
+	}
+	public runTransaction(): never {
+		throw new Error("Method 'runTransaction' not implemented in MockTreeCheckout.");
+	}
+	public runTransactionAsync(): never {
+		throw new Error("Method 'runTransactionAsync' not implemented in MockTreeCheckout.");
+	}
+	public applyChange(): void {
+		throw new Error("Method 'applyChange' not implemented in MockTreeCheckout.");
 	}
 	public merge(view: unknown, disposeView?: unknown): void {
 		throw new Error("Method 'merge' not implemented in MockTreeCheckout.");
 	}
-	public rebase(view: ITreeCheckoutFork): void {
-		throw new Error("Method 'rebase' not implemented in MockTreeCheckout.");
+	public rebaseOnto(branch: unknown): void {
+		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
+	}
+	public dispose(): void {
+		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
 	}
 	public updateSchema(newSchema: TreeStoredSchema): void {
 		throw new Error("Method 'updateSchema' not implemented in MockTreeCheckout.");
@@ -1532,12 +1540,31 @@ export function moveWithin(
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	if (isInPerformanceTestingMode) {
+	emulateProductionBuildHooks(isInPerformanceTestingMode);
+}
+
+function emulateProductionBuildHooks(enable = true): void {
+	if (enable) {
 		before(() => {
 			emulateProductionBuild();
 		});
 		after(() => {
 			emulateProductionBuild(false);
+		});
+	}
+}
+
+/**
+ * Creates two describe blocks, one with production build emulation enabled and one without,
+ * and places the test suite in both contexts.
+ *
+ * Use this for testing code which has debugAsserts to confirm they don't break the desired behavior.
+ */
+export function suitesWithAndWithoutProduction(fn: (emulateProduction: boolean) => void) {
+	for (const emulateProduction of [true, false]) {
+		describe(`emulateProductionBuild: ${emulateProduction}`, () => {
+			emulateProductionBuildHooks(emulateProduction);
+			fn(emulateProduction);
 		});
 	}
 }

@@ -5,6 +5,7 @@
 
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
 
+import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 
@@ -148,3 +149,54 @@ export interface NotificationsManager<
 	 */
 	readonly notifications: NotificationListenable<T>;
 }
+
+/**
+ * Type alias for the return type of {@link (Notifications:1)}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this Notification within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
+ * @alpha
+ * @sealed
+ */
+export type NotificationsConfiguration<
+	T extends InternalUtilityTypes.NotificationListeners<T>,
+	RegistrationKeyRestrictions extends string = string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKeyRestrictions,
+	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	NotificationsManager<T>
+>;
+
+/**
+ * Type alias for the return type of {@link (Notifications:2)}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this Notification within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
+ * @alpha
+ * @sealed
+ */
+export type NotificationsWithSubscriptionsConfiguration<
+	TSubscriptions extends
+		InternalUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>,
+	RegistrationKeyRestrictions extends string = string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKeyRestrictions,
+	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
+	NotificationsManager<
+		InternalUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>
+	>
+>;

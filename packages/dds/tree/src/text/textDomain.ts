@@ -3,14 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { EmptyKey } from "../core/index.js";
+import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
+
+import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	eraseSchemaDetails,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 } from "../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-duplicates
 import type { TreeNode, WithType } from "../simple-tree/index.js";
+// Add some unused imports which show up in the generated d.ts file.
+// This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
+import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
@@ -26,14 +34,47 @@ class TextNode
 			TreeArrayNode.spread(charactersFromString(additionalCharacters)),
 		);
 	}
-	public removeRange(index: number, length: number): void {
-		this.content.removeRange(index, length);
+	public removeRange(index: number | undefined, end: number | undefined): void {
+		this.content.removeRange(index, end);
 	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
 	}
+
+	public characterCount(): number {
+		return this.content.length;
+	}
+
+	public charactersCopy(): string[] {
+		const result = this.content.charactersCopy();
+		debugAssert(
+			() =>
+				compareArrays(result, this.charactersCopy_reference()) ||
+				"invalid charactersCopy optimizations",
+		);
+		return result;
+	}
+
 	public fullString(): string {
+		const result = this.content.fullString();
+		debugAssert(
+			() => result === this.fullString_reference() || "invalid fullString optimizations",
+		);
+		return result;
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of fullString.
+	 */
+	public fullString_reference(): string {
 		return this.content.join("");
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of charactersCopy.
+	 */
+	public charactersCopy_reference(): string[] {
+		return [...this.content];
 	}
 
 	public static fromString(value: string): TextNode {
@@ -58,7 +99,25 @@ export function charactersFromString(value: string): Iterable<string> {
 	return value;
 }
 
-class StringArray extends sf.array("StringArray", SchemaFactory.string) {}
+class StringArray extends sf.array("StringArray", SchemaFactory.string) {
+	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
+		const cursor = getInnerNode(this).borrowCursor();
+		cursor.enterField(EmptyKey);
+		const result = f(cursor);
+		cursor.exitField();
+		return result;
+	}
+
+	public charactersCopy(): string[] {
+		return this.withBorrowedSequenceCursor((cursor) =>
+			mapCursorField(cursor, () => cursor.value as string),
+		);
+	}
+
+	public fullString(): string {
+		return this.charactersCopy().join("");
+	}
+}
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
@@ -120,12 +179,12 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {}
  *
  * Part of that work will be establishing and documenting those patterns so other components with complex encodings can follow them,
  * in addition to implementing them for text.
- * @internal
+ * @alpha
  */
 export namespace TextAsTree {
 	/**
 	 * Statics for text nodes.
-	 * @internal
+	 * @alpha
 	 */
 	export interface Statics {
 		/**
@@ -150,7 +209,7 @@ export namespace TextAsTree {
 	 *
 	 * @see {@link TextAsTree.Statics.fromString} for construction.
 	 * @see {@link TextAsTree.(Tree:type)} for schema.
-	 * @internal
+	 * @alpha
 	 */
 	export interface Members {
 		/**
@@ -159,6 +218,20 @@ export namespace TextAsTree {
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
 		 */
 		characters(): Iterable<string>;
+
+		/**
+		 * Optimized way to get a copy of the {@link TextAsTree.Members.characters} in an array.
+		 */
+		charactersCopy(): string[];
+
+		/**
+		 * Gets the number of characters currently in the text.
+		 * @remarks
+		 * The length of {@link TextAsTree.Members.characters}.
+		 * This is not the length of the string returned by {@link TextAsTree.Members.fullString},
+		 * as that string may contain characters which are made up of multiple UTF-16 code units.
+		 */
+		characterCount(): number;
 
 		/**
 		 * Copy the content of this node into a string.
@@ -184,16 +257,22 @@ export namespace TextAsTree {
 		 * Remove a range from a string based on character index.
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
-		removeRange(index: number, length: number): void;
+		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
 	}
 
 	/**
-	 * Schema for a text node.
+	 * Schema for a {@link TextAsTree.(Tree:variable)} node.
 	 * @remarks
-	 * See {@link TextAsTree.Members} for the API.
-	 * See {@link TextAsTree.Statics} for static APIs on this Schema, including construction.
-	 * @internal
+	 * See {@link TextAsTree.Statics} for static APIs on this schema, including construction.
+	 * @alpha
 	 */
 	export const Tree = eraseSchemaDetails<Members, Statics>()(TextNode);
+
+	/**
+	 * Node for the {@link TextAsTree.(Tree:type)} schema exposing the {@link TextAsTree.Members} API.
+	 * @remarks
+	 * Create using {@link TextAsTree.Statics.fromString}.
+	 * @alpha
+	 */
 	export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }

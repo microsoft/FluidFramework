@@ -64,14 +64,12 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  * @system
  * @beta
  */
-export type Accessor<
-	T,
-	BaseAccessor extends ValueAccessor<T>,
-> = BaseAccessor extends ProxiedValueAccessor<T>
-	? () => DeepReadonly<JsonDeserialized<T>> | undefined
-	: BaseAccessor extends RawValueAccessor<T>
-		? DeepReadonly<JsonDeserialized<T>>
-		: never;
+export type Accessor<T, BaseAccessor extends ValueAccessor<T>> =
+	BaseAccessor extends ProxiedValueAccessor<T>
+		? () => DeepReadonly<JsonDeserialized<T>> | undefined
+		: BaseAccessor extends RawValueAccessor<T>
+			? DeepReadonly<JsonDeserialized<T>>
+			: never;
 
 /**
  * State of a value and its metadata.

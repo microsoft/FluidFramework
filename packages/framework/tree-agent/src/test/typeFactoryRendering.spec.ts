@@ -407,7 +407,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				renderTypeFactoryTypeScript(invalidType, () => "");
 				assert.fail("Expected error to be thrown");
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 				assert(error.message.includes("Expected one of:"));

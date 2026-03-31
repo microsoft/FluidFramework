@@ -52,7 +52,6 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
-	withBufferedTreeEvents,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
@@ -446,6 +445,35 @@ export interface TreeArrayNode<
 	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
 	 */
 	values(): IterableIterator<T>;
+}
+
+/**
+ * {@link (TreeArrayNode:interface)} with additional alpha APIs.
+ * @alpha @sealed
+ */
+export interface TreeArrayNodeAlpha<
+	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
+	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+	in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+> extends TreeArrayNode<TAllowedTypes, T, TNew> {
+	/**
+	 * Removes existing item(s) and/or adds new item(s).
+	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
+	 * Must be a positive in bounds index or a negative index such that `array.length + start` is a positive in bounds index.
+	 * @param deleteCount - The number of item(s) to remove. If not provided, it defaults to the end of the array.
+	 * Must be a non-negative integer no greater than the number of items from `start` to the end of the array.
+	 * @param items - The item(s) to insert at `start`.
+	 * @returns An array containing the item(s) that were removed.
+	 */
+	splice(
+		start: number,
+		deleteCount?: number,
+		...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]
+	): T[];
 }
 
 /**
@@ -998,6 +1026,41 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		editor.remove(removeStart, removeEnd - removeStart);
 	}
+	public splice(
+		start: number,
+		deleteCount?: number,
+		...items: Insertable<T>
+	): TreeNodeFromImplicitAllowedTypes<T>[] {
+		const length = this.length;
+		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
+		const actualDeleteCount =
+			deleteCount === undefined
+				? length - actualStart
+				: Math.min(Math.max(deleteCount, 0), length - actualStart);
+		validateIndexRange(
+			actualStart,
+			actualStart + actualDeleteCount,
+			getSequenceField(this),
+			"TreeArrayNode.splice",
+		);
+		const removed: TreeNodeFromImplicitAllowedTypes<T>[] = [];
+		for (let index = actualStart; index < actualStart + actualDeleteCount; index++) {
+			removed.push(this.at(index) ?? oob());
+		}
+
+		const innerNode = getInnerNode(this);
+		const transaction = innerNode.isHydrated()
+			? innerNode.context.checkout.transaction
+			: undefined;
+		transaction?.start();
+		this.removeRange(actualStart, actualStart + actualDeleteCount);
+		if (items.length > 0) {
+			this.insertAt(actualStart, ...items);
+		}
+		transaction?.commit();
+		return removed;
+	}
+
 	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
@@ -1121,24 +1184,19 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				);
 			}
 
-			// We implement move here via subsequent `remove` and `insert`.
-			// This is strictly an implementation detail and should not be observable by the user.
-			// TODO:AB#47457: Implement proper move support for unhydrated trees.
-			// As a temporary mitigation, we will pause tree events until both edits have been completed.
-			// That way, users will only see a single change event for the array instead of 2.
-			withBufferedTreeEvents(() => {
-				if (sourceField !== destinationField || destinationGap < sourceStart) {
-					destinationField.editor.insert(
-						destinationGap,
-						sourceField.editor.remove(sourceStart, movedCount),
-					);
-				} else if (destinationGap > sourceStart + movedCount) {
-					destinationField.editor.insert(
-						destinationGap - movedCount,
-						sourceField.editor.remove(sourceStart, movedCount),
-					);
-				}
-			});
+			assert(
+				destinationField instanceof UnhydratedSequenceField,
+				0xcd5 /* destinationField should be unhydrated since we're in the else branch of isHydrated() check */,
+			);
+
+			// Use native move which handles the operation atomically for within-field moves
+			// to ensure only a single event is emitted per affected field.
+			destinationField.editor.move(
+				sourceStart,
+				movedCount,
+				destinationGap,
+				sourceField === destinationField ? undefined : sourceField,
+			);
 		}
 	}
 

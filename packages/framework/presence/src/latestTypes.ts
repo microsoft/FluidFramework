@@ -155,6 +155,58 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 }
 
 /**
+ * Type alias for the return type of {@link LatestFactory} when called with
+ * {@link LatestArguments}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this State object within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
+ * @beta
+ * @sealed
+ */
+export type LatestConfiguration<
+	// eslint-disable-next-line @rushstack/no-new-null -- undefined is not a valid replacement for null
+	T extends object | null,
+	RegistrationKeyRestrictions extends string = string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKeyRestrictions,
+	InternalTypes.ValueRequiredState<T>,
+	Latest<T>
+>;
+
+/**
+ * Type alias for the return type of {@link LatestFactory} when called with
+ * {@link LatestArgumentsRaw}.
+ *
+ * @remarks
+ * Use this type instead of any InternalPresenceTypes that may be revealed from
+ * examining factory return type.
+ *
+ * @typeparam RegistrationKeyRestrictions - Optional type parameter to constrain
+ * allowed registration keys for this State object within a workspace.
+ * Specification is recommended to highlight connection between schema and
+ * factory when spread across modules.
+ *
+ * @beta
+ * @sealed
+ */
+export type LatestRawConfiguration<
+	// eslint-disable-next-line @rushstack/no-new-null -- undefined is not a valid replacement for null
+	T extends object | null,
+	RegistrationKeyRestrictions extends string = string,
+> = InternalTypes.ManagerFactory<
+	RegistrationKeyRestrictions,
+	InternalTypes.ValueRequiredState<T>,
+	LatestRaw<T>
+>;
+
+/**
  * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  *
  * @beta
@@ -168,9 +220,9 @@ export interface LatestFactory {
 	 * This overload is used when called with {@link LatestArguments}.
 	 * That is, if a validator function is provided.
 	 */
-	<T extends object | null, Key extends string = string>(
+	<T extends object | null, RegistrationKeyRestrictions extends string = string>(
 		args: LatestArguments<T>,
-	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+	): LatestConfiguration<T, RegistrationKeyRestrictions>;
 
 	/**
 	 * Factory for creating a {@link LatestRaw} State object.
@@ -179,7 +231,7 @@ export interface LatestFactory {
 	 * This overload is used when called with {@link LatestArgumentsRaw}.
 	 * That is, if a validator function is _not_ provided.
 	 */
-	<T extends object | null, Key extends string = string>(
+	<T extends object | null, RegistrationKeyRestrictions extends string = string>(
 		args: LatestArgumentsRaw<T>,
-	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+	): LatestRawConfiguration<T, RegistrationKeyRestrictions>;
 }

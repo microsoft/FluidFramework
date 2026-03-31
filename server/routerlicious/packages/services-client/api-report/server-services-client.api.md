@@ -175,6 +175,29 @@ export class GitManager implements IGitManager {
 }
 
 // @internal
+export type GitManagerConfigDecorator = (config: IGitManagerConfig, context: {
+    tenantId: string;
+    documentId: string;
+    storageName?: string;
+    isEphemeralContainer: boolean;
+    accessToken: string;
+    baseUrl: string;
+}) => IGitManagerConfig;
+
+// @internal
+export const GitManagerConfigDecorators: {
+    withCustom: (customConfig: Partial<IGitManagerConfig> | ((config: IGitManagerConfig, context: {
+        tenantId: string;
+        documentId: string;
+        storageName?: string;
+        isEphemeralContainer: boolean;
+        accessToken: string;
+        baseUrl: string;
+    }) => Partial<IGitManagerConfig>)) => GitManagerConfigDecorator;
+    compose: (...decorators: GitManagerConfigDecorator[]) => GitManagerConfigDecorator;
+};
+
+// @internal
 export class Heap<T> {
     constructor(comparator: IHeapComparator<T>);
     // (undocumented)
@@ -358,6 +381,22 @@ export interface IGitManager {
 }
 
 // @internal
+export interface IGitManagerConfig {
+    defaultHeaders?: RawAxiosRequestHeaders;
+    defaultQueryString?: Record<string, any>;
+    getCorrelationId?: () => string | undefined;
+    getDefaultHeaders?: () => RawAxiosRequestHeaders;
+    getServiceName?: () => string;
+    getTelemetryProperties?: () => Record<string, any>;
+    logHttpMetrics?: (requestProps: any) => void;
+    maxBodyLength?: number;
+    maxContentLength?: number;
+    refreshDefaultHeaders?: () => RawAxiosRequestHeaders;
+    refreshDefaultQueryString?: () => Record<string, any>;
+    refreshTokenIfNeeded?: (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>;
+}
+
+// @internal
 export interface IGitService {
     // (undocumented)
     createBlob(blob: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse>;
@@ -469,7 +508,7 @@ export interface ISummaryTree extends ISummaryTree_2 {
 
 // @internal
 export interface ISummaryUploadManager {
-    writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
+    writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean, summaryTimeStr?: string): Promise<string>;
 }
 
 // @internal
@@ -707,7 +746,7 @@ export function setupAxiosInterceptorsForAbortSignals(getAbortController: () => 
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager, blobsShaCache: Map<string, string>, getPreviousFullSnapshot: (parentHandle: string) => Promise<ISnapshotTreeEx | null | undefined>);
     // (undocumented)
-    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
+    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean, summaryTimeStr?: string): Promise<string>;
 }
 
 // @internal
@@ -735,7 +774,7 @@ export type WholeSummaryTreeValue = IWholeSummaryTree | IWholeSummaryBlob;
 export class WholeSummaryUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager);
     // (undocumented)
-    writeSummaryTree(summaryTree: ISummaryTree, parentHandle: string | undefined, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
+    writeSummaryTree(summaryTree: ISummaryTree, parentHandle: string | undefined, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean, summaryTimeStr?: string): Promise<string>;
 }
 
 // (No @packageDocumentation comment for this package)

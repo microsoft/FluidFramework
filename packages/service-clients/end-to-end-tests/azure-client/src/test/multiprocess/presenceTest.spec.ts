@@ -132,6 +132,13 @@ describe(`Presence with AzureClient`, () => {
 
 			for (const writeClients of [numClients, 1]) {
 				it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeConnected() {
+					/**
+					 * Note: This test is currently skipped in the AFR driver due to General Network Errors in the Service Clients End to End tests pipelines.
+					 * For more context, see AB#59980.
+					 */
+					if (useAzure && numClients > 50) {
+						this.skip();
+					}
 					setTestTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 					// Setup

@@ -185,16 +185,17 @@ export function getConfigForMinVersionForCollabIterable<T>(
 export function selectVersionRoundedDown<T>(
 	minVersionForCollab: string,
 	entries: Iterable<readonly [string, T]>,
+	compareVersions: (a: string, b: string) => number = compare,
 ): readonly [string, T] | undefined {
 	// Sort a copy of the iterable in descending order
 	const versions: (readonly [string, T])[] = [...entries];
-	versions.sort((a, b) => compare(b[0], a[0]));
+	versions.sort((a, b) => compareVersions(b[0], a[0]));
 
 	// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
 	// If so, we set it as the default value for the option.
 	for (const pair of versions) {
 		const [version, _] = pair;
-		if (gte(minVersionForCollab, version)) {
+		if (compareVersions(minVersionForCollab, version) >= 0) {
 			return pair;
 		}
 	}

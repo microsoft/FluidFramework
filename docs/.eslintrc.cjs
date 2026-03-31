@@ -78,6 +78,15 @@ module.exports = {
 						"import/no-internal-modules": "off",
 					},
 				},
+				// TODO: This block only needed because we're using an old version of eslint-config-fluid.
+				// After updating to a newer version this will already be disabled by default.
+				{
+					// Rules only for React files
+					files: ["*.jsx", "*.tsx"],
+					rules: {
+						"react/react-in-jsx-scope": "off",
+					},
+				},
 			],
 		},
 

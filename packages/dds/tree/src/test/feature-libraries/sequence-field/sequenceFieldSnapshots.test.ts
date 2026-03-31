@@ -33,7 +33,7 @@ export function testSnapshots(): void {
 				for (const [index, mark] of marks.entries()) {
 					it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
 						const changeset = [mark];
-						const encoded = codec.json.encode(changeset, {
+						const encoded = codec.encode(changeset, {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
 							decodeNode: (node) => TestNodeId.decode(node, baseContext),

@@ -9,6 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import type { Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
@@ -335,6 +336,75 @@ describe("simple-tree tree", () => {
 			assert.throws(() => {
 				viewA.applyChange({ invalid: "bogus" });
 			}, /cannot apply change.*invalid.*format/i);
+		});
+
+		it("can be undone", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let revertible: Revertible | undefined;
+			viewA.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				revertible = metadata.getRevertible();
+			});
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			assert(change !== undefined);
+			viewA.applyChange(change);
+			assert(revertible !== undefined);
+			revertible.revert();
+			assert.equal(viewA.root, 3);
+		});
+
+		it("can apply alongside a transaction", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			viewA.runTransaction(() => {
+				assert(change !== undefined);
+				viewA.applyChange(change);
+			});
+			assert.equal(viewA.root, 4);
+		});
+
+		it("apply before transactions", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			viewA.runTransaction(() => {
+				viewA.root = 5;
+				assert(change !== undefined);
+				// Even though the serialized change (= 4) is applied _after_ the transaction change (= 5),
+				// it is considered a change external to the transaction and so will be applied before the transaction changes,
+				// as is the general policy for external changes applied during a transaction.
+				viewA.applyChange(change);
+			});
+			assert.equal(viewA.root, 5);
 		});
 	});
 });

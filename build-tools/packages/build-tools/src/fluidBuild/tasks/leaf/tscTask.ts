@@ -470,8 +470,24 @@ export class TscTask extends LeafTask {
 
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
+	private _configFileFullPaths: string[] | undefined;
+
 	protected get recheckLeafIsUpToDate(): boolean {
 		return true;
+	}
+
+	/**
+	 * All config files to track: task-specific configs plus any additional config files from the task definition.
+	 */
+	protected get configFileFullPaths(): string[] {
+		if (this._configFileFullPaths === undefined) {
+			this._configFileFullPaths = [
+				...this.taskSpecificConfigFiles,
+				...this.additionalConfigFiles,
+			];
+		}
+
+		return this._configFileFullPaths;
 	}
 
 	protected async getDoneFileContent(): Promise<string | undefined> {
@@ -516,6 +532,15 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 	}
-	protected abstract get configFileFullPaths(): string[];
+
+	/**
+	 * Config files specific to this task type (e.g., .eslintrc for eslint, package.json for generate-entrypoints).
+	 *
+	 * @remarks
+	 * Ideally, implementations should include any parent or extended configs (e.g., configs referenced
+	 * via `extends`). Some task implementations (like biome) do this, but others (like eslint) currently
+	 * only track the local config file.
+	 */
+	protected abstract get taskSpecificConfigFiles(): string[];
 	protected abstract getToolVersion(): Promise<string>;
 }

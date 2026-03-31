@@ -24,7 +24,6 @@ import {
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
-import { makeSchemaCodec } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -42,18 +41,19 @@ import {
 } from "../../../shared-tree-core/index.js";
 import { toInitialSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import {
+	snapshotCodecFormats,
+	takeJsonSnapshot,
+	useSnapshotDirectory,
+} from "../../snapshots/index.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
 		useSnapshotDirectory("encodeTreeSchema");
 
-		for (const [minVersionForCollab, schemaFormat] of schemaCodecBuilder.registry) {
+		for (const schemaFormat of schemaCodecBuilder.registry) {
 			const encode = (schema: TreeStoredSchema): JsonCompatibleReadOnly => {
-				const codec = schemaFormat.codec({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab,
-				});
+				const codec = schemaFormat.codec({ jsonValidator: FormatValidatorBasic });
 				const result: JsonCompatibleReadOnly = codec.encode(schema);
 				return result;
 			};
@@ -73,6 +73,11 @@ describe("schemaSummarizer", () => {
 		}
 	});
 
+	useSnapshotDirectory("codecFormats");
+	it("formats", () => {
+		snapshotCodecFormats(schemaCodecBuilder, {});
+	});
+
 	describe("Summary metadata validation", () => {
 		function createSchemaSummarizer(options?: {
 			minVersionForCollab?: MinimumVersionForCollab;
@@ -86,7 +91,7 @@ describe("schemaSummarizer", () => {
 				jsonValidator: FormatValidatorBasic,
 				minVersionForCollab,
 			};
-			const codec = makeSchemaCodec(codecOptions);
+			const codec = schemaCodecBuilder.build(codecOptions);
 			return new SchemaSummarizer(schema, collabWindow, codec, minVersionForCollab);
 		}
 

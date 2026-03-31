@@ -1,0 +1,41 @@
+// Lightweight Codespaces profile for docs, API review, and focused package edits.
+{
+	"name": "Lightweight (Review/Docs)",
+	"build": {
+		"dockerfile": "../Dockerfile",
+		"args": {
+			"NODE_VERSION": "24"
+		}
+	},
+	"runArgs": ["--init"],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"biomejs.biome",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"MAI-EngineeringSystems.mai-ai-telemetry",
+				"ms-azure-devops.azure-pipelines",
+				"ms-azuretools.vscode-docker",
+				"mutantdino.resourcemonitor"
+			]
+		}
+	},
+	"onCreateCommand": {
+		"node-setup": "bash scripts/codespace-setup/on-create.sh"
+	},
+	"postCreateCommand": {
+		"welcome-notice": "sudo cp .devcontainer/lightweight/first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt"
+	},
+	"remoteUser": "node",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+			"moby": false
+		},
+		"ghcr.io/devcontainers/features/git-lfs:1": {}
+	},
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "16gb"
+	}
+}

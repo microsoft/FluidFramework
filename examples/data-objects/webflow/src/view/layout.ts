@@ -222,7 +222,6 @@ export class Layout extends EventEmitter {
 			doc.visitRange((position, segment, startOffset, endOffset) => {
 				this.beginSegment(position, segment, startOffset, endOffset);
 
-				// eslint-disable-next-line no-constant-condition
 				while (true) {
 					const index = this.formatStack.length - 1;
 					const formatInfo = this.format;

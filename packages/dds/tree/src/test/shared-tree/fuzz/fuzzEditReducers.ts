@@ -230,7 +230,7 @@ export function applyForkMergeOperation(
 					: clientForkedViews[branchEdit.contents.baseBranch];
 			assert(forkBranchIndex !== undefined);
 			const forkedBranch = clientForkedViews[forkBranchIndex];
-			if (baseBranch.checkout.transaction.isInProgress() === true) {
+			if (baseBranch.checkout.transaction.size > 0) {
 				return;
 			}
 
@@ -399,7 +399,7 @@ export function applyTransactionBoundary(
 	const { checkout } = view;
 	switch (boundary) {
 		case "start": {
-			checkout.transaction.start(false);
+			checkout.transaction.start();
 			break;
 		}
 		case "commit": {
@@ -415,7 +415,7 @@ export function applyTransactionBoundary(
 		}
 	}
 
-	if (!checkout.transaction.isInProgress()) {
+	if (checkout.transaction.size === 0) {
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
 		const rootView = viewFromState(state);

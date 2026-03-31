@@ -13,9 +13,11 @@ import { revealOpaqueJson, toOpaqueJson } from "./internalUtils.js";
 import type {
 	NotificationEmitter,
 	NotificationListenable,
+	NotificationsConfiguration,
 	NotificationsManager,
 	NotificationsManagerEvents,
 	NotificationSubscriberSignatures,
+	NotificationsWithSubscriptionsConfiguration,
 } from "./notificationsManagerTypes.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -146,11 +148,7 @@ export function Notifications<
 	Key extends string = string,
 >(
 	initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>,
-): InternalTypes.ManagerFactory<
-	Key,
-	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
-	NotificationsManager<T>
->;
+): NotificationsConfiguration<T, Key>;
 /**
  * Factory for creating a {@link NotificationsManager}.
  *
@@ -166,13 +164,7 @@ export function Notifications<
 	Key extends string = string,
 >(
 	initialSubscriptions: Partial<TSubscriptions>,
-): InternalTypes.ManagerFactory<
-	Key,
-	InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
-	NotificationsManager<
-		InternalUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>
-	>
->;
+): NotificationsWithSubscriptionsConfiguration<TSubscriptions, Key>;
 
 /**
  * Factory for creating a {@link NotificationsManager}.

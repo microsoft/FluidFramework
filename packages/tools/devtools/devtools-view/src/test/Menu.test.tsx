@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import React from "react";
+import { type FC, useState } from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { Menu, type MenuSelection } from "../components/index.js";
@@ -34,8 +34,8 @@ describe("Menu Accessibility Check", () => {
 			},
 		};
 	});
-	const MenuWrapper: React.FC = () => {
-		const [menuSelection, setMenuSelection] = React.useState<MenuSelection>({
+	const MenuWrapper: FC = () => {
+		const [menuSelection, setMenuSelection] = useState<MenuSelection>({
 			type: "homeMenuSelection",
 		});
 

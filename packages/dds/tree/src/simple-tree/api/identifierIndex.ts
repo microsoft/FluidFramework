@@ -5,13 +5,13 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { TreeIndexKey } from "../../feature-libraries/index.js";
+import type { TreeIndex } from "../../feature-libraries/index.js";
 import type { TreeNode } from "../core/index.js";
 import { FieldKind, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
-import { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+import { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 import type { TreeView } from "./tree.js";
 
 /**
@@ -19,7 +19,7 @@ import type { TreeView } from "./tree.js";
  *
  * @alpha
  */
-export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
+export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 function isStringKey(key: TreeIndexKey): key is string {
 	return typeof key === "string";
@@ -49,7 +49,7 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 		},
 	});
 
-	return createSimpleTreeIndex(
+	return createTreeIndex(
 		view,
 		(schemus) => identifierFields.get(schemus.identifier),
 		(nodes) => {

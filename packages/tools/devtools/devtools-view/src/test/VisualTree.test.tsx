@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import React from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import {

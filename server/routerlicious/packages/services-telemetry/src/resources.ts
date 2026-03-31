@@ -131,6 +131,7 @@ export enum CommonProperties {
 	isGlobalDb = "isGlobalDb",
 	internalErrorCode = "internalErrorCode",
 	callingServiceName = "callingServiceName",
+	uploadAsEphemeralContainer = "uploadAsEphemeralContainer",
 }
 
 /**

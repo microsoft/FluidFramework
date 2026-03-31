@@ -31,11 +31,12 @@ import unicornPlugin from "eslint-plugin-unicorn";
 import unusedImportsPlugin from "eslint-plugin-unused-imports";
 import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
-import type { Linter } from "eslint";
+import type { ESLint, Linter } from "eslint";
 
 import { globalIgnores } from "../constants.mjs";
 import { importXSettings, jsdocSettings } from "../settings.mjs";
 import { baseRules, eslintCommentsRecommendedRules } from "../rules/base.mjs";
+import { dependConfig } from "./overrides.mjs";
 
 export type FlatConfigArray = readonly Readonly<Linter.Config>[];
 
@@ -59,17 +60,21 @@ export const baseConfig: FlatConfigArray = [
 	// eslint:recommended
 	eslintJs.configs.recommended,
 	// @typescript-eslint/recommended-type-checked and stylistic-type-checked
-	...tseslint.configs.recommendedTypeChecked,
-	...tseslint.configs.stylisticTypeChecked,
+	...(tseslint.configs.recommendedTypeChecked satisfies Linter.Config[]),
+	...(tseslint.configs.stylisticTypeChecked satisfies Linter.Config[]),
 	// import-x/recommended and import-x/typescript
-	importXPlugin.flatConfigs.recommended,
-	importXPlugin.flatConfigs.typescript,
+	// Type assertions needed: import-x's FlatConfig type is not compatible with ESLint core's
+	// Linter.Config (missing string index signature on languageOptions).
+	importXPlugin.flatConfigs.recommended as Linter.Config,
+	importXPlugin.flatConfigs.typescript as Linter.Config,
 	// Base config with all plugins and custom rules
 	{
 		plugins: {
 			"@eslint-community/eslint-comments": eslintCommentsPlugin,
 			"@fluid-internal/fluid": fluidPlugin,
-			"@rushstack": rushstackPlugin,
+			// Type assertion needed: @rushstack/eslint-plugin's type declarations haven't been
+			// updated to match ESLint 9's Plugin interface.
+			"@rushstack": rushstackPlugin as unknown as ESLint.Plugin,
 			"jsdoc": jsdocPlugin,
 			"promise": promisePlugin,
 			"tsdoc": tsdocPlugin,
@@ -86,21 +91,21 @@ export const baseConfig: FlatConfigArray = [
 			...baseRules,
 		},
 	},
-	// TypeScript file override from base.js (lines 328-343)
-	// These rules are disabled by default but re-enabled in recommended.js
+	// TypeScript file overrides
 	{
 		files: ["**/*.ts", "**/*.tsx"],
 		rules: {
 			"@typescript-eslint/indent": "off",
-			"func-call-spacing": "off",
-			// TODO: Enable these ASAP (from base.js)
-			"@typescript-eslint/explicit-module-boundary-types": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
+			"dot-notation": "off",
+			"no-unused-expressions": "off",
+		},
+		settings: {
+			jsdoc: {
+				mode: "typescript",
+			},
 		},
 	},
+	dependConfig,
 	// Type validation files need relaxed rules for type compatibility testing
 	{
 		files: ["**/types/*validate*Previous*.ts"],
@@ -110,5 +115,16 @@ export const baseConfig: FlatConfigArray = [
 		},
 	},
 	// Prettier disables conflicting rules - must come after custom rules
-	prettierConfig,
+	prettierConfig satisfies Linter.Config,
+	// Re-enable no-multi-spaces after prettier (which disables it)
+	{
+		rules: {
+			"no-multi-spaces": [
+				"error",
+				{
+					ignoreEOLComments: true,
+				},
+			],
+		},
+	},
 ];

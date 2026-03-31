@@ -5,6 +5,8 @@
 
 import { debugAssert } from "@fluidframework/core-utils/internal";
 import { BTree, defaultComparator, type DefaultComparable } from "@tylerbu/sorted-btree-es6";
+// eslint-disable-next-line import-x/no-internal-modules
+import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
 import { brand, type Brand } from "./brand.js";
 
@@ -78,14 +80,16 @@ export function mergeTupleBTrees<const K extends readonly DefaultComparable[], V
 	tree2: TupleBTree<K, V> | undefined,
 	preferLeft = true,
 ): TupleBTree<K, V> {
-	const result: TupleBTree<K, V> = brand(tree1.clone());
 	if (tree2 === undefined) {
-		return result;
+		return brand(tree1.clone());
 	}
 
-	for (const [key, value] of tree2.entries()) {
-		result.set(key, value, !preferLeft);
-	}
+	// Use efficient union operation from sorted-btree 2.x
+	const result = union<BTree<K, V>, K, V>(
+		tree1 as BTree<K, V>,
+		tree2 as BTree<K, V>,
+		(_key, val1, val2) => (preferLeft ? val1 : val2),
+	);
 
-	return result;
+	return brand(result);
 }

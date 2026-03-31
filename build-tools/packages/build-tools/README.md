@@ -159,6 +159,54 @@ For example:
 }
 ```
 
+#### Extending Task Handler Config Files
+
+For known task handlers like `eslint`, `tsc`, `api-extractor`, etc., `fluid-build` automatically tracks their configuration files (like `.eslintrc`, `tsconfig.json`, `api-extractor.json`). However, you may want to track additional configuration files that affect the task but aren't automatically discovered.
+
+You can specify additional configuration files to track using the `additionalConfigFiles` property in the task's `files` configuration. File paths can be relative to the package directory or use the special token `${repoRoot}` to reference files at the repository root.
+
+Global configuration example (`fluidBuild.config.cjs`):
+
+```js
+module.exports = {
+   tasks: {
+      "eslint": {
+         files: {
+            additionalConfigFiles: ["${repoRoot}/common/build/eslint-config-fluid/flat.mts"]
+         }
+      }
+   }
+}
+```
+
+Package-level extension example (`package.json`):
+
+```jsonc
+{
+   "fluidBuild": {
+      "tasks": {
+         "eslint": {
+            "files": {
+               "additionalConfigFiles": ["...", ".eslintrc.local.json"]  // Extends global additionalConfigFiles
+            }
+         }
+      }
+   }
+}
+```
+
+In this example:
+- The global configuration uses `${repoRoot}` to reference files at the repository root, eliminating the need for relative paths like `../../`
+- The `${repoRoot}` token works the same for all packages regardless of their depth in the directory structure
+- A specific package extends this list by adding `.eslintrc.local.json` using the `"..."` syntax
+- The task will rebuild if any of these files change, in addition to the `eslint.config.mts` file that eslint automatically discovers
+
+The `"..."` syntax works the same way as for task dependencies - it includes the inherited configuration from the global definition. Without `"..."`, the package-level configuration completely replaces the global configuration.
+
+The `${repoRoot}` token can also be used in `inputGlobs` and `outputGlobs` for declarative tasks to reference files at the repository root.
+
+For more examples and use cases, see [Additional Config Files Example](./docs/additional-config-files-example.md).
+
 When building release group, by default, it will trigger the task on all the packages within the release group. That also mean
 that scripts at the release group root are not considered.
 

@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+import { compare } from "semver-ts";
 
 import {
 	getConfigsForMinVersionForCollab,
@@ -290,6 +291,12 @@ describe("compatibilityBase", () => {
 		assert.equal(selectVersionRoundedDown("1.5.0", versions), undefined);
 		// Empty
 		assert.equal(selectVersionRoundedDown("2.0.0", []), undefined);
+
+		// Custom compare function: reversed so rounds up instead of down
+		assert.equal(
+			selectVersionRoundedDown("2.1.0", versions, (a, b) => compare(b, a)),
+			versions[2],
+		);
 	});
 
 	describe("validateConfigMapOverrides", () => {

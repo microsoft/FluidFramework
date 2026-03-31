@@ -263,7 +263,16 @@ export class SchemaFactoryBeta<
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
 			...options,
-		});
+		}) as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			true,
+			T,
+			never,
+			TCustomMetadata
+		>;
 	}
 
 	public override objectRecursive<

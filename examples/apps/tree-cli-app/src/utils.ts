@@ -24,14 +24,16 @@ import {
 	FormatValidatorBasic,
 	type ForestOptions,
 	type ICodecOptions,
-	type JsonCompatible,
 	type VerboseTree,
 	type ViewContent,
-	type ConciseTree,
 	TreeAlpha,
-	KeyEncodingOptions,
 } from "@fluidframework/tree/alpha";
-import { TreeBeta } from "@fluidframework/tree/beta";
+import {
+	TreeBeta,
+	KeyEncodingOptions,
+	type ConciseTree,
+	type JsonCompatible,
+} from "@fluidframework/tree/beta";
 import { type Static, Type } from "@sinclair/typebox";
 
 import type { Item } from "./schema.js";
