@@ -1,5 +1,24 @@
 # Guidance for FluidFramework maintainers and contributors
 
+## Git Hooks (hk)
+
+This repo uses [hk](https://hk.jdx.dev/) to manage git hooks. Hooks are configured in `hk.pkl` at the repo root. Currently, a pre-commit hook runs `biome format` on staged files and auto-stages the formatted results.
+
+Git hooks are **opt-in**. To install them locally:
+
+```shell
+hk install
+```
+
+This sets up the hooks defined in `hk.pkl` to run automatically on commit. You can also run checks manually:
+
+```shell
+hk check  # verify formatting without modifying files
+hk fix    # auto-format files in place
+```
+
+hk requires the [pkl](https://pkl-lang.org/) CLI. Both hk and pkl can be installed via [mise](https://mise.jdx.dev/).
+
 ## Dependencies
 
 This document tracks dependencies that cannot be upgraded to their latest major versions due to technical limitations.

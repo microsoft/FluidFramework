@@ -41,6 +41,7 @@ import {
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,
+	type Breakable,
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
@@ -85,9 +86,9 @@ export class ChunkedForest implements IEditableForest {
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ChunkedForest {
+	public clone(schema: TreeStoredSchemaSubscription, _breaker?: Breakable): ChunkedForest {
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
+		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema));
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {

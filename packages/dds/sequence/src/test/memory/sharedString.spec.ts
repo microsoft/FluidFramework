@@ -63,7 +63,7 @@ describe("SharedString memory usage", () => {
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[10];
 
-	numbersOfEntriesForTests.forEach((x) => {
+	for (const x of numbersOfEntriesForTests) {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				title = `Insert and remove text ${x} times`;
@@ -169,5 +169,5 @@ describe("SharedString memory usage", () => {
 				}
 			})(),
 		);
-	});
+	}
 });

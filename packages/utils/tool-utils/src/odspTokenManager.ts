@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IPublicClientConfig,
 	IOdspTokens,
@@ -38,11 +39,17 @@ export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 /**
  * @internal
  */
-export interface OdspTokenConfig {
-	type: "password";
-	username: string;
-	password: string;
-}
+export type LoginCredentials =
+	| {
+			type: "password";
+			username: string;
+			password: string;
+	  }
+	| {
+			type: "fic";
+			username: string;
+			fetchToken(scopeEndpoint: "push" | "storage"): Promise<string>;
+	  };
 
 /**
  * @internal
@@ -105,23 +112,23 @@ export class OdspTokenManager {
 	public async getOdspTokens(
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting odsp tokens");
-		return this.getTokens(false, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
+		return this.getTokens(false, server, clientConfig, credentials, forceRefresh, forceReauth);
 	}
 
 	public async getPushTokens(
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting push tokens");
-		return this.getTokens(true, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
+		return this.getTokens(true, server, clientConfig, credentials, forceRefresh, forceReauth);
 	}
 
 	private async getTokenFromCache(
@@ -143,11 +150,11 @@ export class OdspTokenManager {
 
 	private static getCacheKey(
 		isPush: boolean,
-		tokenConfig: OdspTokenConfig,
+		credentials: LoginCredentials,
 	): IOdspTokenManagerCacheKey {
 		return {
 			isPush,
-			user: tokenConfig.username,
+			user: credentials.username,
 		};
 	}
 
@@ -155,7 +162,7 @@ export class OdspTokenManager {
 		isPush: boolean,
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		credentials: LoginCredentials,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
@@ -167,7 +174,7 @@ export class OdspTokenManager {
 					isPush,
 					server,
 					clientConfig,
-					tokenConfig,
+					credentials,
 					forceRefresh,
 					forceReauth,
 				);
@@ -175,7 +182,7 @@ export class OdspTokenManager {
 		};
 		if (!forceReauth && !forceRefresh) {
 			// check and return if it exists without lock
-			const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig);
+			const cacheKey = OdspTokenManager.getCacheKey(isPush, credentials);
 			const tokensFromCache = await this.getTokenFromCache(cacheKey);
 			if (tokensFromCache) {
 				if (isValidAndNotExpiredToken(tokensFromCache)) {
@@ -196,12 +203,12 @@ export class OdspTokenManager {
 		isPush: boolean,
 		server: string,
 		clientConfig: IPublicClientConfig,
-		tokenConfig: OdspTokenConfig,
+		credentials: LoginCredentials,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
 		const scope = isPush ? pushScope : getOdspScope(server);
-		const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig);
+		const cacheKey = OdspTokenManager.getCacheKey(isPush, credentials);
 		let tokens: IOdspTokens | undefined;
 		if (!forceReauth) {
 			// check the cache again under the lock (if it is there)
@@ -209,8 +216,16 @@ export class OdspTokenManager {
 			if (tokensFromCache) {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
-						// This updates the tokens in tokensFromCache
-						tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
+						if (credentials.type === "fic") {
+							const scopeEndpoint = isPush ? "push" : "storage";
+							const newTokenData = await credentials.fetchToken(scopeEndpoint);
+							tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
+						} else if (credentials.type === "password") {
+							// For OAuth flows, use refresh token
+							tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
+						} else {
+							unreachableCase(credentials);
+						}
 						await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 					} catch (error) {
 						debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
@@ -225,13 +240,26 @@ export class OdspTokenManager {
 			}
 		}
 
-		tokens = await this.acquireTokensWithPassword(
-			server,
-			scope,
-			clientConfig,
-			tokenConfig.username,
-			tokenConfig.password,
-		);
+		switch (credentials.type) {
+			case "password": {
+				tokens = await this.acquireTokensWithPassword(
+					server,
+					scope,
+					clientConfig,
+					credentials.username,
+					credentials.password,
+				);
+				break;
+			}
+			case "fic": {
+				const tokenData = await credentials.fetchToken(isPush ? "push" : "storage");
+				tokens = this.ficTokenToIOdspTokens(tokenData, isPush);
+				break;
+			}
+			default: {
+				unreachableCase(credentials);
+			}
+		}
 
 		if (!isValidAndNotExpiredToken(tokens)) {
 			throw new Error(
@@ -257,6 +285,52 @@ export class OdspTokenManager {
 			password,
 		};
 		return fetchTokens(server, scope, clientConfig, credentials);
+	}
+
+	private ficTokenToIOdspTokens(token: string, isPush: boolean): IOdspTokens {
+		// eslint-disable-next-line unicorn/prefer-ternary -- using if statement for clarity
+		if (isPush) {
+			// Push tokens are not standard JWTs. With direct token exchange, the second leg includes information about expiry.
+			// This is not available in the FIC flow, but in direct token exchange we request tokens with 1 hour expiry so default to that.
+			// At worst this should result in some higher latency when a token is returned from the cache when it should really be
+			// refreshed immediately (as attempting to use such a token will trigger a token refresh flow indirectly).
+			return {
+				accessToken: token,
+				receivedAt: Math.floor(Date.now() / 1000),
+				expiresIn: 3600,
+			};
+		} else {
+			return this.jwtToIOdspTokens(token);
+		}
+	}
+
+	private jwtToIOdspTokens(token: string): IOdspTokens {
+		let receivedAt: number;
+		let expiresIn: number;
+		const payloadSegment = token.split(".")[1];
+		if (payloadSegment === undefined) {
+			throw new Error("Invalid JWT format");
+		}
+		const payload = JSON.parse(Buffer.from(payloadSegment, "base64url").toString("utf8")) as {
+			iat?: number;
+			exp?: number;
+		};
+		if (typeof payload.iat === "number") {
+			receivedAt = payload.iat;
+		} else {
+			throw new TypeError("JWT payload lacks valid iat claim.");
+		}
+		if (typeof payload.exp === "number" && typeof payload.iat === "number") {
+			expiresIn = payload.exp - payload.iat;
+		} else {
+			throw new TypeError("JWT payload lacks valid exp claim.");
+		}
+
+		return {
+			accessToken: token,
+			receivedAt,
+			expiresIn,
+		};
 	}
 }
 

@@ -40,6 +40,7 @@ import {
 } from "./sessions.js";
 import type {
 	IIdCompressor,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	IIdCompressorCore,
 	IdCreationRange,
 	OpSpaceCompressedId,
@@ -76,6 +77,7 @@ function rangeFinalizationError(expectedStart: number, actualStart: number): Log
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
  */
+// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
 	 * Max allowed initial cluster size.
@@ -94,8 +96,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	// #region Final state
 
-	// The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
-	// This is updated to be equal to `generatedIdCount` + 1 each time it is called.
+	/**
+	 * The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
+	 * This is advanced to `generatedIdCount` + 1 each time it is called.
+	 * On the other hand, when `resetUnfinalizedCreationRange` is called,
+	 * this is moved back to the start of the unfinalized range, to ensure those IDs are included in the next range.
+	 */
 	private nextRangeBaseGenCount = 1;
 	private readonly sessions = new Sessions();
 	private readonly finalSpace = new FinalSpace();
@@ -244,35 +250,23 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public takeUnfinalizedCreationRange(): IdCreationRange {
+		this.resetUnfinalizedCreationRange();
+		return this.takeNextCreationRange();
+	}
+
+	public resetUnfinalizedCreationRange(): void {
+		assert(
+			!this.ongoingGhostSession,
+			0xcec /* IdCompressor should not be operated normally when in a ghost session */,
+		);
+
 		const lastLocalCluster = this.localSession.getLastCluster();
-		let count: number;
-		let firstGenCount: number;
-		if (lastLocalCluster === undefined) {
-			firstGenCount = 1;
-			count = this.localGenCount;
-		} else {
-			firstGenCount = genCountFromLocalId(
-				(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
-			);
-			count = this.localGenCount - firstGenCount + 1;
-		}
-
-		if (count === 0) {
-			return {
-				sessionId: this.localSessionId,
-			};
-		}
-
-		const range: IdCreationRange = {
-			ids: {
-				count,
-				firstGenCount,
-				localIdRanges: this.normalizer.getRangesBetween(firstGenCount, this.localGenCount),
-				requestedClusterSize: this.nextRequestedClusterSize,
-			},
-			sessionId: this.localSessionId,
-		};
-		return this.updateToRange(range);
+		this.nextRangeBaseGenCount =
+			lastLocalCluster === undefined
+				? 1
+				: genCountFromLocalId(
+						(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+					);
 	}
 
 	private updateToRange(range: IdCreationRange): IdCreationRange {
@@ -744,23 +738,40 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 /**
  * Create a new {@link IIdCompressor}.
+ *
+ * @remarks
+ * The returned compressor previously also implemented {@link IIdCompressorCore}, but that
+ * interface is {@link IIdCompressorCore | deprecated} and will be removed from the return
+ * type in a future release. Consumers should type variables as {@link IIdCompressor} and
+ * use {@link (serializeIdCompressor:1)} for serialization instead of calling `serialize()` directly.
+ *
  * @legacy @beta
  */
 export function createIdCompressor(
 	logger?: ITelemetryBaseLogger,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
+ *
+ * @remarks
+ * The returned compressor previously also implemented {@link IIdCompressorCore}, but that
+ * interface is {@link IIdCompressorCore | deprecated} and will be removed from the return
+ * type in a future release. Consumers should type variables as {@link IIdCompressor} and
+ * use {@link (serializeIdCompressor:1)} for serialization instead of calling `serialize()` directly.
+ *
  * @legacy @beta
  */
 export function createIdCompressor(
 	sessionId: SessionId,
 	logger?: ITelemetryBaseLogger,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 ): IIdCompressor & IIdCompressorCore;
 export function createIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 ): IIdCompressor & IIdCompressorCore {
 	let localSessionId: SessionId;
 	let logger: ITelemetryBaseLogger | undefined;
@@ -784,25 +795,42 @@ export function createIdCompressor(
 
 /**
  * Deserializes the supplied state into an ID compressor.
+ *
+ * @remarks
+ * The returned compressor previously also implemented {@link IIdCompressorCore}, but that
+ * interface is {@link IIdCompressorCore | deprecated} and will be removed from the return
+ * type in a future release. Consumers should type variables as {@link IIdCompressor} and
+ * use {@link (serializeIdCompressor:1)} for serialization instead of calling `serialize()` directly.
+ *
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
 	logger?: ITelemetryLoggerExt,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
+ *
+ * @remarks
+ * The returned compressor previously also implemented {@link IIdCompressorCore}, but that
+ * interface is {@link IIdCompressorCore | deprecated} and will be removed from the return
+ * type in a future release. Consumers should type variables as {@link IIdCompressor} and
+ * use {@link (serializeIdCompressor:1)} for serialization instead of calling `serialize()` directly.
+ *
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
 	logger?: ITelemetryLoggerExt,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
 	sessionIdOrLogger: SessionId | ITelemetryLoggerExt | undefined,
 	loggerOrUndefined?: ITelemetryLoggerExt,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 ): IIdCompressor & IIdCompressorCore {
 	if (typeof sessionIdOrLogger === "string") {
 		return IdCompressor.deserialize({
@@ -820,4 +848,61 @@ export function deserializeIdCompressor(
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
 		logger: sessionIdOrLogger,
 	});
+}
+
+/**
+ * Serializes an ID compressor.
+ * @param compressor - The compressor to serialize.
+ * @param withSession - If true, the serialized state will include local session
+ * state (for stashing). If false, only finalized state is included (for summaries).
+ * @legacy @beta
+ */
+export function serializeIdCompressor(
+	compressor: IIdCompressor,
+	withSession: true,
+): SerializedIdCompressorWithOngoingSession;
+/**
+ * Serializes an ID compressor.
+ * @param compressor - The compressor to serialize.
+ * @param withSession - If true, the serialized state will include local session
+ * state (for stashing). If false, only finalized state is included (for summaries).
+ * @legacy @beta
+ */
+export function serializeIdCompressor(
+	compressor: IIdCompressor,
+	withSession: false,
+): SerializedIdCompressorWithNoSession;
+export function serializeIdCompressor(
+	compressor: IIdCompressor,
+	withSession: boolean,
+): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession {
+	const core = toIdCompressorWithCore(compressor);
+	return withSession ? core.serialize(true) : core.serialize(false);
+}
+
+/**
+ * Casts an {@link IIdCompressor} to include {@link IIdCompressorCore}.
+ *
+ * @remarks
+ * Compressors returned by `createIdCompressor` and `deserializeIdCompressor`
+ * always implement both {@link IIdCompressor} and {@link IIdCompressorCore}, but their
+ * return types will be narrowed to {@link IIdCompressor} to keep {@link IIdCompressorCore}
+ * out of the `@legacy` API surface. Internal consumers that need access to core
+ * compressor operations (serialization, range management, etc.) should use this function.
+ *
+ * @param compressor - A compressor created by `createIdCompressor` or
+ * `deserializeIdCompressor`.
+ * @returns The same compressor, typed to include {@link IIdCompressorCore}.
+ * @internal
+ */
+export function toIdCompressorWithCore(
+	compressor: IIdCompressor,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
+): IIdCompressor & IIdCompressorCore {
+	assert(
+		"serialize" in compressor,
+		0xced /* Expected compressor to implement IIdCompressorCore */,
+	);
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
+	return compressor as IIdCompressor & IIdCompressorCore;
 }

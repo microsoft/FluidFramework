@@ -3,44 +3,49 @@
  * Licensed under the MIT License.
  */
 
-export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorTypes } from "./errors.js";
 export {
+	type IOdspError,
+	type IOdspErrorAugmentations,
+	type OdspError,
+	OdspErrorTypes,
+} from "./errors.js";
+export type {
 	HostStoragePolicy,
 	ICollabSessionOptions,
 	IOpsCachingPolicy,
 	ISnapshotOptions,
 } from "./factory.js";
 export {
-	CacheContentType,
+	type CacheContentType,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
-	ICacheEntry,
-	IPersistedCache,
-	IFileEntry,
-	IEntry,
+	type ICacheEntry,
+	type IPersistedCache,
+	type IFileEntry,
+	type IEntry,
 } from "./odspCache.js";
 export {
-	IOdspResolvedUrl,
-	IOdspUrlParts,
-	ISharingLink,
-	ISharingLinkKind,
-	ShareLinkInfoType,
+	type IOdspResolvedUrl,
+	type IOdspUrlParts,
+	type ISharingLink,
+	type ISharingLinkKind,
+	type ShareLinkInfoType,
 	SharingLinkRole,
 	SharingLinkScope,
 } from "./resolvedUrl.js";
 export {
-	IdentityType,
-	InstrumentedStorageTokenFetcher,
-	InstrumentedTokenFetcher,
+	type IdentityType,
+	type InstrumentedStorageTokenFetcher,
+	type InstrumentedTokenFetcher,
 	isTokenFromCache,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
-	TokenFetchOptions,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetcher,
+	type TokenFetchOptions,
 	authHeaderFromTokenResponse,
 	tokenFromResponse,
-	TokenResponse,
+	type TokenResponse,
 } from "./tokenFetch.js";
-export {
+export type {
 	IProvideSessionAwareDriverFactory,
 	IRelaySessionAwareDriverFactory,
 	ISensitivityLabel,

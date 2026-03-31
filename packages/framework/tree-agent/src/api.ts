@@ -369,6 +369,30 @@ export interface TreeAgentOptions<TSchema extends ImplicitFieldSchema> {
 	maximumSequentialEdits?: number;
 }
 
+/**
+ * Options for {@link executeSemanticEditing}.
+ * @alpha
+ */
+export interface ExecuteSemanticEditingOptions<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * Executes any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
+	 * @remarks If not provided, the generated code will be executed using a simple JavaScript eval.
+	 */
+	editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
+	/**
+	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
+	 */
+	maximumSequentialEdits?: number;
+	/**
+	 * Additional information about the application domain that will be included in the generated system prompt.
+	 */
+	domainHints?: string;
+	/**
+	 * If supplied, generates human-readable markdown text describing the actions taken during execution.
+	 */
+	logger?: Logger;
+}
+
 // #endregion
 
 /**

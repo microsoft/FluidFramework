@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 

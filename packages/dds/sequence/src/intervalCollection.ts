@@ -6,25 +6,27 @@
 /* eslint-disable no-bitwise */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	DoublyLinkedList,
 	unreachableCase,
 	type ListNode,
 } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	Client,
 	ISegment,
 	LocalReferencePosition,
 	PropertySet,
+	SequencePlace,
+} from "@fluidframework/merge-tree/internal";
+import {
 	ReferenceType,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	Side,
-	SequencePlace,
 	endpointPosAndSide,
 	type ISegmentInternal,
 	createLocalReconnectingPerspective,
@@ -33,12 +35,12 @@ import {
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type {
+	IIntervalCollectionTypeOperationValue,
+	IntervalAddLocalMetadata,
+	IntervalChangeLocalMetadata,
 	IntervalMessageLocalMetadata,
 	SequenceOptions,
-	type IIntervalCollectionTypeOperationValue,
-	type IntervalAddLocalMetadata,
-	type IntervalChangeLocalMetadata,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
@@ -49,14 +51,16 @@ import {
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
-import {
+import type {
 	CompressedSerializedInterval,
 	ISerializedInterval,
-	IntervalStickiness,
-	IntervalType,
 	SequenceInterval,
 	SequenceIntervalClass,
 	SerializedIntervalDelta,
+} from "./intervals/index.js";
+import {
+	IntervalStickiness,
+	IntervalType,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
 	getSerializedProperties,
@@ -72,8 +76,8 @@ export interface ISerializedIntervalCollectionV2 {
 }
 
 function sidesFromStickiness(stickiness: IntervalStickiness) {
-	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
-	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
+	const startSide = (stickiness & IntervalStickiness.START) === 0 ? Side.Before : Side.After;
+	const endSide = (stickiness & IntervalStickiness.END) === 0 ? Side.After : Side.Before;
 
 	return { startSide, endSide };
 }
@@ -853,8 +857,9 @@ export class IntervalCollection
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -903,8 +908,9 @@ export class IntervalCollection
 				);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(opName);
+			}
 		}
 		const pending = clearEmptyPendingEntry(this.pending, id);
 
@@ -962,8 +968,9 @@ export class IntervalCollection
 				this.removeIntervalById(id);
 				break;
 			}
-			default:
+			default: {
 				throw new Error("unknown ops should not be stashed");
+			}
 		}
 	}
 
@@ -1670,10 +1677,8 @@ export class IntervalCollection
 			op,
 		);
 
-		if (interval) {
-			if (this.onDeserialize) {
-				this.onDeserialize(interval);
-			}
+		if (interval && this.onDeserialize) {
+			this.onDeserialize(interval);
 		}
 
 		this.emit("addInterval", interval, local, op);

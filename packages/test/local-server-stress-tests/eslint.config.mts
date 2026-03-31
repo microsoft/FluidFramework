@@ -4,13 +4,24 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...recommended,
 	{
 		rules: {
+			"@typescript-eslint/consistent-type-imports": "off",
+			"@typescript-eslint/explicit-module-boundary-types": "off",
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
 			"import-x/no-nodejs-modules": "off",
+			"no-void": "off",
+			"require-atomic-updates": "off",
+			"unicorn/no-await-expression-member": "off",
+			"unicorn/no-negated-condition": "off",
+			"unicorn/prefer-spread": "off",
+			"unicorn/switch-case-braces": "off",
+			"unicorn/text-encoding-identifier-case": "off",
 		},
 	},
 	{

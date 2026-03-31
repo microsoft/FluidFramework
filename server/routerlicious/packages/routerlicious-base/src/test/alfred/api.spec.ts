@@ -270,14 +270,6 @@ describe("Routerlicious", () => {
 							"patch",
 						);
 					});
-					it("/:tenantId/:id/blobs", async () => {
-						await assertThrottle(
-							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
-							undefined,
-							undefined,
-							"post",
-						);
-					});
 					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
 						await assertThrottle(
 							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
@@ -846,12 +838,6 @@ describe("Routerlicious", () => {
 						await assertCorrelationId(
 							`/api/v1/${appTenant1.id}/${document1._id}/root`,
 							"patch",
-						);
-					});
-					it("/:tenantId/:id/blobs", async () => {
-						await assertCorrelationId(
-							`/api/v1/${appTenant1.id}/${document1._id}/blobs`,
-							"post",
 						);
 					});
 					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {

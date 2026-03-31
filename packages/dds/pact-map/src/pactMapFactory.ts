@@ -19,6 +19,9 @@ import { PactMapClass } from "./pactMap.js";
  * The factory that produces the PactMap
  */
 export class PactMapFactory implements IChannelFactory<IPactMap> {
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "pact-map";
 	public static readonly Type = "https://graph.microsoft.com/types/pact-map";
 
 	public static readonly Attributes: IChannelAttributes = {

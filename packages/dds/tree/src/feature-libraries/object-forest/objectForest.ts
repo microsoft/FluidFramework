@@ -120,8 +120,14 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		return new ObjectForest(this.breaker, schema, anchors, this.additionalAsserts, this.roots);
+	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ObjectForest {
+		return new ObjectForest(
+			breaker ?? this.breaker,
+			schema,
+			undefined,
+			this.additionalAsserts,
+			this.roots,
+		);
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {

@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
-import {
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IClientConfiguration,
@@ -14,12 +14,12 @@ import {
 	IDocumentMessage,
 	ISignalClient,
 	ITokenClaims,
-	ScopeType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 
-import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
+import type { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 const MaxBatchDeltas = 2000;
 
@@ -37,8 +37,8 @@ const Claims: ITokenClaims = {
 	user: {
 		id: "",
 	},
-	iat: Math.round(new Date().getTime() / 1000),
-	exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+	iat: Math.round(Date.now() / 1000),
+	exp: Math.round(Date.now() / 1000) + 60 * 60, // 1 hour expiration
 	ver: "1.0",
 };
 

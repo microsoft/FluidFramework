@@ -16,7 +16,12 @@ import {
 	TreeViewConfiguration,
 } from "@fluidframework/tree/alpha";
 
-import { createContext, SharedTreeSemanticAgent, createTreeAgent } from "../agent.js";
+import {
+	createContext,
+	SharedTreeSemanticAgent,
+	createTreeAgent,
+	executeSemanticEditing,
+} from "../agent.js";
 import type {
 	EditResult,
 	SharedTreeChatModel,
@@ -941,6 +946,183 @@ describe("createTreeAgent", () => {
 			"toolCallId should be undefined",
 		);
 		agent.dispose();
+	});
+});
+
+// #endregion
+
+// #region executeSemanticEditing tests
+
+describe("executeSemanticEditing", () => {
+	it("can apply a single edit and returns response string", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Edited";` },
+			},
+			{ role: "assistant", content: "Done editing" },
+		]);
+		const response = await executeSemanticEditing(model, view, "Edit it");
+		assert.equal(response, "Done editing");
+		assert.equal(view.root, "Edited");
+	});
+
+	it("can apply multiple sequential edits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "First";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Second";` },
+			},
+			{ role: "assistant", content: "All done" },
+		]);
+		const response = await executeSemanticEditing(model, view, "Edit twice");
+		assert.equal(response, "All done");
+		assert.equal(view.root, "Second");
+	});
+
+	it("rolls back all edits when a later edit fails", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Good";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `throw new Error("boom");` },
+			},
+			{ role: "assistant", content: "Oops" },
+		]);
+		const response = await executeSemanticEditing(model, view, "Edit");
+		assert.equal(response, "Oops");
+		// Query-level fork means all edits are rolled back when the last edit fails
+		assert.equal(view.root, "Initial");
+	});
+
+	it("enforces maximumSequentialEdits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "One";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Two";` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c3",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Three";` },
+			},
+			{ role: "assistant", content: "Gave up" },
+		]);
+		const response = await executeSemanticEditing(model, view, "Edit a lot", {
+			maximumSequentialEdits: 2,
+		});
+		assert.equal(response, "Gave up");
+		// Edit 3 was blocked, setting lastEditFailed — query-level fork rolls back all edits
+		assert.equal(view.root, "Initial");
+	});
+
+	it("handles bad tool args gracefully", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { a: 1, b: 2 },
+			},
+			{ role: "assistant", content: "Gave up" },
+		]);
+		const response = await executeSemanticEditing(model, view, "Edit");
+		assert.equal(response, "Gave up");
+		assert.equal(view.root, "Initial");
+	});
+
+	it("rejects models without invoke()", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			editToolName,
+			async query() {
+				return "nope";
+			},
+		};
+		await assert.rejects(async () => executeSemanticEditing(model, view, "Edit"), /invoke/);
+	});
+
+	it("rejects models without editToolName", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model: SharedTreeChatModel = {
+			async invoke() {
+				return { role: "assistant", content: "nope" };
+			},
+		};
+		await assert.rejects(
+			async () => executeSemanticEditing(model, view, "Edit"),
+			/editToolName/,
+		);
+	});
+
+	it("recovery after failed edit preserves all successful edits", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Initial");
+		const model = createMockInvokeModel([
+			{
+				role: "tool_call",
+				toolCallId: "c1",
+				toolName: editToolName,
+				toolArgs: { js: `throw new Error("boom");` },
+			},
+			{
+				role: "tool_call",
+				toolCallId: "c2",
+				toolName: editToolName,
+				toolArgs: { js: `context.root = "Recovered";` },
+			},
+			{ role: "assistant", content: "Fixed" },
+		]);
+		const response = await executeSemanticEditing(model, view, "Edit");
+		assert.equal(response, "Fixed");
+		assert.equal(view.root, "Recovered");
+	});
+
+	it("works with a simple assistant-only response (no edits)", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
+		view.initialize("Content");
+		const model = createMockInvokeModel([{ role: "assistant", content: "Just a response" }]);
+		const response = await executeSemanticEditing(model, view, "Question");
+		assert.equal(response, "Just a response");
+		assert.equal(view.root, "Content");
 	});
 });
 
