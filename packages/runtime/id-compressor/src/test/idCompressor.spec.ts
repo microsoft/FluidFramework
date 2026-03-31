@@ -9,7 +9,12 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import {
+	IdCompressor,
+	createIdCompressor,
+	deserializeIdCompressor,
+	serializeIdCompressor,
+} from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -459,6 +464,95 @@ describe("IdCompressor", () => {
 					() => compressor.finalizeCreationRange(range4),
 					(e: Error) => e.message === "Ranges finalized out of order",
 				);
+			});
+		});
+
+		describe("by reserving unfinalized ranges for the next take", () => {
+			it("produces equivalent range to takeUnfinalizedCreationRange on next takeNextCreationRange", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				compressor.takeNextCreationRange();
+
+				// Reserve instead of take
+				compressor.resetUnfinalizedCreationRange();
+
+				// Next takeNextCreationRange should cover the unfinalized IDs
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids, {
+					firstGenCount: 1,
+					count: 1,
+					localIdRanges: [[1, 1]],
+					requestedClusterSize: 2,
+				});
+			});
+
+			it("includes new IDs generated after reserving", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				compressor.takeNextCreationRange();
+
+				compressor.resetUnfinalizedCreationRange();
+				generateCompressedIds(compressor, 1);
+
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids, {
+					firstGenCount: 1,
+					count: 2,
+					localIdRanges: [[1, 2]],
+					requestedClusterSize: 2,
+				});
+			});
+
+			it("is a no-op when there are no unfinalized IDs", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+				compressor.resetUnfinalizedCreationRange();
+				const range = compressor.takeNextCreationRange();
+				assert.equal(range.ids, undefined);
+			});
+
+			it("is idempotent", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 2);
+				compressor.takeNextCreationRange();
+
+				compressor.resetUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
+				compressor.resetUnfinalizedCreationRange();
+
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids, {
+					firstGenCount: 1,
+					count: 2,
+					localIdRanges: [[1, 2]],
+					requestedClusterSize: 2,
+				});
+			});
+
+			it("works with multiple outstanding ranges", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+				generateCompressedIds(compressor, 1);
+				const range1 = compressor.takeNextCreationRange();
+				generateCompressedIds(compressor, 1); // one local
+				compressor.finalizeCreationRange(range1);
+				compressor.takeNextCreationRange();
+				generateCompressedIds(compressor, 1); // one eager final
+				compressor.takeNextCreationRange();
+				generateCompressedIds(compressor, 1); // one local
+				compressor.takeNextCreationRange();
+
+				compressor.resetUnfinalizedCreationRange();
+				const range = compressor.takeNextCreationRange();
+				assert.deepEqual(range.ids?.firstGenCount, 2);
+				assert.deepEqual(range.ids?.count, 3);
+				assert.deepEqual(range.ids?.localIdRanges, [
+					[2, 1],
+					[4, 1],
+				]);
+
+				compressor.finalizeCreationRange(range);
 			});
 		});
 	});
@@ -1059,6 +1153,25 @@ describe("IdCompressor", () => {
 			mockLogger.assertMatchAny([
 				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
 			]);
+		});
+	});
+
+	describe("serializeIdCompressor", () => {
+		it("produces the same result as the underlying serialize(true)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			const direct = compressor.serialize(true);
+			const wrapper = serializeIdCompressor(compressor, true);
+			assert.deepStrictEqual(wrapper, direct);
+		});
+
+		it("produces the same result as the underlying serialize(false)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			const direct = compressor.serialize(false);
+			const wrapper = serializeIdCompressor(compressor, false);
+			assert.deepStrictEqual(wrapper, direct);
 		});
 	});
 

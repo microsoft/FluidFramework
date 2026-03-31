@@ -1339,10 +1339,9 @@ describe("createRouteContext", () => {
 		assert.strictEqual(ctx.restTenantGeneralThrottler, undefined);
 	});
 
-	it("maxTokenLifetimeSec is a number (0) when config key is absent", () => {
+	it("maxTokenLifetimeSec is undefined when config key is absent", () => {
 		const providerWithoutKey = new nconf.Provider({}).defaults({});
 		const ctx = createRouteContext(providerWithoutKey, throttlers);
-		assert.strictEqual(typeof ctx.maxTokenLifetimeSec, "number");
-		assert.strictEqual(ctx.maxTokenLifetimeSec, 0);
+		assert.strictEqual(ctx.maxTokenLifetimeSec, undefined);
 	});
 });

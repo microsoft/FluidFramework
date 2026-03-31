@@ -48,11 +48,6 @@ import type {
 	IPendingMessage,
 } from "../../pendingStateManager.js";
 
-function typeFromBatchedOp(message: LocalBatchMessage): string {
-	assert(message.runtimeOp !== undefined, "PRECONDITION: runtimeOp is undefined");
-	return message.runtimeOp.type;
-}
-
 // Make a mock op with distinguishable contents
 function op(data: string): LocalContainerRuntimeMessage {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -194,7 +189,9 @@ describe("Outbox", () => {
 		batchMarker: boolean | undefined = undefined,
 	): IBatchMessage => ({
 		contents:
-			message.runtimeOp === undefined ? message.contents : serializeOp(message.runtimeOp),
+			message.runtimeOp === undefined
+				? message.contents
+				: serializeOp(message.runtimeOp).content,
 		metadata:
 			batchMarker === undefined
 				? message.metadata
@@ -243,7 +240,6 @@ describe("Outbox", () => {
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
-		flushPartialBatches?: boolean;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -262,7 +258,6 @@ describe("Outbox", () => {
 			config: {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
-				flushPartialBatches: params.flushPartialBatches ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -856,147 +851,6 @@ describe("Outbox", () => {
 			() => outbox.submit(messages[1]),
 			"Since we incremented referenceSequenceNumber to 1, this should throw",
 		);
-	});
-
-	it("Splits the batch when an out of order message is detected (if partial flushing is enabled)", () => {
-		const outbox = getOutbox({
-			context: getMockContext(),
-			flushPartialBatches: true,
-		});
-		const messages = [
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 1,
-			},
-		];
-
-		currentSeqNumbers.referenceSequenceNumber = 1;
-
-		outbox.submit(messages[0]);
-		outbox.submit(messages[1]);
-		outbox.flush();
-
-		assert.equal(state.opsSubmitted, messages.length);
-		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.equal(state.batchesSubmitted.length, 2);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[[toSubmittedMessage(messages[0])], [toSubmittedMessage(messages[1])]],
-		);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.referenceSequenceNumber),
-			[0, 1],
-		);
-		assert.equal(state.deltaManagerFlushCalls, 0);
-		const rawMessagesInFlushOrder = [messages[0], messages[1]];
-		assert.deepEqual(
-			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message, i) => ({
-				runtimeOp: message.runtimeOp,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-				localOpMetadata: message.localOpMetadata,
-				opMetadata: message.metadata,
-				batchStartCsn: i + 1, // Each message should have been in its own batch. CSN starts at 1.
-			})),
-		);
-
-		mockLogger.assertMatch([
-			{
-				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-			},
-		]);
-	});
-
-	for (const messages of [
-		[
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 1,
-			},
-		],
-		[
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "0"),
-				referenceSequenceNumber: 1,
-			},
-		],
-	] as LocalBatchMessage[][]) {
-		it("Flushes all batches when an out of order message is detected in either flow (if partial flushing is enabled)", () => {
-			const outbox = getOutbox({
-				context: getMockContext(),
-				flushPartialBatches: true,
-			});
-			for (const message of messages) {
-				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-				if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
-					outbox.submitIdAllocation(message);
-				} else {
-					outbox.submit(message);
-				}
-			}
-
-			assert.equal(state.opsSubmitted, messages.length - 1);
-			assert.equal(state.individualOpsSubmitted.length, 0);
-			assert.equal(state.batchesSubmitted.length, 1);
-			assert.deepEqual(
-				state.batchesSubmitted.map((x) => x.messages),
-				[[toSubmittedMessage(messages[0]), toSubmittedMessage(messages[1])]],
-			);
-
-			mockLogger.assertMatch([
-				{
-					eventName: "Outbox:ReferenceSequenceNumberMismatch",
-				},
-			]);
-		});
-	}
-
-	it("Does not throw when an out of order message is detected (if partial flushing is enabled)", () => {
-		const outbox = getOutbox({
-			context: getMockContext(),
-			flushPartialBatches: true,
-		});
-		const messages: LocalBatchMessage[] = [
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 1,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 2,
-			},
-		];
-
-		assert.doesNotThrow(() => {
-			for (const message of messages) {
-				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-				outbox.submit(message);
-			}
-		}, "Shouldn't throw if partial flushing is enabled");
 	});
 
 	it("Log at most 3 reference sequence number mismatch events", () => {

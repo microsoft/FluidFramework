@@ -95,7 +95,14 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: [
+				"api-extractor:commonjs",
+				"api-extractor:esnext",
+				"build:entrypoints:node10",
+				// Depend on "tsc" and "build:esnext" in case there is no matching "api-extractor:*".
+				"tsc",
+				"build:esnext",
+			],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -109,10 +116,10 @@ module.exports = {
 		// generate reports from legacy entrypoint as well as the "current" one.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports:current": ["api-extractor:esnext"],
-		"build:api-reports:legacy": ["api-extractor:esnext"],
-		"ci:build:api-reports:current": ["api-extractor:esnext"],
-		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
+		"build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
@@ -197,6 +204,10 @@ module.exports = {
 			outputGlobs: ["package.json"],
 			gitignore: ["input", "output"],
 		},
+		"flub generate node10Entrypoints": {
+			inputGlobs: ["package.json"],
+			outputGlobs: ["(alpha|beta|internal|legacy).d.ts", "legacy/alpha.d.ts"],
+		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
 			outputGlobs: ["src/**/*.fsl.svg"],
@@ -230,7 +241,7 @@ module.exports = {
 		},
 		"syncpack lint-semver-ranges": {
 			inputGlobs: [
-				"syncpack.config.cjs",
+				".syncpackrc.yml",
 				"package.json",
 
 				...releaseGroupPackageJsonGlobs,
@@ -244,7 +255,7 @@ module.exports = {
 		},
 		"syncpack list-mismatches": {
 			inputGlobs: [
-				"syncpack.config.cjs",
+				".syncpackrc.yml",
 				"package.json",
 
 				...releaseGroupPackageJsonGlobs,
@@ -281,6 +292,7 @@ module.exports = {
 
 		// Independent packages
 		"build-common": "common/build/build-common",
+		"eslint-config-fluid": "common/build/eslint-config-fluid",
 		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
@@ -418,6 +430,8 @@ module.exports = {
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
 			],
+			// Packages that don't need type tests
+			"npm-package-types-field": ["common/build/eslint-config-fluid/package.json"],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
 				"packages/test/mocha-test-setup/package.json",
@@ -439,6 +453,7 @@ module.exports = {
 				"^build-tools/",
 				"^common/build/",
 				"^experimental/PropertyDDS/",
+				"^packages/framework/quill-react/",
 				"^tools/api-markdown-documenter/",
 			],
 			"npm-package-exports-field": [
@@ -476,9 +491,6 @@ module.exports = {
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"npm-private-packages": [
-				// TODO: Temporarily disabled for this package while it's a part of the client release group.
-				"^common/build/eslint-config-fluid/",
-
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],

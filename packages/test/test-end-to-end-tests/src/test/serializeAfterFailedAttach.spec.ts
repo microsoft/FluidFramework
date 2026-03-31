@@ -87,7 +87,7 @@ describeCompat(
 				logger: provider.logger,
 				configProvider: {
 					getRawConfig: (name) =>
-						name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+						name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 				},
 			});
 			return testLoader;
