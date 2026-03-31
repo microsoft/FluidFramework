@@ -22,7 +22,6 @@ import {
 	type JsonCompatibleReadOnlyObject,
 } from "../../util/index.js";
 import {
-	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
@@ -116,40 +115,6 @@ function makeVersionedValidatedCodec<
 }
 
 /**
- * Creates a codec which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
- *
- * @deprecated Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} and use {@link makeDiscontinuedCodecAndSchema}.
- */
-export function makeDiscontinuedCodecVersion<
-	TDecoded,
-	TEncoded extends Versioned = VersionedJson,
-	TContext = unknown,
->(
-	options: ICodecOptions,
-	discontinuedVersion: FormatVersion,
-	discontinuedSince: SemanticVersion,
-): IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> {
-	const codec: IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> = {
-		encode: (_: TDecoded): TEncoded => {
-			throw new UsageError(
-				`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
-			);
-		},
-		decode: (data: TEncoded): TDecoded => {
-			throw new UsageError(
-				`Cannot decode data in format ${data.version}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
-			);
-		},
-	};
-	return makeVersionedValidatedCodec(
-		options,
-		new Set([discontinuedVersion]),
-		JsonCompatibleReadOnlySchema,
-		codec,
-	);
-}
-
-/**
  * Creates a codec version which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
  */
 export function makeDiscontinuedCodecAndSchema<
@@ -177,31 +142,6 @@ export function makeDiscontinuedCodecAndSchema<
 			},
 		},
 	};
-}
-
-/**
- * Creates a codec which dispatches to the appropriate member of a codec family based on the version of
- * data it encounters.
- * @remarks
- * Each member of the codec family must write an explicit version number into the data it encodes (implementing {@link Versioned}).
- *
- * TODO: Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} so that the actual format version used can be encapsulated.
- */
-export function makeVersionDispatchingCodec<TDecoded, TContext>(
-	family: ICodecFamily<TDecoded, TContext>,
-	options: ICodecOptions & { writeVersion: FormatVersion },
-): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
-	const writeCodec = family.resolve(options.writeVersion);
-	const supportedVersions = new Set(family.getSupportedFormats());
-	return makeVersionedCodec(supportedVersions, options, {
-		encode(data, context): Versioned {
-			return writeCodec.encode(data, context) as Versioned;
-		},
-		decode(data: Versioned, context) {
-			const codec = family.resolve(data.version);
-			return codec.decode(data, context);
-		},
-	});
 }
 
 /**

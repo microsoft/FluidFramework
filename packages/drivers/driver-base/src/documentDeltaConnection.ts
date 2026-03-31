@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryBaseProperties,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
-import {
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
+import type {
 	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
@@ -18,28 +15,30 @@ import {
 	IConnect,
 	IConnected,
 	IDocumentMessage,
-	type ISentSignalMessage,
+	ISentSignalMessage,
 	ISignalClient,
 	ITokenClaims,
-	ScopeType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import {
 	UsageError,
 	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
 } from "@fluidframework/driver-utils/internal";
-import {
+import type {
+	IFluidErrorBase,
 	ITelemetryLoggerExt,
-	EventEmitterWithErrorHandling,
 	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	EventEmitterWithErrorHandling,
 	createChildMonitoringContext,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
 	isFluidError,
 	normalizeError,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
@@ -179,7 +178,7 @@ export class DocumentDeltaConnection
 			// Better flow might be to always unconditionally register all handlers on successful connection,
 			// though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
 			assert(
-				(this.listeners(event).length !== 0) === this.trackedListeners.has(event),
+				this.listeners(event).length > 0 === this.trackedListeners.has(event),
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
@@ -285,7 +284,7 @@ export class DocumentDeltaConnection
 		// latest ops.  This could possibly indicate that initialMessages was called twice.
 		assert(this.earlyOpHandlerAttached, 0x08e /* "Potentially missed initial messages" */);
 		// We will lose ops and perf will tank as we need to go to storage to become current!
-		assert(this.listeners("op").length !== 0, 0x08f /* "No op handler is setup!" */);
+		assert(this.listeners("op").length > 0, 0x08f /* "No op handler is setup!" */);
 
 		this.removeEarlyOpHandler();
 
@@ -306,7 +305,7 @@ export class DocumentDeltaConnection
 	 */
 	public get initialSignals(): ISignalMessage[] {
 		this.checkNotDisposed();
-		assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
+		assert(this.listeners("signal").length > 0, 0x090 /* "No signal handler is setup!" */);
 
 		this.removeEarlySignalHandler();
 
@@ -381,12 +380,12 @@ export class DocumentDeltaConnection
 				signal.targetClientId = targetClientId;
 			}
 			this.emitMessages("submitSignal", [signal]);
-		} else if (targetClientId !== undefined) {
+		} else if (targetClientId === undefined) {
+			this.emitMessages("submitSignal", [[content]]);
+		} else {
 			throw new UsageError(
 				"Sending signals to specific client ids is not supported with this service.",
 			);
-		} else {
-			this.emitMessages("submitSignal", [[content]]);
 		}
 	}
 
@@ -559,7 +558,7 @@ export class DocumentDeltaConnection
 						// That's a WebSocket. Clear it as we can't log it.
 						description.target = undefined;
 					}
-				} catch (_e) {
+				} catch {
 					// TODO: document why we are ignoring the error here
 				}
 
@@ -788,7 +787,7 @@ export class DocumentDeltaConnection
 			return extractLogSafeErrorProperties(error, true).message;
 		}
 		// JSON.stringify drops Error.message
-		const messagePrefix = error?.message !== undefined ? `${error.message}: ` : "";
+		const messagePrefix = error?.message === undefined ? "" : `${error.message}: `;
 
 		// Websocket errors reported by engine.io-client.
 		// They are Error objects with description containing WS error and description = "TransportError"
