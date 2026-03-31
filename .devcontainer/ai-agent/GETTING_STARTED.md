@@ -8,28 +8,31 @@ This codespace is pre-configured for AI-agent-assisted development of the Fluid 
 
 After creating a new AI-enabled Codespace, expect up to a dozen authentication prompts. This is excessive but anticipated — continue clicking through each prompt until they conclude.
 
-Agency may need to be installed manually after the Codespace starts:
+Agency **must** be installed manually after the Codespace starts:
 
 ```bash
 pnpm install:agency
 ```
 
+Then open a **new terminal** for the agent aliases to be available.
+
 ## Quick Start
 
+Dependencies are installed automatically during prebuild. If you need to reinstall:
+
 ```bash
-# Install dependencies (if not already done by prebuild)
 pnpm install
 
 # Build everything
 pnpm build
 
 # Build only a specific package and its dependencies
-fluid-build .
+pnpm fluid-build .
 ```
 
 ## AI Agent Aliases
 
-These aliases are available in all terminal sessions:
+These aliases are available in all terminal sessions (after installing agency):
 
 ### Claude
 
@@ -50,6 +53,12 @@ These aliases are available in all terminal sessions:
 | `copilot-kusto` | `agency copilot --mcp 'kusto ...'` | Telemetry queries |
 | `copilot-oce` | `repoverlay switch ff-oce && copilot-kusto` | On-Call Engineer workflows |
 | `copilot-work` | `agency copilot --mcp 'workiq'` | WorkIQ integration |
+
+### Utility
+
+| Alias | Command | Purpose |
+|---|---|---|
+| `ai-reset` | `repoverlay remove --all` | Remove all repoverlay overlays and reset to clean state |
 
 ## Connecting via SSH
 
@@ -73,45 +82,9 @@ This enables running AI agents locally while the Codespace provides computing po
 | Agent aliases | Shell shortcuts for common AI commands |
 | Higher compute | 32 CPUs / 64 GB RAM (vs 16 CPUs for Standard) |
 
-## Monorepo Structure
-
-| Directory | Contents |
-|---|---|
-| `packages/` | Core Fluid Framework packages organized by area (DDS, runtime, loader, drivers, etc.) |
-| `server/` | Routerlicious server components |
-| `build-tools/` | Internal build tooling, release infrastructure, and ESLint configs |
-| `examples/` | Example applications, benchmarks, and integration samples |
-| `experimental/` | Experimental packages not yet promoted to stable |
-| `common/` | Shared build config and utilities |
-| `docs/` | Documentation source files |
-
-## Key Development Commands
-
-```bash
-# Run tests for the current package
-pnpm test
-
-# Run tests across the whole repo
-pnpm test -r
-
-# Lint
-pnpm lint
-
-# Check formatting
-pnpm format:check
-```
-
-## Development Workflow
-
-1. **Find the package** you want to work on under `packages/`, `server/`, or `build-tools/`.
-2. **Build it** with `fluid-build .` from the package directory — this builds only that package and its dependencies.
-3. **Run tests** with `pnpm test` from the package directory.
-4. **Use an AI agent** (`claude`, `nori`, or `copilot`) to help with development tasks.
-
-## Useful Links
+## More Information
 
 - [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace) — Full documentation for this codespace profile
-- [FluidFramework.com](https://fluidframework.com) — Documentation and API reference
-- [DEV.md](../../DEV.md) — Detailed development setup guide
+- [DEV.md](../../DEV.md) — Development setup, build commands, and workflow guide
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — Contribution guidelines
-- [PACKAGES.md](../../PACKAGES.md) — Full package listing and organization
+- [FluidFramework.com](https://fluidframework.com) — Documentation and API reference

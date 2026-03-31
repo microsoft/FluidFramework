@@ -1,4 +1,4 @@
-Welcome to Fluid Framework (Standard profile)!
+Welcome to Fluid Framework's Standard codespace!
 
 This codespace is configured for full-repo development with 16 CPUs and 64 GB RAM.
 

@@ -1,4 +1,4 @@
-Welcome to Fluid Framework (Lightweight profile)!
+Welcome to Fluid Framework's Lightweight codespace!
 
 This codespace is configured for docs, API review, and focused package edits
 with 4 CPUs and 16 GB RAM. It is not intended for full builds.

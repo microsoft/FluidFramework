@@ -37,7 +37,7 @@
 		"NODE_VERSION_OVERRIDE": "24"
 	},
 	"onCreateCommand": {
-		"node-setup": "bash scripts/codespace-setup/post-create.sh"
+		"node-setup": "bash scripts/codespace-setup/on-create.sh"
 	},
 	"postCreateCommand": {
 		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh",

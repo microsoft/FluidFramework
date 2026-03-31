@@ -1,62 +1,56 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Welcome to Fluid Framework",
-  "description": "A guided orientation to the Fluid Framework monorepo — repo structure, build system, key packages, and development workflow.",
+  "title": "AI-Enabled Codespace Tour",
+  "description": "A guided introduction to the AI tooling available in this codespace — agency, agent aliases, repoverlay, and how to use them for Fluid Framework development.",
   "isPrimary": true,
   "steps": [
     {
-      "file": "package.json",
+      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
       "line": 1,
-      "title": "Monorepo Root",
-      "description": "This is the root `package.json` for the **client release group** — the primary release group in this monorepo. The repo uses **pnpm** as its package manager and **fluid-build** as its build orchestrator.\n\nKey scripts:\n- `pnpm build` — build all packages\n- `pnpm test` — run all tests\n- `fluid-build .` — build only the current package and its dependencies (much faster)"
+      "title": "Welcome",
+      "description": "This is your AI-enabled codespace. It comes pre-configured with AI CLI tooling on top of the standard Fluid Framework development environment.\n\nThis tour will walk you through the AI-specific features. For full documentation, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
     },
     {
-      "directory": "packages",
-      "title": "Core Packages",
-      "description": "The `packages/` directory contains the core Fluid Framework packages, organized into subdirectories by area:\n\n- **dds/** — Distributed Data Structures (SharedMap, SharedString, SharedTree, etc.)\n- **runtime/** — Container and data store runtime\n- **loader/** — Container loader and driver utilities\n- **drivers/** — Service drivers (Routerlicious, ODSP, local)\n- **framework/** — Higher-level framework APIs\n- **service-clients/** — Client libraries for Fluid services\n- **tools/** — Developer tooling\n- **test/** — Cross-cutting test utilities"
+      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
+      "line": 13,
+      "title": "Install Agency",
+      "description": "**Before you can use any AI agents, you must install agency:**\n\n```bash\npnpm install:agency\n```\n\nThen open a **new terminal** for the aliases to take effect.\n\nAgency is the CLI tool that manages AI agent sessions. It wraps Claude Code, GitHub Copilot, and other agents with consistent configuration."
     },
     {
-      "directory": "packages/dds",
-      "title": "Distributed Data Structures (DDS)",
-      "description": "This is the heart of Fluid Framework. Each DDS is a replicated data structure that synchronizes across clients using operational transforms or CRDTs.\n\nKey packages:\n- **tree/** — SharedTree, the primary DDS for hierarchical data\n- **map/** — SharedMap for key-value storage\n- **sequence/** — SharedString for collaborative text\n- **counter/** — SharedCounter for atomic counters\n- **matrix/** — SharedMatrix for 2D data"
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 8,
+      "title": "Claude Aliases",
+      "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** — Default model\n- **`haiku`** — Fastest, cheapest option\n- **`sonnet`** — Balanced capabilities\n- **`opus`** — Most capable model\n\nAll aliases use `agency claude` under the hood, which ensures consistent configuration and context."
     },
     {
-      "directory": "packages/runtime",
-      "title": "Runtime Layer",
-      "description": "The runtime layer manages the lifecycle of containers and data stores:\n\n- **container-runtime/** — Manages the container lifecycle, op processing, and summarization\n- **datastore/** — Base implementation for Fluid data stores\n- **id-compressor/** — Efficient ID allocation across distributed clients\n- **container-runtime-definitions/** and **datastore-definitions/** — Public API interfaces"
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 13,
+      "title": "Nori",
+      "description": "**`nori`** switches to the nori repoverlay and launches Claude.\n\nRepoverlay is an overlay system that layers context files (agent configurations, skills, prompt templates) on top of the repository. The `nori` overlay provides a curated set of skills for feature development, debugging, and bug fixing.\n\nRecommended for feature work, debugging, and bug fixing."
     },
     {
-      "directory": "server",
-      "title": "Server (Routerlicious)",
-      "description": "The `server/` directory contains **Routerlicious**, the reference Fluid relay service. It handles op ordering, storage, and distribution.\n\nFor local development, you'll typically use **Tinylicious** (a lightweight local server) rather than running the full Routerlicious stack. Port 7070 is pre-forwarded in the devcontainer for Tinylicious."
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 15,
+      "title": "Copilot Aliases",
+      "description": "These aliases launch GitHub Copilot with various MCP (Model Context Protocol) integrations:\n\n- **`copilot`** — Standard GitHub Copilot\n- **`copilot-ado`** — With Azure DevOps integration\n- **`copilot-kusto`** — With telemetry query capabilities\n- **`copilot-oce`** — On-Call Engineer workflow (switches to ff-oce overlay)\n- **`copilot-work`** — With WorkIQ integration"
     },
     {
-      "directory": "build-tools",
-      "title": "Build Tools",
-      "description": "Internal tooling for building, testing, and releasing Fluid packages:\n\n- **fluid-build** — Incremental build orchestrator that understands the dependency graph\n- **ESLint configs** — Shared linting rules for the monorepo\n- **Release tooling** — Version bumping, changelog generation, and release automation\n\nThis directory is its own release group with a separate `pnpm-workspace.yaml`."
-    },
-    {
-      "directory": "examples",
-      "title": "Examples",
-      "description": "Example applications and benchmarks demonstrating Fluid Framework usage:\n\n- **apps/** — Full example applications\n- **benchmarks/** — Performance benchmarks\n- **data-objects/** — Example data objects and patterns\n- **version-migration/** — Examples of schema migration patterns\n\nThese are great for understanding how the pieces fit together."
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 21,
+      "title": "Resetting Overlays",
+      "description": "If you need to reset your repoverlay state (remove all overlays and return to a clean repo state), use:\n\n```bash\nai-reset\n```\n\nThis runs `repoverlay remove --all` and is useful when switching between different workflows or troubleshooting overlay issues."
     },
     {
       "file": ".devcontainer/ai-agent/devcontainer.json",
       "line": 1,
-      "title": "Your Codespace Configuration",
-      "description": "This is the devcontainer configuration for the **AI-enabled** profile you're using. It includes:\n\n- **Agency CLI** — run AI agents (Claude, GitHub Copilot) from the terminal\n- **Repoverlay** — overlay system for context files (agents, skills)\n- **GitHub CLI** and **SSH** — PR workflows and `gh codespace ssh` access\n- **ADO Codespaces Auth** — authenticate to Azure DevOps\n- **32 CPUs / 64 GB RAM** — higher compute than the Standard profile\n\n**First-time note:** Expect up to a dozen authentication prompts when you first create this codespace. Keep clicking through — they will end.\n\nIf agency is not already installed, run: `pnpm install:agency`\n\nFor full documentation, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "title": "Codespace Configuration",
+      "description": "This devcontainer profile includes several additions beyond the Standard profile:\n\n- **Agency CLI** and **Repoverlay** (installed via build args)\n- **GitHub CLI** (`gh`) for PR workflows and SSH access\n- **SSH daemon** enabling `gh codespace ssh` from your local terminal\n- **ADO Codespaces Auth** for Azure DevOps authentication\n- **32 CPUs / 64 GB RAM** (vs 16 CPUs for Standard)\n\n**Tip:** You can connect to this codespace from your local terminal with `gh codespace ssh` to run AI agents locally while using the codespace's compute."
     },
     {
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
       "line": 1,
-      "title": "AI Agent Aliases",
-      "description": "This getting-started guide has the full list of AI agent aliases available in your terminal:\n\n**Claude:** `claude`, `haiku`, `sonnet`, `opus`, `nori`\n**Copilot:** `copilot`, `copilot-ado`, `copilot-kusto`, `copilot-oce`, `copilot-work`\n\nYou can also connect to this codespace from your local terminal via SSH:\n```\ngh codespace ssh\n```\n\nThis lets you run AI agents locally while the Codespace provides compute and repo context."
-    },
-    {
-      "file": "DEV.md",
-      "line": 1,
       "title": "Next Steps",
-      "description": "You're all set! Here's what to do next:\n\n1. Run `pnpm install` if dependencies aren't already installed\n2. Navigate to the package you want to work on\n3. Run `fluid-build .` to build it and its dependencies\n4. Run `pnpm test` to verify things work\n5. Use `claude` or `nori` to get AI assistance\n\nThis file (`DEV.md`) has the full development setup guide.\n\nFor more info on the AI-enabled codespace, see the [wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `claude` or `nori` to start an AI-assisted session\n3. Check [DEV.md](DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
     }
   ]
 }
