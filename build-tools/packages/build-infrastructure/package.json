@@ -10,17 +10,10 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"main": "lib/index.js",
@@ -30,8 +23,6 @@
 	},
 	"files": [
 		"/bin",
-		"/dist",
-		"!dist/test",
 		"/lib",
 		"!lib/test",
 		"/oclif.manifest.json"
@@ -47,7 +38,7 @@
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
+		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
