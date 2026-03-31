@@ -219,10 +219,12 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 		);
 		const telemetryProperties = getThrottlingBaseTelemetryProperties(id);
 		this.logger?.warn(`Token bucket for ${id} is exhausted`, {
-			...telemetryProperties.baseLumberjackProperties,
-			retryAfterInSeconds,
-			localRetryAfterInMs: timeUntilLocalTokensCanBeConsumedMs,
-			distributedRetryAfterInMs: timeUntilDistributedTokensCanBeConsumedMs,
+			messageMetaData: {
+				...telemetryProperties.baseMessageMetaData,
+				retryAfterInSeconds,
+				localRetryAfterInMs: timeUntilLocalTokensCanBeConsumedMs,
+				distributedRetryAfterInMs: timeUntilDistributedTokensCanBeConsumedMs,
+			},
 			error: throttlingError,
 		});
 		Lumberjack.warning(
