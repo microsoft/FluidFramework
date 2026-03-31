@@ -442,6 +442,17 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param detachId - the ID to assign to whichever node (if any) is detached from the field when the change applies.
 	 */
 	clear(isEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset;
+
+	/**
+	 * Creates a change which sets the field's content to the node already in the field.
+	 * The intial change has no effect, but will ensure that the node is in this field
+	 * after rebasing over other changes.
+	 * This is only valid to create if the field is not empty.
+	 * @param pinId - The ID to use for moving the current content.
+	 * @param clearId - The ID to use for removing any other node from this field.
+	 * @returns
+	 */
+	pin(pinId: ChangeAtomId, clearId: ChangeAtomId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
@@ -464,6 +475,11 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 			isEmpty,
 			dst: detachId,
 		},
+	}),
+
+	pin: (pinId: ChangeAtomId, clearId: ChangeAtomId): OptionalChangeset => ({
+		valueReplace: { isEmpty: false, src: pinId, dst: clearId },
+		nodeDetach: pinId,
 	}),
 
 	buildChildChanges: (changes: Iterable<[number, NodeId]>): OptionalChangeset => {

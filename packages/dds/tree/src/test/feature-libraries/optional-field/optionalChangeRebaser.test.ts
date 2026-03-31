@@ -80,7 +80,6 @@ const OptionalChange = {
 		ids: {
 			fill: ChangeAtomId;
 			detach: ChangeAtomId;
-			detachNode?: ChangeAtomId;
 		},
 	) {
 		return optionalFieldEditor.set(wasEmpty, ids);
@@ -88,6 +87,10 @@ const OptionalChange = {
 
 	clear(wasEmpty: boolean, detachId: ChangeAtomId) {
 		return optionalFieldEditor.clear(wasEmpty, detachId);
+	},
+
+	pin(pinId: ChangeAtomId, clearId: ChangeAtomId) {
+		return optionalFieldEditor.pin(pinId, clearId);
 	},
 
 	buildChildChange(childChange: NodeId) {
@@ -388,12 +391,12 @@ const generateChildStateForRebaseVersion = function* (
 		{
 			const intention = mintIntention();
 			const revision = tagFromIntention(intention);
-			const [detach, attach] = [mintId(revision), mintId(revision)];
+			const [clearId, pinId] = [mintId(revision), mintId(revision)];
 			const fieldEdit: FieldEditDescription = {
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
-				change: brand(OptionalChange.set(false, { detach, fill: attach, detachNode: attach })),
+				change: brand(OptionalChange.pin(pinId, clearId)),
 				revision,
 			};
 
@@ -784,7 +787,7 @@ export function testRebaserAxioms(): void {
 					numberOfEditsToRebase: 2,
 					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 2 : 5,
 					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 2 : 6,
-					groupSubSuites: true,
+					groupSubSuites: false, // XXX
 				},
 			);
 		});

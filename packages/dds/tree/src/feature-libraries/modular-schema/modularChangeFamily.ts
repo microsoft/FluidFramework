@@ -3857,10 +3857,20 @@ function buildModularChangesetFromNode(props: {
 	setInChangeAtomIdMap(nodeChanges, nodeId, nodeChange);
 
 	if (isDetachedUpPathRoot(path)) {
+		const rootId: ChangeAtomId = {
+			revision: path.detachedNodeId.major,
+			localId: brand(path.detachedNodeId.minor),
+		};
+
 		props.rootNodes.nodeChanges.set(
 			[path.detachedNodeId.major, brand(path.detachedNodeId.minor)],
 			nodeId,
 		);
+
+		setInChangeAtomIdMap(props.nodeToParent, nodeId, {
+			root: rootId,
+		});
+
 		return makeModularChangeset({
 			rebaseVersion: props.rebaseVersion,
 			rootNodes: props.rootNodes,
