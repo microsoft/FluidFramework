@@ -1797,12 +1797,6 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
 }
 
-// @alpha @sealed
-export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
-    delete(key: string): void;
-    set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
-}
-
 // @public @sealed
 export abstract class TreeNode implements WithType {
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
