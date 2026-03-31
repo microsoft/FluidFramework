@@ -530,6 +530,7 @@ stages:
             displayName: 'Release tenant credentials'
             env:
               login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
               script: |
