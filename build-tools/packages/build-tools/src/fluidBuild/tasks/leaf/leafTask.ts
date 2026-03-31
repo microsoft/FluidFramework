@@ -20,7 +20,8 @@ import {
 } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
-import { type Seconds, TaskCacheOutcome } from "../../buildMetrics";
+import type { Seconds } from "../../buildMetrics";
+import { TaskCacheOutcome } from "../../buildMetrics";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
 	type GitIgnoreSettingValue,

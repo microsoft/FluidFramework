@@ -45,6 +45,7 @@ interface ExecutableBreakdown {
 	miss: number;
 	nonIncremental: number;
 	failed: number;
+	notRun: number;
 	totalExecTimeSeconds: Seconds;
 }
 
@@ -92,6 +93,7 @@ export class BuildMetrics {
 				miss: 0,
 				nonIncremental: 0,
 				failed: 0,
+				notRun: 0,
 				totalExecTimeSeconds: 0 as Seconds,
 			};
 			eb.total++;
@@ -125,6 +127,7 @@ export class BuildMetrics {
 				}
 				case TaskCacheOutcome.NotRun: {
 					notRun++;
+					eb.notRun++;
 					break;
 				}
 			}
@@ -181,12 +184,12 @@ export class BuildMetrics {
 			`  ${chalk.bold(String(s.totalTasks))} tasks | ${cachedStr} (${hitRateStr}) | ${executedStr}${nonIncStr}${failedStr}`,
 		);
 
-		// Table of executables that had cache misses (the interesting ones)
+		// Table of executables that had cache misses or other non-cached outcomes (the interesting ones)
 		const withMisses = s.byExecutable.filter(
 			(eb) => eb.miss > 0 || eb.failed > 0 || eb.nonIncremental > 0,
 		);
 		const fullyCached = s.byExecutable.filter(
-			(eb) => eb.miss === 0 && eb.failed === 0 && eb.nonIncremental === 0,
+			(eb) => eb.miss === 0 && eb.failed === 0 && eb.nonIncremental === 0 && eb.notRun === 0,
 		);
 
 		if (withMisses.length > 0) {
@@ -198,19 +201,27 @@ export class BuildMetrics {
 			log("");
 			log(
 				chalk.dim(
-					`  ${"Executable".padEnd(nameWidth)}  Total  Cached  Miss  Hit Rate     Time`,
+					`  ${"Executable".padEnd(nameWidth)}  Total  Cached  Miss  NonInc  Hit Rate     Time`,
 				),
 			);
-			log(chalk.dim(`  ${"─".repeat(nameWidth)}  ─────  ──────  ────  ────────  ───────`));
+			log(
+				chalk.dim(
+					`  ${"─".repeat(nameWidth)}  ─────  ──────  ────  ──────  ────────  ───────`,
+				),
+			);
 
 			for (const eb of withMisses) {
 				const time = formatTime(eb.totalExecTimeSeconds);
 				const missStr = eb.miss > 0 ? chalk.yellow(pad(eb.miss, 4)) : pad(eb.miss, 4);
+				const nonIncStr =
+					eb.nonIncremental > 0
+						? chalk.yellow(pad(eb.nonIncremental, 6))
+						: pad(eb.nonIncremental, 6);
 				const hitRate = eb.total > 0 ? formatPercent(eb.cached / eb.total) : "0%";
 				const hitRateStr = hitRate.padStart(8);
 				const failStr = eb.failed > 0 ? `  ${chalk.red(`${eb.failed} failed`)}` : "";
 				log(
-					`  ${chalk.bold(eb.executable.padEnd(nameWidth))}  ${pad(eb.total, 5)}  ${pad(eb.cached, 6)}  ${missStr}  ${hitRateStr}  ${time.padStart(7)}${failStr}`,
+					`  ${chalk.bold(eb.executable.padEnd(nameWidth))}  ${pad(eb.total, 5)}  ${pad(eb.cached, 6)}  ${missStr}  ${nonIncStr}  ${hitRateStr}  ${time.padStart(7)}${failStr}`,
 				);
 			}
 		}
