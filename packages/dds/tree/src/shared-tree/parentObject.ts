@@ -140,9 +140,7 @@ export class DocumentRootParent extends ParentObjectBase {
 		const branch = this.branch;
 		assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 		if (!branch.compatibility.canView) {
-			throw new UsageError(
-				"Cannot access a DocumentRootParent with incompatible schema",
-			);
+			throw new UsageError("Cannot access a DocumentRootParent with incompatible schema");
 		}
 		return branch;
 	}
@@ -303,10 +301,12 @@ export class RemovedRootParent extends ParentObjectBase {
 		kernel.checkAndEmitStatusChange();
 
 		// Subscribe to afterBatch to check for status changes after any tree modification.
-		let unsubscribeAfterBatch: (() => void) | undefined =
-			this.context.checkout.events.on("afterBatch", () => {
+		let unsubscribeAfterBatch: (() => void) | undefined = this.context.checkout.events.on(
+			"afterBatch",
+			() => {
 				kernel.checkAndEmitStatusChange();
-			});
+			},
+		);
 
 		const unsubscribeStatus = kernel.statusEvents.on("statusChanged", () => {
 			// Once a status transition is detected, stop polling afterBatch.
