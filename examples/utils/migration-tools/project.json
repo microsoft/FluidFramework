@@ -7,7 +7,13 @@
 		"build:compile": {
 			"executor": "nx:noop"
 		},
+		"check:exports": {
+			"executor": "nx:noop"
+		},
 		"check:format": {
+			"executor": "nx:noop"
+		},
+		"eslint": {
 			"executor": "nx:noop"
 		},
 		"format": {
