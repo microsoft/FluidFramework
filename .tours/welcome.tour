@@ -50,7 +50,7 @@
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
       "line": 1,
       "title": "Next Steps",
-      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `claude` or `nori` to start an AI-assisted session\n3. Check [DEV.md](DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `claude` or `nori` to start an AI-assisted session\n3. Check [DEV.md](../DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
     }
   ]
 }

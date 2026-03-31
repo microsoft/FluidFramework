@@ -18,7 +18,7 @@ Then open a **new terminal** for the agent aliases to be available.
 
 ## Quick Start
 
-Dependencies are installed automatically during prebuild. If you need to reinstall:
+If dependencies are not installed yet or you need to reinstall them:
 
 ```bash
 pnpm install
@@ -39,9 +39,9 @@ These aliases are available in all terminal sessions (after installing agency):
 | Alias | Command | Purpose |
 |---|---|---|
 | `claude` | `agency claude` | Default Claude Code model |
-| `haiku` | `agency claude --model haiku` | Fastest, cheapest option |
-| `sonnet` | `agency claude --model sonnet` | Balanced capabilities |
-| `opus` | `agency claude --model opus` | Most capable model |
+| `haiku` | `agency claude -- --model haiku` | Fastest, cheapest option |
+| `sonnet` | `agency claude -- --model sonnet` | Balanced capabilities |
+| `opus` | `agency claude -- --model opus` | Most capable model |
 | `nori` | `repoverlay switch nori && agency claude` | Switch to nori overlay and launch Claude |
 
 ### Copilot
@@ -51,7 +51,7 @@ These aliases are available in all terminal sessions (after installing agency):
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
 | `copilot-ado` | `agency copilot --mcp 'ado --org fluidframework'` | Azure DevOps integration |
 | `copilot-kusto` | `agency copilot --mcp 'kusto ...'` | Telemetry queries |
-| `copilot-oce` | `repoverlay switch ff-oce && copilot-kusto` | On-Call Engineer workflows |
+| `copilot-oce` | `repoverlay switch ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
 | `copilot-work` | `agency copilot --mcp 'workiq'` | WorkIQ integration |
 
 ### Utility

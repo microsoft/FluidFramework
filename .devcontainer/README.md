@@ -33,6 +33,6 @@ The devcontainer lifecycle hooks are structured for prebuild optimization:
 | Hook | Purpose | Runs in prebuild? |
 | --- | --- | --- |
 | `onCreateCommand` | Node.js setup (nvm install, corepack enable) | Yes |
-| `postCreateCommand` | Welcome notice, AI tooling setup | Yes |
+| `postCreateCommand` | Welcome notice (all profiles); AI tooling setup (AI-enabled only) | Yes |
 
 Heavy setup work runs in `onCreateCommand` so it is captured by Codespace prebuilds, making the user-connect experience faster.

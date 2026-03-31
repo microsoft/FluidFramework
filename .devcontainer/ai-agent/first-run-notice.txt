@@ -19,6 +19,7 @@ AI agent aliases (provided by agency):
   copilot               Launch GitHub Copilot via agency
   copilot-ado           Copilot with Azure DevOps MCP
   copilot-kusto         Copilot with Kusto MCP
+  copilot-oce           Copilot for On-Call Engineer workflows
   copilot-work          Copilot with WorkIQ MCP
 
 Getting started:
