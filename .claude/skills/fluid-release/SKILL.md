@@ -185,7 +185,7 @@ For version bumps, use `flub bump` locally or CI-safe alternatives in CI (see [C
 
 Use the `build:` conventional commit prefix for all release PR titles (e.g., `build: tag untagged asserts for 2.90.0 release`).
 
-**All release PRs must be opened as drafts** and assigned to the person running the release. This signals to the team that these are release-infrastructure PRs, not regular feature work. Use `gh pr create --draft --assignee @me`.
+**All release PRs must be opened as drafts** and assigned to the person running the release. The release runner can decide when to mark them ready to review. Use `gh pr create --draft --assignee @me`.
 
 ### Checkpoints
 
