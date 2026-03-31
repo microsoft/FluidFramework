@@ -73,7 +73,7 @@ The sections are configured in [fluidBuild.config.cjs](https://github.com/micros
 
 > [!NOTE]
 > For deprecations, follow the [deprecation process](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation).
-> Ensure both the changeset when doing the deprecation and the changeset when removing the deprecated API link the tracking issues on GitHub if one was created.
+> Ensure that both the deprecation changeset and the removal changeset include a link to the GitHub tracking issue, when one exists.
 
 
 ## Changesets that apply to no packages
@@ -134,7 +134,7 @@ Each package listed in a changeset will get a changelog entry with the changeset
 
 - Internal implementation details irrelevant to consumers
 - PR numbers (the PR which created the changeset is automatically linked by the changelog generator)
-- Internal issue references (such as `AB#...` formatted internal issues references and links non public websites)
+- Internal issue identifiers (for example, `AB#12345`) or links to non-public/internal tracking systems or websites
 - Author attribution
 - Dates (added automatically during release)
 - Changes to test-only or internal-only packages
