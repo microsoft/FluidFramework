@@ -3,7 +3,8 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Adds TreeArrayNodeAlpha with a new splice method
+
+Add TreeArrayNodeAlpha with a new splice method
 
 Adds a `splice` method on `TreeArrayNodeAlpha` that supports removing and inserting items in a single operation to align with JavaScript's Array splice API.
 Returns the removed items as an array.
@@ -18,11 +19,11 @@ The alpha API is accessible by an `asAlpha` cast on existing TreeArrayNodes, or 
 ```typescript
 import { SchemaFactory, SchemaFactoryAlpha, asAlpha } from "@fluidframework/tree";
 
-// Using AsAlpha to cast an existing TreeArrayNode
+// Using asAlpha to cast an existing TreeArrayNode
 const sf = new SchemaFactory("example");
 const Inventory = sf.array("Inventory", sf.string);
 const inventory = new Inventory(["Apples", "Bananas", "Pears"]);
-const inventoryAlpha = asAlpha(inventory)
+const inventoryAlpha = asAlpha(inventory);
 
 // Using SchemaFactoryAlpha so splice is available directly
 const sf = new SchemaFactoryAlpha("example");

@@ -15,21 +15,20 @@ import type {
 	IConnect,
 	IConnected,
 	IDocumentMessage,
+	ISentSignalMessage,
 	ISignalClient,
 	ITokenClaims,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type ISentSignalMessage,
-	ScopeType,
-} from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import {
 	UsageError,
 	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
 } from "@fluidframework/driver-utils/internal";
 import type {
+	IFluidErrorBase,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
@@ -40,7 +39,6 @@ import {
 	getCircularReplacer,
 	isFluidError,
 	normalizeError,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
