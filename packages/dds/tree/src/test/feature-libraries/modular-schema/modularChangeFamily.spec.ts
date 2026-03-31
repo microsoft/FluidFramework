@@ -112,7 +112,6 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, replacer) =>
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- replacer type inference issue
 		change === undefined ? undefined : replacer.getUpdatedAtomId(change),
 };
 
@@ -154,7 +153,6 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
-	getDetachCellIds: (_change) => [],
 };
 
 const singleNodeField = new FlexFieldKind(

@@ -67,13 +67,6 @@ export interface HasRevisionTag {
  */
 export interface Attach extends HasMoveId, HasRevisionTag {
 	readonly type: "Attach";
-
-	// XXX: Use this ID as main ID when serializing
-	/**
-	 * See {@link Detach.detachCellId}.
-	 * This field should only be used if the attach is a pin.
-	 */
-	readonly detachCellId?: ChangeAtomId;
 }
 
 /**
@@ -87,20 +80,6 @@ export interface Attach extends HasMoveId, HasRevisionTag {
 export interface Detach extends HasRevisionTag {
 	readonly type: "Detach";
 	readonly id: ChangesetLocalId;
-
-	/**
-	 * The ID the cell should be set to when this detach is applied.
-	 * If not set, this the same as the detach ID.
-	 * Note that this does not affect the ID associated with the detached node.
-	 * This is ignored when `cellRename` is set.
-	 *
-	 * This applies to the cell where the node is being detached from,
-	 * or the last cell the node occupied if it is already detached.
-	 *
-	 * This field is used to represent the composition of a pin and a detach.
-	 * The composition will be the second detach but with the pin's detachId as detachCellId.
-	 */
-	readonly detachCellId?: ChangeAtomId;
 
 	/**
 	 * When set, this represents a rename of this cell to be applied after the detach.

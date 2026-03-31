@@ -87,10 +87,6 @@ function replaceDetachRevisions<TDetach extends Detach>(
 		updated.cellRename = replacer.getUpdatedAtomId(updated.cellRename, count);
 	}
 
-	if (updated.detachCellId !== undefined) {
-		updated.detachCellId = replacer.getUpdatedAtomId(updated.detachCellId, count);
-	}
-
 	return updated;
 }
 

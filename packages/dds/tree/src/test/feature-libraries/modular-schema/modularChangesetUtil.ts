@@ -39,8 +39,6 @@ import {
 	type NodeId,
 	type TreeChunk,
 } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { DetachedNodeEntry } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 import {
 	addNodeRename,
 	cloneRootTable,
@@ -304,6 +302,11 @@ function normalizeRangeMaps(change: ModularChangeset): ModularChangeset {
 				areEqualChangeAtomIds,
 				areEqualChangeAtomIds,
 			),
+			firstIntermediateRenames: normalizeRangeMap(
+				change.rootNodes.firstIntermediateRenames,
+				areEqualChangeAtomIds,
+				areEqualChangeAtomIds,
+			),
 			detachLocations: normalizeRangeMap(
 				change.rootNodes.detachLocations,
 				areEqualChangeAtomIds,
@@ -544,12 +547,17 @@ function newField(
 	return { fieldKey, kind, changeset, children };
 }
 
+interface TestRenameDescription extends RenameDescription {
+	readonly firstIntermediateRename?: ChangeAtomId;
+}
+
 interface BuildArgs {
 	rebaseVersion?: RebaseVersion;
 	family: ModularChangeFamily;
 	maxId?: number;
 	revisions?: RevisionInfo[];
-	renames?: RenameDescription[];
+	builds?: ChangeAtomIdBTree<TreeChunk>;
+	renames?: TestRenameDescription[];
 	roots?: {
 		detachId: ChangeAtomId;
 		detachLocation?: FieldId;
@@ -617,6 +625,10 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		result.revisions = args.revisions;
 	}
 
+	if (args.builds !== undefined) {
+		result.builds = args.builds;
+	}
+
 	if (args.renames !== undefined) {
 		for (const rename of args.renames) {
 			addNodeRename(
@@ -626,6 +638,14 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 				rename.count,
 				rename.detachLocation,
 			);
+
+			if (rename.firstIntermediateRename !== undefined) {
+				result.rootNodes.firstIntermediateRenames.set(
+					rename.oldId,
+					rename.count,
+					rename.firstIntermediateRename,
+				);
+			}
 		}
 	}
 
@@ -757,7 +777,7 @@ const dummyComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<DetachedNodeEntry | undefined> {
+	): RangeQueryResult<NodeId | undefined> {
 		return { value: undefined, length: count };
 	},
 

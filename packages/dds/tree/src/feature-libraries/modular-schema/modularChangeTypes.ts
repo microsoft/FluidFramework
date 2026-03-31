@@ -82,9 +82,40 @@ export interface ModularChangeset extends HasFieldChanges {
 }
 
 export interface RootNodeTable {
-	// TODO: Include builds, destroys, refreshers, and field changes
+	/**
+	 * Maps from input root ID (or root ID created by a detach in this changeset)
+	 * to output root ID (or root ID used in an attach in this changeset).
+	 * Root renames are considered to be applied after detaches but before attaches in the same changeset.
+	 * This will only have entries for roots which are renamed by this changeset.
+	 * A root rename is treated as an intention that the node should be detached under the new ID,
+	 * meaning that it should be converted to a detach when rebasing over an attach of that node.
+	 */
 	readonly oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	/**
+	 * The inverse of the mapping in `oldToNewId`.
+	 */
 	readonly newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	/**
+	 * A map from input root ID to the first intermediate ID this changeset renames that root to.
+	 * For example, the composition of a changeset with rename A to B, and a changeset with rename B to C
+	 * will have a rename from A to C, but a first intermediate rename from A to B.
+	 * Note that the keys are always input context root IDs, as opposed to detach IDs from this changeset.
+	 * Note that there will be no entry for nodes which are renamed, but have no intermediate ID.
+	 *
+	 * This information is necessary because sequence field determines cell IDs based on the ID of the most recent detach,
+	 * so there is a difference between a changeset which detaches with ID B,
+	 * and a changeset which detaches with A and then renames it to B.
+	 * When a changeset represents a series of detaches of the same node,
+	 * it is only the first detach which would follow that node to a new location when rebasing over a move.
+	 */
+	readonly firstIntermediateRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	/**
+	 * Maps from input context root ID to the node ID for that root.
+	 * This will only have entries for roots this changeset has a NodeChangeset for.
+	 */
 	readonly nodeChanges: ChangeAtomIdBTree<NodeId>;
 
 	/**

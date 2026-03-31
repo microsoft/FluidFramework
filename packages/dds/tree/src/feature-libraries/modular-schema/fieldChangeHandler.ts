@@ -76,12 +76,6 @@ export interface FieldChangeHandler<
 	 */
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 
-	// XXX: Document
-	getDetachCellIds(
-		change: TChangeset,
-		rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
-	): { detachId: ChangeAtomId; cellId: ChangeAtomId; count: number }[];
-
 	createEmpty(): TChangeset;
 }
 
@@ -245,6 +239,7 @@ export interface FieldChangeEncodingContext {
 	// This should only be called during encoding.
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 
+	// XXX: Update comment
 	/**
 	 * Returns the input context root ID from an output context root ID.
 	 * This is only needed for encoding to sequence field format v3 and older.
@@ -252,6 +247,25 @@ export interface FieldChangeEncodingContext {
 	 */
 	getInputRootId(
 		outputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	// XXX: Update comment
+	/**
+	 * Returns the output context root ID from an input context root ID.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
+	getOutputRootId(
+		outputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	/**
+	 * XXX: Comment
+	 */
+	getFirstRenameId(
+		inputRootId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined>;
 
@@ -269,18 +283,6 @@ export interface FieldChangeEncodingContext {
 	 */
 	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
-	/**
-	 * Returns the detach cell ID for the attach associated with `moveId`.
-	 * If there is no associated detach cell ID, or the ID is the same as `moveId`,
-	 * this will return undefined.
-	 * This is only needed for encoding to sequence field format v3 and older.
-	 * This should only be called during encoding.
-	 */
-	getCellIdForMove(
-		moveId: ChangeAtomId,
-		count: number,
-	): RangeQueryResult<ChangeAtomId | undefined>;
-
 	// This should only be called during decoding.
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 
@@ -294,11 +296,18 @@ export interface FieldChangeEncodingContext {
 
 	/**
 	 * Must be called for each root node rename encoded in this field.
-	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * * This should only be called during decoding.
 	 * as in those versions, root node renames were represented in the field they were last detached from.
-	 * This should only be called during decoding.
+	 * @param doesChangeDetachRoots - Should be true iff these roots are attached in the input context of this changeset.
+	 *
+	 * This method is only needed to support encoding to ModularChangeset formats older than v3.
 	 */
-	decodeRootRename(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
+	decodeRootRename(
+		oldId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number,
+		doesChangeDetachRoots: boolean,
+	): void;
 
 	/**
 	 * Must be called for each node which has its detach location changed to this field.

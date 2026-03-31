@@ -173,9 +173,10 @@ function encodeFieldChangesForJson(
 	context: ChangeEncodingContext,
 	encodeNode: NodeEncoder,
 	getInputRootId: ChangeAtomMappingQuery,
+	getOutputRootId: ChangeAtomMappingQuery,
+	getFirstRenameId: ChangeAtomMappingQuery,
 	isAttachId: ChangeAtomIdRangeQuery,
 	isDetachId: ChangeAtomIdRangeQuery,
-	getCellIdForMove: ChangeAtomMappingQuery,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedFieldChangeMap {
 	const encodedFields: EncodedFieldChangeMap = [];
@@ -194,9 +195,10 @@ function encodeFieldChangesForJson(
 
 			encodeNode,
 			getInputRootId,
+			getOutputRootId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
-			getCellIdForMove,
 
 			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 			decodeRootNodeChange: () => fail("Should not be called during encoding"),
@@ -239,9 +241,10 @@ function encodeNodeChangesForJson(
 	context: ChangeEncodingContext,
 	encodeNode: NodeEncoder,
 	getInputRootId: ChangeAtomMappingQuery,
+	getOutputRootId: ChangeAtomMappingQuery,
+	getFirstRenameId: ChangeAtomMappingQuery,
 	isAttachId: ChangeAtomIdRangeQuery,
 	isDetachId: ChangeAtomIdRangeQuery,
-	getCellIdForMove: ChangeAtomMappingQuery,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedNodeChangeset {
 	const encodedChange: EncodedNodeChangeset = {};
@@ -256,9 +259,10 @@ function encodeNodeChangesForJson(
 			context,
 			encodeNode,
 			getInputRootId,
+			getOutputRootId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
-			getCellIdForMove,
 			fieldChangesetCodecs,
 		);
 	}
@@ -315,9 +319,10 @@ function decodeFieldChangesFromJson(
 
 			encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 			getInputRootId: () => fail("Should not query during decoding"),
+			getOutputRootId: () => fail("Should not query during decoding"),
+			getFirstRenameId: () => fail("Should not query during decoding"),
 			isAttachId: () => fail("Should not query during decoding"),
 			isDetachId: () => fail("Should not query during decoding"),
-			getCellIdForMove: () => fail("Should not query during decoding"),
 
 			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 				return decodeNode(encodedNode, { field: fieldId });
@@ -332,8 +337,14 @@ function decodeFieldChangesFromJson(
 				decodedRootTable.detachLocations.set(detachId, 1, fieldId);
 			},
 
-			decodeRootRename: (oldId, newId, count): void => {
-				addNodeRename(decodedRootTable, oldId, newId, count, fieldId);
+			decodeRootRename: (oldId, newId, count, doesChangeDetachRoot): void => {
+				addNodeRename(
+					decodedRootTable,
+					oldId,
+					newId,
+					count,
+					doesChangeDetachRoot ? undefined : fieldId,
+				);
 			},
 
 			decodeMoveAndDetach: (detachId, count): void => {
@@ -555,22 +566,31 @@ export function encodeChange(
 		count: number,
 	): RangeQueryEntry<ChangeAtomId, boolean> => {
 		const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
-		const renameEntry = change.rootNodes.oldToNewId.getFirst(id, detachEntry.length);
-		const isDetach = (detachEntry.value ?? renameEntry.value) !== undefined;
-		return { start: id, value: isDetach, length: renameEntry.length };
+		return { start: id, value: detachEntry.value !== undefined, length: detachEntry.length };
 	};
 
-	const moveIdToCellId = getMoveIdToCellId(change, fieldKinds, fieldToRoots);
-	const getCellIdForMove = (
+	const getOldFromNewId = (
 		id: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId | undefined> => moveIdToCellId.getFirst(id, count);
+	): RangeQueryResult<ChangeAtomId | undefined> =>
+		change.rootNodes.newToOldId.getFirst(id, count);
 
-	const getInputRootId = (
+	const getNewFromOldId = (
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> =>
+		change.rootNodes.oldToNewId.getFirst(id, count);
+
+	const getFirstRenameId = (
 		id: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined> => {
-		return change.rootNodes.newToOldId.getFirst(id, count);
+		const entry = change.rootNodes.firstIntermediateRenames.getFirst(id, count);
+		if (entry.value !== undefined) {
+			return entry;
+		}
+
+		return change.rootNodes.oldToNewId.getFirst(id, entry.length);
 	};
 
 	const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
@@ -583,10 +603,11 @@ export function encodeChange(
 			fieldToRoots,
 			context,
 			encodeNode,
-			getInputRootId,
+			getOldFromNewId,
+			getNewFromOldId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
-			getCellIdForMove,
 			fieldChangesetCodecs,
 		);
 	};
@@ -605,10 +626,11 @@ export function encodeChange(
 			fieldToRoots,
 			context,
 			encodeNode,
-			getInputRootId,
+			getOldFromNewId,
+			getNewFromOldId,
+			getFirstRenameId,
 			isAttachId,
 			isDetachId,
-			getCellIdForMove,
 			fieldChangesetCodecs,
 		),
 		builds: encodeDetachedNodes(
@@ -778,9 +800,11 @@ function getFieldToRoots(
 	}
 
 	for (const entry of rootTable.oldToNewId.entries()) {
+		// XXX: We need to query using `entry.length`.
+		// Should `fieldToRoots` include renames that come after a detach?
 		const fieldId = rootTable.detachLocations.getFirst(entry.start, 1).value;
 		if (fieldId === undefined) {
-			fail("Untracked root change");
+			// This is a rename of nodes detached by this changeset.
 		} else {
 			getOrAddInFieldRootMap(fieldToRoots, normalizeFieldId(fieldId, aliases)).renames.set(
 				entry.start,
@@ -806,51 +830,6 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 	};
 	map.set(key, newRootChanges);
 	return newRootChanges;
-}
-
-export function getMoveIdToCellId(
-	change: ModularChangeset,
-	fieldKinds: FieldKindConfiguration,
-	fieldToRoot: FieldRootMap,
-): ChangeAtomIdRangeMap<ChangeAtomId> {
-	const map = newChangeAtomIdTransform();
-	getMoveIdToCellIdsForFieldChanges(
-		change.fieldChanges,
-		undefined,
-		fieldKinds,
-		fieldToRoot,
-		map,
-	);
-	for (const [nodeId, nodeChange] of change.nodeChanges.entries()) {
-		if (nodeChange.fieldChanges !== undefined) {
-			getMoveIdToCellIdsForFieldChanges(
-				nodeChange.fieldChanges,
-				{ revision: nodeId[0], localId: nodeId[1] },
-				fieldKinds,
-				fieldToRoot,
-				map,
-			);
-		}
-	}
-	return map;
-}
-
-function getMoveIdToCellIdsForFieldChanges(
-	changes: FieldChangeMap,
-	nodeId: NodeId | undefined,
-	fieldKinds: FieldKindConfiguration,
-	fieldToRoots: FieldRootMap,
-	moveIdToCellId: ChangeAtomIdRangeMap<ChangeAtomId>,
-): void {
-	for (const [fieldKey, field] of changes.entries()) {
-		for (const entry of getChangeHandler(fieldKinds, field.fieldKind).getDetachCellIds(
-			field.change,
-			fieldToRoots.get([nodeId?.revision, nodeId?.localId, fieldKey])?.renames ??
-				newChangeAtomIdTransform(),
-		)) {
-			moveIdToCellId.set(entry.detachId, entry.count, entry.cellId);
-		}
-	}
 }
 
 export function decodeChange(

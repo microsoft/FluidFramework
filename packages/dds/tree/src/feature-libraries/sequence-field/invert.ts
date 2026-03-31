@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionTag } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
-import type { DetachedNodeEntry, InvertNodeManager, NodeId } from "../modular-schema/index.js";
+import type { InvertNodeManager, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
@@ -164,12 +164,12 @@ function invertInsertSegment(
 	mark: CellMark<Attach>,
 	revision: RevisionTag | undefined,
 	isRollback: boolean,
-	detachEntry: DetachedNodeEntry | undefined,
+	nodeChange: NodeId | undefined,
 ): Mark {
 	const inputId = getInputCellId(mark);
 	assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
 
-	const detachId = invertAttachId(getAttachedRootId(mark), revision, isRollback, detachEntry);
+	const detachId = invertAttachId(getAttachedRootId(mark), revision, isRollback);
 
 	const removeMark: Mutable<CellMark<Detach>> = {
 		type: "Detach",
@@ -182,8 +182,8 @@ function invertInsertSegment(
 		removeMark.cellRename = inputId;
 	}
 
-	if (detachEntry?.nodeChange !== undefined) {
-		removeMark.changes = detachEntry.nodeChange;
+	if (nodeChange !== undefined) {
+		removeMark.changes = nodeChange;
 	}
 
 	return removeMark;
@@ -193,17 +193,12 @@ function invertAttachId(
 	attachId: ChangeAtomId,
 	revision: RevisionTag | undefined,
 	isRollback: boolean,
-	detachEntry: DetachedNodeEntry | undefined,
 ): ChangeAtomId {
 	if (!isRollback) {
 		return {
 			revision,
 			localId: attachId.localId,
 		};
-	}
-
-	if (detachEntry?.detachId !== undefined) {
-		return detachEntry.detachId;
 	}
 
 	return attachId;

@@ -33,14 +33,12 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		type: "Attach",
 		id: brand(0),
 		revision: tag,
-		detachCellId: atomId,
 	};
 	const detach: Populated<Detach> = {
 		type: "Detach",
 		id: brand(0),
 		revision: tag,
 		cellRename: atomId,
-		detachCellId: atomId,
 	};
 
 	// XXX: Why are the above not used?

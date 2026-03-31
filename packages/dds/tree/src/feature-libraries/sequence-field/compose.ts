@@ -7,7 +7,6 @@ import { assert, unreachableCase, fail } from "@fluidframework/core-utils/intern
 
 import {
 	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -22,15 +21,7 @@ import type {
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
-import type {
-	CellMark,
-	Changeset,
-	Detach,
-	Mark,
-	MarkEffect,
-	MarkList,
-	NoopMark,
-} from "./types.js";
+import type { CellMark, Changeset, Mark, MarkEffect, MarkList, NoopMark } from "./types.js";
 import {
 	CellOrder,
 	areEqualCellIds,
@@ -125,7 +116,7 @@ function composeMarksIgnoreChild(
 	if (isNoopMark(baseMark)) {
 		return newMark;
 	} else if (isNoopMark(newMark)) {
-		return updateBaseMarkId(moveEffects, baseMark);
+		return baseMark;
 	}
 
 	if (isRename(baseMark) && isRename(newMark)) {
@@ -142,46 +133,51 @@ function composeMarksIgnoreChild(
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
 		assert(isDetach(baseMark), 0x9f2 /* Unexpected mark type */);
-		return updateBaseMarkId(moveEffects, { ...baseMark, cellRename: newMark.idOverride });
+		return { ...baseMark, cellRename: newMark.idOverride };
 	}
 
 	if (!markHasCellEffect(baseMark)) {
 		assert(baseMark.type === "Attach", "Expected baseMark to be a pin");
 
+		// XXX: We should use `newMark`.
+
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
-		moveEffects.composeAttachDetach(
-			getAttachedRootId(baseMark),
-			{
-				revision: newMark.revision,
-				localId: newMark.id,
-			},
-			baseMark.count,
-		);
+		const isNewPin = newMark.type === "Attach";
+		const baseId = getAttachedRootId(baseMark);
+		moveEffects.composeAttachDetach(baseId, getMovedNodeId(newMark), baseMark.count, isNewPin);
 
-		const pinId = getAttachedRootId(baseMark);
-		return newMark.type === "Detach"
-			? {
-					...newMark,
-					detachCellId: baseMark.detachCellId ?? pinId,
-					cellRename: getDetachOutputCellId(newMark),
-				}
-			: newMark;
+		if (!isNewPin) {
+			// `newMark` is a detach.
+			// The attach from the base pin cancels with the new detach,
+			// and we are left with the detach portion of the base pin, plus
+			// a rename to the output cell ID of the new detach.
+			return {
+				type: "Detach",
+				id: baseId.localId,
+				revision: baseId.revision,
+				count: baseMark.count,
+				cellRename: getDetachOutputCellId(newMark),
+			};
+		}
+
+		// When composing two pins, we use the ID of the first pin.
+		// This is because the second pin has no observable effect.
+		// Aftere rebasing over a move, the first pin's detach ID is observable as the output cell ID of the detach.
+		return baseMark;
 	} else if (!markHasCellEffect(newMark)) {
 		if (isAttach(newMark) && isAttach(baseMark)) {
-			// When composing two inserts, the second insert (which is a pin) should take precedence.
 			// We treat the pin as a detach and reattach.
 			moveEffects.composeAttachDetach(
 				getAttachedRootId(baseMark),
 				getAttachedRootId(newMark),
 				baseMark.count,
+				false,
 			);
 
-			const composed = { cellId: baseMark.cellId, ...newMark };
-			delete composed.detachCellId;
-			return composed;
+			return { cellId: baseMark.cellId, ...newMark };
 		}
-		return updateBaseMarkId(moveEffects, baseMark);
+		return baseMark;
 	} else if (areInputCellsEmpty(baseMark)) {
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
 		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
@@ -193,6 +189,7 @@ function composeMarksIgnoreChild(
 			getAttachedRootId(baseMark),
 			getDetachedRootId(newMark),
 			baseMark.count,
+			false,
 		);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
@@ -208,36 +205,12 @@ function composeMarksIgnoreChild(
 
 		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, true);
 
-		// The composition has no net effect but we preserve the second change's intention to pin the nodes here.
-		const composedMark = { ...newMark };
+		// The composition has no net effect but we preserve the intention to pin the nodes here.
+		// We use the ID from the first mark.
+		const composedMark = { ...newMark, id: baseMark.id, revision: baseMark.revision };
 		delete composedMark.cellId;
-		const baseDetachCellId = baseMark.detachCellId ?? detachId;
-		if (!areEqualChangeAtomIds(baseDetachCellId, attachId)) {
-			composedMark.detachCellId = baseDetachCellId;
-		}
-
 		return composedMark;
 	}
-}
-
-function updateBaseMarkId(moveEffects: ComposeNodeManager, baseMark: Mark): Mark {
-	if (isDetach(baseMark)) {
-		const baseDetachId = getDetachedRootId(baseMark);
-		const updatedDetachId = getUpdatedDetachId(moveEffects, baseMark);
-		if (
-			updatedDetachId !== undefined &&
-			!areEqualChangeAtomIds(updatedDetachId, baseDetachId)
-		) {
-			return {
-				...baseMark,
-				revision: updatedDetachId.revision,
-				id: updatedDetachId.localId,
-				detachCellId: baseMark.detachCellId ?? baseDetachId,
-			};
-		}
-	}
-
-	return baseMark;
 }
 
 function createNoopMark(
@@ -433,14 +406,5 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	return moveEffects.getNewChangesForBaseDetach(getDetachedRootId(markEffect), 1).value
-		?.nodeChange;
-}
-
-function getUpdatedDetachId(
-	manager: ComposeNodeManager,
-	mark: CellMark<Detach>,
-): ChangeAtomId | undefined {
-	return manager.getNewChangesForBaseDetach(getDetachedRootId(mark), mark.count).value
-		?.detachId;
+	return moveEffects.getNewChangesForBaseDetach(getDetachedRootId(markEffect), 1).value;
 }

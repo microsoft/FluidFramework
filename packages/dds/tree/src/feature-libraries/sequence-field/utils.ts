@@ -7,7 +7,6 @@ import { assert, unreachableCase, fail } from "@fluidframework/core-utils/intern
 
 import {
 	type ChangeAtomId,
-	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -273,10 +272,6 @@ export function compareCellPositionsUsingTombstones(
 export function getDetachOutputCellId(mark: Detach): ChangeAtomId {
 	if (mark.cellRename !== undefined) {
 		return mark.cellRename;
-	}
-
-	if (mark.detachCellId !== undefined) {
-		return mark.detachCellId;
 	}
 
 	return getDetachedRootId(mark);
@@ -561,8 +556,7 @@ function tryMergeEffects(
 			const lhsDetach = lhs as Detach;
 			if (
 				(lhsDetach.id as number) + lhsCount === rhs.id &&
-				areMergeableChangeAtoms(lhsDetach.cellRename, lhsCount, rhs.cellRename) &&
-				areMergeableChangeAtoms(lhsDetach.detachCellId, lhsCount, rhs.detachCellId)
+				areMergeableChangeAtoms(lhsDetach.cellRename, lhsCount, rhs.cellRename)
 			) {
 				return lhsDetach;
 			}
@@ -577,10 +571,7 @@ function tryMergeEffects(
 		}
 		case "Attach": {
 			const lhsInsert = lhs as Attach;
-			if (
-				(lhsInsert.id as number) + lhsCount === rhs.id &&
-				areMergeableChangeAtoms(lhsInsert.detachCellId, lhsCount, rhs.detachCellId)
-			) {
+			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
 				return lhsInsert;
 			}
 			break;
@@ -640,12 +631,6 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 				id: (effect.id as number) + length,
 			};
 
-			if (effect.detachCellId !== undefined) {
-				(effect2 as Mutable<Attach>).detachCellId = splitDetachEvent(
-					effect.detachCellId,
-					length,
-				);
-			}
 			return [effect1, effect2];
 		}
 		case "Detach": {
@@ -657,9 +642,6 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 				effect2Remove.cellRename = splitDetachEvent(effect2Remove.cellRename, length);
 			}
 
-			if (effect2Remove.detachCellId !== undefined) {
-				effect2Remove.detachCellId = splitDetachEvent(effect2Remove.detachCellId, length);
-			}
 			return [effect1, effect2];
 		}
 		case "Rename": {
@@ -795,60 +777,5 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 		default: {
 			return [];
 		}
-	}
-}
-
-export function getDetachCellIds(
-	change: Changeset,
-	rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
-): {
-	detachId: ChangeAtomId;
-	cellId: ChangeAtomId;
-	count: number;
-}[] {
-	const entries: {
-		detachId: ChangeAtomId;
-		cellId: ChangeAtomId;
-		count: number;
-	}[] = [];
-
-	for (const mark of change) {
-		if (mark.type === "Detach" && mark.detachCellId !== undefined) {
-			const detachId = getDetachedRootId(mark);
-			if (!areEqualChangeAtomIds(mark.detachCellId, detachId)) {
-				entries.push({ count: mark.count, detachId, cellId: mark.detachCellId });
-			}
-		} else if (mark.type === "Rename") {
-			addDetachCellIdsForRename(mark, rootRenames, entries);
-		}
-	}
-	return entries;
-}
-
-function addDetachCellIdsForRename(
-	mark: CellMark<Rename>,
-	rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
-	entries: {
-		detachId: ChangeAtomId;
-		cellId: ChangeAtomId;
-		count: number;
-	}[],
-): void {
-	assert(mark.cellId !== undefined, "Rename should not target a full cell");
-	const rootRenameEntry = rootRenames.getFirst(mark.cellId, mark.count);
-	const countProcessed = rootRenameEntry.length;
-	if (
-		rootRenameEntry.value !== undefined &&
-		!areEqualChangeAtomIds(mark.idOverride, rootRenameEntry.value)
-	) {
-		entries.push({
-			cellId: mark.cellId,
-			detachId: rootRenameEntry.value,
-			count: countProcessed,
-		});
-	}
-
-	if (countProcessed < mark.count) {
-		addDetachCellIdsForRename(splitMark(mark, countProcessed)[1], rootRenames, entries);
 	}
 }

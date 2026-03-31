@@ -218,6 +218,16 @@ describe("GenericField", () => {
 					{
 						baseContext,
 						getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
+						getOutputRootId: (id, count) => ({
+							start: id,
+							value: id,
+							length: count,
+						}),
+						getFirstRenameId: (id, count) => ({
+							start: id,
+							value: undefined,
+							length: count,
+						}),
 						isAttachId: (id, count) => ({
 							start: id,
 							value: false,
@@ -227,11 +237,6 @@ describe("GenericField", () => {
 							start: id,
 							value: false,
 							length: count,
-						}),
-						getCellIdForMove: (id, count) => ({
-							start: id,
-							length: count,
-							value: undefined,
 						}),
 						encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 						decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
