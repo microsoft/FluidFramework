@@ -20,6 +20,7 @@ import type {
 	LocalContainerRuntimeMessage,
 } from "../../messageTypes.js";
 import {
+	addBatchMetadata,
 	BatchManager,
 	type OutboundBatchMessage,
 	type OutboundBatch,
@@ -372,6 +373,7 @@ describe("RemoteMessageProcessor", () => {
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();
+			addBatchMetadata(batchA);
 			batchA.messages[2].metadata = undefined; // Wipe out the ending metadata so the next batch's start shows up mid-batch
 			batchManager.push(
 				{ runtimeOp: op("B1"), referenceSequenceNumber: 1 },
@@ -382,6 +384,7 @@ describe("RemoteMessageProcessor", () => {
 				false /* reentrant */,
 			);
 			const batchB = batchManager.popBatch();
+			addBatchMetadata(batchB);
 
 			const processor = getMessageProcessor();
 
@@ -427,6 +430,7 @@ describe("RemoteMessageProcessor", () => {
 				false /* reentrant */,
 			);
 			const batchA = batchManager.popBatch();
+			addBatchMetadata(batchA);
 			batchA.messages[0].metadata = undefined; // Wipe out the starting metadata
 
 			const processor = getMessageProcessor();
