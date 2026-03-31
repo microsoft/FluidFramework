@@ -6,6 +6,7 @@
 import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	eraseSchemaDetails,
 	getInnerNode,
@@ -75,6 +76,35 @@ class TextNode
 	 */
 	public charactersCopy_reference(): string[] {
 		return [...this.content];
+	}
+
+	public onCharactersChanged(
+		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+	): () => void {
+		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) => {
+			if (delta === undefined) {
+				callback(undefined);
+				return;
+			}
+			let readPos = 0;
+			const ops: TextAsTree.TextOp[] = [];
+			for (const op of delta) {
+				if (op.type === "retain") {
+					ops.push(op);
+					readPos += op.count;
+				} else if (op.type === "insert") {
+					let text = "";
+					for (let i = 0; i < op.count; i++) {
+						text += this.content[readPos] as string;
+						readPos++;
+					}
+					ops.push({ type: "insert", text });
+				} else {
+					ops.push(op);
+				}
+			}
+			callback(ops);
+		});
 	}
 
 	public static fromString(value: string): TextNode {
@@ -183,6 +213,17 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
  */
 export namespace TextAsTree {
 	/**
+	 * A single operation in a character-level delta, analogous to the ops produced by {@link https://quilljs.com/docs/delta/ | Quill Delta}.
+	 * @remarks
+	 * Inserts carry the actual inserted text (not individual characters), which is more convenient for consumers.
+	 * @alpha
+	 */
+	export type TextOp =
+		| { readonly type: "retain"; readonly count: number }
+		| { readonly type: "insert"; readonly text: string }
+		| { readonly type: "remove"; readonly count: number };
+
+	/**
 	 * Statics for text nodes.
 	 * @alpha
 	 */
@@ -258,6 +299,17 @@ export namespace TextAsTree {
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
 		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
+
+		/**
+		 * Subscribe to incremental character-level changes on this text node.
+		 * @param callback - Called after each change with a sequence of {@link TextAsTree.TextOp}s describing what changed,
+		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
+		 * @returns A cleanup function that unsubscribes the callback when called.
+		 * @remarks
+		 * Prefer this over re-reading {@link TextAsTree.Members.fullString} on every change when incremental
+		 * application is possible (e.g. updating an editor's content model).
+		 */
+		onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
 	}
 
 	/**

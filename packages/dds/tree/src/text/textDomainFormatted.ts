@@ -177,6 +177,36 @@ class TextNode
 			});
 		}
 	}
+	public onCharactersChanged(
+		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+	): () => void {
+		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) => {
+			if (delta === undefined) {
+				callback(undefined);
+				return;
+			}
+			let readPos = 0;
+			const ops: TextAsTree.TextOp[] = [];
+			for (const op of delta) {
+				if (op.type === "retain") {
+					ops.push(op);
+					readPos += op.count;
+				} else if (op.type === "insert") {
+					let text = "";
+					for (let i = 0; i < op.count; i++) {
+						const atom = this.content[readPos] as FormattedTextAsTree.StringAtom;
+						text += atom.content.content;
+						readPos++;
+					}
+					ops.push({ type: "insert", text });
+				} else {
+					ops.push(op);
+				}
+			}
+			callback(ops);
+		});
+	}
+
 	public getUniformRun(startIndex: number, endIndex?: number): number {
 		return this.content.getUniformRun(startIndex, endIndex);
 	}

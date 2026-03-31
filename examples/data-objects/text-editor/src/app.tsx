@@ -38,23 +38,12 @@ import { type FC, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 /**
- * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
- * so in Codespaces we need to use the forwarded URL.
+ * Get the Tinylicious endpoint URL.
+ * Uses the same origin as the app so the webpack dev server proxy can forward requests
+ * to Tinylicious without cross-origin auth issues (e.g. in Codespaces).
  */
 function getTinyliciousEndpoint(): string {
-	const hostname = window.location.hostname;
-	const tinyliciousPort = 7070;
-
-	// Detect GitHub Codespaces: hostname like "ideal-giggle-xxx-8080.app.github.dev"
-	if (hostname.endsWith(".app.github.dev")) {
-		const match = /^(.+)-\d+\.app\.github\.dev$/.exec(hostname);
-		if (match) {
-			const codespaceName = match[1];
-			return `https://${codespaceName}-${tinyliciousPort}.app.github.dev`;
-		}
-	}
-
-	return `http://localhost:${tinyliciousPort}`;
+	return window.location.origin;
 }
 
 const containerSchema = {

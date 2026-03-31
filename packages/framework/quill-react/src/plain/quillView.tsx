@@ -4,12 +4,13 @@
  */
 
 import {
-	withMemoizedTreeObservations,
 	syncTextToTree,
+	unwrapPropTreeNode,
 	type PropTreeNode,
 } from "@fluidframework/react/internal";
 import type { TextAsTree } from "@fluidframework/tree/internal";
 import Quill from "quill";
+import type { Op } from "quill-delta";
 import { type FC, useEffect, useRef } from "react";
 
 /**
@@ -27,7 +28,7 @@ export interface MainViewProps {
  * @internal
  */
 export const MainView: FC<MainViewProps> = ({ root }) => {
-	return <TextEditorView root={root} />;
+	return <TextEditorView root={unwrapPropTreeNode(root)} />;
 };
 
 /**
@@ -35,10 +36,12 @@ export const MainView: FC<MainViewProps> = ({ root }) => {
  * Uses TextAsTree for collaborative plain text storage.
  *
  * @remarks
- * This uses withMemoizedTreeObservations to automatically re-render
- * when the tree changes.
+ * Subscribes to incremental character-level deltas from the tree via
+ * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged} to apply
+ * remote changes through {@link https://quilljs.com/docs/delta/ | Quill Delta} without
+ * a full setText on every change.
  */
-const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTree.Tree }) => {
+const TextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
 	// DOM element where Quill will mount its editor
 	const editorRef = useRef<HTMLDivElement>(null);
 	// Quill instance, persisted across renders to avoid re-initialization
@@ -46,71 +49,76 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 	// Guards against update loops between Quill and the tree
 	const isUpdatingRef = useRef<boolean>(false);
 
-	// Access tree content during render to establish observation.
-	// The HOC will automatically re-render when this content changes.
-	const currentText = root.fullString();
-
-	// Initialize Quill editor
+	// Initialize Quill editor. Runs once on mount.
+	// In React strict mode, effects run twice. The `!quillRef.current` check makes the second
+	// call a no-op, preventing double-initialization of Quill.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
-		if (editorRef.current && !quillRef.current) {
-			const quill = new Quill(editorRef.current, {
-				placeholder: "Start typing...",
-			});
-
-			// Set initial content from tree (add trailing newline to match Quill's convention)
-			const initialText = root.fullString();
-			if (initialText.length > 0) {
-				const textWithNewline = initialText.endsWith("\n") ? initialText : `${initialText}\n`;
-				quill.setText(textWithNewline);
-			}
-
-			// Listen to local Quill changes
-			quill.on("text-change", (_delta, _oldDelta, source) => {
-				if (source === "user" && !isUpdatingRef.current) {
-					isUpdatingRef.current = true;
-
-					// Get plain text from Quill and preserve trailing newline
-					const newText = quill.getText();
-					// TODO: Consider using delta from Quill to compute a more minimal update,
-					// and maybe add a debugAssert that the delta actually gets the strings synchronized.
-					syncTextToTree(root, newText);
-
-					isUpdatingRef.current = false;
-				}
-			});
-
-			quillRef.current = quill;
+		if (!editorRef.current || quillRef.current) {
+			return;
 		}
-		// In React strict mode, effects run twice. The `!quillRef.current` check above
-		// makes the second call a no-op, preventing double-initialization of Quill.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+
+		const quill = new Quill(editorRef.current, {
+			placeholder: "Start typing...",
+		});
+		quillRef.current = quill;
+
+		// Set initial content from tree (Quill requires a trailing newline).
+		const initialText = root.fullString();
+		const textWithNewline = initialText.endsWith("\n") ? initialText : `${initialText}\n`;
+		if (textWithNewline.length > 1) {
+			quill.setText(textWithNewline);
+		}
+
+		// Listen to local Quill changes — sync Quill → tree.
+		quill.on("text-change", (_delta, _oldDelta, source) => {
+			if (source === "user" && !isUpdatingRef.current) {
+				isUpdatingRef.current = true;
+				syncTextToTree(root, quill.getText());
+				isUpdatingRef.current = false;
+			}
+		});
 	}, []);
 
-	// Sync Quill when tree changes externally.
-	// We skip this if isUpdatingRef is true, meaning we caused the tree change ourselves
-	// via the text-change handler above - in that case Quill already has the correct content.
-	// No update is lost because isUpdatingRef is only true synchronously during our own
-	// handler execution, so Quill already reflects the change.
-	if (quillRef.current && !isUpdatingRef.current) {
-		const quillText = quillRef.current.getText();
-		// Normalize tree text to match Quill's trailing newline convention
-		const treeTextWithNewline = currentText.endsWith("\n") ? currentText : `${currentText}\n`;
+	// Subscribe to incremental tree changes — sync tree → Quill.
+	// Kept in a separate effect so it re-subscribes correctly after React strict mode cleanup,
+	// independent of the Quill initialization guard above.
+	useEffect(() => {
+		return root.onCharactersChanged((ops) => {
+			const quill = quillRef.current;
+			if (isUpdatingRef.current || !quill) {
+				return;
+			}
 
-		// Only update if content actually differs (avoids cursor jump on local edits)
-		if (quillText !== treeTextWithNewline) {
 			isUpdatingRef.current = true;
 
-			const selection = quillRef.current.getSelection();
-			quillRef.current.setText(treeTextWithNewline);
-			if (selection) {
-				const length = quillRef.current.getLength();
-				const newPosition = Math.min(selection.index, length - 1);
-				quillRef.current.setSelection(newPosition, 0);
+			if (ops === undefined) {
+				// Delta unavailable — fall back to full setText.
+				const text = root.fullString();
+				const normalized = text.endsWith("\n") ? text : `${text}\n`;
+				const selection = quill.getSelection();
+				quill.setText(normalized);
+				if (selection) {
+					const length = quill.getLength();
+					quill.setSelection(Math.min(selection.index, length - 1), 0);
+				}
+			} else {
+				// Translate TextOp[] to a Quill delta and apply incrementally.
+				const quillOps: Op[] = ops.map((op) => {
+					if (op.type === "retain") {
+						return { retain: op.count };
+					} else if (op.type === "insert") {
+						return { insert: op.text };
+					} else {
+						return { delete: op.count };
+					}
+				});
+				quill.updateContents({ ops: quillOps }, "api");
 			}
 
 			isUpdatingRef.current = false;
-		}
-	}
+		});
+	}, [root]);
 
 	return (
 		<div
@@ -146,4 +154,4 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 			/>
 		</div>
 	);
-});
+};

@@ -1565,11 +1565,22 @@ export namespace TextAsTree {
         charactersCopy(): string[];
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
+        onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
         removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
     }
     export interface Statics {
         fromString(value: string): Tree;
     }
+    export type TextOp = {
+        readonly type: "retain";
+        readonly count: number;
+    } | {
+        readonly type: "insert";
+        readonly text: string;
+    } | {
+        readonly type: "remove";
+        readonly count: number;
+    };
     const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
     export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }

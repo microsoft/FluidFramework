@@ -58,6 +58,13 @@ module.exports = (env = {}) => {
 				directory: path.join(__dirname, "dist"),
 			},
 			open: true,
+			proxy: [
+				{
+					context: ["/alfio", "/documents", "/deltas", "/repos", "/socket.io"],
+					target: "http://localhost:7070",
+					ws: true,
+				},
+			],
 		},
 		watchOptions: {
 			ignored: "**/node_modules/**",

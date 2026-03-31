@@ -4,11 +4,9 @@
  */
 
 import type { TextAsTree } from "@fluidframework/tree/internal";
-import { type ChangeEvent, type FC, useCallback, useRef } from "react";
+import { type ChangeEvent, type FC, useCallback, useEffect, useRef } from "react";
 
-import type { PropTreeNode } from "../../propNode.js";
-import { withMemoizedTreeObservations } from "../../useTree.js";
-
+import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import { syncTextToTree } from "./plainUtils.js";
 
 /**
@@ -18,7 +16,7 @@ import { syncTextToTree } from "./plainUtils.js";
  * @internal
  */
 export const MainView: FC<{ root: PropTreeNode<TextAsTree.Tree> }> = ({ root }) => {
-	return <PlainTextEditorView root={root} />;
+	return <PlainTextEditorView root={unwrapPropTreeNode(root)} />;
 };
 
 /**
@@ -26,85 +24,120 @@ export const MainView: FC<{ root: PropTreeNode<TextAsTree.Tree> }> = ({ root }) 
  * Uses TextAsTree for collaborative plain text storage.
  *
  * @remarks
- * This uses withMemoizedTreeObservations to automatically re-render
- * when the tree changes.
+ * Subscribes to incremental character-level deltas from the tree via
+ * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged} to apply
+ * remote changes to the textarea without a full re-read of the text.
  */
-const PlainTextEditorView = withMemoizedTreeObservations(
-	({ root }: { root: TextAsTree.Tree }) => {
-		// Reference to the textarea element
-		const textareaRef = useRef<HTMLTextAreaElement>(null);
-		// Guards against update loops between textarea and the tree
-		const isUpdatingRef = useRef<boolean>(false);
+const PlainTextEditorView: FC<{ root: TextAsTree.Tree }> = ({ root }) => {
+	// Reference to the textarea element
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	// Guards against update loops between textarea and the tree
+	const isUpdatingRef = useRef<boolean>(false);
 
-		// Access tree content during render to establish observation.
-		// The HOC will automatically re-render when this content changes.
-		const currentText = root.fullString();
+	// Subscribe to incremental tree changes and apply them to the textarea.
+	useEffect(() => {
+		return root.onCharactersChanged((ops) => {
+			if (isUpdatingRef.current || !textareaRef.current) {
+				return;
+			}
 
-		// Handle textarea changes - sync textarea → tree
-		const handleChange = useCallback(
-			(event: ChangeEvent<HTMLTextAreaElement>) => {
-				if (isUpdatingRef.current) {
-					return;
+			isUpdatingRef.current = true;
+
+			if (ops === undefined) {
+				// Delta unavailable — fall back to full re-read.
+				textareaRef.current.value = root.fullString();
+			} else {
+				// Apply ops incrementally to avoid a full O(N) re-read.
+				const textarea = textareaRef.current;
+				const selectionStart = textarea.selectionStart;
+				const selectionEnd = textarea.selectionEnd;
+
+				let newValue = "";
+				let readPos = 0;
+				const oldValue = textarea.value;
+				let newCursorStart = selectionStart;
+				let newCursorEnd = selectionEnd;
+
+				for (const op of ops) {
+					if (op.type === "retain") {
+						newValue += oldValue.slice(readPos, readPos + op.count);
+						readPos += op.count;
+					} else if (op.type === "insert") {
+						// Adjust cursor: shift right if insert is before or at cursor.
+						if (readPos <= selectionStart) {
+							newCursorStart += op.text.length;
+						}
+						if (readPos <= selectionEnd) {
+							newCursorEnd += op.text.length;
+						}
+						newValue += op.text;
+					} else {
+						// remove
+						// Adjust cursor: shift left by how much was removed before cursor.
+						const removeEnd = readPos + op.count;
+						if (removeEnd <= selectionStart) {
+							newCursorStart -= op.count;
+							newCursorEnd -= op.count;
+						} else if (readPos < selectionStart) {
+							const overlap = selectionStart - readPos;
+							newCursorStart -= overlap;
+							newCursorEnd -= overlap;
+						}
+						readPos += op.count;
+					}
 				}
 
-				isUpdatingRef.current = true;
+				// Append any tail not covered by ops (e.g. trailing retained content).
+				newValue += oldValue.slice(readPos);
 
-				const newText = event.target.value;
-				syncTextToTree(root, newText);
-
-				isUpdatingRef.current = false;
-			},
-			[root],
-		);
-
-		// Sync textarea when tree changes externally.
-		// We skip this if isUpdatingRef is true, meaning we caused the tree change ourselves
-		// via the handleChange above - in that case textarea already has the correct content.
-		if (textareaRef.current && !isUpdatingRef.current) {
-			const textareaValue = textareaRef.current.value;
-
-			// Only update if content actually differs (avoids cursor jump on local edits)
-			if (textareaValue !== currentText) {
-				isUpdatingRef.current = true;
-
-				// Preserve cursor position
-				const selectionStart = textareaRef.current.selectionStart;
-				const selectionEnd = textareaRef.current.selectionEnd;
-
-				textareaRef.current.value = currentText;
-
-				// Restore cursor position, clamped to new text length
-				const newPosition = Math.min(selectionStart, currentText.length);
-				const newEnd = Math.min(selectionEnd, currentText.length);
-				textareaRef.current.setSelectionRange(newPosition, newEnd);
-
-				isUpdatingRef.current = false;
+				textarea.value = newValue;
+				const clampedStart = Math.min(newCursorStart, newValue.length);
+				const clampedEnd = Math.min(newCursorEnd, newValue.length);
+				textarea.setSelectionRange(clampedStart, clampedEnd);
 			}
-		}
 
-		return (
-			<div
-				className="text-editor-container"
-				style={{ height: "100%", display: "flex", flexDirection: "column" }}
-			>
-				<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
-				<textarea
-					ref={textareaRef}
-					defaultValue={currentText}
-					onChange={handleChange}
-					placeholder="Start typing..."
-					style={{
-						flex: 1,
-						minHeight: "300px",
-						border: "1px solid #ccc",
-						borderRadius: "4px",
-						padding: "8px",
-						fontSize: "14px",
-						fontFamily: "inherit",
-						resize: "vertical",
-					}}
-				/>
-			</div>
-		);
-	},
-);
+			isUpdatingRef.current = false;
+		});
+	}, [root]);
+
+	// Handle textarea changes - sync textarea → tree
+	const handleChange = useCallback(
+		(event: ChangeEvent<HTMLTextAreaElement>) => {
+			if (isUpdatingRef.current) {
+				return;
+			}
+
+			isUpdatingRef.current = true;
+
+			syncTextToTree(root, event.target.value);
+
+			isUpdatingRef.current = false;
+		},
+		[root],
+	);
+
+	return (
+		<div
+			className="text-editor-container"
+			style={{ height: "100%", display: "flex", flexDirection: "column" }}
+		>
+			<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
+			<textarea
+				ref={textareaRef}
+				defaultValue={root.fullString()}
+				onChange={handleChange}
+				placeholder="Start typing..."
+				style={{
+					flex: 1,
+					minHeight: "300px",
+					border: "1px solid #ccc",
+					borderRadius: "4px",
+					padding: "8px",
+					fontSize: "14px",
+					fontFamily: "inherit",
+					resize: "vertical",
+				}}
+			/>
+		</div>
+	);
+};
