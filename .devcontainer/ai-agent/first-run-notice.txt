@@ -3,6 +3,14 @@ Welcome to Fluid Framework (AI-enabled profile)!
 This codespace is configured for AI-agent-assisted workflows with 32 CPUs and
 64 GB RAM. It includes additional CLI tooling (GitHub CLI, SSH, agency, repoverlay).
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!  IMPORTANT: To use AI agents, run the following command first:             !!
+!!                                                                            !!
+!!      pnpm install:agency                                                   !!
+!!                                                                            !!
+!!  Then open a NEW terminal for the agent aliases to be available.           !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 AI agent aliases (provided by agency):
   claude                Launch Claude Code via agency
   haiku / sonnet / opus Launch Claude with a specific model
@@ -29,8 +37,6 @@ Monorepo structure:
   build-tools/          Internal build tooling and release infrastructure
   examples/             Example applications and benchmarks
   experimental/         Experimental packages (not yet stable)
-
-NOTE: If agency is not installed, run: pnpm install:agency
 
 Full docs: https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace
 General:   https://fluidframework.com
