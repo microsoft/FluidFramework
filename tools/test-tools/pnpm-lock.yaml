@@ -24,8 +24,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.63.0
-        version: 0.63.0(@types/node@18.19.31)
+        specifier: ^0.64.0
+        version: 0.64.0(@types/node@18.19.31)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.1.0
         version: 6.1.0(eslint@8.57.1)(typescript@5.4.5)
@@ -113,8 +113,8 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.2.0':
     resolution: {integrity: sha512-KAES3hOge6htTmYCTjBObjhi1oaVkT+XPyFV7tgOgIicaS9PZgD9ErFV2wiFdWtZiqoThKFlZewfwWNd+mqeXg==}
 
-  '@fluid-tools/version-tools@0.63.0':
-    resolution: {integrity: sha512-XckRsHRPKunrcD4CtbqpHFbCrH/kIbRuyohSEckeTh2GVxaZW4eUj3NxyaKCn/hUq9qtGvhDhBbbfGlA/G2HiQ==}
+  '@fluid-tools/version-tools@0.64.0':
+    resolution: {integrity: sha512-PUak4Sh2k8VHZzGPb9YIY689wapXEyPT9pLFPCIbEDXvITQcI3V6eWbqDfcySEovkp83G/uxXZkBIrp/BE9ceA==}
     engines: {node: '>=20.19.0'}
     hasBin: true
 
@@ -122,8 +122,8 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.63.0':
-    resolution: {integrity: sha512-Zpp1X6gETBXSIP9mkhBjKTpY1qkNINQIdEhYRoo6bvnZ50mvSncEOBgHlEhS3vQh3vYc2XwUT8sGuVMVJCKhoA==}
+  '@fluidframework/build-tools@0.64.0':
+    resolution: {integrity: sha512-/QziCGc2g5ehW5bs1idjh8LKcNYzD/VY1Dv3Bo3/pnnOBKIdJ0YtN7OSt11ojWbc7giipFr8q0Ly65p8jnpKrw==}
     engines: {node: '>=20.19.0'}
     hasBin: true
 
@@ -2024,11 +2024,6 @@ packages:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
 
-  semver@7.7.3:
-    resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
-    engines: {node: '>=10'}
-    hasBin: true
-
   semver@7.7.4:
     resolution: {integrity: sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==}
     engines: {node: '>=10'}
@@ -2480,7 +2475,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/version-tools@0.63.0(@types/node@18.19.31)':
+  '@fluid-tools/version-tools@0.64.0(@types/node@18.19.31)':
     dependencies:
       '@oclif/core': 4.8.0
       '@oclif/plugin-autocomplete': 3.2.39
@@ -2498,9 +2493,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.63.0(@types/node@18.19.31)':
+  '@fluidframework/build-tools@0.64.0(@types/node@18.19.31)':
     dependencies:
-      '@fluid-tools/version-tools': 0.63.0(@types/node@18.19.31)
+      '@fluid-tools/version-tools': 0.64.0(@types/node@18.19.31)
       '@manypkg/get-packages': 2.2.2
       '@types/glob': 7.2.0
       async: 3.2.6
@@ -2520,7 +2515,7 @@ snapshots:
       picomatch: 4.0.3
       picospinner: 2.1.0
       rimraf: 6.1.3
-      semver: 7.7.3
+      semver: 7.7.4
       sort-package-json: 1.57.0
       ts-deepmerge: 7.0.3
       type-fest: 2.19.0
@@ -3587,7 +3582,7 @@ snapshots:
       esquery: 1.6.0
       object-deep-merge: 1.0.5
       parse-imports-exports: 0.2.4
-      semver: 7.7.3
+      semver: 7.7.4
       spdx-expression-parse: 4.0.0
     transitivePeerDependencies:
       - supports-color
@@ -3644,7 +3639,7 @@ snapshots:
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
       regjsparser: 0.10.0
-      semver: 7.7.3
+      semver: 7.7.4
       strip-indent: 3.0.0
 
   eslint-plugin-unused-imports@4.2.0(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.4.5))(eslint@8.57.1)(typescript@5.4.5))(eslint@8.57.1):
@@ -4625,8 +4620,6 @@ snapshots:
   semver@5.7.2: {}
 
   semver@6.3.1: {}
-
-  semver@7.7.3: {}
 
   semver@7.7.4: {}
 

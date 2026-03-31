@@ -545,8 +545,10 @@ stages:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
             FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{variables.pipelineIdentifierForTelemetry}}" }'
             ${{ if eq(endpointObject.endpointName, 'odsp') }}:
-              login__odsp__test__tenants: $(tenantCreds)
-              login__microsoft__clientId: $(appClientId)
+              token__package__import__location: $(token__package__import__location)
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ else }}:
               login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ if eq( endpointObject.endpointName, 'frs' ) }}:
@@ -612,7 +614,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'FF Pipeline Authentication'
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
@@ -625,12 +627,15 @@ stages:
           # Release the tenant back to the tenant pool
           - task: Bash@3
             displayName: 'Release tenant credentials'
+            env:
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
 
-                pnpm exec trips-cleanup --reservationId=$(stringBearerToken)
+                pnpm exec trips-cleanup --useFic
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
