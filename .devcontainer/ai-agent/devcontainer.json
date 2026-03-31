@@ -30,9 +30,7 @@
 			}
 		},
 		"codespaces": {
-			"openFiles": [
-				".devcontainer/ai-agent/GETTING_STARTED.md"
-			]
+			"openFiles": [".devcontainer/ai-agent/GETTING_STARTED.md"]
 		}
 	},
 	"containerEnv": {
