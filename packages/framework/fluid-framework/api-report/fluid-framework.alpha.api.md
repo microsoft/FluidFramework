@@ -476,6 +476,13 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     };
 }
 
+// @alpha @sealed
+export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
+    delete(key: K): void;
+    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    set(key: K, value: V): void;
+}
+
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];

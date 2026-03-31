@@ -36,6 +36,11 @@ declare type _fluidMap_to_fluidReadonlyMap = requireTrue<
 	isAssignableTo<FluidMap<string, number>, FluidReadonlyMap<string, number>>
 >;
 
+// FluidReadonlyMap is assignable to ReadonlyMap (the extra Symbol.toStringTag is compatible).
+declare type _fluidReadonlyMap_to_readonlyMap = requireTrue<
+	isAssignableTo<FluidReadonlyMap<string, number>, ReadonlyMap<string, number>>
+>;
+
 // Native Map is assignable to FluidReadonlyMap
 declare type _map_to_fluidReadonlyMap = requireTrue<
 	isAssignableTo<Map<string, number>, FluidReadonlyMap<string, number>>

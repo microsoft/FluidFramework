@@ -65,6 +65,7 @@ export type {
 	ErasedBaseType,
 	FluidIterable,
 	FluidIterableIterator,
+	FluidMap,
 	FluidReadonlyMap,
 } from "@fluidframework/core-interfaces/internal";
 

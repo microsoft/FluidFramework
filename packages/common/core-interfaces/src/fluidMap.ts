@@ -23,11 +23,11 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
 
 /**
  * Like TypeScript's built in `ReadonlyMap` type, except unaffected by TypeScript's version and configuration options.
- * Also, unlike the build in `ReadonlyMap`, this interface includes Symbol.toStringTag.
+ * Also, unlike the built in `ReadonlyMap`, this interface includes Symbol.toStringTag.
  *
  * @remarks
  * This exists so that Fluid has a `ReadonlyMap` type which is safe to implement that cannot be broken by changes to TypeScript's default ReadonlyMap type.
- * All behavior exposed through this interface should be compatible with the corresponding behavior of JavaScript ReadonlyMaps,
+ * All behavior exposed through this interface should be compatible with the corresponding behavior of built in ReadonlyMaps,
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `ReadonlyMap` type.
  *
