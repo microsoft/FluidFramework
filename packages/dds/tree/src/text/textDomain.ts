@@ -79,14 +79,6 @@ class TextNode
 		);
 		methods.exposeMethod(
 			TextNode,
-			"characters",
-			buildFunc({
-				description: "Gets an iterable over the characters currently in the text.",
-				returns: tf.array(tf.string()),
-			}),
-		);
-		methods.exposeMethod(
-			TextNode,
 			"charactersCopy",
 			buildFunc({
 				description: "Optimized way to get a copy of the characters in an array.",
