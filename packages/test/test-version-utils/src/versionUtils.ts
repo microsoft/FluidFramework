@@ -220,19 +220,6 @@ export function resolveVersion(requested: string, installed: boolean): string {
 	}
 }
 
-async function ensureModulePath(version: string, modulePath: string): Promise<void> {
-	const release = await lock(baseModulePath, { retries: { forever: true } });
-	try {
-		console.log(`Installing version ${version} at ${modulePath}`);
-		if (!existsSync(modulePath)) {
-			// Create the under the baseModulePath lock
-			mkdirSync(modulePath, { recursive: true });
-		}
-	} finally {
-		release();
-	}
-}
-
 /**
  * Ensures the requested package version is installed locally.
  *
@@ -253,8 +240,6 @@ export async function ensureInstalled(
 		return { version, modulePath };
 	}
 
-	await ensureModulePath(version, modulePath);
-
 	// Adjust package list based on the minVersion for each package. If the requested version is
 	// less than the minVersion, skip that package.
 	const adjustedPackageList = packageList
@@ -265,15 +250,25 @@ export async function ensureInstalled(
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}
 
-	// Release the base path but lock the modulePath so we can do parallel installs
-	const release = await lock(modulePath, { retries: { forever: true } });
+	// Ensure baseModulePath exists before locking it. isInstalled() guarantees this on the
+	// normal path, but when force=true we skip that call so we must ensure it explicitly.
+	await ensureInstalledJsonLazy;
+
+	// Serialize all installations under a single lock. Concurrent pnpm invocations conflict
+	// on pnpm's global content-addressable store; running them serially avoids this while
+	// still benefiting from the store cache for fast repeated installs.
+	const release = await lock(baseModulePath, { retries: { forever: true } });
 	try {
+		console.log(`Installing version ${version} at ${modulePath}`);
+		if (!existsSync(modulePath)) {
+			mkdirSync(modulePath, { recursive: true });
+		}
+
 		if (force) {
-			// remove version from install.json under the modulePath lock
 			await removeInstalled(version);
 		}
 
-		// Check installed status again under lock the modulePath lock
+		// Check installed status again under lock.
 		if (force || !(await isInstalled(version))) {
 			const options: ExecOptions = {
 				cwd: modulePath,
@@ -289,7 +284,7 @@ export async function ensureInstalled(
 			};
 
 			// Pin the isolated install directory to the same registry pnpm is using in the parent
-			// process and enforce a minimum package age. Writing these files before `pnpm init`
+			// process and enforce a minimum package age. Writing pnpm-workspace.yaml here
 			// makes pnpm treat modulePath as a workspace root so the settings are scoped here only.
 			const registry = getPnpmRegistry();
 			writeFileSync(
@@ -307,22 +302,14 @@ export async function ensureInstalled(
 				{ encoding: "utf8" },
 			);
 
-			// Install the packages
-			await new Promise<void>((resolve, reject) =>
-				execFile(pnpmCmd, ["init"], options, (error, stdout, stderr) => {
-					if (error) {
-						const errorString =
-							error instanceof Error
-								? `${error.message}\n${error.stack}`
-								: JSON.stringify(error);
-						reject(
-							new Error(
-								`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
-							),
-						);
-					}
-					resolve();
-				}),
+			// Write a minimal package.json so pnpm add has a manifest to update.
+			// Done with writeFileSync rather than `pnpm init` so that it is idempotent:
+			// `pnpm init` fails if package.json already exists (e.g. force=true on a previously
+			// installed version, or a revision bump that clears installed.json but leaves the dir).
+			writeFileSync(
+				path.join(modulePath, "package.json"),
+				JSON.stringify({ name: "legacy-compat-install", version: "1.0.0" }, undefined, 2),
+				{ encoding: "utf8" },
 			);
 			await new Promise<void>((resolve, reject) =>
 				execFile(
@@ -360,10 +347,8 @@ export async function ensureInstalled(
 		}
 		return { version, modulePath };
 	} catch (e) {
-		// rmdirSync recursive flags introduced in Node v12.10
-		// Remove the `as any` cast once node typing is updated.
 		try {
-			(rmdirSync as any)(modulePath, { recursive: true });
+			rmdirSync(modulePath, { recursive: true });
 		} catch (ex) {
 			// TODO: document why we are ignoring the error here
 		}
