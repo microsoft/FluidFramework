@@ -70,13 +70,9 @@ export interface IOutboxParameters {
 	 * JIT callback to generate an ID allocation op at flush time.
 	 * Called after rebase (if any), so the returned message has the correct refSeq.
 	 *
-	 * @param useUnfinalizedRange - If true, use `takeUnfinalizedCreationRange()` (for reconnect).
-	 * Otherwise use `takeNextCreationRange()` (normal flush).
 	 * @returns A LocalBatchMessage for the ID allocation op, or undefined if no IDs need allocating.
 	 */
-	readonly generateIdAllocationOp: (
-		useUnfinalizedRange: boolean,
-	) => LocalBatchMessage | undefined;
+	readonly generateIdAllocationOp: () => LocalBatchMessage | undefined;
 }
 
 /**
@@ -201,7 +197,6 @@ export class Outbox {
 	private readonly logger: ITelemetryLoggerExt;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
-	private useUnfinalizedRangeOnNextFlush = false;
 	private batchRebasesToReport = 5;
 	private rebasing = false;
 
@@ -332,15 +327,6 @@ export class Outbox {
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
-	/**
-	 * Signals that on the next JIT ID allocation, the outbox should use
-	 * `takeUnfinalizedCreationRange()` (comprehensive) instead of `takeNextCreationRange()` (incremental).
-	 * Used during reconnect so the first replayed batch includes all outstanding ID ranges.
-	 */
-	public requestUnfinalizedIdRanges(): void {
-		this.useUnfinalizedRangeOnNextFlush = true;
-	}
-
 	private addMessageToBatchManager(
 		batchManager: BatchManager,
 		message: LocalBatchMessage,
@@ -392,19 +378,14 @@ export class Outbox {
 			return;
 		}
 
-		// JIT ID allocation: generateJIT=true on both calls. takeNextCreationRange() is
-		// cumulative, so the first non-empty batch captures all pending IDs. The second
-		// call will return undefined (no remaining IDs). This is simpler than picking a target.
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
 			disableGroupedBatching: true,
 			resubmitInfo,
-			generateJIT: true,
 		});
 		this.flushInternal({
 			batchManager: this.mainBatch,
 			resubmitInfo,
-			generateJIT: true,
 		});
 	}
 
@@ -441,9 +422,8 @@ export class Outbox {
 		batchManager: BatchManager;
 		disableGroupedBatching?: boolean;
 		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
-		generateJIT?: boolean;
 	}): void {
-		const { batchManager, disableGroupedBatching = false, resubmitInfo, generateJIT } = params;
+		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
 		if (batchManager.empty) {
 			return;
 		}
@@ -472,18 +452,22 @@ export class Outbox {
 			// Note: Since this is happening in the same turn the ops were originally created with,
 			// and they haven't gone to PendingStateManager yet, we can just let them respect
 			// ContainerRuntime.inStagingMode.  So we do not plumb local 'staged' variable through here.
-			this.rebase(rawBatch, batchManager, generateJIT);
+			this.rebase(rawBatch, batchManager);
 			return;
 		}
 
-		// Generate ID Allocation ops just-in-time, after rebase (if any).
-		// This ensures the refSeq is correct (matching the rest of the batch) and that
-		// ID ranges aren't lost during rebase (since reSubmit drops IdAllocation ops).
-		// Only generate for non-staged batches — ID alloc ops are always non-staged.
-		if (generateJIT === true && !staged) {
-			const useUnfinalized = this.useUnfinalizedRangeOnNextFlush;
-			this.useUnfinalizedRangeOnNextFlush = false;
-			const idAllocMsg = this.params.generateIdAllocationOp(useUnfinalized);
+		// Did we disconnect? (i.e. is shouldSend false?)
+		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
+		const shouldSendNow = this.params.shouldSend() && !staged;
+
+		if (shouldSendNow) {
+			// Generate ID Allocation op just-in-time, after rebase (if any), and before addBatchMetadata,
+			// so that the prepended idAllocMsg is correctly marked as the first op in the batch.
+			// This ensures the refSeq is correct (matching the rest of the batch) and that
+			// ID ranges aren't lost during rebase (since reSubmit drops IdAllocation ops).
+			// Only generate for non-staged batches — ID alloc ops are always non-staged.
+			const idAllocMsg = this.params.generateIdAllocationOp();
 			if (idAllocMsg !== undefined) {
 				rawBatch = { ...rawBatch, messages: [idAllocMsg, ...rawBatch.messages] };
 			}
@@ -492,10 +476,7 @@ export class Outbox {
 		addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 
 		let clientSequenceNumber: number | undefined;
-		// Did we disconnect? (i.e. is shouldSend false?)
-		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
-		if (this.params.shouldSend() && !staged) {
+		if (shouldSendNow) {
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
@@ -518,11 +499,7 @@ export class Outbox {
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(
-		rawBatch: LocalBatch,
-		batchManager: BatchManager,
-		generateJIT?: boolean,
-	): void {
+	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
@@ -551,7 +528,7 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal({ batchManager, generateJIT });
+		this.flushInternal({ batchManager });
 		this.rebasing = false;
 	}
 

@@ -2064,15 +2064,11 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
-			generateIdAllocationOp: (
-				useUnfinalizedRange: boolean,
-			): LocalBatchMessage | undefined => {
+			generateIdAllocationOp: (): LocalBatchMessage | undefined => {
 				if (this._idCompressor === undefined) {
 					return undefined;
 				}
-				const idRange = useUnfinalizedRange
-					? this._idCompressor.takeUnfinalizedCreationRange()
-					: this._idCompressor.takeNextCreationRange();
+				const idRange = this._idCompressor.takeNextCreationRange();
 				if (idRange.ids === undefined) {
 					return undefined;
 				}
