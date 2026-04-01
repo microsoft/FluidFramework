@@ -62,7 +62,7 @@ export interface IStagingControllerEvents extends IEvent {
  *
  * @remarks
  * Implement this interface on objects placed in the container scope (or `HostUXTypes`)
- * so that interested code can retrieve the staging controller via the fluid object provider pattern.
+ * so that interested code can retrieve the staging controller via the Fluid object provider pattern.
  *
  * @legacy @alpha
  */

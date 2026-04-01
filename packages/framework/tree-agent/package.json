@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -115,6 +115,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"@fluidframework/type-factory": "workspace:~",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
