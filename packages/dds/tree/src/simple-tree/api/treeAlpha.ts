@@ -43,7 +43,7 @@ export interface NodeChangedDataDelta {
 	 * The sequential operations describing what changed in the array node.
 	 * @remarks
 	 * The value may be `undefined` when the document was updated in a way that required multiple
-	 * internal changes pass in a single operation (for example, a data change combined with a
+	 * internal change passes in a single operation (for example, a data change combined with a
 	 * schema upgrade).
 	 *
 	 * See {@link ArrayNodeDeltaOp} for op semantics.

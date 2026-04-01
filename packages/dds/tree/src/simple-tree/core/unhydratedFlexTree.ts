@@ -536,20 +536,26 @@ class UnhydratedRequiredField
 const dummyDetachedNodeId = { minor: 0 } satisfies DeltaDetachedNodeId;
 
 /**
- * Builds delta marks for an intra-field move expressed as sequential Quill-style ops.
+ * Builds {@link DeltaMark}s for an intra-field move.
  *
- * @remarks
- * A forward move (`sourceIndex < destIndex`) is expressed as:
- * `retain(sourceIndex), remove(count), retain(between), insert(count)`
+ * @example Forward move (`sourceIndex < destIndex`):
+ * ```
+ * retain(sourceIndex), detach(count), retain(between), attach(count)
+ * ```
  *
- * A backward move (`destIndex < sourceIndex`) is expressed as:
- * `retain(destIndex), insert(count), retain(between), remove(count)`
+ * @example Backward move (`destIndex < sourceIndex`):
+ * ```
+ * retain(destIndex), attach(count), retain(between), detach(count)
+ * ```
  */
 function buildUnhydratedMoveMarks(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
 ): readonly DeltaMark[] {
+	assert(sourceIndex >= 0, 0xbb9 /* sourceIndex must be non-negative */);
+	assert(count > 0, 0xbba /* count must be positive */);
+	assert(destIndex >= 0, 0xbbb /* destIndex must be non-negative */);
 	const marks: DeltaMark[] = [];
 	if (sourceIndex < destIndex) {
 		// Moving forward: source comes before destination in the original array.
