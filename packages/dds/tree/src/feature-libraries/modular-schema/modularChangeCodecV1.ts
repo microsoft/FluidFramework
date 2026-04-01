@@ -15,6 +15,7 @@ import {
 } from "../../codec/index.js";
 import {
 	newChangeAtomIdTransform,
+	offsetChangeAtomId,
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type ChangeEncodingContext,
@@ -800,17 +801,18 @@ function getFieldToRoots(
 	}
 
 	for (const entry of rootTable.oldToNewId.entries()) {
-		// XXX: We need to query using `entry.length`.
 		// Should `fieldToRoots` include renames that come after a detach?
-		const fieldId = rootTable.detachLocations.getFirst(entry.start, 1).value;
-		if (fieldId === undefined) {
-			// This is a rename of nodes detached by this changeset.
-		} else {
-			getOrAddInFieldRootMap(fieldToRoots, normalizeFieldId(fieldId, aliases)).renames.set(
-				entry.start,
-				entry.length,
-				entry.value,
-			);
+		for (const fieldEntry of rootTable.detachLocations.getAll2(entry.start, entry.length)) {
+			const fieldId = fieldEntry.value;
+			if (fieldId === undefined) {
+				// This is a rename of nodes detached by this changeset.
+			} else {
+				getOrAddInFieldRootMap(fieldToRoots, normalizeFieldId(fieldId, aliases)).renames.set(
+					offsetChangeAtomId(entry.start, fieldEntry.offset),
+					fieldEntry.length,
+					offsetChangeAtomId(entry.value, fieldEntry.offset),
+				);
+			}
 		}
 	}
 
