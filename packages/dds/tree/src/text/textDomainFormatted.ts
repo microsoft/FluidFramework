@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
-	mapCursorField,
+	forEachNodeSubsequence,
 	type FieldKey,
 	type ITreeCursorSynchronous,
 } from "../core/index.js";
@@ -223,9 +223,10 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 		return result;
 	}
 
-	public charactersCopy(): string[] {
-		return this.withBorrowedSequenceCursor((cursor) =>
-			mapCursorField(cursor, () => {
+	private getCharactersSubarray(startIndex: number, endIndex: number): string[] {
+		return this.withBorrowedSequenceCursor((cursor) => {
+			const result: string[] = [];
+			forEachNodeSubsequence(cursor, startIndex, endIndex, () => {
 				debugAssert(
 					() =>
 						cursor.type === FormattedTextAsTree.StringAtom.identifier ||
@@ -256,55 +257,25 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 				}
 				cursor.exitNode();
 				cursor.exitField();
-				return content;
-			}),
-		);
+				result.push(content);
+			});
+			return result;
+		});
+	}
+
+	public charactersCopy(): string[] {
+		return this.getCharactersSubarray(0, this.length);
 	}
 
 	public fullString(): string {
 		return this.charactersCopy().join("");
 	}
-	public getString(startIndex: number, endIndex?: number): string {
-		const arrayLength = this.length;
-		if (startIndex < 0 || startIndex >= arrayLength) {
-			return "";
-		}
-		return this.withBorrowedSequenceCursor((cursor) => {
-			const limit = Math.min(endIndex ?? arrayLength, arrayLength) - startIndex;
-			let result = "";
 
-			cursor.enterNode(startIndex);
-			for (let index = 0; index < limit; index++) {
-				if (index > 0 && !cursor.nextNode()) {
-					break;
-				}
-
-				cursor.enterField(EmptyKey);
-				cursor.enterNode(0);
-				switch (cursor.type) {
-					case FormattedTextAsTree.StringTextAtom.identifier: {
-						cursor.enterField(EmptyKey);
-						cursor.enterNode(0);
-						result += cursor.value as string;
-						cursor.exitNode();
-						cursor.exitField();
-						break;
-					}
-					case FormattedTextAsTree.StringLineAtom.identifier: {
-						result += "\n";
-						break;
-					}
-					default: {
-						fail(0xcde /* Unsupported node type in text array */, () => `${cursor.type}`);
-					}
-				}
-				cursor.exitNode();
-				cursor.exitField();
-			}
-			cursor.exitNode();
-			return result;
-		});
+	public getString(startIndex: number, endIndex: number = this.length): string {
+		validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getString");
+		return this.getCharactersSubarray(startIndex, endIndex).join("");
 	}
+
 	public getUniformRun(startIndex: number, endIndex: number = this.length): number {
 		validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getUniformRun");
 		if (endIndex === startIndex) {

@@ -95,6 +95,7 @@ import { FetchSource, MessageType } from "@fluidframework/driver-definitions/int
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -130,6 +131,7 @@ import type {
 	IContainerRuntimeBaseInternal,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
+	ContainerRuntimeBaseAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -834,6 +836,24 @@ export async function loadContainerRuntime(
 	return ContainerRuntime.loadRuntime(params);
 }
 
+/**
+ * Alpha variant of {@link loadContainerRuntime} that returns the runtime in an
+ * extendable object, allowing additional properties to be added in the future.
+ *
+ * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
+ * @returns An object containing the runtime.
+ *
+ * @legacy @alpha
+ */
+export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+	runtime: IContainerRuntime & ContainerRuntimeBaseAlpha & IRuntime;
+}> {
+	return ContainerRuntime.loadRuntime2({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+	});
+}
+
 const defaultMaxConsecutiveReconnects = 7;
 
 /**
@@ -909,14 +929,15 @@ export class ContainerRuntime
 		return ContainerRuntime.loadRuntime2({
 			...params,
 			registry: new FluidDataStoreRegistry(params.registryEntries),
-		});
+		}).then((r) => r.runtime);
 	}
 
 	/**
-	 * Load the stores from a snapshot and returns the runtime.
+	 * Load the stores from a snapshot and returns an object containing the runtime.
 	 * @remarks
 	 * Same as {@link ContainerRuntime.loadRuntime},
 	 * but with `registry` instead of `registryEntries` and more `runtimeOptions`.
+	 * Returns `{ runtime }` to allow future extensions (e.g. staging mode controls).
 	 */
 	public static async loadRuntime2(
 		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
@@ -935,7 +956,7 @@ export class ContainerRuntime
 			 */
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
-	): Promise<ContainerRuntime> {
+	): Promise<{ runtime: ContainerRuntime }> {
 		const {
 			context,
 			registry,
@@ -1164,6 +1185,7 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1286,7 +1308,7 @@ export class ContainerRuntime
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
 
-		return runtime;
+		return { runtime };
 	}
 
 	public readonly options: Record<string | number, unknown>;
@@ -1356,6 +1378,7 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
@@ -1371,6 +1394,7 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined {
 		// Expose ID Compressor only if it's On from the start.
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
@@ -1591,6 +1615,7 @@ export class ContainerRuntime
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
 		private readonly _storage: IContainerStorageService,
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,

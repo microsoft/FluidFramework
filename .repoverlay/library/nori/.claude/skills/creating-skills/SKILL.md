@@ -57,15 +57,6 @@ The script should be stored in the same place as the skill. Add a section to the
 SKILL.md on how to use the script. If the script is required to be called, add
 that instruction to the <required> block.
 
-# Template Variables
-
-These variables are automatically substituted when skills are installed:
-- `{{skills_dir}}` → actual path to skills directory (e.g., `/home/user/.claude/skills`)
-- `{{nori_install_dir}}` → actual install directory (e.g., `/home/user`)
-
-Use these in your skill content to create portable paths. This is especially
-necessary for making sure scripts are discoverable.
-
 # Tools and Code
 
 Document which tools are necessary for the skill.

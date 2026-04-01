@@ -22,14 +22,27 @@
 				"ms-codespaces-tools.ado-codespaces-auth",
 				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-docker",
-				"mutantdino.resourcemonitor"
-			]
+				"mutantdino.resourcemonitor",
+				"vsls-contrib.codetour"
+			],
+			"settings": {
+				"workbench.startupEditor": "none"
+			}
+		},
+		"codespaces": {
+			"openFiles": [".devcontainer/ai-agent/GETTING_STARTED.md"]
 		}
 	},
 	"containerEnv": {
 		"NODE_VERSION_OVERRIDE": "24"
 	},
-	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh && bash scripts/codespace-setup/ai-setup.sh",
+	"onCreateCommand": {
+		"node-setup": "bash scripts/codespace-setup/on-create.sh"
+	},
+	"postCreateCommand": {
+		"ai-setup": "bash scripts/codespace-setup/ai-setup.sh",
+		"welcome-notice": "sudo cp .devcontainer/ai-agent/first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt"
+	},
 	"remoteUser": "node",
 	"features": {
 		// Enables docker CLI inside the container

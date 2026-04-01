@@ -1,0 +1,32 @@
+Welcome to Fluid Framework's AI-enabled codespace!
+
+This codespace is configured for AI-agent-assisted workflows with 32 CPUs and
+64 GB RAM. It includes additional CLI tooling (GitHub CLI, SSH, agency, repoverlay).
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!  IMPORTANT: To use AI agents, run the following command first:             !!
+!!                                                                            !!
+!!      pnpm install:agency                                                   !!
+!!                                                                            !!
+!!  Then open a NEW terminal for the agent aliases to be available.           !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+AI agent aliases (provided by agency):
+  claude                Launch Claude Code via agency
+  haiku / sonnet / opus Launch Claude with a specific model
+  nori                  Switch to nori overlay and launch Claude
+                        Recommended for feature work, debugging, and bug fixing.
+  copilot               Launch GitHub Copilot via agency
+  copilot-ado           Copilot with Azure DevOps MCP
+  copilot-kusto         Copilot with Kusto MCP
+  copilot-oce           Copilot for On-Call Engineer workflows
+  copilot-work          Copilot with WorkIQ MCP
+
+Getting started:
+  pnpm install:agency   Install agency (required for AI agents)
+  pnpm install          Install all dependencies
+  pnpm build            Build all packages
+  pnpm test             Run tests
+  pnpm fluid-build .    Build only the current package and its dependencies
+
+More information on this codespace: https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace

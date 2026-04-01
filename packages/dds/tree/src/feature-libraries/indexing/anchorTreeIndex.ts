@@ -273,7 +273,10 @@ export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
 	public *allEntries(): IterableIterator<[TKey, TValue]> {
 		this.checkNotDisposed();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
-			assert(hasElement(nodes), "expected at least one node for each key in the index");
+			assert(
+				hasElement(nodes),
+				0xce9 /* expected at least one node for each key in the index */,
+			);
 			const value = this.getValue(nodes);
 			if (value !== undefined) {
 				yield [key, value];

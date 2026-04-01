@@ -413,14 +413,13 @@ stages:
           - task: AzureCLI@2
             displayName: 'Log in to retrieve tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'FF Pipeline Authentication'
               # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
                 set -eu -o pipefail
-
                 az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
 
           - task: Bash@3
@@ -433,7 +432,7 @@ stages:
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }}
+                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --useFic
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
@@ -446,9 +445,15 @@ stages:
             # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
             # The e2e test workload references the keys (login__*).
             ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
+              token__package__import__location: $(token__package__import__location)
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
               login__microsoft__clientId: $(appClientId)
               login__odspdf__test__tenants: $(tenantCreds)
             ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
+              token__package__import__location: $(token__package__import__location)
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
               login__microsoft__clientId: $(appClientId)
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
@@ -510,7 +515,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
             inputs:
-              azureSubscription: 'Fluid Framework Tests'
+              azureSubscription: 'FF Pipeline Authentication'
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
@@ -523,11 +528,14 @@ stages:
           # Release the tenant back to the tenant pool
           - task: Bash@3
             displayName: 'Release tenant credentials'
+            env:
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
-                pnpm exec trips-cleanup --reservationId=$(stringBearerToken) --odspEndpoint=${{ parameters.odspTenantType }}
+                pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures

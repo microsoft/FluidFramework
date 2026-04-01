@@ -1,5 +1,9 @@
 # @fluidframework/tree-agent-ses
 
+## 2.92.0
+
+Dependency updates only.
+
 ## 2.91.0
 
 Dependency updates only.
