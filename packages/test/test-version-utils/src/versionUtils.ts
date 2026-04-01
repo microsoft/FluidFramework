@@ -270,25 +270,20 @@ export async function ensureInstalled(
 			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
-				execFile(
-					pnpmCmd,
-					["init"],
-					options,
-					(error, stdout, stderr) => {
-						if (error) {
-							const errorString =
-								error instanceof Error
-									? `${error.message}\n${error.stack}`
-									: JSON.stringify(error);
-							reject(
-								new Error(
-									`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
-								),
-							);
-						}
-						resolve();
-					},
-				),
+				execFile(pnpmCmd, ["init"], options, (error, stdout, stderr) => {
+					if (error) {
+						const errorString =
+							error instanceof Error
+								? `${error.message}\n${error.stack}`
+								: JSON.stringify(error);
+						reject(
+							new Error(
+								`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
+							),
+						);
+					}
+					resolve();
+				}),
 			);
 			await new Promise<void>((resolve, reject) =>
 				execFile(
