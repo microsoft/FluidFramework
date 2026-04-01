@@ -19,7 +19,6 @@
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
-		"postinstall": "cd ../../common/build/eslint-config-fluid && pnpm install",
 		"lint": "npm run prettier && npm run ci:eslint",
 		"lint:fix": "npm run prettier:fix && pnpm run -r --stream --no-sort lint:fix",
 		"policy-check": "cd ../.. && npm run policy-check",
@@ -50,7 +49,7 @@
 		"@fluid-tools/build-cli": "^0.64.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.64.0",
-		"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
+		"@fluidframework/eslint-config-fluid": "^9.0.0",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",
@@ -90,7 +89,6 @@
 			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2."
 		],
 		"overrides": {
-			"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
 			"diff@>=5 <6": "^5.2.2",
 			"diff@>=7 <8": "^8.0.3",
 			"diff@>=8 <9": "^8.0.3",
