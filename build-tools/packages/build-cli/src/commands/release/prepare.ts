@@ -70,7 +70,7 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 
 		this.logHr();
 		for (const [name, check] of allChecks) {
-			this.log(chalk.gray(`Running check: ${name}`));
+			this.info(chalk.gray(`Running check: ${name}`));
 			// eslint-disable-next-line no-await-in-loop -- the checks are supposed to run serially
 			let checkResult: CheckResult;
 			try {
