@@ -8,11 +8,16 @@ import type { FieldSchema, TreeNodeSchema } from "@fluidframework/tree";
 import {
 	ArrayNodeSchema,
 	MapNodeSchema,
+	normalizeAllowedTypes,
 	ObjectNodeSchema,
 	RecordNodeSchema,
 } from "@fluidframework/tree/alpha";
 import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
-import type { SimpleLeafNodeSchema } from "@fluidframework/tree/internal";
+import type {
+	AllowedTypeMetadata,
+	AllowedTypesFull,
+	SimpleLeafNodeSchema,
+} from "@fluidframework/tree/internal";
 import {
 	isTypeFactoryType,
 	type TypeFactoryOptional,
@@ -49,6 +54,7 @@ interface BindingIntersectionResult {
 }
 
 interface TypeExpression {
+	staged?: boolean;
 	precedence: TypePrecedence;
 	text: string;
 }
@@ -207,14 +213,18 @@ export function renderSchemaTypeScript(
 	}
 
 	function renderFieldLine(name: string, field: FieldSchema): string[] {
-		const { comment, optional, type } = describeField(field);
+		const { comment, optional, type, setType } = describeField(field);
 		const lines: string[] = [];
 		if (comment !== undefined && comment !== "") {
 			for (const note of comment.split("\n")) {
 				lines.push(`// ${note}`);
 			}
 		}
-		lines.push(`${name}${optional ? "?" : ""}: ${type};`);
+		if (setType === undefined) {
+			lines.push(`${name}${optional ? "?" : ""}: ${type};`);
+		} else {
+			lines.push(`get ${name}(): ${type};\n\tset ${name}(value: ${setType});`);
+		}
 		return lines;
 	}
 
@@ -222,8 +232,10 @@ export function renderSchemaTypeScript(
 		comment?: string;
 		optional: boolean;
 		type: string;
+		setType?: string;
 	} {
-		const allowedTypes = renderAllowedTypes(field.allowedTypeSet);
+		const normalizedAllowedTypes = normalizeAllowedTypes(field.allowedTypes);
+		const allowedTypes = renderAnnotatedAllowedTypes(normalizedAllowedTypes);
 		const type = formatExpression(allowedTypes);
 		const optional = field.kind !== FieldKind.Required;
 		const customMetadata = field.metadata.custom as
@@ -260,6 +272,20 @@ export function renderSchemaTypeScript(
 		}
 
 		const description = field.metadata?.description;
+
+		if (allowedTypes.staged === true) {
+			const { types } = normalizedAllowedTypes.evaluate();
+			const nonStagedSchemas = types
+				.filter(({ metadata }) => metadata.stagedSchemaUpgrade === undefined)
+				.map(({ type: nodeSchema }) => nodeSchema);
+			const getType = formatExpression(allowedTypes, TypePrecedence.Union);
+			const setType = formatExpression(
+				renderAllowedTypes(nonStagedSchemas),
+				TypePrecedence.Union,
+			);
+			return { optional, type: getType, setType };
+		}
+
 		return {
 			optional,
 			type,
@@ -333,14 +359,42 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderTypeReference(schema: TreeNodeSchema): TypeExpression {
+	function renderAnnotatedAllowedTypes(allowedTypes: AllowedTypesFull): TypeExpression {
+		const { types } = allowedTypes.evaluate();
+		const expressions: TypeExpression[] = [];
+		for (const { metadata, type } of types) {
+			expressions.push(renderTypeReference(type, metadata));
+		}
+		if (expressions.length === 0) {
+			return { precedence: TypePrecedence.Object, text: "never" };
+		}
+		if (expressions.length === 1) {
+			return expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" };
+		}
+		const staged = expressions.some((e) => e.staged === true) ? true : undefined;
+		return {
+			staged,
+			precedence: TypePrecedence.Union,
+			text: expressions
+				.map((expr) => formatExpression(expr, TypePrecedence.Union))
+				.join(" | "),
+		};
+	}
+
+	function renderTypeReference(
+		schema: TreeNodeSchema,
+		metadata?: AllowedTypeMetadata,
+	): TypeExpression {
+		const staged = metadata?.stagedSchemaUpgrade === undefined ? undefined : true;
 		if (isNamedSchema(schema.identifier)) {
 			return {
+				staged,
 				precedence: TypePrecedence.Object,
 				text: resolver.resolve(schema),
 			};
 		}
-		return renderInlineSchema(schema);
+		const result = renderInlineSchema(schema);
+		return staged === undefined ? result : { ...result, staged };
 	}
 
 	function renderInlineSchema(schema: TreeNodeSchema): TypeExpression {

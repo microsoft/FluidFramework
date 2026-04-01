@@ -9,6 +9,7 @@ import {
 	getSimpleSchema,
 	independentView,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -372,6 +373,31 @@ type MapWithProperty = Map<string, string> & {
 			schemaText.includes("interface Foo_2_2"),
 			"Natural Foo_2 becomes Foo_2_2 since Foo_2 was taken",
 		);
+	});
+
+	describe("handles staged allowed types", () => {
+		const sfBeta = new SchemaFactoryBeta("staged-type-tests");
+
+		it("for object nodes", () => {
+			class ObjWithStagedType extends sfBeta.object("ObjWithStagedType", {
+				foo: SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			}) {}
+
+			const objectDomainSchemaString = getDomainSchemaString(ObjWithStagedType, {
+				foo: "test",
+			});
+			assert.deepEqual(
+				objectDomainSchemaString,
+				`interface ObjWithStagedType {
+    get foo(): string | number;
+	set foo(value: string);
+}
+`,
+			);
+		});
 	});
 });
 
