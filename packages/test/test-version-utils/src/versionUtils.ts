@@ -122,8 +122,10 @@ async function removeInstalled(version: string): Promise<void> {
 
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
-const npmCmd =
-	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
+// pnpm is used instead of npm for package installation to enable security flags (--ignore-scripts, --prefer-offline).
+// The registry is inherited from the process environment: in CI, NPM_CONFIG_USERCONFIG points to an .npmrc configured
+// for the Azure Artifacts feed, which pnpm honors the same way npm does.
+const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 /**
  * Resolves a version range or alias to a specific version number.
@@ -166,18 +168,18 @@ export function resolveVersion(requested: string, installed: boolean): string {
 		let result: string | undefined;
 		try {
 			result = execFileSync(
-				npmCmd,
-				["v", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
+				pnpmCmd,
+				["view", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
 				{
 					encoding: "utf8",
-					// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+					// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
 					shell: true,
 				},
 			);
 		} catch (error: any) {
 			debugger;
 			throw new Error(
-				`Error while running: ${npmCmd} v "@fluidframework/container-loader@${requested}" version --json`,
+				`Error while running: ${pnpmCmd} view "@fluidframework/container-loader@${requested}" version --json`,
 			);
 		}
 		if (result === "" || result === undefined) {
@@ -262,17 +264,15 @@ export async function ensureInstalled(
 					// will otherwise propagate to these commands but fail to resolve.
 					NODE_OPTIONS: "",
 				},
-				// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+				// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
 				// @ts-expect-error ExecOptions does not acknowledge boolean for `shell` as a valid option (at least as of @types/node@18.19.1)
 				shell: true,
 			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
 				execFile(
-					npmCmd,
-					// Added --verbose to try to troubleshoot AB#6195.
-					// We should probably remove it if when find the root cause and fix for that.
-					["init", "--yes", "--verbose"],
+					pnpmCmd,
+					["init"],
 					options,
 					(error, stdout, stderr) => {
 						if (error) {
@@ -292,13 +292,15 @@ export async function ensureInstalled(
 			);
 			await new Promise<void>((resolve, reject) =>
 				execFile(
-					npmCmd,
-					// Added --verbose to try to troubleshoot AB#6195.
-					// We should probably remove it when we find the root cause and fix for that.
+					pnpmCmd,
 					[
-						"i",
-						"--no-package-lock",
-						"--verbose",
+						"add",
+						// Prevent postinstall/preinstall scripts from running in installed packages,
+						// which would otherwise execute arbitrary code from newly-published releases.
+						"--ignore-scripts",
+						// Use the pnpm content-addressable store cache when available, reducing
+						// exposure to packages published since the cache was last populated.
+						"--prefer-offline",
 						...adjustedPackageList.map((pkg) => `${pkg}@${version}`),
 					],
 					options,
