@@ -4,6 +4,14 @@
  */
 
 import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ExposedMethods,
+	type IExposedMethods,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/type-factory/alpha";
+import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -26,8 +34,71 @@ class TextNode
 	extends sf.object("Text", {
 		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 	})
-	implements TextAsTree.Members
+	implements TextAsTree.Members, IExposedMethods
 {
+	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+		methods.exposeMethod(
+			TextNode,
+			"insertAt",
+			buildFunc(
+				{
+					description: "Insert characters into the text at the given character index.",
+					returns: tf.void(),
+				},
+				["index", tf.number()],
+				["additionalCharacters", tf.string()],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"removeRange",
+			buildFunc(
+				{
+					description: "Remove a range of characters from the text by character index.",
+					returns: tf.void(),
+				},
+				["startIndex", tf.union([tf.number(), tf.undefined()])],
+				["endIndex", tf.union([tf.number(), tf.undefined()])],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"fullString",
+			buildFunc({
+				description: "Copy the content of this text node into a string.",
+				returns: tf.string(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"characterCount",
+			buildFunc({
+				description: "Gets the number of characters currently in the text.",
+				returns: tf.number(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"characters",
+			buildFunc({
+				description: "Gets an iterable over the characters currently in the text.",
+				returns: tf.array(tf.string()),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"charactersCopy",
+			buildFunc({
+				description: "Optimized way to get a copy of the characters in an array.",
+				returns: tf.array(tf.string()),
+			}),
+		);
+	}
+
+	public [exposeMethodsSymbol](methods: ExposedMethods): void {
+		TextNode[exposeMethodsSymbol](methods);
+	}
+
 	public insertAt(index: number, additionalCharacters: string): void {
 		this.content.insertAt(
 			index,
