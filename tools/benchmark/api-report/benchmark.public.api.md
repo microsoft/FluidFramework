@@ -108,6 +108,9 @@ export function finishLoggingReport(reports: SuiteData, incremental: boolean, ou
 // @public
 export function formatResultArrayTable(data: SuiteData): string | undefined;
 
+// @public
+export function fullName(parent: ReportPath | undefined, benchmarkName?: string): string;
+
 // @public @input
 export interface HookArguments {
     // @deprecated
@@ -121,6 +124,9 @@ export type HookFunction = () => void | Promise<unknown>;
 
 // @public
 export const isInPerformanceTestingMode: boolean;
+
+// @public
+export function isResultError(result: BenchmarkResult): result is BenchmarkError;
 
 // @public
 export function isSuiteNode(item: ReportSuite | ReportEntry): item is ReportSuite;
@@ -268,5 +274,8 @@ export enum ValueType {
     // (undocumented)
     SmallerIsBetter = "SmallerIsBetter"
 }
+
+// @public
+export function visitSuitesArray(report: SuiteData, callback: (data: SuiteData) => void): void;
 
 ```
