@@ -460,7 +460,7 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		const shouldSendNow = this.params.shouldSend() && !staged;
-
+		let clientSequenceNumber: number | undefined;
 		if (shouldSendNow) {
 			// Generate ID Allocation op just-in-time, after rebase (if any), and before addBatchMetadata,
 			// so that the prepended idAllocMsg is correctly marked as the first op in the batch.
@@ -471,12 +471,7 @@ export class Outbox {
 			if (idAllocMsg !== undefined) {
 				rawBatch = { ...rawBatch, messages: [idAllocMsg, ...rawBatch.messages] };
 			}
-		}
-
-		addBatchMetadata(rawBatch, resubmitInfo?.batchId);
-
-		let clientSequenceNumber: number | undefined;
-		if (shouldSendNow) {
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
 
 			clientSequenceNumber = this.sendBatch(virtualizedBatch);
@@ -485,6 +480,8 @@ export class Outbox {
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
 		}
+
+		addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 
 		this.params.pendingStateManager.onFlushBatch(
 			rawBatch.messages,
