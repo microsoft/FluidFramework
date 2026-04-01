@@ -98,6 +98,8 @@ export {
 	type ContainerRuntimeBaseAlpha,
 	type CommitStagedChangesOptionsInternal,
 	type IContainerRuntimeBaseInternal,
+	type IProvideStagingController,
 	type IStagingController,
+	type IStagingControllerEvents,
 	asLegacyAlpha,
 } from "./stagingMode.js";

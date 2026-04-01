@@ -42,7 +42,7 @@ export class BaseContainerRuntimeFactoryAlpha extends BaseContainerRuntimeFactor
 	 * This is available after {@link BaseContainerRuntimeFactoryAlpha.preInitialize} has been called.
 	 * It is the exclusive interface for entering/exiting staging mode.
 	 */
-	public stagingController: IStagingController | undefined;
+	public stagingController!: IStagingController;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super(props);

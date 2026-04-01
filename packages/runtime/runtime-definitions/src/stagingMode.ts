@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+
 import type { IContainerRuntimeBase } from "./dataStoreContext.js";
 
 /**
@@ -39,6 +41,36 @@ export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 }
 
 /**
+ * Events emitted by {@link IStagingController}.
+ *
+ * @legacy @alpha
+ */
+export interface IStagingControllerEvents extends IEvent {
+	/**
+	 * Emitted when staging mode is entered or exited.
+	 *
+	 * @param event - The event name: `"stagingModeChanged"`.
+	 * @param listener - Called with `true` when staging mode is entered, `false` when exited.
+	 *
+	 * @eventProperty
+	 */
+	(event: "stagingModeChanged", listener: (active: boolean) => void): void;
+}
+
+/**
+ * Provider for {@link IStagingController}.
+ *
+ * @remarks
+ * Implement this interface on objects placed in the container scope (or `HostUXTypes`)
+ * so that interested code can retrieve the staging controller via the fluid object provider pattern.
+ *
+ * @legacy @alpha
+ */
+export interface IProvideStagingController {
+	readonly IStagingController: IStagingController;
+}
+
+/**
  * Controller for managing staged changes across the lifetime of a container.
  *
  * @remarks
@@ -46,13 +78,17 @@ export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
  * The holder of this object is the exclusive controller of staging mode —
  * no other code path can enter or exit staging mode.
  *
- * Use {@link ContainerRuntimeBaseAlpha.inStagingMode} on the container runtime to check
- * whether the container is currently in staging mode.
- *
  * @legacy @alpha
  * @sealed
  */
-export interface IStagingController {
+export interface IStagingController
+	extends IProvideStagingController,
+		IEventProvider<IStagingControllerEvents> {
+	/**
+	 * Whether the container is currently in staging mode.
+	 */
+	readonly inStagingMode: boolean;
+
 	/**
 	 * Enter staging mode. While in staging mode, ops are buffered locally
 	 * and not sent to the ordering service until

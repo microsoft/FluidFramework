@@ -281,6 +281,12 @@ export interface IProvideFluidDataStoreRegistry {
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
+// @alpha @legacy
+export interface IProvideStagingController {
+    // (undocumented)
+    readonly IStagingController: IStagingController;
+}
+
 // @beta @sealed @legacy
 export interface IRuntimeMessageCollection {
     readonly envelope: ISequencedMessageEnvelope;
@@ -304,9 +310,16 @@ export interface IRuntimeStorageService {
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @alpha @sealed @legacy
-export interface IStagingController {
+export interface IStagingController extends IProvideStagingController, IEventProvider<IStagingControllerEvents> {
     enterStagingMode(): void;
     exitStagingMode(action: "commit" | "discard"): void;
+    readonly inStagingMode: boolean;
+}
+
+// @alpha @legacy
+export interface IStagingControllerEvents extends IEvent {
+    // @eventProperty
+    (event: "stagingModeChanged", listener: (active: boolean) => void): void;
 }
 
 // @beta @legacy
