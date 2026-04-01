@@ -311,6 +311,11 @@ export async function getPreReleaseDependencies(
 			// Resolve catalog: references before passing to semver
 			const resolvedVersion = resolveCatalogVersion(depName, depVersion, catalogs);
 
+			// Skip workspace versions: assume they are fine.
+			if (resolvedVersion.startsWith("workspace:")) {
+				continue;
+			}
+
 			// Convert the range into the minimum version
 			const minVer = semver.minVersion(resolvedVersion);
 			if (minVer === null) {
