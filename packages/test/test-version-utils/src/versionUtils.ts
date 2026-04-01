@@ -33,7 +33,9 @@ const getModulePath = (version: string): string => path.join(baseModulePath, ver
 const resolutionCache = new Map<string, string>();
 
 // Increment the revision if we want to force installation (e.g. package list changed)
-export const revision = 4;
+// Bumped to 5: switched from npm to pnpm with node-linker=hoisted; cached installs with the
+// old npm flat layout or the pnpm isolated layout must be reinstalled.
+export const revision = 5;
 
 interface InstalledJson {
 	revision: number;
@@ -123,9 +125,28 @@ async function removeInstalled(version: string): Promise<void> {
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
 // pnpm is used instead of npm for package installation to enable security flags (--ignore-scripts, --prefer-offline).
-// The registry is inherited from the process environment: in CI, NPM_CONFIG_USERCONFIG points to an .npmrc configured
-// for the Azure Artifacts feed, which pnpm honors the same way npm does.
 const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+
+// Minimum age (in minutes) a package version must have before pnpm will install it.
+// This guards against supply-chain attacks that exploit the window between a compromised publish and detection.
+// 1 day expressed in minutes (requires pnpm >= 10.16.0).
+// N-1/N-2 Fluid versions are always older than this threshold, so compatibility testing is unaffected.
+const minimumReleaseAgeMinutes = 1 * 24 * 60;
+
+// Queries the registry that pnpm is currently configured to use, so that the isolated install
+// directory can be explicitly pinned to the same registry. In CI, pnpm is configured via
+// NPM_CONFIG_USERCONFIG to use the Azure Artifacts feed; locally it falls back to the public registry.
+let cachedPnpmRegistry: string | undefined;
+function getPnpmRegistry(): string {
+	if (cachedPnpmRegistry === undefined) {
+		cachedPnpmRegistry = execFileSync(pnpmCmd, ["config", "get", "registry"], {
+			encoding: "utf8",
+			// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+			shell: true,
+		}).trim();
+	}
+	return cachedPnpmRegistry;
+}
 
 /**
  * Resolves a version range or alias to a specific version number.
@@ -268,6 +289,26 @@ export async function ensureInstalled(
 				// @ts-expect-error ExecOptions does not acknowledge boolean for `shell` as a valid option (at least as of @types/node@18.19.1)
 				shell: true,
 			};
+
+			// Pin the isolated install directory to the same registry pnpm is using in the parent
+			// process and enforce a minimum package age. Writing these files before `pnpm init`
+			// makes pnpm treat modulePath as a workspace root so the settings are scoped here only.
+			const registry = getPnpmRegistry();
+			writeFileSync(
+				path.join(modulePath, ".npmrc"),
+				// node-linker=hoisted gives a flat node_modules layout (npm-compatible), which
+				// loadPackage() requires to resolve both direct and transitive dependencies by
+				// their package name. Without this, pnpm's default isolated layout places
+				// transitive deps under node_modules/.pnpm/ and they cannot be found.
+				`registry=${registry}\nnode-linker=hoisted\n`,
+				{ encoding: "utf8" },
+			);
+			writeFileSync(
+				path.join(modulePath, "pnpm-workspace.yaml"),
+				`minimumReleaseAge: ${minimumReleaseAgeMinutes}\n`,
+				{ encoding: "utf8" },
+			);
+
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
 				execFile(pnpmCmd, ["init"], options, (error, stdout, stderr) => {
