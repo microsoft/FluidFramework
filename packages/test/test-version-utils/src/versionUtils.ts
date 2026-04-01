@@ -138,13 +138,11 @@ const minimumReleaseAgeMinutes = 1 * 24 * 60;
 // NPM_CONFIG_USERCONFIG to use the Azure Artifacts feed; locally it falls back to the public registry.
 let cachedPnpmRegistry: string | undefined;
 function getPnpmRegistry(): string {
-	if (cachedPnpmRegistry === undefined) {
-		cachedPnpmRegistry = execFileSync(pnpmCmd, ["config", "get", "registry"], {
-			encoding: "utf8",
-			// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-			shell: true,
-		}).trim();
-	}
+	cachedPnpmRegistry ??= execFileSync(pnpmCmd, ["config", "get", "registry"], {
+		encoding: "utf8",
+		// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+		shell: true,
+	}).trim();
 	return cachedPnpmRegistry;
 }
 
