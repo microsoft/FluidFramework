@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/tree-agent-langchain",
+	"name": "@fluidframework/type-factory",
 	"version": "2.93.0",
-	"description": "LangChain integration helpers for @fluidframework/tree-agent",
+	"description": "Shared types for exposing schema methods and properties to an LLM agent",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/framework/tree-agent-langchain"
+		"directory": "packages/framework/type-factory"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -110,10 +110,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/tree-agent": "workspace:~",
-		"@fluidframework/type-factory": "workspace:~",
-		"@langchain/core": "^0.3.80"
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
@@ -122,13 +119,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
-		"@langchain/anthropic": "^0.3.24",
-		"@langchain/google-genai": "^0.2.16",
-		"@langchain/openai": "^0.6.12",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
