@@ -671,12 +671,12 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel" },
+				{ eventName: "RedirectRedeemFallback" },
 				{
 					eventName: "RedeemShareLink_end",
 					details:
 						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":false}',
 				},
-				{ eventName: "RedirectRedeemFallback" },
 			]),
 			"Should have redeemed sharing link before re-throwing the redirection error",
 		);
