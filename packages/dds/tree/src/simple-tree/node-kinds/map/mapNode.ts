@@ -165,39 +165,13 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
  */
 export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
-		TreeNode {
-	/**
-	 * Adds or updates an entry in the map with a specified `key` and a `value`.
-	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 *
-	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNodeAlpha.delete} with that key.
-	 */
-	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
-
-	/**
-	 * Removes the specified element from this map by its `key`.
-	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
-	 *
-	 * @privateRemarks
-	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
-	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
-	 * is more likely to create issues / promote bad usage patterns than offer useful information.
-	 *
-	 * @param key - The key of the element to remove from the map.
-	 */
-	delete(key: string): void;
-}
+		TreeNode,
+		Pick<TreeMapNode<T>, "set" | "delete"> {}
 
 // TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
 // This is not ideal, but no alternatives are possible.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const handler: ProxyHandler<TreeMapNode<any>> = {
+const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {
 	getPrototypeOf: () => {
 		return Map.prototype;
 	},
@@ -281,7 +255,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			yield value;
 		}
 	}
-	public forEach<TThis extends TreeMapNode<T>>(
+	public forEach<TThis extends TreeMapNodeAlpha<T>>(
 		this: TThis,
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
@@ -325,7 +299,8 @@ export function mapSchema<
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 	const persistedMetadata = nodeOptions.persistedMetadata;
 
-	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
+	class Schema extends CustomMapNodeBase<T> implements TreeMapNodeAlpha<T> {
+		public readonly [Symbol.toStringTag] = "MapSchema";
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
