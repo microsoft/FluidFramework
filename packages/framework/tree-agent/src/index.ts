@@ -40,7 +40,7 @@ export type {
 	Context,
 } from "./api.js";
 export { llmDefault } from "./utils.js";
-export { type BindableSchema, type ArgsTuple } from "./methodBinding.js";
+export { type BindableSchema } from "./methodBinding.js";
 export { typeFactory } from "./treeAgentTypes.js";
 
 // Re-export APIs that were moved to @fluidframework/type-factory to avoid breaking changes.
@@ -50,6 +50,7 @@ export {
 	isTypeFactoryType,
 	type ExposedMethods,
 	type Arg,
+	type ArgsTuple,
 	type FunctionDef,
 	type MethodKeys,
 	type Ctor,

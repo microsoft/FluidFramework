@@ -6,8 +6,7 @@
 
 export { Arg }
 
-// @alpha
-export type ArgsTuple<T extends readonly Arg_2[]> = T extends readonly [infer Single extends Arg_2] ? [Single[1]] : T extends readonly [infer Head extends Arg_2, ...infer Tail extends readonly Arg_2[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
+export { ArgsTuple }
 
 // @alpha
 export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: ViewOrTree<TSchema>, code: string) => Promise<void>;
