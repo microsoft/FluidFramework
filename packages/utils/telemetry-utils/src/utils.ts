@@ -38,7 +38,7 @@ export interface ISampledTelemetryLogger extends TelemetryLoggerExt {
 }
 
 /**
- * Wraps around an existing logger matching the {@link TelemetryLoggerExt} interface and provides the ability to only log a subset of events using a sampling strategy provided by an ${@link IEventSampler}.
+ * Wraps around an existing logger matching the {@link TelemetryLoggerExt} interface and provides the ability to only log a subset of events using a sampling strategy provided by an {@link IEventSampler}.
  * You can chose to not provide an event sampler which is effectively a no-op, meaning that it will be treated as if the sampler always returns true.
  *
  * @remarks

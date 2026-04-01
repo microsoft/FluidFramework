@@ -581,8 +581,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				},
 			};
 		})();
-		const idCompressorLoger = createSampledLogger(this.loggerInternal, idCompressorEventSampler);
-		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, idCompressorLoger);
+		const idCompressorLogger = createSampledLogger(this.loggerInternal, idCompressorEventSampler);
+		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, idCompressorLogger);
 		this.editLogSize = options.inMemoryHistorySize;
 		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(

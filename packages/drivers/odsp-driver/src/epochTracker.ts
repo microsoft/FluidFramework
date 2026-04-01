@@ -96,7 +96,7 @@ export const Odsp409Error = "Odsp409Error";
  * @beta
  *
  * @privateRemarks
- * This class should be hidden and and interface exposed to better manage internal types like telemetry logger.
+ * This class should be hidden and an interface exposed to better manage internal types like telemetry logger.
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
