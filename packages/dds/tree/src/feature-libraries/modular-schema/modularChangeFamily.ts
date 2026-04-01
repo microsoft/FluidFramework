@@ -1658,6 +1658,7 @@ export class ModularChangeFamily
 		for (const [_detachId, nodeId] of rebasedRoots.nodeChanges.entries()) {
 			// XXX: This is incorrect if the rebased changeset attaches the node.
 			// Efficiently computing whether the changeset attaches the node would require maintaining a mapping from node ID to attach ID.
+			// Alternatively, we could only set the input attach/detach state here, and set the output detach state by viewing fields?
 			const detachedInOutput = true;
 			this.updateConstraintsForNode(
 				nodeId,
@@ -2232,7 +2233,6 @@ function invertBuilds(
  */
 export function* relevantRemovedRoots(
 	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
 	const rootIds: ChangeAtomIdRangeMap<boolean> = newChangeAtomIdRangeMap();
 	addAttachesToSet(change, rootIds);

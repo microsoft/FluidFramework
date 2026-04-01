@@ -657,7 +657,6 @@ function encodeMarkEffectV2(
 	const type = mark.type;
 	switch (type) {
 		case "Attach": {
-			// XXX: Handle pins
 			const attachId = getAttachedRootId(mark);
 			const rootInputId = context.getInputRootId(attachId, mark.count).value ?? attachId;
 			const isMove = context.isDetachId(rootInputId, mark.count).value;
