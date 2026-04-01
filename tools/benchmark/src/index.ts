@@ -53,6 +53,7 @@ export {
 	type SuiteData,
 } from "./reporterUtilities.js";
 export {
+	isResultError,
 	isSuiteNode,
 	parseBenchmarkResult,
 	parseReport,
