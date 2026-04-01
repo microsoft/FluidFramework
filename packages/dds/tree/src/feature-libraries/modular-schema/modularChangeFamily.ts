@@ -1080,6 +1080,13 @@ export class ModularChangeFamily
 			revertConstraintState,
 		);
 
+		if (rebaseVersion > 1) {
+			// Detach locations are not needed in newer rebase versions.
+			// We delete the detach location entries as a normalization.
+			rebasedRootNodes.detachLocations.clear();
+			rebasedRootNodes.outputDetachLocations.clear();
+		}
+
 		const fieldsWithRootMoves = getFieldsWithRootMoves(
 			crossFieldTable.rebasedRootNodes,
 			change.nodeAliases,
