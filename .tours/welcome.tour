@@ -1,0 +1,56 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "AI-Enabled Codespace Tour",
+  "description": "A guided introduction to the AI tooling available in this codespace — agency, agent aliases, repoverlay, and how to use them for Fluid Framework development.",
+  "isPrimary": true,
+  "steps": [
+    {
+      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
+      "line": 1,
+      "title": "Welcome",
+      "description": "This is your AI-enabled codespace. It comes pre-configured with AI CLI tooling on top of the standard Fluid Framework development environment.\n\nThis tour will walk you through the AI-specific features. For full documentation, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+    },
+    {
+      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
+      "line": 13,
+      "title": "Install Agency",
+      "description": "**Before you can use any AI agents, you must install agency:**\n\n```bash\npnpm install:agency\n```\n\nThen open a **new terminal** for the aliases to take effect.\n\nAgency is the CLI tool that manages AI agent sessions. It wraps Claude Code, GitHub Copilot, and other agents with consistent configuration."
+    },
+    {
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 8,
+      "title": "Claude Aliases",
+      "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** — Default model\n- **`haiku`** — Fastest, cheapest option\n- **`sonnet`** — Balanced capabilities\n- **`opus`** — Most capable model\n\nAll aliases use `agency claude` under the hood, which ensures consistent configuration and context."
+    },
+    {
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 13,
+      "title": "Nori",
+      "description": "**`nori`** switches to the nori repoverlay and launches Claude.\n\nRepoverlay is an overlay system that layers context files (agent configurations, skills, prompt templates) on top of the repository. The `nori` overlay provides a curated set of skills for feature development, debugging, and bug fixing.\n\nRecommended for feature work, debugging, and bug fixing."
+    },
+    {
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 15,
+      "title": "Copilot Aliases",
+      "description": "These aliases launch GitHub Copilot with various MCP (Model Context Protocol) integrations:\n\n- **`copilot`** — Standard GitHub Copilot\n- **`copilot-ado`** — With Azure DevOps integration\n- **`copilot-kusto`** — With telemetry query capabilities\n- **`copilot-oce`** — On-Call Engineer workflow (switches to ff-oce overlay)\n- **`copilot-work`** — With WorkIQ integration"
+    },
+    {
+      "file": "scripts/codespace-setup/agent-aliases.sh",
+      "line": 21,
+      "title": "Resetting Overlays",
+      "description": "If you need to reset your repoverlay state (remove all overlays and return to a clean repo state), use:\n\n```bash\nai-reset\n```\n\nThis runs `repoverlay remove --all` and is useful when switching between different workflows or troubleshooting overlay issues."
+    },
+    {
+      "file": ".devcontainer/ai-agent/devcontainer.json",
+      "line": 1,
+      "title": "Codespace Configuration",
+      "description": "This devcontainer profile includes several additions beyond the Standard profile:\n\n- **Agency CLI** and **Repoverlay** (installed via build args)\n- **GitHub CLI** (`gh`) for PR workflows and SSH access\n- **SSH daemon** enabling `gh codespace ssh` from your local terminal\n- **ADO Codespaces Auth** for Azure DevOps authentication\n- **32 CPUs / 64 GB RAM** (vs 16 CPUs for Standard)\n\n**Tip:** You can connect to this codespace from your local terminal with `gh codespace ssh` to run AI agents locally while using the codespace's compute."
+    },
+    {
+      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
+      "line": 1,
+      "title": "Next Steps",
+      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `claude` or `nori` to start an AI-assisted session\n3. Check [DEV.md](../DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+    }
+  ]
+}
