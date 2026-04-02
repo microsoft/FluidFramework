@@ -168,6 +168,7 @@ export class SharedTreeChangeFamily
 		change: TaggedChange<SharedTreeChange>,
 		over: TaggedChange<SharedTreeChange>,
 		revisionMetadata: RevisionMetadataSource,
+		ignoreNoChangeViolation?: boolean,
 	): SharedTreeChange {
 		if (change.change.changes.length === 0 || over.change.changes.length === 0) {
 			return change.change;
@@ -204,6 +205,7 @@ export class SharedTreeChangeFamily
 						mapTaggedChange(change, dataChangeIntention.innerChange),
 						mapTaggedChange(over, dataChangeOver.innerChange),
 						revisionMetadata,
+						ignoreNoChangeViolation,
 					),
 				},
 			],
