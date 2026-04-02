@@ -223,9 +223,6 @@ importers:
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
-      minimatch:
-        specifier: ^10.2.4
-        version: 10.2.4
       npm-check-updates:
         specifier: ^17.1.18
         version: 17.1.18

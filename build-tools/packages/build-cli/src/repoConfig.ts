@@ -8,9 +8,9 @@ import type { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
 
 // Mapping of branch to a list of release groups/packages that should run policy by default.
 // TODO: This should be configured in the fluid-build config, like type test defaults are.
-const defaults = new Map([
-	["main", "client"],
-	["release/*", "client"],
+const defaults = new Map<string, ReleaseGroup[]>([
+	["main", ["client"]],
+	["release/*", ["client"]],
 ]);
 
 /**
@@ -26,7 +26,7 @@ export const getRunPolicyCheckDefault = (
 
 	for (const [branchPattern, shouldRunPolicy] of defaults) {
 		if (picomatch.isMatch(branch, branchPattern)) {
-			return shouldRunPolicy.includes(releaseGroupOrPackage);
+			return shouldRunPolicy.includes(releaseGroupOrPackage as ReleaseGroup);
 		}
 	}
 
