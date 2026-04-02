@@ -137,8 +137,10 @@ minimumReleaseAge: ${minimumReleaseAgeMinutes}
 
 trustPolicy: no-downgrade
 # See: https://github.com/orgs/pnpm/discussions/11084
+# Packages with similar issues can be added to this list after manual vetting + verification that the situation is similar.
 trustPolicyExclude:
   - 'semver@6.3.1'
+  - 'engine.io-client@3.5.6'
 `;
 
 // Queries the registry that pnpm is currently configured to use, so that the isolated install
