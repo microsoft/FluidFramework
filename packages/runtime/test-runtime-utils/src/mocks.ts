@@ -50,6 +50,7 @@ import {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	type IIdCompressorCore,
 	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
@@ -65,6 +66,7 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultMinVersionForCollab,
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
 	toDeltaManagerErased,
@@ -869,6 +871,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
@@ -896,7 +899,7 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab;
+		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
 	}
 
 	private readonly: boolean = false;
@@ -907,7 +910,7 @@ export class MockFluidDataStoreRuntime
 	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -938,6 +941,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
