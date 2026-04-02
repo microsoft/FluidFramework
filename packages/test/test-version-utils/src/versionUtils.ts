@@ -138,7 +138,7 @@ minimumReleaseAge: ${minimumReleaseAgeMinutes}
 trustPolicy: no-downgrade
 # See: https://github.com/orgs/pnpm/discussions/11084
 trustPolicyExclude:
-  - 'semver@6'
+  - 'semver@6.3.1'
 `;
 
 // Queries the registry that pnpm is currently configured to use, so that the isolated install
@@ -261,6 +261,8 @@ export async function ensureInstalled(
 		return { version, modulePath };
 	}
 
+	await ensureModulePath(version, modulePath);
+
 	// Adjust package list based on the minVersion for each package. If the requested version is
 	// less than the minVersion, skip that package.
 	const adjustedPackageList = packageList
@@ -270,12 +272,6 @@ export async function ensureInstalled(
 	if (versionHasMovedSparsedMatrix(version)) {
 		adjustedPackageList.push("@fluid-experimental/sequence-deprecated");
 	}
-
-	// Ensure baseModulePath exists before locking it. isInstalled() guarantees this on the
-	// normal path, but when force=true we skip that call so we must ensure it explicitly.
-	await ensureInstalledJsonLazy;
-
-	await ensureModulePath(version, modulePath);
 
 	// Release the base path but lock the modulePath so we can do parallel installs
 	const release = await lock(modulePath, { retries: { forever: true } });
@@ -330,8 +326,6 @@ export async function ensureInstalled(
 					pnpmCmd,
 					[
 						"add",
-						// Prevent postinstall/preinstall scripts from running in installed packages,
-						// which would otherwise execute arbitrary code from newly-published releases.
 						"--ignore-scripts",
 						// Use the pnpm content-addressable store cache when available, reducing
 						// exposure to packages published since the cache was last populated.
