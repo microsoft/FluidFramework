@@ -67,6 +67,6 @@ should ignore other tests entirely until it works.
 
 # Emulators for testing
 
-Web servers or web apps: use playwright (read the {{skills_dir}}/webapp-testing/SKILL.md)
+Web servers or web apps: use playwright (read the .claude/skills/webapp-testing/SKILL.md)
 TUI tools: use tmux with screen capture
 CLI tools: use bash

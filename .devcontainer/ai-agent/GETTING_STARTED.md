@@ -38,10 +38,10 @@ These aliases are available in all terminal sessions (after installing agency):
 
 | Alias | Command | Purpose |
 |---|---|---|
-| `claude` | `agency claude` | Default Claude Code model |
-| `haiku` | `agency claude -- --model haiku` | Fastest, cheapest option |
-| `sonnet` | `agency claude -- --model sonnet` | Balanced capabilities |
-| `opus` | `agency claude -- --model opus` | Most capable model |
+| `claude` | `repoverlay switch ff-claude && agency claude` | Default Claude Code model |
+| `haiku` | `repoverlay switch ff-claude && agency claude -- --model haiku` | Fastest, cheapest option |
+| `sonnet` | `repoverlay switch ff-claude && agency claude -- --model sonnet` | Balanced capabilities |
+| `opus` | `repoverlay switch ff-claude && agency claude -- --model opus` | Most capable model |
 | `nori` | `repoverlay switch nori && agency claude` | Switch to nori overlay and launch Claude |
 
 ### Copilot
