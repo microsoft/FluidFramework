@@ -21,11 +21,6 @@ import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
 	readonly compressionOptions?: ICompressionRuntimeOptions;
-
-	/**
-	 * If true, the outbox is allowed to rebase the batch during flushing.
-	 */
-	readonly canRebase: boolean;
 }
 
 export interface BatchSequenceNumbers {

@@ -212,8 +212,8 @@ export class Outbox {
 	constructor(private readonly params: IOutboxParameters) {
 		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
 
-		this.mainBatch = new BatchManager({ canRebase: true });
-		this.blobAttachBatch = new BatchManager({ canRebase: true });
+		this.mainBatch = new BatchManager({});
+		this.blobAttachBatch = new BatchManager({});
 	}
 
 	public get messageCount(): number {
@@ -227,12 +227,6 @@ export class Outbox {
 	public get blobAttachBatchMessageCount(): number {
 		return this.blobAttachBatch.length;
 	}
-
-	/**
-	 * @remarks With JIT ID allocation, pending IDs are tracked by the compressor, not the outbox.
-	 * This always returns 0. ID allocation ops are generated at flush time.
-	 */
-	public readonly idAllocationBatchMessageCount: number = 0;
 
 	public get isEmpty(): boolean {
 		return this.messageCount === 0;
@@ -256,7 +250,7 @@ export class Outbox {
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private maybeFlushPartialBatch(): void {
+	private outboxSequenceNumberCoherencyCheck(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		assert(
@@ -316,13 +310,13 @@ export class Outbox {
 	}
 
 	public submit(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.outboxSequenceNumberCoherencyCheck();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitBlobAttach(message: LocalBatchMessage): void {
-		this.maybeFlushPartialBatch();
+		this.outboxSequenceNumberCoherencyCheck();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
@@ -347,13 +341,13 @@ export class Outbox {
 	 */
 	public flush(resubmitInfo?: BatchResubmitInfo): void {
 		// We have nothing to flush if all batchManagers are empty, and we we're not needing to resubmit an empty batch placeholder
-		// Note that it's possible that there are unfinalized ranges in the ID Compressor,
-		// but there's no urgency to flush those if they're not referenced in any messages.
 		if (
 			this.blobAttachBatch.empty &&
 			this.mainBatch.empty &&
 			resubmitInfo?.batchId === undefined
 		) {
+			// Note that it's possible that there are unfinalized ranges in the ID Compressor,
+			// but there's no urgency to flush those if they're not referenced in any messages.
 			return;
 		}
 
@@ -439,11 +433,7 @@ export class Outbox {
 
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
-		if (
-			batchManager.options.canRebase &&
-			rawBatch.hasReentrantOps === true &&
-			groupingEnabled
-		) {
+		if (rawBatch.hasReentrantOps === true && groupingEnabled) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// Rebase the current batch (resubmit the ops one-by-one) and then reinvoke flushInternal.
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
@@ -498,7 +488,6 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
-		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
 		const squash = false;

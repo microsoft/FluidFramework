@@ -4282,7 +4282,6 @@ export class ContainerRuntime
 					outboxLength: this.outbox.messageCount,
 					mainBatchLength: this.outbox.mainBatchMessageCount,
 					blobAttachBatchLength: this.outbox.blobAttachBatchMessageCount,
-					idAllocationBatchLength: this.outbox.idAllocationBatchMessageCount,
 				},
 			);
 		}
@@ -4845,7 +4844,7 @@ export class ContainerRuntime
 		// Incoming ops still break the batch via direct this.flush() calls elsewhere
 		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
 		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
-		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
+		// Additionally, outbox.outboxSequenceNumberCoherencyCheck() (called on every submit) detects
 		// sequence number changes and throws if unexpected changes are detected.
 		if (
 			this.inStagingMode &&
