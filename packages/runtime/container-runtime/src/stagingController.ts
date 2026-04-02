@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	CommitStagedChangesOptionsInternal,
 	IStagingController,
-	IStagingControllerEvents,
 } from "@fluidframework/runtime-definitions/internal";
 
 /**
@@ -17,10 +15,7 @@ import type {
  * This object is created once at container load time and is the exclusive controller
  * of staging mode for the container's lifetime.
  */
-export class StagingController
-	extends TypedEventEmitter<IStagingControllerEvents>
-	implements IStagingController
-{
+export class StagingController implements IStagingController {
 	private _inStagingMode: boolean = false;
 
 	public get IStagingController(): IStagingController {
@@ -37,14 +32,11 @@ export class StagingController
 			action: "commit" | "discard",
 			options?: Partial<CommitStagedChangesOptionsInternal>,
 		) => void,
-	) {
-		super();
-	}
+	) {}
 
 	public enterStagingMode(): void {
 		this.enter();
 		this._inStagingMode = true;
-		this.emit("stagingModeChanged", true);
 	}
 
 	/**
@@ -63,6 +55,5 @@ export class StagingController
 	): void {
 		this.exit(action, options);
 		this._inStagingMode = false;
-		this.emit("stagingModeChanged", false);
 	}
 }

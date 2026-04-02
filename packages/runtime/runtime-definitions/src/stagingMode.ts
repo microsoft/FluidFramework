@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-
 import type { IContainerRuntimeBase } from "./dataStoreContext.js";
 
 /**
@@ -41,23 +39,6 @@ export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 }
 
 /**
- * Events emitted by {@link IStagingController}.
- *
- * @legacy @alpha
- */
-export interface IStagingControllerEvents extends IEvent {
-	/**
-	 * Emitted when staging mode is entered or exited.
-	 *
-	 * @param event - The event name: `"stagingModeChanged"`.
-	 * @param listener - Called with `true` when staging mode is entered, `false` when exited.
-	 *
-	 * @eventProperty
-	 */
-	(event: "stagingModeChanged", listener: (active: boolean) => void): void;
-}
-
-/**
  * Provider for {@link IStagingController}.
  *
  * @remarks
@@ -81,9 +62,7 @@ export interface IProvideStagingController {
  * @legacy @alpha
  * @sealed
  */
-export interface IStagingController
-	extends IProvideStagingController,
-		IEventProvider<IStagingControllerEvents> {
+export interface IStagingController extends IProvideStagingController {
 	/**
 	 * Whether the container is currently in staging mode.
 	 */
