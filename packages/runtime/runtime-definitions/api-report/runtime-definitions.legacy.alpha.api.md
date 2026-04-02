@@ -433,13 +433,13 @@ export interface OpAttributionKey {
 // @beta @legacy
 export type PackagePath = readonly string[];
 
-// @alpha @legacy (undocumented)
+// @alpha @legacy
 export const StagingModeExitAction: {
     readonly Commit: "commit";
     readonly Discard: "discard";
 };
 
-// @alpha @legacy (undocumented)
+// @alpha @legacy
 export type StagingModeExitAction = (typeof StagingModeExitAction)[keyof typeof StagingModeExitAction];
 
 // @beta @legacy (undocumented)
