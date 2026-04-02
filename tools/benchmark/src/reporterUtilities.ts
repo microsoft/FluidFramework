@@ -92,7 +92,11 @@ function suiteNames(parent: ReportPath | undefined): string[] {
 	return names.reverse();
 }
 
-function fullName(parent: ReportPath | undefined, benchmarkName?: string): string {
+/**
+ * Constructs a human-readable, slash-separated name from the suite hierarchy and an optional benchmark name.
+ * @public
+ */
+export function fullName(parent: ReportPath | undefined, benchmarkName?: string): string {
 	const names = suiteNames(parent);
 	if (benchmarkName !== undefined) {
 		names.push(benchmarkName);

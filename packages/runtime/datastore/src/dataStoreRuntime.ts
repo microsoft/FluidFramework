@@ -383,9 +383,13 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
-	 * See `IFluidDataStoreRuntimeInternalConfig.minVersionForCollab`.
+	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 *
+	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
+	 * and we keep this property as private, but consumers may optimistically cast
+	 * to the internal interface to access this property.
 	 */
-	public readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	/**
 	 * Create an instance of a DataStore runtime.
