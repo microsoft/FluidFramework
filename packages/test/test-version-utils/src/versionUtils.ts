@@ -228,6 +228,19 @@ export function resolveVersion(requested: string, installed: boolean): string {
 	}
 }
 
+async function ensureModulePath(version: string, modulePath: string): Promise<void> {
+	const release = await lock(baseModulePath, { retries: { forever: true } });
+	try {
+		console.log(`Installing version ${version} at ${modulePath}`);
+		if (!existsSync(modulePath)) {
+			// Create the under the baseModulePath lock
+			mkdirSync(modulePath, { recursive: true });
+		}
+	} finally {
+		release();
+	}
+}
+
 /**
  * Ensures the requested package version is installed locally.
  *
@@ -262,21 +275,17 @@ export async function ensureInstalled(
 	// normal path, but when force=true we skip that call so we must ensure it explicitly.
 	await ensureInstalledJsonLazy;
 
-	// Serialize all installations under a single lock. Concurrent pnpm invocations conflict
-	// on pnpm's global content-addressable store; running them serially avoids this while
-	// still benefiting from the store cache for fast repeated installs.
-	const release = await lock(baseModulePath, { retries: { forever: true } });
-	try {
-		console.log(`Installing version ${version} at ${modulePath}`);
-		if (!existsSync(modulePath)) {
-			mkdirSync(modulePath, { recursive: true });
-		}
+	await ensureModulePath(version, modulePath);
 
+	// Release the base path but lock the modulePath so we can do parallel installs
+	const release = await lock(modulePath, { retries: { forever: true } });
+	try {
 		if (force) {
+			// remove version from install.json under the modulePath lock
 			await removeInstalled(version);
 		}
 
-		// Check installed status again under lock.
+		// Check installed status again under the modulePath lock
 		if (force || !(await isInstalled(version))) {
 			const options: ExecFileOptions = {
 				cwd: modulePath,
