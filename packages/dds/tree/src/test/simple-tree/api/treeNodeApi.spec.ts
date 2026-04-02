@@ -2184,7 +2184,11 @@ describe("treeNodeApi", () => {
 
 				// For hydrated arrays, nodeChanged fires for element property changes via the delta pipeline.
 				// For unhydrated arrays, the delta pipeline is not active so nodeChanged does not fire.
-				assert.equal(shallowChanges, hydrated ? 1 : 0, `nodeChanged fires only in hydrated mode.`);
+				assert.equal(
+					shallowChanges,
+					hydrated ? 1 : 0,
+					`nodeChanged fires only in hydrated mode.`,
+				);
 				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 
@@ -2945,9 +2949,7 @@ describe("treeNodeApi", () => {
 											"inner",
 											{
 												kind: "object",
-												changedProperties: new Map([
-													["x", { kind: "leaf", newValue: 99 }],
-												]),
+												changedProperties: new Map([["x", { kind: "leaf", newValue: 99 }]]),
 											},
 										],
 									]),

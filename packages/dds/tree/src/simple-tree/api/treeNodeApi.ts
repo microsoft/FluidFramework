@@ -8,7 +8,12 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, rootFieldKey, type DeltaFieldMap, type DeltaMark } from "../../core/index.js";
+import {
+	EmptyKey,
+	rootFieldKey,
+	type DeltaFieldMap,
+	type DeltaMark,
+} from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
 import {
@@ -35,7 +40,11 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isArrayNodeSchema, isMapNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import {
+	isArrayNodeSchema,
+	isMapNodeSchema,
+	isObjectNodeSchema,
+} from "../node-kinds/index.js";
 import type { TreeMapNode } from "../node-kinds/index.js";
 
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
@@ -338,7 +347,10 @@ export const treeNodeApi: TreeNodeApi = {
  * The case where both `attach` and `detach` are set is unreachable today: the sequence-field
  * encoder never emits such marks for array (EmptyKey) fields. It is handled defensively.
  */
-function deltaMarksToArrayOps(marks: readonly DeltaMark[], node: TreeNode): ArrayNodeDeltaOp[] {
+function deltaMarksToArrayOps(
+	marks: readonly DeltaMark[],
+	node: TreeNode,
+): ArrayNodeDeltaOp[] {
 	const ops: ArrayNodeDeltaOp[] = [];
 	let writePos = 0; // Position in the post-change array.
 	for (const mark of marks) {
@@ -434,8 +446,7 @@ function buildNodeDeltaFromFields(
 				nodeSchema.storedKeyToPropertyKey.get(fieldKey) ??
 				fail("Could not find stored key in schema when building NodeDelta.");
 			const fieldMark =
-				fieldChanges.marks[0] ??
-				fail("Expected non-empty marks in field changes.");
+				fieldChanges.marks[0] ?? fail("Expected non-empty marks in field changes.");
 			const propertyValue = (node as unknown as Record<string, unknown>)[propertyKey];
 			changedProperties.set(propertyKey, buildPropertyDelta(propertyValue, fieldMark));
 		}
@@ -454,8 +465,7 @@ function buildNodeDeltaFromFields(
 		for (const [fieldKey, fieldChanges] of fields) {
 			const propertyKey = extractFromOpaque(fieldKey);
 			const fieldMark =
-				fieldChanges.marks[0] ??
-				fail("Expected non-empty marks in field changes.");
+				fieldChanges.marks[0] ?? fail("Expected non-empty marks in field changes.");
 			const propertyValue = mapNode.get(propertyKey);
 			changedProperties.set(propertyKey, buildPropertyDelta(propertyValue, fieldMark));
 		}

@@ -131,6 +131,7 @@ export interface ArrayNodeRemoveOp {
 
 // @alpha @sealed
 export interface ArrayNodeRetainOp {
+    readonly childDelta?: NodeDelta;
     // (undocumented)
     readonly count: number;
     // (undocumented)
@@ -856,6 +857,18 @@ export interface NodeChangedDataDelta {
 export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode> {
     readonly changedProperties: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
 }
+
+// @alpha @sealed
+export type NodeDelta = {
+    readonly kind: "array";
+    readonly ops: readonly ArrayNodeDeltaOp[];
+} | {
+    readonly kind: "object";
+    readonly changedProperties: ReadonlyMap<string, NodeDelta>;
+} | {
+    readonly kind: "leaf";
+    readonly newValue: TreeLeafValue;
+};
 
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<string, NodeKind, infer TNode> ? TNode : T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode> ? TNode : never;
