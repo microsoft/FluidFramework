@@ -195,9 +195,9 @@ export async function fetchSnapshotWithRedeem(
 			) {
 				try {
 					// The redirect itself is handled earlier, but we need to redeem the sharing link
-					// now against the redirected URL rather than waiting until the next API call retries
-					// with the redirect URL applied. After this point the sharing link is removed from
-					// the resolved URL, so we wouldn't be able to redeem during a later failure.
+					// now against the redirected URL rather than waiting until the error reaches the
+					// resolveWithLocationRedirectionHandling handler as it will call getAbsoluteURL
+					// and would fail due to permission issues since it will not attempt to redeem.
 					logger.sendTelemetryEvent(
 						{
 							eventName: "RedirectRedeemFallback",
