@@ -804,7 +804,7 @@ export interface MakeNominal {
 }
 
 // @alpha @sealed @system
-export interface MapNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Map, TreeMapNode<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
+export interface MapNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Map, TreeMapNodeAlpha<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
 }
 
 // @alpha @sealed @system
@@ -822,7 +822,7 @@ export interface MapNodeCustomizableSchemaUnsafe<out TName extends string, in ou
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]> | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
 
 // @alpha @sealed @system
-export interface MapNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Map, TreeMapNode<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
+export interface MapNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Map, TreeMapNodeAlpha<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
 }
 
 // @alpha
