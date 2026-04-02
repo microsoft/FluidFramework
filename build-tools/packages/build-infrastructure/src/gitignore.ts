@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -23,7 +23,7 @@ export function toPosixPath(s: string): string {
  */
 interface GitignoreRuleSet {
 	dir: string;
-	ig: ReturnType<typeof createIgnore>;
+	ignorer: ReturnType<typeof createIgnore>;
 }
 
 /**
@@ -36,6 +36,7 @@ interface GitignoreRuleSet {
  * should call {@link clearGitignoreRuleSetsCache} when appropriate.
  */
 const gitignoreRuleSetsCache = new Map<string, GitignoreRuleSet[]>();
+const pendingGitignoreRuleSetsCache = new Map<string, Promise<GitignoreRuleSet[]>>();
 
 /**
  * Clears the cached gitignore rule sets.
@@ -45,6 +46,63 @@ const gitignoreRuleSetsCache = new Map<string, GitignoreRuleSet[]>();
  */
 export function clearGitignoreRuleSetsCache(): void {
 	gitignoreRuleSetsCache.clear();
+	pendingGitignoreRuleSetsCache.clear();
+}
+
+/**
+ * Returns true if the path is inside the provided directory.
+ */
+function isPathWithinDirectory(filePath: string, dir: string): boolean {
+	const relativePath = path.relative(dir, filePath);
+	return !relativePath.startsWith("..") && !path.isAbsolute(relativePath);
+}
+
+/**
+ * Returns true if the error represents a missing file.
+ */
+function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		(error as NodeJS.ErrnoException).code === "ENOENT"
+	);
+}
+
+/**
+ * Reads the .gitignore file in the provided directory, if present.
+ */
+async function readGitignoreRuleSet(dir: string): Promise<GitignoreRuleSet | undefined> {
+	const gitignorePath = path.join(dir, ".gitignore");
+
+	try {
+		const content = await readFile(gitignorePath, "utf8");
+		return { dir, ignorer: createIgnore().add(content) };
+	} catch (error) {
+		if (isFileNotFoundError(error)) {
+			return undefined;
+		}
+
+		throw error;
+	}
+}
+
+/**
+ * Reads the .gitignore file in the provided directory synchronously, if present.
+ */
+function readGitignoreRuleSetSync(dir: string): GitignoreRuleSet | undefined {
+	const gitignorePath = path.join(dir, ".gitignore");
+
+	try {
+		const content = readFileSync(gitignorePath, "utf8");
+		return { dir, ignorer: createIgnore().add(content) };
+	} catch (error) {
+		if (isFileNotFoundError(error)) {
+			return undefined;
+		}
+
+		throw error;
+	}
 }
 
 /**
@@ -59,40 +117,29 @@ async function readGitignoreRuleSets(dir: string): Promise<GitignoreRuleSet[]> {
 		return cached;
 	}
 
-	const ruleSets: GitignoreRuleSet[] = [];
-	const dirs: string[] = [];
-
-	let currentDir = normalizedDir;
-	for (;;) {
-		dirs.push(currentDir);
-		const parentDir = path.dirname(currentDir);
-		if (parentDir === currentDir) {
-			break;
-		}
-		currentDir = parentDir;
+	const pending = pendingGitignoreRuleSetsCache.get(normalizedDir);
+	if (pending !== undefined) {
+		return pending;
 	}
 
-	for (const directory of dirs.reverse()) {
-		const gitignorePath = path.join(directory, ".gitignore");
-		try {
-			const content = await readFile(gitignorePath, "utf8");
-			const filePatterns = content
-				.split("\n")
-				.map((line) => line.trim())
-				.filter((line) => line && !line.startsWith("#"));
+	const loadPromise = (async () => {
+		const parentDir = path.dirname(normalizedDir);
+		const inheritedRuleSets =
+			parentDir === normalizedDir ? [] : await readGitignoreRuleSets(parentDir);
+		const currentRuleSet = await readGitignoreRuleSet(normalizedDir);
+		const ruleSets =
+			currentRuleSet === undefined ? inheritedRuleSets : [...inheritedRuleSets, currentRuleSet];
+		gitignoreRuleSetsCache.set(normalizedDir, ruleSets);
+		return ruleSets;
+	})();
 
-			if (filePatterns.length > 0) {
-				const ig = createIgnore();
-				ig.add(filePatterns);
-				ruleSets.push({ dir: directory, ig });
-			}
-		} catch {
-			// File not found or not readable — skip
-		}
+	pendingGitignoreRuleSetsCache.set(normalizedDir, loadPromise);
+
+	try {
+		return await loadPromise;
+	} finally {
+		pendingGitignoreRuleSetsCache.delete(normalizedDir);
 	}
-
-	gitignoreRuleSetsCache.set(normalizedDir, ruleSets);
-	return ruleSets;
 }
 
 /**
@@ -110,44 +157,45 @@ function readGitignoreRuleSetsSync(dir: string): GitignoreRuleSet[] {
 		return cached;
 	}
 
-	const ruleSets: GitignoreRuleSet[] = [];
-	const dirs: string[] = [];
-
-	let currentDir = normalizedDir;
-	for (;;) {
-		dirs.push(currentDir);
-		const parentDir = path.dirname(currentDir);
-		if (parentDir === currentDir) {
-			break;
-		}
-		currentDir = parentDir;
-	}
-
-	for (const directory of dirs.reverse()) {
-		const gitignorePath = path.join(directory, ".gitignore");
-		if (!existsSync(gitignorePath)) {
-			continue;
-		}
-
-		try {
-			const content = readFileSync(gitignorePath, "utf8");
-			const filePatterns = content
-				.split("\n")
-				.map((line) => line.trim())
-				.filter((line) => line && !line.startsWith("#"));
-
-			if (filePatterns.length > 0) {
-				const ig = createIgnore();
-				ig.add(filePatterns);
-				ruleSets.push({ dir: directory, ig });
-			}
-		} catch {
-			// File not found or not readable — skip
-		}
-	}
+	const parentDir = path.dirname(normalizedDir);
+	const inheritedRuleSets =
+		parentDir === normalizedDir ? [] : readGitignoreRuleSetsSync(parentDir);
+	const currentRuleSet = readGitignoreRuleSetSync(normalizedDir);
+	const ruleSets =
+		currentRuleSet === undefined ? inheritedRuleSets : [...inheritedRuleSets, currentRuleSet];
 
 	gitignoreRuleSetsCache.set(normalizedDir, ruleSets);
 	return ruleSets;
+}
+
+/**
+ * Applies gitignore rules to a single file path.
+ */
+function shouldIncludeFile(
+	file: string,
+	cwd: string,
+	ruleSets: readonly GitignoreRuleSet[],
+): boolean {
+	if (!isPathWithinDirectory(file, cwd)) {
+		return true;
+	}
+
+	let isIgnored = false;
+
+	for (const { dir, ignorer } of ruleSets) {
+		if (!isPathWithinDirectory(file, dir)) {
+			continue;
+		}
+
+		const testResult = ignorer.test(toPosixPath(path.relative(dir, file)));
+		if (testResult.ignored) {
+			isIgnored = true;
+		} else if (testResult.unignored) {
+			isIgnored = false;
+		}
+	}
+
+	return !isIgnored;
 }
 
 /**
@@ -156,13 +204,19 @@ function readGitignoreRuleSetsSync(dir: string): GitignoreRuleSet[] {
  * relative to each .gitignore file's directory.
  */
 export async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
-	// Read .gitignore rule sets for the cwd and its parent directories
-	const ruleSets = await readGitignoreRuleSets(cwd);
-	if (ruleSets.length === 0) {
-		return files;
-	}
+	const normalizedCwd = path.resolve(cwd);
+	const included = await Promise.all(
+		files.map(async (file) => {
+			if (!isPathWithinDirectory(file, normalizedCwd)) {
+				return true;
+			}
 
-	return filterFilesWithRuleSets(files, cwd, ruleSets);
+			const ruleSets = await readGitignoreRuleSets(path.dirname(file));
+			return shouldIncludeFile(file, normalizedCwd, ruleSets);
+		}),
+	);
+
+	return files.filter((_file, index) => included[index]);
 }
 
 /**
@@ -171,48 +225,14 @@ export async function filterByGitignore(files: string[], cwd: string): Promise<s
  * relative to each .gitignore file's directory.
  */
 export function filterByGitignoreSync(files: string[], cwd: string): string[] {
-	// Read .gitignore rule sets for the cwd and its parent directories
-	const ruleSets = readGitignoreRuleSetsSync(cwd);
-	if (ruleSets.length === 0) {
-		return files;
-	}
-
-	return filterFilesWithRuleSets(files, cwd, ruleSets);
-}
-
-/**
- * Internal helper to filter files using pre-loaded rule sets.
- */
-function filterFilesWithRuleSets(
-	files: string[],
-	cwd: string,
-	ruleSets: GitignoreRuleSet[],
-): string[] {
+	const normalizedCwd = path.resolve(cwd);
 	return files.filter((file) => {
-		const relativeToCwd = path.relative(cwd, file);
-		// Only filter files that are within the cwd
-		if (relativeToCwd.startsWith("..") || path.isAbsolute(relativeToCwd)) {
+		if (!isPathWithinDirectory(file, normalizedCwd)) {
 			return true;
 		}
 
-		let isIgnored = false;
-
-		for (const { dir, ig } of ruleSets) {
-			const relativeToRuleDir = path.relative(dir, file);
-			// Skip rule sets whose directory does not contain this file
-			if (relativeToRuleDir.startsWith("..") || path.isAbsolute(relativeToRuleDir)) {
-				continue;
-			}
-
-			const testResult = ig.test(toPosixPath(relativeToRuleDir));
-			if (testResult.ignored) {
-				isIgnored = true;
-			} else if (testResult.unignored) {
-				isIgnored = false;
-			}
-		}
-
-		return !isIgnored;
+		const ruleSets = readGitignoreRuleSetsSync(path.dirname(file));
+		return shouldIncludeFile(file, normalizedCwd, ruleSets);
 	});
 }
 
@@ -257,6 +277,5 @@ export async function globWithGitignore(
 
 	const filtered = applyGitignore ? await filterByGitignore(files, cwd) : files;
 
-	// Sort results for consistent ordering (tinyglobby does not guarantee sorted order)
-	return filtered.sort();
+	return filtered;
 }
