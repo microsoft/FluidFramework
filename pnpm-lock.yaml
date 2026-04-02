@@ -5308,9 +5308,6 @@ importers:
 
   examples/utils/typescript-versions-host:
     devDependencies:
-      '@fluid-example/typescript-versions-host-previous':
-        specifier: npm:@fluid-example/typescript-versions-host@2.91.0
-        version: 'link:'
       typescript-5.4:
         specifier: npm:typescript@~5.4.5
         version: typescript@5.4.5
@@ -16564,9 +16561,6 @@ importers:
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.64.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
-      '@fluid-tools/fetch-tool-previous':
-        specifier: npm:@fluid-tools/fetch-tool@2.91.0
-        version: '@fluid-tools/fetch-tool@2.91.0(encoding@0.1.13)'
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -18261,10 +18255,6 @@ packages:
 
   '@fluid-tools/build-infrastructure@0.64.0':
     resolution: {integrity: sha512-YPrMHoLYtYsYkEOFWnC50qOZwnEQv/BamFyjK28BevkQVq8p9FIHKo/rNS87rdyXEqneGGTBNctCMdsUMDgAMw==}
-    hasBin: true
-
-  '@fluid-tools/fetch-tool@2.91.0':
-    resolution: {integrity: sha512-HtohFSw9XLemtygKdLmR1l1vev7Rw1LxrrKrqbz9j/hg+dRGrEEDn5VPZHnM0vMkmyF7LAk8C7wb8WkEwzHtOw==}
     hasBin: true
 
   '@fluid-tools/version-tools@0.64.0':
@@ -30263,30 +30253,6 @@ snapshots:
       - '@types/node'
       - bufferutil
       - react-devtools-core
-      - supports-color
-      - utf-8-validate
-
-  '@fluid-tools/fetch-tool@2.91.0(encoding@0.1.13)':
-    dependencies:
-      '@azure/identity': 4.13.1
-      '@azure/identity-cache-persistence': 1.1.1
-      '@fluid-internal/client-utils': 2.91.0
-      '@fluidframework/container-runtime': 2.91.0
-      '@fluidframework/core-interfaces': 2.91.0
-      '@fluidframework/core-utils': 2.91.0
-      '@fluidframework/datastore': 2.91.0
-      '@fluidframework/driver-definitions': 2.91.0
-      '@fluidframework/odsp-doclib-utils': 2.91.0(encoding@0.1.13)
-      '@fluidframework/odsp-driver': 2.91.0(encoding@0.1.13)
-      '@fluidframework/odsp-driver-definitions': 2.91.0
-      '@fluidframework/odsp-urlresolver': 2.91.0(encoding@0.1.13)
-      '@fluidframework/routerlicious-driver': 2.91.0(encoding@0.1.13)
-      '@fluidframework/routerlicious-urlresolver': 2.91.0
-      '@fluidframework/runtime-definitions': 2.91.0
-      '@fluidframework/tool-utils': 2.91.0(encoding@0.1.13)
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
       - supports-color
       - utf-8-validate
 
