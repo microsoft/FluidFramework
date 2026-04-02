@@ -140,6 +140,7 @@ export {
 	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
+	type NodeDelta,
 	type SchemaUpgrade,
 	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.

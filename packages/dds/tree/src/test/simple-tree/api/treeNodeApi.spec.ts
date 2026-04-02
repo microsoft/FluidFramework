@@ -1985,11 +1985,11 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("object node", () => {
-			const sb = new SchemaFactory("object-node-in-root");
-			class MyObject extends sb.object("object", {
-				myNumber: sb.number,
+			const sf = new SchemaFactory("object-node-in-root");
+			class MyObject extends sf.object("object", {
+				myNumber: sf.number,
 			}) {}
-			class TreeSchema extends sb.object("root", {
+			class TreeSchema extends sf.object("root", {
 				rootObject: MyObject,
 			}) {}
 
@@ -2072,8 +2072,8 @@ describe("treeNodeApi", () => {
 			});
 
 			it(`changing optional field triggers 'nodeChanged' and 'treeChanged'`, () => {
-				class TestObject extends sb.object("root", {
-					child: sb.optional(sb.number),
+				class TestObject extends sf.object("root", {
+					child: sf.optional(sf.number),
 				}) {}
 
 				const testNode = new TestObject({});
@@ -2130,12 +2130,12 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describeHydration("array node", (initializeTree) => {
-			const sb = new SchemaFactory("array-node-tests");
-			class myObject extends sb.object("object", {
-				myNumber: sb.number,
+		describeHydration("array node", (initializeTree, hydrated) => {
+			const sf = new SchemaFactory("array-node-tests");
+			class myObject extends sf.object("object", {
+				myNumber: sf.number,
 			}) {}
-			const treeSchema = sb.array("root", myObject);
+			const treeSchema = sf.array("root", myObject);
 
 			function check(
 				eventName: keyof TreeChangeEvents,
@@ -2182,14 +2182,16 @@ describe("treeNodeApi", () => {
 
 				root[0].myNumber++;
 
-				assert.equal(shallowChanges, 0, `nodeChanged should NOT fire.`);
+				// For hydrated arrays, nodeChanged fires for element property changes via the delta pipeline.
+				// For unhydrated arrays, the delta pipeline is not active so nodeChanged does not fire.
+				assert.equal(shallowChanges, hydrated ? 1 : 0, `nodeChanged fires only in hydrated mode.`);
 				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 
 			it(`move between array nodes triggers both 'nodeChanged' and 'treeChanged' the correct number of times on source and target nodes`, () => {
-				const testSchema = sb.object("root", {
-					array1: sb.array(sb.number),
-					array2: sb.array(sb.number),
+				const testSchema = sf.object("root", {
+					array1: sf.array(sf.number),
+					array2: sf.array(sf.number),
 				});
 				const root = initializeTree(testSchema, {
 					array1: [1],
@@ -2216,7 +2218,7 @@ describe("treeNodeApi", () => {
 			});
 
 			it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-				const testSchema = sb.array("listRoot", sb.number);
+				const testSchema = sf.array("listRoot", sf.number);
 				const root = initializeTree(testSchema, []);
 
 				let shallowChanges = 0;
@@ -2261,11 +2263,11 @@ describe("treeNodeApi", () => {
 		});
 
 		describeHydration("map node", (initializeTree) => {
-			const sb = new SchemaFactory("map-node-in-root");
-			class myObject extends sb.object("object", {
-				myNumber: sb.number,
+			const sf = new SchemaFactory("map-node-in-root");
+			class myObject extends sf.object("object", {
+				myNumber: sf.number,
 			}) {}
-			const treeSchema = sb.map("root", myObject);
+			const treeSchema = sf.map("root", myObject);
 
 			function check(
 				eventName: keyof TreeChangeEvents,
@@ -2371,17 +2373,17 @@ describe("treeNodeApi", () => {
 		// by other leaf nodes.
 
 		it(`all kinds of changes trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-			const sb = new SchemaFactory("object-node-in-root");
-			const innerObject = sb.object("inner-object", { innerProp: sb.number });
-			class map extends sb.map("map", sb.number) {}
-			class list extends sb.array("list", sb.number) {}
-			const outerObject = sb.object("outer-object", {
-				objectProp: sb.optional(innerObject),
-				mapProp: sb.optional(map),
-				arrayProp: sb.optional(list),
-				valueProp: sb.optional(sb.number),
+			const sf = new SchemaFactory("object-node-in-root");
+			const innerObject = sf.object("inner-object", { innerProp: sf.number });
+			class map extends sf.map("map", sf.number) {}
+			class list extends sf.array("list", sf.number) {}
+			const outerObject = sf.object("outer-object", {
+				objectProp: sf.optional(innerObject),
+				mapProp: sf.optional(map),
+				arrayProp: sf.optional(list),
+				valueProp: sf.optional(sf.number),
 			});
-			const treeSchema = sb.object("root", {
+			const treeSchema = sf.object("root", {
 				rootObject: outerObject,
 			});
 
@@ -2475,10 +2477,10 @@ describe("treeNodeApi", () => {
 				parentIndex: 0,
 			};
 
-			const sb = new SchemaFactory("object-node-in-root");
-			const treeSchema = sb.object("root", {
-				prop1: sb.number,
-				prop2: sb.number,
+			const sf = new SchemaFactory("object-node-in-root");
+			const treeSchema = sf.object("root", {
+				prop1: sf.number,
+				prop2: sf.number,
 			});
 
 			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
@@ -2512,9 +2514,9 @@ describe("treeNodeApi", () => {
 			// during the detach pass of the delta visit even if they're not being mutated during that pass, doesn't cause
 			// the 'treeChanged' event to fire before the 'nodeChanged' event, which could be an easily introduced bug when
 			// updating the delta visit code for the anchorset.
-			const sb = new SchemaFactory("test");
-			class innerObject extends sb.object("inner", { value: sb.number }) {}
-			class treeSchema extends sb.object("root", {
+			const sf = new SchemaFactory("test");
+			class innerObject extends sf.object("inner", { value: sf.number }) {}
+			class treeSchema extends sf.object("root", {
 				prop1: innerObject,
 			}) {}
 
@@ -2544,11 +2546,11 @@ describe("treeNodeApi", () => {
 		});
 
 		it(`'nodeChanged' includes the names of changed properties (objectNode)`, () => {
-			const sb = new SchemaFactory("test");
-			class TestNode extends sb.object("root", {
-				prop1: sb.optional(sb.number),
-				prop2: sb.optional(sb.number),
-				prop3: sb.optional(sb.number),
+			const sf = new SchemaFactory("test");
+			class TestNode extends sf.object("root", {
+				prop1: sf.optional(sf.number),
+				prop2: sf.optional(sf.number),
+				prop3: sf.optional(sf.number),
 			}) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
@@ -2577,20 +2579,20 @@ describe("treeNodeApi", () => {
 		it(`'nodeChanged' strong typing`, () => {
 			// Check compile time type checking of property names
 
-			const sb = new SchemaFactory("test");
-			class ObjectAB extends sb.object("AB", {
-				A: sb.optional(sb.number),
-				B: sb.optional(sb.number),
+			const sf = new SchemaFactory("test");
+			class ObjectAB extends sf.object("AB", {
+				A: sf.optional(sf.number),
+				B: sf.optional(sf.number),
 			}) {}
 
-			class ObjectBC extends sb.object("BC", {
-				B: sb.optional(sb.number),
-				C: sb.optional(sb.number),
+			class ObjectBC extends sf.object("BC", {
+				B: sf.optional(sf.number),
+				C: sf.optional(sf.number),
 			}) {}
 
-			class Map1 extends sb.map("Map1", sb.number) {}
+			class Map1 extends sf.map("Map1", sf.number) {}
 
-			class Array1 extends sb.array("Array1", sb.number) {}
+			class Array1 extends sf.array("Array1", sf.number) {}
 
 			const ab = new ObjectAB({});
 			const bc = new ObjectBC({});
@@ -2678,8 +2680,8 @@ describe("treeNodeApi", () => {
 		});
 
 		it(`'nodeChanged' includes the names of changed properties (mapNode)`, () => {
-			const sb = new SchemaFactory("test");
-			class TestNode extends sb.map("root", [sb.number]) {}
+			const sf = new SchemaFactory("test");
+			class TestNode extends sf.map("root", [sf.number]) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
 			view.initialize(
@@ -2709,8 +2711,8 @@ describe("treeNodeApi", () => {
 		});
 
 		it(`'nodeChanged' does not include changedProperties for arrayNode (provides delta instead)`, () => {
-			const sb = new SchemaFactory("test");
-			class TestNode extends sb.array("root", [sb.number]) {}
+			const sf = new SchemaFactory("test");
+			class TestNode extends sf.array("root", [sf.number]) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: TestNode }));
 			view.initialize([1, 2]);
@@ -2746,8 +2748,8 @@ describe("treeNodeApi", () => {
 			//   insert  – elements added to the array
 			//   remove  – elements removed from the array
 			// Trailing unchanged elements are NOT represented by a trailing retain op.
-			const sb = new SchemaFactory("nodeChanged-delta-content");
-			class TestArray extends sb.array("TestArray", [sb.number]) {}
+			const sf = new SchemaFactory("nodeChanged-delta-content");
+			class TestArray extends sf.array("TestArray", [sf.number]) {}
 
 			it(`insertAtEnd emits a leading retain followed by an insert`, () => {
 				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
@@ -2836,9 +2838,9 @@ describe("treeNodeApi", () => {
 				// the marks for the array field include a {fields} mark for the
 				// unchanged-at-array-level element. deltaMarksToArrayOps converts that
 				// to a "retain" op.
-				const sb2 = new SchemaFactory("retain-delta");
-				class RetainItem extends sb2.object("RetainItem", { value: sb2.number }) {}
-				class RetainArray extends sb2.array("RetainArray", [RetainItem]) {}
+				const sf = new SchemaFactory("retain-delta");
+				class RetainItem extends sf.object("RetainItem", { value: sf.number }) {}
+				class RetainArray extends sf.array("RetainArray", [RetainItem]) {}
 
 				const view = getView(new TreeViewConfiguration({ schema: RetainArray }));
 				view.initialize([{ value: 1 }, { value: 2 }, { value: 3 }]);
@@ -2863,12 +2865,236 @@ describe("treeNodeApi", () => {
 					],
 				]);
 			});
+
+			describe(`'nodeChanged' childDelta payload for nested element changes`, () => {
+				// childDelta is only produced on retain ops when a structural array change
+				// (insert/remove/move) occurs in the same transaction as a nested property change.
+				// A fork is used to compose both changes into a single delta.
+				const sf2 = new SchemaFactory("childDelta-tests");
+				class Inner extends sf2.object("Inner", {
+					x: sf2.number,
+					y: sf2.number,
+				}) {}
+				class Outer extends sf2.object("Outer", { inner: Inner }) {}
+				class OuterArray extends sf2.array("OuterArray", [Outer]) {}
+				class Item extends sf2.object("Item", { v: sf2.number }) {}
+				class ItemArray extends sf2.array("ItemArray", [Item]) {}
+
+				it(`nested property changes produce childDelta with leaf newValues`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: OuterArray }));
+					view.initialize([{ inner: { x: 1, y: 2 } }, { inner: { x: 3, y: 4 } }]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					const { forkView, forkCheckout } = getViewForForkedBranch(view);
+					forkView.root[0].inner.x = 10;
+					forkView.root[0].inner.y = 20;
+					forkView.root.removeAt(1);
+					view.checkout.merge(forkCheckout);
+
+					assert.deepEqual(deltas, [
+						[
+							{
+								type: "retain",
+								count: 1,
+								childDelta: {
+									kind: "object",
+									changedProperties: new Map([
+										[
+											"inner",
+											{
+												kind: "object",
+												changedProperties: new Map([
+													["x", { kind: "leaf", newValue: 10 }],
+													["y", { kind: "leaf", newValue: 20 }],
+												]),
+											},
+										],
+									]),
+								},
+							},
+							{ type: "remove", count: 1 },
+						],
+					]);
+				});
+
+				it(`pure nested property change (no structural change) fires array nodeChanged with all-retain delta`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: OuterArray }));
+					view.initialize([{ inner: { x: 1, y: 2 } }, { inner: { x: 3, y: 4 } }]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					// Format-only change — no insert/remove on the array.
+					root[0].inner.x = 99;
+
+					// Delta marks only cover changed positions; trailing unchanged elements
+					// produce no mark, so the delta has just the one retain-with-childDelta.
+					assert.deepEqual(deltas, [
+						[
+							{
+								type: "retain",
+								count: 1,
+								childDelta: {
+									kind: "object",
+									changedProperties: new Map([
+										[
+											"inner",
+											{
+												kind: "object",
+												changedProperties: new Map([
+													["x", { kind: "leaf", newValue: 99 }],
+												]),
+											},
+										],
+									]),
+								},
+							},
+						],
+					]);
+				});
+
+				it(`unmodified elements produce plain retain ops without childDelta`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
+					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					// Only a structural change — no nested property changes.
+					root.removeAt(2);
+
+					assert.deepEqual(deltas, [
+						[
+							{ type: "retain", count: 2 },
+							{ type: "remove", count: 1 },
+						],
+					]);
+					// Plain retain has no childDelta.
+					const retain = deltas[0]?.[0];
+					assert(retain !== undefined);
+					assert(retain.type === "retain");
+					assert.equal(retain.childDelta, undefined);
+				});
+
+				it(`middle element modification produces retain, retain-with-childDelta, remove`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
+					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					const { forkView, forkCheckout } = getViewForForkedBranch(view);
+					forkView.root[1].v = 42;
+					forkView.root.removeAt(2);
+					view.checkout.merge(forkCheckout);
+
+					assert.equal(deltas.length, 1);
+					const ops = deltas[0];
+					assert(ops !== undefined);
+					// Element 0 retained unchanged.
+					assert.deepEqual(ops[0], { type: "retain", count: 1 });
+					// Element 1 retained with childDelta.
+					assert(ops[1]?.type === "retain" && ops[1].childDelta !== undefined);
+					assert.deepEqual(ops[1].childDelta, {
+						kind: "object",
+						changedProperties: new Map([["v", { kind: "leaf", newValue: 42 }]]),
+					});
+					// Element 2 removed.
+					assert.deepEqual(ops[2], { type: "remove", count: 1 });
+				});
+
+				it(`replaced child node produces an empty delta in childDelta`, () => {
+					// Tests the path in buildNodeDeltaFromFields where a child object node is
+					// replaced entirely (attach+detach both set on the mark → empty delta).
+					const sf3 = new SchemaFactory("replaced-child");
+					class Child extends sf3.object("Child", { v: sf3.number }) {}
+					class Parent extends sf3.object("Parent", { child: Child }) {}
+					class ParentArray extends sf3.array("ParentArray", [Parent]) {}
+
+					const view = getView(new TreeViewConfiguration({ schema: ParentArray }));
+					view.initialize([{ child: { v: 1 } }, { child: { v: 2 } }]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					const { forkView, forkCheckout } = getViewForForkedBranch(view);
+					// Replace the child node entirely (not just modify a property).
+					forkView.root[0].child = new Child({ v: 99 });
+					// removeAt(1) is required: childDelta is only populated on retain ops when the same
+					// transaction also has a structural change (insert/remove). The fork is used to
+					// compose both changes into a single delta so that condition is met.
+					forkView.root.removeAt(1);
+					view.checkout.merge(forkCheckout);
+
+					assert.equal(deltas.length, 1);
+					const ops = deltas[0];
+					assert(ops !== undefined);
+					const retain = ops[0];
+					assert(retain !== undefined);
+					assert(retain.type === "retain");
+					assert(retain.childDelta !== undefined);
+					// The replaced child appears as an empty object delta.
+					assert.deepEqual(retain.childDelta, {
+						kind: "object",
+						changedProperties: new Map([
+							["child", { kind: "object", changedProperties: new Map() }],
+						]),
+					});
+				});
+
+				it(`map node element with nested property change produces childDelta`, () => {
+					// Tests the map/record branch of buildNodeDeltaFromFields.
+					const sf4 = new SchemaFactory("map-child-delta");
+					class MapElement extends sf4.object("MapElement", { v: sf4.number }) {}
+					class InnerMap extends sf4.map("Inner", MapElement) {}
+					class ContainerArray extends sf4.array("ContainerArray", [InnerMap]) {}
+
+					const view = getView(new TreeViewConfiguration({ schema: ContainerArray }));
+					view.initialize([{ key1: { v: 1 } }, { key1: { v: 2 } }]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					const { forkView, forkCheckout } = getViewForForkedBranch(view);
+					// Modify a property of the map element at index 0.
+					const mapNode = forkView.root[0];
+					assert(mapNode !== undefined);
+					const entry = mapNode.get("key1");
+					assert(entry !== undefined);
+					entry.v = 42;
+					forkView.root.removeAt(1);
+					view.checkout.merge(forkCheckout);
+
+					assert.equal(deltas.length, 1);
+					const ops = deltas[0];
+					assert(ops !== undefined);
+					const retain = ops[0];
+					assert(retain !== undefined);
+					assert(retain.type === "retain");
+					assert(retain.childDelta !== undefined);
+					// The map node delta: kind "object" with the changed key.
+					assert(retain.childDelta.kind === "object");
+					const keyDelta = retain.childDelta.changedProperties.get("key1");
+					assert.deepEqual(keyDelta, {
+						kind: "object",
+						changedProperties: new Map([["v", { kind: "leaf", newValue: 42 }]]),
+					});
+				});
+			});
 		});
 
 		it(`'nodeChanged' uses property keys, not stored keys, for the list of changed properties`, () => {
-			const sb = new SchemaFactory("test");
-			class TestNode extends sb.object("root", {
-				prop1: sb.optional(sb.number, { key: "stored-prop1" }),
+			const sf = new SchemaFactory("test");
+			class TestNode extends sf.object("root", {
+				prop1: sf.optional(sf.number, { key: "stored-prop1" }),
 			}) {}
 
 			const view = getView(new TreeViewConfiguration({ schema: TestNode }));

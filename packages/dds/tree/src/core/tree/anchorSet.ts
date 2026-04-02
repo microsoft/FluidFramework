@@ -983,6 +983,31 @@ export class AnchorSet implements AnchorLocator {
 							this.parentField,
 							marks,
 						);
+						// Queue childrenChangedAfterBatch for array sequence fields that have
+						// pure retain-with-fields marks (element property changes with no
+						// structural array change). Only EmptyKey fields are array sequence
+						// fields; object/map fields use string keys and retain the existing
+						// contract that nodeChanged does not fire for deep descendant changes.
+						// Structural changes (attach/detach) already queue it via notifyChildrenChanged.
+						// The alreadyEmitted deduplication in free() prevents double-firing for
+						// transactions that have both structural and nested element changes.
+						if (this.parentField === EmptyKey) {
+							const hasStructuralChange = marks.some(
+								(m) => m.attach !== undefined || m.detach !== undefined,
+							);
+							const hasNestedChanges = marks.some(
+								(m) => m.fields !== undefined && m.fields.size > 0,
+							);
+							const onlyNestedChanges = !hasStructuralChange && hasNestedChanges;
+							if (onlyNestedChanges) {
+								this.bufferedEvents.push({
+									node: interned,
+									event: "childrenChangedAfterBatch",
+									changedField: this.parentField,
+									fieldMarks: marks,
+								});
+							}
+						}
 					}
 				}
 			},

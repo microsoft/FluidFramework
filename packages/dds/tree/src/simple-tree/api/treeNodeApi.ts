@@ -8,7 +8,7 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, rootFieldKey, type DeltaMark } from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type DeltaFieldMap, type DeltaMark } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
 import {
@@ -35,9 +35,24 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { isArrayNodeSchema, isMapNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import type { TreeMapNode } from "../node-kinds/index.js";
 
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
+
+/**
+ * A recursive description of what changed within a node during a tree change event.
+ * Carried by {@link ArrayNodeRetainOp.childDelta} for retained array elements that have nested changes.
+ * @remarks
+ * - `"array"` — the node is an array; {@link NodeDelta} carries the {@link ArrayNodeDeltaOp}s describing what changed within the array.
+ * - `"object"` — the node is an object, map, or record node; {@link NodeDelta} maps each changed property name to its own nested {@link NodeDelta}.
+ * - `"leaf"` — the node is a leaf value; {@link NodeDelta} carries the new value after the change.
+ * @sealed @alpha
+ */
+export type NodeDelta =
+	| { readonly kind: "array"; readonly ops: readonly ArrayNodeDeltaOp[] }
+	| { readonly kind: "object"; readonly changedProperties: ReadonlyMap<string, NodeDelta> }
+	| { readonly kind: "leaf"; readonly newValue: TreeLeafValue };
 
 /**
  * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
@@ -47,6 +62,15 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
 export interface ArrayNodeRetainOp {
 	readonly type: "retain";
 	readonly count: number;
+	/**
+	 * When present, describes what changed within the single retained element.
+	 * @remarks
+	 * Only set when {@link ArrayNodeRetainOp.count} is `1` and the element has nested changes
+	 * (e.g. a property of an object element was updated).
+	 * `childDelta` is absent when `count` is greater than `1` because the delta encoding
+	 * only tracks per-element nested changes for individual elements, not for runs.
+	 */
+	readonly childDelta?: NodeDelta;
 }
 
 /**
@@ -253,8 +277,8 @@ export const treeNodeApi: TreeNodeApi = {
 						// unavailable rather than receiving stale marks from only the first batch.
 						// TODO: Once the eventing stack is rewritten to walk the composed delta at
 						// flush time, `marks` will always be defined. Remove the `undefined` fallback
-						// and simplify to: `const delta = deltaMarksToArrayOps(marks);`
-						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks);
+						// and simplify to: `const delta = deltaMarksToArrayOps(marks, node);`
+						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks, node);
 						listener({ delta });
 					});
 				} else {
@@ -301,29 +325,142 @@ export const treeNodeApi: TreeNodeApi = {
  * array delta ops suitable for inclusion in {@link NodeChangedData.delta}.
  *
  * Each mark in the delta describes a contiguous run of positions in the original array:
- * - A mark with only `count` (no attach/detach) → `"retain"` (elements unchanged at this level)
+ * - A mark with only `count` (no attach/detach) → `"retain"` (elements unchanged at this level);
+ * if `fields` is also set on the mark, {@link ArrayNodeRetainOp.childDelta} is populated with nested changes
  * - A mark with only `attach` → `"insert"` (new elements added)
  * - A mark with only `detach` → `"remove"` (elements removed)
  * - A mark with both `attach` and `detach` → `"remove"` + `"insert"`
+ *
+ * @param marks - The low-level delta marks for the array's sequence field.
+ * @param node - The array node in its post-change state, used to read element values for nested deltas.
  *
  * @privateRemarks
  * The case where both `attach` and `detach` are set is unreachable today: the sequence-field
  * encoder never emits such marks for array (EmptyKey) fields. It is handled defensively.
  */
-function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDeltaOp[] {
+function deltaMarksToArrayOps(marks: readonly DeltaMark[], node: TreeNode): ArrayNodeDeltaOp[] {
 	const ops: ArrayNodeDeltaOp[] = [];
+	let writePos = 0; // Position in the post-change array.
 	for (const mark of marks) {
 		if (mark.detach !== undefined) {
 			ops.push({ type: "remove", count: mark.count });
 		}
 		if (mark.attach !== undefined) {
 			ops.push({ type: "insert", count: mark.count });
+			writePos += mark.count;
 		} else if (mark.detach === undefined) {
-			// Neither attach nor detach: elements retained (may have nested changes in mark.fields).
-			ops.push({ type: "retain", count: mark.count });
+			// Retain: elements were not added or removed (but may have nested changes).
+			if (mark.fields === undefined) {
+				ops.push({ type: "retain", count: mark.count });
+			} else {
+				// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
+				// Read the retained element from the post-change array to build the childDelta.
+				// The cast is necessary because ArrayNode does not expose indexed access on its
+				// TypeScript type, but at runtime its proxy forwards numeric property reads to the
+				// underlying sequence field.
+				const element = (node as unknown as readonly unknown[])[writePos];
+				assert(
+					isTreeNode(element),
+					"Leaf element should not have nested field changes (mark.fields is set but element is not a TreeNode).",
+				);
+				const elementSchema =
+					tryGetTreeNodeSchema(element) ??
+					fail("Expected schema for retained tree node with nested changes.");
+				ops.push({
+					type: "retain",
+					count: 1,
+					childDelta: buildNodeDeltaFromFields(element, mark.fields, elementSchema),
+				});
+			}
+			writePos += mark.count;
 		}
 	}
 	return ops;
+}
+
+/**
+ * Builds the {@link NodeDelta} for a single property given the property's current value and
+ * the low-level {@link DeltaMark} that describes what happened to it.
+ *
+ * Shared by the object and map/record branches of {@link buildNodeDeltaFromFields} — both
+ * iterate over changed fields and apply the same per-property logic; only the key derivation
+ * differs between the two callers.
+ */
+function buildPropertyDelta(propertyValue: unknown, fieldMark: DeltaMark): NodeDelta {
+	if (isTreeNode(propertyValue)) {
+		const childSchema =
+			tryGetTreeNodeSchema(propertyValue) ??
+			fail("Expected schema for tree node when building property delta.");
+		if (fieldMark.fields !== undefined && fieldMark.detach === undefined) {
+			// Child node retained with nested property changes — recurse.
+			return buildNodeDeltaFromFields(propertyValue, fieldMark.fields, childSchema);
+		}
+		// Child node was replaced entirely — report an empty delta so consumers know the property changed.
+		// At this point childSchema is always an object, array, or map schema: leaf values are not
+		// TreeNodes and are handled by the else branch below.
+		return isArrayNodeSchema(childSchema)
+			? { kind: "array", ops: [] }
+			: { kind: "object", changedProperties: new Map() };
+	} else {
+		if (fieldMark.fields !== undefined && fieldMark.detach === undefined) {
+			// A retain mark with nested `fields` implies a tree node was retained, not a leaf.
+			// Reaching here indicates an unexpected internal state.
+			fail("Expected a tree node for a retain mark with nested fields.");
+		}
+		// Leaf value (string, number, boolean, null, or IFluidHandle) was replaced.
+		return { kind: "leaf", newValue: propertyValue as TreeLeafValue };
+	}
+}
+
+/**
+ * Recursively builds a {@link NodeDelta} describing what changed within a tree node,
+ * given the low-level {@link DeltaFieldMap} for its changed fields.
+ *
+ * @param node - The node in its post-change state, used to read current property values.
+ * @param fields - The changed fields on the node (from the internal delta mark).
+ * Each entry is guaranteed to have at least one mark — `modularChangeFamily` filters out
+ * empty-marks entries before constructing the delta.
+ * @param nodeSchema - The schema of the node, used to map stored field keys to property names.
+ */
+function buildNodeDeltaFromFields(
+	node: TreeNode,
+	fields: DeltaFieldMap,
+	nodeSchema: TreeNodeSchema,
+): NodeDelta {
+	if (isObjectNodeSchema(nodeSchema)) {
+		const changedProperties = new Map<string, NodeDelta>();
+		for (const [fieldKey, fieldChanges] of fields) {
+			const propertyKey =
+				nodeSchema.storedKeyToPropertyKey.get(fieldKey) ??
+				fail("Could not find stored key in schema when building NodeDelta.");
+			const fieldMark =
+				fieldChanges.marks[0] ??
+				fail("Expected non-empty marks in field changes.");
+			const propertyValue = (node as unknown as Record<string, unknown>)[propertyKey];
+			changedProperties.set(propertyKey, buildPropertyDelta(propertyValue, fieldMark));
+		}
+		return { kind: "object", changedProperties };
+	} else if (isArrayNodeSchema(nodeSchema)) {
+		// Nested array: its sequence field changes are under EmptyKey.
+		const emptyKeyChanges =
+			fields.get(EmptyKey) ?? fail("Expected EmptyKey changes in array node delta.");
+		return { kind: "array", ops: deltaMarksToArrayOps(emptyKeyChanges.marks, node) };
+	} else {
+		// Map or record node: stored field keys are the property keys.
+		// Map entries are accessed via .get() — direct property access does not work on map node proxies.
+		assert(isMapNodeSchema(nodeSchema), "expected map or record schema in map branch");
+		const mapNode = node as unknown as TreeMapNode;
+		const changedProperties = new Map<string, NodeDelta>();
+		for (const [fieldKey, fieldChanges] of fields) {
+			const propertyKey = extractFromOpaque(fieldKey);
+			const fieldMark =
+				fieldChanges.marks[0] ??
+				fail("Expected non-empty marks in field changes.");
+			const propertyValue = mapNode.get(propertyKey);
+			changedProperties.set(propertyKey, buildPropertyDelta(propertyValue, fieldMark));
+		}
+		return { kind: "object", changedProperties };
+	}
 }
 
 /**

@@ -11,6 +11,7 @@ export type {
 	ArrayNodeInsertOp,
 	ArrayNodeRemoveOp,
 	ArrayNodeRetainOp,
+	NodeDelta,
 } from "./treeNodeApi.js";
 import type { ArrayNodeDeltaOp } from "./treeNodeApi.js";
 

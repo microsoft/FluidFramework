@@ -99,6 +99,7 @@ export {
 	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
+	type NodeDelta,
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
