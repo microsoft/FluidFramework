@@ -128,10 +128,18 @@ async function removeInstalled(version: string): Promise<void> {
 const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 // Minimum age (in minutes) a package version must have before pnpm will install it.
-// This guards against supply-chain attacks that exploit the window between a compromised publish and detection.
-// 1 day expressed in minutes (requires pnpm >= 10.16.0).
-// N-1/N-2 Fluid versions are always older than this threshold, so compatibility testing is unaffected.
 const minimumReleaseAgeMinutes = 1 * 24 * 60;
+
+// Enforce reasonable security settings on compat package installs to mitigate risk of supply-chain attacks.
+// See https://pnpm.io/supply-chain-security for context on the flags used here.
+const pnpmWorkspaceYamlContent = `
+minimumReleaseAge: ${minimumReleaseAgeMinutes}
+
+trustPolicy: no-downgrade
+# See: https://github.com/orgs/pnpm/discussions/11084
+trustPolicyExclude:
+  - 'semver@6'
+`;
 
 // Queries the registry that pnpm is currently configured to use, so that the isolated install
 // directory can be explicitly pinned to the same registry. In CI, pnpm is configured via
@@ -296,11 +304,9 @@ export async function ensureInstalled(
 				`registry=${registry}\nnode-linker=hoisted\n`,
 				{ encoding: "utf8" },
 			);
-			writeFileSync(
-				path.join(modulePath, "pnpm-workspace.yaml"),
-				`minimumReleaseAge: ${minimumReleaseAgeMinutes}\n`,
-				{ encoding: "utf8" },
-			);
+			writeFileSync(path.join(modulePath, "pnpm-workspace.yaml"), pnpmWorkspaceYamlContent, {
+				encoding: "utf8",
+			});
 
 			// Write a minimal package.json so pnpm add has a manifest to update.
 			// Done with writeFileSync rather than `pnpm init` so that it is idempotent:
