@@ -374,6 +374,10 @@ export interface IGarbageCollectionRuntime {
  */
 export interface IGarbageCollector {
 	/**
+	 * The GC configurations serialized as a JSON string for telemetry.
+	 */
+	readonly serializedConfigs: string;
+	/**
 	 * Tells the time at which session expiry timer started in a previous container.
 	 * This is only set when loading from a stashed container and will be equal to the
 	 * original container's local client time when it was loaded (and started the session expiry timer).

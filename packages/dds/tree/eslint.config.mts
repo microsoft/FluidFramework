@@ -4,10 +4,13 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
+	{
+		ignores: ["./src/entrypoints/**"],
+	},
 	{
 		rules: {
 			"@typescript-eslint/no-empty-object-type": [

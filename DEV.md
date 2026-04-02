@@ -1,5 +1,24 @@
 # Guidance for FluidFramework maintainers and contributors
 
+## Git Hooks (hk)
+
+This repo uses [hk](https://hk.jdx.dev/) to manage git hooks. Hooks are configured in `hk.pkl` at the repo root. Currently, a pre-commit hook runs `biome format` on staged files and auto-stages the formatted results.
+
+Git hooks are **opt-in**. To install them locally:
+
+```shell
+hk install
+```
+
+This sets up the hooks defined in `hk.pkl` to run automatically on commit. You can also run checks manually:
+
+```shell
+hk check  # verify formatting without modifying files
+hk fix    # auto-format files in place
+```
+
+hk requires the [pkl](https://pkl-lang.org/) CLI. Both hk and pkl can be installed via [mise](https://mise.jdx.dev/).
+
 ## Dependencies
 
 This document tracks dependencies that cannot be upgraded to their latest major versions due to technical limitations.
@@ -161,3 +180,40 @@ When `strictDepBuilds: true`, pnpm requires explicit approval before running bui
 - **Sub-workspaces with own lockfiles**: Both `pnpm.onlyBuiltDependencies` in the workspace's `package.json` AND `onlyBuiltDependencies` in the workspace's `pnpm-workspace.yaml` (due to [pnpm bug #9082](https://github.com/pnpm/pnpm/issues/9082))
 
 To approve a new package's build scripts, add it to the appropriate `onlyBuiltDependencies` list(s).
+
+## Claude Sandboxing Configuration
+
+The default configuration of the codespace Docker container is not compatible with [Claude sandboxing](https://code.claude.com/docs/en/sandboxing).
+There are multiple settings that need to be tweaked in both the container and Claude.
+
+### Container security flags ([`devcontainer.json`](.devcontainer/ai-agent/devcontainer.json) `runArgs`)
+
+Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblewrap) to isolate processes in a user namespace with restricted mount/filesystem access. bwrap requires three capabilities that Docker containers don't grant by default:
+
+| Flag | Why bwrap needs it |
+|------|--------------------|
+| `--security-opt apparmor=unconfined` | Docker's default AppArmor profile blocks `mount` and `pivot_root` syscalls that bwrap uses to build its mount namespace. |
+| `--cap-add SYS_ADMIN` | bwrap needs `CAP_SYS_ADMIN` to create new mount namespaces and perform bind mounts inside them. |
+| `--security-opt seccomp=unconfined` | Docker's default seccomp profile blocks `unshare`, `pivot_root`, and some `mount` calls. bwrap needs all three. |
+
+### Root mount propagation ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+
+bwrap bind-mounts host paths into its sandbox namespace. For these mounts to propagate correctly, the root mount (`/`) must be marked as **shared**. Docker defaults to **private** propagation, which causes bwrap mounts to silently fail. The `postStartCommand` runs:
+
+```shell
+sudo mount --make-rshared /
+```
+
+This recursively marks all mount points as shared, allowing bwrap's bind mounts to work.
+
+### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+
+Claude Code sets `TMPDIR=/tmp/claude` inside the sandbox, but doesn't create the directory itself. The sandbox allowlist permits writes to `/tmp/claude`, and the weaker sandbox bind-mounts the real `/tmp` into the namespace, so the directory just needs to exist on the host. Without it, any tool that resolves `TMPDIR` on startup (pnpm, node, etc.) crashes with `ENOENT`. The `postStartCommand` runs `mkdir -p /tmp/claude` to pre-create it. This is a workaround for a Claude Code bug ([anthropics/claude-code#21654](https://github.com/anthropics/claude-code/issues/21654)).
+
+### `enableWeakerNestedSandbox` ([Claude settings](.repoverlay/library/ff-claude/.claude/settings.json))
+
+Even with the above flags, Docker still blocks mounting a fresh `/proc` filesystem inside a user namespace — a kernel-level restriction that `CAP_SYS_ADMIN` and AppArmor changes cannot override. Claude's full-strength sandbox requires this `/proc` mount. The `enableWeakerNestedSandbox` setting tells Claude to use a weaker sandbox variant that skips the `/proc` mount while still providing filesystem isolation via bwrap.
+
+### `--copy` flag for repoverlay ([`agent-aliases.sh`](scripts/codespace-setup/agent-aliases.sh))
+
+repoverlay defaults to applying overlays as symlinks (e.g., `.claude/settings.json` -> `.repoverlay/library/ff-claude/.claude/settings.json`). bwrap cannot follow symlinks when constructing its mount namespace — it bind-mounts individual paths, and a symlink at the source causes a "No such file or directory" error even when the target is within the same repo. The `--copy` flag in `agent-aliases.sh` forces repoverlay to copy files instead, avoiding this limitation.

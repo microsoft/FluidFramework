@@ -5,12 +5,13 @@
 
 import fs from "fs";
 
-import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import type { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
-	ITestObjectProvider,
-	TestObjectProvider,
+	type ITestObjectProvider,
+	type TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
@@ -26,13 +27,13 @@ import {
 	getDriverInformationWhenNoProviderIsAvailable,
 	getVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import type { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
 	getDataRuntimeApi,
 	getLoaderApi,
 	getContainerRuntimeApi,
 	getDriverApi,
-	CompatApis,
+	type CompatApis,
 	getCompatModeFromKind,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
@@ -108,66 +109,98 @@ export interface IE2EDocsConfig {
 	documents: DescribeE2EDocInfo[];
 }
 // Default document types to be used during the performance E2E runs.
-const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
-	{
-		testTitle: "10Mb Map",
-		documentType: "DocumentMap",
-		documentTypeInfo: {
-			numberOfItems: 2,
-			itemSizeMb: 5, // 5Mb
-		},
-		minSampleCount: 2,
-		supportedEndpoints: ["local", "odsp"],
-	},
-	{
-		testTitle: "5Mb Map",
-		documentType: "DocumentMap",
-		documentTypeInfo: {
-			numberOfItems: 1,
-			itemSizeMb: 5, // 5Mb
-		},
-		minSampleCount: 2,
-		supportedEndpoints: ["local", "odsp"],
-	},
-	{
-		testTitle: "250 DataStores - 750 DDSs",
-		documentType: "DocumentMultipleDataStores",
-		documentTypeInfo: {
-			numberDataStores: 250,
-			numberDataStoresPerIteration: 250,
-		},
-		minSampleCount: 1,
-	},
-	{
-		testTitle: "500 DataStores - 1500 DDSs",
-		documentType: "DocumentMultipleDataStores",
-		documentTypeInfo: {
-			numberDataStores: 500,
-			numberDataStoresPerIteration: 250,
-		},
-		minSampleCount: 1,
-	},
-	{
-		testTitle: "Matrix 10x10 with SharedStrings",
-		documentType: "DocumentMatrix",
-		documentTypeInfo: {
-			rowSize: 10,
-			columnSize: 10,
-			stringSize: 100,
-		},
-		minSampleCount: 2,
-	},
-	{
-		testTitle: "Matrix 100x100 with SharedStrings",
-		documentType: "DocumentMatrixPlain",
-		documentTypeInfo: {
-			rowSize: 100,
-			columnSize: 100,
-			stringSize: 100,
-		},
-		minSampleCount: 2,
-	},
-];
+const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = isInPerformanceTestingMode
+	? [
+			{
+				testTitle: "10Mb Map",
+				documentType: "DocumentMap",
+				documentTypeInfo: {
+					numberOfItems: 2,
+					itemSizeMb: 5, // 5Mb
+				},
+				minSampleCount: 2,
+				supportedEndpoints: ["local", "odsp"],
+			},
+			{
+				testTitle: "5Mb Map",
+				documentType: "DocumentMap",
+				documentTypeInfo: {
+					numberOfItems: 1,
+					itemSizeMb: 5, // 5Mb
+				},
+				minSampleCount: 2,
+				supportedEndpoints: ["local", "odsp"],
+			},
+			{
+				testTitle: "250 DataStores - 750 DDSs",
+				documentType: "DocumentMultipleDataStores",
+				documentTypeInfo: {
+					numberDataStores: 250,
+					numberDataStoresPerIteration: 250,
+				},
+				minSampleCount: 1,
+			},
+			{
+				testTitle: "500 DataStores - 1500 DDSs",
+				documentType: "DocumentMultipleDataStores",
+				documentTypeInfo: {
+					numberDataStores: 500,
+					numberDataStoresPerIteration: 250,
+				},
+				minSampleCount: 1,
+			},
+			{
+				testTitle: "Matrix 10x10 with SharedStrings",
+				documentType: "DocumentMatrix",
+				documentTypeInfo: {
+					rowSize: 10,
+					columnSize: 10,
+					stringSize: 100,
+				},
+				minSampleCount: 2,
+			},
+			{
+				testTitle: "Matrix 100x100 with SharedStrings",
+				documentType: "DocumentMatrixPlain",
+				documentTypeInfo: {
+					rowSize: 100,
+					columnSize: 100,
+					stringSize: 100,
+				},
+				minSampleCount: 2,
+			},
+		]
+	: [
+			{
+				testTitle: "2Mb Map",
+				documentType: "DocumentMap",
+				documentTypeInfo: {
+					numberOfItems: 1,
+					itemSizeMb: 2,
+				},
+				minSampleCount: 2,
+				supportedEndpoints: ["local", "odsp"],
+			},
+			{
+				testTitle: "25 DataStores - 75 DDSs",
+				documentType: "DocumentMultipleDataStores",
+				documentTypeInfo: {
+					numberDataStores: 25,
+					numberDataStoresPerIteration: 25,
+				},
+				minSampleCount: 1,
+			},
+			{
+				testTitle: "Matrix 5x5 with SharedStrings",
+				documentType: "DocumentMatrix",
+				documentTypeInfo: {
+					rowSize: 5,
+					columnSize: 5,
+					stringSize: 10,
+				},
+				minSampleCount: 2,
+			},
+		];
 
 /**
  * @internal

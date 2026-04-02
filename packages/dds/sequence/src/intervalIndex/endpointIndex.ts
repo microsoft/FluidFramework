@@ -5,9 +5,10 @@
 
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { createTransientIntervalFromSequence, SequenceInterval } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
+import { createTransientIntervalFromSequence } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
-import { ISharedString } from "../sharedString.js";
+import type { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
 

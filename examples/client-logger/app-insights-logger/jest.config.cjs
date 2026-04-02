@@ -14,6 +14,12 @@ module.exports = {
 	moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],
 	testEnvironment: "jsdom",
+	globals: {
+		fetch: globalThis.fetch,
+		Request: globalThis.Request,
+		Response: globalThis.Response,
+		Headers: globalThis.Headers,
+	},
 	moduleNameMapper: {
 		// Remove explicit .js from local paths to allow jest to find the .ts* files
 		"^(\\.{1,2}/.*)\\.js$": "$1",

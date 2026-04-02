@@ -1,0 +1,20 @@
+{
+	"permissions": {
+		"defaultMode": "auto"
+	},
+	"skipAutoPermissionPrompt": true,
+	"sandbox": {
+		"enabled": true,
+		"enableWeakerNestedSandbox": true,
+		"allowedNetworkHosts": [
+			"api.github.com",
+			"registry.npmjs.org",
+			"developer.mozilla.org",
+			"www.typescriptlang.org",
+			"nodejs.org",
+			"www.npmjs.com",
+			"fluidframework.com",
+			"stackoverflow.com"
+		]
+	}
+}

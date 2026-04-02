@@ -415,6 +415,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
 					createBlobPayloadPending: undefined,
+					disableSchemaUpgrade: false,
+					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
 				const expectedRuntimeOptions2 = {
 					summaryOptions: {},
@@ -431,6 +433,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 					createBlobPayloadPending: undefined,
+					disableSchemaUpgrade: false,
+					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
 
 				const expectedRuntimeOptions =
