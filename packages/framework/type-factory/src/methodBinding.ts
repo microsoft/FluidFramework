@@ -100,6 +100,15 @@ export interface ExposedMethods {
 		S extends Ctor & IExposedMethods,
 		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,
 	>(constructor: S, methodName: K, tfFunction: Z): void;
+
+	/**
+	 * Expose a method with type factory types.
+	 */
+	expose<
+		const K extends string & keyof MethodKeys<InstanceType<S>>,
+		S extends Ctor & IExposedMethods,
+		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,
+	>(constructor: S, methodName: K, tfFunction: Z): void;
 }
 
 /**

@@ -25,6 +25,7 @@ export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
 export interface ExposedMethods {
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(constructor: S, methodName: K, tfFunction: Z): void;
     exposeMethod<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(constructor: S, methodName: K, tfFunction: Z): void;
 }
 
