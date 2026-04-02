@@ -5,7 +5,7 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { ExecOptions, execFileSync, execFile } from "node:child_process";
+import { execFileSync, execFile, type ExecFileOptions } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -278,7 +278,7 @@ export async function ensureInstalled(
 
 		// Check installed status again under lock.
 		if (force || !(await isInstalled(version))) {
-			const options: ExecOptions = {
+			const options: ExecFileOptions = {
 				cwd: modulePath,
 				env: {
 					...process.env,
@@ -287,7 +287,6 @@ export async function ensureInstalled(
 					NODE_OPTIONS: "",
 				},
 				// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-				// @ts-expect-error ExecOptions does not acknowledge boolean for `shell` as a valid option (at least as of @types/node@18.19.1)
 				shell: true,
 			};
 
