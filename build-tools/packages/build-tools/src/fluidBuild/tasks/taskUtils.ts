@@ -97,8 +97,12 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
  * Converts a path to use forward slashes (POSIX style).
  *
  * @remarks
- * This function mirrors the build-infrastructure implementation so the build-tools
- * task utilities apply gitignore rules consistently.
+ * This helper intentionally mirrors `@fluid-tools/build-infrastructure`, but it is
+ * duplicated here because `@fluidframework/build-tools` runs as CommonJS while
+ * `@fluid-tools/build-infrastructure` is a package-wide ESM package (`"type": "module"`).
+ * Until the build-infrastructure `require` path is fully wired for safe runtime
+ * consumption from CommonJS, build-tools keeps a local copy so the gitignore logic
+ * behaves the same in both packages.
  */
 export function toPosixPath(s: string): string {
 	return s.replace(/\\/g, "/");
@@ -275,8 +279,12 @@ export async function globWithGitignore(
  * relative to each .gitignore file's directory.
  *
  * @remarks
- * This function and related gitignore utilities mirror the build-infrastructure
- * implementation so build-tools uses the same gitignore semantics.
+ * These utilities intentionally duplicate the implementation in
+ * `@fluid-tools/build-infrastructure`. The duplication is temporary but deliberate:
+ * `@fluidframework/build-tools` executes as CommonJS, while build-infrastructure is
+ * published as package-wide ESM. Keeping a local copy avoids depending on a runtime
+ * import path that is still crossing that module-format boundary, while preserving
+ * identical gitignore semantics for build-tools tasks.
  */
 async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
 	const normalizedCwd = path.resolve(cwd);
