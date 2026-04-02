@@ -90,6 +90,13 @@ class ExposedMethodsI implements ExposedMethods {
 			functionDef.returns,
 		);
 	}
+	public expose<
+		const K extends string & keyof MethodKeys<InstanceType<S>>,
+		S extends Ctor & IExposedMethods,
+		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,
+	>(schema: S, methodName: K, functionDef: Z): void {
+		this.exposeMethod(schema, methodName, functionDef);
+	}
 
 	public static getExposedMethods(schemaClass: BindableSchema): {
 		methods: Record<string, FunctionWrapper>;
