@@ -2842,9 +2842,9 @@ describe("treeNodeApi", () => {
 				// the marks for the array field include a {fields} mark for the
 				// unchanged-at-array-level element. deltaMarksToArrayOps converts that
 				// to a "retain" op.
-				const sf = new SchemaFactory("retain-delta");
-				class RetainItem extends sf.object("RetainItem", { value: sf.number }) {}
-				class RetainArray extends sf.array("RetainArray", [RetainItem]) {}
+				const sf2 = new SchemaFactory("retain-delta");
+				class RetainItem extends sf2.object("RetainItem", { value: sf2.number }) {}
+				class RetainArray extends sf2.array("RetainArray", [RetainItem]) {}
 
 				const view = getView(new TreeViewConfiguration({ schema: RetainArray }));
 				view.initialize([{ value: 1 }, { value: 2 }, { value: 3 }]);

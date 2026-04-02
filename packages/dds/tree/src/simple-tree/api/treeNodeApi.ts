@@ -45,7 +45,7 @@ import {
 	isMapNodeSchema,
 	isObjectNodeSchema,
 } from "../node-kinds/index.js";
-import type { TreeMapNode } from "../node-kinds/index.js";
+import type { ReadonlyArrayNode, TreeMapNode } from "../node-kinds/index.js";
 
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
@@ -287,7 +287,11 @@ export const treeNodeApi: TreeNodeApi = {
 						// TODO: Once the eventing stack is rewritten to walk the composed delta at
 						// flush time, `marks` will always be defined. Remove the `undefined` fallback
 						// and simplify to: `const delta = deltaMarksToArrayOps(marks, node);`
-						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks, node);
+						const delta =
+							marks === undefined
+								? undefined
+								: // isArrayNodeSchema(nodeSchema) above confirms node is an array node at runtime.
+									deltaMarksToArrayOps(marks, node as ReadonlyArrayNode);
 						listener({ delta });
 					});
 				} else {
@@ -349,7 +353,7 @@ export const treeNodeApi: TreeNodeApi = {
  */
 function deltaMarksToArrayOps(
 	marks: readonly DeltaMark[],
-	node: TreeNode,
+	node: ReadonlyArrayNode,
 ): ArrayNodeDeltaOp[] {
 	const ops: ArrayNodeDeltaOp[] = [];
 	let writePos = 0; // Position in the post-change array.
@@ -367,10 +371,7 @@ function deltaMarksToArrayOps(
 			} else {
 				// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
 				// Read the retained element from the post-change array to build the childDelta.
-				// The cast is necessary because ArrayNode does not expose indexed access on its
-				// TypeScript type, but at runtime its proxy forwards numeric property reads to the
-				// underlying sequence field.
-				const element = (node as unknown as readonly unknown[])[writePos];
+				const element = node[writePos];
 				assert(
 					isTreeNode(element),
 					"Leaf element should not have nested field changes (mark.fields is set but element is not a TreeNode).",
@@ -420,6 +421,8 @@ function buildPropertyDelta(propertyValue: unknown, fieldMark: DeltaMark): NodeD
 			fail("Expected a tree node for a retain mark with nested fields.");
 		}
 		// Leaf value (string, number, boolean, null, or IFluidHandle) was replaced.
+		// isTreeNode(propertyValue) returned false above, so propertyValue is not a TreeNode.
+		// The only non-TreeNode values in the tree are TreeLeafValues.
 		return { kind: "leaf", newValue: propertyValue as TreeLeafValue };
 	}
 }
@@ -447,6 +450,8 @@ function buildNodeDeltaFromFields(
 				fail("Could not find stored key in schema when building NodeDelta.");
 			const fieldMark =
 				fieldChanges.marks[0] ?? fail("Expected non-empty marks in field changes.");
+			// isObjectNodeSchema(nodeSchema) confirms this is an object node whose proxy
+			// forwards property reads by string key to the underlying fields.
 			const propertyValue = (node as unknown as Record<string, unknown>)[propertyKey];
 			changedProperties.set(propertyKey, buildPropertyDelta(propertyValue, fieldMark));
 		}
@@ -455,12 +460,17 @@ function buildNodeDeltaFromFields(
 		// Nested array: its sequence field changes are under EmptyKey.
 		const emptyKeyChanges =
 			fields.get(EmptyKey) ?? fail("Expected EmptyKey changes in array node delta.");
-		return { kind: "array", ops: deltaMarksToArrayOps(emptyKeyChanges.marks, node) };
+		// isArrayNodeSchema(nodeSchema) above confirms node is an array node at runtime.
+		return {
+			kind: "array",
+			ops: deltaMarksToArrayOps(emptyKeyChanges.marks, node as ReadonlyArrayNode),
+		};
 	} else {
 		// Map or record node: stored field keys are the property keys.
 		// Map entries are accessed via .get() — direct property access does not work on map node proxies.
 		assert(isMapNodeSchema(nodeSchema), "expected map or record schema in map branch");
-		const mapNode = node as unknown as TreeMapNode;
+		// isMapNodeSchema(nodeSchema) above confirms node is a map node at runtime.
+		const mapNode = node as TreeMapNode;
 		const changedProperties = new Map<string, NodeDelta>();
 		for (const [fieldKey, fieldChanges] of fields) {
 			const propertyKey = extractFromOpaque(fieldKey);
