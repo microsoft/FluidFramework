@@ -115,7 +115,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"@fluidframework/type-factory": "workspace:~",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {

@@ -5,6 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { TreeNodeSchema } from "@fluidframework/tree/alpha";
+
 import type {
 	TypeFactoryType,
 	TypeFactoryArray,
@@ -20,7 +21,7 @@ import type {
 	TypeFactoryIntersection,
 	TypeFactoryFunction,
 	TypeFactoryInstanceOf,
-} from "@fluidframework/type-factory/internal";
+} from "./treeAgentTypes.js";
 
 /**
  * Converts type factory type definitions into TypeScript declaration text.
@@ -151,11 +152,7 @@ export function renderTypeFactoryTypeScript(
 				return;
 			}
 			case "instanceof": {
-				append(
-					getFriendlyName(
-						(type as TypeFactoryInstanceOf).constructor as unknown as TreeNodeSchema,
-					),
-				);
+				append(getFriendlyName((type as TypeFactoryInstanceOf).schema));
 				return;
 			}
 			default: {
