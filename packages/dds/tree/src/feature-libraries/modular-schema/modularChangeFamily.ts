@@ -4907,6 +4907,7 @@ enum RenameCollisionPolicy {
 	Overwrite,
 }
 
+// XXX: Break this function into smaller pieces
 /**
  * Adds to a rename table, composing with renames which should be applied before or after the inserted rename.
  * @param table - The table to insert the rename into.
@@ -4941,7 +4942,6 @@ function insertRootRename(
 
 		if (rename1Entry.value !== undefined) {
 			composedOldId = rename1Entry.value;
-			deleteNodeRenameFrom(table, composedOldId, countProcessed);
 		}
 	}
 
@@ -4958,10 +4958,38 @@ function insertRootRename(
 
 		if (rename2Entry.value !== undefined) {
 			composedNewId = rename2Entry.value;
-			// XXX: Not safe to delete before we know the full count processed?
-			deleteNodeRenameTo(table, composedNewId, countProcessed);
 		}
 	}
+
+	const detachLocationEntry = getDetachLocation(composedOldId, countProcessed);
+	countProcessed = detachLocationEntry.length;
+
+	// Beyond this point we do not make new queries which would change `countProcessed`.
+	// Now that we know the range of IDs we're processing, we apply edits to the table.
+	if (!areEqualChangeAtomIds(composedOldId, oldId)) {
+		// The rename we're inserting composed with a rename to `composedOldId`.
+		// We delete that existing rename here before adding the composed entry.
+		deleteNodeRenameFrom(table, composedOldId, countProcessed);
+	}
+
+	if (!areEqualChangeAtomIds(composedNewId, newId)) {
+		// The rename we're inserting composed with a rename from `composedNewId`.
+		// We delete that existing rename here before adding the composed entry.
+		deleteNodeRenameTo(table, composedNewId, countProcessed);
+	}
+
+	if (collisionPolicy === RenameCollisionPolicy.Overwrite) {
+		deleteNodeRenameFrom(table, composedOldId, countProcessed);
+		deleteNodeRenameTo(table, composedNewId, countProcessed);
+	}
+
+	addNodeRename(
+		table,
+		composedOldId,
+		composedNewId,
+		countProcessed,
+		detachLocationEntry.value,
+	);
 
 	if (intermediateRenameEntry.value === undefined) {
 		const renameToOldId = areEqualChangeAtomIds(oldId, composedOldId) ? undefined : oldId;
@@ -4970,9 +4998,6 @@ function insertRootRename(
 			table.firstIntermediateRenames.set(composedOldId, countProcessed, firstRenameId);
 		}
 	}
-
-	const detachLocationEntry = getDetachLocation(composedOldId, countProcessed);
-	countProcessed = detachLocationEntry.length;
 
 	if (areEqualChangeAtomIds(composedOldId, composedNewId)) {
 		// The renames cancelling out implies that the detach location of the root is not changed by the composed changeset.
@@ -5002,19 +5027,6 @@ function insertRootRename(
 			}
 		}
 	}
-
-	if (collisionPolicy === RenameCollisionPolicy.Overwrite) {
-		deleteNodeRenameFrom(table, composedOldId, countProcessed);
-		deleteNodeRenameTo(table, composedNewId, countProcessed);
-	}
-
-	addNodeRename(
-		table,
-		composedOldId,
-		composedNewId,
-		countProcessed,
-		detachLocationEntry.value,
-	);
 
 	// XXX: Update output detach location.
 	const countRemaining = count - countProcessed;
