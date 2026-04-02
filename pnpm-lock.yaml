@@ -8445,9 +8445,6 @@ importers:
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
-      tslib:
-        specifier: ^1.10.0
-        version: 1.14.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
