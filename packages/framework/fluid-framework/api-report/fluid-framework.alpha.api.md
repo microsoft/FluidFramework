@@ -159,6 +159,9 @@ export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeViewConfi
 // @alpha
 export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeArrayNode<TAllowedTypes>): TreeArrayNodeAlpha<TAllowedTypes>;
 
+// @alpha
+export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeMapNode<TAllowedTypes>): TreeMapNodeAlpha<TAllowedTypes>;
+
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
