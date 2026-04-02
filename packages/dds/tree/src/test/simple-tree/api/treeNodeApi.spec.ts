@@ -3002,7 +3002,9 @@ describe("treeNodeApi", () => {
 					// Element 0 retained unchanged.
 					assert.deepEqual(ops[0], { type: "retain", count: 1 });
 					// Element 1 retained with childDelta.
-					assert(ops[1]?.type === "retain" && ops[1].childDelta !== undefined);
+					assert(ops[1] !== undefined, "Expected op at index 1");
+					assert.equal(ops[1].type, "retain");
+					assert(ops[1].childDelta !== undefined, "Expected childDelta on retain op");
 					assert.deepEqual(ops[1].childDelta, {
 						kind: "object",
 						changedProperties: new Map([["v", { kind: "leaf", newValue: 42 }]]),
@@ -3083,7 +3085,7 @@ describe("treeNodeApi", () => {
 					assert(retain.type === "retain");
 					assert(retain.childDelta !== undefined);
 					// The map node delta: kind "object" with the changed key.
-					assert(retain.childDelta.kind === "object");
+					assert.equal(retain.childDelta.kind, "object");
 					const keyDelta = retain.childDelta.changedProperties.get("key1");
 					assert.deepEqual(keyDelta, {
 						kind: "object",

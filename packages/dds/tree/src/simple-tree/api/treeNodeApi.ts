@@ -331,7 +331,7 @@ export const treeNodeApi: TreeNodeApi = {
 
 /**
  * Converts an array of internal {@link DeltaMark}s for a sequence field into sequential
- * array delta ops suitable for inclusion in {@link NodeChangedData.delta}.
+ * array delta ops suitable for inclusion in {@link NodeChangedDataDelta.delta}.
  *
  * Each mark in the delta describes a contiguous run of positions in the original array:
  * - A mark with only `count` (no attach/detach) → `"retain"` (elements unchanged at this level);
