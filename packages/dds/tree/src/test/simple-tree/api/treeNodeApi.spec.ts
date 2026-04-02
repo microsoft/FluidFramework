@@ -2864,7 +2864,14 @@ describe("treeNodeApi", () => {
 
 				assert.deepEqual(deltas, [
 					[
-						{ type: "retain", count: 1 },
+						{
+							type: "retain",
+							count: 1,
+							childDelta: {
+								kind: "object",
+								changedProperties: new Map([["value", { kind: "leaf", newValue: 99 }]]),
+							},
+						},
 						{ type: "remove", count: 1 },
 					],
 				]);
@@ -2976,11 +2983,6 @@ describe("treeNodeApi", () => {
 							{ type: "remove", count: 1 },
 						],
 					]);
-					// Plain retain has no childDelta.
-					const retain = deltas[0]?.[0];
-					assert(retain !== undefined);
-					assert(retain.type === "retain");
-					assert.equal(retain.childDelta, undefined);
 				});
 
 				it(`middle element modification produces retain, retain-with-childDelta, remove`, () => {
@@ -2996,30 +2998,29 @@ describe("treeNodeApi", () => {
 					forkView.root.removeAt(2);
 					view.checkout.merge(forkCheckout);
 
-					assert.equal(deltas.length, 1);
-					const ops = deltas[0];
-					assert(ops !== undefined);
-					// Element 0 retained unchanged.
-					assert.deepEqual(ops[0], { type: "retain", count: 1 });
-					// Element 1 retained with childDelta.
-					assert(ops[1] !== undefined, "Expected op at index 1");
-					assert.equal(ops[1].type, "retain");
-					assert(ops[1].childDelta !== undefined, "Expected childDelta on retain op");
-					assert.deepEqual(ops[1].childDelta, {
-						kind: "object",
-						changedProperties: new Map([["v", { kind: "leaf", newValue: 42 }]]),
-					});
-					// Element 2 removed.
-					assert.deepEqual(ops[2], { type: "remove", count: 1 });
+					assert.deepEqual(deltas, [
+						[
+							{ type: "retain", count: 1 },
+							{
+								type: "retain",
+								count: 1,
+								childDelta: {
+									kind: "object",
+									changedProperties: new Map([["v", { kind: "leaf", newValue: 42 }]]),
+								},
+							},
+							{ type: "remove", count: 1 },
+						],
+					]);
 				});
 
 				it(`replaced child node produces an empty delta in childDelta`, () => {
 					// Tests the path in buildNodeDeltaFromFields where a child object node is
 					// replaced entirely (attach+detach both set on the mark → empty delta).
-					const sf3 = new SchemaFactory("replaced-child");
-					class Child extends sf3.object("Child", { v: sf3.number }) {}
-					class Parent extends sf3.object("Parent", { child: Child }) {}
-					class ParentArray extends sf3.array("ParentArray", [Parent]) {}
+					const sfReplace = new SchemaFactory("replaced-child");
+					class Child extends sfReplace.object("Child", { v: sfReplace.number }) {}
+					class Parent extends sfReplace.object("Parent", { child: Child }) {}
+					class ParentArray extends sfReplace.array("ParentArray", [Parent]) {}
 
 					const view = getView(new TreeViewConfiguration({ schema: ParentArray }));
 					view.initialize([{ child: { v: 1 } }, { child: { v: 2 } }]);
@@ -3053,12 +3054,99 @@ describe("treeNodeApi", () => {
 					});
 				});
 
+				it(`clearing an optional field produces childDelta with kind "deleted"`, () => {
+					// Tests the propertyValue === undefined path in buildPropertyDelta.
+					const sfDeleted = new SchemaFactory("deleted-field-delta");
+					class ItemWithOptional extends sfDeleted.object("ItemWithOptional", {
+						v: sfDeleted.number,
+						optional: sfDeleted.optional(sfDeleted.number),
+					}) {}
+					class ItemWithOptionalArray extends sfDeleted.array("ItemWithOptionalArray", [
+						ItemWithOptional,
+					]) {}
+
+					const view = getView(new TreeViewConfiguration({ schema: ItemWithOptionalArray }));
+					view.initialize([
+						{ v: 1, optional: 42 },
+						{ v: 2, optional: 99 },
+					]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					const { forkView, forkCheckout } = getViewForForkedBranch(view);
+					forkView.root[0].optional = undefined;
+					forkView.root.removeAt(1);
+					view.checkout.merge(forkCheckout);
+
+					assert.deepEqual(deltas, [
+						[
+							{
+								type: "retain",
+								count: 1,
+								childDelta: {
+									kind: "object",
+									changedProperties: new Map([["optional", { kind: "deleted" }]]),
+								},
+							},
+							{ type: "remove", count: 1 },
+						],
+					]);
+				});
+
+				it(`record node element with nested property change produces childDelta`, () => {
+					// Tests the isRecordNodeSchema branch of buildNodeDeltaFromFields.
+					const sfRecord = new SchemaFactoryAlpha("record-child-delta");
+					class RecordElement extends sfRecord.object("RecordElement", {
+						v: sfRecord.number,
+					}) {}
+					class InnerRecord extends sfRecord.record("Inner", RecordElement) {}
+					class ContainerArray extends sfRecord.array("ContainerArray", [InnerRecord]) {}
+
+					const view = getView(new TreeViewConfiguration({ schema: ContainerArray }));
+					view.initialize([{ key1: { v: 1 } }, { key1: { v: 2 } }]);
+					const root = view.root;
+
+					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+
+					const { forkView, forkCheckout } = getViewForForkedBranch(view);
+					const entry: RecordElement | undefined = forkView.root[0].key1;
+					assert(entry !== undefined, "Expected key1 entry");
+					entry.v = 42;
+					forkView.root.removeAt(1);
+					view.checkout.merge(forkCheckout);
+
+					assert.deepEqual(deltas, [
+						[
+							{
+								type: "retain",
+								count: 1,
+								childDelta: {
+									kind: "object",
+									changedProperties: new Map([
+										[
+											"key1",
+											{
+												kind: "object",
+												changedProperties: new Map([["v", { kind: "leaf", newValue: 42 }]]),
+											},
+										],
+									]),
+								},
+							},
+							{ type: "remove", count: 1 },
+						],
+					]);
+				});
+
 				it(`map node element with nested property change produces childDelta`, () => {
 					// Tests the map/record branch of buildNodeDeltaFromFields.
-					const sf4 = new SchemaFactory("map-child-delta");
-					class MapElement extends sf4.object("MapElement", { v: sf4.number }) {}
-					class InnerMap extends sf4.map("Inner", MapElement) {}
-					class ContainerArray extends sf4.array("ContainerArray", [InnerMap]) {}
+					const sfMap = new SchemaFactory("map-child-delta");
+					class MapElement extends sfMap.object("MapElement", { v: sfMap.number }) {}
+					class InnerMap extends sfMap.map("Inner", MapElement) {}
+					class ContainerArray extends sfMap.array("ContainerArray", [InnerMap]) {}
 
 					const view = getView(new TreeViewConfiguration({ schema: ContainerArray }));
 					view.initialize([{ key1: { v: 1 } }, { key1: { v: 2 } }]);
