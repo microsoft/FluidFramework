@@ -1230,6 +1230,8 @@ export type NodeDelta = {
 } | {
     readonly kind: "leaf";
     readonly newValue: TreeLeafValue;
+} | {
+    readonly kind: "deleted";
 };
 
 // @public
