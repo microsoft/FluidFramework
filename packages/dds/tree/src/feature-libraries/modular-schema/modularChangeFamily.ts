@@ -254,6 +254,8 @@ export class ModularChangeFamily
 			noChangeConstraintOnRevert,
 		});
 
+		removeUnnecessaryDetachLocations(composed.rootNodes, composed.rebaseVersion);
+
 		// XXX: This is an expensive assert which should be disabled before merging.
 		validateChangeset(composed, this.fieldKinds);
 		return composed;
@@ -1080,12 +1082,7 @@ export class ModularChangeFamily
 			revertConstraintState,
 		);
 
-		if (rebaseVersion > 1) {
-			// Detach locations are not needed in newer rebase versions.
-			// We delete the detach location entries as a normalization.
-			rebasedRootNodes.detachLocations.clear();
-			rebasedRootNodes.outputDetachLocations.clear();
-		}
+		removeUnnecessaryDetachLocations(rebasedRootNodes, rebaseVersion);
 
 		const fieldsWithRootMoves = getFieldsWithRootMoves(
 			crossFieldTable.rebasedRootNodes,
@@ -2561,6 +2558,18 @@ export function rebaseRevisionMetadataFromInfo(
 	};
 }
 
+function removeUnnecessaryDetachLocations(
+	roots: RootNodeTable,
+	rebaseVersion: RebaseVersion,
+): void {
+	if (rebaseVersion > 1) {
+		// Detach locations are not needed in newer rebase versions.
+		// We delete the detach location entries as a normalization.
+		roots.detachLocations.clear();
+		roots.outputDetachLocations.clear();
+	}
+}
+
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 	return (
 		change.fieldChanges === undefined &&
@@ -3050,6 +3059,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					this.table.rebasedRootNodes,
 					baseAttachId,
 					newDetachId,
+					undefined,
 					countToProcess,
 					undefined,
 					this.table.newChange.rootNodes,
@@ -4899,18 +4909,20 @@ enum RenameCollisionPolicy {
 
 /**
  * Adds to a rename table, composing with renames which should be applied before or after the inserted rename.
- * @param tableToUpdate - The table to insert the rename into.
+ * @param table - The table to insert the rename into.
  * @param oldId - The root ID to rename from.
  * @param newId - The root ID to rename to.
+ * @param newIntermediateId - The first intermediate ID to rename to.
  * @param count - The length of the range of roots being renames.
  * @param renamesBefore - If renamesBefore has a rename from X to `oldId`, the inserted rename will compose to a rename from X to `newId`.
  * @param renamesAfter - If renamesAfter has a rename from `newId` to X, the inserted rename will compose to a rename from `oldId` to X.
  * @param getDetachLocation - A function which provides the detach location for the rename, given the composed ID to rename from.
  */
 function insertRootRename(
-	tableToUpdate: RootNodeTable,
+	table: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
+	newIntermediateId: ChangeAtomId | undefined,
 	count: number,
 	renamesBefore: RootNodeTable | undefined,
 	renamesAfter: RootNodeTable | undefined,
@@ -4920,74 +4932,103 @@ function insertRootRename(
 	) => RangeQueryResult<FieldId | undefined>,
 	collisionPolicy: RenameCollisionPolicy = RenameCollisionPolicy.Error,
 ): void {
-	let countToProcess = count;
+	let countProcessed = count;
 
 	let composedOldId = oldId;
 	if (renamesBefore !== undefined) {
-		const rename1Entry = renamesBefore.newToOldId.getFirst(oldId, countToProcess);
-		countToProcess = rename1Entry.length;
+		const rename1Entry = renamesBefore.newToOldId.getFirst(oldId, countProcessed);
+		countProcessed = rename1Entry.length;
 
 		if (rename1Entry.value !== undefined) {
 			composedOldId = rename1Entry.value;
-			deleteNodeRenameFrom(tableToUpdate, composedOldId, countToProcess);
-
-			const intermediateRenameEntry = tableToUpdate.firstIntermediateRenames.getFirst(
-				composedOldId,
-				countToProcess,
-			);
-			countToProcess = intermediateRenameEntry.length;
-			if (intermediateRenameEntry.value === undefined) {
-				tableToUpdate.firstIntermediateRenames.set(composedOldId, countToProcess, oldId);
-			}
+			deleteNodeRenameFrom(table, composedOldId, countProcessed);
 		}
 	}
 
-	let composedNewId = newId;
+	const intermediateRenameEntry = table.firstIntermediateRenames.getFirst(
+		composedOldId,
+		countProcessed,
+	);
+	countProcessed = intermediateRenameEntry.length;
 
+	let composedNewId = newId;
 	if (renamesAfter !== undefined) {
-		const rename2Entry = renamesAfter.oldToNewId.getFirst(newId, countToProcess);
-		countToProcess = rename2Entry.length;
+		const rename2Entry = renamesAfter.oldToNewId.getFirst(newId, countProcessed);
+		countProcessed = rename2Entry.length;
 
 		if (rename2Entry.value !== undefined) {
 			composedNewId = rename2Entry.value;
-			deleteNodeRenameTo(tableToUpdate, composedNewId, countToProcess);
+			// XXX: Not safe to delete before we know the full count processed?
+			deleteNodeRenameTo(table, composedNewId, countProcessed);
+		}
+	}
 
-			const intermediateRenameEntry = tableToUpdate.firstIntermediateRenames.getFirst(
-				composedOldId,
-				countToProcess,
+	if (intermediateRenameEntry.value === undefined) {
+		const renameToOldId = areEqualChangeAtomIds(oldId, composedOldId) ? undefined : oldId;
+		const firstRenameId = renameToOldId ?? newIntermediateId ?? newId;
+		if (!areEqualChangeAtomIds(firstRenameId, composedNewId)) {
+			table.firstIntermediateRenames.set(composedOldId, countProcessed, firstRenameId);
+		}
+	}
+
+	const detachLocationEntry = getDetachLocation(composedOldId, countProcessed);
+	countProcessed = detachLocationEntry.length;
+
+	if (areEqualChangeAtomIds(composedOldId, composedNewId)) {
+		// The renames cancelling out implies that the detach location of the root is not changed by the composed changeset.
+		table.outputDetachLocations.delete(composedNewId, countProcessed);
+		table.outputDetachLocations.delete(newId, countProcessed);
+	} else {
+		const outputDetachEntry = table.outputDetachLocations.getFirst(oldId, countProcessed);
+		countProcessed = outputDetachEntry.length;
+		if (outputDetachEntry.value !== undefined) {
+			const finalOutputDetachEntry = table.outputDetachLocations.getFirst(
+				composedNewId,
+				countProcessed,
 			);
-			countToProcess = intermediateRenameEntry.length;
-			if (intermediateRenameEntry.value === undefined) {
-				tableToUpdate.firstIntermediateRenames.set(composedOldId, countToProcess, newId);
+			countProcessed = finalOutputDetachEntry.length;
+
+			// We've renamed the root for this output detach location, so we remove the existing entry.
+			table.outputDetachLocations.delete(oldId, countProcessed);
+
+			// If there is already an output detach location for `composedNewId`,
+			// we should keep that one, since it may reflect a different, later location.
+			if (finalOutputDetachEntry.value === undefined) {
+				table.outputDetachLocations.set(
+					composedNewId,
+					countProcessed,
+					outputDetachEntry.value,
+				);
 			}
 		}
 	}
 
-	const detachLocationEntry = getDetachLocation(composedOldId, countToProcess);
-	countToProcess = detachLocationEntry.length;
-
 	if (collisionPolicy === RenameCollisionPolicy.Overwrite) {
-		deleteNodeRenameFrom(tableToUpdate, composedOldId, countToProcess);
-		deleteNodeRenameTo(tableToUpdate, composedNewId, countToProcess);
+		deleteNodeRenameFrom(table, composedOldId, countProcessed);
+		deleteNodeRenameTo(table, composedNewId, countProcessed);
 	}
 
 	addNodeRename(
-		tableToUpdate,
+		table,
 		composedOldId,
 		composedNewId,
-		countToProcess,
+		countProcessed,
 		detachLocationEntry.value,
 	);
 
-	tryRemoveDetachLocation(tableToUpdate, newId, countToProcess);
-	tryRemoveDetachLocation(tableToUpdate, composedNewId, countToProcess);
-
-	const countRemaining = count - countToProcess;
+	// XXX: Update output detach location.
+	const countRemaining = count - countProcessed;
 	if (countRemaining > 0) {
+		const offsetIntermediateRename =
+			newIntermediateId === undefined
+				? undefined
+				: offsetChangeAtomId(newIntermediateId, countProcessed);
+
 		insertRootRename(
-			tableToUpdate,
-			offsetChangeAtomId(oldId, countToProcess),
-			offsetChangeAtomId(newId, countToProcess),
+			table,
+			offsetChangeAtomId(oldId, countProcessed),
+			offsetChangeAtomId(newId, countProcessed),
+			offsetIntermediateRename,
 			countRemaining,
 			renamesBefore,
 			renamesAfter,
@@ -5059,16 +5100,25 @@ function composeRootRename(
 		return change2.rootNodes.detachLocations.getFirst(oldId, countProcessed);
 	};
 
-	insertRootRename(
-		composedTable,
+	for (const intermediateRenameEntry of change2.rootNodes.firstIntermediateRenames.getAll2(
 		oldId,
-		newId,
 		count,
-		change1.rootNodes,
-		renamesAfter,
-		getDetachLocation,
-		collisionPolicy,
-	);
+	)) {
+		const offsetOldId = offsetChangeAtomId(oldId, intermediateRenameEntry.offset);
+		const offsetNewId = offsetChangeAtomId(newId, intermediateRenameEntry.offset);
+
+		insertRootRename(
+			composedTable,
+			offsetOldId,
+			offsetNewId,
+			intermediateRenameEntry.value,
+			intermediateRenameEntry.length,
+			change1.rootNodes,
+			renamesAfter,
+			getDetachLocation,
+			collisionPolicy,
+		);
+	}
 }
 
 function tryRemoveDetachLocation(
@@ -5112,6 +5162,7 @@ function deleteNodeRenameEntry(
 ): void {
 	roots.oldToNewId.delete(oldId, count);
 	roots.newToOldId.delete(newId, count);
+	tryRemoveDetachLocation(roots, oldId, count);
 }
 
 function replaceRootTableRevision(

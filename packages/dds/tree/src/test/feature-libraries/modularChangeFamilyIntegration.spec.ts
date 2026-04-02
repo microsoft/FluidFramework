@@ -1934,6 +1934,7 @@ describe("ModularChangeFamily integration", () => {
 			const fieldAId = { nodeId: undefined, field: fieldA };
 			const detachId: ChangeAtomId = { revision: tag2, localId: brand(3) };
 			const firstDetachId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const moveOutId: ChangeAtomId = { revision: tag2, localId: brand(1) };
 
 			const expected = Change.build(
 				{
@@ -1941,13 +1942,19 @@ describe("ModularChangeFamily integration", () => {
 					maxId: 3,
 					detachedMoves: [{ detachId, count: 1, newLocation: fieldAId }],
 					renames: [
-						{ oldId: firstDetachId, newId: detachId, count: 1, detachLocation: undefined },
+						{
+							oldId: firstDetachId,
+							newId: detachId,
+							firstIntermediateRename: moveOutId,
+							count: 1,
+							detachLocation: undefined,
+						},
 					],
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
 					MarkMaker.detach(1, firstDetachId, {
-						cellRename: { revision: tag2, localId: brand(1) },
+						cellRename: moveOutId,
 					}),
 					MarkMaker.skip(1),
 					MarkMaker.rename(1, { revision: tag2, localId: brand(2) }, detachId),
