@@ -71,7 +71,7 @@ export interface IStagingController extends IProvideStagingController {
 	/**
 	 * Enter staging mode. While in staging mode, ops are buffered locally
 	 * and not sent to the ordering service until
-	 * {@link IStagingController.exitStagingMode | exitStagingMode("commit")} is called.
+	 * {@link IStagingController.exitStagingMode | exitStagingMode(StagingModeExitAction.Commit)} is called.
 	 *
 	 * @throws Will throw if already in staging mode or if the container is detached.
 	 */
@@ -80,13 +80,44 @@ export interface IStagingController extends IProvideStagingController {
 	/**
 	 * Exit staging mode and either commit or discard the staged changes.
 	 *
-	 * @param action - `"commit"` sends the buffered ops to the ordering service.
-	 * `"discard"` rolls back all changes made while in staging mode.
+	 * @param action - `StagingModeExitAction.Commit` sends the buffered ops to the ordering service.
+	 * `StagingModeExitAction.Discard` rolls back all changes made while in staging mode.
 	 *
 	 * @throws Will throw if not currently in staging mode.
 	 */
-	exitStagingMode(action: "commit" | "discard"): void;
+	exitStagingMode(action: StagingModeExitAction): void;
 }
+
+/**
+ * The action to take when exiting staging mode via {@link IStagingController.exitStagingMode}.
+ *
+ * @legacy @alpha
+ */
+export const StagingModeExitAction = {
+	/**
+	 * Send the buffered ops to the ordering service.
+	 *
+	 * @remarks
+	 * The container will remain dirty until the submitted ops are acknowledged by the server.
+	 */
+	Commit: "commit",
+	/**
+	 * Roll back all changes made while in staging mode.
+	 *
+	 * @remarks
+	 * The container will return to the state it was in before
+	 * {@link IStagingController.enterStagingMode} was called.
+	 */
+	Discard: "discard",
+} as const;
+
+/**
+ * The action to take when exiting staging mode via {@link IStagingController.exitStagingMode}.
+ *
+ * @legacy @alpha
+ */
+export type StagingModeExitAction =
+	(typeof StagingModeExitAction)[keyof typeof StagingModeExitAction];
 
 /**
  * Converts types to their alpha counterparts to expose alpha functionality.

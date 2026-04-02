@@ -312,7 +312,7 @@ export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "content
 // @alpha @sealed @legacy
 export interface IStagingController extends IProvideStagingController {
     enterStagingMode(): void;
-    exitStagingMode(action: "commit" | "discard"): void;
+    exitStagingMode(action: StagingModeExitAction): void;
     readonly inStagingMode: boolean;
 }
 
@@ -432,6 +432,15 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
+
+// @alpha @legacy (undocumented)
+export const StagingModeExitAction: {
+    readonly Commit: "commit";
+    readonly Discard: "discard";
+};
+
+// @alpha @legacy (undocumented)
+export type StagingModeExitAction = (typeof StagingModeExitAction)[keyof typeof StagingModeExitAction];
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

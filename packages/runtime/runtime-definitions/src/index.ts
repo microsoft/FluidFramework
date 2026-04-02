@@ -101,4 +101,5 @@ export {
 	type IProvideStagingController,
 	type IStagingController,
 	asLegacyAlpha,
+	StagingModeExitAction,
 } from "./stagingMode.js";
