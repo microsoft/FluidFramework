@@ -90,6 +90,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
+		"@fluid-experimental/oldest-client-observer-previous": "npm:@fluid-experimental/oldest-client-observer@2.92.0",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
@@ -104,5 +105,8 @@
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"broken": {}
 	}
 }
