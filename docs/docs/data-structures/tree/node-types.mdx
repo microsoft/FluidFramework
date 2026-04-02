@@ -7,41 +7,34 @@ Data on a [SharedTree](./index.mdx) is stored as a [node](./nodes.mdx) of one of
 
 ## Leaf Nodes
 
-A [leaf](../../api/fluid-framework/nodekind-enum.md#leaf-enummember) node represents an atomic value, while a [TreeNode](../../api/fluid-framework/treenode-class.md) represents an object or collection.
-The following leaf node types are available:
+A [leaf](../../api/fluid-framework/nodekind-enum.md#leaf-enummember) holds an atomic value. The available leaf types are:
 
--   [**boolean**](../../api/fluid-framework/schemastatics-interface.md#boolean-propertysignature): Works identically to a JavaScript boolean.
--   [**number**](../../api/fluid-framework/schemastatics-interface.md#number-propertysignature): Works identically to a JavaScript number except does not support -0, NaN or Infinity.
--   [**string**](../../api/fluid-framework/schemastatics-interface.md#string-propertysignature): Works identically to a JavaScript string except for not supporting unpaired UTF-16 surrogate pairs.
--   [**null**](../../api/fluid-framework/schemastatics-interface.md#null-propertysignature): Works identically to a JavaScript null.
--   [**FluidHandle**](../../api/fluid-framework/schemastatics-interface.md#handle-propertysignature): A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles](../../concepts/handles.mdx).
+-   [**boolean**](../../api/fluid-framework/schemastatics-interface.md#boolean-propertysignature): a JavaScript boolean.
+-   [**number**](../../api/fluid-framework/schemastatics-interface.md#number-propertysignature): a JavaScript number, but does not support `-0` (normalized to 0), `NaN`, or `Infinity` (normalized to `null` where allowed).
+-   [**string**](../../api/fluid-framework/schemastatics-interface.md#string-propertysignature): a JavaScript string, but does not support unpaired UTF-16 surrogate pairs.
+-   [**null**](../../api/fluid-framework/schemastatics-interface.md#null-propertysignature): JavaScript `null`.
+-   [**FluidHandle**](../../api/fluid-framework/schemastatics-interface.md#handle-propertysignature): a handle to a Fluid DDS or Data Object. See [Handles](../../concepts/handles.mdx).
 
 ## TreeNodes
 
-The following subsections describe the available [TreeNode](../../api/fluid-framework/treenode-class.md) types.
+There are multiple [kinds](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum) of [TreeNode](../../api/fluid-framework/treenode-class.md), each of which manage and expose their children differently.
 
 ### Object Nodes
 
-An [object node](../../api/fluid-framework/treeobjectnode-typealias.md) is a JavaScript object like TreeNode with zero or more named child [fields](../../api/fluid-framework/fieldschema-class.md) exposed as properties of the object.
-The object node's fields can be node types.
-A `SharedTree` can have many object nodes at various places in the tree and they do not all have to conform to the same schema.
-Your schema can specify different properties for different object nodes.
-The schema also specifies whether a child property is
+An [object node](../../api/fluid-framework/treeobjectnode-typealias.md) has zero or more named child [fields](../../api/fluid-framework/fieldschema-class.md) exposed as properties.
+Different object nodes in the same tree can have different schemas.
+The schema specifies whether each property is
 [required](../../api/fluid-framework/schemastatics-interface.md#required-propertysignature),
-[optional](../../api/fluid-framework/schemastatics-interface.md#optional-propertysignature)
+[optional](../../api/fluid-framework/schemastatics-interface.md#optional-propertysignature),
 or an [identifier](../../api/fluid-framework/schemafactory-class.md#identifier-property),
-as well as what types of nodes are allowed in the field.
-For example, a property could be either number or string.
+and which node types are allowed (e.g., a property could allow `number` or `string`).
 
 ### Map Nodes
 
-A map node is a set of zero or more key-value pairs similar to a JavaScript Map object, but the keys can only be strings.
-The schema for the `SharedTree` that your code defines will specify the possible node types that can be values of the keys.
-It can specify that all node types are allowed or only a subset. There is no way to specify different subsets of node types for different keys.
-
-The schema for a map node cannot specify particular key names, nor can it specify a maximum or minimum number of key-value pairs.
+A map node holds zero or more string-keyed values, similar to a JavaScript `Map` with string keys.
+The schema specifies which node types are allowed as values; all keys share the same allowed types and there is no way to constrain individual key names or the number of entries.
 
 ### Array Nodes
 
-An array node is an indexed sequence of zero or more values like a JavaScript array.
-In principle, values can be any of the node types, but the schema that your code defines will specify what subset of those types can be the values of any given array item.
+An array node is an indexed sequence of zero or more values, like a JavaScript array.
+The schema specifies which node types are allowed as items.

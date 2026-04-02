@@ -4,9 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import type { GraphCommit } from "../core/index.js";
-import type { ChangeEnricher } from "./changeEnricher.js";
 import { hasSome } from "../util/index.js";
+
+import type { ChangeEnricher } from "./changeEnricher.js";
 
 /**
  * Utility for enriching commits from a {@link Branch} before these commits are applied and submitted.
@@ -30,11 +32,11 @@ export class BranchCommitEnricher<TChange> {
 	public prepareChanges(commits: readonly GraphCommit<TChange>[]): void {
 		if (hasSome(commits)) {
 			const startingState = commits[0].parent;
-			assert(startingState !== undefined, "New commits must have a parent.");
+			assert(startingState !== undefined, 0xcc1 /* New commits must have a parent. */);
 			const enrichedCommits = this.enricher.enrich(startingState, commits);
 			for (const [index, commit] of commits.entries()) {
 				const enrichedCommit = enrichedCommits[index];
-				assert(enrichedCommit !== undefined, "Missing enriched commit.");
+				assert(enrichedCommit !== undefined, 0xcc2 /* Missing enriched commit. */);
 				this.prepared.set(commit, enrichedCommit);
 			}
 		}

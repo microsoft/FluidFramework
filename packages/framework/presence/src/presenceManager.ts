@@ -18,8 +18,7 @@ import type {
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type {
 	AttendeesEvents,
 	AttendeeId,
@@ -29,6 +28,7 @@ import type {
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SignalMessages } from "./protocol.js";
+import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./runtimeTypes.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
@@ -71,18 +71,24 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	public readonly attendees: Presence["attendees"];
 
 	public readonly states = {
-		getWorkspace: <TSchema extends StatesWorkspaceSchema>(
+		getWorkspace: <
+			TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
+			TSchemaKeys extends string & keyof TSchema,
+		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
 			settings?: BroadcastControlSettings,
-		): StatesWorkspace<TSchema> =>
+		): StatesWorkspace<TSchema, unknown, TSchemaKeys> =>
 			this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent, settings),
 	};
 	public readonly notifications = {
-		getWorkspace: <TSchema extends NotificationsWorkspaceSchema>(
+		getWorkspace: <
+			TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>,
+			TSchemaKeys extends string & keyof TSchema,
+		>(
 			workspaceAddress: WorkspaceAddress,
 			requestedContent: TSchema,
-		): NotificationsWorkspace<TSchema> =>
+		): NotificationsWorkspace<TSchema, TSchemaKeys> =>
 			this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
 	};
 

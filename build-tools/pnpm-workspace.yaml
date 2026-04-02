@@ -10,3 +10,10 @@
 
 packages:
   - "packages/*"
+
+# Supply chain security settings - see /DEV.md for documentation
+minimumReleaseAge: 1440
+resolutionMode: highest
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+strictDepBuilds: true

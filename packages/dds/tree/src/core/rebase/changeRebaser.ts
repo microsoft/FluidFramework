@@ -82,11 +82,19 @@ export interface ChangeRebaser<TChangeset> {
 	 * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
 	 * - `rebase(a, compose([]))` is equal to `a`.
 	 * - `rebase(compose([]), a)` is equal to `compose([])`.
+	 *
+	 * @param ignoreNoChangeViolation - When true, no-change constraint violations are suppressed during rebase.
+	 * This is a kludge to support undo/redo flows where an undo is rebased over newer commits that have no net
+	 * effect on the document state (e.g. an edit plus its undo). We want the rebaser to treat no-change constraints
+	 * as violated only if the sequence of changes rebased over leave the document in some meaningfully different state.
+	 * Because implementing that rebasing logic in full is more complex, this flag is a hack to manually get
+	 * that behavior in a special case.
 	 */
 	rebase(
 		change: TaggedChange<TChangeset>,
 		over: TaggedChange<TChangeset>,
 		revisionMetadata: RevisionMetadataSource,
+		ignoreNoChangeViolation?: boolean,
 	): TChangeset;
 
 	/**
@@ -121,13 +129,14 @@ export interface RevisionReplacer {
 
 	/**
 	 * Returns the updated ID for the given ID.
-	 * @param id - The ID to update.
+	 * @param id - The ID of the first change atom to update.
+	 * @param count - The number of contiguous change atoms to update. Defaults to 1.
 	 * @returns an updated ID iff the given `id` needs updating, otherwise returns the given `id`.
 	 * @remarks
 	 * This function always maps the same input {@link ChangeAtomId.revision | revision} and {@link ChangeAtomId.localId | local ID} to the same output revision local ID.
 	 * This means multiple references to the same atom of change will remain consistent after revision replacement.
 	 */
-	getUpdatedAtomId<T extends ChangeAtomId>(id: T): T;
+	getUpdatedAtomId<T extends ChangeAtomId>(id: T, count?: number): T;
 }
 
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {

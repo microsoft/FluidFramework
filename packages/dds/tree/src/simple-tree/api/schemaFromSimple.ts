@@ -24,8 +24,8 @@ import type {
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-
 import type { TreeSchema } from "../treeSchema.js";
+
 import { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 
 const factory = new SchemaFactoryAlpha(undefined);

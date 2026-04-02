@@ -17,6 +17,7 @@ import {
 	DefaultChangeFamily,
 	DefaultRevisionReplacer,
 } from "../../../feature-libraries/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
@@ -30,7 +31,6 @@ import {
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils.js";
-import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 
 describe("EditManager - Bench", () => {
 	interface Scenario {

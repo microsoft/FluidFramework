@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { expect } from "chai";
 import * as chai from "chai";
+import { expect } from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 import * as semver from "semver";

@@ -10,7 +10,6 @@
 
 packages:
   - "azure/packages/**"
-  - "common/build/eslint-config-fluid"
   - "examples/**"
   - "experimental/**"
   - "packages/**"
@@ -20,3 +19,26 @@ packages:
   - "!**/dist/**"
   - "!**/lib/**"
   - "!**/src/**"
+
+# Supply chain security settings - see /DEV.md for documentation
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude: [
+  # Temporary exceptions go here as needed.
+]
+resolutionMode: highest
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+strictDepBuilds: true
+
+catalogs:
+  # Build-tools packages
+  buildTools:
+    "@fluid-tools/build-cli": ^0.64.0
+    "@fluid-tools/version-tools": ^0.64.0
+    "@fluidframework/build-tools": ^0.64.0
+    "@fluidframework/bundle-size-tools": ^0.64.0
+  # eslint and related packages
+  eslint:
+    "@fluidframework/eslint-config-fluid": "^9.0.0"
+    "eslint": "~9.39.1"
+    "eslint-config-prettier": "~10.1.8"

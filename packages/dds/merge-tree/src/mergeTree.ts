@@ -2477,16 +2477,34 @@ export class MergeTree {
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
-					const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props);
 
-					this.annotateRange(
-						start,
-						start + segment.cachedLength,
-						{ props },
-						this.localPerspective,
-						rollbackStamp,
-						{ op: annotateOp, rollback: true },
-					);
+					// If the segment has been removed by a concurrent operation, we can't use
+					// position-based annotateRange because findRollbackPosition returns a position
+					// that doesn't account for the removed segment, causing the rollback to target
+					// the wrong segment. Instead, directly roll back the properties on the segment.
+					if (isRemoved(segment)) {
+						const propertyManager = (segment.propertyManager ??= new PropertiesManager());
+						propertyManager.rollbackProperties(
+							{ props },
+							segment,
+							this.collabWindow.collaborating,
+						);
+					} else {
+						const annotateOp = createAnnotateRangeOp(
+							start,
+							start + segment.cachedLength,
+							props,
+						);
+
+						this.annotateRange(
+							start,
+							start + segment.cachedLength,
+							{ props },
+							this.localPerspective,
+							rollbackStamp,
+							{ op: annotateOp, rollback: true },
+						);
+					}
 					i++;
 				}
 			}

@@ -8,8 +8,15 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
+import type { AllowedTypesFull } from "./allowedTypes.js";
+import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
-import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
+import {
+	getSimpleNodeSchemaFromInnerNode,
+	isTreeNode,
+	TreeNodeKernel,
+	type InnerNode,
+} from "./treeNodeKernel.js";
 import {
 	NodeKind,
 	type TreeNodeSchema,
@@ -17,16 +24,9 @@ import {
 	type TreeNodeSchemaInitializedData,
 	type TreeNodeSchemaPrivateData,
 } from "./treeNodeSchema.js";
-import {
-	getSimpleNodeSchemaFromInnerNode,
-	isTreeNode,
-	TreeNodeKernel,
-	type InnerNode,
-} from "./treeNodeKernel.js";
 import type { InternalTreeNode } from "./types.js";
+import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import { typeSchemaSymbol } from "./withType.js";
-import type { AllowedTypesFull } from "./allowedTypes.js";
-import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { IThrottlingWarning } from "@fluidframework/driver-definitions/internal";
@@ -318,11 +318,11 @@ describe("ErrorUtils", () => {
 			],
 		];
 
-		testCases.forEach((testCase) => {
+		for (const testCase of testCases) {
 			it(`Parses URL as expected hostName:[${testCase[0]}] path:[${testCase[1]}]`, () => {
 				const actualOutput = getUrlForTelemetry(testCase[0]!, testCase[1]);
 				assert.strictEqual(actualOutput, testCase[2]);
 			});
-		});
+		}
 	});
 });

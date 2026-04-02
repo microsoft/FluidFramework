@@ -22,6 +22,7 @@ export {
 	UsageError,
 	validatePrecondition,
 	LayerIncompatibilityError,
+	type MessageLike,
 } from "./error.js";
 export {
 	extractLogSafeErrorProperties,

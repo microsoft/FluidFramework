@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
 	EmptyKey,
@@ -20,10 +21,7 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "../../feature-libraries/index.js";
-import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
-
 import { JsonAsTree } from "../../jsonDomainSchema.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	booleanSchema,
 	nullSchema,
@@ -31,6 +29,7 @@ import {
 	stringSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/leafNodeSchema.js";
+import { brand, isReadonlyArray, type JsonCompatible } from "../../util/index.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>

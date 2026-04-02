@@ -30,6 +30,7 @@ parameters:
 
 steps:
 - checkout: ff_pipeline_host
+  path: $(FFPipelineHostDirectory)
 
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting
@@ -56,7 +57,7 @@ steps:
 - template: /tools/pipelines/templates/include-install.yml@self
   parameters:
     packageManager: pnpm
-    buildDirectory: $(Build.SourcesDirectory)
+    buildDirectory: $(FFPipelineHostDirectory)
     packageManagerInstallCommand: pnpm install
     primaryRegistry: $(ado-feeds-ff-download-only)
     userNpmrcPath: ${{ parameters.userNpmrcDirectory }}/.npmrc
@@ -86,7 +87,7 @@ steps:
   - task: AzureCLI@2
     displayName: 'Log in to retrieve tenant credentials'
     inputs:
-      azureSubscription: 'Fluid Framework Tests'
+      azureSubscription: 'FF Pipeline Authentication'
       # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
       addSpnToEnvironment: true
       scriptType: 'bash'
@@ -107,5 +108,5 @@ steps:
         set -eu -o pipefail
 
         # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-        pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
+        pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --useFic
         echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"

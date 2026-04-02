@@ -5,6 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
+import { currentVersion } from "../../../../codec/index.js";
 import type {
 	ITreeCursorSynchronous,
 	TreeChunk,
@@ -15,7 +19,7 @@ import type {
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	type FieldBatchEncodingContext,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,
 	type IncrementalDecoder,
@@ -30,6 +34,12 @@ import {
 	incrementalFieldEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
+import {
+	FieldBatchFormatVersion,
+	type EncodedFieldBatchV2,
+	SpecialField,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
@@ -47,6 +57,20 @@ import {
 	emptyChunk,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
+import {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+	numberSchema,
+	SchemaFactoryAlpha,
+	stringSchema,
+	TreeViewConfigurationAlpha,
+} from "../../../../simple-tree/index.js";
+import {
+	toStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toInitialSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../simple-tree/toStoredSchema.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
@@ -57,33 +81,9 @@ import {
 	RecursiveType,
 	testTrees,
 } from "../../../testTrees.js";
+import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
-import {
-	FieldBatchFormatVersion,
-	SpecialField,
-	validVersions,
-	type EncodedFieldBatch,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
-	toStoredSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	toInitialSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../simple-tree/toStoredSchema.js";
-import {
-	incrementalEncodingPolicyForAllowedTypes,
-	incrementalSummaryHint,
-	numberSchema,
-	SchemaFactoryAlpha,
-	stringSchema,
-	TreeViewConfigurationAlpha,
-} from "../../../../simple-tree/index.js";
-import { currentVersion } from "../../../../codec/index.js";
 
 const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
@@ -360,7 +360,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");
@@ -442,7 +442,7 @@ describe("schemaBasedEncoding", () => {
 		assert.deepEqual(bufferFull, [[0]]);
 	});
 
-	for (const version of validVersions) {
+	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
 		describe(`test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-schema-compressed/V${version}`);
 			// TODO: test non size 1 batches
@@ -470,7 +470,7 @@ describe("schemaBasedEncoding", () => {
 						idCompressor,
 					};
 					idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
-					const codec = makeFieldBatchCodec({
+					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,
 					});

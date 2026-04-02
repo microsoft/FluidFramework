@@ -4,15 +4,23 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
 	{
+		ignores: ["./src/entrypoints/**"],
+	},
+	{
 		rules: {
+			"@typescript-eslint/no-empty-object-type": [
+				"error",
+				{
+					allowInterfaces: "with-single-extends",
+					allowObjectTypes: "always",
+				},
+			],
 			"@typescript-eslint/no-namespace": "off",
-			"@typescript-eslint/no-empty-interface": "off",
-			"@typescript-eslint/no-empty-object-type": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/no-unused-vars": [
 				"error",
@@ -26,22 +34,12 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
-			"import-x/order": "off",
 			"jsdoc/require-description": "warn",
-			"unicorn/no-await-expression-member": "off",
 			"unicorn/no-null": "off",
-			"unicorn/prefer-export-from": "off",
-			"unicorn/text-encoding-identifier-case": "off",
 		},
 	},
 	{
 		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
 		rules: {
 			"@typescript-eslint/no-unused-vars": ["off"],
 			"@typescript-eslint/explicit-function-return-type": "off",

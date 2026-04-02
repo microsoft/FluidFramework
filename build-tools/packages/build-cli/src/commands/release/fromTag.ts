@@ -4,9 +4,9 @@
  */
 
 import {
+	detectBumpType,
 	type ReleaseVersion,
 	type VersionBumpType,
-	detectBumpType,
 } from "@fluid-tools/version-tools";
 import { type MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
@@ -15,7 +15,8 @@ import { sortPackageJson as sortJson } from "sort-package-json";
 
 import { findPackageOrReleaseGroup } from "../../args.js";
 // eslint-disable-next-line import-x/no-deprecated
-import { MonoRepoKind, sortVersions } from "../../library/index.js";
+import { MonoRepoKind } from "../../library/context.js";
+import { sortVersions } from "../../library/package.js";
 import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
 import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
 

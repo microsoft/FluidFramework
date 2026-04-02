@@ -60,7 +60,7 @@ describe("Primitives", () => {
 	 * @returns The coerced value.
 	 */
 	function getCoercedValue(value: unknown): unknown {
-		const coercedValue = JSON.parse(JSON.stringify(value));
+		const coercedValue: unknown = JSON.parse(JSON.stringify(value));
 
 		// Paranoid check that the given value is in fact coerced.
 		assert.notDeepEqual(value, coercedValue, "Expected JSON stringify/parse to coerce value.");

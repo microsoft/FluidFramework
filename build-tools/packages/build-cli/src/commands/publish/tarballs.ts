@@ -12,7 +12,9 @@ import execa from "execa";
 import { Gunzip } from "fflate";
 import latestVersion from "latest-version";
 import { glob } from "tinyglobby";
-import { BaseCommand, getTarballName, readLines } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import { getTarballName } from "../../library/package.js";
+import { readLines } from "../../library/text.js";
 
 interface TarballMetadata {
 	name: string;

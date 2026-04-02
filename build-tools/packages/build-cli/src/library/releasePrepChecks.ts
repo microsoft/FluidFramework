@@ -7,10 +7,10 @@ import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import {
+	checkPackagesCompatLayerGeneration,
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackagesCompatLayerGeneration,
 	formatCompatLayerGenerationError,
 } from "./compatLayerGeneration.js";
 import type { Context } from "./context.js";

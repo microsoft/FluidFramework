@@ -139,7 +139,6 @@ export class OpsCache {
 	private async getCore(from: number, to?: number): Promise<IMessage[]> {
 		const messages: IMessage[] = [];
 		let batchNumber = this.getBatchNumber(from);
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			const res = await this.cache.read(`${this.batchSize}_${batchNumber}`);
 			if (res === undefined) {

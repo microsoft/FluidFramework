@@ -20,3 +20,5 @@ fence.json                   linguist-language=JSON5
 
 # Hide docs from GitHub's language detection
 /docs/**                     linguist-documentation
+
+.github/workflows/*.lock.yml linguist-generated=true merge=ours

@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
@@ -25,12 +25,6 @@ const config: Linter.Config[] = [
 	},
 	{
 		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
 		rules: {
 			"import-x/no-internal-modules": [
 				"error",

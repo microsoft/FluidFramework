@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
-import type { IJsonCodec, IMultiFormatCodec } from "../codec/index.js";
+import type { IJsonCodec } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
@@ -14,6 +14,9 @@ import type {
 	SchemaAndPolicy,
 } from "../core/index.js";
 import { mapIterable, type JsonCompatibleReadOnly, type Mutable } from "../util/index.js";
+
+import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
 	EncodedCommit,
@@ -21,8 +24,6 @@ import type {
 	SequenceId,
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
-import type { SharedBranchSummaryData } from "./editManager.js";
-import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -31,7 +32,7 @@ export interface EditManagerEncodingContext {
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -53,13 +54,13 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 			idCompressor: context.idCompressor,
 			revision: undefined,
 		}),
-		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
+		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly>>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -83,12 +84,12 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 	return {
 		...commit,
 		revision,
-		change: changeCodec.json.decode(commit.change, { ...context, revision }),
+		change: changeCodec.decode(commit.change, { ...context, revision }),
 	};
 }
 
 export function encodeSharedBranch<TChangeset>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -159,7 +160,7 @@ export function encodeSharedBranch<TChangeset>(
 }
 
 export function decodeSharedBranch<TChangeset>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -181,7 +182,6 @@ export function decodeSharedBranch<TChangeset>(
 		trunk: trunk.map(
 			(commit): SequencedCommit<TChangeset> =>
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				decodeCommit(changeCodec, revisionTagCodec, commit, {
 					originatorId: commit.sessionId,
 					idCompressor: context.idCompressor,

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-unassigned-import
-import "jsdom-global/register.js";
+// eslint-disable-next-line import-x/no-unassigned-import, import-x/no-internal-modules
+import "global-jsdom/register";
 
-// 'jsdom-global' does not polyfill mark() and measure().  We stub them ourselves.
+// 'global-jsdom' does not polyfill mark() and measure().  We stub them ourselves.
 window.performance.mark ??= () => undefined as unknown as PerformanceMark;
 window.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
 
@@ -50,8 +50,8 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 	before(async function () {
-		// Initialization of 'compat LTS ^1.3.x - old loader' compat variant can take a couple seconds.
-		this.timeout(10000);
+		// Initialization of compat variants can take several seconds, especially with newer jsdom versions.
+		this.timeout(30000);
 
 		provider = getTestObjectProvider({ resetAfterEach: false });
 		const container = await provider.createContainer(FlowDocument.getFactory());

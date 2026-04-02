@@ -4,11 +4,11 @@
  */
 
 import {
+	detectVersionScheme,
+	getVersionRange,
 	type ReleaseVersion,
 	type VersionBumpType,
 	type VersionScheme,
-	detectVersionScheme,
-	getVersionRange,
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 

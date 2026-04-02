@@ -4,6 +4,10 @@
 
 <!-- Enumerate unpublished changes here. They can be merged into release sections when the next release is published. -->
 
+# 1.1.1
+
+Fix accessibility issues in the Refresh buttons
+
 # 1.1.0
 
 Adds support for `DataObject` and `TreeDataObject` visualization.

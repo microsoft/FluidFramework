@@ -31,16 +31,17 @@ import {
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { numberSchema } from "../../../simple-tree/index.js";
 import { ReferenceCountedBase, brand } from "../../../util/index.js";
 import {
 	type TestField,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
+
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema } from "../../../simple-tree/index.js";
 
 const basicOnlyChunkCompressor: ChunkCompressor = {
 	policy: basicOnlyChunkPolicy,

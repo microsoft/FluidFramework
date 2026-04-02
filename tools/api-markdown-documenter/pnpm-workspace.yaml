@@ -6,3 +6,17 @@
 # for our independent packages as well. This file makes pnpm treat the project as a one-package workspace.
 packages:
   - "."
+
+# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
+# in package.json is not respected when the workspace has its own lockfile.
+# See: https://github.com/pnpm/pnpm/issues/9082
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - unrs-resolver
+
+# Supply chain security settings - see /DEV.md for documentation
+minimumReleaseAge: 1440
+resolutionMode: highest
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+strictDepBuilds: true

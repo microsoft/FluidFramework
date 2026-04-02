@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { WebApi, getBearerHandler } from "azure-devops-node-api";
+import { getBearerHandler, WebApi } from "azure-devops-node-api";
 import type { IGitApi } from "azure-devops-node-api/GitApi";
 import type {
 	CommentThreadStatus,

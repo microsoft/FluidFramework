@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { Static, TSchema } from "@sinclair/typebox";
+
 import type { IJsonCodec } from "../../codec/index.js";
 import { hasSingle } from "../../util/index.js";
 
@@ -17,7 +19,6 @@ import type {
 	DetachedFieldSummaryData,
 	Major,
 } from "./detachedFieldIndexTypes.js";
-import type { Static, TSchema } from "@sinclair/typebox";
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

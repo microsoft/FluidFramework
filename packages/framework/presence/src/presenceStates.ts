@@ -6,24 +6,27 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
 import { RequiredBroadcastControl } from "./broadcastControls.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { RecordEntryTypes } from "./internalUtils.js";
+import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
+import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
 import type {
 	ClientRecord,
-	PostUpdateAction,
+	LocalStateUpdateOptions,
+	StateDatastore,
+} from "./stateDatastore.js";
+import { handleFromDatastore } from "./stateDatastore.js";
+import type { PostUpdateAction } from "./statesManagerTypes.js";
+import type { AnyWorkspace, StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
+import type {
 	ValidatableOptionalState,
 	ValidatableRequiredState,
 	ValidatableValueDirectory,
 	ValidatableValueDirectoryOrState,
 	ValidatableValueStructure,
-} from "./internalTypes.js";
-import type { RecordEntryTypes } from "./internalUtils.js";
-import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
-import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
-import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
-import { handleFromDatastore } from "./stateDatastore.js";
-import type { AnyWorkspace, StatesWorkspace, StatesWorkspaceSchema } from "./types.js";
+} from "./validatableTypes.js";
 import { unbrandIVM } from "./valueManager.js";
 
 /**

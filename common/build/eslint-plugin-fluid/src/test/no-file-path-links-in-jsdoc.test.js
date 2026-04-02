@@ -27,34 +27,41 @@ describe(`Do not allow file path links in JSDoc/TSDoc comments (eslint ${eslintV
 
 	it("Should report errors for file path links in block comments", async function () {
 		const result = await lintFile("test.ts");
-		assert.strictEqual(result.errorCount, 4);
+		assert.strictEqual(result.errorCount, 5);
 
-		// Error 1
+		// Error 1: Summary section with relative path
 		const error1 = result.messages[0];
 		assert.strictEqual(error1.message, expectedErrorMessage);
 		assert.strictEqual(error1.line, 10);
 		assert.strictEqual(error1.column, 56); // 1-based, inclusive
 		assert.strictEqual(error1.endColumn, 84); // 1-based, exclusive
 
-		// Error 2
+		// Error 2: Summary section with relative path
 		const error2 = result.messages[1];
 		assert.strictEqual(error2.message, expectedErrorMessage);
 		assert.strictEqual(error2.line, 11);
 		assert.strictEqual(error2.column, 17); // 1-based, inclusive
 		assert.strictEqual(error2.endColumn, 41); // 1-based, exclusive
 
-		// Error 3
+		// Error 3: Summary section with absolute path
 		const error3 = result.messages[2];
 		assert.strictEqual(error3.message, expectedErrorMessage);
 		assert.strictEqual(error3.line, 16);
 		assert.strictEqual(error3.column, 57); // 1-based, inclusive
 		assert.strictEqual(error3.endColumn, 84); // 1-based, exclusive
 
-		// Error 4
+		// Error 4: Summary section with absolute path
 		const error4 = result.messages[3];
 		assert.strictEqual(error4.message, expectedErrorMessage);
 		assert.strictEqual(error4.line, 17);
 		assert.strictEqual(error4.column, 17); // 1-based, inclusive
 		assert.strictEqual(error4.endColumn, 40); // 1-based, exclusive
+
+		// Error 5: @remarks block with file path link
+		const error5 = result.messages[4];
+		assert.strictEqual(error5.message, expectedErrorMessage);
+		assert.strictEqual(error5.line, 24);
+		assert.strictEqual(error5.column, 31); // 1-based, inclusive
+		assert.strictEqual(error5.endColumn, 53); // 1-based, exclusive
 	});
 });

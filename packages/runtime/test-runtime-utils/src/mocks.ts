@@ -48,9 +48,11 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IIdCompressorCore,
-	IdCreationRange,
+import {
+	createIdCompressor,
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
+	type IIdCompressorCore,
+	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
@@ -64,6 +66,7 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultMinVersionForCollab,
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
 	toDeltaManagerErased,
@@ -241,6 +244,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	/**
+	 * Creates a {@link MockDeltaConnection} for this container runtime.
+	 *
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	public createDeltaConnection(): MockDeltaConnection {
@@ -575,7 +580,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	/**
-	 * @returns a minimum sequence number for all connected clients.
+	 * Gets the minimum sequence number for all connected clients.
 	 */
 	public getMinSeq(): number {
 		let minimumSequenceNumber: number | undefined;
@@ -866,6 +871,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
+		// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
@@ -885,7 +891,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor;
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
@@ -893,7 +899,7 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab;
+		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
 	}
 
 	private readonly: boolean = false;
@@ -904,7 +910,7 @@ export class MockFluidDataStoreRuntime
 	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -935,6 +941,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
+	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
@@ -954,6 +961,8 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
+	 * Whether the data store is local (not attached).
+	 *
 	 * @deprecated Use `attachState` instead
 	 *
 	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.

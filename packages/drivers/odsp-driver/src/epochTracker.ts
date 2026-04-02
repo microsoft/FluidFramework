@@ -170,7 +170,6 @@ export class EpochTracker implements IPersistedFileCache {
 					return undefined;
 				}
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value.value;
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
@@ -302,7 +301,7 @@ export class EpochTracker implements IPersistedFileCache {
 				await this.checkForEpochError(error, epochFromResponse, fetchType);
 				throw error;
 			})
-			.catch((error) => {
+			.catch(async (error) => {
 				// If the error is about location redirection, then we need to generate new resolved url with correct
 				// location info.
 				if (
@@ -321,6 +320,9 @@ export class EpochTracker implements IPersistedFileCache {
 							{ driverVersion, redirectLocation },
 						);
 						locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
+						// Clear the cache for this file entry since the site/geo has moved.
+						// The cached snapshot was stored under the old siteUrl and is no longer valid.
+						await this.removeEntries();
 						throw locationRedirectionError;
 					}
 				}

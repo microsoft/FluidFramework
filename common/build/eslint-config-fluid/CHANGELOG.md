@@ -1,14 +1,19 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## 2.80.0
+## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
-Dependency updates only.
+### Native ESLint 9 Flat Config (No FlatCompat)
 
-## 2.74.0
+The flat config implementation has been refactored to use native ESLint 9 flat config format, removing the dependency on `FlatCompat` from `@eslint/eslintrc`. This provides cleaner configuration and better compatibility with ESLint 9.
 
-Dependency updates only.
+#### Flat Config Exports
 
-## Unreleased
+The `flat.mts` module now exports four configurations:
+
+- `recommended` - The recommended configuration for most projects
+- `strict` - Stricter rules for production code
+- `minimalDeprecated` - Minimal configuration (deprecated, use recommended)
+- `strictBiome` - Strict configuration with Biome formatter compatibility
 
 ### Removed Rushstack Dependencies
 
@@ -18,19 +23,6 @@ The following packages have been removed from dependencies:
 - `@rushstack/eslint-plugin-security`
 
 The `@rushstack/eslint-plugin-security` plugin has been removed from all configurations. The `patch/modern-module-resolution.js` file has also been removed as it was only needed to support the `@rushstack/eslint-patch` dependency.
-
-### ESLint 9 Flat Config Support
-
-This package now supports ESLint 9 flat config format via a new `flat.mjs` export. The flat config wraps existing configs using `FlatCompat` from `@eslint/eslintrc` for backward compatibility.
-
-Key features:
-
-- New `flat.mjs` module exports `recommended`, `strict`, and `minimalDeprecated` configs for ESLint 9
-- Automatic handling of type-aware parsing configuration for JavaScript files and test files
-- Generated `eslint.config.mjs` files for all packages in the repository
-- Script to regenerate flat configs: `pnpm tsx scripts/generate-flat-eslint-configs.ts`
-
-Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the legacy `.eslintrc.cjs` format remains supported for backward compatibility. Migration is optional and not required.
 
 ### ESLint Rule Changes
 
@@ -48,7 +40,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 - `react-hooks/set-state-in-render`
 - `react-hooks/use-memo`
 
-**React-hooks rules temporarily downgraded to `"warn"`** (until ESLint 9 migration completes):
+**`react-hooks` rules temporarily set to `"warn"`** (to allow time to address violations before the next major release):
 
 - `react-hooks/rules-of-hooks`: Changed from `"error"` to `"warn"`
 - `react-hooks/exhaustive-deps`: Changed from `"error"` to `"warn"`
@@ -86,7 +78,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 #### Rule promotions
 
-**recommended -> minimal**
+The following rules, which were previously enabled only in the `recommended` config, are now also enabled in the `minimal` config:
 
 - `@typescript-eslint/explicit-function-return-type`
 - `@typescript-eslint/no-import-type-side-effects`
@@ -97,7 +89,12 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 - `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
 
-## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
+#### Other new rules
+
+#### [@eslint-community/eslint-comments/require-description](https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html)
+
+We recommend that all `eslint-disable` comments include a description explaining why the rule is being disabled.
+This rule is currently configured at the `warn` level, so it will emit a warning (which may not fail CI), and is expected to be promoted to an error in the future.
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
 

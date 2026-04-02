@@ -9,15 +9,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type {
-	IEphemeralRuntime,
-	PostUpdateAction,
-	ValidatableOptionalState,
-	ValidatableValueDirectory,
-	ValidatableValueStructure,
-} from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
@@ -50,6 +43,8 @@ import {
 	datastoreUpdateMessageType,
 	joinMessageType,
 } from "./protocol.js";
+import type { IEphemeralRuntime } from "./runtimeTypes.js";
+import type { PostUpdateAction } from "./statesManagerTypes.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -60,6 +55,11 @@ import type {
 	StatesWorkspaceSchema,
 	WorkspaceAddress,
 } from "./types.js";
+import type {
+	ValidatableOptionalState,
+	ValidatableValueDirectory,
+	ValidatableValueStructure,
+} from "./validatableTypes.js";
 
 interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	public: AnyWorkspace<TSchema>;
@@ -112,15 +112,21 @@ export interface PresenceDatastoreManager {
 		alternateProvider: ClientConnectionId | undefined,
 	): void;
 	onDisconnected(): void;
-	getWorkspace<TSchema extends StatesWorkspaceSchema>(
+	getWorkspace<
+		TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
+		TSchemaKeys extends string & keyof TSchema,
+	>(
 		internalWorkspaceAddress: `s:${WorkspaceAddress}`,
 		requestedContent: TSchema,
 		controls?: BroadcastControlSettings,
-	): StatesWorkspace<TSchema>;
-	getWorkspace<TSchema extends NotificationsWorkspaceSchema>(
+	): StatesWorkspace<TSchema, unknown, TSchemaKeys>;
+	getWorkspace<
+		TSchema extends Partial<NotificationsWorkspaceSchema<TSchemaKeys>>,
+		TSchemaKeys extends string & keyof TSchema,
+	>(
 		internalWorkspaceAddress: `n:${WorkspaceAddress}`,
 		requestedContent: TSchema,
-	): NotificationsWorkspace<TSchema>;
+	): NotificationsWorkspace<TSchema, TSchemaKeys>;
 	processSignal(
 		message: InboundExtensionMessage<SignalMessages> & { clientId: ClientConnectionId },
 		local: boolean,

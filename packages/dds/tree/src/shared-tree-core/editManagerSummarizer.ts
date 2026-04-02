@@ -126,7 +126,7 @@ export class EditManagerSummarizer<TChangeset>
 			0x42c /* There should not already be stored EditManager data when loading from summary */,
 		);
 
-		const summary = parse(bufferToString(schemaBuffer, "utf-8")) as JsonCompatibleReadOnly;
+		const summary = parse(bufferToString(schemaBuffer, "utf8")) as JsonCompatibleReadOnly;
 		const data = this.codec.decode(summary, { idCompressor: this.idCompressor });
 		this.editManager.loadSummaryData(data);
 	}

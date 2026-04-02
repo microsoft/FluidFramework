@@ -11,7 +11,7 @@ import {
 } from "@fluid-tools/version-tools";
 import { MonoRepo } from "@fluidframework/build-tools";
 import { lilconfigSync } from "lilconfig";
-import type { Context } from "./library/index.js";
+import type { Context } from "./library/context.js";
 import type { ReleaseGroup } from "./releaseGroups.js";
 
 /**

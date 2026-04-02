@@ -7,12 +7,12 @@ import { strict as assert } from "node:assert";
 import path from "node:path";
 
 import {
-	type ReleaseVersion,
-	type VersionBumpType,
 	detectBumpType,
 	detectVersionScheme,
 	getPreviousVersions,
 	isVersionBumpType,
+	type ReleaseVersion,
+	type VersionBumpType,
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import { type Command, Flags, ux } from "@oclif/core";
@@ -23,27 +23,27 @@ import sortJson from "sort-json";
 import { table } from "table";
 
 import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand } from "../../library/commands/base.js";
+import type { Context, VersionDetails } from "../../library/context.js";
+import { getDisplayDate, getDisplayDateRelative } from "../../library/dates.js";
+import type { Repository } from "../../library/git.js";
 import {
-	BaseCommand,
-	type Context,
+	filterVersionsOlderThan,
+	getFluidDependencies,
 	type PackageVersionMap,
+	sortVersions,
+} from "../../library/package.js";
+import {
+	getRanges,
 	type ReleaseReport,
 	type ReportKind,
-	type Repository,
-	type VersionDetails,
-	filterVersionsOlderThan,
-	getDisplayDate,
-	getDisplayDateRelative,
-	getFluidDependencies,
-	getRanges,
-	sortVersions,
 	toReportKind,
-} from "../../library/index.js";
+} from "../../library/release.js";
 import type { CommandLogger } from "../../logging.js";
 import {
+	isReleaseGroup,
 	type ReleaseGroup,
 	type ReleasePackage,
-	isReleaseGroup,
 } from "../../releaseGroups.js";
 
 /**

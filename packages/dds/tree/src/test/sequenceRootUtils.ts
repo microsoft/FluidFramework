@@ -10,12 +10,13 @@ import {
 	type JsonableTree,
 } from "../core/index.js";
 import { FieldKinds } from "../feature-libraries/index.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import type { ITreeCheckout, TreeCheckout } from "../shared-tree/index.js";
 import { stringSchema, normalizeAllowedTypes, toInitialSchema } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
-import { checkoutWithContent, chunkFromJsonableTrees } from "./utils.js";
+
 import { fieldJsonCursor } from "./json/index.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { checkoutWithContent, chunkFromJsonableTrees } from "./utils.js";
 
 // This file provides utilities for testing sequence fields using documents where the root is the sequence being tested.
 // This pattern is not expressible using the public simple-tree API, and is only for testing internal details.

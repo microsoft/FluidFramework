@@ -77,7 +77,7 @@ else\
     echo "Skipping package version for dev build.";\
 fi
 
-RUN pnpm run build
+RUN pnpm run ci:build
 
 # Build that actually runs
 FROM runnerbase AS runner

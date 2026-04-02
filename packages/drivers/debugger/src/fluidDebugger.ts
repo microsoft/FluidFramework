@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions/internal";
@@ -39,6 +39,8 @@ export namespace FluidDebugger {
 	}
 
 	/**
+	 * Creates a document service factory wrapper that enables debugging with a debugger window.
+	 *
 	 * @legacy
 	 * @beta
 	 */

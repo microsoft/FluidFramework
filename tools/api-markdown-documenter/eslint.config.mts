@@ -4,7 +4,7 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
  */
 import type { Linter } from "eslint";
-import { strict } from "../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
@@ -36,15 +36,6 @@ const config: Linter.Config[] = [
 				},
 			],
 			"@typescript-eslint/no-unused-expressions": "off",
-		},
-	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
 		},
 	},
 ];

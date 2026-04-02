@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 import sharedConfig from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
@@ -14,15 +14,6 @@ const config: Linter.Config[] = [
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
 			"react/no-deprecated": "off",
-		},
-	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
 		},
 	},
 ];

@@ -4,7 +4,7 @@
  */
 
 import { existsSync } from "node:fs";
-import { readFile, readdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import * as path from "path";
 import createIgnore from "ignore";

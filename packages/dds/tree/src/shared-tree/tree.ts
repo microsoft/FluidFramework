@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { Context } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
@@ -17,18 +18,14 @@ import {
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
-import {
-	addConstraintsToTransaction,
-	SchematizingSimpleTreeView,
-} from "./schematizingTreeView.js";
-import type { ITreeCheckout } from "./treeCheckout.js";
-import { Context } from "../feature-libraries/index.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { addConstraintsToTransaction, type ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the {@link (Tree:variable)} export.
- * @system @sealed @public
+ * @sealed @public
  */
 export interface Tree extends TreeNodeApi {
 	/**

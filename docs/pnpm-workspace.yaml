@@ -4,8 +4,25 @@
 #
 # Because we have the client release group at the root of the repo, there's a pnpm-workspace.yaml file in the hierarchy
 # for our independent packages as well. This file makes pnpm treat the project as a one-package workspace.
+
 packages:
   - .
 
+# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
+# in package.json is not respected when the workspace has its own lockfile.
+# See: https://github.com/pnpm/pnpm/issues/9082
 onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - core-js
+  - core-js-pure
+  - keytar
   - linkcheck-bin
+  - typesense-instantsearch-adapter
+  - unrs-resolver
+
+# Supply chain security settings - see /DEV.md for documentation
+minimumReleaseAge: 1440
+resolutionMode: highest
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+strictDepBuilds: true
