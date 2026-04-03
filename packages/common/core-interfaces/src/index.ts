@@ -8,13 +8,6 @@ export type { BrandedType } from "./brandedType.js";
 export type { IDisposable } from "./disposable.js";
 
 export type {
-	FluidIterable,
-	FluidIterableIterator,
-	FluidMap,
-	FluidReadonlyMap,
-} from "./fluidMap.js";
-
-export type {
 	IErrorBase,
 	IGenericError,
 	IUsageError,

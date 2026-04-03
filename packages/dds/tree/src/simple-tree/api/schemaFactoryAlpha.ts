@@ -448,7 +448,7 @@ export class SchemaFactoryAlpha<
 	public static readonly withDefaultRecursive = schemaStaticsAlpha.withDefaultRecursive;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeAlpha}.
+	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear as values in the map.
