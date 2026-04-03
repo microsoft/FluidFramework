@@ -21,8 +21,15 @@ resources:
   - repository: ff_pipeline_host
     type: git
     name: ff_pipeline_host
+    ${{ if ne(parameters.ffPipelineHostRef, ' ') }}:
+      ref: ${{ parameters.ffPipelineHostRef }}
 
 parameters:
+
+- name: ffPipelineHostRef
+  type: string
+  default: ' '
+  displayName: 'ff_pipeline_host ref (branch, tag, or commit SHA; leave blank for default)'
 
 - name: poolBuild
   type: object
