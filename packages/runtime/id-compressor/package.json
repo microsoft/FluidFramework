@@ -104,8 +104,7 @@
 		"test:snapshots:regen": "npm run test:mocha:esm -- --snapshot",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist && fluid-tsc commonjs --watch --project ./tsconfig.cjs.json",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
