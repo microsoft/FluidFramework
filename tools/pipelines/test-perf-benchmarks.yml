@@ -151,7 +151,7 @@ stages:
             workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               set -eu -o pipefail
-              pnpm run build:compile
+              pnpm exec fluid-build --nolint --task build:test:esm --worker
 
         # ODSP tenant setup
         - ${{ if eq(job.endpointName, 'odsp') }}:
