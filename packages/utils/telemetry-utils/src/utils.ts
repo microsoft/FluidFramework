@@ -6,7 +6,10 @@
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import { loggerToMonitoringContext } from "./config.js";
-import type { ITelemetryGenericEventExt, TelemetryLoggerExt } from "./undeprecated.js";
+import type {
+	ITelemetryGenericEventExt,
+	TelemetryLoggerExt,
+} from "./telemetryTypesUndeprecated.js";
 
 /**
  * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.

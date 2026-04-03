@@ -12,7 +12,7 @@ import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "../telemetryTypes.js";
+} from "../telemetryTypesUndeprecated.js";
 import { ThresholdCounter } from "../thresholdCounter.js";
 
 class FakeTelemetryLogger implements TelemetryLoggerExt {

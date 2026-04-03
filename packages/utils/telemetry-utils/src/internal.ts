@@ -99,7 +99,7 @@ export type {
 	ITelemetryErrorEventExt,
 	ITelemetryPerformanceEventExt,
 	TelemetryEventCategory,
-} from "./undeprecated.js";
+} from "./telemetryTypesUndeprecated.js";
 export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
 export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
 

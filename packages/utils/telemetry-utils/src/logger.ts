@@ -35,7 +35,7 @@ import type {
 	ITelemetryGenericEventExt,
 	ITelemetryPerformanceEventExt,
 	TelemetryEventCategory,
-} from "./undeprecated.js";
+} from "./telemetryTypesUndeprecated.js";
 
 /**
  * Type erase a {@link TelemetryLoggerExt} to an {@link ITelemetryLoggerExt}.

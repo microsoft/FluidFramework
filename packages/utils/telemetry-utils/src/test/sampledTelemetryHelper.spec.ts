@@ -17,7 +17,7 @@ import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "../telemetryTypes.js";
+} from "../telemetryTypesUndeprecated.js";
 
 /**
  * @remarks Initialized in advance to extract its keys for type checking.

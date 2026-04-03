@@ -14,7 +14,7 @@ import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "../telemetryTypes.js";
+} from "../telemetryTypesUndeprecated.js";
 import { measure } from "../utils.js";
 
 /**

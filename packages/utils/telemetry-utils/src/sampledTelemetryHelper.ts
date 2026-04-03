@@ -12,7 +12,7 @@ import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "./undeprecated.js";
+} from "./telemetryTypesUndeprecated.js";
 
 /**
  * @privateRemarks

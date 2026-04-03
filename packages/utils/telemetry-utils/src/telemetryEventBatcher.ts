@@ -8,7 +8,7 @@ import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "./undeprecated.js";
+} from "./telemetryTypesUndeprecated.js";
 
 /**
  * Telemetry class that accumulates measurements which are eventually logged in a telemetry event through the provided
