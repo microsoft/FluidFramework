@@ -159,6 +159,9 @@ export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeViewConfi
 // @alpha
 export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeArrayNode<TAllowedTypes>): TreeArrayNodeAlpha<TAllowedTypes>;
 
+// @alpha
+export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(node: TreeMapNode<TAllowedTypes>): TreeMapNodeAlpha<TAllowedTypes>;
+
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
@@ -484,6 +487,31 @@ export const FluidClientVersion: {
     readonly v2_80: "2.80.0";
 };
 
+// @alpha @sealed
+export interface FluidIterable<T> {
+    // (undocumented)
+    [Symbol.iterator](): FluidIterableIterator<T>;
+}
+
+// @alpha @sealed
+export interface FluidIterableIterator<T> extends FluidIterable<T> {
+    // (undocumented)
+    next(): {
+        value: T;
+        done?: false;
+    } | {
+        value: undefined;
+        done: true;
+    };
+}
+
+// @alpha @sealed
+export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
+    delete(key: K): void;
+    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    set(key: K, value: V): void;
+}
+
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
@@ -491,6 +519,19 @@ export type FluidObject<T = unknown> = {
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @alpha @sealed
+export interface FluidReadonlyMap<K, V> {
+    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
+    readonly [Symbol.toStringTag]: string;
+    entries(): FluidIterableIterator<[K, V]>;
+    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): FluidIterableIterator<K>;
+    readonly size: number;
+    values(): FluidIterableIterator<V>;
+}
 
 // @beta
 export namespace FluidSerializableAsTree {
@@ -1155,7 +1196,7 @@ export interface MakeNominal {
 }
 
 // @alpha @sealed @system
-export interface MapNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Map, TreeMapNode<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
+export interface MapNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Map, TreeMapNodeAlpha<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
 }
 
 // @alpha @sealed @system
@@ -1173,7 +1214,7 @@ export interface MapNodeCustomizableSchemaUnsafe<out TName extends string, in ou
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]> | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
 
 // @alpha @sealed @system
-export interface MapNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Map, TreeMapNode<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
+export interface MapNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Map, TreeMapNodeAlpha<T> & WithType<TName, NodeKind.Map, T>, MapNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {
 }
 
 // @alpha
@@ -2166,7 +2207,7 @@ export interface TreeIdentifierUtils {
 }
 
 // @alpha @sealed
-export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
+export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
     dispose(): void;
 }
 
@@ -2187,6 +2228,10 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
     keys(): IterableIterator<string>;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
+}
+
+// @alpha @sealed
+export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode, Pick<TreeMapNode<T>, "set" | "delete"> {
 }
 
 // @public @sealed

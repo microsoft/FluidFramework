@@ -17,7 +17,7 @@ if (
 	assert = chai.assert;
 	nock = require("nock");
 	sinon = require("sinon");
-	should = chai.should();
+	should = chai.should(); // assignment shouldn't be needed; just calling "should()" should be sufficient
 	_ = require("lodash");
 	isBrowser = false;
 } else {
