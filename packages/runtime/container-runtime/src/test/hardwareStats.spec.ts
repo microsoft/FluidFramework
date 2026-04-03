@@ -21,7 +21,13 @@ function setNavigator(
 	// eslint-disable-next-line @rushstack/no-new-null -- testing behavior with global
 	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,
 ) {
-	global.navigator = navigator as Navigator;
+	// In Node 22+, globalThis.navigator is a read-only getter, so direct
+	// assignment throws. Use Object.defineProperty to override it.
+	Object.defineProperty(globalThis, "navigator", {
+		value: navigator,
+		writable: true,
+		configurable: true,
+	});
 }
 
 describe("Hardware Stats", () => {
