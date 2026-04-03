@@ -86,15 +86,11 @@ export interface ComposeNodeManager {
 	 * @param baseAttachId - The ID of the attach in the base changeset.
 	 * @param newDetachId - The ID of the detach in the new changeset.
 	 * @param count - The number of nodes being attached then detached.
-	 * @param treatNewAsRedundantPin - Must be set to true if the composed changeset will include `baseAttachId`,
-	 * instead of the new changeset's final attach ID.
-	 * This is used by sequence field when composing an attach with a pin.
 	 */
 	composeAttachDetach(
 		baseAttachId: ChangeAtomId,
 		newDetachId: ChangeAtomId,
 		count: number,
-		treatNewAsRedundantPin: boolean,
 	): void;
 
 	/**
@@ -115,14 +111,11 @@ export interface ComposeNodeManager {
 	 * @param baseDetachId - The ID of the detach in the base changeset.
 	 * @param newAttachId - The ID of the attach in the new changeset.
 	 * @param count - The number of nodes being detached then attached.
-	 * @param convertToPin - Should be set to true if the composed change will include a detach and attach with `baseDetachId`.
-	 * Otherwise the composed change should not include either `baseDetachId` or `newAttachId`.
 	 */
 	composeDetachAttach(
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
-		convertToPin: boolean,
 	): void;
 }
 

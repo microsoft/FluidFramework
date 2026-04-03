@@ -33,6 +33,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		type: "Attach",
 		id: brand(0),
 		revision: tag,
+		detachId: atomId,
 	};
 	const detach: Populated<Detach> = {
 		type: "Detach",

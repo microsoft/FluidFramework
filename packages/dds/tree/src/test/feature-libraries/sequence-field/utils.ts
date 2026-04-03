@@ -834,7 +834,7 @@ function newComposeManager(): TestComposeManager {
 			this.isInvalidated = true;
 		},
 
-		composeDetachAttach(baseDetachId, newAttachId, count, preserveRename): void {},
+		composeDetachAttach(baseDetachId, newAttachId, count): void {},
 	};
 
 	return manager;

@@ -67,6 +67,12 @@ export interface HasRevisionTag {
  */
 export interface Attach extends HasMoveId, HasRevisionTag {
 	readonly type: "Attach";
+
+	/**
+	 * This represents the ID of the detach portion of a pin.
+	 * This should be undefined if the attach is not a pin.
+	 */
+	readonly detachId?: ChangeAtomId;
 }
 
 /**

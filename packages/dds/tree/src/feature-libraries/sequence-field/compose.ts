@@ -11,7 +11,7 @@ import {
 	type RevisionMetadataSource,
 	type RevisionTag,
 } from "../../core/index.js";
-import type { IdAllocator } from "../../util/index.js";
+import type { IdAllocator, Mutable } from "../../util/index.js";
 import type {
 	ComposeNodeManager,
 	NodeChangeComposer,
@@ -21,7 +21,15 @@ import type {
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
-import type { CellMark, Changeset, Mark, MarkEffect, MarkList, NoopMark } from "./types.js";
+import type {
+	Attach,
+	CellMark,
+	Changeset,
+	Mark,
+	MarkEffect,
+	MarkList,
+	NoopMark,
+} from "./types.js";
 import {
 	CellOrder,
 	areEqualCellIds,
@@ -139,43 +147,51 @@ function composeMarksIgnoreChild(
 	if (!markHasCellEffect(baseMark)) {
 		assert(baseMark.type === "Attach", "Expected baseMark to be a pin");
 
-		// XXX: We should use `newMark`.
-
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
-		const isNewPin = newMark.type === "Attach";
-		const baseId = getAttachedRootId(baseMark);
-		moveEffects.composeAttachDetach(baseId, getMovedNodeId(newMark), baseMark.count, isNewPin);
+		const baseAttachId = getAttachedRootId(baseMark);
+		const baseDetachId = baseMark.detachId ?? baseAttachId;
+		moveEffects.composeAttachDetach(baseAttachId, getMovedNodeId(newMark), baseMark.count);
 
-		if (!isNewPin) {
-			// `newMark` is a detach.
-			// The attach from the base pin cancels with the new detach,
-			// and we are left with the detach portion of the base pin, plus
-			// a rename to the output cell ID of the new detach.
-			return {
-				type: "Detach",
-				id: baseId.localId,
-				revision: baseId.revision,
-				count: baseMark.count,
-				cellRename: getDetachOutputCellId(newMark),
-			};
+		switch (newMark.type) {
+			case "Detach": {
+				// The attach from the base pin cancels with the new detach,
+				// and we are left with the detach portion of the base pin, plus
+				// a rename to the output cell ID of the new detach.
+				return {
+					type: "Detach",
+					id: baseDetachId.localId,
+					revision: baseDetachId.revision,
+					count: baseMark.count,
+					cellRename: getDetachOutputCellId(newMark),
+				};
+			}
+			case "Attach": {
+				// Note that `newMark` is a pin.
+				return {
+					...newMark,
+					detachId: baseDetachId,
+				};
+			}
+			default: {
+				fail("Expected a mark type which can have a cell effect");
+			}
 		}
-
-		// When composing two pins, we use the ID of the first pin.
-		// This is because the second pin has no observable effect.
-		// Aftere rebasing over a move, the first pin's detach ID is observable as the output cell ID of the detach.
-		return baseMark;
 	} else if (!markHasCellEffect(newMark)) {
 		if (isAttach(newMark) && isAttach(baseMark)) {
 			// We treat the pin as a detach and reattach.
 			moveEffects.composeAttachDetach(
 				getAttachedRootId(baseMark),
-				getAttachedRootId(newMark),
+				newMark.detachId ?? getAttachedRootId(newMark),
 				baseMark.count,
-				false,
 			);
 
-			return { cellId: baseMark.cellId, ...newMark };
+			// We are composing an attach with a pin (which is a detach and attach).
+			// The base attach composes with the detach to create a rename (handled by ModularChangeFamily in `composeAttachDetach`),
+			// and we're left with just the attach portion of `newMark`.
+			const composed: Mutable<CellMark<Attach>> = { cellId: baseMark.cellId, ...newMark };
+			delete composed.detachId;
+			return composed;
 		}
 		return baseMark;
 	} else if (areInputCellsEmpty(baseMark)) {
@@ -189,7 +205,6 @@ function composeMarksIgnoreChild(
 			getAttachedRootId(baseMark),
 			getDetachedRootId(newMark),
 			baseMark.count,
-			false,
 		);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
@@ -203,7 +218,7 @@ function composeMarksIgnoreChild(
 		const detachId = getDetachedRootId(baseMark);
 		const attachId = getAttachedRootId(newMark);
 
-		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, true);
+		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count);
 
 		// The composition has no net effect but we preserve the intention to pin the nodes here.
 		// We use the ID from the first mark.

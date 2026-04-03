@@ -13,6 +13,7 @@ import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
+	offsetChangeAtomId,
 } from "../../core/index.js";
 import { type Mutable, areAdjacentIntegerRanges, brand } from "../../util/index.js";
 import {
@@ -571,7 +572,10 @@ function tryMergeEffects(
 		}
 		case "Attach": {
 			const lhsInsert = lhs as Attach;
-			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
+			if (
+				(lhsInsert.id as number) + lhsCount === rhs.id &&
+				areMergeableChangeAtoms(lhsInsert.detachId, lhsCount, rhs.detachId)
+			) {
 				return lhsInsert;
 			}
 			break;
@@ -623,13 +627,17 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			return [effect, effect];
 		}
 		case "Attach": {
-			const effect1: Mutable<TEffect> = {
+			const effect1: TEffect = {
 				...effect,
 			};
-			const effect2: Mutable<TEffect> = {
+			const effect2: TEffect = {
 				...effect,
 				id: (effect.id as number) + length,
 			};
+
+			if (effect.detachId !== undefined) {
+				(effect2 as Mutable<Attach>).detachId = offsetChangeAtomId(effect.detachId, length);
+			}
 
 			return [effect1, effect2];
 		}
@@ -754,8 +762,13 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 
 			if (mark.cellId === undefined) {
 				// This is a pin, which is treated as a detach and attach.
+				const detachId = mark.detachId ?? getAttachedRootId(mark);
 				keys.push({
-					key: { revision: mark.revision, localId: mark.id, target: NodeMoveType.Detach },
+					key: {
+						revision: detachId.revision,
+						localId: detachId.localId,
+						target: NodeMoveType.Detach,
+					},
 					count,
 				});
 			}

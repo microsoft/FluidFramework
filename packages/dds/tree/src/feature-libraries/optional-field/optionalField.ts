@@ -240,7 +240,7 @@ function compose(
 ): OptionalChangeset {
 	const detachId2 = getEffectiveDetachId(change2);
 	if (change1.valueReplace?.src !== undefined && detachId2 !== undefined) {
-		nodeManager.composeAttachDetach(change1.valueReplace.src, detachId2, 1, false);
+		nodeManager.composeAttachDetach(change1.valueReplace.src, detachId2, 1);
 	}
 
 	const composedDetach = composeNodeDetaches(change1, change2, nodeManager);
@@ -258,7 +258,7 @@ function compose(
 		change1.nodeDetach !== undefined &&
 		areEqualChangeAtomIdOpts(change1.nodeDetach, change2.valueReplace?.src)
 	) {
-		nodeManager.composeDetachAttach(change1.nodeDetach, change1.nodeDetach, 1, true);
+		nodeManager.composeDetachAttach(change1.nodeDetach, change1.nodeDetach, 1);
 	}
 
 	return makeChangeset(composedReplace, composedDetach, composedChildChange);

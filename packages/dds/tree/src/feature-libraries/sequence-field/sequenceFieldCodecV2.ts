@@ -668,10 +668,19 @@ function encodeMarkEffectV2(
 				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, rootInputId);
 
 			if (!isMove && isInitialAttachLocation) {
+				// Note that in the case that the mark is a pin with different attach and detach IDs,
+				// we encode it as a pin using just the detach ID.
+				// This is because it is not possible to represent both IDs in this format,
+				// and the attach ID is arbitrary and has no observable effect.
+				//
+				// The detach ID is observable, as if this change is rebased over a move of these nodes,
+				// the resulting change will have a detach using that ID,
+				// and other changes may reference the cell ID of that detach.
+				const rootId = mark.detachId ?? attachId;
 				return {
 					insert: {
-						revision: encodeRevision(mark.revision),
-						id: mark.id,
+						revision: encodeRevision(rootId.revision),
+						id: rootId.localId,
 					},
 				};
 			}

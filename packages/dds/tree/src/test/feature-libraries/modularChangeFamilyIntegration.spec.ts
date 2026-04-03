@@ -1663,9 +1663,14 @@ describe("ModularChangeFamily integration", () => {
 						fieldB,
 						{
 							marks: [
-								{ count: 1 },
 								{
 									count: 1,
+									detach: { major: tag1, minor: 0 },
+									attach: { major: tag1, minor: 0 },
+								},
+								{
+									count: 1,
+
 									fields: new Map([
 										[fieldC, { marks: [{ count: 1, attach: { major: tag2, minor: 2 } }] }],
 									]),

@@ -3242,7 +3242,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseAttachId: ChangeAtomId,
 		newDetachId: ChangeAtomId,
 		count: number,
-		treatNewAsRedundantPin: boolean,
 	): void {
 		let countToProcess = count;
 
@@ -3270,67 +3269,46 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		const baseDetachId = baseRootIdEntry.value;
 
-		if (treatNewAsRedundantPin) {
-			assert(
-				areEqualChangeAtomIds(newDetachId, newAttachIdEntry.value) &&
-					areEqualChangeAtomIds(baseAttachId, baseDetachId),
-				"Pins with renames are not supported",
-			);
+		if (!areEqualChangeAtomIds(newDetachId, baseAttachId)) {
+			this.table.attachDetachRenames.set(baseAttachId, countToProcess, newDetachId);
+		}
 
+		// Both changes can have the same ID if they came from inverse changesets
+		const hasNewAttachWithBaseAttachId =
+			newAttachEntry.value !== undefined &&
+			areEqualChangeAtomIds(baseAttachId, newAttachIdEntry.value);
+
+		if (!hasNewAttachWithBaseAttachId) {
+			// The new attach may still exist in the composed changeset so we do not remove it here.
+			// The new attach will typically cancel with a base detach,
+			// in which case the cross-field key will be removed in `composeDetachAttach`.
+			this.table.removedCrossFieldKeys.set(
+				{ ...baseAttachId, target: NodeMoveType.Attach },
+				countToProcess,
+				true,
+			);
+		}
+
+		const baseDetachEntry = getFirstDetachField(
+			this.table.baseChange.crossFieldKeys,
+			baseDetachId,
+			countToProcess,
+		);
+
+		countToProcess = baseDetachEntry.length;
+
+		const hasBaseDetachWithNewDetachId =
+			baseDetachEntry.value !== undefined && areEqualChangeAtomIds(newDetachId, baseDetachId);
+
+		if (!hasBaseDetachWithNewDetachId) {
+			// The base detach may still exist in the composed changeset so we do not remove it here.
+			// The base detach will typically cancel with a new attach,
+			// in which case the cross-field key will be removed in `composeDetachAttach`.
 			this.table.removedCrossFieldKeys.set(
 				{ ...newDetachId, target: NodeMoveType.Detach },
 				countToProcess,
 				true,
 			);
-
-			this.table.removedCrossFieldKeys.set(
-				{ ...newAttachIdEntry.value, target: NodeMoveType.Attach },
-				countToProcess,
-				true,
-			);
-		} else {
-			if (!areEqualChangeAtomIds(newDetachId, baseAttachId)) {
-				this.table.attachDetachRenames.set(baseAttachId, countToProcess, newDetachId);
-			}
-
-			// Both changes can have the same ID if they came from inverse changesets
-			const hasNewAttachWithBaseAttachId =
-				newAttachEntry.value !== undefined &&
-				areEqualChangeAtomIds(baseAttachId, newAttachIdEntry.value);
-
-			if (!hasNewAttachWithBaseAttachId) {
-				// The new attach may still exist in the composed changeset so we do not remove it here.
-				// The new attach will typically cancel with a base detach,
-				// in which case the cross-field key will be removed in `composeDetachAttach`.
-				this.table.removedCrossFieldKeys.set(
-					{ ...baseAttachId, target: NodeMoveType.Attach },
-					countToProcess,
-					true,
-				);
-			}
-
-			const baseDetachEntry = getFirstDetachField(
-				this.table.baseChange.crossFieldKeys,
-				baseDetachId,
-				countToProcess,
-			);
-
-			countToProcess = baseDetachEntry.length;
-
-			const hasBaseDetachWithNewDetachId =
-				baseDetachEntry.value !== undefined &&
-				areEqualChangeAtomIds(newDetachId, baseDetachId);
-
-			if (!hasBaseDetachWithNewDetachId) {
-				// The base detach may still exist in the composed changeset so we do not remove it here.
-				// The base detach will typically cancel with a new attach,
-				// in which case the cross-field key will be removed in `composeDetachAttach`.
-				this.table.removedCrossFieldKeys.set(
-					{ ...newDetachId, target: NodeMoveType.Detach },
-					countToProcess,
-					true,
-				);
-			}
 		}
 
 		if (newAttachEntry.value === undefined) {
@@ -3355,7 +3333,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				offsetChangeAtomId(baseAttachId, countToProcess),
 				offsetChangeAtomId(newDetachId, countToProcess),
 				remainingCount,
-				treatNewAsRedundantPin,
 			);
 		}
 	}
@@ -3411,51 +3388,36 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
-		composeToPin: boolean,
 	): void {
-		if (composeToPin) {
-			if (!areEqualChangeAtomIds(baseDetachId, newAttachId)) {
-				// The pin will have `baseDetachId` as both its detach and attach ID.
-				// So we remove `newAttachId` unless that is equal to the pin's detach ID.
-				this.table.removedCrossFieldKeys.set(
-					{ target: NodeMoveType.Attach, ...newAttachId },
-					count,
-					true,
-				);
-			}
-
-			// We add `baseDetachId` as an attach ID.
-			this.table.addedCrossFieldKeys.set(
-				{ target: NodeMoveType.Attach, ...baseDetachId },
-				count,
-				this.fieldId,
-			);
-
-			// In the case where `baseDetachId` is part of a rollback of a move in change2,
-			// change2 will also have a detach with `baseDetachId`.
-			// We make sure that `baseDetachId` is registered in this field in the composed change.
-			// In other cases, this line is unnecessary but harmless.
-			this.table.addedCrossFieldKeys.set(
-				{ target: NodeMoveType.Detach, ...baseDetachId },
-				count,
-				this.fieldId,
-			);
-
-			// We remove any rename from `baseDetachId`, since it is now reattached with the same ID.
-			this.table.deletedRenames.set(baseDetachId, count, true);
-		} else {
-			this.table.removedCrossFieldKeys.set(
-				{ target: NodeMoveType.Detach, ...baseDetachId },
-				count,
-				true,
-			);
-
+		if (!areEqualChangeAtomIds(baseDetachId, newAttachId)) {
+			// The pin will have `baseDetachId` as both its detach and attach ID.
+			// So we remove `newAttachId` unless that is equal to the pin's detach ID.
 			this.table.removedCrossFieldKeys.set(
 				{ target: NodeMoveType.Attach, ...newAttachId },
 				count,
 				true,
 			);
 		}
+
+		// We add `baseDetachId` as an attach ID.
+		this.table.addedCrossFieldKeys.set(
+			{ target: NodeMoveType.Attach, ...baseDetachId },
+			count,
+			this.fieldId,
+		);
+
+		// In the case where `baseDetachId` is part of a rollback of a move in change2,
+		// change2 will also have a detach with `baseDetachId`.
+		// We make sure that `baseDetachId` is registered in this field in the composed change.
+		// In other cases, this line is unnecessary but harmless.
+		this.table.addedCrossFieldKeys.set(
+			{ target: NodeMoveType.Detach, ...baseDetachId },
+			count,
+			this.fieldId,
+		);
+
+		// We remove any rename from `baseDetachId`, since it is now reattached with the same ID.
+		this.table.deletedRenames.set(baseDetachId, count, true);
 	}
 
 	private invalidateBaseFields(fields: FieldId[]): void {
