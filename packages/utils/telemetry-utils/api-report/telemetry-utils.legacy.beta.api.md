@@ -34,9 +34,9 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     // @deprecated
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
     // @deprecated
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: LogLevel): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
     // @deprecated
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: LogLevel): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
 // @beta @legacy (undocumented)
