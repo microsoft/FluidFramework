@@ -71,10 +71,8 @@ ENV PATH="/home/node/.local/bin:/home/node/.cargo/bin:${PATH}"
 ARG INSTALL_PLAYWRIGHT_CLI=false
 RUN if [ "$INSTALL_PLAYWRIGHT_CLI" = "true" ]; then npm install -g @playwright/cli@latest; fi
 
-# Agency is installed at runtime via postCreateCommand (ai-setup.sh) rather than
-# during the Docker build, because the installer requires Azure authentication
-# which is only available in the user's session. The PATH setup above (lines 39-63)
-# ensures agency is on PATH once installed.
+# Optionally install agency (installs to $HOME/.config/agency, must run as node user)
+RUN if [ "$INSTALL_AGENCY" = "true" ]; then curl --proto '=https' --tlsv1.2 -fsSL https://aka.ms/InstallTool.sh | sh -s agency; fi
 
 # Optionally install repoverlay
 ARG INSTALL_REPOVERLAY=false
