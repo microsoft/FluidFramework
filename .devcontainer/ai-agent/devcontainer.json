@@ -64,7 +64,7 @@
 		// Enables SSH connections into the container using `gh codespace ssh`
 		"ghcr.io/devcontainers/features/sshd:1": {
 			"version": "latest"
-		},
+		}
 	},
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
 	// can be lengthy enough that it's convenient.
