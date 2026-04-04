@@ -98,11 +98,11 @@ export interface IFluidContainerEvents extends IEvent {
 	(event: "dirty", listener: () => void): void;
 
 	/**
-	 * Emitted when the {@link IFluidContainer} is closed, which permanently disables it.
+	 * Emitted when the {@link IFluidContainer} is disposed, which permanently disables it.
 	 *
 	 * @remarks Listener parameters:
 	 *
-	 * - `error`: If the container was closed due to error (as opposed to an explicit call to
+	 * - `error`: If the container was disposed due to error (as opposed to an explicit call to
 	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
@@ -138,7 +138,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * A container is considered dirty in the following cases:
 	 *
 	 * 1. The container has been created in the detached state, and either it has not been attached yet or it is
-	 * in the process of being attached (container is in `attaching` state). If container is closed prior to being
+	 * in the process of being attached (container is in `attaching` state). If container is disposed prior to being
 	 * attached, host may never know if the file was created or not.
 	 *
 	 * 2. The container was attached, but it has local changes that have not yet been saved to service endpoint.
@@ -331,6 +331,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.acquireExtension = extensionStore.acquireExtension.bind(extensionStore);
 		container.on("connected", this.connectedHandler);
 		container.on("closed", this.disposedHandler);
+		container.on("disposed", this.disposedHandler);
 		container.on("disconnected", this.disconnectedHandler);
 		container.on("saved", this.savedHandler);
 		container.on("dirty", this.dirtyHandler);
@@ -393,6 +394,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		this.container.dispose();
 		this.container.off("connected", this.connectedHandler);
 		this.container.off("closed", this.disposedHandler);
+		this.container.off("disposed", this.disposedHandler);
 		this.container.off("disconnected", this.disconnectedHandler);
 		this.container.off("saved", this.savedHandler);
 		this.container.off("dirty", this.dirtyHandler);
