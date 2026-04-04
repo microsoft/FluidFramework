@@ -24,7 +24,6 @@
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
 				"MAI-EngineeringSystems.mai-ai-telemetry",
-				"ms-codespaces-tools.ado-codespaces-auth",
 				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-docker",
 				"mutantdino.resourcemonitor",
@@ -66,9 +65,6 @@
 		"ghcr.io/devcontainers/features/sshd:1": {
 			"version": "latest"
 		},
-		// Features needed for the ms-codespaces-tools.ado-codespaces-auth extension
-		"ghcr.io/microsoft/codespace-features/external-repository:4": {},
-		"ghcr.io/microsoft/codespace-features/artifacts-helper:3": {}
 	},
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
 	// can be lengthy enough that it's convenient.
