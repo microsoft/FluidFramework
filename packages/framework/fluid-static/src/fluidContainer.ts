@@ -390,7 +390,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	}
 
 	public dispose(): void {
-		this.container.close();
+		this.container.dispose();
 		this.container.off("connected", this.connectedHandler);
 		this.container.off("closed", this.disposedHandler);
 		this.container.off("disconnected", this.disconnectedHandler);
