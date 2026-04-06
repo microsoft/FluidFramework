@@ -269,6 +269,7 @@ export {
 	TreeIndex, 
 	TreeIndexKey, 
 	TreeIndexNodes, 
+	TreeMapNodeAlpha, 
 	TreeParsingOptions, 
 	TreeSchema, 
 	TreeSchemaEncodingOptions, 
