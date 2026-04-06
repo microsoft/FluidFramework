@@ -500,7 +500,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
         value: T;
         done?: false;
     } | {
-        value: undefined;
+        value: any;
         done: true;
     };
 }

@@ -15,16 +15,6 @@ type requireTrue<_X extends true> = true;
 type requireFalse<_X extends false> = true;
 type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
 
-// Suppress noUnusedLocals for the imports & utilities above.
-declare type MakeUnusedImportErrorsGoAway =
-	| requireTrue<true>
-	| requireFalse<false>
-	| isAssignableTo<true, true>
-	| FluidIterable<unknown>
-	| FluidIterableIterator<unknown>
-	| FluidMap<unknown, unknown>
-	| FluidReadonlyMap<unknown, unknown>;
-
 // Native ReadonlyMap is NOT assignable to FluidReadonlyMap because
 // FluidReadonlyMap requires [Symbol.toStringTag], which ReadonlyMap lacks.
 declare type _readonlyMap_to_fluidReadonlyMap = requireFalse<
@@ -78,4 +68,27 @@ declare type _arrayKeys_to_fluidIterableIterator = requireTrue<
 >;
 declare type _arrayValues_to_fluidIterableIterator = requireTrue<
 	isAssignableTo<ReturnType<string[]["values"]>, FluidIterableIterator<string>>
+>;
+
+// Array.from inference tests
+// The done branch of FluidIterableIterator uses `any` (not `undefined`) so that
+// Array.from and other call sites infer the element type as T, not T | undefined.
+
+// Array.from on a FluidIterableIterator<string> should produce string[], not (string | undefined)[].
+declare const stringIter: FluidIterableIterator<string>;
+declare type _arrayFromIterator = requireTrue<
+	isAssignableTo<typeof arrayFromIteratorResult, string[]>
+>;
+declare const arrayFromIteratorResult: ReturnType<typeof Array.from<string>>;
+// Verify that the actual Array.from call infers correctly:
+declare const arrayFromFluidIter: typeof stringIter extends Iterable<infer U> ? U[] : never;
+declare type _arrayFromFluidIter_is_string_array = requireTrue<
+	isAssignableTo<typeof arrayFromFluidIter, string[]>
+>;
+
+// Array.from on a FluidReadonlyMap should produce [K, V][], not ([K, V] | undefined)[].
+declare const fluidMap: FluidReadonlyMap<string, number>;
+declare const arrayFromFluidMap: typeof fluidMap extends Iterable<infer U> ? U[] : never;
+declare type _arrayFromFluidMap_is_entry_array = requireTrue<
+	isAssignableTo<typeof arrayFromFluidMap, [string, number][]>
 >;

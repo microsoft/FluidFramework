@@ -15,10 +15,16 @@ export interface FluidIterable<T> {
 /**
  * Like TypeScript's built-in iterable iterator type, except unaffected by TypeScript's version and configuration options.
  *
+ * @privateRemarks
+ * The done branch uses `any` rather than `undefined` to match TypeScript's built-in IteratorReturnResult, which defaults to any for the same reason.
+ * Using `undefined` causes TypeScript to include it in type inference at call sites like `Array.from` which would infer `T | undefined` instead of `T`.
+ * The done value is never meaningful to callers since values are only consumed when done is false, so `any` is both correct and safe here.
+ *
  * @sealed @alpha
  */
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
-	next(): { value: T; done?: false } | { value: undefined; done: true };
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	next(): { value: T; done?: false } | { value: any; done: true };
 }
 
 /**
