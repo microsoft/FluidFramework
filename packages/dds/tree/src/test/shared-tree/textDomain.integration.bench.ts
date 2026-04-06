@@ -64,7 +64,8 @@ describe("TextDomain benchmarks", () => {
 
 		/**
 		 * Depths at which to place the text node within the wrapper tree.
-		 * A deeper text node results in a longer path in the generated op, which increases op size.
+		 * @remarks
+		 * A deeper text node results in a longer path in the generated op, which we expect to increase op size.
 		 */
 		const nodeDepths = [1, 10, 100] as const;
 
