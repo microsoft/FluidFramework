@@ -175,9 +175,20 @@ export function renderSchemaTypeScript(
 		name: string,
 		schema: ArrayNodeSchema,
 	): RenderResult {
-		const elementTypes = renderAllowedTypes(schema.childTypes);
-		const base = `${formatExpression(elementTypes)}[]`;
+		const elementTypes = renderAnnotatedChildTypes(schema);
 		const binding = renderBindingIntersection(definition);
+		if (elementTypes.staged === true) {
+			const nonStagedTypes = [...schema.childTypes].filter(
+				(child) => schema.simpleAllowedTypes.get(child.identifier)?.isStaged === false,
+			);
+			const readType = formatExpression(elementTypes);
+			const writeType = formatExpression(renderAllowedTypes(nonStagedTypes));
+			return {
+				declaration: `type ${name} = TreeArray<${readType}, ${writeType}>${binding.suffix};`,
+				description: describeBinding(schema.metadata?.description, "array", binding),
+			};
+		}
+		const base = `${formatExpression(elementTypes)}[]`;
 		return {
 			declaration: `type ${name} = ${base}${binding.suffix};`,
 			description: describeBinding(schema.metadata?.description, "array", binding),
@@ -189,9 +200,20 @@ export function renderSchemaTypeScript(
 		name: string,
 		schema: MapNodeSchema,
 	): RenderResult {
-		const valueType = renderAllowedTypes(schema.childTypes);
-		const base = `Map<string, ${valueType.text}>`;
+		const valueType = renderAnnotatedChildTypes(schema);
 		const binding = renderBindingIntersection(definition);
+		if (valueType.staged === true) {
+			const nonStagedTypes = [...schema.childTypes].filter(
+				(child) => schema.simpleAllowedTypes.get(child.identifier)?.isStaged === false,
+			);
+			const readType = formatExpression(valueType);
+			const writeType = formatExpression(renderAllowedTypes(nonStagedTypes));
+			return {
+				declaration: `type ${name} = TreeMap<${readType}, ${writeType}>${binding.suffix};`,
+				description: describeBinding(schema.metadata?.description, "map", binding),
+			};
+		}
+		const base = `Map<string, ${valueType.text}>`;
 		return {
 			declaration: `type ${name} = ${base}${binding.suffix};`,
 			description: describeBinding(schema.metadata?.description, "map", binding),
@@ -352,6 +374,42 @@ export function renderSchemaTypeScript(
 			return expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" };
 		}
 		return {
+			precedence: TypePrecedence.Union,
+			text: expressions
+				.map((expr) => formatExpression(expr, TypePrecedence.Union))
+				.join(" | "),
+		};
+	}
+
+	function renderAnnotatedChildTypes(
+		schema: ArrayNodeSchema | MapNodeSchema | RecordNodeSchema,
+	): TypeExpression {
+		const expressions: TypeExpression[] = [];
+		for (const childSchema of schema.childTypes) {
+			const isStaged =
+				schema.simpleAllowedTypes.get(childSchema.identifier)?.isStaged !== false;
+			let expr: TypeExpression;
+			if (isNamedSchema(childSchema.identifier)) {
+				expr = {
+					staged: isStaged ? true : undefined,
+					precedence: TypePrecedence.Object,
+					text: resolver.resolve(childSchema),
+				};
+			} else {
+				const result = renderInlineSchema(childSchema);
+				expr = isStaged ? { ...result, staged: true } : result;
+			}
+			expressions.push(expr);
+		}
+		if (expressions.length === 0) {
+			return { precedence: TypePrecedence.Object, text: "never" };
+		}
+		if (expressions.length === 1) {
+			return expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" };
+		}
+		const staged = expressions.some((e) => e.staged === true) ? (true as const) : undefined;
+		return {
+			staged,
 			precedence: TypePrecedence.Union,
 			text: expressions
 				.map((expr) => formatExpression(expr, TypePrecedence.Union))

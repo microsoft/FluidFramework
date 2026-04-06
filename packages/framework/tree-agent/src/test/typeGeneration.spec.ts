@@ -398,6 +398,37 @@ type MapWithProperty = Map<string, string> & {
 `,
 			);
 		});
+
+		it("for array nodes", () => {
+			class StagedArray extends sfBeta.array(
+				"StagedArray",
+				SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			) {}
+
+			const schemaString = getDomainSchemaString(StagedArray, ["hello"]);
+			assert.deepEqual(
+				schemaString,
+				`type StagedArray = TreeArray<(string | number), string>;\n`,
+			);
+		});
+
+		it("for map nodes", () => {
+			class StagedMap extends sfBeta.map(
+				"StagedMap",
+				SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			) {}
+
+			const schemaString = getDomainSchemaString(StagedMap, new Map([["a", "alpha"]]));
+			assert.deepEqual(schemaString, `type StagedMap = TreeMap<(string | number), string>;\n`);
+		});
+
+
 	});
 });
 
