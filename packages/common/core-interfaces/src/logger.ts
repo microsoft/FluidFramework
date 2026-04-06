@@ -79,7 +79,7 @@ export const LogLevel = {
 	 * @see {@link (LogLevel:variable).info}
 	 * @deprecated Use {@link (LogLevel:variable).info} to preserve prior treatment.
 	 */
-	default: 20, // Default log levelExpand commentComment on line R82
+	default: 20, // Default log level
 
 	/**
 	 * @deprecated Use {@link (LogLevel:variable).essential}
