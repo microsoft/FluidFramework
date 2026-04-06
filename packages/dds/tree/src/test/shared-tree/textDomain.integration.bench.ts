@@ -113,6 +113,7 @@ describe("TextDomain benchmarks", () => {
 					}
 					return current;
 				},
+				benchmarkType: BenchmarkType.Measurement,
 			},
 			{
 				keyLength: 10,
@@ -133,6 +134,7 @@ describe("TextDomain benchmarks", () => {
 					}
 					return current;
 				},
+				benchmarkType: BenchmarkType.Perspective,
 			},
 			{
 				keyLength: 100,
@@ -153,6 +155,7 @@ describe("TextDomain benchmarks", () => {
 					}
 					return current;
 				},
+				benchmarkType: BenchmarkType.Measurement,
 			},
 		];
 
@@ -176,7 +179,7 @@ describe("TextDomain benchmarks", () => {
 						for (const charCount of charCounts) {
 							benchmarkCustom({
 								only: false,
-								type: BenchmarkType.Measurement,
+								type: testSchemaConfiguration.benchmarkType,
 								title: `insert ${charCount} character(s) into empty string at depth ${depth} with key length ${testSchemaConfiguration.keyLength}`,
 								run: async (reporter) => {
 									const tree = createConnectedTree();
@@ -212,7 +215,7 @@ describe("TextDomain benchmarks", () => {
 						for (const charCount of charCounts) {
 							benchmarkCustom({
 								only: false,
-								type: BenchmarkType.Measurement,
+								type: testSchemaConfiguration.benchmarkType,
 								title: `remove ${charCount} character(s) from string of 1000 characters at depth ${depth} with key length ${testSchemaConfiguration.keyLength}`,
 								run: async (reporter) => {
 									const tree = createConnectedTree();
@@ -247,25 +250,27 @@ describe("TextDomain benchmarks", () => {
 	});
 
 	describe("TextDomain encoding benchmarks", () => {
-		/**
-		 * String lengths used as the test axis.
-		 */
-		const stringLengths = [1, 10, 100, 1000] as const;
+		const testConfigs = [
+			{ stringLength: 1, benchmarkType: BenchmarkType.Measurement },
+			{ stringLength: 10, benchmarkType: BenchmarkType.Perspective },
+			{ stringLength: 100, benchmarkType: BenchmarkType.Perspective },
+			{ stringLength: 1000, benchmarkType: BenchmarkType.Measurement }
+		] as const;
 
 		configureBenchmarkHooks();
 
 		const viewConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 
 		describe("TextAsTree.Tree node encoded size", () => {
-			for (const length of stringLengths) {
+			for (const testConfig of testConfigs) {
 				benchmarkCustom({
 					only: false,
-					type: BenchmarkType.Measurement,
-					title: `exportVerbose encoded size for string of length ${length}`,
+					type: testConfig.benchmarkType,
+					title: `exportVerbose encoded size for string of length ${testConfig.stringLength}`,
 					run: async (reporter) => {
 						const independentTree = createIndependentTreeAlpha({});
 						const view = independentTree.viewWith(viewConfig);
-						view.initialize(TextAsTree.Tree.fromString("a".repeat(length)));
+						view.initialize(TextAsTree.Tree.fromString("a".repeat(testConfig.stringLength)));
 
 						const encoded = TreeAlpha.exportVerbose(view.root);
 						// TextAsTree nodes never contain IFluidHandle, so this cast is safe.
