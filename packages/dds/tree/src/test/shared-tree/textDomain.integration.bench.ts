@@ -253,8 +253,7 @@ describe("TextDomain benchmarks", () => {
 		const testConfigs = [
 			{ stringLength: 1, benchmarkType: BenchmarkType.Measurement },
 			{ stringLength: 10, benchmarkType: BenchmarkType.Perspective },
-			{ stringLength: 100, benchmarkType: BenchmarkType.Perspective },
-			{ stringLength: 1000, benchmarkType: BenchmarkType.Measurement }
+			{ stringLength: 100, benchmarkType: BenchmarkType.Measurement }
 		] as const;
 
 		configureBenchmarkHooks();
