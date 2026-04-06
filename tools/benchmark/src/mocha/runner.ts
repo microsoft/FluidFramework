@@ -49,17 +49,25 @@ export function buildChildArgs(
 	// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
 	// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
 	// put in mocha's --node-option flag.
-	const childArgs = [...execArgv, ...argv];
-	childArgs.push("--childProcess");
+	let childArgs = [...execArgv, ...argv];
 
 	// Remove arguments for any existing test filters.
 	for (const flag of ["--grep", "--fgrep"]) {
-		const flagIndex = childArgs.indexOf(flag);
-		if (flagIndex > 0) {
+		let flagIndex: number;
+		while ((flagIndex = childArgs.indexOf(flag)) >= 0) {
 			// Remove the flag, and the argument after it (all these flags take one argument)
 			childArgs.splice(flagIndex, 2);
 		}
 	}
+
+	// Remove arguments for debugging if they're present; in order to debug child processes we need
+	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
+	// of scope for now.
+	childArgs = childArgs.filter((x) => !x.match(/^(--inspect|--debug).*/));
+
+	// Add new flags:
+
+	childArgs.push("--childProcess");
 
 	// Add test filter so child process only runs the current test.
 	// Use --grep with an anchored regex for an exact match, since --fgrep does substring matching
@@ -68,14 +76,6 @@ export function buildChildArgs(
 	// TODO: once only supporting NodeJS 24+, we can use the new RegExp.escape function here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/escape
 	const escapedTitle = testFullTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	childArgs.push("--grep", `^${escapedTitle}$`);
-
-	// Remove arguments for debugging if they're present; in order to debug child processes we need
-	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
-	// of scope for now.
-	let inspectArgIndex: number = -1;
-	while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
-		childArgs.splice(inspectArgIndex, 1);
-	}
 
 	return childArgs;
 }
