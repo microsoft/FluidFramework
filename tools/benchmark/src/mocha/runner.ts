@@ -83,12 +83,13 @@ export function buildChildArgs(
 /**
  * Runs the specified test in a child process and returns the results.
  * @remarks
+ * Instead of running the benchmark in this process, this creates create a new process to run it.
+ * This can reduce the impact of prior tests (and test order more generally) on performance through effects like JIT and heap state.
+ *
  * The provided test must write a {@link BenchmarkResult} to stdout.
  * See {@link recordTestResult} which does this for child processes.
  */
 async function runTestInChildProcess(testFullTitle: string): Promise<CollectedData> {
-	// Instead of running the benchmark in this process, create a new process.
-	// See {@link isParentProcess} for why.
 	// Launch new process, with:
 	// - mocha filter to run only this test.
 	// - --childProcess flag added (so data will be returned via stdout as json)
