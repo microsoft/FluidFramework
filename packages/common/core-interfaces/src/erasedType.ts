@@ -57,7 +57,7 @@
  * @sealed
  * @public
  */
-export abstract class ErasedType<out Name = unknown> {
+export declare abstract class ErasedType<out Name = unknown> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This method will not exist at runtime and accessing it is invalid.
@@ -70,18 +70,14 @@ export abstract class ErasedType<out Name = unknown> {
 	/**
 	 * This class should never exist at runtime, so make it un-constructable.
 	 */
-	private constructor() {}
+	private constructor();
 
 	/**
 	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
-	 * This `Symbol.hasInstance` implementation ensures that `instanceof` will error if used,
-	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
+	 * This `Symbol.hasInstance` declaration ensures that `instanceof` will error if used,
+	 * (no definition) and in TypeScript 5.3 and newer will produce a compile time error if used.
 	 */
-	public static [Symbol.hasInstance](value: never): value is never {
-		throw new Error(
-			"ErasedType is a compile time type brand not a real class that can be used with `instanceof` at runtime.",
-		);
-	}
+	public static [Symbol.hasInstance](value: never): value is never;
 }
 
 /**
@@ -102,7 +98,7 @@ export abstract class ErasedType<out Name = unknown> {
  * @beta
  * @system
  */
-export abstract class ErasedBaseType<out Name = unknown> {
+export declare abstract class ErasedBaseType<out Name = unknown> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This method will not exist at runtime and accessing it is invalid.
@@ -119,7 +115,7 @@ export abstract class ErasedBaseType<out Name = unknown> {
 	 * However protected is almost as good since this class is not package exported,
 	 * and it allows ErasedTypeImplementation to extend this class.
 	 */
-	protected constructor() {}
+	protected constructor();
 }
 
 /**
