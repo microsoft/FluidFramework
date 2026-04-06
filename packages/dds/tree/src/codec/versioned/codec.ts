@@ -12,16 +12,16 @@ import {
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { Type, type TSchema } from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 import { gt } from "semver-ts";
 
 import { pkgVersion } from "../../packageVersion.js";
-import type {
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlyObject,
+import {
+	JsonCompatibleReadOnlySchema,
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 } from "../../util/index.js";
 import {
-	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
@@ -115,68 +115,33 @@ function makeVersionedValidatedCodec<
 }
 
 /**
- * Creates a codec which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
- *
- * TODO: {@link ClientVersionDispatchingCodecBuilder} should get support for extra decode only entries and/or unstable formats (codecs without a minVersionForCollab that will never be selected for write unless overridden).
- * Once done, users of this should migrate to ClientVersionDispatchingCodecBuilder and this function can be simplified.
+ * Creates a codec version which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
  */
-export function makeDiscontinuedCodecVersion<
+export function makeDiscontinuedCodecAndSchema<
 	TDecoded,
-	TEncoded extends Versioned = VersionedJson,
-	TContext = unknown,
+	TContext,
+	TFormatVersion extends FormatVersion = FormatVersion,
 >(
-	options: ICodecOptions,
-	discontinuedVersion: FormatVersion,
+	discontinuedVersion: TFormatVersion,
 	discontinuedSince: SemanticVersion,
-): IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> {
-	const schema = Type.Object(
-		{
-			version:
-				discontinuedVersion === undefined
-					? Type.Undefined()
-					: Type.Literal(discontinuedVersion),
-		},
-		// Using `additionalProperties: true` allows this schema to be used when loading data encoded by older versions even though they contain additional properties.
-		{ additionalProperties: true },
-	);
-	const codec: IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> = {
-		encode: (_: TDecoded): TEncoded => {
-			throw new UsageError(
-				`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
-			);
-		},
-		decode: (data: TEncoded): TDecoded => {
-			throw new UsageError(
-				`Cannot decode data to format ${data.version}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
-			);
+): CodecVersion<TDecoded, TContext, TFormatVersion> {
+	return {
+		minVersionForCollab: undefined,
+		formatVersion: discontinuedVersion,
+		codec: {
+			schema: JsonCompatibleReadOnlySchema,
+			encode: (_data: TDecoded) => {
+				throw new UsageError(
+					`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
+				);
+			},
+			decode: (data: unknown) => {
+				throw new UsageError(
+					`Cannot decode data in format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
+				);
+			},
 		},
 	};
-	return makeVersionedValidatedCodec(options, new Set([discontinuedVersion]), schema, codec);
-}
-
-/**
- * Creates a codec which dispatches to the appropriate member of a codec family based on the version of
- * data it encounters.
- * @remarks
- * Each member of the codec family must write an explicit version number into the data it encodes (implementing {@link Versioned}).
- *
- * TODO: Users of this should migrate to {@link ClientVersionDispatchingCodecBuilder} so that the actual format version used can be encapsulated.
- */
-export function makeVersionDispatchingCodec<TDecoded, TContext>(
-	family: ICodecFamily<TDecoded, TContext>,
-	options: ICodecOptions & { writeVersion: FormatVersion },
-): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
-	const writeCodec = family.resolve(options.writeVersion);
-	const supportedVersions = new Set(family.getSupportedFormats());
-	return makeVersionedCodec(supportedVersions, options, {
-		encode(data, context): Versioned {
-			return writeCodec.encode(data, context) as Versioned;
-		},
-		decode(data: Versioned, context) {
-			const codec = family.resolve(data.version);
-			return codec.decode(data, context);
-		},
-	});
 }
 
 /**
@@ -220,7 +185,7 @@ export interface CodecVersion<
 	TDecoded,
 	TContext,
 	TFormatVersion extends FormatVersion,
-	TBuildOptions extends ICodecOptions,
+	TBuildOptions extends ICodecOptions = ICodecOptions,
 > extends CodecVersionBase<
 		| CodecAndSchema<TDecoded, TContext>
 		| ((options: TBuildOptions) => CodecAndSchema<TDecoded, TContext>),
@@ -399,32 +364,62 @@ export class ClientVersionDispatchingCodecBuilder<
 		 */
 		readonly writeVersion: TFormatVersion;
 	} {
-		const applied = this.applyOptions(options);
+		const [applied, decoder] = this.buildDecoderInternal(options);
 		const writeVersion = getWriteVersion(this.name, options, applied);
-		const fromFormatVersion = new Map<
-			FormatVersion,
-			EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>
-		>(applied.map((codec) => [codec.formatVersion, codec]));
 		return {
+			...decoder,
 			encode: (data: TDecoded, context: TContext): JsonCompatibleReadOnly => {
 				return writeVersion.codec.encode(data, context);
-			},
-			decode: (data: JsonCompatibleReadOnly, context: TContext): TDecoded => {
-				const versioned = data as Partial<Versioned>;
-				const codec = fromFormatVersion.get(versioned.version);
-				if (codec === undefined) {
-					throw new UsageError(
-						`Unsupported version ${versioned.version} encountered while decoding ${this.name} data. Supported versions for this data are: ${versionList(applied)}.
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
-					);
-				}
-				return codec.codec.decode(data, context);
 			},
 			writeVersion: writeVersion.formatVersion,
 		};
 	}
 
-	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree {
+	private buildDecoderInternal(
+		options: TBuildOptions,
+	): [
+		EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>[],
+		Pick<
+			IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+			"decode"
+		>,
+	] {
+		const applied = this.applyOptions(options);
+		const fromFormatVersion = new Map<
+			FormatVersion,
+			EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>
+		>(applied.map((codec) => [codec.formatVersion, codec]));
+		return [
+			applied,
+			{
+				decode: (data: JsonCompatibleReadOnly, context: TContext): TDecoded => {
+					const versioned = data as Partial<Versioned>;
+					const codec = fromFormatVersion.get(versioned.version);
+					if (codec === undefined) {
+						throw new UsageError(
+							`Unsupported version ${versioned.version} encountered while decoding ${this.name} data. Supported versions for this data are: ${versionList(applied)}.
+The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+						);
+					}
+					return codec.codec.decode(data, context);
+				},
+			},
+		];
+	}
+
+	/**
+	 * Produce a single codec which can read any supported format.
+	 */
+	public buildDecoder(
+		options: TBuildOptions,
+	): Pick<
+		IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
+		"decode"
+	> {
+		return this.buildDecoderInternal(options)[1];
+	}
+
+	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree<TFormatVersion> {
 		// TODO: add support for children codecs.
 		const selected = getWriteVersionNoOverrides(this.registry, clientVersion);
 		return {

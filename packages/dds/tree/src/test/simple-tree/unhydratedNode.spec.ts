@@ -537,9 +537,9 @@ describe("Unhydrated nodes", () => {
 			log.push(...changedProperties),
 		);
 		TreeBeta.on(map, "nodeChanged", ({ changedProperties }) => log.push(...changedProperties));
-		TreeBeta.on(array, "nodeChanged", ({ changedProperties }) => {
-			assert.equal(changedProperties, undefined);
-			// Arrays do not supply a changedProperties, but we still want to validate that the event is emitted.
+		TreeBeta.on(array, "nodeChanged", (data) => {
+			assert.equal("changedProperties" in data, false);
+			// Arrays do not supply changedProperties, but we still want to validate that the event is emitted.
 			log.push("<arrayChanged>");
 		});
 		TreeBeta.on(record, "nodeChanged", ({ changedProperties }) => {

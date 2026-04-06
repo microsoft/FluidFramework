@@ -1,0 +1,138 @@
+{
+	"name": "@fluidframework/quill-react",
+	"version": "2.93.0",
+	"description": "Utilities for integrating content powered by the Fluid Framework into React applications that utilize the Quill rich text editor",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/framework/quill-react"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/alpha.d.ts",
+				"default": "./lib/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/beta.d.ts",
+				"default": "./lib/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "./lib/public.d.ts",
+	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints . --profile esm-only",
+		"check:biome": "biome check .",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
+		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
+		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
+		"check:format": "npm run check:biome",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"pack:tests": "tar -cf ./react.test-files.tar ./src/test ./lib/test",
+		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"dist/**/*.*js",
+			"lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
+		"quill": "^2.0.3",
+		"quill-delta": "^5.1.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.2",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/react": "workspace:~",
+		"@fluidframework/tinylicious-client": "workspace:~",
+		"@microsoft/api-extractor": "7.52.11",
+		"@testing-library/react": "^16.3.0",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "~20.19.30",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.1",
+		"c8": "^10.1.3",
+		"concurrently": "^9.2.1",
+		"copyfiles": "^2.4.1",
+		"cross-env": "^10.1.0",
+		"eslint": "catalog:eslint",
+		"eslint-config-prettier": "catalog:eslint",
+		"global-jsdom": "^26.0.0",
+		"jiti": "^2.6.1",
+		"jsdom": "^26.1.0",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"disabled": true
+	}
+}

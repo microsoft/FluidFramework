@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IPersistedCache,
@@ -14,15 +14,12 @@ import {
 	getKeyForCacheEntry,
 	maximumCacheDurationMs,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ITelemetryLoggerExt,
-	UsageError,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
-import { IDBPDatabase } from "idb";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import type { IDBPDatabase } from "idb";
 
+import type { FluidCacheDBSchema } from "./FluidCacheIndexedDb.js";
 import {
-	FluidCacheDBSchema,
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
 } from "./FluidCacheIndexedDb.js";
@@ -154,10 +151,10 @@ export class FluidCache implements IPersistedCache {
 				const index = transaction.store.index("createdTimeMs");
 				// Get items which were cached before the maxCacheItemAge.
 				const keysToDelete = await index.getAllKeys(
-					IDBKeyRange.upperBound(new Date().getTime() - this.maxCacheItemAge),
+					IDBKeyRange.upperBound(Date.now() - this.maxCacheItemAge),
 				);
 
-				await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+				await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 				await transaction.done;
 			} catch (error: any) {
 				this.logger.sendErrorEvent(
@@ -229,7 +226,7 @@ export class FluidCache implements IPersistedCache {
 
 			const keysToDelete = await index.getAllKeys(file.docId);
 
-			await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+			await Promise.all(keysToDelete.map(async (key) => transaction.store.delete(key)));
 			await transaction.done;
 		} catch (error: any) {
 			this.logger.sendErrorEvent(
@@ -310,7 +307,7 @@ export class FluidCache implements IPersistedCache {
 				return undefined;
 			}
 
-			const currentTime = new Date().getTime();
+			const currentTime = Date.now();
 
 			// If too much time has passed since this cache entry was used, we will also return undefined
 			if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
@@ -337,7 +334,7 @@ export class FluidCache implements IPersistedCache {
 		try {
 			db = await this.openDb();
 
-			const currentTime = new Date().getTime();
+			const currentTime = Date.now();
 
 			await db.put(
 				FluidDriverObjectStoreName,

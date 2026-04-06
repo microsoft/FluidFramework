@@ -136,6 +136,8 @@ export interface ITreeAlpha extends ITree {
  * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
  *
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
+ *
+ * See {@link TreeBranchAlpha} for additional APIs that are in an earlier stage of development.
  * @sealed @beta
  */
 export interface TreeBranch extends IDisposable {
@@ -351,6 +353,8 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
  *
  * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
  * and choose a schema compatibility policy that aligns with their application's needs.
+ *
+ * See also {@link TreeViewAlpha}, {@link TreeViewBeta} and {@link TreeBranch} for additional APIs that are in earlier stages of development.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.
@@ -573,6 +577,8 @@ export interface TreeBranchEvents {
 
 /**
  * Events for {@link TreeView}.
+ * @remarks
+ * See {@link TreeBranchEvents} for more events related to the underlying branch of the SharedTree.
  * @sealed @public
  */
 export interface TreeViewEvents {

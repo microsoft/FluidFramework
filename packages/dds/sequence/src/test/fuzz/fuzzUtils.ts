@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import * as path from "path";
+import { strict as assert } from "node:assert";
+import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -230,7 +230,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 		const { channel } = state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		assert(channel);
 		const labels = channel.getIntervalCollectionLabels();
-		const interval = Array.from(labels)
+		const interval = [...labels]
 			.map((label) =>
 				channel.getIntervalCollection(label).getIntervalById(loggingInfo.intervalId),
 			)
@@ -332,7 +332,7 @@ export function makeReducer<TState extends FuzzTestState>(
 export function createSharedStringGeneratorOperations(
 	optionsParam?: SharedStringOperationGenerationConfig,
 ) {
-	const options = { ...defaultSharedStringOperationGenerationConfig, ...(optionsParam ?? {}) };
+	const options = { ...defaultSharedStringOperationGenerationConfig, ...optionsParam };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
 	function startPosition({ random, client }: ClientOpState): number {
@@ -492,13 +492,14 @@ export const baseModel: Omit<
 		},
 		(op) => {
 			switch (op.type) {
-				case "addText":
+				case "addText": {
 					if (op.index > 0) {
 						op.index -= 1;
 					}
 					break;
+				}
 				case "removeRange":
-				case "annotateRange":
+				case "annotateRange": {
 					if (op.start > 0) {
 						op.start--;
 					}
@@ -506,6 +507,7 @@ export const baseModel: Omit<
 						op.end--;
 					}
 					break;
+				}
 				case "addInterval":
 				case "changeInterval": {
 					const { startPos, endPos, startSide, endSide } = endpointPosAndSide(
@@ -520,8 +522,9 @@ export const baseModel: Omit<
 					}
 					break;
 				}
-				default:
+				default: {
 					break;
+				}
 			}
 		},
 		(op) => {
@@ -581,7 +584,7 @@ export function makeIntervalOperationGenerator(
 		isShorterThanMaxLength,
 	} = createSharedStringGeneratorOperations(optionsParam);
 
-	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
+	const options = { ...defaultIntervalOperationGenerationConfig, ...optionsParam };
 
 	function isNonEmpty(collection: ISequenceIntervalCollection): boolean {
 		for (const _ of collection) {
@@ -625,7 +628,7 @@ export function makeIntervalOperationGenerator(
 	}
 
 	function nonEmptyIntervalCollection({ client, random }: ClientOpState): string {
-		const nonEmptyLabels = Array.from(client.channel.getIntervalCollectionLabels()).filter(
+		const nonEmptyLabels = [...client.channel.getIntervalCollectionLabels()].filter(
 			(label) => {
 				const collection = client.channel.getIntervalCollection(label);
 				return isNonEmpty(collection);
@@ -636,7 +639,7 @@ export function makeIntervalOperationGenerator(
 
 	function interval(state: ClientOpState): { collectionName: string; id: string } {
 		const collectionName = nonEmptyIntervalCollection(state);
-		const intervals = Array.from(state.client.channel.getIntervalCollection(collectionName));
+		const intervals = [...state.client.channel.getIntervalCollection(collectionName)];
 		const id = state.random.pick(intervals)?.getIntervalId();
 		assert(id);
 
@@ -683,7 +686,7 @@ export function makeIntervalOperationGenerator(
 	}
 
 	const hasAnInterval = ({ client }: ClientOpState): boolean =>
-		Array.from(client.channel.getIntervalCollectionLabels()).some((label) => {
+		[...client.channel.getIntervalCollectionLabels()].some((label) => {
 			const collection = client.channel.getIntervalCollection(label);
 			return isNonEmpty(collection);
 		});

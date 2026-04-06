@@ -7,9 +7,12 @@ import type {
 	TreeView,
 	TreeViewAlpha,
 	TreeViewBeta,
+	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	TreeArrayNode,
+	TreeArrayNodeAlpha,
 } from "./simple-tree/index.js";
 
 /**
@@ -33,6 +36,14 @@ export function asAlpha<TSchema extends ImplicitFieldSchema>(
 export function asAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeViewConfiguration<TSchema>,
 ): TreeViewConfigurationAlpha<TSchema>;
+
+/**
+ * Retrieve the {@link TreeArrayNodeAlpha | alpha API} for a {@link (TreeArrayNode:interface)}.
+ * @alpha
+ */
+export function asAlpha<TAllowedTypes extends ImplicitAllowedTypes>(
+	node: TreeArrayNode<TAllowedTypes>,
+): TreeArrayNodeAlpha<TAllowedTypes>;
 
 /**
  * Implementation of overloads for {@link asAlpha}.

@@ -26,16 +26,13 @@ import {
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
-// We have to use disable twice this rule here and below, otherwise this rule gets in conflict with itself and ends up flagging imports as wrong, then flagging
-// the fixes made to resolve the error as wrong and demands the changes it demanded be reverted.
-// eslint-disable-next-line import-x/order
 import type {
 	areSafelyAssignable,
 	JsonCompatibleReadOnly,
 	requireFalse,
 	requireTrue,
 } from "../util/index.js";
-// eslint-disable-next-line import-x/order
+
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
 import {
@@ -2507,6 +2504,62 @@ describe("TableFactory unit tests", () => {
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.columns.length, 0);
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
+
+			unsubscribe();
+		});
+
+		it("multiple inserts should be undoable if no concurrent modifications occurred", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [],
+					rows: [{ id: "row-0", cells: {} }],
+				}),
+			);
+
+			view.root.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
+			});
+
+			view.root.insertColumns({
+				columns: [{ id: "column-1", props: {} }],
+			});
+
+			view.root.insertColumns({
+				columns: [{ id: "column-2", props: {} }],
+			});
+
+			// No changes happened concurrently, so we should be able to revert all of these changes.
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 3);
+			revertible.revert();
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 2);
+			revertible.revert();
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 1);
+			revertible.revert();
+
+			assert.equal(view.root.columns.length, 0);
 
 			unsubscribe();
 		});

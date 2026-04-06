@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Extract and return the w3c data.
@@ -111,9 +111,9 @@ export async function promiseRaceWithWinner<T>(
 	promises: Promise<T>[],
 ): Promise<{ index: number; value: T }> {
 	return new Promise((resolve, reject) => {
-		promises.forEach((p, index) => {
+		for (const [index, p] of promises.entries()) {
 			p.then((v): void => resolve({ index, value: v })).catch(reject);
-		});
+		}
 	});
 }
 
@@ -129,7 +129,7 @@ export function validateMessages(
 	logger: ITelemetryLoggerExt,
 	strict: boolean = true,
 ): void {
-	if (messages.length !== 0) {
+	if (messages.length > 0) {
 		const start = messages[0].sequenceNumber;
 		const length = messages.length;
 		const last = messages[length - 1].sequenceNumber;

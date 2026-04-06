@@ -9,6 +9,7 @@ import type { TAnySchema } from "@sinclair/typebox";
 import {
 	type ICodecOptions,
 	type IJsonCodec,
+	type JsonCodecPart,
 	type SchemaValidationFunction,
 	extractJsonValidator,
 	withSchemaValidation,
@@ -22,6 +23,7 @@ import type {
 	ITreeCursorSynchronous,
 	RevisionInfo,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import {
 	type IdAllocator,
@@ -279,10 +281,9 @@ export function decodeNodeChangesetFromJson(
 export function encodeDetachedNodes(
 	detachedNodes: ChangeAtomIdBTree<TreeChunk> | undefined,
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -336,10 +337,9 @@ export function encodeDetachedNodes(
 export function decodeDetachedNodes(
 	encoded: EncodedBuilds | undefined,
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -385,18 +385,16 @@ export function decodeDetachedNodes(
 export function encodeRevisionInfos(
 	revisions: readonly RevisionInfo[],
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): EncodedRevisionInfo[] | undefined {
 	if (context.revision !== undefined) {
 		assert(
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Using optional chaining here would change behavior: `revisions[0]?.rollbackOf === undefined` is true when revisions[0] is undefined, but this check requires revisions[0] to be defined. As currently written, such a change would be safe because context.revision is included in the check and from a couple lines above is confirmed not undefined. But this more verbose form is clearer.
 			revisions.length === 1 &&
-				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Using optional chaining here would change behavior: `revisions[0]?.rollbackOf === undefined` is true when revisions[0] is undefined, but this check requires revisions[0] to be defined. As currently written, such a change would be safe because context.revision is included in the check and from a couple lines above is confirmed not undefined. But this more verbose form is clearer.
 				revisions[0] !== undefined &&
 				revisions[0].revision === context.revision &&
 				revisions[0].rollbackOf === undefined,
@@ -425,10 +423,9 @@ export function encodeRevisionInfos(
 export function decodeRevisionInfos(
 	revisions: readonly EncodedRevisionInfo[] | undefined,
 	context: ChangeEncodingContext,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): RevisionInfo[] | undefined {
@@ -462,10 +459,9 @@ export function encodeChange(
 			codec: FieldCodec;
 		}
 	>,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -514,10 +510,9 @@ export function decodeChange(
 			codec: FieldCodec;
 		}
 	>,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
@@ -580,10 +575,9 @@ export function decodeChange(
 
 export function getFieldChangesetCodecs(
 	fieldKinds: FieldKindConfiguration,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	codecOptions: ICodecOptions,
@@ -629,10 +623,9 @@ export function getFieldChangesetCodecs(
 
 export function makeModularChangeCodecV1(
 	fieldKinds: FieldKindConfiguration,
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
