@@ -182,8 +182,7 @@ describe("TextDomain benchmarks", () => {
 						view.initialize(TextAsTree.Tree.fromString("a".repeat(stringLength)));
 
 						const encoded = TreeAlpha.exportVerbose(view.root);
-						// TextAsTree nodes never contain IFluidHandle, so this cast is safe.
-						const encodedSize = utf8Length(encoded as unknown as JsonCompatibleReadOnly);
+						const encodedSize = utf8Length(encoded as JsonCompatibleReadOnly);
 
 						reporter.addMeasurement("Encoded Size (Bytes)", encodedSize);
 					},
