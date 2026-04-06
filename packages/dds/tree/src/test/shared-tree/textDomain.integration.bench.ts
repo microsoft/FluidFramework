@@ -67,12 +67,22 @@ describe("TextDomain benchmarks", () => {
 		 * @remarks
 		 * A deeper text node results in a longer path in the generated op, which we expect to increase op size.
 		 */
-		const nodeDepths = [1, 10, 100] as const;
+		const depthConfigs = [
+			{ depth: 1, benchmarkType: BenchmarkType.Measurement },
+			{ depth: 5, benchmarkType: BenchmarkType.Perspective },
+			{ depth: 25, benchmarkType: BenchmarkType.Measurement },
+			{ depth: 125, benchmarkType: BenchmarkType.Perspective },
+		] as const;
 
 		/**
 		 * Numbers of characters to insert or remove in each benchmark.
 		 */
-		const charCounts = [1, 10, 100] as const;
+		const charCountConfigs = [
+			{ charCount: 1, benchmarkType: BenchmarkType.Measurement },
+			{ charCount: 10, benchmarkType: BenchmarkType.Perspective },
+			{ charCount: 100, benchmarkType: BenchmarkType.Measurement },
+			{ charCount: 1000, benchmarkType: BenchmarkType.Perspective },
+		] as const;
 
 		/**
 		 * Key length variants to test. Each entry specifies the key string to use at runtime.
@@ -81,7 +91,20 @@ describe("TextDomain benchmarks", () => {
 			{ keyLength: 1, key: "a", benchmarkType: BenchmarkType.Measurement },
 			{ keyLength: 10, key: "a".repeat(10), benchmarkType: BenchmarkType.Perspective },
 			{ keyLength: 100, key: "a".repeat(100), benchmarkType: BenchmarkType.Measurement },
+			{ keyLength: 1000, key: "a".repeat(1000), benchmarkType: BenchmarkType.Perspective },
 		] as const;
+
+		/**
+		 * Returns `BenchmarkType.Perspective` if any of the given types is `Perspective`,
+		 * otherwise returns `BenchmarkType.Measurement`.
+		 */
+		function getEffectiveBenchmarkType(
+			...types: (BenchmarkType.Measurement | BenchmarkType.Perspective)[]
+		): BenchmarkType {
+			return types.includes(BenchmarkType.Perspective)
+				? BenchmarkType.Perspective
+				: BenchmarkType.Measurement;
+		}
 
 		describe("Plain text", () => {
 			const currentTestOps: ISequencedDocumentMessage[] = [];
@@ -98,12 +121,12 @@ describe("TextDomain benchmarks", () => {
 			});
 
 			describe("Insert characters", () => {
-				for (const depth of nodeDepths) {
-					for (const { key, keyLength, benchmarkType } of keyConfigs) {
-						for (const charCount of charCounts) {
+				for (const { depth, benchmarkType: depthType } of depthConfigs) {
+					for (const { key, keyLength, benchmarkType: keyType } of keyConfigs) {
+						for (const { charCount, benchmarkType: charType } of charCountConfigs) {
 							benchmarkCustom({
 								only: false,
-								type: benchmarkType,
+								type: getEffectiveBenchmarkType(depthType, keyType, charType),
 								title: `insert ${charCount} character(s) into empty string at depth ${depth} with key length ${keyLength}`,
 								run: async (reporter) => {
 									const tree = createConnectedTree();
@@ -128,12 +151,12 @@ describe("TextDomain benchmarks", () => {
 			});
 
 			describe("Remove characters", () => {
-				for (const depth of nodeDepths) {
-					for (const { key, keyLength, benchmarkType } of keyConfigs) {
-						for (const charCount of charCounts) {
+				for (const { depth, benchmarkType: depthType } of depthConfigs) {
+					for (const { key, keyLength, benchmarkType: keyType } of keyConfigs) {
+						for (const { charCount, benchmarkType: charType } of charCountConfigs) {
 							benchmarkCustom({
 								only: false,
-								type: benchmarkType,
+								type: getEffectiveBenchmarkType(depthType, keyType, charType),
 								title: `remove ${charCount} character(s) from string of 1000 characters at depth ${depth} with key length ${keyLength}`,
 								run: async (reporter) => {
 									const tree = createConnectedTree();
@@ -166,6 +189,7 @@ describe("TextDomain benchmarks", () => {
 			{ stringLength: 1, benchmarkType: BenchmarkType.Measurement },
 			{ stringLength: 10, benchmarkType: BenchmarkType.Perspective },
 			{ stringLength: 100, benchmarkType: BenchmarkType.Measurement },
+			{ stringLength: 1000, benchmarkType: BenchmarkType.Perspective },
 		] as const;
 
 		const viewConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
