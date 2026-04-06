@@ -326,6 +326,13 @@ export abstract class ReleaseReportBaseCommand<
 export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 	typeof ReleaseReportCommand
 > {
+	// This command is deprecated and will be removed in a future release.
+	static readonly state = "deprecated" as const;
+	static readonly deprecationOptions = {
+		message:
+			"Release reports will no longer be generated in the future. This command will be removed in a future release.",
+	};
+
 	static readonly description = `Generates a report of Fluid Framework releases.
 
     The release report command is used to produce a report of all the packages that were released and their version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
@@ -394,6 +401,16 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<void> {
+		const deprecationWarning = chalk.bgRed(
+			chalk.white(chalk.bold(" DO NOT RELY ON THIS COMMAND ")),
+		);
+		const lines = Array.from({ length: 12 }, () => deprecationWarning).join("\n");
+		this.log(`\n${lines}`);
+		this.warning(
+			"This command is deprecated and will be removed in a future release. Release reports will no longer be generated.",
+		);
+		this.log(`${lines}\n`);
+
 		const { flags } = this;
 
 		const shouldOutputFiles = flags.output !== undefined;

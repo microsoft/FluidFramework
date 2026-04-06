@@ -9,12 +9,20 @@ import { isInternalTestVersion } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
+import chalk from "picocolors";
 
 import { semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import { type ReleaseReport, toReportKind } from "../../library/release.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
+	// This command is deprecated and will be removed in a future release.
+	static readonly state = "deprecated" as const;
+	static readonly deprecationOptions = {
+		message:
+			"Release reports will no longer be generated in the future. This command will be removed in a future release.",
+	};
+
 	static readonly summary =
 		`Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
 
@@ -45,6 +53,16 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	};
 
 	public async run(): Promise<void> {
+		const deprecationWarning = chalk.bgRed(
+			chalk.white(chalk.bold(" DO NOT RELY ON THIS COMMAND ")),
+		);
+		const lines = Array.from({ length: 12 }, () => deprecationWarning).join("\n");
+		this.log(`\n${lines}`);
+		this.warning(
+			"This command is deprecated and will be removed in a future release. Release reports will no longer be generated.",
+		);
+		this.log(`${lines}\n`);
+
 		const { flags } = this;
 
 		const reportData = await fs.readFile(flags.fullReportFilePath, "utf8");
