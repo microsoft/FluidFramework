@@ -87,19 +87,6 @@ function createTextTree(
 }
 
 describe("Text tree memory usage", () => {
-	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
-	// because they won't be out of scope when we garbage-collect between runs of the same test,
-	// and that will skew measurements. Tests should allocate all the memory they need using local
-	// variables scoped to the test function itself, so several iterations of a given test can
-	// measure from the same baseline (as much as possible).
-	//
-	// NOTE: The initialization benchmarks produce reliable results because creating an entire tree
-	// is a large allocation that clearly exceeds GC variance. The insert and remove benchmarks
-	// are included for completeness but produce noisy results — individual text edits allocate
-	// (or free) too little memory relative to GC variance between heap snapshots.
-	// For reliable edit performance comparisons between forest types, see the time-based
-	// benchmarks in textForest.bench.ts.
-
 	for (const variant of textVariants) {
 		describe(`${variant.name} text`, () => {
 			for (const charCount of variant.charCounts) {

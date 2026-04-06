@@ -224,6 +224,86 @@ describe("Text forest benchmarks", () => {
 				}
 			});
 
+			// --- Formatted text read operations (getUniformRun + getString) ---
+			// These are the hot path functions used by buildDeltaFromTree to convert
+			// the tree into Quill deltas on every update.
+			if (textConfig.name === "Formatted") {
+				describe("getUniformRun time", () => {
+					for (const charCount of textConfig.sizes) {
+						for (const [forestName, forestType] of forestTypes) {
+							let root: FormattedTextAsTree.Tree;
+							benchmark({
+								type: BenchmarkType.Measurement,
+								title: `getUniformRun over ${charCount} chars in ${forestName}`,
+								before: () => {
+									const factory = configuredSharedTree({
+										forest: forestType,
+									}).getFactory();
+									const provider = new TestTreeProviderLite(1, factory);
+									const tree = provider.trees[0];
+									const view = tree.kernel.viewWith(
+										new TreeViewConfiguration({
+											schema: FormattedTextAsTree.Tree,
+										}),
+									);
+									view.initialize(
+										FormattedTextAsTree.Tree.fromString(generateText(charCount)) as never,
+									);
+									provider.synchronizeMessages();
+									root = view.root as unknown as FormattedTextAsTree.Tree;
+								},
+								benchmarkFn: () => {
+									// Walk the entire document run-by-run, matching buildDeltaFromTree usage
+									let index = 0;
+									while (index < root.characterCount()) {
+										const runLength = root.getUniformRun(index);
+										index += runLength;
+									}
+								},
+							});
+						}
+					}
+				});
+
+				describe("getString time", () => {
+					for (const charCount of textConfig.sizes) {
+						for (const [forestName, forestType] of forestTypes) {
+							let root: FormattedTextAsTree.Tree;
+							benchmark({
+								type: BenchmarkType.Measurement,
+								title: `getString over ${charCount} chars in ${forestName}`,
+								before: () => {
+									const factory = configuredSharedTree({
+										forest: forestType,
+									}).getFactory();
+									const provider = new TestTreeProviderLite(1, factory);
+									const tree = provider.trees[0];
+									const view = tree.kernel.viewWith(
+										new TreeViewConfiguration({
+											schema: FormattedTextAsTree.Tree,
+										}),
+									);
+									view.initialize(
+										FormattedTextAsTree.Tree.fromString(generateText(charCount)) as never,
+									);
+									provider.synchronizeMessages();
+									root = view.root as unknown as FormattedTextAsTree.Tree;
+								},
+								benchmarkFn: () => {
+									// Walk the entire document run-by-run, extracting text per run
+									let index = 0;
+									while (index < root.characterCount()) {
+										const runLength = root.getUniformRun(index);
+										root.getString(index, index + runLength);
+										index += runLength;
+									}
+								},
+							});
+						}
+					}
+				});
+			}
+
 			// --- Summary size ---
 			describe("summary size", () => {
 				for (const charCount of textConfig.sizes) {
