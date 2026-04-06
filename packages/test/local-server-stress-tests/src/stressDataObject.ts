@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	loadContainerRuntime,
+	loadContainerRuntimeAlpha,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
@@ -26,7 +26,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import type { IStagingController } from "@fluidframework/runtime-definitions/internal";
 import {
 	RuntimeHeaders,
 	toFluidHandleInternal,
@@ -335,14 +335,11 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stageControls: StageControlsAlpha | undefined;
+	public stagingController: IStagingController | undefined;
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode(): void {
-		assert(
-			this.containerRuntimeExp.enterStagingMode !== undefined,
-			"enterStagingMode must be defined",
-		);
-		this.stageControls = this.containerRuntimeExp.enterStagingMode();
+		assert(this.stagingController !== undefined, "stagingController must be set");
+		this.stagingController.enterStagingMode();
 	}
 
 	public inStagingMode(): boolean {
@@ -354,13 +351,12 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public exitStagingMode(commit: boolean): void {
-		assert(this.stageControls !== undefined, "must have staging mode controls");
+		assert(this.stagingController !== undefined, "stagingController must be set");
 		if (commit) {
-			this.stageControls.commitChanges();
+			this.stagingController.exitStagingMode("commit");
 		} else {
-			this.stageControls.discardChanges();
+			this.stagingController.exitStagingMode("discard");
 		}
-		this.stageControls = undefined;
 
 		// Flush any pending containerObjectMap registrations that were deferred during staging mode.
 		// This happens after staging mode exits so the writes won't be rolled back.
@@ -397,7 +393,9 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			return this;
 		},
 		instantiateRuntime: async (context, existing) => {
-			const runtime = await loadContainerRuntime({
+			// eslint-disable-next-line prefer-const
+			let stagingController: IStagingController | undefined;
+			const { runtime, stagingController: sc } = await loadContainerRuntimeAlpha({
 				context,
 				existing,
 				runtimeOptions,
@@ -414,9 +412,13 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					);
 					assert(aliasedDefault !== undefined, "default must exist");
 
-					return aliasedDefault.get();
+					const dataObject = (await aliasedDefault.get()) as DefaultStressDataObject;
+					assert(stagingController !== undefined, "stagingController must be set by now");
+					dataObject.stagingController = stagingController;
+					return dataObject;
 				},
 			});
+			stagingController = sc;
 			// id compressor isn't made available via the interface right now.
 			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
 			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.

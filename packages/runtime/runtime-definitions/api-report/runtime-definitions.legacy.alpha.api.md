@@ -21,7 +21,6 @@ export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAt
 
 // @alpha @sealed @legacy
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
-    enterStagingMode(): StageControlsAlpha;
     readonly inStagingMode: boolean;
 }
 
@@ -282,6 +281,12 @@ export interface IProvideFluidDataStoreRegistry {
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
+// @alpha @legacy
+export interface IProvideStagingController {
+    // (undocumented)
+    readonly IStagingController: IStagingController;
+}
+
 // @beta @sealed @legacy
 export interface IRuntimeMessageCollection {
     readonly envelope: ISequencedMessageEnvelope;
@@ -303,6 +308,13 @@ export interface IRuntimeStorageService {
 
 // @beta @legacy
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
+
+// @alpha @sealed @legacy
+export interface IStagingController extends IProvideStagingController {
+    enterStagingMode(): void;
+    exitStagingMode(action: StagingModeExitAction): void;
+    readonly inStagingMode: boolean;
+}
 
 // @beta @legacy
 export interface ISummarizeInternalResult extends ISummarizeResult {
@@ -421,11 +433,14 @@ export interface OpAttributionKey {
 // @beta @legacy
 export type PackagePath = readonly string[];
 
-// @alpha @sealed @legacy
-export interface StageControlsAlpha {
-    readonly commitChanges: () => void;
-    readonly discardChanges: () => void;
-}
+// @alpha @legacy
+export const StagingModeExitAction: {
+    readonly Commit: "commit";
+    readonly Discard: "discard";
+};
+
+// @alpha @legacy
+export type StagingModeExitAction = (typeof StagingModeExitAction)[keyof typeof StagingModeExitAction];
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

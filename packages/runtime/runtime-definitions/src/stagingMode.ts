@@ -28,52 +28,104 @@ export interface CommitStagedChangesOptionsInternal {
 }
 
 /**
- * Controls for managing staged changes in experimental staging mode.
- *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
  * @internal
  */
-export interface StageControlsInternal extends StageControlsAlpha {
+export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 	/**
-	 * Exit staging mode and commit to any changes made while in staging mode.
-	 * This will cause them to be sent to the ordering service, and subsequent changes
-	 * made by this container will additionally flow freely to the ordering service.
-	 * @param options - Options when committing changes.
+	 * Indicates whether the container is currently in staging mode.
 	 */
-	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsInternal>) => void;
+	readonly inStagingMode: boolean;
 }
 
 /**
- * Controls for managing staged changes in alpha staging mode.
+ * Provider for {@link IStagingController}.
  *
- * Provides methods to either commit or discard changes made while in staging mode.
+ * @remarks
+ * Implement this interface on objects placed in the container scope (or `HostUXTypes`)
+ * so that interested code can retrieve the staging controller via the Fluid object provider pattern.
+ *
+ * @legacy @alpha
+ */
+export interface IProvideStagingController {
+	readonly IStagingController: IStagingController;
+}
+
+/**
+ * Controller for managing staged changes across the lifetime of a container.
+ *
+ * @remarks
+ * Obtained once at container creation time from the alpha container runtime factory.
+ * The holder of this object is the exclusive controller of staging mode —
+ * no other code path can enter or exit staging mode.
  *
  * @legacy @alpha
  * @sealed
  */
-export interface StageControlsAlpha {
+export interface IStagingController extends IProvideStagingController {
 	/**
-	 * Exit staging mode and commit to any changes made while in staging mode.
-	 * This will cause them to be sent to the ordering service, and subsequent changes
-	 * made by this container will additionally flow freely to the ordering service.
+	 * Whether the container is currently in staging mode.
 	 */
-	readonly commitChanges: () => void;
+	readonly inStagingMode: boolean;
+
 	/**
-	 * Exit staging mode and discard any changes made while in staging mode.
+	 * Enter staging mode. While in staging mode, ops are buffered locally
+	 * and not sent to the ordering service until
+	 * {@link IStagingController.exitStagingMode | exitStagingMode(StagingModeExitAction.Commit)} is called.
+	 *
+	 * @throws Will throw if already in staging mode or if the container is detached.
 	 */
-	readonly discardChanges: () => void;
+	enterStagingMode(): void;
+
+	/**
+	 * Exit staging mode and either commit or discard the staged changes.
+	 *
+	 * @param action - `StagingModeExitAction.Commit` sends the buffered ops to the ordering service.
+	 * `StagingModeExitAction.Discard` rolls back all changes made while in staging mode.
+	 *
+	 * @throws Will throw if not currently in staging mode.
+	 */
+	exitStagingMode(action: StagingModeExitAction): void;
 }
 
 /**
- * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
- * @internal
+ * The action to take when exiting staging mode via {@link IStagingController.exitStagingMode}.
+ *
+ * @legacy @alpha
  */
-export interface IContainerRuntimeBaseInternal extends ContainerRuntimeBaseAlpha {
+export const StagingModeExitAction = {
 	/**
-	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
-	 * @returns Controls for committing or discarding staged changes.
+	 * Send the buffered ops to the ordering service.
+	 *
+	 * @remarks
+	 * The container will remain dirty until the submitted ops are acknowledged by the server.
 	 */
-	enterStagingMode(): StageControlsInternal;
+	Commit: "commit",
+	/**
+	 * Roll back all changes made while in staging mode.
+	 *
+	 * @remarks
+	 * The container will return to the state it was in before
+	 * {@link IStagingController.enterStagingMode} was called.
+	 */
+	Discard: "discard",
+} as const;
+
+/**
+ * The action to take when exiting staging mode via {@link IStagingController.exitStagingMode}.
+ *
+ * @legacy @alpha
+ */
+export type StagingModeExitAction =
+	(typeof StagingModeExitAction)[keyof typeof StagingModeExitAction];
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ * @sealed
+ */
+export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
+	return base as ContainerRuntimeBaseAlpha;
 }
 
 /**
@@ -84,21 +136,7 @@ export interface IContainerRuntimeBaseInternal extends ContainerRuntimeBaseAlpha
  */
 export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
 	/**
-	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
-	 * @returns Controls for committing or discarding staged changes.
-	 */
-	enterStagingMode(): StageControlsAlpha;
-	/**
 	 * Indicates whether the container is currently in staging mode.
 	 */
 	readonly inStagingMode: boolean;
-}
-
-/**
- * Converts types to their alpha counterparts to expose alpha functionality.
- * @legacy @alpha
- * @sealed
- */
-export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
-	return base as ContainerRuntimeBaseAlpha;
 }

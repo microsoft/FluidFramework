@@ -35,6 +35,7 @@ export {
 } from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,
+	BaseContainerRuntimeFactoryAlpha,
 	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,

@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/container-loader/internal";
 import {
 	IContainerRuntimeOptions,
-	loadContainerRuntime,
+	loadContainerRuntimeAlpha,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	ConfigTypes,
@@ -28,10 +28,10 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import {
-	asLegacyAlpha,
-	type IContainerRuntimeBase,
-	type StageControlsInternal,
+import type {
+	IContainerRuntimeBase,
+	IStagingController,
+	CommitStagedChangesOptionsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -59,7 +59,7 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	public stagingController: IStagingController | undefined;
 	get DataObjectWithStagingMode(): this {
 		return this;
 	}
@@ -117,12 +117,20 @@ class DataObjectWithStagingMode extends DataObject {
 		return state;
 	}
 
-	public enterStagingMode(): StageControlsInternal {
-		assert(
-			this.containerRuntimeExp.enterStagingMode !== undefined,
-			"enterStagingMode must be defined",
-		);
-		return this.containerRuntimeExp.enterStagingMode();
+	public enterStagingMode(): void {
+		assert(this.stagingController !== undefined, "stagingController must be set");
+		this.stagingController.enterStagingMode();
+	}
+
+	public exitStagingMode(
+		action: "commit" | "discard",
+		options?: Partial<CommitStagedChangesOptionsInternal>,
+	): void {
+		assert(this.stagingController !== undefined, "stagingController must be set");
+		// StagingController.exitStagingMode supports options even though IStagingController does not
+		// (CommitStagedChangesOptionsInternal is @internal, so can't be on the @alpha interface)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(this.stagingController as any).exitStagingMode(action, options);
 	}
 }
 
@@ -141,7 +149,9 @@ const runtimeFactory: IRuntimeFactory = {
 		const runtimeOptions: IContainerRuntimeOptions = {
 			enableRuntimeIdCompressor: "on",
 		};
-		return loadContainerRuntime({
+		// eslint-disable-next-line prefer-const
+		let stagingController: IStagingController | undefined;
+		const { runtime, stagingController: sc } = await loadContainerRuntimeAlpha({
 			context,
 			existing,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
@@ -154,9 +164,16 @@ const runtimeFactory: IRuntimeFactory = {
 				}
 				const root = await rt.getAliasedDataStoreEntryPoint("default");
 				assert(root !== undefined, "default must exist");
-				return root.get();
+				const dataObject = (await root.get()) as DataObjectWithStagingMode;
+				// stagingController is set after loadContainerRuntimeAlpha returns,
+				// but provideEntryPoint is called lazily by container.getEntryPoint().
+				assert(stagingController !== undefined, "stagingController must be set by now");
+				dataObject.stagingController = stagingController;
+				return dataObject;
 			},
 		});
+		stagingController = sc;
+		return runtime;
 	},
 };
 
@@ -479,7 +496,7 @@ describe("Staging Mode", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
@@ -489,7 +506,7 @@ describe("Staging Mode", () => {
 		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
-		stagingControls.commitChanges();
+		clients.original.dataObject.exitStagingMode("commit");
 
 		await waitForSave(clients);
 
@@ -506,7 +523,7 @@ describe("Staging Mode", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
@@ -516,7 +533,7 @@ describe("Staging Mode", () => {
 		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
-		stagingControls.discardChanges();
+		clients.original.dataObject.exitStagingMode("discard");
 
 		await waitForSave(clients);
 
@@ -534,7 +551,7 @@ describe("Staging Mode", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const branchData = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		assertConsistent(clients, "states should match after branch");
 
 		clients.original.dataObject.addDDS("branch-only");
@@ -554,7 +571,7 @@ describe("Staging Mode", () => {
 			"Expected mainline change to reach branch",
 		);
 
-		branchData.commitChanges();
+		clients.original.dataObject.exitStagingMode("commit");
 
 		await waitForSave(clients);
 
@@ -565,12 +582,12 @@ describe("Staging Mode", () => {
 		it(`${commit ? "commitChanges" : "discardChanges"} allows subsequent outbound changes to flow`, async () => {
 			const deltaConnectionServer = LocalDeltaConnectionServer.create();
 			const clients = await createClients(deltaConnectionServer);
-			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
 			if (commit) {
-				stagingControls.commitChanges();
+				clients.original.dataObject.exitStagingMode("commit");
 			} else {
-				stagingControls.discardChanges();
+				clients.original.dataObject.exitStagingMode("discard");
 			}
 
 			await waitForSave(clients);
@@ -590,7 +607,7 @@ describe("Staging Mode", () => {
 	it("can be exited while disconnected and functionality is preserved", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
-		const stagingControls = clients.original.dataObject.enterStagingMode();
+		clients.original.dataObject.enterStagingMode();
 		clients.original.dataObject.makeEdit("branch-only");
 		clients.loaded.dataObject.makeEdit("after-branch");
 
@@ -599,7 +616,7 @@ describe("Staging Mode", () => {
 		await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
 		await ensureDisconnected(clients.original);
-		stagingControls.commitChanges();
+		clients.original.dataObject.exitStagingMode("commit");
 		await ensureConnected(clients.original);
 
 		await waitForSave(clients);
@@ -626,13 +643,13 @@ describe("Staging Mode", () => {
 			const reSubmitSquashedSpy = sinon.spy(rootMap, "reSubmitSquashed" as keyof SharedObject);
 			const reSubmitCoreSpy = sinon.spy(rootMap, "reSubmitCore" as keyof SharedObject);
 
-			const stagingControls = clients.original.dataObject.enterStagingMode();
+			clients.original.dataObject.enterStagingMode();
 			clients.original.dataObject.makeEdit("branch-only");
 
 			if (disconnectBeforeCommit) {
 				await ensureDisconnected(clients.original);
 			}
-			stagingControls.commitChanges({ squash });
+			clients.original.dataObject.exitStagingMode("commit", { squash });
 			if (disconnectBeforeCommit) {
 				await ensureConnected(clients.original);
 			}
