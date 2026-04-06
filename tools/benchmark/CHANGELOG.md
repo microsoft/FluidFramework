@@ -2,6 +2,8 @@
 
 ## 0.54.0
 
+-   Fixed `--parentProcess` mode incorrectly matching tests whose full title is a substring of another test's full title. The child process filter now uses an exact-match regex (`--grep ^title$`) instead of substring matching (`--fgrep title`).
+
 ## 0.53.0
 
 -   Memory benchmarks now have much more aggressive GC to collect more stable results.

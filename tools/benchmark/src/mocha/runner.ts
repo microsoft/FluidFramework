@@ -26,6 +26,61 @@ export async function supportParentProcess(
 }
 
 /**
+ * Build the argument list for the child process from the parent process's arguments.
+ *
+ * @remarks
+ * This is a pure function extracted from {@link runTestInChildProcess} to make the
+ * argument-building logic independently testable.
+ *
+ * @param testFullTitle - The full title of the mocha test to run.
+ * @param execArgv - Node-specific flags (typically `process.execArgv`).
+ * @param argv - The command-line arguments (typically `process.argv.slice(1)`).
+ * @returns The argument list for the child process.
+ */
+export function buildChildArgs(
+	testFullTitle: string,
+	execArgv: readonly string[],
+	argv: readonly string[],
+): string[] {
+	// execArgv[0] should be the script for mocha thats currently running (.../node_modules/mocha/lib/cli/cli.js)
+	// But this is not the case for mocha parallel mode due to how it sets up its workers.
+	// This is one of the main reasons mocha parallel mode is not currently supported here.
+
+	// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
+	// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
+	// put in mocha's --node-option flag.
+	const childArgs = [...execArgv, ...argv];
+	childArgs.push("--childProcess");
+
+	// Remove arguments for any existing test filters.
+	for (const flag of ["--grep", "--fgrep"]) {
+		const flagIndex = childArgs.indexOf(flag);
+		if (flagIndex > 0) {
+			// Remove the flag, and the argument after it (all these flags take one argument)
+			childArgs.splice(flagIndex, 2);
+		}
+	}
+
+	// Add test filter so child process only runs the current test.
+	// Use --grep with an anchored regex for an exact match, since --fgrep does substring matching
+	// and would incorrectly match tests whose full title contains another test's full title.
+	// Escape any special regex characters in the test title to avoid changing the meaning of the regex.
+	// TODO: once only supporting NodeJS 24+, we can use the new RegExp.escape function here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/escape
+	const escapedTitle = testFullTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	childArgs.push("--grep", `^${escapedTitle}$`);
+
+	// Remove arguments for debugging if they're present; in order to debug child processes we need
+	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
+	// of scope for now.
+	let inspectArgIndex: number = -1;
+	while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
+		childArgs.splice(inspectArgIndex, 1);
+	}
+
+	return childArgs;
+}
+
+/**
  * Runs the specified test in a child process and returns the results.
  * @remarks
  * The provided test must write a {@link BenchmarkResult} to stdout.
@@ -41,37 +96,7 @@ async function runTestInChildProcess(testFullTitle: string): Promise<CollectedDa
 	// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
 	const command = process.argv0 ?? fail("there must be a command");
 
-	const reusedArgs = process.argv.slice(1);
-
-	// reusedArgs[0] should be the script for mocha thats currently running (.../node_modules/mocha/lib/cli/cli.js)
-	// But this is not the case for mocha parallel mode due to how it sets up its workers.
-	// This is one of the main reasons mocha parallel mode is not currently supported here.
-
-	// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
-	// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
-	// put in mocha's --node-option flag.
-	const childArgs = [...process.execArgv, ...reusedArgs];
-	childArgs.push("--childProcess");
-
-	// Remove arguments for any existing test filters.
-	for (const flag of ["--grep", "--fgrep"]) {
-		const flagIndex = childArgs.indexOf(flag);
-		if (flagIndex > 0) {
-			// Remove the flag, and the argument after it (all these flags take one argument)
-			childArgs.splice(flagIndex, 2);
-		}
-	}
-
-	// Add test filter so child process only run the current test.
-	childArgs.push("--fgrep", testFullTitle);
-
-	// Remove arguments for debugging if they're present; in order to debug child processes we need
-	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
-	// of scope for now.
-	let inspectArgIndex: number = -1;
-	while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
-		childArgs.splice(inspectArgIndex, 1);
-	}
+	const childArgs = buildChildArgs(testFullTitle, process.execArgv, process.argv.slice(1));
 
 	// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
 	const childProcess = await import("node:child_process");
