@@ -12,7 +12,7 @@
     },
     {
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
-      "line": 13,
+      "line": 9,
       "title": "Install Agency",
       "description": "**Before you can use any AI agents, you must install agency.**\n\nRun `pnpm install:agency` in the terminal. This requires Azure authentication — a browser window will open for you to sign in. Then open a **new terminal** for the aliases to take effect.\n\nAgency is the CLI tool that manages AI agent sessions. It wraps Claude Code, GitHub Copilot, and other agents with consistent configuration."
     },
