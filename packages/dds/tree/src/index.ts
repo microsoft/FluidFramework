@@ -111,7 +111,6 @@ export {
 	type TreeChangeEvents,
 	type NodeFromSchema,
 	type TreeMapNode,
-	type TreeMapNodeAlpha,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
 	FieldKind,
