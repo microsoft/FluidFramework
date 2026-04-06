@@ -26,9 +26,9 @@ import {
 } from "./opBenchmarkUtilities.js";
 
 describe("TextDomain benchmarks", () => {
-	describe("TextDomain op size benchmarks", () => {
-		configureBenchmarkHooks();
+	configureBenchmarkHooks();
 
+	describe("TextDomain op size benchmarks", () => {
 		const schemaFactory = new SchemaFactory("bench.textDepth");
 
 		// String literal types for 10- and 100-character "a" key names.
@@ -253,10 +253,8 @@ describe("TextDomain benchmarks", () => {
 		const testConfigs = [
 			{ stringLength: 1, benchmarkType: BenchmarkType.Measurement },
 			{ stringLength: 10, benchmarkType: BenchmarkType.Perspective },
-			{ stringLength: 100, benchmarkType: BenchmarkType.Measurement }
+			{ stringLength: 100, benchmarkType: BenchmarkType.Measurement },
 		] as const;
-
-		configureBenchmarkHooks();
 
 		const viewConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 
