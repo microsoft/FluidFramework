@@ -7,7 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	BenchmarkType,
-	benchmarkCustom,
+	benchmarkIt,
 	isInPerformanceTestingMode,
 	ValueType,
 	type CollectedData,
@@ -404,7 +404,7 @@ describe("Op Size", () => {
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title: `${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`,
@@ -445,7 +445,7 @@ describe("Op Size", () => {
 							? extraDescription
 							: `1 transactions containing 1 removal of ${BENCHMARK_NODE_COUNT} nodes`
 					}`;
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title,
@@ -486,7 +486,7 @@ describe("Op Size", () => {
 					const title = `${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
 						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
 					}`;
-					benchmarkCustom({
+					benchmarkIt({
 						only: false,
 						type: BenchmarkType.Measurement,
 						title,

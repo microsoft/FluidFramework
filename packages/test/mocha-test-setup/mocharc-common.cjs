@@ -103,7 +103,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		config["timeout"] = 1_000_000;
 
 		// If there is no filter specified, limit to benchmarks.
-		// If mocha allowed multiple filters to all be applied th further narrow results, we would do this unconditionally.
+		// If mocha allowed multiple filters to all be applied to further narrow results, we would do this unconditionally.
 		if (!(process.argv.includes("--fgrep") || process.argv.includes("--grep"))) {
 			config["fgrep"] = ["@Benchmark"];
 		}

@@ -83,7 +83,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 FLUID_TEST_PERF_MODE=1 mocha --fgrep @Benchmark --timeout 30000",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",

@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
-	benchmarkCustom,
+	benchmarkIt,
 	benchmark,
 	ValueType,
 	type CollectedData,
@@ -85,7 +85,7 @@ describe("Summary benchmarks", () => {
 		}
 
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
-			benchmarkCustom({
+			benchmarkIt({
 				only: false,
 				type: BenchmarkType.Measurement,
 				title: `a wide tree with ${numberOfNodes} nodes.`,
@@ -99,7 +99,7 @@ describe("Summary benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
-			benchmarkCustom({
+			benchmarkIt({
 				only: false,
 				type: BenchmarkType.Measurement,
 				title: `a deep tree with ${numberOfNodes} nodes.`,
