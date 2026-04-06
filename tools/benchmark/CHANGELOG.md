@@ -1,5 +1,7 @@
 # @fluid-tools/benchmark
 
+## 0.54.0
+
 ## 0.53.0
 
 -   Memory benchmarks now have much more aggressive GC to collect more stable results.
