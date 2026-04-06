@@ -24,7 +24,6 @@ packages:
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude: [
   # Temporary exceptions go here as needed.
-  "@fluid-tools/benchmark", # 0.53.0-388292 published Tue Mar 31 2026, needs 24h to age out
 ]
 resolutionMode: highest
 blockExoticSubdeps: true
