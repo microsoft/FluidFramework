@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmarkCustom } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmarkCustom,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { Tree, TreeAlpha, createIndependentTreeAlpha } from "../../shared-tree/index.js";
@@ -42,6 +46,10 @@ describe("TextDomain benchmarks", () => {
 
 		const viewConfig = new TreeViewConfiguration({ schema: WrapperMap });
 
+		function getPropertyKey(keyLength: number): string {
+			return "a".repeat(keyLength);
+		}
+
 		function makeTree(depth: number, key: string, text: string): WrapperMap {
 			const textNode = TextAsTree.Tree.fromString(text);
 			let current: WrapperMap = new WrapperMap([[key, textNode]]);
@@ -68,31 +76,65 @@ describe("TextDomain benchmarks", () => {
 		 * A deeper text node results in a longer path in the generated op, which we expect to increase op size.
 		 */
 		const depthConfigs = [
-			{ depth: 1, benchmarkType: BenchmarkType.Measurement },
-			{ depth: 5, benchmarkType: BenchmarkType.Perspective },
-			{ depth: 25, benchmarkType: BenchmarkType.Measurement },
-			{ depth: 125, benchmarkType: BenchmarkType.Perspective },
+			{ depth: 1, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
+			{ depth: 5, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: false },
+			{ depth: 25, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: false },
+			{ depth: 125, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: false },
 		] as const;
 
 		/**
 		 * Numbers of characters to insert or remove in each benchmark.
 		 */
 		const charCountConfigs = [
-			{ charCount: 1, benchmarkType: BenchmarkType.Measurement },
-			{ charCount: 10, benchmarkType: BenchmarkType.Perspective },
-			{ charCount: 100, benchmarkType: BenchmarkType.Measurement },
-			{ charCount: 1000, benchmarkType: BenchmarkType.Perspective },
+			{ charCount: 1, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
+			{ charCount: 10, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: false },
+			{
+				charCount: 100,
+				benchmarkType: BenchmarkType.Measurement,
+				runInCorrectnessMode: false,
+			},
+			{
+				charCount: 1000,
+				benchmarkType: BenchmarkType.Perspective,
+				runInCorrectnessMode: false,
+			},
 		] as const;
 
 		/**
 		 * Key length variants to test. Each entry specifies the key string to use at runtime.
 		 */
 		const keyConfigs = [
-			{ keyLength: 1, key: "a", benchmarkType: BenchmarkType.Measurement },
-			{ keyLength: 10, key: "a".repeat(10), benchmarkType: BenchmarkType.Perspective },
-			{ keyLength: 100, key: "a".repeat(100), benchmarkType: BenchmarkType.Measurement },
-			{ keyLength: 1000, key: "a".repeat(1000), benchmarkType: BenchmarkType.Perspective },
+			{
+				keyLength: 1,
+				benchmarkType: BenchmarkType.Measurement,
+				runInCorrectnessMode: true,
+			},
+			{
+				keyLength: 10,
+				benchmarkType: BenchmarkType.Perspective,
+				runInCorrectnessMode: false,
+			},
+			{
+				keyLength: 100,
+				benchmarkType: BenchmarkType.Measurement,
+				runInCorrectnessMode: false,
+			},
+			{
+				keyLength: 1000,
+				benchmarkType: BenchmarkType.Perspective,
+				runInCorrectnessMode: false,
+			},
 		] as const;
+
+		const filteredDepthConfigs = depthConfigs.filter(
+			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		);
+		const filteredCharCountConfigs = charCountConfigs.filter(
+			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		);
+		const filteredKeyConfigs = keyConfigs.filter(
+			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		);
 
 		/**
 		 * Returns `BenchmarkType.Perspective` if any of the given types is `Perspective`,
@@ -121,19 +163,21 @@ describe("TextDomain benchmarks", () => {
 			});
 
 			describe("Insert characters", () => {
-				for (const { depth, benchmarkType: depthType } of depthConfigs) {
-					for (const { key, keyLength, benchmarkType: keyType } of keyConfigs) {
-						for (const { charCount, benchmarkType: charType } of charCountConfigs) {
+				for (const { depth, benchmarkType: depthType } of filteredDepthConfigs) {
+					for (const { keyLength, benchmarkType: keyType } of filteredKeyConfigs) {
+						for (const { charCount, benchmarkType: charType } of filteredCharCountConfigs) {
 							benchmarkCustom({
 								only: false,
 								type: getEffectiveBenchmarkType(depthType, keyType, charType),
 								title: `insert ${charCount} character(s) into empty string at depth ${depth} with key length ${keyLength}`,
 								run: async (reporter) => {
+									const key = getPropertyKey(keyLength);
+
 									const tree = createConnectedTree();
-									registerOpListener(tree, currentTestOps);
 									const view = tree.viewWith(viewConfig);
 									view.initialize(makeTree(depth, key, ""));
-									currentTestOps.length = 0; // discard initialization ops
+
+									registerOpListener(tree, currentTestOps);
 
 									const textNode = getLeaf(view.root, key);
 									textNode.insertAt(0, "a".repeat(charCount));
@@ -151,19 +195,21 @@ describe("TextDomain benchmarks", () => {
 			});
 
 			describe("Remove characters", () => {
-				for (const { depth, benchmarkType: depthType } of depthConfigs) {
-					for (const { key, keyLength, benchmarkType: keyType } of keyConfigs) {
-						for (const { charCount, benchmarkType: charType } of charCountConfigs) {
+				for (const { depth, benchmarkType: depthType } of filteredDepthConfigs) {
+					for (const { keyLength, benchmarkType: keyType } of filteredKeyConfigs) {
+						for (const { charCount, benchmarkType: charType } of filteredCharCountConfigs) {
 							benchmarkCustom({
 								only: false,
 								type: getEffectiveBenchmarkType(depthType, keyType, charType),
 								title: `remove ${charCount} character(s) from string of 1000 characters at depth ${depth} with key length ${keyLength}`,
 								run: async (reporter) => {
+									const key = getPropertyKey(keyLength);
+
 									const tree = createConnectedTree();
-									registerOpListener(tree, currentTestOps);
 									const view = tree.viewWith(viewConfig);
 									view.initialize(makeTree(depth, key, "a".repeat(1000)));
-									currentTestOps.length = 0; // discard initialization ops
+
+									registerOpListener(tree, currentTestOps);
 
 									const textNode = getLeaf(view.root, key);
 									textNode.removeRange(0, charCount);
@@ -186,16 +232,37 @@ describe("TextDomain benchmarks", () => {
 
 	describe("TextDomain encoding benchmarks", () => {
 		const testConfigs = [
-			{ stringLength: 1, benchmarkType: BenchmarkType.Measurement },
-			{ stringLength: 10, benchmarkType: BenchmarkType.Perspective },
-			{ stringLength: 100, benchmarkType: BenchmarkType.Measurement },
-			{ stringLength: 1000, benchmarkType: BenchmarkType.Perspective },
+			{
+				stringLength: 1,
+				benchmarkType: BenchmarkType.Measurement,
+				runInCorrectnessMode: true,
+			},
+			{
+				stringLength: 10,
+				benchmarkType: BenchmarkType.Perspective,
+				runInCorrectnessMode: false,
+			},
+			{
+				stringLength: 100,
+				benchmarkType: BenchmarkType.Measurement,
+				runInCorrectnessMode: false,
+			},
+			{
+				stringLength: 1000,
+				benchmarkType: BenchmarkType.Perspective,
+				runInCorrectnessMode: false,
+			},
 		] as const;
+
+		// Filter configs to those that should be run in the current mode (performance or correctness).
+		const filteredConfigs = testConfigs.filter(
+			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
+		);
 
 		const viewConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 
 		describe("TextAsTree.Tree node encoded size", () => {
-			for (const { stringLength, benchmarkType } of testConfigs) {
+			for (const { stringLength, benchmarkType } of filteredConfigs) {
 				benchmarkCustom({
 					only: false,
 					type: benchmarkType,
