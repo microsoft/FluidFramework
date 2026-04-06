@@ -130,20 +130,15 @@ const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 // Minimum age (in minutes) a package version must have before pnpm will install it.
 const minimumReleaseAgeMinutes = 1 * 24 * 60;
 
-const trustPolicyIgnoreAfterMinutes = 7 * 24 * 60;
 // Enforce reasonable security settings on compat package installs to mitigate risk of supply-chain attacks.
 // See https://pnpm.io/supply-chain-security for context on the flags used here.
 const pnpmWorkspaceYamlContent = `
 minimumReleaseAge: ${minimumReleaseAgeMinutes}
 
-trustPolicy: no-downgrade
-# See: https://github.com/orgs/pnpm/discussions/11084
-trustPolicyIgnoreAfter: ${trustPolicyIgnoreAfterMinutes}
-# Packages with similar issues can be added to this list after manual vetting + verification that the situation is similar.
-trustPolicyExclude:
-  - 'semver@6.3.1'
-  - 'engine.io-client@3.5.6'
-  - '@sinclair/typebox@0.34.49'
+# See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
+# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, as Azure Artifact feeds don't seem to preserve trusted provenance metadata
+# depending on how packages are ingested. Note the "off" here is the default as well.
+trustPolicy: off
 
 packages:
   - '.'
