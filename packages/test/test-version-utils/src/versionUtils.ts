@@ -141,6 +141,9 @@ trustPolicy: no-downgrade
 trustPolicyExclude:
   - 'semver@6.3.1'
   - 'engine.io-client@3.5.6'
+
+packages:
+  - '.'
 `;
 
 // Queries the registry that pnpm is currently configured to use, so that the isolated install
@@ -328,7 +331,6 @@ export async function ensureInstalled(
 					pnpmCmd,
 					[
 						"add",
-						"--ignore-scripts",
 						// Use the pnpm content-addressable store cache when available, reducing
 						// exposure to packages published since the cache was last populated.
 						"--prefer-offline",
