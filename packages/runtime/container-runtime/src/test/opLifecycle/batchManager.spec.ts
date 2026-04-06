@@ -52,7 +52,7 @@ const smallMessage = (size: number = 100): LocalBatchMessage => {
 };
 
 describe("BatchManager", () => {
-	const defaultOptions: IBatchManagerOptions = {};
+	const defaultOptions: IBatchManagerOptions = { disableGroupedBatching: false };
 
 	describe("addBatchMetadata", () => {
 		const makeLocalBatch = (...ops: string[]): LocalBatch => ({
@@ -124,6 +124,17 @@ describe("BatchManager", () => {
 		assert.equal(
 			estimateSocketSize(localBatchToOutboundBatch({ messages, referenceSequenceNumber: 0 })),
 			2400,
+		);
+	});
+
+	it("disableGroupedBatching is accessible via options", () => {
+		assert.equal(
+			new BatchManager({ disableGroupedBatching: true }).options.disableGroupedBatching,
+			true,
+		);
+		assert.equal(
+			new BatchManager({ disableGroupedBatching: false }).options.disableGroupedBatching,
+			false,
 		);
 	});
 

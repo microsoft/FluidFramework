@@ -212,8 +212,8 @@ export class Outbox {
 	constructor(private readonly params: IOutboxParameters) {
 		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
 
-		this.mainBatch = new BatchManager({});
-		this.blobAttachBatch = new BatchManager({});
+		this.mainBatch = new BatchManager({ disableGroupedBatching: false });
+		this.blobAttachBatch = new BatchManager({ disableGroupedBatching: true });
 	}
 
 	public get messageCount(): number {
@@ -233,10 +233,7 @@ export class Outbox {
 	}
 
 	public containsUserChanges(): boolean {
-		return (
-			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
-			// ID Allocation ops are not user changes
-		);
+		return this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges();
 	}
 
 	/**
@@ -374,7 +371,6 @@ export class Outbox {
 
 		this.flushInternal({
 			batchManager: this.blobAttachBatch,
-			disableGroupedBatching: true,
 			resubmitInfo,
 		});
 		this.flushInternal({
@@ -414,10 +410,9 @@ export class Outbox {
 
 	private flushInternal(params: {
 		batchManager: BatchManager;
-		disableGroupedBatching?: boolean;
 		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
 	}): void {
-		const { batchManager, disableGroupedBatching = false, resubmitInfo } = params;
+		const { batchManager, resubmitInfo } = params;
 		if (batchManager.empty) {
 			return;
 		}
@@ -432,8 +427,13 @@ export class Outbox {
 		);
 
 		const groupingEnabled =
-			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
-		if (rawBatch.hasReentrantOps === true && groupingEnabled) {
+			!batchManager.options.disableGroupedBatching &&
+			this.params.groupingManager.groupedBatchingEnabled();
+		if (rawBatch.hasReentrantOps === true) {
+			assert(
+				resubmitInfo === undefined,
+				"Re-submitting a batch with reentrant ops is not supported",
+			);
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// Rebase the current batch (resubmit the ops one-by-one) and then reinvoke flushInternal.
 			// If a batch contains reentrant ops (ops created as a result from processing another op)

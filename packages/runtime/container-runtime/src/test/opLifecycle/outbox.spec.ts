@@ -971,7 +971,7 @@ describe("Outbox", () => {
 			validateCounts(0, 0, 0);
 		});
 
-		it("batch has reentrant ops, but grouped batching is off", () => {
+		it("batch has reentrant ops, but grouped batching is off: rebase still happens", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
 				opGroupingConfig: {
@@ -984,12 +984,14 @@ describe("Outbox", () => {
 				createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
 			];
 
+			state.isReentrant = true;
 			outbox.submit(messages[0]);
 			outbox.submit(messages[1]);
+			state.isReentrant = false;
 
 			outbox.flush();
 
-			validateCounts(2, 1, 0);
+			validateCounts(0, 0, 2);
 		});
 
 		it("batch has reentrant ops", () => {
@@ -1032,6 +1034,72 @@ describe("Outbox", () => {
 			outbox.flush();
 
 			validateCounts(0, 0, 1);
+		});
+
+		it("reentrant blobAttach ops trigger rebase", () => {
+			// blobAttach batch has disableGroupedBatching:true, but reentrant ops must still rebase
+			// (previously, the disableGroupedBatching flag suppressed rebase for blobAttach)
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.BlobAttach, "0"),
+				createMessage(ContainerMessageType.BlobAttach, "1"),
+			];
+
+			state.isReentrant = true;
+			outbox.submitBlobAttach(messages[0]);
+			outbox.submitBlobAttach(messages[1]);
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			validateCounts(0, 0, 2);
+		});
+
+		it("non-reentrant blobAttach ops do not trigger rebase", () => {
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.BlobAttach, "0"),
+				createMessage(ContainerMessageType.BlobAttach, "1"),
+			];
+
+			outbox.submitBlobAttach(messages[0]);
+			outbox.submitBlobAttach(messages[1]);
+
+			outbox.flush();
+
+			validateCounts(2, 1, 0);
+		});
+
+		it("throws when resubmitting a batch that has reentrant ops", () => {
+			// Resubmitting (flush with batchId) a batch that contains reentrant ops is not supported
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			state.isReentrant = true;
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "0"));
+			state.isReentrant = false;
+
+			assert.throws(
+				() => outbox.flush({ batchId: "batchId", staged: false }),
+				(e: Error) =>
+					e.message === "Re-submitting a batch with reentrant ops is not supported",
+			);
 		});
 
 		it("should group the batch", () => {

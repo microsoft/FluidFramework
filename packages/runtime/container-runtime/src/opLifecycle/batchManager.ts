@@ -20,6 +20,7 @@ import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
+	readonly disableGroupedBatching: boolean;
 	readonly compressionOptions?: ICompressionRuntimeOptions;
 }
 
