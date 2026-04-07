@@ -9,6 +9,7 @@ import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/i
 import {
 	eraseSchemaDetails,
 	getInnerNode,
+	incrementalSummaryHint,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -24,7 +25,12 @@ const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
 	extends sf.object("Text", {
-		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+		content: sf.required(
+			sf.types([{ type: () => StringArray, metadata: {} }], {
+				custom: { [incrementalSummaryHint]: true },
+			}),
+			{ key: EmptyKey },
+		),
 	})
 	implements TextAsTree.Members
 {

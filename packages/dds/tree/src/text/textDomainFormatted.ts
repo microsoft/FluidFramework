@@ -18,6 +18,7 @@ import {
 	enumFromStrings,
 	eraseSchemaDetails,
 	getInnerNode,
+	incrementalSummaryHint,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -37,7 +38,12 @@ const sf = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 
 class TextNode
 	extends sf.object("Text", {
-		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+		content: sf.required(
+			sf.types([{ type: () => StringArray, metadata: {} }], {
+				custom: { [incrementalSummaryHint]: true },
+			}),
+			{ key: EmptyKey },
+		),
 	})
 	implements FormattedTextAsTree.Members
 {

@@ -26,10 +26,17 @@ import {
  */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { SchemaFactory, type TreeView } from "@fluidframework/tree";
+import {
+	configuredSharedTreeAlpha,
+	ForestTypeOptimized,
+	TreeCompressionStrategy,
+	incrementalEncodingPolicyForAllowedTypes,
+	TreeViewConfigurationAlpha,
+	FluidClientVersion,
+} from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
@@ -57,12 +64,6 @@ function getTinyliciousEndpoint(): string {
 	return `http://localhost:${tinyliciousPort}`;
 }
 
-const containerSchema = {
-	initialObjects: {
-		tree: SharedTree,
-	},
-};
-
 const sf = new SchemaFactory("com.fluidframework.example.text-editor");
 
 export class TextEditorRoot extends sf.object("TextEditorRoot", {
@@ -70,7 +71,20 @@ export class TextEditorRoot extends sf.object("TextEditorRoot", {
 	formattedText: FormattedTextAsTree.Tree,
 }) {}
 
-export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
+export const treeConfig = new TreeViewConfigurationAlpha({ schema: TextEditorRoot });
+
+const SharedTree = configuredSharedTreeAlpha({
+	forest: ForestTypeOptimized,
+	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(treeConfig),
+	minVersionForCollab: FluidClientVersion.v2_74,
+});
+
+const containerSchema = {
+	initialObjects: {
+		tree: SharedTree,
+	},
+};
 
 function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 	return {
