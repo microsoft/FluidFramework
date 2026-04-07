@@ -120,8 +120,7 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 * This event only fires on the array node whose elements changed — it does not propagate to
 	 * ancestor nodes. To receive a delta for a nested array, subscribe directly to that array.
 	 * Ancestor nodes still receive the base (no-payload) `treeChanged` via the normal subtree
-	 * propagation, and retain ops with {@link ArrayNodeRetainOp.contentChanged} signal which
-	 * elements contain nested changes worth drilling into.
+	 * propagation.
 	 *
 	 * The listener type is conditional on `TNode`. If `TNode` is the base {@link TreeNode} type
 	 * (i.e. the node's schema is not known statically), the listener is typed as `() => void`

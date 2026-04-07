@@ -2860,7 +2860,10 @@ describe("treeNodeApi", () => {
 				view.checkout.merge(forkCheckout);
 
 				assert.deepEqual(deltas, [
-					[{ type: "retain", count: 1, contentChanged: true }, { type: "remove", count: 1 }],
+					[
+						{ type: "retain", count: 1, contentChanged: true },
+						{ type: "remove", count: 1 },
+					],
 				]);
 			});
 
@@ -2881,14 +2884,16 @@ describe("treeNodeApi", () => {
 					const nodeChangedFired: unknown[] = [];
 					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
-					TreeAlpha.on(root, "treeChanged", ({ delta }) =>
-						treeChangedDeltas.push(delta),
-					);
+					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					// Modify a nested property — no structural change on the array.
 					root[0].v = 99;
 
-					assert.equal(nodeChangedFired.length, 0, "nodeChanged should not fire for pure nested change");
+					assert.equal(
+						nodeChangedFired.length,
+						0,
+						"nodeChanged should not fire for pure nested change",
+					);
 					assert.deepEqual(treeChangedDeltas, [
 						[{ type: "retain", count: 1, contentChanged: true }],
 					]);
@@ -2919,7 +2924,12 @@ describe("treeNodeApi", () => {
 
 					assert.equal(nodeChangedCount, 1);
 					assert.equal(treeChangedCount, 1);
-					const expected = [[{ type: "retain", count: 2 }, { type: "remove", count: 1 }]];
+					const expected = [
+						[
+							{ type: "retain", count: 2 },
+							{ type: "remove", count: 1 },
+						],
+					];
 					assert.deepEqual(nodeChangedDeltas, expected);
 					assert.deepEqual(treeChangedDeltas, expected);
 				});
@@ -2931,12 +2941,8 @@ describe("treeNodeApi", () => {
 
 					const nodeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "nodeChanged", ({ delta }) =>
-						nodeChangedDeltas.push(delta),
-					);
-					TreeAlpha.on(root, "treeChanged", ({ delta }) =>
-						treeChangedDeltas.push(delta),
-					);
+					TreeAlpha.on(root, "nodeChanged", ({ delta }) => nodeChangedDeltas.push(delta));
+					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					const { forkView, forkCheckout } = getViewForForkedBranch(view);
 					forkView.root[1].v = 42;
@@ -2960,9 +2966,7 @@ describe("treeNodeApi", () => {
 					const root = view.root;
 
 					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "treeChanged", ({ delta }) =>
-						treeChangedDeltas.push(delta),
-					);
+					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					// Modify two elements in one transaction — both should appear as separate
 					// retain-with-contentChanged ops, confirming per-element granularity.
@@ -2986,15 +2990,47 @@ describe("treeNodeApi", () => {
 					const root = view.root;
 
 					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "treeChanged", ({ delta }) =>
-						treeChangedDeltas.push(delta),
-					);
+					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					root.removeAt(2);
 
 					assert.deepEqual(treeChangedDeltas, [
-						[{ type: "retain", count: 2 }, { type: "remove", count: 1 }],
+						[
+							{ type: "retain", count: 2 },
+							{ type: "remove", count: 1 },
+						],
 					]);
+				});
+
+				it(`insert fires treeChanged with an insert op`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
+					view.initialize([{ v: 1 }, { v: 2 }]);
+					const root = view.root;
+
+					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+
+					root.insertAtEnd({ v: 3 });
+
+					assert.deepEqual(treeChangedDeltas, [
+						[
+							{ type: "retain", count: 2 },
+							{ type: "insert", count: 1 },
+						],
+					]);
+				});
+
+				it(`insertAt(0) emits only an insert op (no spurious leading retain)`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
+					view.initialize([{ v: 1 }, { v: 2 }]);
+					const root = view.root;
+
+					const treeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
+					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+
+					root.insertAt(0, { v: 0 });
+
+					assert.deepEqual(treeChangedDeltas, [[{ type: "insert", count: 1 }]]);
 				});
 			});
 		});

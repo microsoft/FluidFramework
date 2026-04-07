@@ -8,11 +8,7 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	EmptyKey,
-	rootFieldKey,
-	type DeltaMark,
-} from "../../core/index.js";
+import { EmptyKey, rootFieldKey, type DeltaMark } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
 import {
@@ -45,9 +41,9 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
  * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
- * Represents elements whose position in the array was not structurally changed (not inserted or removed).
- * In deltas from {@link TreeChangeEventsAlpha.treeChanged}, {@link ArrayNodeRetainOp.contentChanged}
- * may additionally be set when the element has nested changes.
+ * Represents elements that were neither inserted nor removed from the array.
+ * The {@link ArrayNodeRetainOp.contentChanged} flag may additionally be set when the element
+ * has nested changes; see that field for details.
  * @sealed @alpha
  */
 export interface ArrayNodeRetainOp {
@@ -61,8 +57,10 @@ export interface ArrayNodeRetainOp {
 	 * @remarks
 	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details of what
 	 * changed within it.
-	 * This flag is only present in deltas from {@link TreeChangeEventsAlpha.treeChanged};
-	 * the {@link TreeChangeEventsBeta.nodeChanged} delta does not include it.
+	 * This flag appears in deltas from both {@link TreeChangeEventsAlpha.nodeChanged} and
+	 * {@link TreeChangeEventsAlpha.treeChanged}. It is not present in
+	 * {@link TreeChangeEventsBeta.nodeChanged}, which provides
+	 * {@link NodeChangedData.changedProperties} for non-array nodes instead.
 	 */
 	readonly contentChanged?: true;
 }
@@ -284,8 +282,7 @@ export const treeNodeApi: TreeNodeApi = {
 						// unavailable rather than receiving stale marks from only the first batch.
 						// TODO: Once the eventing stack is rewritten to walk the composed delta at
 						// flush time, `marks` will always be defined. Remove the `undefined` fallback.
-						const delta =
-							marks === undefined ? undefined : deltaMarksToArrayOps(marks);
+						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks);
 						listener({ delta });
 					});
 				} else {
@@ -332,8 +329,7 @@ export const treeNodeApi: TreeNodeApi = {
  * array delta ops suitable for inclusion in {@link NodeChangedDataDelta.delta}.
  *
  * Each mark in the delta describes a contiguous run of positions in the original array:
- * - A mark with only `count` (no attach/detach) → `"retain"` (elements unchanged at this level);
- * if `fields` is also set on the mark, {@link ArrayNodeRetainOp.contentChanged} is set to `true`
+ * - A mark with only `count` (no attach/detach) → `"retain"` (with `contentChanged: true` if `fields` is set)
  * - A mark with only `attach` → `"insert"` (new elements added)
  * - A mark with only `detach` → `"remove"` (elements removed)
  * - A mark with both `attach` and `detach` → `"remove"` + `"insert"`
