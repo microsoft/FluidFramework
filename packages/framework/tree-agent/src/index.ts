@@ -40,5 +40,53 @@ export type {
 	Context,
 } from "./api.js";
 export { llmDefault } from "./utils.js";
-export { type BindableSchema, type ArgsTuple } from "./methodBinding.js";
-export { typeFactory } from "./treeAgentTypes.js";
+export {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ArgsTuple,
+	type ExposedMethods,
+	type Arg,
+	type FunctionDef,
+	type MethodKeys,
+	type BindableSchema,
+	type Ctor,
+	type IExposedMethods,
+} from "./methodBinding.js";
+export type {
+	exposePropertiesSymbol,
+	PropertyDef,
+	ExposedProperties,
+	IExposedProperties,
+} from "./propertyBinding.js";
+
+export {
+	typeFactory,
+	isTypeFactoryType,
+} from "./treeAgentTypes.js";
+
+export type {
+	TypeFactoryType,
+	TypeFactoryTypeKind,
+	TypeFactoryString,
+	TypeFactoryNumber,
+	TypeFactoryBoolean,
+	TypeFactoryDate,
+	TypeFactoryVoid,
+	TypeFactoryUndefined,
+	TypeFactoryNull,
+	TypeFactoryUnknown,
+	TypeFactoryArray,
+	TypeFactoryPromise,
+	TypeFactoryObject,
+	TypeFactoryRecord,
+	TypeFactoryMap,
+	TypeFactoryTuple,
+	TypeFactoryUnion,
+	TypeFactoryIntersection,
+	TypeFactoryLiteral,
+	TypeFactoryOptional,
+	TypeFactoryReadonly,
+	TypeFactoryFunction,
+	TypeFactoryFunctionParameter,
+	TypeFactoryInstanceOf,
+} from "./treeAgentTypes.js";

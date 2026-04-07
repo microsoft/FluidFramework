@@ -94,7 +94,7 @@ If unused: "This endpoint isn't called. Remove it (YAGNI)?"
 
 **Reference finishing-a-development-branch skill (Steps 1-2):**
 
-See `{{skills_dir}}/finishing-a-development-branch/SKILL.md`
+See `.claude/skills/finishing-a-development-branch/SKILL.md`
 
 - [ ] Run tests: `npm test` (or project equivalent)
   - If tests fail, fix before proceeding

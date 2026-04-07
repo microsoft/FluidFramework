@@ -649,21 +649,41 @@ describe("Runtime", () => {
 				await Promise.resolve();
 
 				// Generate another ID and submit a data store op referencing it.
-				// This triggers submitIdAllocationOpIfNeeded → takeNextCreationRange.
+				// At flush time, the JIT generateIdAllocationOp callback calls takeNextCreationRange.
 				// Because the unfinalized range was released during replay, both IDs
 				// are included in the resulting allocation range.
 				const id2 = compressor.generateCompressedId();
 				submitDataStoreOp(containerRuntime, "someDS", genTestDataStoreMessage({ id: id2 }));
 
-				// Let the Outbox flush so we can check submittedOps length
+				// Let the Outbox flush so we can check submittedOps length.
+				// With JIT ID allocation, the ID alloc op is prepended to the main batch,
+				// which gets grouped into a single grouped batch op.
 				await Promise.resolve();
-				assert.strictEqual(submittedOps.length, 2, "Expected 1 ID Allocation + 1 data op");
+				assert.strictEqual(
+					submittedOps.length,
+					1,
+					"Expected 1 grouped batch (containing ID Allocation + data op)",
+				);
+
+				// The grouped batch contains the ID allocation as its first inner message.
+				// Extract the ID allocation range from it to finalize.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- test-only: extracting untyped grouped batch contents
+				const groupedContents = submittedOps[0].contents;
+				assert(
+					Array.isArray(groupedContents),
+					"Expected grouped batch contents to be an array",
+				);
+				assert.strictEqual(
+					groupedContents.length,
+					2,
+					"Expected 2 inner messages in grouped batch",
+				);
 
 				// Simulate processing the ID Allocation ack — finalize the range.
 				// Without the call to resetUnfinalizedCreationRange in replayPendingStates,
 				// this results in a "Ranges finalized out of order" error.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-				compressor.finalizeCreationRange(submittedOps[0].contents);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- test-only: extracting untyped grouped batch contents
+				compressor.finalizeCreationRange(groupedContents[0].contents.contents);
 
 				// Both IDs should now be finalized (positive final IDs in op space).
 				// Without resetUnfinalizedCreationRange, id1 would remain a local-only
@@ -4757,12 +4777,10 @@ describe("Runtime", () => {
 				});
 
 				it("IdAllocation + reconnect while in staging mode does not hit coherency check", async () => {
-					// This is the highest-risk scenario from Mark's test plan.
-					// The fix in b4e1fd1dd25 added scheduleFlush() after submitIdAllocationOpIfNeeded
-					// during replayPendingStates. With threshold suppression, that scheduleFlush()
-					// returns early if in staging mode and under threshold. But the "op" handler
-					// calls flush() directly, so the IdAllocation op still gets flushed before
-					// new ops with different refSeqs are submitted.
+					// With JIT ID allocation, the ID alloc op is generated at flush time
+					// (via generateIdAllocationOp callback), so it naturally gets the correct refSeq.
+					// The "op" handler calls flush() directly, so the IdAllocation op still gets
+					// flushed before new ops with different refSeqs are submitted.
 
 					// Start disconnected so we can trigger IdAllocation on reconnect
 					mockContext = getMockContext({ connected: false }) as IContainerContext;

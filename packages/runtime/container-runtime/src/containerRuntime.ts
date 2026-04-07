@@ -2069,6 +2069,24 @@ export class ContainerRuntime
 			}),
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.dataModelChangeRunner.running,
+			generateIdAllocationOp: (): LocalBatchMessage | undefined => {
+				if (this._idCompressor === undefined) {
+					return undefined;
+				}
+				const idRange = this._idCompressor.takeNextCreationRange();
+				if (idRange.ids === undefined) {
+					return undefined;
+				}
+				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
+					type: ContainerMessageType.IdAllocation,
+					contents: idRange,
+				};
+				return {
+					runtimeOp: idAllocationMessage,
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					staged: false,
+				};
+			},
 		});
 
 		this._quorum = quorum;
@@ -3687,9 +3705,6 @@ export class ContainerRuntime
 
 						this.stageControls = undefined;
 
-						// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-						// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-						this.submitIdAllocationOpIfNeeded({ staged: false });
 						const batchInfos = discardOrCommit();
 						event.reportProgress({
 							details: {
@@ -4272,7 +4287,6 @@ export class ContainerRuntime
 					outboxLength: this.outbox.messageCount,
 					mainBatchLength: this.outbox.mainBatchMessageCount,
 					blobAttachBatchLength: this.outbox.blobAttachBatchMessageCount,
-					idAllocationBatchLength: this.outbox.idAllocationBatchMessageCount,
 				},
 			);
 		}
@@ -4733,33 +4747,6 @@ export class ContainerRuntime
 		return this.blobManager.lookupTemporaryBlobStorageId(localId);
 	}
 
-	private submitIdAllocationOpIfNeeded({
-		resubmitOutstandingRanges = false,
-		staged,
-	}: {
-		resubmitOutstandingRanges?: boolean;
-		staged: boolean;
-	}): void {
-		if (this._idCompressor) {
-			const idRange = resubmitOutstandingRanges
-				? this._idCompressor.takeUnfinalizedCreationRange()
-				: this._idCompressor.takeNextCreationRange();
-			// Don't include the idRange if there weren't any Ids allocated
-			if (idRange.ids !== undefined) {
-				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
-					type: ContainerMessageType.IdAllocation,
-					contents: idRange,
-				};
-				const idAllocationBatchMessage: LocalBatchMessage = {
-					runtimeOp: idAllocationMessage,
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					staged,
-				};
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
-			}
-		}
-	}
-
 	private submit(
 		containerRuntimeMessage: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
@@ -4802,11 +4789,6 @@ export class ContainerRuntime
 				!staged || canStageMessageOfType(type),
 				0xbba /* Unexpected message type submitted in Staging Mode */,
 			);
-
-			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
-			if (!staged) {
-				this.submitIdAllocationOpIfNeeded({ staged: false });
-			}
 
 			// Allow document schema controller to send a message if it needs to propose change in document schema.
 			// If it needs to send a message, it will call provided callback with payload of such message and rely
@@ -4867,7 +4849,7 @@ export class ContainerRuntime
 		// Incoming ops still break the batch via direct this.flush() calls elsewhere
 		// (deltaManager "op" handler, process(), connection changes, getPendingLocalState,
 		// exitStagingMode). Those all bypass scheduleFlush(), so they're unaffected by this check.
-		// Additionally, outbox.maybeFlushPartialBatch() (called on every submit) detects
+		// Additionally, outbox.outboxSequenceNumberCoherencyCheck() (called on every submit) detects
 		// sequence number changes and throws if unexpected changes are detected.
 		if (
 			this.inStagingMode &&
