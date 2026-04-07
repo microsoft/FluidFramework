@@ -1570,7 +1570,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describeHydration("Responding to changes", (initializeTree, hydrated) => {
+	describeHydration("Responding to changes", (initializeTree) => {
 		it("Responding to any changes in the table", () => {
 			const table = initializeTree(Table, Table.create());
 
@@ -1643,10 +1643,10 @@ describe("TableFactory unit tests", () => {
 			assert.equal(eventCount, 1);
 
 			// Update column props.
-			// For hydrated arrays, nodeChanged fires for element property changes via the delta pipeline.
-			// For unhydrated arrays, the delta pipeline is not active so nodeChanged does not fire.
+			// nodeChanged does not fire for nested property changes — only structural changes
+			// (insert/remove/move) to the array trigger nodeChanged.
 			table.columns[0].props = { label: "Column 0" };
-			const afterPropsChange = hydrated ? 2 : 1;
+			const afterPropsChange = 1;
 			assert.equal(eventCount, afterPropsChange);
 
 			// Insert a row

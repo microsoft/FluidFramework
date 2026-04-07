@@ -75,6 +75,9 @@ import {
 	toInitialSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
+	type NodeChangedDataDelta,
+	type ArrayNodeDeltaOp,
+	deltaMarksToArrayOps,
 	type TreeChangeEventsAlpha,
 	type ConciseTree,
 	importConcise,
@@ -85,6 +88,7 @@ import {
 	type TreeNodeSchema,
 	getUnhydratedContext,
 	type TreeBranchAlpha,
+	isArrayNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -810,6 +814,19 @@ export const TreeAlpha: TreeAlpha = {
 		eventName: K,
 		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
 	): () => void {
+		// For array nodes, override treeChanged to fire via childrenChangedAfterBatch (which
+		// includes both structural and pure nested-content changes) and provide a delta payload.
+		if (eventName === "treeChanged" && isArrayNodeSchema(getKernel(node).schema)) {
+			return getKernel(node).events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
+				const marks = fieldMarks.get(EmptyKey);
+				const delta: ArrayNodeDeltaOp[] | undefined =
+					marks === undefined ? undefined : deltaMarksToArrayOps(marks);
+				// The conditional type `TreeChangeEventsAlpha<TNode>["treeChanged"]` resolves to
+				// `(data: NodeChangedDataDelta) => void` for array nodes. The `isArrayNodeSchema`
+				// guard above confirms TNode is an array node at runtime, so this cast is safe.
+				(listener as (data: NodeChangedDataDelta) => void)({ delta });
+			});
+		}
 		return treeNodeApi.on(node, eventName, listener);
 	},
 

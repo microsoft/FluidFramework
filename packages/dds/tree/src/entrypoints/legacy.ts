@@ -116,7 +116,6 @@ export {
 	JsonCompatibleObject, 
 	KeyEncodingOptions, 
 	NodeChangedData,
-	NodeDelta,
 	ArrayNodeDeltaOp,
 	ArrayNodeInsertOp,
 	ArrayNodeRemoveOp,

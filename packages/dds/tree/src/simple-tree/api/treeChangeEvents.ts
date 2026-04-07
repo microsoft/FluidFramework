@@ -36,10 +36,7 @@ export interface TreeChangeEvents {
 	 *
 	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
 	 *
-	 * - Array nodes define a change as when an element is added, removed, moved, or replaced,
-	 * or when a property of an element changes (i.e., a nested change within an element).
-	 * In the latter case, the {@link ArrayNodeRetainOp.childDelta} field on the corresponding
-	 * retain op describes what changed within the element.
+	 * - Array nodes define a change as when an element is added, removed, moved, or replaced.
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *
