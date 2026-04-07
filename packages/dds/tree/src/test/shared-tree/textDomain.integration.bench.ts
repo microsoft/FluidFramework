@@ -126,6 +126,11 @@ describe("TextDomain benchmarks", () => {
 			},
 		] as const;
 
+		// Control values
+		const defaultTreeDepth = 1;
+		const defaultCharacterCount = 1;
+		const defaultKeyLength = 1;
+
 		const filteredDepthConfigs = depthConfigs.filter(
 			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
 		);
@@ -135,18 +140,6 @@ describe("TextDomain benchmarks", () => {
 		const filteredKeyConfigs = keyConfigs.filter(
 			(config) => isInPerformanceTestingMode || config.runInCorrectnessMode,
 		);
-
-		/**
-		 * Returns `BenchmarkType.Perspective` if any of the given types is `Perspective`,
-		 * otherwise returns `BenchmarkType.Measurement`.
-		 */
-		function getEffectiveBenchmarkType(
-			...types: (BenchmarkType.Measurement | BenchmarkType.Perspective)[]
-		): BenchmarkType {
-			return types.includes(BenchmarkType.Perspective)
-				? BenchmarkType.Perspective
-				: BenchmarkType.Measurement;
-		}
 
 		describe("Plain text", () => {
 			const currentTestOps: ISequencedDocumentMessage[] = [];
@@ -163,67 +156,168 @@ describe("TextDomain benchmarks", () => {
 			});
 
 			describe("Insert characters", () => {
-				for (const { depth, benchmarkType: depthType } of filteredDepthConfigs) {
-					for (const { keyLength, benchmarkType: keyType } of filteredKeyConfigs) {
-						for (const { charCount, benchmarkType: charType } of filteredCharCountConfigs) {
-							benchmarkCustom({
-								only: false,
-								type: getEffectiveBenchmarkType(depthType, keyType, charType),
-								title: `insert ${charCount} character(s) into empty string at depth ${depth} with key length ${keyLength}`,
-								run: async (reporter) => {
-									const key = getPropertyKey(keyLength);
+				describe(`Op size by inserted character count`, () => {
+					for (const { charCount, benchmarkType } of filteredCharCountConfigs) {
+						benchmarkCustom({
+							only: false,
+							type: benchmarkType,
+							title: `Insert ${charCount} character(s) into empty string`,
+							run: async (reporter) => {
+								const key = getPropertyKey(defaultKeyLength);
 
-									const tree = createConnectedTree();
-									const view = tree.viewWith(viewConfig);
-									view.initialize(makeTree(depth, key, ""));
+								const tree = createConnectedTree();
+								const view = tree.viewWith(viewConfig);
+								view.initialize(makeTree(defaultTreeDepth, key, ""));
 
-									registerOpListener(tree, currentTestOps);
-
-									const textNode = getLeaf(view.root, key);
-									textNode.insertAt(0, "a".repeat(charCount));
-
-									assert.equal(textNode.characterCount(), charCount);
-									const opStats = getOperationsStats(currentTestOps);
-									for (const statKey of Object.keys(opStats)) {
-										reporter.addMeasurement(statKey, opStats[statKey]);
-									}
-								},
-							});
-						}
+								registerOpListener(tree, currentTestOps);
+								const textNode = getLeaf(view.root, key);
+								textNode.insertAt(0, "a".repeat(charCount));
+								assert.equal(textNode.characterCount(), charCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const statKey of Object.keys(opStats)) {
+									reporter.addMeasurement(statKey, opStats[statKey]);
+								}
+							},
+						});
 					}
-				}
+				});
+
+				describe(`Op size by tree depth`, () => {
+					for (const { depth, benchmarkType } of filteredDepthConfigs) {
+						benchmarkCustom({
+							only: false,
+							type: benchmarkType,
+							title: `Insert ${defaultCharacterCount} character(s) into empty string at tree depth ${depth}`,
+							run: async (reporter) => {
+								const key = getPropertyKey(defaultKeyLength);
+
+								const tree = createConnectedTree();
+								const view = tree.viewWith(viewConfig);
+								view.initialize(makeTree(depth, key, ""));
+
+								registerOpListener(tree, currentTestOps);
+
+								const textNode = getLeaf(view.root, key);
+								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
+								assert.equal(textNode.characterCount(), defaultCharacterCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const statKey of Object.keys(opStats)) {
+									reporter.addMeasurement(statKey, opStats[statKey]);
+								}
+							},
+						});
+					}
+				});
+
+				describe(`Op size by property key length`, () => {
+					for (const { keyLength, benchmarkType } of filteredKeyConfigs) {
+						benchmarkCustom({
+							only: false,
+							type: benchmarkType,
+							title: `Insert ${defaultCharacterCount} character(s) into empty string under property with key length ${keyLength}`,
+							run: async (reporter) => {
+								const key = getPropertyKey(keyLength);
+
+								const tree = createConnectedTree();
+								const view = tree.viewWith(viewConfig);
+								view.initialize(makeTree(defaultTreeDepth, key, ""));
+
+								registerOpListener(tree, currentTestOps);
+
+								const textNode = getLeaf(view.root, key);
+								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
+								assert.equal(textNode.characterCount(), defaultCharacterCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const statKey of Object.keys(opStats)) {
+									reporter.addMeasurement(statKey, opStats[statKey]);
+								}
+							},
+						});
+					}
+				});
 			});
 
 			describe("Remove characters", () => {
-				for (const { depth, benchmarkType: depthType } of filteredDepthConfigs) {
-					for (const { keyLength, benchmarkType: keyType } of filteredKeyConfigs) {
-						for (const { charCount, benchmarkType: charType } of filteredCharCountConfigs) {
-							benchmarkCustom({
-								only: false,
-								type: getEffectiveBenchmarkType(depthType, keyType, charType),
-								title: `remove ${charCount} character(s) from string of 1000 characters at depth ${depth} with key length ${keyLength}`,
-								run: async (reporter) => {
-									const key = getPropertyKey(keyLength);
+				describe(`Op size by removed character count`, () => {
+					for (const { charCount, benchmarkType } of filteredCharCountConfigs) {
+						benchmarkCustom({
+							only: false,
+							type: benchmarkType,
+							title: `Remove ${charCount} character(s) from string of 1000 characters`,
+							run: async (reporter) => {
+								const key = getPropertyKey(defaultKeyLength);
 
-									const tree = createConnectedTree();
-									const view = tree.viewWith(viewConfig);
-									view.initialize(makeTree(depth, key, "a".repeat(1000)));
+								const tree = createConnectedTree();
+								const view = tree.viewWith(viewConfig);
+								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(1000)));
 
-									registerOpListener(tree, currentTestOps);
+								registerOpListener(tree, currentTestOps);
 
-									const textNode = getLeaf(view.root, key);
-									textNode.removeRange(0, charCount);
-
-									assert.equal(textNode.characterCount(), 1000 - charCount);
-									const opStats = getOperationsStats(currentTestOps);
-									for (const statKey of Object.keys(opStats)) {
-										reporter.addMeasurement(statKey, opStats[statKey]);
-									}
-								},
-							});
-						}
+								const textNode = getLeaf(view.root, key);
+								textNode.removeRange(0, charCount);
+								assert.equal(textNode.characterCount(), 1000 - charCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const statKey of Object.keys(opStats)) {
+									reporter.addMeasurement(statKey, opStats[statKey]);
+								}
+							},
+						});
 					}
-				}
+				});
+
+				describe(`Op size by tree depth`, () => {
+					for (const { depth, benchmarkType } of filteredDepthConfigs) {
+						benchmarkCustom({
+							only: false,
+							type: benchmarkType,
+							title: `Remove ${defaultCharacterCount} character(s) from string of 1000 characters at tree depth ${depth}`,
+							run: async (reporter) => {
+								const key = getPropertyKey(defaultKeyLength);
+
+								const tree = createConnectedTree();
+								const view = tree.viewWith(viewConfig);
+								view.initialize(makeTree(depth, key, "a".repeat(1000)));
+
+								registerOpListener(tree, currentTestOps);
+
+								const textNode = getLeaf(view.root, key);
+								textNode.removeRange(0, defaultCharacterCount);
+								assert.equal(textNode.characterCount(), 1000 - defaultCharacterCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const statKey of Object.keys(opStats)) {
+									reporter.addMeasurement(statKey, opStats[statKey]);
+								}
+							},
+						});
+					}
+				});
+
+				describe(`Op size by property key length`, () => {
+					for (const { keyLength, benchmarkType } of filteredKeyConfigs) {
+						benchmarkCustom({
+							only: false,
+							type: benchmarkType,
+							title: `Remove ${defaultCharacterCount} character(s) from string of 1000 characters under property with key length ${keyLength}`,
+							run: async (reporter) => {
+								const key = getPropertyKey(keyLength);
+
+								const tree = createConnectedTree();
+								const view = tree.viewWith(viewConfig);
+								view.initialize(makeTree(defaultTreeDepth, key, "a".repeat(1000)));
+
+								registerOpListener(tree, currentTestOps);
+
+								const textNode = getLeaf(view.root, key);
+								textNode.removeRange(0, defaultCharacterCount);
+								assert.equal(textNode.characterCount(), 1000 - defaultCharacterCount);
+								const opStats = getOperationsStats(currentTestOps);
+								for (const statKey of Object.keys(opStats)) {
+									reporter.addMeasurement(statKey, opStats[statKey]);
+								}
+							},
+						});
+					}
+				});
 			});
 		});
 
