@@ -24,6 +24,7 @@ packages:
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude: [
   # Temporary exceptions go here as needed.
+  "@fluid-tools/benchmark",
 ]
 resolutionMode: highest
 blockExoticSubdeps: true
