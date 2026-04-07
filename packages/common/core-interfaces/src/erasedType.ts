@@ -92,8 +92,8 @@ export declare abstract class ErasedType<out Name = unknown> {
  * Implement interfaces which extend this by sub-classing {@link ErasedTypeImplementation}.
  *
  * This class should only be a `type` package export, preventing users from extending it directly.
- * But since {@link ErasedTypeImplementation} does extend it an implementation
- * for ctor must be provided, unlike {@link ErasedType}.
+ * But since {@link ErasedTypeImplementation} does extend it, an implementation
+ * of the constructor must be provided, unlike {@link ErasedType}.
  *
  * Since {@link ErasedTypeImplementation} is exported as `@internal`, this restricts implementations of the sealed interfaces to users of `@internal` APIs, which should be anything within this release group.
  * Any finer grained restrictions can be done as documentation, but not type enforced.
