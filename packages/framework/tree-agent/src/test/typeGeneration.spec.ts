@@ -15,10 +15,15 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "@fluidframework/tree/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	exposePropertiesSymbol,
+	type ExposedMethods,
+	type ExposedProperties,
+} from "@fluidframework/type-factory/alpha";
 
-import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { fluidHandleTypeName } from "../prompt.js";
-import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { typeFactory } from "../treeAgentTypes.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
 
@@ -33,7 +38,7 @@ class Todo extends sf.object("Todo", {
 	}
 
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(
+		methods.exposeMethod(
 			Todo,
 			"method",
 			buildFunc({ returns: typeFactory.boolean() }, ["n", typeFactory.string()]),
@@ -47,7 +52,7 @@ class TestTodoAppSchema extends sf.object("TestTodoAppSchema", {
 	todos: sf.array(Todo),
 }) {
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(
+		methods.exposeMethod(
 			TestTodoAppSchema,
 			"addTodo",
 			buildFunc({ returns: typeFactory.instanceOf(Todo) }, [
@@ -101,7 +106,7 @@ describe("Type generation", () => {
 				}
 
 				public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-					methods.expose(
+					methods.exposeMethod(
 						ObjWithMethod,
 						"method",
 						buildFunc({ returns: typeFactory.boolean() }, ["n", typeFactory.string()]),
@@ -126,7 +131,7 @@ describe("Type generation", () => {
 				}
 
 				public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-					methods.expose(
+					methods.exposeMethod(
 						ArrayWithMethod,
 						"method",
 						buildFunc({ returns: typeFactory.boolean() }, ["n", typeFactory.string()]),
@@ -152,7 +157,7 @@ type ArrayWithMethod = string[] & {
 				}
 
 				public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-					methods.expose(
+					methods.exposeMethod(
 						MapWithMethod,
 						"method",
 						buildFunc({ returns: typeFactory.boolean() }, ["n", typeFactory.string()]),
@@ -180,7 +185,7 @@ type MapWithMethod = Map<string, string> & {
 				}
 
 				public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-					methods.expose(
+					methods.exposeMethod(
 						MapWithMethod,
 						"method",
 						buildFunc({ returns: typeFactory.instanceOf(Obj) }, ["n", typeFactory.string()]),
