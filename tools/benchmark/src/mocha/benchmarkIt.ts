@@ -40,11 +40,9 @@ export function benchmarkIt(options: BenchmarkOptions): Test {
 	const test = itFunction(title, async () => {
 		// Emits the "benchmark end" event with the result
 		await emitResultsMocha(
-			async () =>
-				await supportParentProcess(
-					test.fullTitle(),
-					useParentProcess && !isChildProcess,
-					async () => await options.run(timer),
+			() =>
+				supportParentProcess(test.fullTitle(), useParentProcess && !isChildProcess, () =>
+					options.run(timer),
 				),
 			test,
 		);

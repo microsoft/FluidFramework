@@ -13,6 +13,13 @@ import {
 import { captureResults } from "../benchmarkAuthoringUtilities.js";
 import { fail } from "../assert.js";
 
+const inspectOrDebugArgRegex = /^(--inspect|--debug)/;
+const jsonLineRegex = /^(\[.*\]|\{.*\})$/;
+
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
  * Wrapper for the contents of a mocha test that supports running in a child process and emitting results to the mocha reporter.
  */
@@ -21,7 +28,7 @@ export async function supportParentProcess(
 	isParentProcess: boolean,
 	run: () => CollectedData | Promise<CollectedData>,
 ): Promise<{ result: BenchmarkResult; exception?: Error }> {
-	const inner = isParentProcess ? async () => await runTestInChildProcess(testFullTitle) : run;
+	const inner = isParentProcess ? () => runTestInChildProcess(testFullTitle) : run;
 	return captureResults(inner, isChildProcess ? "Child Process Duration" : undefined);
 }
 
@@ -63,7 +70,7 @@ export function buildChildArgs(
 	// Remove arguments for debugging if they're present; in order to debug child processes we need
 	// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
 	// of scope for now.
-	childArgs = childArgs.filter((x) => !x.match(/^(--inspect|--debug).*/));
+	childArgs = childArgs.filter((x) => !inspectOrDebugArgRegex.test(x));
 
 	// Add new flags:
 
@@ -74,7 +81,7 @@ export function buildChildArgs(
 	// and would incorrectly match tests whose full title contains another test's full title.
 	// Escape any special regex characters in the test title to avoid changing the meaning of the regex.
 	// TODO: once only supporting NodeJS 24+, we can use the new RegExp.escape function here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/escape
-	const escapedTitle = testFullTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const escapedTitle = escapeRegExp(testFullTitle);
 	childArgs.push("--grep", `^${escapedTitle}$`);
 
 	return childArgs;
@@ -104,7 +111,7 @@ async function runTestInChildProcess(testFullTitle: string): Promise<CollectedDa
 	const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
 
 	// Find the BenchmarkResult in the child's output.
-	const output = result.stdout.split("\n").filter((s) => s.match(/^(\[.*\]|\{.*\})$/));
+	const output = result.stdout.split("\n").filter((s) => jsonLineRegex.test(s));
 
 	const throwChildProcessErrors = () => {
 		if (result.error) {
