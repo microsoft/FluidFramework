@@ -54,8 +54,9 @@ In `@fluidframework/eslint-config-fluid`, update the version of `@fluid-internal
 
 ### 4. Add New Rule to the Appropriate Config
 
-Depending on the scope of the rule, add it to one of the following configurations (NOTE: `strict.js` extends `recommended.js`):
+Depending on the scope of the rule, add it to one of the following configurations (NOTE: `recommended.js` extends `base.js`, and `strict.js` extends `recommended.js`):
 
+- `base.js`
 - `recommended.js`
 - `strict.js`
 
