@@ -60,13 +60,11 @@ export const fluidHandleSymbol: unique symbol;
 
 // @alpha @sealed
 export interface FluidIterable<T> {
-    // (undocumented)
     [Symbol.iterator](): FluidIterableIterator<T>;
 }
 
 // @alpha @sealed
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
-    // (undocumented)
     next(): {
         value: T;
         done?: false;

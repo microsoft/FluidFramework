@@ -9,6 +9,11 @@
  * @sealed @alpha
  */
 export interface FluidIterable<T> {
+	/**
+	 * Returns an iterator over the elements in this iterable.
+	 *
+	 * @remarks Works like the built-in {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/iterator | \[Symbol.iterator\]} protocol.
+	 */
 	[Symbol.iterator](): FluidIterableIterator<T>;
 }
 
@@ -25,6 +30,13 @@ export interface FluidIterable<T> {
  * @sealed @alpha
  */
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
+	/**
+	 * Returns the next element in the iteration sequence.
+	 *
+	 * @remarks Works like the built-in {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterator_protocol | Iterator.next} method.
+	 * When there are remaining elements, returns `\{ value: T; done?: false \}`.
+	 * When the iteration is complete, returns `\{ value: any; done: true \}`.
+	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	next(): { value: T; done?: false } | { value: any; done: true };
 }
