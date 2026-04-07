@@ -121,8 +121,7 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"isomorphic-fetch": "^3.0.0"
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
@@ -134,7 +133,6 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@2.91.0",
 		"@microsoft/api-extractor": "7.52.11",
-		"@types/isomorphic-fetch": "^0.0.39",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
 		"c8": "^10.1.3",
