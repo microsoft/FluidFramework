@@ -31,6 +31,8 @@ import {
 	utf8Length,
 } from "./opBenchmarkUtilities.js";
 
+const isInCorrectnessTestingMode = !isInPerformanceTestingMode;
+
 describe("TextDomain benchmarks", () => {
 	configureBenchmarkHooks();
 
@@ -187,7 +189,9 @@ describe("TextDomain benchmarks", () => {
 									);
 								}
 							}
-							assertLinear({ points: opSizeByCharCount });
+							if (isInCorrectnessTestingMode) {
+								assertLinear({ points: opSizeByCharCount });
+							}
 						},
 					});
 				});
@@ -220,7 +224,9 @@ describe("TextDomain benchmarks", () => {
 									reporter.addMeasurement(`${statKey} [depth=${depth}]`, opStats[statKey]);
 								}
 							}
-							assertLinear({ points: opSizeByDepth });
+							if (isInCorrectnessTestingMode) {
+								assertLinear({ points: opSizeByDepth });
+							}
 						},
 					});
 				});
@@ -259,7 +265,9 @@ describe("TextDomain benchmarks", () => {
 									);
 								}
 							}
-							assertLinear({ points: opSizeByKeyLength });
+							if (isInCorrectnessTestingMode) {
+								assertLinear({ points: opSizeByKeyLength });
+							}
 						},
 					});
 				});
@@ -299,11 +307,13 @@ describe("TextDomain benchmarks", () => {
 							}
 							// Remove ops encode a (start, count) range, not the removed characters,
 							// so op size should be essentially independent of character count.
-							assertApproximatelyConstant({
-								sizes: opSizes,
-								// Allow for a small amount of variance.
-								maxDeltaBytes: 20
-							});
+							if (isInCorrectnessTestingMode) {
+								assertApproximatelyConstant({
+									sizes: opSizes,
+									// Allow for a small amount of variance.
+									maxDeltaBytes: 20,
+								});
+							}
 						},
 					});
 				});
@@ -336,7 +346,9 @@ describe("TextDomain benchmarks", () => {
 									reporter.addMeasurement(`${statKey} [depth=${depth}]`, opStats[statKey]);
 								}
 							}
-							assertLinear({ points: opSizeByDepth });
+							if (isInCorrectnessTestingMode) {
+								assertLinear({ points: opSizeByDepth });
+							}
 						},
 					});
 				});
@@ -375,7 +387,9 @@ describe("TextDomain benchmarks", () => {
 									);
 								}
 							}
-							assertLinear({ points: opSizeByKeyLength });
+							if (isInCorrectnessTestingMode) {
+								assertLinear({ points: opSizeByKeyLength });
+							}
 						},
 					});
 				});
@@ -437,7 +451,9 @@ describe("TextDomain benchmarks", () => {
 							encodedSize,
 						);
 					}
+					if (isInCorrectnessTestingMode) {
 					assertLinear({ points: encodedSizeByLength });
+				}
 				},
 			});
 		});
