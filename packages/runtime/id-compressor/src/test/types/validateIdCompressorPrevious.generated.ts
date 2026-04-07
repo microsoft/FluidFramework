@@ -11,224 +11,224 @@
  */
 
 import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
-import type * as old from "@fluidframework/telemetry-utils-previous/legacy";
+import type * as old from "@fluidframework/id-compressor-previous/legacy";
 
-import type * as current from "@fluidframework/telemetry-utils/legacy";
+import type * as current from "@fluidframework/id-compressor/legacy";
 
 declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_EventEmitterWithErrorHandling": {"forwardCompat": false}
+ * "Function_createIdCompressor": {"backCompat": false}
  */
-declare type old_as_current_for_Class_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<old.EventEmitterWithErrorHandling>, TypeOnly<current.EventEmitterWithErrorHandling>>
+declare type current_as_old_for_Function_createIdCompressor = requireAssignableTo<TypeOnly<typeof current.createIdCompressor>, TypeOnly<typeof old.createIdCompressor>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_EventEmitterWithErrorHandling": {"backCompat": false}
+ * "Function_createSessionId": {"backCompat": false}
  */
-declare type current_as_old_for_Class_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<current.EventEmitterWithErrorHandling>, TypeOnly<old.EventEmitterWithErrorHandling>>
+declare type current_as_old_for_Function_createSessionId = requireAssignableTo<TypeOnly<typeof current.createSessionId>, TypeOnly<typeof old.createSessionId>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassStatics_EventEmitterWithErrorHandling": {"backCompat": false}
+ * "Function_deserializeIdCompressor": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<typeof current.EventEmitterWithErrorHandling>, TypeOnly<typeof old.EventEmitterWithErrorHandling>>
+declare type current_as_old_for_Function_deserializeIdCompressor = requireAssignableTo<TypeOnly<typeof current.deserializeIdCompressor>, TypeOnly<typeof old.deserializeIdCompressor>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Function_createChildLogger": {"backCompat": false}
+ * "Function_serializeIdCompressor": {"backCompat": false}
  */
-declare type current_as_old_for_Function_createChildLogger = requireAssignableTo<TypeOnly<typeof current.createChildLogger>, TypeOnly<typeof old.createChildLogger>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ITelemetryErrorEventExt": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<old.ITelemetryErrorEventExt>, TypeOnly<current.ITelemetryErrorEventExt>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ITelemetryErrorEventExt": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ITelemetryErrorEventExt = requireAssignableTo<TypeOnly<current.ITelemetryErrorEventExt>, TypeOnly<old.ITelemetryErrorEventExt>>
+declare type current_as_old_for_Function_serializeIdCompressor = requireAssignableTo<TypeOnly<typeof current.serializeIdCompressor>, TypeOnly<typeof old.serializeIdCompressor>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryGenericEventExt": {"forwardCompat": false}
+ * "Interface_IdCreationRange": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<old.ITelemetryGenericEventExt>, TypeOnly<current.ITelemetryGenericEventExt>>
+declare type old_as_current_for_Interface_IdCreationRange = requireAssignableTo<TypeOnly<old.IdCreationRange>, TypeOnly<current.IdCreationRange>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryGenericEventExt": {"backCompat": false}
+ * "Interface_IdCreationRange": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryGenericEventExt = requireAssignableTo<TypeOnly<current.ITelemetryGenericEventExt>, TypeOnly<old.ITelemetryGenericEventExt>>
+declare type current_as_old_for_Interface_IdCreationRange = requireAssignableTo<TypeOnly<current.IdCreationRange>, TypeOnly<old.IdCreationRange>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryLoggerExt": {"forwardCompat": false}
+ * "Interface_IIdCompressor": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<old.ITelemetryLoggerExt>, TypeOnly<current.ITelemetryLoggerExt>>
+declare type old_as_current_for_Interface_IIdCompressor = requireAssignableTo<TypeOnly<old.IIdCompressor>, TypeOnly<current.IIdCompressor>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryLoggerExt": {"backCompat": false}
+ * "Interface_IIdCompressor": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryLoggerExt = requireAssignableTo<TypeOnly<current.ITelemetryLoggerExt>, TypeOnly<old.ITelemetryLoggerExt>>
+declare type current_as_old_for_Interface_IIdCompressor = requireAssignableTo<TypeOnly<current.IIdCompressor>, TypeOnly<old.IIdCompressor>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryLoggerPropertyBags": {"forwardCompat": false}
+ * "Interface_IIdCompressorCore": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBags>, TypeOnly<current.ITelemetryLoggerPropertyBags>>
+declare type old_as_current_for_Interface_IIdCompressorCore = requireAssignableTo<TypeOnly<old.IIdCompressorCore>, TypeOnly<current.IIdCompressorCore>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryLoggerPropertyBags": {"backCompat": false}
+ * "Interface_IIdCompressorCore": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryLoggerPropertyBags = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBags>, TypeOnly<old.ITelemetryLoggerPropertyBags>>
+declare type current_as_old_for_Interface_IIdCompressorCore = requireAssignableTo<TypeOnly<current.IIdCompressorCore>, TypeOnly<old.IIdCompressorCore>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryPerformanceEventExt": {"forwardCompat": false}
+ * "TypeAlias_OpSpaceCompressedId": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<old.ITelemetryPerformanceEventExt>, TypeOnly<current.ITelemetryPerformanceEventExt>>
+declare type old_as_current_for_TypeAlias_OpSpaceCompressedId = requireAssignableTo<TypeOnly<old.OpSpaceCompressedId>, TypeOnly<current.OpSpaceCompressedId>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ITelemetryPerformanceEventExt": {"backCompat": false}
+ * "TypeAlias_OpSpaceCompressedId": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ITelemetryPerformanceEventExt = requireAssignableTo<TypeOnly<current.ITelemetryPerformanceEventExt>, TypeOnly<old.ITelemetryPerformanceEventExt>>
+declare type current_as_old_for_TypeAlias_OpSpaceCompressedId = requireAssignableTo<TypeOnly<current.OpSpaceCompressedId>, TypeOnly<old.OpSpaceCompressedId>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
+ * "TypeAlias_SerializedIdCompressor": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<old.ITelemetryLoggerPropertyBag>, TypeOnly<current.ITelemetryLoggerPropertyBag>>
+declare type old_as_current_for_TypeAlias_SerializedIdCompressor = requireAssignableTo<TypeOnly<old.SerializedIdCompressor>, TypeOnly<current.SerializedIdCompressor>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ITelemetryLoggerPropertyBag": {"backCompat": false}
+ * "TypeAlias_SerializedIdCompressor": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ITelemetryLoggerPropertyBag = requireAssignableTo<TypeOnly<current.ITelemetryLoggerPropertyBag>, TypeOnly<old.ITelemetryLoggerPropertyBag>>
+declare type current_as_old_for_TypeAlias_SerializedIdCompressor = requireAssignableTo<TypeOnly<current.SerializedIdCompressor>, TypeOnly<old.SerializedIdCompressor>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ITelemetryPropertiesExt": {"forwardCompat": false}
+ * "TypeAlias_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<old.ITelemetryPropertiesExt>, TypeOnly<current.ITelemetryPropertiesExt>>
+declare type old_as_current_for_TypeAlias_SerializedIdCompressorWithNoSession = requireAssignableTo<TypeOnly<old.SerializedIdCompressorWithNoSession>, TypeOnly<current.SerializedIdCompressorWithNoSession>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ITelemetryPropertiesExt": {"backCompat": false}
+ * "TypeAlias_SerializedIdCompressorWithNoSession": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_ITelemetryPropertiesExt = requireAssignableTo<TypeOnly<current.ITelemetryPropertiesExt>, TypeOnly<old.ITelemetryPropertiesExt>>
+declare type current_as_old_for_TypeAlias_SerializedIdCompressorWithNoSession = requireAssignableTo<TypeOnly<current.SerializedIdCompressorWithNoSession>, TypeOnly<old.SerializedIdCompressorWithNoSession>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_TelemetryEventCategory": {"forwardCompat": false}
+ * "TypeAlias_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<old.TelemetryEventCategory>, TypeOnly<current.TelemetryEventCategory>>
+declare type old_as_current_for_TypeAlias_SerializedIdCompressorWithOngoingSession = requireAssignableTo<TypeOnly<old.SerializedIdCompressorWithOngoingSession>, TypeOnly<current.SerializedIdCompressorWithOngoingSession>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_TelemetryEventCategory": {"backCompat": false}
+ * "TypeAlias_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryEventCategory = requireAssignableTo<TypeOnly<current.TelemetryEventCategory>, TypeOnly<old.TelemetryEventCategory>>
+declare type current_as_old_for_TypeAlias_SerializedIdCompressorWithOngoingSession = requireAssignableTo<TypeOnly<current.SerializedIdCompressorWithOngoingSession>, TypeOnly<old.SerializedIdCompressorWithOngoingSession>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_TelemetryEventPropertyTypeExt": {"forwardCompat": false}
+ * "TypeAlias_SessionId": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypeExt>, TypeOnly<current.TelemetryEventPropertyTypeExt>>
+declare type old_as_current_for_TypeAlias_SessionId = requireAssignableTo<TypeOnly<old.SessionId>, TypeOnly<current.SessionId>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_TelemetryEventPropertyTypeExt": {"backCompat": false}
+ * "TypeAlias_SessionId": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypeExt = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypeExt>, TypeOnly<old.TelemetryEventPropertyTypeExt>>
+declare type current_as_old_for_TypeAlias_SessionId = requireAssignableTo<TypeOnly<current.SessionId>, TypeOnly<old.SessionId>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_TelemetryEventPropertyTypes": {"forwardCompat": false}
+ * "TypeAlias_SessionSpaceCompressedId": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<old.TelemetryEventPropertyTypes>, TypeOnly<current.TelemetryEventPropertyTypes>>
+declare type old_as_current_for_TypeAlias_SessionSpaceCompressedId = requireAssignableTo<TypeOnly<old.SessionSpaceCompressedId>, TypeOnly<current.SessionSpaceCompressedId>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_TelemetryEventPropertyTypes": {"backCompat": false}
+ * "TypeAlias_SessionSpaceCompressedId": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TelemetryEventPropertyTypes = requireAssignableTo<TypeOnly<current.TelemetryEventPropertyTypes>, TypeOnly<old.TelemetryEventPropertyTypes>>
+declare type current_as_old_for_TypeAlias_SessionSpaceCompressedId = requireAssignableTo<TypeOnly<current.SessionSpaceCompressedId>, TypeOnly<old.SessionSpaceCompressedId>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_StableId": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_StableId = requireAssignableTo<TypeOnly<old.StableId>, TypeOnly<current.StableId>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_StableId": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_StableId = requireAssignableTo<TypeOnly<current.StableId>, TypeOnly<old.StableId>>
