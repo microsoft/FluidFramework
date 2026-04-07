@@ -225,12 +225,22 @@ export function renderSchemaTypeScript(
 		name: string,
 		schema: RecordNodeSchema,
 	): RenderResult {
-		const valueType = renderAllowedTypes(schema.childTypes);
-		const base = `Record<string, ${valueType.text}>`;
+		const valueType = renderAnnotatedChildTypes(schema);
 		const binding = renderBindingIntersection(definition);
+		let description = schema.metadata?.description;
+		if (valueType.staged === true) {
+			const stagedTypes = [...schema.childTypes].filter(
+				(child) => schema.simpleAllowedTypes.get(child.identifier)?.isStaged !== false,
+			);
+			const stagedTypeList = formatExpression(renderAllowedTypes(stagedTypes));
+			const note = `Warning: do not set record values to any of the following types (they are staged and not yet writeable): ${stagedTypeList}`;
+			description =
+				description !== undefined && description !== "" ? `${description}\n${note}` : note;
+		}
+		const base = `Record<string, ${valueType.text}>`;
 		return {
 			declaration: `type ${name} = ${base}${binding.suffix};`,
-			description: describeBinding(schema.metadata?.description, "record", binding),
+			description: describeBinding(description, "record", binding),
 		};
 	}
 

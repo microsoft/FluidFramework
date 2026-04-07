@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	getSimpleSchema,
 	independentView,
@@ -377,6 +378,7 @@ type MapWithProperty = Map<string, string> & {
 
 	describe("handles staged allowed types", () => {
 		const sfBeta = new SchemaFactoryBeta("staged-type-tests");
+		const sfAlpha = new SchemaFactoryAlpha("staged-type-tests");
 
 		it("for object nodes", () => {
 			class ObjWithStagedType extends sfBeta.object("ObjWithStagedType", {
@@ -428,7 +430,43 @@ type MapWithProperty = Map<string, string> & {
 			assert.deepEqual(schemaString, `type StagedMap = TreeMap<(string | number), string>;\n`);
 		});
 
+		it("for record nodes", () => {
+			class StagedRecord extends sfAlpha.recordAlpha(
+				"StagedRecord",
+				SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			) {}
 
+			const schemaString = getDomainSchemaString(StagedRecord, { a: "alpha" });
+			assert.deepEqual(
+				schemaString,
+				`// Warning: do not set record values to any of the following types (they are staged and not yet writeable): number\ntype StagedRecord = Record<string, string | number>;\n`,
+			);
+		});
+
+		it("record nodes throw a runtime error when writing a staged type", () => {
+			class StagedRecord extends sfAlpha.recordAlpha(
+				"StagedRecord2",
+				SchemaFactoryBeta.types([
+					SchemaFactoryBeta.string,
+					SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+				]),
+			) {}
+
+			const view = independentView(new TreeViewConfiguration({ schema: StagedRecord }));
+			view.initialize({ a: "alpha" });
+			const record = view.root;
+
+			// Writing a string (non-staged) should succeed
+			record.a = "updated";
+
+			// Writing a number (staged type) should throw at runtime
+			assert.throws(() => {
+				record.b = 42;
+			});
+		});
 	});
 });
 
