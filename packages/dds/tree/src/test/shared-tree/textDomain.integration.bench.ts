@@ -452,8 +452,8 @@ describe("TextDomain benchmarks", () => {
 						);
 					}
 					if (isInCorrectnessTestingMode) {
-					assertLinear({ points: encodedSizeByLength });
-				}
+						assertLinear({ points: encodedSizeByLength });
+					}
 				},
 			});
 		});
