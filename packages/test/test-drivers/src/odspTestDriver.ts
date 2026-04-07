@@ -38,10 +38,17 @@ const passwordLoginCredentials = (username: string, password: string): LoginCred
 	password,
 });
 
-const ficLoginCredentials = (username: string): LoginCredentials => {
+const ficLoginCredentials = (
+	username: string,
+	odspEndpointName: OdspEndpoint,
+): LoginCredentials => {
 	const fetchToken = async (scopeEndpoint: "storage" | "push"): Promise<string> => {
 		const testTenantCheckoutClient = await getTestTenantCheckoutClient();
-		const tokens = await testTenantCheckoutClient.fetchFicTokens([username], scopeEndpoint);
+		const tokens = await testTenantCheckoutClient.fetchFicTokens(
+			[username],
+			scopeEndpoint,
+			odspEndpointName,
+		);
 		if (!Array.isArray(tokens)) {
 			// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
 			// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
@@ -117,6 +124,7 @@ interface TestTenantCheckoutClient {
 	fetchFicTokens(
 		usernames: string[],
 		tokenScope: "push" | "storage",
+		odspEndpointName: OdspEndpoint,
 	): Promise<TokenCredentials[]>;
 }
 
@@ -188,7 +196,7 @@ export function getOdspCredentials(
 				"login__odsp__fic__test__users was defined but does not have any valid usernames.",
 			);
 		}
-		return usernames.map((username) => ficLoginCredentials(username));
+		return usernames.map((username) => ficLoginCredentials(username, odspEndpointName));
 	} else if (loginTenants !== undefined) {
 		/**
 		 * Parse login credentials using the new tenant format for e2e tests.
