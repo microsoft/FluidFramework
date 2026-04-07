@@ -31,7 +31,6 @@ overrides:
   express@>=4 <5: ^4.22.1
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
-  jsrsasign: ^11.1.1
 
 importers:
 
