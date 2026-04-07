@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -74,4 +76,71 @@ export function getOperationsStats(
 		"Total Op Size (Bytes)": lengths.reduce((a, b) => a + b, 0),
 		"Total Ops:": operations.length,
 	};
+}
+
+/**
+ * Asserts that the given (x, y) points lie on a line, using R² ≥ `r2Threshold`.
+ * Skipped when fewer than 3 points are provided, since 2 points always define a perfect line.
+ */
+export function assertLinear({
+	points,
+	r2Threshold = 0.999,
+}: {
+	/**
+	 * The data points to test, where `x` is the axis value and `y` is the measured op size.
+	 */
+	readonly points: readonly { x: number; y: number }[];
+	/**
+	 * The minimum acceptable R² value.
+	 * @defaultValue 0.999
+	 */
+	readonly r2Threshold?: number;
+}): void {
+	if (points.length <= 2) {
+		return;
+	}
+	const n = points.length;
+	const meanX = points.reduce((s, p) => s + p.x, 0) / n;
+	const meanY = points.reduce((s, p) => s + p.y, 0) / n;
+	const ssXX = points.reduce((s, p) => s + (p.x - meanX) ** 2, 0);
+	const ssXY = points.reduce((s, p) => s + (p.x - meanX) * (p.y - meanY), 0);
+	const ssYY = points.reduce((s, p) => s + (p.y - meanY) ** 2, 0);
+	if (ssYY === 0) {
+		return; // All y values equal — trivially linear.
+	}
+	const slope = ssXY / ssXX;
+	const intercept = meanY - slope * meanX;
+	const ssRes = points.reduce((s, p) => s + (p.y - (intercept + slope * p.x)) ** 2, 0);
+	const r2 = 1 - ssRes / ssYY;
+	assert(
+		r2 >= r2Threshold,
+		`Expected a linear relationship between axis and op size (R² ≥ ${r2Threshold}), got R² = ${r2.toFixed(6)}.`,
+	);
+}
+
+/**
+ * Asserts that op size varies by at most `maxDeltaBytes` across all measurements.
+ * Skipped when fewer than 2 values are provided (e.g. in correctness mode).
+ */
+export function assertApproximatelyConstant({
+	sizes,
+	maxDeltaBytes,
+}: {
+	/**
+	 * The measured op sizes to compare.
+	 */
+	readonly sizes: readonly number[];
+	/**
+	 * The maximum permitted difference between the largest and smallest op size.
+	 */
+	readonly maxDeltaBytes: number;
+}): void {
+	if (sizes.length <= 1) {
+		return;
+	}
+	const delta = Math.max(...sizes) - Math.min(...sizes);
+	assert(
+		delta <= maxDeltaBytes,
+		`Expected approximately constant op size (max delta ≤ ${maxDeltaBytes} B), got ${delta} B.`,
+	);
 }

@@ -23,6 +23,8 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 import {
+	assertApproximatelyConstant,
+	assertLinear,
 	createConnectedTree,
 	getOperationsStats,
 	registerOpListener,
@@ -157,6 +159,7 @@ describe("TextDomain benchmarks", () => {
 
 			describe("Insert characters", () => {
 				describe(`Op size by inserted character count`, () => {
+					const opSizeByCharCount: { x: number; y: number }[] = [];
 					for (const { charCount, benchmarkType } of filteredCharCountConfigs) {
 						benchmarkCustom({
 							only: false,
@@ -174,15 +177,21 @@ describe("TextDomain benchmarks", () => {
 								textNode.insertAt(0, "a".repeat(charCount));
 								assert.equal(textNode.characterCount(), charCount);
 								const opStats = getOperationsStats(currentTestOps);
+								opSizeByCharCount.push({
+									x: charCount,
+									y: opStats["Total Op Size (Bytes)"],
+								});
 								for (const statKey of Object.keys(opStats)) {
 									reporter.addMeasurement(statKey, opStats[statKey]);
 								}
 							},
 						});
 					}
+					after(() => assertLinear({ points: opSizeByCharCount }));
 				});
 
 				describe(`Op size by tree depth`, () => {
+					const opSizeByDepth: { x: number; y: number }[] = [];
 					for (const { depth, benchmarkType } of filteredDepthConfigs) {
 						benchmarkCustom({
 							only: false,
@@ -201,15 +210,18 @@ describe("TextDomain benchmarks", () => {
 								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 								const opStats = getOperationsStats(currentTestOps);
+								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
 								for (const statKey of Object.keys(opStats)) {
 									reporter.addMeasurement(statKey, opStats[statKey]);
 								}
 							},
 						});
 					}
+					after(() => assertLinear({ points: opSizeByDepth }));
 				});
 
 				describe(`Op size by property key length`, () => {
+					const opSizeByKeyLength: { x: number; y: number }[] = [];
 					for (const { keyLength, benchmarkType } of filteredKeyConfigs) {
 						benchmarkCustom({
 							only: false,
@@ -228,17 +240,23 @@ describe("TextDomain benchmarks", () => {
 								textNode.insertAt(0, "a".repeat(defaultCharacterCount));
 								assert.equal(textNode.characterCount(), defaultCharacterCount);
 								const opStats = getOperationsStats(currentTestOps);
+								opSizeByKeyLength.push({
+									x: keyLength,
+									y: opStats["Total Op Size (Bytes)"],
+								});
 								for (const statKey of Object.keys(opStats)) {
 									reporter.addMeasurement(statKey, opStats[statKey]);
 								}
 							},
 						});
 					}
+					after(() => assertLinear({ points: opSizeByKeyLength }));
 				});
 			});
 
 			describe("Remove characters", () => {
 				describe(`Op size by removed character count`, () => {
+					const opSizes: number[] = [];
 					for (const { charCount, benchmarkType } of filteredCharCountConfigs) {
 						benchmarkCustom({
 							only: false,
@@ -257,15 +275,20 @@ describe("TextDomain benchmarks", () => {
 								textNode.removeRange(0, charCount);
 								assert.equal(textNode.characterCount(), 1000 - charCount);
 								const opStats = getOperationsStats(currentTestOps);
+								opSizes.push(opStats["Total Op Size (Bytes)"]);
 								for (const statKey of Object.keys(opStats)) {
 									reporter.addMeasurement(statKey, opStats[statKey]);
 								}
 							},
 						});
 					}
+					// Remove ops encode a (start, count) range, not the removed characters,
+					// so op size should be essentially independent of character count.
+					after(() => assertApproximatelyConstant({ sizes: opSizes, maxDeltaBytes: 20 }));
 				});
 
 				describe(`Op size by tree depth`, () => {
+					const opSizeByDepth: { x: number; y: number }[] = [];
 					for (const { depth, benchmarkType } of filteredDepthConfigs) {
 						benchmarkCustom({
 							only: false,
@@ -284,15 +307,18 @@ describe("TextDomain benchmarks", () => {
 								textNode.removeRange(0, defaultCharacterCount);
 								assert.equal(textNode.characterCount(), 1000 - defaultCharacterCount);
 								const opStats = getOperationsStats(currentTestOps);
+								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
 								for (const statKey of Object.keys(opStats)) {
 									reporter.addMeasurement(statKey, opStats[statKey]);
 								}
 							},
 						});
 					}
+					after(() => assertLinear({ points: opSizeByDepth }));
 				});
 
 				describe(`Op size by property key length`, () => {
+					const opSizeByKeyLength: { x: number; y: number }[] = [];
 					for (const { keyLength, benchmarkType } of filteredKeyConfigs) {
 						benchmarkCustom({
 							only: false,
@@ -311,12 +337,17 @@ describe("TextDomain benchmarks", () => {
 								textNode.removeRange(0, defaultCharacterCount);
 								assert.equal(textNode.characterCount(), 1000 - defaultCharacterCount);
 								const opStats = getOperationsStats(currentTestOps);
+								opSizeByKeyLength.push({
+									x: keyLength,
+									y: opStats["Total Op Size (Bytes)"],
+								});
 								for (const statKey of Object.keys(opStats)) {
 									reporter.addMeasurement(statKey, opStats[statKey]);
 								}
 							},
 						});
 					}
+					after(() => assertLinear({ points: opSizeByKeyLength }));
 				});
 			});
 		});
@@ -356,6 +387,7 @@ describe("TextDomain benchmarks", () => {
 		const viewConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 
 		describe("TextAsTree.Tree node encoded size", () => {
+			const encodedSizeByLength: { x: number; y: number }[] = [];
 			for (const { stringLength, benchmarkType } of filteredConfigs) {
 				benchmarkCustom({
 					only: false,
@@ -369,10 +401,12 @@ describe("TextDomain benchmarks", () => {
 						const encoded = TreeAlpha.exportVerbose(view.root);
 						const encodedSize = utf8Length(encoded as JsonCompatibleReadOnly);
 
+						encodedSizeByLength.push({ x: stringLength, y: encodedSize });
 						reporter.addMeasurement("Encoded Size (Bytes)", encodedSize);
 					},
 				});
 			}
+			after(() => assertLinear({ points: encodedSizeByLength }));
 		});
 
 		// TODO: formatted text benchmarks.
