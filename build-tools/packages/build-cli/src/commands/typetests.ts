@@ -154,8 +154,12 @@ export function normalizeConfig(
 const typetestsGenScript = "flub generate typetests --dir . -v";
 
 /**
- * Adds, removes, or replaces the `typetests:gen` script in the package.json `scripts` section
- * based on whether type validation is enabled or disabled.
+ * Normalizes the `typetests:gen` script in the package.json `scripts` section when the
+ * `typeValidation` node is present.
+ *
+ * If `typeValidation.disabled` is `true`, the script is removed. Otherwise, if `typeValidation`
+ * is defined, the script is added or replaced. If `typeValidation` is `undefined`, this function
+ * does not modify `scripts`.
  */
 export function normalizeTypeTestScript(pkgJson: PackageWithTypeTestSettings): void {
 	if (pkgJson.typeValidation?.disabled === true) {
