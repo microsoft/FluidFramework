@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -97,7 +97,7 @@ export function assertLinear({
 	readonly r2Threshold?: number;
 }): void {
 	if (points.length <= 2) {
-		return;
+		fail("Expected at least 3 data points to assert linear relationship.");
 	}
 	const n = points.length;
 	const meanX = points.reduce((s, p) => s + p.x, 0) / n;
@@ -136,7 +136,7 @@ export function assertApproximatelyConstant({
 	readonly maxDeltaBytes: number;
 }): void {
 	if (sizes.length <= 1) {
-		return;
+		fail("Expected at least 2 measurements to assert approximately constant op size.");
 	}
 	const delta = Math.max(...sizes) - Math.min(...sizes);
 	assert(
