@@ -39,7 +39,7 @@ Transform rough ideas into fully-formed designs through structured questioning a
 When design is approved and implementation will follow:
 
 - Announce: "I'm using the Using Git Worktrees skill to set up an isolated workspace."
-- Switch to {{skills_dir}}/using-git-worktrees
+- Switch to .claude/skills/using-git-worktrees
 - Follow that skill's process for directory selection, safety verification, and setup
 - Return here when worktree ready
 
@@ -50,7 +50,7 @@ Ask: "Ready to create the implementation plan?"
 When your human partner confirms (any affirmative response):
 
 - Announce: "I'm using the Writing Plans skill to create the implementation plan."
-- Switch to {{skills_dir}}/writing-plans skill
+- Switch to .claude/skills/writing-plans skill
 - Create detailed plan in the worktree
 
 ## When to Revisit Earlier Phases

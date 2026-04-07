@@ -443,10 +443,10 @@ export function forEachNodeSubsequence<TCursor extends ITreeCursor = ITreeCursor
 	endIndex: number,
 	f: (cursor: TCursor) => void,
 ): void {
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+	assert(cursor.mode === CursorLocationType.Fields, 0xce5 /* should be in fields */);
 
-	assert(startIndex >= 0, "invalid startIndex");
-	assert(endIndex >= startIndex, "invalid endIndex");
+	assert(startIndex >= 0, 0xce6 /* invalid startIndex */);
+	assert(endIndex >= startIndex, 0xce7 /* invalid endIndex */);
 	const outputLength = endIndex - startIndex;
 	if (outputLength === 0) {
 		// Avoids out of bounds index on cursor.enterNode when requesting 0 length subarray at end of array.
@@ -458,7 +458,7 @@ export function forEachNodeSubsequence<TCursor extends ITreeCursor = ITreeCursor
 		f(cursor);
 		const hasNext = cursor.nextNode();
 		if (!hasNext) {
-			assert(i === outputLength - 1, "requested endIndex is out of bounds");
+			assert(i === outputLength - 1, 0xce8 /* requested endIndex is out of bounds */);
 			return;
 		}
 	}

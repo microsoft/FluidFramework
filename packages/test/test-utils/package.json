@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-utils",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"description": "Utilities for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -144,7 +144,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@2.91.0",
+		"@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@2.92.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/debug": "^4.1.5",
 		"@types/diff": "^3.5.1",
@@ -163,7 +163,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IProvideTestFluidObject": {
+				"forwardCompat": false
+			},
+			"Interface_ITestFluidObject": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

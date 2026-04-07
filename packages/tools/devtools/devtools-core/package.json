@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools-core",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -151,7 +151,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/devtools-core-previous": "npm:@fluidframework/devtools-core@2.91.0",
+		"@fluidframework/devtools-core-previous": "npm:@fluidframework/devtools-core@2.92.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
