@@ -4,7 +4,10 @@
  */
 
 /**
- * Like TypeScript's built-in `Iterable` type, except unaffected by TypeScript's version and configuration options.
+ * Like TypeScript's built-in `Iterable` type.
+ *
+ * @privateRemarks
+ * This exists to be unaffected by TypeScript's version and configuration options.
  *
  * @sealed @alpha
  */
@@ -42,11 +45,12 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
 }
 
 /**
- * Like TypeScript's built in `ReadonlyMap` type, except unaffected by TypeScript's version and configuration options.
- * Also, unlike the built in `ReadonlyMap`, this interface includes Symbol.toStringTag.
+ * Like TypeScript's built in `ReadonlyMap` type.
+ * Unlike the built in `ReadonlyMap`, this interface includes Symbol.toStringTag.
  *
- * @remarks
- * This exists so that Fluid has a `ReadonlyMap` type which is safe to implement that cannot be broken by changes to TypeScript's default ReadonlyMap type.
+ * @privateRemarks
+ * This exists so that Fluid has a `ReadonlyMap` type which is unaffected by TypeScript's version and configuration options,
+ * and safe to implement without being broken by changes to TypeScript's default ReadonlyMap type.
  * All behavior exposed through this interface should be compatible with the corresponding behavior of built in ReadonlyMaps,
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `ReadonlyMap` type.
@@ -106,10 +110,11 @@ export interface FluidReadonlyMap<K, V> {
 }
 
 /**
- * Like TypeScript's built in `Map` type, except unaffected by TypeScript's version and configuration options.
+ * Like TypeScript's built in `Map` type.
  *
- * @remarks
- * This exists so that Fluid has a `Map` type which is safe to implement that cannot be broken by changes to TypeScript's default Map type.
+ * @privateRemarks
+ * This exists so that Fluid has a `Map` type which is unaffected by TypeScript's version and configuration options,
+ * and safe to implement without being broken by changes to TypeScript's default Map type.
  * All behavior exposed through this interface should be compatible with the corresponding behavior of JavaScript Maps,
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `Map` type.
