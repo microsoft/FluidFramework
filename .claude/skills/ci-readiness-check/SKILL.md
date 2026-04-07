@@ -21,7 +21,7 @@ Omit steps that don't apply (e.g. skip "Build unbuilt packages" if everything is
 
 Before doing anything, ask the user:
 
-> I'll run a CI readiness check on your branch. Pick a mode (fastest to slowest):
+> I can run a CI readiness check on your branch. Pick a mode (fastest to slowest):
 >
 > 1. Skip — skip the CI readiness check
 > 2. Check — auto-fix formatting, policy, and syncpack on changed packages (~5–10 seconds; always fast)

@@ -77,7 +77,7 @@ git remote get-url origin
 
 If the URL contains `microsoft/FluidFramework`, **stop** — pushing a branch directly to the main repo is almost certainly not intended. Tell the user they likely need to push to their fork instead. Do not proceed.
 
-Once the checks in steps 2–3 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 6. This is the only point where the skill asks the user a question.
+Once the checks in steps 2–3 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 6. Aside from any prompt shown by `ci-readiness-check` in step 1, this is the only point where the `fluid-pr` flow asks the user a question.
 
 ```bash
 # Push branch (first time)
