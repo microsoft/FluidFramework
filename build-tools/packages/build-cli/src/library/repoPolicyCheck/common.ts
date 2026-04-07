@@ -63,7 +63,7 @@ export function runUpdatePackageJsonResolver(
 		updatePackageJsonFile(path.dirname(file), updater);
 		return { resolved: true };
 	} catch (error: unknown) {
-		const message = (error as Error).message;
+		const message = error instanceof Error ? error.message : String(error);
 		return { resolved: false, message: message !== "" ? message : undefined };
 	}
 }
@@ -83,7 +83,7 @@ export async function runUpdatePackageJsonFileAsyncResolver(
 		await updatePackageJsonFileAsync(path.dirname(file), updater);
 		return { resolved: true };
 	} catch (error: unknown) {
-		const message = (error as Error).message;
+		const message = error instanceof Error ? error.message : String(error);
 		return { resolved: false, message: message !== "" ? message : undefined };
 	}
 }
