@@ -18,7 +18,7 @@ export interface FluidIterable<T> {
 }
 
 /**
- * Like TypeScript's built-in iterable iterator type, except unaffected by TypeScript's version and configuration options.
+ * Like TypeScript's built-in iterable iterator type.
  *
  * @privateRemarks
  * The done branch uses `any` rather than `undefined` to match TypeScript's built-in IteratorReturnResult, which defaults to any for the same reason.
