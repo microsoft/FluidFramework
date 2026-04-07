@@ -53,18 +53,18 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	};
 
 	public async run(): Promise<void> {
+		const { flags } = this;
+
 		const deprecationWarning = chalk.bgRed(
 			chalk.white(chalk.bold(" DO NOT RELY ON THIS COMMAND ")),
 		);
 		const lines = Array.from({ length: 12 }, () => deprecationWarning).join("\n");
-		this.log(`\n${lines}`);
+		if (!flags.quiet) {
+			this.log(`\n${lines}\n`);
+		}
 		this.warning(
 			"This command is deprecated and will be removed in a future release. Release reports will no longer be generated.",
 		);
-		this.log(`${lines}\n`);
-
-		const { flags } = this;
-
 		const reportData = await fs.readFile(flags.fullReportFilePath, "utf8");
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
