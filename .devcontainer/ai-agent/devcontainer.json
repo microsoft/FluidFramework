@@ -5,7 +5,7 @@
 		"dockerfile": "../Dockerfile",
 		"args": {
 			"NODE_VERSION": "24",
-			"INSTALL_AGENCY": "true",
+			// "INSTALL_AGENCY": "true",
 			"INSTALL_REPOVERLAY": "true"
 			// TODO: Figure out the playwright strategy
 			// "INSTALL_PLAYWRIGHT_CLI": "true"
