@@ -74,8 +74,9 @@ export declare abstract class ErasedType<out Name = unknown> {
 
 	/**
 	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
-	 * This `Symbol.hasInstance` declaration ensures that `instanceof` will error if used,
-	 * (no definition) and in TypeScript 5.3 and newer will produce a compile time error if used.
+	 * This `Symbol.hasInstance` declaration (no definition) ensures that `instanceof` will
+	 * produce `ReferenceError` if used at runtime. And in TypeScript 5.3 and newer will produce
+	 * a compile time error if used.
 	 */
 	public static [Symbol.hasInstance](value: never): value is never;
 }
