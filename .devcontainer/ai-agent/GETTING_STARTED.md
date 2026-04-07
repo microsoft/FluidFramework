@@ -6,13 +6,7 @@ This codespace is pre-configured for AI-agent-assisted development of the Fluid 
 
 ## First-time Setup
 
-After creating a new AI-enabled Codespace, expect up to a dozen authentication prompts. This is excessive but anticipated — continue clicking through each prompt until they conclude.
-
-Agency **must** be installed manually after the Codespace starts:
-
-```bash
-pnpm install:agency
-```
+Agency **must** be installed manually after the Codespace starts. Run `pnpm install:agency` in the terminal — this requires Azure authentication and will open a browser window for sign-in.
 
 Then open a **new terminal** for the agent aliases to be available.
 
@@ -78,7 +72,6 @@ This enables running AI agents locally while the Codespace provides computing po
 | Repoverlay | Overlay system for context files (agents, skills) |
 | GitHub CLI (`gh`) | Pre-installed for PR workflows and SSH access |
 | SSH daemon | Enables `gh codespace ssh` connections |
-| ADO Codespaces Auth | Authenticate to Azure DevOps |
 | Agent aliases | Shell shortcuts for common AI commands |
 | Higher compute | 32 CPUs / 64 GB RAM (vs 16 CPUs for Standard) |
 

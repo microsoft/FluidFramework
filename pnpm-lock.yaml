@@ -58,6 +58,8 @@ overrides:
   minimatch@>=10 <11: ^10.2.4
   serialize-javascript@>=6 <7: ^7.0.4
   express@>=4 <5: ^4.22.1
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
 
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
@@ -192,8 +194,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -10012,8 +10014,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -10604,8 +10606,8 @@ importers:
         specifier: workspace:~
         version: link:../routerlicious-driver
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -13445,8 +13447,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -16842,9 +16844,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../telemetry-utils
-      isomorphic-fetch:
-        specifier: ^3.0.0
-        version: 3.0.0(encoding@0.1.13)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -16873,9 +16872,6 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
-      '@types/isomorphic-fetch':
-        specifier: ^0.0.39
-        version: 0.0.39
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -19945,9 +19941,6 @@ packages:
     peerDependencies:
       ioredis: '>=5'
 
-  '@types/isomorphic-fetch@0.0.39':
-    resolution: {integrity: sha512-I0gou/ZdA1vMG7t7gMzL7VYu2xAKU78rW9U1l10MI0nn77pEHq3tQqHQ8hMmXdMpBlkxZOorjI4sO594Z3kKJw==}
-
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
 
@@ -22687,7 +22680,7 @@ packages:
   fdir@5.3.0:
     resolution: {integrity: sha512-BtE53+jaa7nNHT+gPdfU6cFAXOJUWDs2b5GFox8dtl6zLXmfNf/N6im69b9nqNNwDyl27mpIWX8qR7AafWzSdQ==}
     peerDependencies:
-      picomatch: 2.x
+      picomatch: ^2.3.2
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -22696,7 +22689,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^3 || ^4
+      picomatch: ^4.0.4
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -24129,8 +24122,8 @@ packages:
     resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
     engines: {node: '>=12', npm: '>=6'}
 
-  jsrsasign@11.1.0:
-    resolution: {integrity: sha512-Ov74K9GihaK9/9WncTe1mPmvrO7Py665TUfUKvraXBpu+xcTWitrtuOwcjf4KMU9maPaYn0OuaWy0HOzy/GBXg==}
+  jsrsasign@11.1.1:
+    resolution: {integrity: sha512-6w95OOXH8DNeGxakqLndBEqqwQ6A70zGaky1oxfg8WVLWOnghTfJsc5Tknx+Z88MHSb1bGLcqQHImOF8Lk22XA==}
 
   jssm@5.104.2:
     resolution: {integrity: sha512-2UGO9psXneFRqMq2xzme3d+ralxRTWQAckGgU6c99UZBY2+AI2H9JYtKmHPScYiNr7/yaV2Id3bYVlmtFGyqLg==}
@@ -25564,12 +25557,12 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
+  picomatch@4.0.4:
+    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
   picospinner@2.1.0:
@@ -30365,7 +30358,7 @@ snapshots:
   '@fluidframework/azure-service-utils@2.92.0':
     dependencies:
       '@fluidframework/driver-definitions': 2.92.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
 
   '@fluidframework/build-common@2.0.3': {}
@@ -30389,7 +30382,7 @@ snapshots:
       lodash.isequal: 4.5.0
       multimatch: 5.0.0
       picocolors: 1.1.1
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       picospinner: 2.1.0
       rimraf: 6.1.3
       semver: 7.7.3
@@ -30949,7 +30942,7 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-test-utils': 7.0.0
       '@fluidframework/telemetry-utils': 2.92.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -31331,7 +31324,7 @@ snapshots:
       '@fluidframework/server-test-utils': 7.0.0
       debug: 4.4.3(supports-color@8.1.1)
       events_pkg: events@3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -31375,7 +31368,7 @@ snapshots:
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       jwt-decode: 3.1.2
       querystring: 0.2.1
       sillyname: 0.1.0
@@ -31393,7 +31386,7 @@ snapshots:
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       jwt-decode: 4.0.0
       sillyname: 0.1.0
       uuid: 11.1.0
@@ -31602,7 +31595,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 2.92.0
       '@fluidframework/runtime-utils': 2.92.0
       '@fluidframework/telemetry-utils': 2.92.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -31669,7 +31662,7 @@ snapshots:
       '@fluidframework/driver-definitions': 2.92.0
       '@fluidframework/driver-utils': 2.92.0
       '@fluidframework/routerlicious-driver': 2.92.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -33505,8 +33498,6 @@ snapshots:
     dependencies:
       ioredis: 5.6.1
 
-  '@types/isomorphic-fetch@0.0.39': {}
-
   '@types/istanbul-lib-coverage@2.0.6': {}
 
   '@types/istanbul-lib-report@3.0.3':
@@ -34523,7 +34514,7 @@ snapshots:
   anymatch@3.1.3:
     dependencies:
       normalize-path: 3.0.0
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   aproba@2.0.0: {}
 
@@ -35892,7 +35883,7 @@ snapshots:
       is-installed-globally: 1.0.0
       json5: 2.2.3
       memoize: 10.2.0
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       prompts: 2.4.2
       rechoir: 0.8.0
       safe-regex: 2.1.1
@@ -36801,13 +36792,13 @@ snapshots:
     dependencies:
       pend: 1.2.0
 
-  fdir@5.3.0(picomatch@2.3.1):
+  fdir@5.3.0(picomatch@2.3.2):
     optionalDependencies:
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
-  fdir@6.5.0(picomatch@4.0.3):
+  fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   fecha@4.2.3: {}
 
@@ -37263,10 +37254,10 @@ snapshots:
     dependencies:
       cli-progress: 3.12.0
       commander: 7.2.0
-      fdir: 5.3.0(picomatch@2.3.1)
+      fdir: 5.3.0(picomatch@2.3.2)
       minimatch: 3.1.5
       nodegit: empty-npm-package@1.0.0
-      picomatch: 2.3.1
+      picomatch: 2.3.2
       strip-json-comments: 3.1.1
       tsconfig-paths: 3.15.0
       typescript: 4.9.5
@@ -38403,7 +38394,7 @@ snapshots:
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   jest-validate@29.7.0:
     dependencies:
@@ -38630,7 +38621,7 @@ snapshots:
       ms: 2.1.3
       semver: 7.7.3
 
-  jsrsasign@11.1.0: {}
+  jsrsasign@11.1.1: {}
 
   jssm@5.104.2:
     dependencies:
@@ -39512,7 +39503,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   mime-db@1.52.0: {}
 
@@ -40457,9 +40448,9 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.1: {}
+  picomatch@2.3.2: {}
 
-  picomatch@4.0.3: {}
+  picomatch@4.0.4: {}
 
   picospinner@2.1.0: {}
 
@@ -41156,7 +41147,7 @@ snapshots:
 
   readdirp@3.6.0:
     dependencies:
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   readdirp@4.1.2: {}
 
@@ -42471,8 +42462,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tinylicious@7.0.0:
     dependencies:

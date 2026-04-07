@@ -135,7 +135,7 @@
 		"remark-github": "^12.0.0",
 		"remark-github-beta-blockquote-admonitions": "^3.1.1",
 		"remark-toc": "^9.0.0",
-		"replace-in-file": "^7.2.0",
+		"replace-in-file": "^8.4.0",
 		"resolve.exports": "^2.0.3",
 		"semver": "^7.7.3",
 		"simple-git": "^3.32.3",

@@ -46,6 +46,8 @@ overrides:
   minimatch@>=10 <11: ^10.2.4
   serialize-javascript@>=6 <7: ^7.0.4
   express@>=4 <5: ^4.22.1
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
 
 patchedDependencies:
   '@microsoft/api-extractor@7.45.1':
@@ -453,8 +455,8 @@ importers:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -1182,8 +1184,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^11.1.1
+        version: 11.1.1
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -5330,7 +5332,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^3 || ^4
+      picomatch: ^4.0.4
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -6295,8 +6297,8 @@ packages:
     resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
     engines: {node: '>=12', npm: '>=6'}
 
-  jsrsasign@11.0.0:
-    resolution: {integrity: sha512-BtRwVKS+5dsgPpAtzJcpo5OoWjSs1/zllSBG0+8o8/aV0Ki76m6iZwHnwnsqoTdhfFZDN1XIdcaZr5ZkP+H2gg==}
+  jsrsasign@11.1.1:
+    resolution: {integrity: sha512-6w95OOXH8DNeGxakqLndBEqqwQ6A70zGaky1oxfg8WVLWOnghTfJsc5Tknx+Z88MHSb1bGLcqQHImOF8Lk22XA==}
 
   jssm@5.104.2:
     resolution: {integrity: sha512-2UGO9psXneFRqMq2xzme3d+ralxRTWQAckGgU6c99UZBY2+AI2H9JYtKmHPScYiNr7/yaV2Id3bYVlmtFGyqLg==}
@@ -7382,12 +7384,12 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
+  picomatch@4.0.4:
+    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
   picospinner@2.1.0:
@@ -9712,7 +9714,7 @@ snapshots:
       lodash.isequal: 4.5.0
       multimatch: 5.0.0
       picocolors: 1.1.1
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       picospinner: 2.1.0
       rimraf: 6.1.3
       semver: 7.7.3
@@ -9894,7 +9896,7 @@ snapshots:
       '@fluidframework/server-test-utils': 7.0.0
       debug: 4.4.1
       events_pkg: events@3.3.0
-      jsrsasign: 11.0.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -9980,7 +9982,7 @@ snapshots:
       crc-32: 1.2.0
       debug: 4.4.1
       json-stringify-safe: 5.0.1
-      jsrsasign: 11.0.0
+      jsrsasign: 11.1.1
       jwt-decode: 4.0.0
       sillyname: 0.1.0
       uuid: 11.1.0
@@ -11857,7 +11859,7 @@ snapshots:
   anymatch@3.1.3:
     dependencies:
       normalize-path: 3.0.0
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   aproba@1.2.0:
     optional: true
@@ -13448,9 +13450,9 @@ snapshots:
     dependencies:
       pend: 1.2.0
 
-  fdir@6.5.0(picomatch@4.0.3):
+  fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   fecha@4.2.3: {}
 
@@ -14463,7 +14465,7 @@ snapshots:
       ms: 2.1.3
       semver: 7.7.4
 
-  jsrsasign@11.0.0: {}
+  jsrsasign@11.1.1: {}
 
   jssm@5.104.2:
     dependencies:
@@ -15082,7 +15084,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   mime-db@1.52.0: {}
 
@@ -15847,9 +15849,9 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.1: {}
+  picomatch@2.3.2: {}
 
-  picomatch@4.0.3: {}
+  picomatch@4.0.4: {}
 
   picospinner@2.1.0: {}
 
@@ -16213,7 +16215,7 @@ snapshots:
 
   readdirp@3.6.0:
     dependencies:
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   readline-sync@1.4.10: {}
 
@@ -17116,8 +17118,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tmp@0.0.33:
     dependencies:

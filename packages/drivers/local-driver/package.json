@@ -130,7 +130,7 @@
 		"@fluidframework/server-services-core": "^7.0.0",
 		"@fluidframework/server-test-utils": "^7.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"jsrsasign": "^11.0.0",
+		"jsrsasign": "^11.1.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {

@@ -50,7 +50,8 @@
 			"js-yaml: overridden to fix CVE-2025-64718 (prototype pollution via merge keys).",
 			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
 			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
-			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support)."
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
 		],
 		"overrides": {
 			"diff@>=5 <6": "^5.2.2",
@@ -62,7 +63,9 @@
 			"minimatch@>=8 <9": "^8.0.7",
 			"minimatch@>=9 <10": "^9.0.9",
 			"minimatch@>=10 <11": "^10.2.4",
-			"serialize-javascript@>=6 <7": "^7.0.4"
+			"serialize-javascript@>=6 <7": "^7.0.4",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"onlyBuiltDependencies": [
 			"unrs-resolver"
