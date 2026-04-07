@@ -194,8 +194,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -10014,8 +10014,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -10606,8 +10606,8 @@ importers:
         specifier: workspace:~
         version: link:../routerlicious-driver
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -13444,8 +13444,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       jsrsasign:
-        specifier: ^11.0.0
-        version: 11.1.0
+        specifier: ^11.1.1
+        version: 11.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -24119,8 +24119,8 @@ packages:
     resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
     engines: {node: '>=12', npm: '>=6'}
 
-  jsrsasign@11.1.0:
-    resolution: {integrity: sha512-Ov74K9GihaK9/9WncTe1mPmvrO7Py665TUfUKvraXBpu+xcTWitrtuOwcjf4KMU9maPaYn0OuaWy0HOzy/GBXg==}
+  jsrsasign@11.1.1:
+    resolution: {integrity: sha512-6w95OOXH8DNeGxakqLndBEqqwQ6A70zGaky1oxfg8WVLWOnghTfJsc5Tknx+Z88MHSb1bGLcqQHImOF8Lk22XA==}
 
   jssm@5.104.2:
     resolution: {integrity: sha512-2UGO9psXneFRqMq2xzme3d+ralxRTWQAckGgU6c99UZBY2+AI2H9JYtKmHPScYiNr7/yaV2Id3bYVlmtFGyqLg==}
@@ -30376,7 +30376,7 @@ snapshots:
   '@fluidframework/azure-service-utils@2.91.0':
     dependencies:
       '@fluidframework/driver-definitions': 2.91.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
 
   '@fluidframework/build-common@2.0.3': {}
@@ -30961,7 +30961,7 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.0
       '@fluidframework/server-test-utils': 7.0.0
       '@fluidframework/telemetry-utils': 2.91.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -31346,7 +31346,7 @@ snapshots:
       '@fluidframework/server-test-utils': 7.0.0
       debug: 4.4.3(supports-color@8.1.1)
       events_pkg: events@3.3.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -31390,7 +31390,7 @@ snapshots:
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       jwt-decode: 3.1.2
       querystring: 0.2.1
       sillyname: 0.1.0
@@ -31408,7 +31408,7 @@ snapshots:
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       jwt-decode: 4.0.0
       sillyname: 0.1.0
       uuid: 11.1.0
@@ -31617,7 +31617,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 2.91.0
       '@fluidframework/runtime-utils': 2.91.0
       '@fluidframework/telemetry-utils': 2.91.0
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -31686,7 +31686,7 @@ snapshots:
       '@fluidframework/driver-definitions': 2.91.0
       '@fluidframework/driver-utils': 2.91.0
       '@fluidframework/routerlicious-driver': 2.91.0(encoding@0.1.13)
-      jsrsasign: 11.1.0
+      jsrsasign: 11.1.1
       uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
@@ -38643,7 +38643,7 @@ snapshots:
       ms: 2.1.3
       semver: 7.7.3
 
-  jsrsasign@11.1.0: {}
+  jsrsasign@11.1.1: {}
 
   jssm@5.104.2:
     dependencies:
