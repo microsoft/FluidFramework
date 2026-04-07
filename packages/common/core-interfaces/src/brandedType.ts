@@ -41,11 +41,13 @@
  * same package version. If a type must cross package boundaries, as may be the
  * case for cross layer types, the derived type should pick a specific version
  * of core-interfaces to import BrandedType from. Exact versions are best, but
- * as security best practice, use ~ specification. A change in version should
- * be considered a breaking change. In the preferred derived class pattern, the
- * derived class is subject to the same identity rules and might benefit from
- * being in a type-only -definitions package. See {@link ErasedType} example
- * comments for version stable patterns.
+ * as security best practice, use ~ specification.  Consumers are expected to
+ * use a package manager that will produce consistency over minor patches.
+ * A change in version should be considered a breaking change.
+ *
+ * In the preferred derived class pattern, the derived class is subject to the
+ * same identity rules and might benefit from being in a type-only `-definitions`
+ * package. See {@link ErasedType} example comments for version stable patterns.
  *
  * @example
  * Definition of two branded types with different variance:

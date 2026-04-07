@@ -18,8 +18,9 @@
  * same package version. If a type must cross package boundaries, as may be the
  * case for cross layer types, the derived type should pick a specific version
  * of core-interfaces to import ErasedType from. Exact versions are best, but
- * as security best practice, use ~ specification. A change in version should
- * be considered a breaking change.
+ * as security best practice, use ~ specification. Consumers are expected to
+ * use a package manager that will produce consistency over minor patches.
+ * A change in version should be considered a breaking change.
  *
  * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
  * uses the type name instead of expanding it.
