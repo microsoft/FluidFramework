@@ -299,7 +299,11 @@ describe("TextDomain benchmarks", () => {
 							}
 							// Remove ops encode a (start, count) range, not the removed characters,
 							// so op size should be essentially independent of character count.
-							assertApproximatelyConstant({ sizes: opSizes, maxDeltaBytes: 20 });
+							assertApproximatelyConstant({
+								sizes: opSizes,
+								// Allow for a small amount of variance.
+								maxDeltaBytes: 20
+							});
 						},
 					});
 				});
