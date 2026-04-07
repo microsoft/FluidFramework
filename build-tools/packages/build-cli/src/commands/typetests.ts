@@ -111,6 +111,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 
 			if (this.flags.normalize) {
 				json.typeValidation = normalizeConfig(json.typeValidation);
+				normalizeTypeTestScript(json);
 			}
 		});
 	}
@@ -148,6 +149,24 @@ export function normalizeConfig(
 		normalized.broken = { ...defaultTypeValidationConfig.broken };
 	}
 	return normalized;
+}
+
+const typetestsGenScript = "flub generate typetests --dir . -v";
+
+/**
+ * Adds, removes, or replaces the `typetests:gen` script in the package.json `scripts` section
+ * based on whether type validation is enabled or disabled.
+ */
+export function normalizeTypeTestScript(pkgJson: PackageWithTypeTestSettings): void {
+	if (pkgJson.typeValidation?.disabled === true) {
+		if (pkgJson.scripts?.["typetests:gen"] !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete pkgJson.scripts["typetests:gen"];
+		}
+	} else if (pkgJson.typeValidation !== undefined) {
+		pkgJson.scripts ??= {};
+		pkgJson.scripts["typetests:gen"] = typetestsGenScript;
+	}
 }
 
 export enum VersionOptions {
