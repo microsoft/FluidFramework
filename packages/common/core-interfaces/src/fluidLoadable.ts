@@ -29,24 +29,3 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 	 */
 	readonly handle: IFluidHandle;
 }
-
-/**
- * @internal
- */
-export const IFluidRunnable: keyof IProvideFluidRunnable = "IFluidRunnable";
-
-/**
- * @internal
- */
-export interface IProvideFluidRunnable {
-	readonly IFluidRunnable: IFluidRunnable;
-}
-/**
- * @internal
- */
-export interface IFluidRunnable {
-	// TODO: Use `unknown` instead (API-Breaking)
-
-	run(...args: any[]): Promise<void>;
-	stop(reason?: string): void;
-}

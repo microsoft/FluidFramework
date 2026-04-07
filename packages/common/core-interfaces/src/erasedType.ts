@@ -13,13 +13,30 @@
  * allowing code outside of a package to have a reference/handle to something in the package in a type safe way without the package having to publicly export the types of the object.
  * This should not be confused with the more specific IFluidHandle which is also named after this design pattern.
  *
+ * As this is a class and not just an interface, to match derived types, the
+ * declarations for any two derivatives must come from the same source - the
+ * same package version. If a type must cross package boundaries, as may be the
+ * case for cross layer types, the derived type should pick a specific version
+ * of core-interfaces to import ErasedType from. Exact versions are best, but
+ * as security best practice, use ~ specification. Consumers are expected to
+ * use a package manager that will produce consistency over minor patches.
+ * A change in version should be considered a breaking change.
+ *
  * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
  * uses the type name instead of expanding it.
  *
  * @example
+ * package.json:
+ * ```json
+ *   "dependencies": {
+ *     "@fluidframework/erased-type-v1": "npm:@fluidframework/core-interfaces@~2.0.0"
+ *   }
+ * ```
+ * source.ts:
  * ```typescript
+ * import { ErasedType as ErasedTypeV1 } from "@fluidframework/erased-type-v1";
  * // public sealed type
- * export interface ErasedMyType extends ErasedType<"myPackage.MyType"> {}
+ * export interface ErasedMyType extends ErasedTypeV1<"myPackage.MyType"> {}
  * // internal type
  * export interface MyType {
  * 	example: number;
@@ -35,6 +52,7 @@
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
+ *
  * @privateRemarks
  * For this pattern to work well it needs to be difficult for a user of the erased type to
  * implicitly use something other than a instance received from the package as an instance of the erased type in type safe code.
@@ -86,11 +104,15 @@ export abstract class ErasedType<out Name = unknown> {
 
 /**
  * Used to mark a `@sealed` interface in a strongly typed way to prevent external implementations.
+ *
  * @remarks
  * This is an alternative to {@link ErasedType} which is more ergonomic to implement in the case where the implementation can extend `ErasedTypeImplementation`.
  *
  * Users of interfaces extending this should never refer to anything about this class:
  * migrating the type branding to another mechanism, like {@link ErasedType} should be considered a non-breaking change.
+ *
+ * @see {@link ErasedType} for version compatibility notes.
+ *
  * @privateRemarks
  * Implement interfaces which extend this by sub-classing {@link ErasedTypeImplementation}.
  *
