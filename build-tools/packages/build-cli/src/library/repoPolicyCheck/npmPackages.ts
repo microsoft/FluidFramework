@@ -11,8 +11,6 @@ import { EOL as newline } from "node:os";
 import path from "node:path";
 import {
 	findGitRootSync,
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
 import { getApiExtractorConfigFilePath, type PackageJson } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
@@ -26,7 +24,7 @@ import {
 } from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import { type Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, runUpdatePackageJsonFileAsyncResolver, runUpdatePackageJsonResolver, writeFile } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -837,7 +835,7 @@ export const handlers: Handler[] = [
 			return undefined;
 		},
 		resolver: (file: string, gitRoot: string): { resolved: boolean } => {
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			return runUpdatePackageJsonResolver(file, (json) => {
 				json.author = author;
 				json.license = licenseId;
 
@@ -858,8 +856,6 @@ export const handlers: Handler[] = [
 
 				json.homepage = homepage;
 			});
-
-			return { resolved: true };
 		},
 	},
 	{
@@ -1119,7 +1115,7 @@ export const handlers: Handler[] = [
 				: undefined;
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			return runUpdatePackageJsonResolver(file, (json) => {
 				const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 
 				if (hasScriptsField) {
@@ -1162,8 +1158,6 @@ export const handlers: Handler[] = [
 					}
 				}
 			});
-
-			return { resolved: true };
 		},
 	},
 	{
@@ -1289,8 +1283,7 @@ export const handlers: Handler[] = [
 				: undefined;
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			return runUpdatePackageJsonResolver(file, (json) => {
 				for (const [scriptName, scriptContent] of Object.entries(json.scripts)) {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (scriptContent) {
@@ -1298,8 +1291,6 @@ export const handlers: Handler[] = [
 					}
 				}
 			});
-
-			return result;
 		},
 	},
 	{
@@ -1583,15 +1574,13 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			return runUpdatePackageJsonResolver(file, (json) => {
 				const missing = missingCleanDirectories(json.scripts);
 				let clean: string = json.scripts.clean ?? "rimraf --glob";
 				if (!clean.startsWith("rimraf --glob")) {
-					result.resolved = false;
-					result.message =
-						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
-					return;
+					throw new Error(
+						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'",
+					);
 				}
 				if (missing.length > 0) {
 					clean += ` ${missing.join(" ")}`;
@@ -1599,8 +1588,6 @@ export const handlers: Handler[] = [
 				// clean up for grouping
 				json.scripts.clean = getPreferredScriptLine(clean);
 			});
-
-			return result;
 		},
 	},
 	{
@@ -1720,20 +1707,12 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			return runUpdatePackageJsonResolver(file, (json) => {
 				if (shouldCheckExportsField(json)) {
-					try {
-						const exportsField = generateExportsField(json);
-						json.exports = exportsField;
-					} catch (error: unknown) {
-						result.resolved = false;
-						result.message = (error as Error).message;
-					}
+					const exportsField = generateExportsField(json);
+					json.exports = exportsField;
 				}
 			});
-
-			return result;
 		},
 	},
 	{
@@ -1769,7 +1748,6 @@ export const handlers: Handler[] = [
 			file: string,
 			root: string,
 		): Promise<{ resolved: boolean; message?: string }> => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
 			const dir = path.dirname(file);
 			const pathToRoot = path.relative(dir, root);
 			// <projectFolder> is used in path to allow config file to be located anywhere
@@ -1777,70 +1755,68 @@ export const handlers: Handler[] = [
 			const commonApiLintConfig = `<projectFolder>/${path
 				.join(pathToRoot, "common/build/build-common/api-extractor-lint.entrypoint.json")
 				.replaceAll("\\", "/")}`;
-			await updatePackageJsonFileAsync(dir, async (packageJson) => {
-				try {
-					const missingElements = await getApiLintElementsMissing(packageJson, dir);
-					// 1. Fix config files.
-					//    Config files are written first before any scripts are updated that
-					//    would reference them. In case of failure, the package.json is not
-					//    updated, which helps to avoid noise checking policy again.
-					//    a. Make sure config directories exist using set of unique directories.
-					const configDirs = new Set(
-						[...missingElements.configFiles.keys()].map((configFile) =>
-							path.dirname(configFile),
-						),
-					);
-					await Promise.all(
-						[...configDirs].map(async (configDir) =>
-							fs.promises.mkdir(configDir, { recursive: true }),
-						),
-					);
-					//    b. Write config files.
-					await Promise.all(
-						[...missingElements.configFiles.entries()].map(
-							async ([configFile, mainEntryPointFilePath]) =>
-								writeJson(
-									configFile,
-									{
-										$schema:
-											"https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-										extends: configFile.endsWith("-bundle.json")
-											? commonApiLintConfig.replace(".entrypoint.json", ".json")
-											: commonApiLintConfig,
-										// <projectFolder> is used in place of . to allow
-										// various config file locations. This replace()
-										// also removes a possible `*|` prefix sentinel
-										// for special bundle target.
-										mainEntryPointFilePath: mainEntryPointFilePath.replace(
-											/^(\*\|)?.\//,
-											"<projectFolder>/",
-										),
-									},
-									{ spaces: "\t" },
-								),
-						),
-					);
-					// 2. Fix devDependencies.
-					if (missingElements.devDependencies.length > 0) {
-						packageJson.devDependencies = packageJson.devDependencies ?? {};
-						for (const devDep of missingElements.devDependencies) {
-							// Ideally this would be set with version specified in neighbor
-							// packages. Accept any version and let user set version.
-							packageJson.devDependencies[devDep] = "*";
-						}
-						result.message = `Please set the version for the new devDependencies in ${packageJson.name}.`;
+			let successMessage: string | undefined;
+			const result = await runUpdatePackageJsonFileAsyncResolver(file, async (packageJson) => {
+				const missingElements = await getApiLintElementsMissing(packageJson, dir);
+				// 1. Fix config files.
+				//    Config files are written first before any scripts are updated that
+				//    would reference them. In case of failure, the package.json is not
+				//    updated, which helps to avoid noise checking policy again.
+				//    a. Make sure config directories exist using set of unique directories.
+				const configDirs = new Set(
+					[...missingElements.configFiles.keys()].map((configFile) =>
+						path.dirname(configFile),
+					),
+				);
+				await Promise.all(
+					[...configDirs].map(async (configDir) =>
+						fs.promises.mkdir(configDir, { recursive: true }),
+					),
+				);
+				//    b. Write config files.
+				await Promise.all(
+					[...missingElements.configFiles.entries()].map(
+						async ([configFile, mainEntryPointFilePath]) =>
+							writeJson(
+								configFile,
+								{
+									$schema:
+										"https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+									extends: configFile.endsWith("-bundle.json")
+										? commonApiLintConfig.replace(".entrypoint.json", ".json")
+										: commonApiLintConfig,
+									// <projectFolder> is used in place of . to allow
+									// various config file locations. This replace()
+									// also removes a possible `*|` prefix sentinel
+									// for special bundle target.
+									mainEntryPointFilePath: mainEntryPointFilePath.replace(
+										/^(\*\|)?.\//,
+										"<projectFolder>/",
+									),
+								},
+								{ spaces: "\t" },
+							),
+					),
+				);
+				// 2. Fix devDependencies.
+				if (missingElements.devDependencies.length > 0) {
+					packageJson.devDependencies = packageJson.devDependencies ?? {};
+					for (const devDep of missingElements.devDependencies) {
+						// Ideally this would be set with version specified in neighbor
+						// packages. Accept any version and let user set version.
+						packageJson.devDependencies[devDep] = "*";
 					}
-					// 3. Fix scripts.
-					//    Final step using all prior elements.
-					for (const { name, commandLine } of missingElements.scriptEntries) {
-						packageJson.scripts[name] = commandLine;
-					}
-				} catch (error: unknown) {
-					result.resolved = false;
-					result.message = (error as Error).message;
+					successMessage = `Please set the version for the new devDependencies in ${packageJson.name}.`;
+				}
+				// 3. Fix scripts.
+				//    Final step using all prior elements.
+				for (const { name, commandLine } of missingElements.scriptEntries) {
+					packageJson.scripts[name] = commandLine;
 				}
 			});
-
+			if (result.resolved && successMessage !== undefined) {
+				return { resolved: true, message: successMessage };
+			}
 			return result;
 		},
 	},
@@ -1916,11 +1892,11 @@ export const handlers: Handler[] = [
 			packageJsonFilePath: string,
 			rootDirectoryPath: string,
 		): { resolved: boolean; message?: string } => {
-			const result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
+			let devDepsMissing = false;
+			const result = runUpdatePackageJsonResolver(packageJsonFilePath, (packageJson) => {
 				// If the package is private, there is nothing to fix.
 				if (packageJson.private === true) {
-					return result;
+					return;
 				}
 
 				const requirements =
@@ -1963,13 +1939,17 @@ export const handlers: Handler[] = [
 					const devDependencies = Object.keys(packageJson.devDependencies ?? {});
 					for (const requiredDevDependency of requirements.requiredDevDependencies) {
 						if (!devDependencies.includes(requiredDevDependency)) {
-							result.resolved = false;
+							// Signal failure via closure so the file is still written with any
+							// script corrections that were applied above.
+							devDepsMissing = true;
 							break;
 						}
 					}
 				}
 			});
-
+			if (devDepsMissing) {
+				return { resolved: false };
+			}
 			return result;
 		},
 	},

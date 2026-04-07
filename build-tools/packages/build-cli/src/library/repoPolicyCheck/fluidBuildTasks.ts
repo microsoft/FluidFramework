@@ -6,10 +6,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
-} from "@fluid-tools/build-infrastructure";
-import {
 	FluidRepo,
 	getFluidBuildConfig,
 	getTaskDefinitions,
@@ -21,7 +17,12 @@ import {
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
 import { getFlubConfig } from "../../config.js";
-import { type Handler, readFile } from "./common.js";
+import {
+	type Handler,
+	readFile,
+	runUpdatePackageJsonFileAsyncResolver,
+	runUpdatePackageJsonResolver,
+} from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
 /**
@@ -847,19 +848,13 @@ export const handlers: Handler[] = [
 			file: string,
 			root: string,
 		): Promise<{ resolved: boolean; message?: string }> => {
-			let result: { resolved: boolean; message?: string } = { resolved: true };
-			await updatePackageJsonFileAsync(path.dirname(file), async (json) => {
+			return runUpdatePackageJsonFileAsyncResolver(file, async (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
 				}
-				try {
-					const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
-					patchTaskDeps(root, json, "eslint", scriptDeps);
-				} catch (error: unknown) {
-					result = { resolved: false, message: (error as Error).message };
-				}
+				const scriptDeps = await eslintGetScriptDependencies(path.dirname(file), root, json);
+				patchTaskDeps(root, json, "eslint", scriptDeps);
 			});
-			return result;
 		},
 	},
 	{
@@ -902,8 +897,7 @@ export const handlers: Handler[] = [
 		handler: async (file: string, root: string) =>
 			buildDepsHandler(file, root, checkTscDependencies),
 		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
-			let result: { resolved: boolean; message?: string } = { resolved: true };
-			updatePackageJsonFile(path.dirname(file), (json) => {
+			return runUpdatePackageJsonResolver(file, (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
 				}
@@ -918,24 +912,18 @@ export const handlers: Handler[] = [
 					for (const commandUntrimmed of scriptCommands.split("&&")) {
 						const command = commandUntrimmed.trim();
 						if (shouldProcessScriptForTsc(script, command, ignore)) {
-							try {
-								const checkDeps = getTscCommandDependencies(
-									packageDir,
-									json,
-									script,
-									command,
-									packageMap,
-								);
-								patchTaskDeps(root, json, script, checkDeps);
-							} catch (error: unknown) {
-								result = { resolved: false, message: (error as Error).message };
-								return;
-							}
+							const checkDeps = getTscCommandDependencies(
+								packageDir,
+								json,
+								script,
+								command,
+								packageMap,
+							);
+							patchTaskDeps(root, json, script, checkDeps);
 						}
 					}
 				}
 			});
-			return result;
 		},
 	},
 ];
