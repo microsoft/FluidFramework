@@ -4,6 +4,7 @@
  */
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -57,11 +58,15 @@ export const toRedirectTable = (
 	blobManagerLoadInfo: IBlobManagerLoadInfo,
 	logger: ITelemetryLoggerExt,
 ): Map<string, string> => {
-	logger.sendTelemetryEvent({
-		eventName: "AttachmentBlobsLoaded",
-		count: blobManagerLoadInfo.ids?.length ?? 0,
-		redirectTable: blobManagerLoadInfo.redirectTable?.length,
-	});
+	logger.sendTelemetryEvent(
+		{
+			eventName: "AttachmentBlobsLoaded",
+			count: blobManagerLoadInfo.ids?.length ?? 0,
+			redirectTable: blobManagerLoadInfo.redirectTable?.length,
+		},
+		undefined,
+		LogLevel.info,
+	);
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
 		for (const storageId of blobManagerLoadInfo.ids) {

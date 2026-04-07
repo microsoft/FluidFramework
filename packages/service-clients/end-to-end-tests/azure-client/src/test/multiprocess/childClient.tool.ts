@@ -86,7 +86,7 @@ function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): v
 	if (interest === "details") {
 		content.details = event.details;
 	}
-	log(`[${logLevel ?? LogLevel.default}]`, content);
+	log(`[${logLevel ?? LogLevel.essential}]`, content);
 }
 
 /**

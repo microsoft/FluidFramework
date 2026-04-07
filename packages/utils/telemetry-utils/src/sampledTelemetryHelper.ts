@@ -4,6 +4,7 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
@@ -293,7 +294,7 @@ export class SampledTelemetryHelper<
 				...processedCustomData,
 			};
 
-			this.logger.sendPerformanceEvent(telemetryEvent);
+			this.logger.sendPerformanceEvent(telemetryEvent, undefined, LogLevel.info);
 			this.measurementsMap.delete(bucket);
 		}
 	}

@@ -78,11 +78,13 @@ export const LogLevel = {
 	 * Value to assume when not otherwise given.
 	 * @see {@link (LogLevel:variable).info}
 	 * @deprecated Use {@link (LogLevel:variable).info} to preserve prior treatment.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/26969} for removal timeline.
 	 */
 	default: 20, // Default log level
 
 	/**
-	 * @deprecated Use {@link (LogLevel:variable).essential}
+	 * @deprecated Use {@link (LogLevel:variable).essential}.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/26969} for removal timeline.
 	 */
 	error: 30, // To log errors.
 } as const;
