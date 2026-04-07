@@ -174,9 +174,10 @@ export function renderSchemaTypeScript(
 		const elementTypes = renderAnnotatedChildTypes(schema);
 		const binding = renderBindingIntersection(definition);
 		if (elementTypes.staged === true) {
-			const nonStagedTypes = [...schema.childTypes].filter(
-				(child) => !schema.simpleAllowedTypes.get(child.identifier)?.isStaged,
-			);
+			const nonStagedTypes = [...schema.childTypes].filter((child) => {
+				const isStaged = schema.simpleAllowedTypes.get(child.identifier)?.isStaged;
+				return isStaged === undefined || isStaged === false;
+			});
 			const readType = formatExpression(elementTypes);
 			const writeType = formatExpression(renderAllowedTypes(nonStagedTypes));
 			return {
