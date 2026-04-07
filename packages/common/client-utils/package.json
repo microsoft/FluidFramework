@@ -107,8 +107,7 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/mocha/**/*.spec.*js\" mocha",
 		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/mocha/**/*.spec.*js\" mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -144,7 +143,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.91.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.92.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

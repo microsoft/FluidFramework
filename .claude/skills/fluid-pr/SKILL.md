@@ -6,16 +6,17 @@ description: Use when creating a pull request in the Fluid Framework repo. Compo
 <required>
 *CRITICAL* Add the following steps to your Todo list using TodoWrite:
 
-1. Confirm you are NOT on `main` or any release branch. If you are, stop and tell the user: you cannot create a PR from a protected branch — they need to create or switch to a feature branch first.
-2. Verify that the `origin` remote does not point to `microsoft/FluidFramework`. If it does, stop and tell the user: pushing a branch directly to the main repo is not allowed — they should push to their fork instead.
-3. Compose the PR title following Fluid Framework conventions.
-4. Compose the PR body following the official template.
-5. Print the proposed title and body as text, then immediately use the `AskUserQuestion` tool to let the user choose what to do next. Use these exact options:
+1. Run the ci-readiness-check skill. If the user skips it, continue. If it reports remaining issues, tell the user and ask whether to proceed with the PR anyway — but always continue with the PR skill regardless of their answer.
+2. Confirm you are NOT on `main` or any release branch. If you are, stop and tell the user: you cannot create a PR from a protected branch — they need to create or switch to a feature branch first.
+3. Verify that the `origin` remote does not point to `microsoft/FluidFramework`. If it does, stop and tell the user: pushing a branch directly to the main repo is not allowed — they should push to their fork instead.
+4. Compose the PR title following Fluid Framework conventions.
+5. Compose the PR body following the official template.
+6. Print the proposed title and body as text, then immediately use the `AskUserQuestion` tool to let the user choose what to do next. Use these exact options:
    - "Create PR" — Push the branch and open the pull request
    - "Create draft PR" — Push the branch and open a draft pull request
    - "Edit" — Revise the title or body before creating
    - "Cancel" — Don't create a PR
-6. If the user picks "Edit", apply their edits and re-present (go back to step 5). If "Create PR" or "Create draft PR", push and create accordingly. If "Cancel", stop.
+7. If the user picks "Edit", apply their edits and re-present (go back to step 6). If "Create PR" or "Create draft PR", push and create accordingly. If "Cancel", stop.
 </required>
 
 # PR Title Conventions
@@ -76,7 +77,7 @@ git remote get-url origin
 
 If the URL contains `microsoft/FluidFramework`, **stop** — pushing a branch directly to the main repo is almost certainly not intended. Tell the user they likely need to push to their fork instead. Do not proceed.
 
-Once the checks in steps 1–2 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 5. This is the only point where the skill asks the user a question.
+Once the checks in steps 2–3 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 6. Aside from any prompt shown by `ci-readiness-check` in step 1, this is the only point where the `fluid-pr` flow asks the user a question.
 
 ```bash
 # Push branch (first time)

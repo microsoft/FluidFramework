@@ -105,8 +105,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -123,7 +122,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.91.0",
+		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.92.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
@@ -133,17 +132,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IFluidDataStoreContext": {
-				"forwardCompat": false
-			},
-			"Interface_IFluidDataStoreContextDetached": {
-				"forwardCompat": false
-			},
-			"Interface_IFluidParentContext": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

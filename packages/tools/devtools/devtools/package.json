@@ -94,8 +94,7 @@
 		"test": "echo TODO: add tests",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
 		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -130,7 +129,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.91.0",
+		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.92.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",

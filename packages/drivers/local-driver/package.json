@@ -91,8 +91,7 @@
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -130,7 +129,7 @@
 		"@fluidframework/server-services-core": "^7.0.0",
 		"@fluidframework/server-test-utils": "^7.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"jsrsasign": "^11.0.0",
+		"jsrsasign": "^11.1.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
@@ -141,7 +140,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.91.0",
+		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.92.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.10",

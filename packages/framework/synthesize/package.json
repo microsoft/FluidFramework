@@ -88,8 +88,7 @@
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -127,7 +126,7 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@2.91.0",
+		"@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@2.92.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
