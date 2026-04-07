@@ -4,11 +4,14 @@ This codespace is configured for AI-agent-assisted workflows with 32 CPUs and
 64 GB RAM. It includes additional CLI tooling (GitHub CLI, SSH, agency, repoverlay).
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!  To use AI agents, run the following command first:                       !!
+!!  To use AI agents, run the following command first:                        !!
 !!                                                                            !!
 !!      pnpm install:agency                                                   !!
 !!                                                                            !!
 !!  Then open a NEW terminal for the agent aliases to be available.           !!
+!!                                                                            !!
+!!  NOTE: pnpm install:agency requires VS Code (desktop or SSH).              !!
+!!  It may not work in a browser-based Codespace.                             !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 AI agent aliases (provided by agency):

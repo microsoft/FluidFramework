@@ -8,6 +8,11 @@ This codespace is pre-configured for AI-agent-assisted development of the Fluid 
 
 Agency **must** be installed manually after the Codespace starts. Run `pnpm install:agency` in the terminal — this requires Azure authentication and will open a browser window for sign-in.
 
+> [!NOTE]
+> `pnpm install:agency` is supported in **VS Code** (desktop or SSH). It may not work in a
+> browser-based Codespace because the OAuth redirect requires a local browser and authentication may
+> not complete correctly.
+
 Then open a **new terminal** for the agent aliases to be available.
 
 ## Quick Start
@@ -32,11 +37,11 @@ These aliases are available in all terminal sessions (after installing agency):
 
 | Alias | Command | Purpose |
 |---|---|---|
-| `claude` | `repoverlay switch ff-claude && agency claude` | Default Claude Code model |
-| `haiku` | `repoverlay switch ff-claude && agency claude -- --model haiku` | Fastest, cheapest option |
-| `sonnet` | `repoverlay switch ff-claude && agency claude -- --model sonnet` | Balanced capabilities |
-| `opus` | `repoverlay switch ff-claude && agency claude -- --model opus` | Most capable model |
-| `nori` | `repoverlay switch nori && agency claude` | Switch to nori overlay and launch Claude |
+| `claude` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework'` | Default Claude Code model |
+| `haiku` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model haiku` | Fastest, cheapest option |
+| `sonnet` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model sonnet` | Balanced capabilities |
+| `opus` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model opus` | Most capable model |
+| `nori` | `repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework'` | Switch to nori overlay and launch Claude |
 
 ### Copilot
 
@@ -45,7 +50,7 @@ These aliases are available in all terminal sessions (after installing agency):
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
 | `copilot-ado` | `agency copilot --mcp 'ado --org fluidframework'` | Azure DevOps integration |
 | `copilot-kusto` | `agency copilot --mcp 'kusto ...'` | Telemetry queries |
-| `copilot-oce` | `repoverlay switch ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
+| `copilot-oce` | `repoverlay switch --copy ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
 | `copilot-work` | `agency copilot --mcp 'workiq'` | WorkIQ integration |
 
 ### Utility
