@@ -369,14 +369,8 @@ export class Outbox {
 			return;
 		}
 
-		this.flushInternal({
-			batchManager: this.blobAttachBatch,
-			resubmitInfo,
-		});
-		this.flushInternal({
-			batchManager: this.mainBatch,
-			resubmitInfo,
-		});
+		this.flushInternal(this.blobAttachBatch, resubmitInfo);
+		this.flushInternal(this.mainBatch, resubmitInfo);
 	}
 
 	private flushEmptyBatch(
@@ -408,11 +402,10 @@ export class Outbox {
 		return;
 	}
 
-	private flushInternal(params: {
-		batchManager: BatchManager;
-		resubmitInfo?: BatchResubmitInfo; // undefined if not resubmitting
-	}): void {
-		const { batchManager, resubmitInfo } = params;
+	private flushInternal(
+		batchManager: BatchManager,
+		resubmitInfo?: BatchResubmitInfo, // undefined if not resubmitting
+	): void {
 		if (batchManager.empty) {
 			return;
 		}
@@ -469,9 +462,9 @@ export class Outbox {
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
 				0x9d2 /* unexpected negative clientSequenceNumber (empty batch should yield undefined) */,
 			);
+		} else {
+			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 		}
-
-		addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 
 		this.params.pendingStateManager.onFlushBatch(
 			rawBatch.messages,
@@ -514,7 +507,7 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal({ batchManager });
+		this.flushInternal(batchManager);
 		this.rebasing = false;
 	}
 

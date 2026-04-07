@@ -4777,7 +4777,6 @@ describe("Runtime", () => {
 				});
 
 				it("IdAllocation + reconnect while in staging mode does not hit coherency check", async () => {
-					// This is the highest-risk scenario from Mark's test plan.
 					// With JIT ID allocation, the ID alloc op is generated at flush time
 					// (via generateIdAllocationOp callback), so it naturally gets the correct refSeq.
 					// The "op" handler calls flush() directly, so the IdAllocation op still gets
