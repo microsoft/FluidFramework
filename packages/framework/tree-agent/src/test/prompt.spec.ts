@@ -14,11 +14,16 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "@fluidframework/tree/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	exposePropertiesSymbol,
+	type ExposedMethods,
+	type ExposedProperties,
+} from "@fluidframework/type-factory/alpha";
 
 import type { TreeView } from "../api.js";
-import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { fluidHandleTypeName, getPrompt } from "../prompt.js";
-import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
 import { typeFactory as tf } from "../treeAgentTypes.js";
 
@@ -90,7 +95,7 @@ describe("Prompt generation", () => {
 				}
 
 				public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-					methods.expose(
+					methods.exposeMethod(
 						Obj,
 						"method",
 						buildFunc({ returns: tf.boolean() }, ["s", tf.string()]),
@@ -285,7 +290,7 @@ describe("Prompt snapshot", () => {
 		}
 		class NumberValue extends sf.object("TestArrayItem", { value: sf.number }) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-				methods.expose(
+				methods.exposeMethod(
 					NumberValue,
 					"formatValue",
 					buildFunc(
@@ -327,7 +332,7 @@ describe("Prompt snapshot", () => {
 			handle: sf.optional(sf.handle),
 		}) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-				methods.expose(
+				methods.exposeMethod(
 					Obj,
 					"processData",
 					buildFunc(
