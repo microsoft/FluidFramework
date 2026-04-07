@@ -18,7 +18,9 @@ export interface FluidIterable<T> {
  * @privateRemarks
  * The done branch uses `any` rather than `undefined` to match TypeScript's built-in IteratorReturnResult, which defaults to any for the same reason.
  * Using `undefined` causes TypeScript to include it in type inference at call sites like `Array.from` which would infer `T | undefined` instead of `T`.
- * The done value is never meaningful to callers since values are only consumed when done is false, so `any` is both correct and safe here.
+ * The done value is rarely meaningful to callers since values are mainly consumed when done is false.
+ * Thus `any` is not particularly harmful here, and the unsafety is worth it as
+ * it interacts better with the existing TypeScript `IteratorResult` interfaces where `TReturn` defaults to any.
  *
  * @sealed @alpha
  */
