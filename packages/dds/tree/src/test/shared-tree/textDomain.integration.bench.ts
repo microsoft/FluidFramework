@@ -88,8 +88,16 @@ describe("TextDomain benchmarks", () => {
 		 * Numbers of characters to insert or remove in each benchmark.
 		 */
 		const characterCountConfigs = [
-			{ characterCount: 1, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
-			{ characterCount: 10, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: false },
+			{
+				characterCount: 1,
+				benchmarkType: BenchmarkType.Measurement,
+				runInCorrectnessMode: true,
+			},
+			{
+				characterCount: 10,
+				benchmarkType: BenchmarkType.Perspective,
+				runInCorrectnessMode: false,
+			},
 			{
 				characterCount: 100,
 				benchmarkType: BenchmarkType.Measurement,
@@ -209,10 +217,7 @@ describe("TextDomain benchmarks", () => {
 								const opStats = getOperationsStats(localOps);
 								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
 								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(
-										`${statKey} [depth=${depth}]`,
-										opStats[statKey],
-									);
+									reporter.addMeasurement(`${statKey} [depth=${depth}]`, opStats[statKey]);
 								}
 							}
 							assertLinear({ points: opSizeByDepth });
@@ -324,10 +329,7 @@ describe("TextDomain benchmarks", () => {
 								const opStats = getOperationsStats(localOps);
 								opSizeByDepth.push({ x: depth, y: opStats["Total Op Size (Bytes)"] });
 								for (const statKey of Object.keys(opStats)) {
-									reporter.addMeasurement(
-										`${statKey} [depth=${depth}]`,
-										opStats[statKey],
-									);
+									reporter.addMeasurement(`${statKey} [depth=${depth}]`, opStats[statKey]);
 								}
 							}
 							assertLinear({ points: opSizeByDepth });
