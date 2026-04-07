@@ -7,6 +7,11 @@ description: Fix a vulnerable transitive dependency by applying pnpm overrides t
 
 This skill remediates a vulnerable transitive dependency across all pnpm lockfiles in the repo.
 
+**Important:** When searching for files or text in this repo, **always exclude `node_modules`**. Use
+`-not -path "*/node_modules/*"` with `find`, `--glob '!node_modules'` with `grep`/ripgrep, and avoid
+glob patterns like `**/pnpm-workspace.yaml` that will match inside `node_modules`. There is never a
+reason to look inside `node_modules` during this workflow.
+
 ## Inputs
 
 Before starting, confirm you have all three of these from the user:
@@ -78,11 +83,14 @@ Also add a comment in `pnpm.comments` (or `pnpm.commentsOverrides` — match whi
 
 **3b. Run pnpm install:**
 
+**Always use absolute paths.** Do not `cd` into a directory without returning to the repo root afterward —
+a stale working directory will cause subsequent commands to target the wrong lockfile.
+
 ```bash
-cd <directory-of-package.json> && pnpm install --no-frozen-lockfile
+(cd /absolute/path/to/directory-of-package.json && pnpm install --no-frozen-lockfile)
 ```
 
-Use `--no-frozen-lockfile` because the override will cause lockfile changes.
+Using a subshell `( )` ensures the working directory resets after the command completes.
 
 ## Step 4: Verify the fix
 
@@ -139,7 +147,7 @@ Remove the override entry (and its comment) from `package.json`.
 **5b. Reinstall:**
 
 ```bash
-cd <directory-of-package.json> && pnpm install --no-frozen-lockfile
+(cd /absolute/path/to/directory-of-package.json && pnpm install --no-frozen-lockfile)
 ```
 
 **5c. Re-check the lockfile:**
