@@ -63,7 +63,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		}),
 		normalize: Flags.boolean({
 			char: "n",
-			description: `Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.`,
+			description: `Normalizes type test configuration in package.json. Removes unrecognized data from "typeValidation" and adds any missing default settings. Also updates the "typetests:gen" script: adds or replaces it when type tests are enabled, or removes it when disabled.`,
 			exclusive: ["enable"],
 		}),
 		...PackageCommand.flags,
