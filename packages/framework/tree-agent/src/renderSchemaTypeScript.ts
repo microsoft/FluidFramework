@@ -175,7 +175,7 @@ export function renderSchemaTypeScript(
 		const binding = renderBindingIntersection(definition);
 		if (elementTypes.staged === true) {
 			const nonStagedTypes = [...schema.childTypes].filter(
-				(child) => schema.simpleAllowedTypes.get(child.identifier)?.isStaged === false,
+				(child) => !schema.simpleAllowedTypes.get(child.identifier)?.isStaged,
 			);
 			const readType = formatExpression(elementTypes);
 			const writeType = formatExpression(renderAllowedTypes(nonStagedTypes));
@@ -200,7 +200,7 @@ export function renderSchemaTypeScript(
 		const binding = renderBindingIntersection(definition);
 		if (valueType.staged === true) {
 			const nonStagedTypes = [...schema.childTypes].filter(
-				(child) => schema.simpleAllowedTypes.get(child.identifier)?.isStaged === false,
+				(child) => !schema.simpleAllowedTypes.get(child.identifier)?.isStaged,
 			);
 			const readType = formatExpression(valueType);
 			const writeType = formatExpression(renderAllowedTypes(nonStagedTypes));
@@ -226,7 +226,7 @@ export function renderSchemaTypeScript(
 		let description = schema.metadata?.description;
 		if (valueType.staged === true) {
 			const stagedTypes = [...schema.childTypes].filter(
-				(child) => schema.simpleAllowedTypes.get(child.identifier)?.isStaged !== false,
+				(child) => !!schema.simpleAllowedTypes.get(child.identifier)?.isStaged,
 			);
 			const stagedTypeList = formatExpression(renderAllowedTypes(stagedTypes));
 			const note = `Warning: do not set record values to any of the following types (they are staged and not yet writeable): ${stagedTypeList}`;
@@ -392,8 +392,7 @@ export function renderSchemaTypeScript(
 	): TypeExpression {
 		const expressions: TypeExpression[] = [];
 		for (const childSchema of schema.childTypes) {
-			const isStaged =
-				schema.simpleAllowedTypes.get(childSchema.identifier)?.isStaged !== false;
+			const isStaged = !!schema.simpleAllowedTypes.get(childSchema.identifier)?.isStaged;
 			let expr: TypeExpression;
 			if (isNamedSchema(childSchema.identifier)) {
 				expr = {
