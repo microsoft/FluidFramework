@@ -81,8 +81,8 @@ describe("TextDomain benchmarks", () => {
 		 */
 		const depthConfigs = [
 			{ depth: 1, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
-			{ depth: 5, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: false },
-			{ depth: 25, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: false },
+			{ depth: 5, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
+			{ depth: 25, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
 			{ depth: 125, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: false },
 		] as const;
 
@@ -98,12 +98,12 @@ describe("TextDomain benchmarks", () => {
 			{
 				characterCount: 10,
 				benchmarkType: BenchmarkType.Perspective,
-				runInCorrectnessMode: false,
+				runInCorrectnessMode: true,
 			},
 			{
 				characterCount: 100,
 				benchmarkType: BenchmarkType.Measurement,
-				runInCorrectnessMode: false,
+				runInCorrectnessMode: true,
 			},
 			{
 				characterCount: 1000,
@@ -124,12 +124,12 @@ describe("TextDomain benchmarks", () => {
 			{
 				keyLength: 10,
 				benchmarkType: BenchmarkType.Perspective,
-				runInCorrectnessMode: false,
+				runInCorrectnessMode: true,
 			},
 			{
 				keyLength: 100,
 				benchmarkType: BenchmarkType.Measurement,
-				runInCorrectnessMode: false,
+				runInCorrectnessMode: true,
 			},
 			{
 				keyLength: 1000,
@@ -409,12 +409,12 @@ describe("TextDomain benchmarks", () => {
 			{
 				stringLength: 10,
 				benchmarkType: BenchmarkType.Perspective,
-				runInCorrectnessMode: false,
+				runInCorrectnessMode: true,
 			},
 			{
 				stringLength: 100,
 				benchmarkType: BenchmarkType.Measurement,
-				runInCorrectnessMode: false,
+				runInCorrectnessMode: true,
 			},
 			{
 				stringLength: 1000,
