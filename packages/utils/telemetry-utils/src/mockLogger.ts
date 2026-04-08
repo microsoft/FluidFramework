@@ -41,7 +41,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	public readonly minLogLevel: LogLevel;
 
 	public constructor(minLogLevel?: LogLevel) {
-		this.minLogLevel = minLogLevel ?? LogLevel.essential;
+		this.minLogLevel = minLogLevel ?? LogLevel.info;
 	}
 
 	/**

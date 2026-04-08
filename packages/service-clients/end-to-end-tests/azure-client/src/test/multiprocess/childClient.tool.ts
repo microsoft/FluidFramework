@@ -14,8 +14,7 @@ import {
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { LogLevel } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, LogLevel } from "@fluidframework/core-interfaces";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
@@ -86,7 +85,7 @@ function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): v
 	if (interest === "details") {
 		content.details = event.details;
 	}
-	log(`[${logLevel ?? LogLevel.essential}]`, content);
+	log(`[${logLevel ?? "unspecified"}]`, content);
 }
 
 /**

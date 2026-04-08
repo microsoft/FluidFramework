@@ -187,7 +187,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.info = LogLevel.info,
 	): void {
 		this.sendTelemetryEventCore(
 			{ ...event, category: event.category ?? "generic" },
