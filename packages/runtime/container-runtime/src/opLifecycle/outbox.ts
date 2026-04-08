@@ -371,7 +371,7 @@ export class Outbox {
 		let sendIdAllocOp = true;
 		if (!this.blobAttachBatch.empty) {
 			this.flushInternal(this.blobAttachBatch, sendIdAllocOp, resubmitInfo);
-			sendIdAllocOp = false; // Only send ID alloc op for the first batch flushed, if needed. This ensures correct refSeq and prevents duplicate ID alloc ops.
+			sendIdAllocOp = false; // Only send ID alloc op for the first batch flushed, if needed. Prevents duplicate ID alloc ops.
 		}
 		if (!this.mainBatch.empty) {
 			this.flushInternal(this.mainBatch, sendIdAllocOp, resubmitInfo);
@@ -409,7 +409,7 @@ export class Outbox {
 
 	private flushInternal(
 		batchManager: BatchManager,
-		sendIdAllocOp: boolean, // undefined if not needed
+		sendIdAllocOp: boolean,
 		resubmitInfo?: BatchResubmitInfo, // undefined if not resubmitting
 	): void {
 		assert(!batchManager.empty, "Cannot flush an empty batch");

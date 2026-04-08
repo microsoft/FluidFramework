@@ -349,7 +349,7 @@ describe("Outbox", () => {
 		outbox.submit(messages[1]);
 		outbox.flush();
 
-		// Flush 2 — no more ID alloc ops
+		// Flush 2 — idAlloc op prepended again (generateIdAllocationOp returns an op on every call in this test)
 		outbox.submit(messages[2]);
 		outbox.flush();
 
@@ -1183,7 +1183,7 @@ describe("Outbox", () => {
 			outbox.submit(mainMsg);
 			outbox.flush();
 
-			// Called once for blobAttach (returns idAlloc), once for main (returns undefined)
+			// Called once total — only for the first non-empty batch (blobAttach); main batch is skipped
 			assert.equal(
 				idAllocCallCount,
 				1,
