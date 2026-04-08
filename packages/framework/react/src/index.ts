@@ -46,4 +46,4 @@ export {
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
 export { syncTextToTree, PlainTextMainView } from "./text/index.js";
-export { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
+export { UndoRedoStacks, LabeledUndoRedoStacks, type UndoRedo } from "./undoRedo.js";
