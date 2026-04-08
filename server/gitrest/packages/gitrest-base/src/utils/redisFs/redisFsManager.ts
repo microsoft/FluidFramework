@@ -230,7 +230,10 @@ export class RedisFs extends FsPromisesBase {
 		const [folderpath] = args;
 		const folderpathString = folderpath.toString();
 
-		const result = await executeRedisFsApiWithMetric(
+		// Cast through unknown because keysByPrefix returns string[], which doesn't
+		// overlap with Dirent<Buffer>[] (a return type variant added in @types/node@22).
+		// This is safe because isomorphic-git always expects string[] results from readdir.
+		return executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.keysByPrefix(folderpathString),
 			RedisFsApis.Readdir,
 			this.redisFsConfig.enableRedisFsMetrics,
@@ -238,12 +241,7 @@ export class RedisFs extends FsPromisesBase {
 			{
 				folderpathString,
 			},
-		);
-
-		// Cast through unknown because keysByPrefix returns string[], which doesn't
-		// overlap with Dirent<Buffer>[] (a return type variant added in @types/node@22).
-		// This is safe because isomorphic-git always expects string[] results from readdir.
-		return result as unknown as Awaited<ReturnType<typeof fsPromises.readdir>>;
+		) as unknown as ReturnType<typeof fsPromises.readdir>;
 	}
 
 	/**
