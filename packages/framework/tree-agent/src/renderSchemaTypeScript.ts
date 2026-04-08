@@ -177,11 +177,14 @@ export function renderSchemaTypeScript(
 	): RenderResult {
 		const elementTypes = renderAnnotatedChildTypes(schema);
 		const binding = renderBindingIntersection(definition);
+
+		// When staged types are present, split into separate read/write types so
+		// staged types appear readable but not writeable.
 		if (elementTypes.staged === true) {
-			const nonStagedTypes = [...schema.childTypes].filter((child) => {
-				const isStaged = schema.simpleAllowedTypes.get(child.identifier)?.isStaged;
-				return isStaged === undefined || isStaged === false;
-			});
+			const nonStagedTypes = [...schema.childTypes].filter(
+				(child) =>
+					typeof schema.simpleAllowedTypes.get(child.identifier)?.isStaged !== "object",
+			);
 			const readType = formatExpression(elementTypes);
 			const writeType = formatExpression(renderAllowedTypes(nonStagedTypes));
 			return {
@@ -189,6 +192,7 @@ export function renderSchemaTypeScript(
 				description: describeBinding(schema.metadata?.description, "array", binding),
 			};
 		}
+
 		const base = `${formatExpression(elementTypes)}[]`;
 		return {
 			declaration: `type ${name} = ${base}${binding.suffix};`,
@@ -203,9 +207,13 @@ export function renderSchemaTypeScript(
 	): RenderResult {
 		const valueType = renderAnnotatedChildTypes(schema);
 		const binding = renderBindingIntersection(definition);
+
+		// When staged types are present, split into separate read/write types so
+		// staged types appear readable but not writeable.
 		if (valueType.staged === true) {
 			const nonStagedTypes = [...schema.childTypes].filter(
-				(child) => !schema.simpleAllowedTypes.get(child.identifier)?.isStaged,
+				(child) =>
+					typeof schema.simpleAllowedTypes.get(child.identifier)?.isStaged !== "object",
 			);
 			const readType = formatExpression(valueType);
 			const writeType = formatExpression(renderAllowedTypes(nonStagedTypes));
@@ -229,9 +237,14 @@ export function renderSchemaTypeScript(
 		const valueType = renderAnnotatedChildTypes(schema);
 		const binding = renderBindingIntersection(definition);
 		let description = schema.metadata?.description;
+
+		// Records don't support separate read/write types, so emit a warning
+		// listing the staged types that should not be used as values.
+		// A runtime error will occur if a a staged type is attempted to be written to a record.
 		if (valueType.staged === true) {
 			const stagedTypes = [...schema.childTypes].filter(
-				(child) => !!schema.simpleAllowedTypes.get(child.identifier)?.isStaged,
+				(child) =>
+					typeof schema.simpleAllowedTypes.get(child.identifier)?.isStaged === "object",
 			);
 			const stagedTypeList = formatExpression(renderAllowedTypes(stagedTypes));
 			const note = `Warning: do not set record values to any of the following types (they are staged and not yet writeable): ${stagedTypeList}`;
@@ -256,7 +269,9 @@ export function renderSchemaTypeScript(
 		if (setType === undefined) {
 			lines.push(`${name}${optional ? "?" : ""}: ${type};`);
 		} else {
-			lines.push(`get ${name}(): ${type};\n\tset ${name}(value: ${setType});`);
+			const undefinedSuffix = optional ? " | undefined" : "";
+			lines.push(`get ${name}(): ${type}${undefinedSuffix};`);
+			lines.push(`set ${name}(value: ${setType}${undefinedSuffix});`);
 		}
 		return lines;
 	}
@@ -316,7 +331,9 @@ export function renderSchemaTypeScript(
 				renderAllowedTypes(nonStagedSchemas),
 				TypePrecedence.Union,
 			);
-			return { optional, type: getType, setType };
+			const comment =
+				description === undefined || description === "" ? undefined : description;
+			return { optional, type: getType, setType, comment };
 		}
 
 		return {
@@ -397,7 +414,9 @@ export function renderSchemaTypeScript(
 	): TypeExpression {
 		const expressions: TypeExpression[] = [];
 		for (const childSchema of schema.childTypes) {
-			const isStaged = !!schema.simpleAllowedTypes.get(childSchema.identifier)?.isStaged;
+			// isStaged is a SchemaUpgrade object when the type is staged, or false/undefined otherwise.
+			const isStaged =
+				typeof schema.simpleAllowedTypes.get(childSchema.identifier)?.isStaged === "object";
 			let expr: TypeExpression;
 			if (isNamedSchema(childSchema.identifier)) {
 				expr = {

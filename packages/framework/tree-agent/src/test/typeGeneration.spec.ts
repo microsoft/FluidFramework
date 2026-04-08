@@ -395,7 +395,30 @@ type MapWithProperty = Map<string, string> & {
 				objectDomainSchemaString,
 				`interface ObjWithStagedType {
     get foo(): string | number;
-	set foo(value: string);
+    set foo(value: string);
+}
+`,
+			);
+		});
+
+		it("for optional object node fields", () => {
+			class ObjWithOptionalStagedType extends sfBeta.object("ObjWithOptionalStagedType", {
+				foo: sfBeta.optional(
+					SchemaFactoryBeta.types([
+						SchemaFactoryBeta.string,
+						SchemaFactoryBeta.staged(SchemaFactoryBeta.number),
+					]),
+				),
+			}) {}
+
+			const objectDomainSchemaString = getDomainSchemaString(ObjWithOptionalStagedType, {
+				foo: "test",
+			});
+			assert.deepEqual(
+				objectDomainSchemaString,
+				`interface ObjWithOptionalStagedType {
+    get foo(): string | number | undefined;
+    set foo(value: string | undefined);
 }
 `,
 			);
