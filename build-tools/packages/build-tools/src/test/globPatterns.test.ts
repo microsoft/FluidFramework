@@ -8,7 +8,12 @@ import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach } from "mocha";
-import { globFn, globWithGitignore, toPosixPath } from "../fluidBuild/tasks/taskUtils";
+import {
+	clearGitignoreRuleSetsCache,
+	globFn,
+	globWithGitignore,
+	toPosixPath,
+} from "../fluidBuild/tasks/taskUtils";
 import { testDataPath } from "./init";
 
 const globTestDataPath = path.resolve(testDataPath, "glob");
@@ -237,8 +242,14 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 	const gitIgnoredDir = path.join(globTestDataPath, "gitignored");
 	const gitIgnoredFile = path.join(gitIgnoredDir, "shouldBeIgnored.ts");
 	const ignoredPatternFile = path.join(globTestDataPath, "test.ignored");
+	const nestedGitIgnoredDir = path.join(globTestDataPath, "nested-gitignored");
+	const nestedGitignoreFile = path.join(nestedGitIgnoredDir, ".gitignore");
+	const nestedGitIgnoredFile = path.join(nestedGitIgnoredDir, "ignoredByNested.ts");
+	const nestedGitKeptFile = path.join(nestedGitIgnoredDir, "kept.ts");
 
 	beforeEach(async () => {
+		clearGitignoreRuleSetsCache();
+
 		// Create gitignored directory and file for testing
 		await mkdir(gitIgnoredDir, { recursive: true });
 		await writeFile(
@@ -247,12 +258,20 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 		);
 		// Create a file matching *.ignored pattern
 		await writeFile(ignoredPatternFile, "// This file matches *.ignored pattern\n");
+
+		// Create a nested directory with its own .gitignore
+		await mkdir(nestedGitIgnoredDir, { recursive: true });
+		await writeFile(nestedGitignoreFile, "ignoredByNested.ts\n");
+		await writeFile(nestedGitIgnoredFile, "// This file should be ignored by nested .gitignore\n");
+		await writeFile(nestedGitKeptFile, "// This file should be kept by nested .gitignore\n");
 	});
 
 	afterEach(async () => {
 		// Clean up test files
 		await rm(gitIgnoredDir, { recursive: true, force: true });
 		await rm(ignoredPatternFile, { force: true });
+		await rm(nestedGitIgnoredDir, { recursive: true, force: true });
+		clearGitignoreRuleSetsCache();
 	});
 
 	it("includes gitignored files when gitignore option is false", async () => {
@@ -273,6 +292,8 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 				"gitignored/shouldBeIgnored.ts",
 				"ignore-test/exclude.ts",
 				"ignore-test/include.ts",
+				"nested-gitignored/ignoredByNested.ts",
+				"nested-gitignored/kept.ts",
 				"nested/deep/file1.ts",
 				"nested/deep/file2.ts",
 				"nested/deep/file3.ts",
@@ -300,6 +321,7 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 				"file2.ts",
 				"ignore-test/exclude.ts",
 				"ignore-test/include.ts",
+				"nested-gitignored/kept.ts",
 				"nested/deep/file1.ts",
 				"nested/deep/file2.ts",
 				"nested/deep/file3.ts",
@@ -323,6 +345,7 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 				"file2.ts",
 				"ignore-test/exclude.ts",
 				"ignore-test/include.ts",
+				"nested-gitignored/kept.ts",
 				"nested/deep/file1.ts",
 				"nested/deep/file2.ts",
 				"nested/deep/file3.ts",
@@ -382,6 +405,7 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 				"file2.ts",
 				"ignore-test/exclude.ts",
 				"ignore-test/include.ts",
+				"nested-gitignored/kept.ts",
 				"nested/deep/file1.ts",
 				"nested/deep/file2.ts",
 				"nested/deep/file3.ts",
@@ -390,6 +414,32 @@ describe("globWithGitignore (LeafTask file enumeration)", () => {
 				"tracked.ts",
 			].sort(),
 		);
+	});
+
+	it("applies descendant .gitignore files", async () => {
+		assert(existsSync(nestedGitIgnoredFile), "ignoredByNested.ts should exist");
+
+		const results = await globWithGitignore(["**/*.ts"], {
+			cwd: globTestDataPath,
+			gitignore: true,
+		});
+		const relativePaths = toRelativePaths(results);
+
+		assert(!relativePaths.includes("nested-gitignored/ignoredByNested.ts"));
+		assert(relativePaths.includes("nested-gitignored/kept.ts"));
+	});
+
+	it("includes descendant .gitignore matches when gitignore is false", async () => {
+		assert(existsSync(nestedGitIgnoredFile), "ignoredByNested.ts should exist");
+
+		const results = await globWithGitignore(["**/*.ts"], {
+			cwd: globTestDataPath,
+			gitignore: false,
+		});
+		const relativePaths = toRelativePaths(results);
+
+		assert(relativePaths.includes("nested-gitignored/ignoredByNested.ts"));
+		assert(relativePaths.includes("nested-gitignored/kept.ts"));
 	});
 
 	it("returns absolute paths", async () => {

@@ -29,7 +29,16 @@ export interface BuildProjectLayout {
 }
 
 // @public
+export function clearGitignoreRuleSetsCache(): void;
+
+// @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export function filterByGitignore(files: string[], cwd: string): Promise<string[]>;
+
+// @public
+export function filterByGitignoreSync(files: string[], cwd: string): string[];
 
 // @public
 export function findGitRootSync(cwd?: string): string;
@@ -71,6 +80,15 @@ export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: stri
 
 // @public
 export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
+
+// @public
+export function globWithGitignore(patterns: readonly string[], options: GlobWithGitignoreOptions): Promise<string[]>;
+
+// @public
+export interface GlobWithGitignoreOptions {
+    cwd: string;
+    gitignore?: boolean;
+}
 
 // @public
 export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
@@ -241,6 +259,9 @@ export interface Reloadable {
 
 // @public
 export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
+
+// @public
+export function toPosixPath(s: string): string;
 
 // @public
 export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;

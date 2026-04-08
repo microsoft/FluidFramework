@@ -6,9 +6,9 @@
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import * as glob from "glob";
-import globby from "globby";
 import * as path from "path";
+import createIgnore from "ignore";
+import { glob as tinyglobbyGlob } from "tinyglobby";
 
 import type { PackageJson } from "../../common/npmPackage";
 import { lookUpDirSync } from "../../common/utils";
@@ -93,53 +93,24 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
 	return "api-extractor.json";
 }
 
+/**
+ * Converts a path to use forward slashes (POSIX style).
+ *
+ * @remarks
+ * This helper intentionally mirrors `@fluid-tools/build-infrastructure`, but it is
+ * duplicated here because `@fluidframework/build-tools` runs as CommonJS while
+ * `@fluid-tools/build-infrastructure` is a package-wide ESM package (`"type": "module"`).
+ * Until the build-infrastructure `require` path is fully wired for safe runtime
+ * consumption from CommonJS, build-tools keeps a local copy so the gitignore logic
+ * behaves the same in both packages.
+ */
 export function toPosixPath(s: string): string {
 	return s.replace(/\\/g, "/");
 }
 
 /**
- * Promisified wrapper around the glob library.
- *
- * @param pattern - Glob pattern to match files
- * @param options - Options to pass to glob
- * @returns Promise resolving to array of matched file paths
- *
- * @remarks
- * When the environment variable `FLUID_BUILD_TEST_RANDOM_ORDER` is set to "true", results will be
- * randomly shuffled to expose code that incorrectly depends on glob result ordering. This should only
- * be used in test/CI environments.
- */
-export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
-	return new Promise((resolve, reject) => {
-		glob.default(pattern, options, (err, matches) => {
-			if (err) {
-				reject(err);
-				return;
-			}
-
-			// Test mode: randomize order to expose ordering dependencies
-			if (isRandomOrderTestMode()) {
-				resolve(shuffleArray([...matches]));
-				return;
-			}
-
-			resolve(matches);
-		});
-	});
-}
-
-export async function loadModule(modulePath: string, moduleType?: string): Promise<unknown> {
-	const ext = path.extname(modulePath);
-	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
-	if (esm) {
-		return await import(pathToFileURL(modulePath).toString());
-	}
-	return require(modulePath);
-}
-
-/**
  * Shuffles an array in place using Fisher-Yates algorithm.
- * Used for testing order-independence when FLUID_BUILD_TEST_RANDOM_ORDER is set to "true".
+ * Used for testing order-independence when FLUID_BUILD_TEST_RANDOM_ORDER is set.
  *
  * @param array - The array to shuffle
  * @returns The shuffled array (same reference, modified in place)
@@ -158,6 +129,95 @@ function shuffleArray<T>(array: T[]): T[] {
  */
 function isRandomOrderTestMode(): boolean {
 	return process.env.FLUID_BUILD_TEST_RANDOM_ORDER === "true";
+}
+
+/**
+ * Options for {@link globFn}.
+ * This interface maps to the options supported by tinyglobby.
+ */
+export interface GlobFnOptions {
+	/**
+	 * The current working directory to use for relative patterns.
+	 */
+	cwd?: string;
+
+	/**
+	 * When true, only returns files (excludes directories).
+	 * @defaultValue true
+	 */
+	nodir?: boolean;
+
+	/**
+	 * When true, includes dotfiles in the results.
+	 * @defaultValue false
+	 */
+	dot?: boolean;
+
+	/**
+	 * When true, returns absolute paths instead of relative paths.
+	 * @defaultValue false
+	 */
+	absolute?: boolean;
+
+	/**
+	 * Patterns to exclude from the results.
+	 */
+	ignore?: string | string[];
+
+	/**
+	 * When true, follows symbolic links.
+	 * @defaultValue true
+	 */
+	follow?: boolean;
+}
+
+/**
+ * Glob files using tinyglobby.
+ *
+ * @param pattern - Glob pattern to match files
+ * @param options - Options to pass to glob
+ * @returns Promise resolving to array of matched file paths
+ *
+ * @remarks
+ * When the environment variable `FLUID_BUILD_TEST_RANDOM_ORDER` is set to "true", results will be
+ * randomly shuffled to expose code that incorrectly depends on glob result ordering. This should only
+ * be used in test/CI environments.
+ */
+export async function globFn(pattern: string, options: GlobFnOptions = {}): Promise<string[]> {
+	const { cwd, nodir = true, dot = false, absolute = false, ignore, follow = true } = options;
+
+	// Map options from glob/globby-style to tinyglobby-style
+	const results = await tinyglobbyGlob(pattern, {
+		cwd,
+		onlyFiles: nodir,
+		dot,
+		absolute,
+		ignore: ignore === undefined ? undefined : Array.isArray(ignore) ? ignore : [ignore],
+		followSymbolicLinks: follow,
+	});
+
+	// When nodir is false (i.e., onlyFiles is false), tinyglobby returns directories
+	// with trailing slashes. Remove them for backwards compatibility with the glob package.
+	const normalized = nodir
+		? results
+		: results.map((p) => (p.endsWith("/") ? p.slice(0, -1) : p));
+
+	// Test mode: randomize order to expose ordering dependencies
+	if (isRandomOrderTestMode()) {
+		return shuffleArray([...normalized]);
+	}
+
+	// Sort results for consistent ordering (tinyglobby does not guarantee sorted order)
+	return normalized.sort();
+}
+
+export async function loadModule(modulePath: string, moduleType?: string): Promise<unknown> {
+	const ext = path.extname(modulePath);
+	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
+	if (esm) {
+		return await import(pathToFileURL(modulePath).toString());
+	}
+	return require(modulePath);
 }
 
 /**
@@ -180,12 +240,13 @@ export interface GlobWithGitignoreOptions {
  * Glob files with optional gitignore support. This function is used by LeafWithGlobInputOutputDoneFileTask
  * to get input and output files for tasks.
  *
- * @param patterns - Glob patterns to match files. Patterns should be relative paths (e.g., "src/**\/*.ts").
- * Absolute patterns are not recommended as they may behave unexpectedly with the cwd option.
+ * @param patterns - Glob patterns to match files.
  * @param options - Options for the glob operation.
  * @returns An array of absolute paths to all files that match the globs.
  *
  * @remarks
+ * This function uses tinyglobby for globbing and the `ignore` package for gitignore filtering.
+ * The gitignore patterns are read from .gitignore files in the file system hierarchy.
  * When the environment variable `FLUID_BUILD_TEST_RANDOM_ORDER` is set to "true", results will be
  * randomly shuffled to expose code that incorrectly depends on glob result ordering. This should only
  * be used in test/CI environments.
@@ -194,17 +255,186 @@ export async function globWithGitignore(
 	patterns: readonly string[],
 	options: GlobWithGitignoreOptions,
 ): Promise<string[]> {
-	const { cwd, gitignore = true } = options;
-	const results = await globby([...patterns], {
+	const { cwd, gitignore: applyGitignore = true } = options;
+
+	// Get all files matching the patterns
+	const files = await tinyglobbyGlob(patterns, {
 		cwd,
 		absolute: true,
-		gitignore,
 	});
+
+	const filtered = applyGitignore ? await filterByGitignore(files, cwd) : files;
 
 	// Test mode: randomize order to expose ordering dependencies
 	if (isRandomOrderTestMode()) {
-		return shuffleArray([...results]);
+		return shuffleArray([...filtered]);
 	}
 
-	return results;
+	return filtered;
+}
+
+/**
+ * Filters an array of absolute file paths using gitignore rules.
+ * Reads .gitignore files from the filesystem hierarchy and applies them correctly
+ * relative to each .gitignore file's directory.
+ *
+ * @remarks
+ * These utilities intentionally duplicate the implementation in
+ * `@fluid-tools/build-infrastructure`. The duplication is temporary but deliberate:
+ * `@fluidframework/build-tools` executes as CommonJS, while build-infrastructure is
+ * published as package-wide ESM. Keeping a local copy avoids depending on a runtime
+ * import path that is still crossing that module-format boundary, while preserving
+ * identical gitignore semantics for build-tools tasks.
+ */
+async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
+	const normalizedCwd = path.resolve(cwd);
+	const included = await Promise.all(
+		files.map(async (file) => {
+			if (!isPathWithinDirectory(file, normalizedCwd)) {
+				return true;
+			}
+
+			const ruleSets = await readGitignoreRuleSets(path.dirname(file));
+			return shouldIncludeFile(file, normalizedCwd, ruleSets);
+		}),
+	);
+
+	return files.filter((_file, index) => included[index]);
+}
+
+/**
+ * A gitignore rule set binds a directory to an `ignore` instance configured
+ * with the patterns from that directory's .gitignore file.
+ */
+type GitignoreRuleSet = {
+	dir: string;
+	ignorer: ReturnType<typeof createIgnore>;
+};
+
+/**
+ * Cache for gitignore rule sets per directory path.
+ *
+ * This avoids re-reading .gitignore files for the same directory.
+ * Note: This cache is scoped to the module lifecycle. If .gitignore files
+ * are modified while a process is running, the cached patterns may become
+ * stale. Long-running processes that need to reflect .gitignore changes
+ * should call {@link clearGitignoreRuleSetsCache} when appropriate.
+ */
+const gitignoreRuleSetsCache = new Map<string, GitignoreRuleSet[]>();
+const pendingGitignoreRuleSetsCache = new Map<string, Promise<GitignoreRuleSet[]>>();
+
+/**
+ * Clears the cached gitignore rule sets.
+ *
+ * This can be used by long-running processes (e.g. watch modes) that need to
+ * pick up changes to .gitignore files without restarting the process.
+ */
+export function clearGitignoreRuleSetsCache(): void {
+	gitignoreRuleSetsCache.clear();
+	pendingGitignoreRuleSetsCache.clear();
+}
+
+/**
+ * Returns true if the path is inside the provided directory.
+ */
+function isPathWithinDirectory(filePath: string, dir: string): boolean {
+	const relativePath = path.relative(dir, filePath);
+	return !relativePath.startsWith("..") && !path.isAbsolute(relativePath);
+}
+
+/**
+ * Returns true if the error represents a missing file.
+ */
+function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		(error as NodeJS.ErrnoException).code === "ENOENT"
+	);
+}
+
+/**
+ * Reads the .gitignore file in the provided directory, if present.
+ */
+async function readGitignoreRuleSet(dir: string): Promise<GitignoreRuleSet | undefined> {
+	const gitignorePath = path.join(dir, ".gitignore");
+
+	try {
+		const content = await readFile(gitignorePath, "utf8");
+		return { dir, ignorer: createIgnore().add(content) };
+	} catch (error) {
+		if (isFileNotFoundError(error)) {
+			return undefined;
+		}
+
+		throw error;
+	}
+}
+
+/**
+ * Reads gitignore patterns from .gitignore files in the given directory and its
+ * parents, returning a list of rule sets ordered from ancestor to descendant.
+ * Results are cached per directory path to avoid repeated filesystem reads.
+ */
+async function readGitignoreRuleSets(dir: string): Promise<GitignoreRuleSet[]> {
+	const normalizedDir = path.resolve(dir);
+	const cached = gitignoreRuleSetsCache.get(normalizedDir);
+	if (cached !== undefined) {
+		return cached;
+	}
+
+	const pending = pendingGitignoreRuleSetsCache.get(normalizedDir);
+	if (pending !== undefined) {
+		return pending;
+	}
+
+	const loadPromise = (async () => {
+		const parentDir = path.dirname(normalizedDir);
+		const inheritedRuleSets =
+			parentDir === normalizedDir ? [] : await readGitignoreRuleSets(parentDir);
+		const currentRuleSet = await readGitignoreRuleSet(normalizedDir);
+		const ruleSets =
+			currentRuleSet === undefined ? inheritedRuleSets : [...inheritedRuleSets, currentRuleSet];
+		gitignoreRuleSetsCache.set(normalizedDir, ruleSets);
+		return ruleSets;
+	})();
+
+	pendingGitignoreRuleSetsCache.set(normalizedDir, loadPromise);
+
+	try {
+		return await loadPromise;
+	} finally {
+		pendingGitignoreRuleSetsCache.delete(normalizedDir);
+	}
+}
+
+/**
+ * Applies gitignore rules to a single file path.
+ */
+function shouldIncludeFile(
+	file: string,
+	cwd: string,
+	ruleSets: readonly GitignoreRuleSet[],
+): boolean {
+	if (!isPathWithinDirectory(file, cwd)) {
+		return true;
+	}
+
+	let isIgnored = false;
+
+	for (const { dir, ignorer } of ruleSets) {
+		if (!isPathWithinDirectory(file, dir)) {
+			continue;
+		}
+
+		const testResult = ignorer.test(toPosixPath(path.relative(dir, file)));
+		if (testResult.ignored) {
+			isIgnored = true;
+		} else if (testResult.unignored) {
+			isIgnored = false;
+		}
+	}
+
+	return !isIgnored;
 }
