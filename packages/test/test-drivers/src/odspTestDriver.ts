@@ -277,9 +277,17 @@ export function getOdspCredentials(
  * @internal
  */
 export class OdspTestDriver implements ITestDriver {
-	// Share the tokens and driverId across multiple instance of the test driver
-	private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
+	// Share the tokens and driverId across multiple instances of the test driver.
+	// FIC tokens use a memory-only cache to avoid cross-process file lock contention
+	// when many child processes fetch tokens for different users simultaneously.
+	// Password tokens still use the file-based cache to persist refresh tokens.
+	private static readonly ficTokenManager = new OdspTokenManager();
+	private static readonly passwordTokenManager = new OdspTokenManager(odspTokensCache);
 	private static readonly driveIdPCache = new Map<string, Promise<string>>();
+
+	private static getTokenManager(credentials: LoginCredentials): OdspTokenManager {
+		return credentials.type === "fic" ? this.ficTokenManager : this.passwordTokenManager;
+	}
 	// Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
 	private static readonly legacyDriverUserRandomIndex = Math.random();
 
@@ -414,7 +422,7 @@ export class OdspTestDriver implements ITestDriver {
 		config: TokenConfig,
 	): Promise<string> {
 		const host = new URL(options.siteUrl).host;
-		const tokens = await this.odspTokenManager.getOdspTokens(
+		const tokens = await this.getTokenManager(config.credentials).getOdspTokens(
 			host,
 			config,
 			config.credentials,
@@ -505,7 +513,7 @@ export class OdspTestDriver implements ITestDriver {
 
 	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
 		const host = new URL(options.siteUrl).host;
-		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
+		const tokens = await OdspTestDriver.getTokenManager(this.config.credentials).getPushTokens(
 			host,
 			this.config,
 			this.config.credentials,
