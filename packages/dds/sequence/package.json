@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.91.0",
+	"version": "2.93.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,7 +70,7 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
@@ -119,8 +119,7 @@
 		"test:newsnapfiles": "node --conditions=allow-ff-test-exports lib/test/createSnapshotFiles.tool.js",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.fuzz.spec.*js\" -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -169,8 +168,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.83.0",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.92.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/diff": "^3.5.1",
@@ -181,8 +180,8 @@
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"diff": "^3.5.0",
-		"eslint": "~9.39.1",
+		"diff": "^4.0.4",
+		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",

@@ -4,7 +4,8 @@
  */
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 
 /**
  * Utility api to convert ISummaryTree to a summary tree where blob contents are only utf8 strings.

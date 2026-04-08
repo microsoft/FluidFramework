@@ -102,6 +102,7 @@ export class SummaryManager
 	private latestClientId: string | undefined;
 	private state = SummaryManagerState.Off;
 	private summarizer?: ISummarizer;
+	private pendingStopReason?: SummarizerStopReason;
 	private _disposed = false;
 	private summarizerStopTimeout?: ReturnType<typeof setTimeout>;
 	/**
@@ -287,6 +288,13 @@ export class SummaryManager
 				this.summarizer = summarizer;
 				this.setupForwardedEvents(summarizer);
 
+				// A stop may have been requested while we were awaiting summarizer creation.
+				// Replay it now so the summarizer can observe the stop intent and move to exit.
+				if (this.pendingStopReason !== undefined) {
+					summarizer.stop(this.pendingStopReason);
+					this.pendingStopReason = undefined;
+				}
+
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// If we can't run the LastSummary, simply return as to avoid paying the cost of launching
 				// the summarizer at all.
@@ -375,6 +383,7 @@ export class SummaryManager
 	private cleanupAfterSummarizerStop(): void {
 		this.summarizerGeneration++;
 		this.state = SummaryManagerState.Off;
+		this.pendingStopReason = undefined;
 
 		// Clear any pending stop timeout to avoid it firing for a different summarizer
 		if (this.summarizerStopTimeout !== undefined) {
@@ -396,6 +405,7 @@ export class SummaryManager
 			return;
 		}
 		this.state = SummaryManagerState.Stopping;
+		this.pendingStopReason = reason;
 
 		// Stopping the running summarizer client should trigger a change
 		// in states when the running summarizer closes
@@ -502,6 +512,7 @@ export class SummaryManager
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
 		this.cleanupForwardedEvents();
+		this.pendingStopReason = undefined;
 		if (this.summarizerStopTimeout !== undefined) {
 			clearTimeout(this.summarizerStopTimeout);
 		}

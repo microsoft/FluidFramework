@@ -3,107 +3,83 @@ title: Rolling Out New Allowed Types
 sidebar_position: 3
 ---
 
-# Rolling Out New Allowed Types
+This guide shows how to safely add a new [TreeNodeSchema](../../../api/fluid-framework/treenodeschema-typealias) to an existing [AllowedTypes](../../../api/tree/allowedtypes-typealias) field without breaking [forwards compatibility](./index.mdx#forwards-compatibility).
 
-This guide shows how to safely add a new [TreeNodeSchema](../../../api/fluid-framework/treenodeschema-typealias) to an existing [AllowedTypes](../../../api/tree/allowedtypes-typealias) in a [SharedTree](../index.mdx) schema without breaking [forwards compatibility](./index.mdx#forwards-compatibility) with existing applications.
+Adding a new allowed type directly would break old clients as they cannot read documents containing it.
+The staged process below avoids this.
 
-Directly adding a new node type to an existing field would cause old clients to be unable to load documents whose schema contain the new type, breaking them immediately.
-The following process stages changes to introduce a new allowed type in a non-breaking way.
-
-Writing a test using [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) is recommended to help ensure this process is followed correctly,
-and that all required versions of the application or library can collaborate through the rollout.
+A [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) test is recommended to verify that all relevant client versions can collaborate correctly through the rollout.
 
 ## Step-by-Step Guide
 
-The example below walks through the process of adding string support to a field that previously only supported numbers.
-The full code can be found in our [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
-There are some differences because this guide describes the example as a real scenario involving code deployments while the full code example uses test utilities to emulate this.
+The example below adds `string` support to a field that previously only allowed `number`.
+Full code is in the [test suite](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts) (which uses test utilities to emulate code deployments).
 
-We start with a schema that only supports numbers and initialize the tree with it:
 ```typescript
-// Schema A: only number allowed
-const schemaA = SchemaFactoryBeta.optional([SchemaFactoryBeta.number]);
-
-// initialize with schema A
-const configA = new TreeViewConfiguration({
-    schema: schemaA,
-});
-const viewA = treeA.viewWith(configA);
-viewA.initialize(5);
-synchronizeTrees();
+// Initial version: only number allowed
+const mySchema = SchemaFactoryBeta.optional([SchemaFactoryBeta.number]);
 ```
 
 ### Step 1: Define and Stage the New Allowed Type
 
-To add support for reading strings, we import the alpha APIs and use [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) to mark the new allowed type:
+Use [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) to add support for future documents containing the new type.
+This version still creates documents that only allow the old types, but can work with documents created in Step 3 that contain the new type.
+Any code using this schema must correctly handle the presence of the new type, even though it cannot be added to documents yet.
 
 ```typescript
-// Schema B: number or string (string is staged)
-const schemaB = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
+const mySchema = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
     SchemaFactoryBeta.number,
     SchemaFactoryBeta.staged(SchemaFactoryBeta.string),
 ]));
 ```
 
-### Step 2: Upgrade the Schema to Deploy Reading Support
-
-We can now deploy `schemaB` to clients as a complete replacement to `schemaA`.
-At this point, new clients will be able to read documents containing strings and old clients will not.
-This is safe because no clients have the ability to insert strings into the document.
+No schema upgrade is performed at this step: [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) types are excluded from stored schemas, so `upgradeSchema()` is a no-op and the new type cannot be added to documents yet:
 
 ```typescript
-// view second tree with schema B
-const configB = new TreeViewConfiguration({
-    schema: schemaB,
-});
-const viewB = treeB.viewWith(configB);
-// check view B can read the document
-assert.equal(viewB.compatibility.canView, true);
-
-// check view B cannot write strings to the root
+// Assuming `view` is a TreeView configured with `mySchema`:
 assert.throws(() => {
-    viewB.root = "test";
+    view.root = "test"; // Strings are staged: writing them is not allowed until Step 3.
 });
 ```
 
-For this schema change, the schema does not need to be [upgraded](./index.mdx#schema-upgrade-process) because [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) allowed types are removed from stored schemas.
-Upgrading the schema would result in a noop.
+### Step 2: Wait for Client Saturation
 
-### Step 3: Wait for Client Saturation
+Wait until enough clients have adopted Step 1.
+Monitor version distribution telemetry until the pre-Step-1 version is no longer in use.
+Clients without Step 1 cannot open documents upgraded in Step 3.
 
-Ensure all clients in the deployment have the staged support before proceeding.
-Monitor the deployment to confirm coverage.
+See [staged rollouts](./index.mdx#staged-rollouts) for more detail.
 
-See the [staged rollouts](./index.mdx#staged-rollouts) section for more details on this step.
+### Step 3: Enable Inserting the New Type
 
-### Step 4: Upgrade to Allow Inserting the New Allowed Type
-
-Once client saturation has been reached, remove the [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) wrapper from the new allowed type and call `upgradeSchema` to make a change to the stored schema:
+Remove the [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) wrapper and call [`upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-methodsignature) to update the stored schema:
 
 ```typescript
-// Schema C: number or string, both fully allowed
-const schemaC = SchemaFactoryBeta.optional([
+// number or string, both fully allowed
+const mySchema = SchemaFactoryBeta.optional([
     SchemaFactoryBeta.number,
     SchemaFactoryBeta.string,
 ]);
 
-// view third tree with schema C
-const configC = new TreeViewConfiguration({
-    schema: schemaC,
+const config = new TreeViewConfiguration({
+    schema: mySchema,
 });
-const viewC = treeC.viewWith(configC);
-assert.equal(viewC.compatibility.canView, false);
-assert.equal(viewC.compatibility.canUpgrade, true);
-// upgrade to schema C and change the root to a string
-viewC.upgradeSchema();
-viewC.root = "test";
-synchronizeTrees();
+const view = tree.viewWith(config);
+assert.equal(view.compatibility.canView, false);
+assert.equal(view.compatibility.canUpgrade, true);
+// Upgrade the stored schema to allow strings
+view.upgradeSchema();
+
+// Now we can use the new type
+view.root = "test";
 ```
 
-Any client code changes to add functionality for inserting the new allowed type can also be deployed in this step.
+Code that writes the new allowed type can be deployed in this step.
+
+This step changes the stored schema, which is why the wait in Step 2 is necessary: once a document is upgraded, clients on the original schema can no longer open it.
+If you have a [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) test (strongly recommended for any schema change), update the [minVersionForCollaboration](../../../api/fluid-framework/snapshotschemacompatibilityoptions-interface#minversionforcollaboration-propertysignature) to the version released in Step 1 and take a new snapshot.
 
 ## See Also
 
-- [`SchemaStaticsBeta.staged()` API](../../../api/fluid-framework/schemafactorybeta-class#staged-property) - API documentation
+- [`SchemaFactoryBeta.staged()` API](../../../api/fluid-framework/schemafactorybeta-class#staged-property) - API documentation
 - [Schema Definition](../schema-definition.mdx) - How to define schemas
-- [Node Types](../node-types.mdx) - Understanding different node types

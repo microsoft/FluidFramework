@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
@@ -69,7 +70,10 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			}
 			async before(): Promise<void> {
 				this.container = undefined;
-				await delay(1000);
+				if (isInPerformanceTestingMode) {
+					// TODO: this should be removed, or document why it exists (probably a workaround for memory measurement issues in current version of benchmark).
+					await delay(1000);
+				}
 			}
 		})(),
 	);

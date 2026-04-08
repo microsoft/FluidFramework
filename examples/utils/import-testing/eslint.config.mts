@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 import sharedConfig from "../../eslint.config.data.mts";
 
 const config: Linter.Config[] = [
@@ -20,7 +20,6 @@ const config: Linter.Config[] = [
 				project: [
 					"./tsconfig.json",
 					"./tsconfig.crossPackage.node16.json",
-					"./src/test/tsconfig.crossPackageConsumer.json",
 					"./src/test/tsconfig.json",
 				],
 			},

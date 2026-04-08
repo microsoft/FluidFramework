@@ -14,7 +14,7 @@ import type {
 	WithValue,
 } from "../simple-tree/index.js";
 
-import { assertValidConstraint } from "./schematizingTreeView.js";
+import { assertValidConstraint } from "./treeCheckout.js";
 
 /**
  * A {@link TreeContextAlpha | tree context} that can be used for e.g. unhydrated nodes.

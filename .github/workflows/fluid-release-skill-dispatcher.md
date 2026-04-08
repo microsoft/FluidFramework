@@ -41,7 +41,7 @@ Use the trigger context and user inputs to dispatch release workflows in this re
 ## Behavior
 
 1. Read `${{ github.event.inputs.workflow }}`, `${{ github.event.inputs.tag }}`, and `${{ github.event.inputs.pr }}`.
-2. If `${{ github.event_name }}` is `schedule`, dispatch `release-notes-issue` with no inputs, then stop.
+2. If `${{ env.GH_AW_GITHUB_EVENT_NAME }}` is `schedule`, dispatch `release-notes-issue` with no inputs, then stop.
 3. If `workflow` is `all`, dispatch:
    - `release-notes-issue` (no inputs)
    - `release-approval` with `{ "pr": "<pr>" }` only when `pr` is provided
