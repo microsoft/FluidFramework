@@ -270,7 +270,7 @@ describe("ChildLogger", () => {
 		assert(!sent, "verbose event should not be sent");
 
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.info);
-		assert(sent, "essential event should be sent");
+		assert(sent, "info event should be sent");
 
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "essential event should be sent");
