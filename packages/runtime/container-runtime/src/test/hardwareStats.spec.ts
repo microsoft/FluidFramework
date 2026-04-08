@@ -34,7 +34,7 @@ function setNavigator(
 
 function restoreNavigator() {
 	if (originalNavigatorDescriptor === undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- this branch can be removed after upgrading to Node 22, which always provides a built-in navigator descriptor
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- this branch can be removed after upgrading to Node 22, which always provides a built-in navigator descriptor (AB#68707)
 		delete (globalThis as Record<string, unknown>).navigator;
 	} else {
 		Object.defineProperty(globalThis, "navigator", originalNavigatorDescriptor);
