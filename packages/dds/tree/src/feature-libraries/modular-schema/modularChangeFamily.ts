@@ -4482,6 +4482,9 @@ function composeRootTables(
 ): RootNodeTable {
 	const composedTable = cloneRootTable(change1.rootNodes);
 
+	// It's important that we compose output detach locations before calling `composeRootRenames`,
+	// because we delete output detach locations when finding that renames cancel out.
+	composeOutputDetachLocations(change1, change2, composedTable);
 	composeRootRenames(change1, change2, composedTable);
 
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
@@ -4519,21 +4522,27 @@ function composeRootTables(
 		}
 	}
 
+	return composedTable;
+}
+
+function composeOutputDetachLocations(
+	change1: ModularChangeset,
+	change2: ModularChangeset,
+	composedRoots: RootNodeTable,
+): void {
 	for (const outputDetachEntry of change1.rootNodes.outputDetachLocations.entries()) {
 		composeOutputDetachLocation(
 			outputDetachEntry.start,
 			outputDetachEntry.length,
 			outputDetachEntry.value,
 			change2,
-			composedTable,
+			composedRoots,
 		);
 	}
 
 	for (const entry of change2.rootNodes.outputDetachLocations.entries()) {
-		composedTable.outputDetachLocations.set(entry.start, entry.length, entry.value);
+		composedRoots.outputDetachLocations.set(entry.start, entry.length, entry.value);
 	}
-
-	return composedTable;
 }
 
 function composeOutputDetachLocation(
@@ -4990,7 +4999,6 @@ function insertRootRename(
 		}
 	}
 
-	// XXX: Update output detach location.
 	const countRemaining = count - countProcessed;
 	if (countRemaining > 0) {
 		const offsetIntermediateRename =
