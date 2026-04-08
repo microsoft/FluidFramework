@@ -57,7 +57,7 @@ describe("BatchManager", () => {
 	describe("addBatchMetadata", () => {
 		const makeLocalBatch = (...ops: string[]): LocalBatch => ({
 			messages: ops.map((data, i) => ({ runtimeOp: op(data), referenceSequenceNumber: i })),
-			referenceSequenceNumber: ops.length - 1,
+			referenceSequenceNumber: undefined,
 		});
 
 		for (const includeBatchId of [true, false])

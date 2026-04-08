@@ -10,7 +10,6 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { isContainerMessageDirtyable } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";
@@ -21,7 +20,6 @@ import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
 	readonly disableGroupedBatching: boolean;
-	readonly compressionOptions?: ICompressionRuntimeOptions;
 }
 
 export interface BatchSequenceNumbers {

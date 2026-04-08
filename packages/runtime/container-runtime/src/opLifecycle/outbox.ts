@@ -368,9 +368,14 @@ export class Outbox {
 			}
 			return;
 		}
-
-		this.flushInternal(this.blobAttachBatch, resubmitInfo);
-		this.flushInternal(this.mainBatch, resubmitInfo);
+		let sendIdAllocOp = true;
+		if (!this.blobAttachBatch.empty) {
+			this.flushInternal(this.blobAttachBatch, sendIdAllocOp, resubmitInfo);
+			sendIdAllocOp = false; // Only send ID alloc op for the first batch flushed, if needed. This ensures correct refSeq and prevents duplicate ID alloc ops.
+		}
+		if (!this.mainBatch.empty) {
+			this.flushInternal(this.mainBatch, sendIdAllocOp, resubmitInfo);
+		}
 	}
 
 	private flushEmptyBatch(
@@ -404,12 +409,10 @@ export class Outbox {
 
 	private flushInternal(
 		batchManager: BatchManager,
+		sendIdAllocOp: boolean, // undefined if not needed
 		resubmitInfo?: BatchResubmitInfo, // undefined if not resubmitting
 	): void {
-		if (batchManager.empty) {
-			return;
-		}
-
+		assert(!batchManager.empty, "Cannot flush an empty batch");
 		let rawBatch = batchManager.popBatch();
 
 		// On resubmit we use the original batch's staged state, so these should match as well.
@@ -435,7 +438,7 @@ export class Outbox {
 			// Note: Since this is happening in the same turn the ops were originally created with,
 			// and they haven't gone to PendingStateManager yet, we can just let them respect
 			// ContainerRuntime.inStagingMode.  So we do not plumb local 'staged' variable through here.
-			this.rebase(rawBatch, batchManager);
+			this.rebase(rawBatch, batchManager, sendIdAllocOp);
 			return;
 		}
 
@@ -450,7 +453,7 @@ export class Outbox {
 			// This ensures the refSeq is correct (matching the rest of the batch) and that
 			// ID ranges aren't lost during rebase (since reSubmit drops IdAllocation ops).
 			// Only generate for non-staged batches — ID alloc ops are always non-staged.
-			const idAllocMsg = this.params.generateIdAllocationOp();
+			const idAllocMsg = sendIdAllocOp ? this.params.generateIdAllocationOp() : undefined;
 			if (idAllocMsg !== undefined) {
 				rawBatch = { ...rawBatch, messages: [idAllocMsg, ...rawBatch.messages] };
 			}
@@ -478,8 +481,13 @@ export class Outbox {
 	 * they will end up back in the same batch manager they were flushed from and subsequently flushed.
 	 *
 	 * @param rawBatch - the batch to be rebased
+	 * @param sendIdAllocOp - whether to send ID allocation op
 	 */
-	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
+	private rebase(
+		rawBatch: LocalBatch,
+		batchManager: BatchManager,
+		sendIdAllocOp: boolean,
+	): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 
 		this.rebasing = true;
@@ -507,7 +515,9 @@ export class Outbox {
 			this.batchRebasesToReport--;
 		}
 
-		this.flushInternal(batchManager);
+		if (!batchManager.empty) {
+			this.flushInternal(batchManager, sendIdAllocOp);
+		}
 		this.rebasing = false;
 	}
 

@@ -241,6 +241,7 @@ describe("Outbox", () => {
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
 		generateIdAllocationOp?: () => LocalBatchMessage | undefined;
+		reSubmit?: (message: PendingMessageResubmitData, squash: boolean) => void;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -268,9 +269,11 @@ describe("Outbox", () => {
 				mockLogger,
 			),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			reSubmit: (message: PendingMessageResubmitData) => {
-				state.opsResubmitted++;
-			},
+			reSubmit:
+				params.reSubmit ??
+				((_message: PendingMessageResubmitData) => {
+					state.opsResubmitted++;
+				}),
 			opReentrancy: () => state.isReentrant,
 			generateIdAllocationOp: params.generateIdAllocationOp ?? (() => undefined),
 		});
@@ -328,23 +331,17 @@ describe("Outbox", () => {
 
 	it("Sending batches", () => {
 		const idAllocMessage = createMessage(ContainerMessageType.IdAllocation, "idAlloc");
-		let idAllocReturned = false;
 		const outbox = getOutbox({
 			context: getMockContext(),
-			// JIT callback: return an ID alloc op on the first call, then undefined
 			generateIdAllocationOp: () => {
-				if (!idAllocReturned) {
-					idAllocReturned = true;
-					return idAllocMessage;
-				}
-				return undefined;
+				return idAllocMessage;
 			},
 		});
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
 		];
 
 		// Flush 1 — JIT ID alloc op is prepended to the first non-empty batch (blobAttach is empty, so main batch)
@@ -359,7 +356,7 @@ describe("Outbox", () => {
 		// Not Flushed
 		outbox.submit(messages[3]);
 
-		assert.equal(state.opsSubmitted, 4); // 2 main + idAlloc from flush 1, 1 main from flush 2
+		assert.equal(state.opsSubmitted, 5);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
@@ -371,7 +368,7 @@ describe("Outbox", () => {
 					toSubmittedMessage(messages[1], false),
 				],
 				// Flush 2 (Main)
-				[toSubmittedMessage(messages[2])],
+				[toSubmittedMessage(idAllocMessage, true), toSubmittedMessage(messages[2])],
 			],
 			"Submitted batches are incorrect",
 		);
@@ -384,6 +381,7 @@ describe("Outbox", () => {
 			[messages[0], 1],
 			[messages[1], 1],
 			// Flush 2 (Main)
+			[idAllocMessage, 4],
 			[messages[2], 4],
 		] as const;
 		assert.deepEqual(
@@ -1163,6 +1161,127 @@ describe("Outbox", () => {
 			outbox.flush();
 
 			validateCounts(2, 1, 0);
+		});
+	});
+
+	describe("JIT IdAllocation (generateIdAllocationOp)", () => {
+		it("IdAlloc op is prepended to blobAttach batch when it flushes before main", () => {
+			const idAllocMessage = createMessage(ContainerMessageType.IdAllocation, "idAlloc");
+			let idAllocCallCount = 0;
+			const outbox = getOutbox({
+				context: getMockContext(),
+				generateIdAllocationOp: () => {
+					idAllocCallCount++;
+					return idAllocMessage;
+				},
+			});
+
+			const blobAttachMsg = createMessage(ContainerMessageType.BlobAttach, "blob0");
+			const mainMsg = createMessage(ContainerMessageType.FluidDataStoreOp, "main0");
+
+			outbox.submitBlobAttach(blobAttachMsg);
+			outbox.submit(mainMsg);
+			outbox.flush();
+
+			// Called once for blobAttach (returns idAlloc), once for main (returns undefined)
+			assert.equal(
+				idAllocCallCount,
+				1,
+				"generateIdAllocationOp should be called once per flush, and only the first flush (for blobAttach) should generate an IdAlloc op",
+			);
+			assert.deepEqual(
+				state.batchesSubmitted.map((x) => x.messages),
+				[
+					// BlobAttach batch: idAlloc prepended, batch markers applied to 2-msg batch
+					[toSubmittedMessage(idAllocMessage, true), toSubmittedMessage(blobAttachMsg, false)],
+					// Main batch: no idAlloc
+					[toSubmittedMessage(mainMsg)],
+				],
+				"IdAlloc should be prepended to blobAttach batch, not main",
+			);
+		});
+
+		it("Disconnected flush does not invoke generateIdAllocationOp", () => {
+			let idAllocCallCount = 0;
+			const outbox = getOutbox({
+				context: getMockContext(),
+				generateIdAllocationOp: () => {
+					idAllocCallCount++;
+					return createMessage(ContainerMessageType.IdAllocation, "idAlloc");
+				},
+			});
+
+			state.canSendOps = false;
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "0"));
+			outbox.flush();
+
+			assert.equal(
+				idAllocCallCount,
+				0,
+				"generateIdAllocationOp must not be called when disconnected",
+			);
+			assert.equal(state.opsSubmitted, 0, "No ops should be submitted when disconnected");
+			assert.equal(
+				state.pendingOpContents.length,
+				1,
+				"Op should still be tracked in pending state",
+			);
+		});
+
+		it("Rebase path invokes generateIdAllocationOp only after rebase completes", () => {
+			const idAllocMessage = createMessage(ContainerMessageType.IdAllocation, "idAlloc");
+			let idAllocCallCount = 0;
+			const message0 = createMessage(ContainerMessageType.FluidDataStoreOp, "0");
+			const message1 = createMessage(ContainerMessageType.FluidDataStoreOp, "1");
+
+			// Use a wrapper so reSubmit can reference outbox before it's assigned
+			const outboxWrapper: { outbox?: Outbox } = {};
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: { groupedBatchingEnabled: true },
+				generateIdAllocationOp: () => {
+					idAllocCallCount++;
+					return idAllocCallCount === 1 ? idAllocMessage : undefined;
+				},
+				// Re-push each resubmitted message, simulating ContainerRuntime.reSubmit behavior.
+				// This causes the second flushInternal call (after rebase) to see a non-empty batch,
+				// making it the right place to generate the IdAlloc op.
+				reSubmit: (message: PendingMessageResubmitData) => {
+					state.opsResubmitted++;
+					assert(outboxWrapper.outbox !== undefined);
+					outboxWrapper.outbox.submit({
+						runtimeOp: message.runtimeOp,
+						localOpMetadata: message.localOpMetadata,
+						metadata: message.opMetadata,
+						referenceSequenceNumber: Number.POSITIVE_INFINITY,
+					});
+				},
+			});
+			outboxWrapper.outbox = outbox;
+
+			// Submit messages as reentrant — triggers rebase on flush
+			state.isReentrant = true;
+			outbox.submit(message0);
+			outbox.submit(message1);
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			// generateIdAllocationOp should be called exactly once:
+			// - NOT during the first flushInternal (which exits early into rebase)
+			// - YES during the second flushInternal (after rebase, with the freshly rebased batch)
+			assert.equal(
+				idAllocCallCount,
+				1,
+				"generateIdAllocationOp must be called exactly once, after rebase completes",
+			);
+			assert.equal(state.opsResubmitted, 2, "Both ops should be resubmitted during rebase");
+			// The idAlloc + 2 rebased ops are grouped into a single outbound op
+			assert.equal(
+				state.opsSubmitted,
+				1,
+				"Rebased batch (with idAlloc) should be sent as one grouped op",
+			);
 		});
 	});
 
