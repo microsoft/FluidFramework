@@ -559,7 +559,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 		super(namespace, realProperties);
 		this.loggers = loggers;
-		this._minLogLevelOfAllLoggers = LogLevel.essential;
+		this._minLogLevelOfAllLoggers = LogLevel.info;
 		this.calculateMinLogLevel();
 	}
 
@@ -571,7 +571,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 		if (this.loggers.length > 0) {
 			const logLevels: LogLevel[] = [];
 			for (const logger of this.loggers) {
-				logLevels.push(logger.minLogLevel ?? LogLevel.essential);
+				logLevels.push(logger.minLogLevel ?? LogLevel.info);
 			}
 			this._minLogLevelOfAllLoggers = Math.min(...logLevels) as LogLevel;
 		}
