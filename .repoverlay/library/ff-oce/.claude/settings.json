@@ -7,21 +7,17 @@
 		"PreToolUse": [
 			{
 				"matcher": "Bash",
-				"if": "Bash(git push*)",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "printf '{\"additionalContext\":\"REMINDER: Before pushing to remote, ci-readiness-check should have been run this session. If it has not, offer to run it now before proceeding with the push.\"}'"
-					}
-				]
-			},
-			{
-				"matcher": "Bash",
-				"if": "Bash(gh pr create*)",
-				"hooks": [
+						"if": "Bash(git push*)",
+						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before pushing, check whether ci-readiness-check has been run this session. If not, run the full skill (load .claude/skills/ci-readiness-check/SKILL.md and follow its checklist) before proceeding. If it was already run and no further relevant changes were made since, you may proceed.\"}}'",
+						"statusMessage": "Checking CI readiness..."
+					},
 					{
 						"type": "command",
-						"command": "printf '{\"additionalContext\":\"Before creating this PR, read .claude/skills/fluid-pr-guide/SKILL.md for title and body conventions.\"}'"
+						"if": "Bash(gh pr create*)",
+						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before creating this PR, read .claude/skills/fluid-pr-guide/SKILL.md for title and body conventions.\"}}'"
 					}
 				]
 			}
