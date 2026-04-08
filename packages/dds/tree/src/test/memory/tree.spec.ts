@@ -135,7 +135,7 @@ describe("SharedTree memory usage", () => {
 	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
-		? [1000, 10_000, 100_000]
+		? [100, 10_000] // [1000, 10_000, 100_000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[10];
 
@@ -143,6 +143,9 @@ describe("SharedTree memory usage", () => {
 		benchmarkIt({
 			title: `Set an integer property ${numberOfEntries} times in a local SharedTree`,
 			...benchmarkMemoryUse({
+				keepIterations: 4,
+				warmUpIterations: 2,
+				enableAsyncGC: true,
 				benchmarkFn: async (state) => {
 					while (state.continue()) {
 						await state.beforeAllocation();
@@ -157,6 +160,7 @@ describe("SharedTree memory usage", () => {
 								sharedTree.root.child.propertyOne = numberOfEntries;
 							}
 							await state.whileAllocated();
+							sharedTree.dispose();
 						}
 						await state.afterDeallocation();
 					}
@@ -167,6 +171,9 @@ describe("SharedTree memory usage", () => {
 		benchmarkIt({
 			title: `Set a string property ${numberOfEntries} times in a local SharedTree`,
 			...benchmarkMemoryUse({
+				keepIterations: 4,
+				warmUpIterations: 2,
+				enableAsyncGC: true,
 				benchmarkFn: async (state) => {
 					while (state.continue()) {
 						await state.beforeAllocation();
@@ -181,6 +188,7 @@ describe("SharedTree memory usage", () => {
 								sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
 							}
 							await state.whileAllocated();
+							sharedTree.dispose();
 						}
 						await state.afterDeallocation();
 					}
@@ -191,6 +199,9 @@ describe("SharedTree memory usage", () => {
 		benchmarkIt({
 			title: `Set an optional integer property ${numberOfEntries} times in a local SharedTree, then clear it`,
 			...benchmarkMemoryUse({
+				keepIterations: 4,
+				warmUpIterations: 2,
+				enableAsyncGC: true,
 				benchmarkFn: async (state) => {
 					while (state.continue()) {
 						await state.beforeAllocation();
@@ -206,6 +217,7 @@ describe("SharedTree memory usage", () => {
 							}
 							sharedTree.root.child.propertyOne = undefined; // This is possible since the property is optional.
 							await state.whileAllocated();
+							sharedTree.dispose();
 						}
 						await state.afterDeallocation();
 					}
@@ -232,11 +244,13 @@ describe("SharedTree memory usage", () => {
 					benchmarkIt({
 						title: `initialize ${numberOfNodes} nodes into tree using ${forestName}`,
 						...benchmarkMemoryUse({
+							keepIterations: 4,
+							warmUpIterations: 2,
+							enableAsyncGC: true,
 							benchmarkFn: async (state) => {
 								while (state.continue()) {
 									await state.beforeAllocation();
 									{
-										// eslint-disable-next-line @typescript-eslint/no-unused-vars
 										const sharedTree = createLocalSharedTree(
 											"testSharedTree",
 											schema,
@@ -247,6 +261,7 @@ describe("SharedTree memory usage", () => {
 											},
 										);
 										await state.whileAllocated();
+										sharedTree.dispose();
 									}
 									await state.afterDeallocation();
 								}

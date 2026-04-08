@@ -43,9 +43,10 @@ function runBenchmark({
 	return benchmarkIt({
 		title,
 		...benchmarkMemoryUse({
-			// logProcessedData: true,
-			// warmUpIterations: 4,
-			// keepIterations: 4,
+			// These tests are quite slow, so force a lower iteration count.
+			// If we need better data at some point, we can look into raising it.
+			warmUpIterations: 2,
+			keepIterations: 4,
 			enableAsyncGC: true,
 			benchmarkFn: async (state) => {
 				while (state.continue()) {
