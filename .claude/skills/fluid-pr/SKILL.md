@@ -10,8 +10,8 @@ description: Use when creating a pull request in the Fluid Framework repo. Compo
 
 1. Confirm you are NOT on `main` or any release branch. If you are, stop and tell the user: you cannot create a PR from a protected branch — they need to create or switch to a feature branch first.
 2. Verify that the `origin` remote does not point to `microsoft/FluidFramework`. If it does, stop and tell the user: pushing a branch directly to the main repo is not allowed — they should push to their fork instead.
-3. Compose the PR title following Fluid Framework conventions (read `.claude/skills/fluid-pr-guide/SKILL.md`).
-4. Compose the PR body following the official template (read `.claude/skills/fluid-pr-guide/SKILL.md`).
+3. Compose the PR title following Fluid Framework conventions using the `fluid-pr-guide` skill.
+4. Compose the PR body following the official template using the `fluid-pr-guide` skill.
 5. Print the proposed title and body as text, then immediately use the `AskUserQuestion` tool to let the user choose what to do next. Use these exact options:
    - "Create PR" — Push the branch and open the pull request
    - "Create draft PR" — Push the branch and open a draft pull request

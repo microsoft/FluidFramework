@@ -17,7 +17,7 @@
 					{
 						"type": "command",
 						"if": "Bash(gh pr create*)",
-						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before creating this PR, read .claude/skills/fluid-pr-guide/SKILL.md for title and body conventions.\"}}'"
+						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before creating this PR, load and follow the fluid-pr-guide skill for title and body conventions.\"}}'"
 					}
 				]
 			}
