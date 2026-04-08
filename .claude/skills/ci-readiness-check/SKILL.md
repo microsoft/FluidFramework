@@ -9,7 +9,7 @@ Step 1 asks the user to pick a mode. Immediately after they respond, create one 
 Tasks to create by mode:
 
 - Check: Run CI script → Review output → Report final status
-- Build: Run CI script → Review output → Build unbuilt packages → ESLint auto-fix → Regenerate API reports → Run build:docs → Regenerate type tests → Report final status
+- Build: Run CI script → Review output → Build unbuilt packages → ESLint auto-fix → Regenerate API reports → API changes review → Run build:docs → Regenerate type tests → Report final status
 - Test: same as Build, plus Run tests
 
 For Build/Test: if `@fluidframework/tree` is among the changed packages and its API surface likely changed, add a "Cascade API reports to aggregator packages" task after "Regenerate API reports".

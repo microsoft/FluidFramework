@@ -125,7 +125,7 @@ If none exists, create one on behalf of the user from the repo root:
 pnpm flub changeset add --empty
 ```
 
-This drops a randomly-named file in `.changeset/`. Edit it with content based on what changed. YAML front matter lists affected packages (only those meaningful to consumers) with bump type `minor`, plus `"__section"` to route to the right release notes section: `feature` (new APIs), `deprecation`, `breaking` (major / server only; use `legacy` for legacy API breaks), `fix`, or `other`.
+This drops a randomly-named file in `.changeset/`. Edit it with content based on what changed. YAML front matter lists affected packages (only those meaningful to consumers) with bump type `minor`, plus `"__section"` to route to the right release notes section: `feature` (new APIs), `deprecation`, `breaking` (major / server only; use `legacy` for legacy API breaks), `tree` (changes to SharedTree/`@fluidframework/tree` APIs), `fix`, or `other`.
 
 Summary line rules (from `.changeset/README.md`): succinct, no terminal punctuation, no backtick formatting, present tense. Prefix test: mentally prepend "In this release," to verify it reads naturally. Body may include a code example for features, deprecations, and breaking changes.
 

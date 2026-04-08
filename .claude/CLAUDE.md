@@ -1,4 +1,10 @@
-# Fluid Framework — Claude Context
+# Fluid Framework — Agent Context
+
+> This file is mirrored in `.github/copilot-instructions.md`. Changes here should be duplicated there, and vice versa.
+
+## Asserts
+
+When writing asserts (from `@fluidframework/core-utils`), use a string literal for the error message, not a hex assert code. This applies only to newly added asserts, not existing ones.
 
 ## Azure DevOps
 
