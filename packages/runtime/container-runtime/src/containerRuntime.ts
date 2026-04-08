@@ -56,8 +56,8 @@ import type {
 	IResponse,
 	ITelemetryBaseLogger,
 	Listenable,
-	LogLevel,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
