@@ -36,6 +36,19 @@ class TextNode
 	})
 	implements TextAsTree.Members, IExposedMethods
 {
+	/**
+	 * Exposes the following methods to an LLM agent:
+	 *
+	 * - `insertAt` - Insert characters into the text at the given character index.
+	 *
+	 * - `removeRange` - Remove a range of characters from the text by character index.
+	 *
+	 * - `fullString` - Copy the content of this text node into a string.
+	 *
+	 * - `characterCount` - Gets the number of characters currently in the text.
+	 *
+	 * - `charactersCopy` - Optimized way to get a copy of the characters in an array.
+	 */
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 		methods.exposeMethod(
 			TextNode,
