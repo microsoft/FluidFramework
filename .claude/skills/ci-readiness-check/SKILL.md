@@ -93,7 +93,7 @@ If API Extractor fails with `ae-missing-release-tag`, add a TSDoc release tag (`
 After regenerating reports, check whether any api-report files actually changed:
 
 ```bash
-git diff --name-only | grep api-report
+git diff --name-only HEAD -- | grep api-report
 ```
 
 If any api-report files changed, run the `api-changes` skill. It will classify the changes by release tag, determine whether API Council approval is needed, flag any breaking changes that require process steps, and verify changeset and deprecation requirements.

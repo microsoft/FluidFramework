@@ -4,6 +4,8 @@ description: Use when creating a pull request in the Fluid Framework repo. Compo
 ---
 
 <required>
+*CRITICAL* Do NOT run `gh pr create` until the user has explicitly confirmed via AskUserQuestion in step 6. Do not skip ahead.
+
 *CRITICAL* Add the following steps to your task/todo list using your available task tooling (TaskCreate for Claude, TodoWrite for Copilot):
 
 1. Run the ci-readiness-check skill. If the user skips it, continue. If it reports remaining issues, tell the user and ask whether to proceed with the PR anyway — but always continue with the PR skill regardless of their answer.

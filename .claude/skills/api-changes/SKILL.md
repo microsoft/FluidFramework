@@ -117,7 +117,7 @@ Share this link with the user for full deprecation guidance: https://github.com/
 
 All customer-facing API changes require a changeset — additions, modifications, deprecations, tag promotions, removals.
 
-Check whether one exists: `git status | grep .changeset/`
+Check whether one exists: `git status --porcelain -- .changeset/`
 
 If none exists, create one on behalf of the user from the repo root:
 
