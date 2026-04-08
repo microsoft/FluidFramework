@@ -2182,10 +2182,10 @@ describe("treeNodeApi", () => {
 
 				root[0].myNumber++;
 
-				// nodeChanged does not fire for pure nested changes (element property changes)
-				// regardless of hydration state — only structural array changes (insert/remove/move)
+				// nodeChanged does not fire for deep changes (element property changes)
+				// regardless of hydration state — only shallow array changes (insert/remove/move)
 				// trigger nodeChanged.
-				assert.equal(shallowChanges, 0, `nodeChanged should not fire for nested changes.`);
+				assert.equal(shallowChanges, 0, `nodeChanged should not fire for deep changes.`);
 				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 
@@ -2833,7 +2833,7 @@ describe("treeNodeApi", () => {
 				]);
 			});
 
-			it(`nested child modification alongside removal produces a retain op with contentChanged`, () => {
+			it(`deep change alongside removal produces a retain op with contentChanged`, () => {
 				// When an element's nested properties change (but it is not itself
 				// inserted or removed) AND another element is removed in the same delta,
 				// the marks for the array field include a {fields} mark for the
@@ -2868,15 +2868,15 @@ describe("treeNodeApi", () => {
 			});
 
 			describe(`'treeChanged' alpha delta payload for array nodes`, () => {
-				// TreeAlpha.on(array, "treeChanged") fires for both structural changes
-				// (insert/remove/move) and pure nested-content changes (a property of an element
-				// changed without restructuring the array). The delta uses contentChanged: true to
-				// flag elements with nested changes.
+				// TreeAlpha.on(array, "treeChanged") fires for both shallow changes
+				// (insert/remove/move) and deep changes (a property of an element changed
+				// without any shallow array change). The delta uses contentChanged: true to
+				// flag elements with deep changes.
 				const sfTree = new SchemaFactory("treeChanged-delta-tests");
 				class Item extends sfTree.object("Item", { v: sfTree.number }) {}
 				class ItemArray extends sfTree.array("ItemArray", [Item]) {}
 
-				it(`pure nested property change fires treeChanged but not nodeChanged`, () => {
+				it(`deep change fires treeChanged but not nodeChanged`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;
@@ -2886,27 +2886,27 @@ describe("treeNodeApi", () => {
 					TreeAlpha.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
 					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
-					// Modify a nested property — no structural change on the array.
+					// Modify a deep property — no shallow change on the array.
 					root[0].v = 99;
 
 					assert.equal(
 						nodeChangedFired.length,
 						0,
-						"nodeChanged should not fire for pure nested change",
+						"nodeChanged should not fire for deep change",
 					);
 					assert.deepEqual(treeChangedDeltas, [
 						[{ type: "retain", count: 1, contentChanged: true }],
 					]);
 				});
 
-				it(`structural change fires both nodeChanged and treeChanged independently`, () => {
+				it(`shallow change fires both nodeChanged and treeChanged independently`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;
 
 					// Each subscription is verified to fire exactly once, proving they are
 					// independent event paths (nodeChanged via childrenChangedAfterBatch
-					// with structural filter; treeChanged via childrenChangedAfterBatch always).
+					// with shallow filter; treeChanged via childrenChangedAfterBatch always).
 					let nodeChangedCount = 0;
 					let treeChangedCount = 0;
 					const nodeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -2934,7 +2934,7 @@ describe("treeNodeApi", () => {
 					assert.deepEqual(treeChangedDeltas, expected);
 				});
 
-				it(`structural + nested change fires both nodeChanged and treeChanged with contentChanged`, () => {
+				it(`shallow + deep change fires both nodeChanged and treeChanged with contentChanged`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;
@@ -2960,7 +2960,7 @@ describe("treeNodeApi", () => {
 					assert.deepEqual(treeChangedDeltas, expected);
 				});
 
-				it(`multiple elements with nested changes in one transaction each get contentChanged`, () => {
+				it(`multiple elements with deep changes in one transaction each get contentChanged`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;

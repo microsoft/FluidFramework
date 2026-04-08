@@ -245,11 +245,11 @@ export interface TreeAlpha {
 	 * This callback should be called only once.
 	 * @remarks
 	 * Provides richer events than {@link (TreeBeta:interface).on} for array nodes:
-	 * - `nodeChanged` includes a {@link NodeChangedDataDelta.delta | delta} payload for structural
+	 * - `nodeChanged` includes a {@link NodeChangedDataDelta.delta | delta} payload for direct
 	 * changes (insert, remove, move).
 	 * - `treeChanged` also includes a {@link NodeChangedDataDelta.delta | delta} payload and fires
-	 * for both structural changes and pure nested-content changes (e.g. a property of an element
-	 * changed without restructuring the array).
+	 * for both shallow changes and deep changes (e.g. a property of an element changed without
+	 * any direct array change).
 	 */
 	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
 		node: TNode,
@@ -819,7 +819,7 @@ export const TreeAlpha: TreeAlpha = {
 		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
 	): () => void {
 		// For array nodes, override treeChanged to fire via childrenChangedAfterBatch (which
-		// includes both structural and pure nested-content changes) and provide a delta payload.
+		// includes both shallow and deep changes) and provide a delta payload.
 		if (eventName === "treeChanged" && isArrayNodeSchema(getKernel(node).schema)) {
 			return getKernel(node).events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
 				const marks = fieldMarks.get(EmptyKey);

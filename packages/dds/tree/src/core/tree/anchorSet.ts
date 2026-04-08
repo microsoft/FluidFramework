@@ -998,8 +998,8 @@ export class AnchorSet implements AnchorLocator {
 							const hasNestedChanges = marks.some(
 								(m) => m.fields !== undefined && m.fields.size > 0,
 							);
-							const onlyNestedChanges = !hasStructuralChange && hasNestedChanges;
-							if (onlyNestedChanges) {
+							const onlyDeepChanges = !hasStructuralChange && hasNestedChanges;
+							if (onlyDeepChanges) {
 								this.bufferedEvents.push({
 									node: interned,
 									event: "childrenChangedAfterBatch",

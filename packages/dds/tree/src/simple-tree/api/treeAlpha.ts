@@ -43,11 +43,14 @@ export interface NodeChangedDataDelta {
 	/**
 	 * The sequential operations describing what changed in the array node.
 	 * @remarks
-	 * The value may be `undefined` in two cases:
-	 * - The node was created locally and has not yet been inserted into a document tree (a known
-	 * temporary limitation, tracked in AB#63261).
-	 * - The document was updated in a way that required multiple internal change passes in a single
-	 * operation (for example, a data change combined with a schema upgrade).
+	 * The value may be `undefined` when the document was updated in a way that required multiple
+	 * internal change passes in a single operation (for example, a data change combined with a
+	 * schema upgrade).
+	 *
+	 * @remarks
+	 * Note: for unhydrated array nodes (not yet inserted into a document), deep changes
+	 * on elements do not fire `treeChanged` at all — not even with `delta: undefined`. Only direct
+	 * changes (insert, remove, move) fire the event on unhydrated nodes (tracked in AB#63261).
 	 *
 	 * See {@link ArrayNodeDeltaOp} for op semantics.
 	 */
@@ -77,7 +80,7 @@ export type NodeChangedDataAlpha<TNode extends TreeNode = TreeNode> =
  * Provides a `nodeChanged` event that includes a delta payload for array nodes and
  * requires `changedProperties` for object, map, and record nodes.
  * Also provides a `treeChanged` event that, for array nodes, carries a {@link NodeChangedDataDelta}
- * payload describing both structural and nested-content changes.
+ * payload describing both shallow and deep changes.
  * For non-array nodes the `treeChanged` signature is the same as the base event.
  *
  * Use via `TreeAlpha.on`.
@@ -86,41 +89,45 @@ export type NodeChangedDataAlpha<TNode extends TreeNode = TreeNode> =
 export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	extends TreeChangeEvents {
 	/**
-	 * Emitted when a direct structural change occurs on the node (an element was inserted,
-	 * removed, or moved). For array nodes the event data includes a
-	 * {@link NodeChangedDataDelta.delta | delta} payload as a sequence of {@link ArrayNodeDeltaOp}
-	 * values; retain ops with {@link ArrayNodeRetainOp.contentChanged | contentChanged} flag elements
-	 * that also had nested-content changes in the same transaction.
-	 * For object, map, and record nodes the event data includes
-	 * {@link NodeChangedDataProperties.changedProperties | changedProperties}.
+	 * Emitted when a shallow change occurs on this node.
 	 *
 	 * @remarks
-	 * Does not fire for pure nested-content changes (e.g. a property of an array element changed
-	 * without any structural array change). Subscribe to {@link TreeChangeEventsAlpha.treeChanged}
-	 * on the array to receive a delta for those cases as well.
+	 * For array nodes: the event data includes a {@link NodeChangedDataDelta.delta | delta} payload
+	 * as a sequence of {@link ArrayNodeDeltaOp} values; retain ops with
+	 * {@link ArrayNodeRetainOp.contentChanged | contentChanged} flag elements that also had deep
+	 * changes in the same transaction. Does not fire for deep changes (e.g. a property of an
+	 * array element changed without any shallow array change). Subscribe to
+	 * {@link TreeChangeEventsAlpha.treeChanged} on the array to receive a delta for those cases as well.
+	 *
+	 * For object, map, and record nodes: the event data includes
+	 * {@link NodeChangedDataProperties.changedProperties | changedProperties}.
 	 *
 	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
 	 */
 	nodeChanged: (data: NodeChangedDataAlpha<TNode>) => void;
 
 	/**
-	 * For array nodes: emitted when any change occurred within the array, including both
-	 * structural changes (insert, remove, move) and nested-content changes (a property of
-	 * an element changed). The event data carries a {@link NodeChangedDataDelta.delta | delta}
-	 * payload describing what changed.
-	 *
-	 * For non-array nodes: same as the base {@link TreeChangeEvents.treeChanged}.
+	 * Emitted when something in the subtree rooted at this node changes.
 	 *
 	 * @remarks
-	 * The delta uses {@link ArrayNodeRetainOp.contentChanged} to flag elements that have
-	 * nested-content changes, without describing the details of those nested changes.
-	 * To inspect nested changes, subscribe to `nodeChanged` or `treeChanged` on the
-	 * individual element nodes.
+	 * For array nodes: emitted when any change occurred within the array, including both
+	 * shallow changes (insert, remove, move) and deep changes (e.g. a property of an element
+	 * changed). The event data carries a {@link NodeChangedDataDelta.delta | delta} payload
+	 * describing what changed. The delta uses {@link ArrayNodeRetainOp.contentChanged} to flag
+	 * elements that have deep changes, without describing the details of those deep changes.
+	 * To inspect deep changes, subscribe to `nodeChanged` or `treeChanged` on the individual
+	 * element nodes.
 	 *
 	 * This event only fires on the array node whose elements changed — it does not propagate to
 	 * ancestor nodes. To receive a delta for a nested array, subscribe directly to that array.
 	 * Ancestor nodes still receive the base (no-payload) `treeChanged` via the normal subtree
 	 * propagation.
+	 *
+	 * For unhydrated array nodes (not yet inserted into a document), only direct changes
+	 * (insert, remove, move) fire this event. Deep changes on elements of unhydrated
+	 * arrays are not detected (tracked in AB#63261).
+	 *
+	 * For non-array nodes: same as the base {@link TreeChangeEvents.treeChanged}.
 	 *
 	 * The listener type is conditional on `TNode`. If `TNode` is the base {@link TreeNode} type
 	 * (i.e. the node's schema is not known statically), the listener is typed as `() => void`

@@ -1642,24 +1642,21 @@ describe("TableFactory unit tests", () => {
 			});
 			assert.equal(eventCount, 1);
 
-			// Update column props.
-			// nodeChanged does not fire for nested property changes — only structural changes
-			// (insert/remove/move) to the array trigger nodeChanged.
+			// Update column props
 			table.columns[0].props = { label: "Column 0" };
-			const afterPropsChange = 1;
-			assert.equal(eventCount, afterPropsChange);
+			assert.equal(eventCount, 1); // Event should not have fired for column node changes
 
 			// Insert a row
 			table.insertRows({ rows: [{ id: "row-0", cells: {}, props: {} }] });
-			assert.equal(eventCount, afterPropsChange); // Event should not have fired for row insertion
+			assert.equal(eventCount, 1); // Event should not have fired for row insertion
 
 			// Re-order columns
 			table.columns.moveToEnd(0);
-			assert.equal(eventCount, afterPropsChange + 1);
+			assert.equal(eventCount, 2);
 
 			// Remove column
 			table.removeColumns(["column-0"]);
-			assert.equal(eventCount, afterPropsChange + 2);
+			assert.equal(eventCount, 3);
 		});
 	});
 

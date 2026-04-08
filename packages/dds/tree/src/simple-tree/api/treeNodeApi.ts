@@ -43,20 +43,17 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
  * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements that were neither inserted nor removed from the array.
  * The {@link ArrayNodeRetainOp.contentChanged} flag may additionally be set when the element
- * has nested changes; see that field for details.
+ * has deep changes; see that field for details.
  * @sealed @alpha
  */
 export interface ArrayNodeRetainOp {
 	readonly type: "retain";
 	readonly count: number;
 	/**
-	 * When `true`, one or more properties of this retained element changed (e.g. an object field
-	 * was updated, or a map/record entry was added, removed, or replaced).
-	 * When absent, the element itself was not modified — only its position in the array may have
-	 * changed due to surrounding inserts, removes, or moves.
+	 * Set if there are any changes in the subtree rooted at this retained element.
+	 * When absent, nothing in the element's subtree changed.
 	 * @remarks
-	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details of what
-	 * changed within it.
+	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details.
 	 * This flag appears in deltas from both {@link TreeChangeEventsAlpha.nodeChanged} and
 	 * {@link TreeChangeEventsAlpha.treeChanged}. It is not present in
 	 * {@link TreeChangeEventsBeta.nodeChanged}, which provides
@@ -263,17 +260,17 @@ export const treeNodeApi: TreeNodeApi = {
 				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
 						const marks = fieldMarks.get(EmptyKey);
-						// nodeChanged fires only for structural changes (insert, remove, move).
-						// Pure nested-content changes (e.g. a property of an element changed) are
+						// nodeChanged fires only for shallow changes (insert, remove, move).
+						// Deep changes (e.g. a property of an element changed) are
 						// surfaced via TreeChangeEventsAlpha.treeChanged with a delta payload instead.
 						// When marks are undefined (marks could not be composed across multiple
 						// internal passes), we conservatively fire nodeChanged rather than silently
 						// dropping the event, even though the underlying change may have been
-						// purely nested. This is a known limitation of the current eventing stack.
-						const hasStructuralChange =
+						// purely deep. This is a known limitation of the current eventing stack.
+						const hasShallowChange =
 							marks === undefined ||
 							marks.some((m) => m.attach !== undefined || m.detach !== undefined);
-						if (!hasStructuralChange) {
+						if (!hasShallowChange) {
 							return;
 						}
 						// `marks` is undefined when the field was modified across multiple batches
@@ -349,12 +346,12 @@ export function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDelt
 		if (mark.attach !== undefined) {
 			ops.push({ type: "insert", count: mark.count });
 		} else if (mark.detach === undefined) {
-			// Retain: elements were not added or removed (but may have nested changes).
+			// Retain: elements were not added or removed (but may have deep changes).
 			if (mark.fields === undefined) {
 				ops.push({ type: "retain", count: mark.count });
 			} else {
 				// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
-				// Set contentChanged to flag that the retained element has nested changes.
+				// Set contentChanged to flag that the retained element has deep changes.
 				ops.push({ type: "retain", count: 1, contentChanged: true });
 			}
 		}
