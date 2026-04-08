@@ -20,17 +20,8 @@ import { serializeOp } from "./opSerialization.js";
 import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
+	readonly disableGroupedBatching: boolean;
 	readonly compressionOptions?: ICompressionRuntimeOptions;
-
-	/**
-	 * If true, the outbox is allowed to rebase the batch during flushing.
-	 */
-	readonly canRebase: boolean;
-
-	/**
-	 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
-	 */
-	readonly ignoreBatchId?: boolean;
 }
 
 export interface BatchSequenceNumbers {
@@ -127,8 +118,9 @@ export class BatchManager {
 
 	/**
 	 * Gets the pending batch and clears state for the next batch.
+	 * The caller is responsible for calling {@link addBatchMetadata} after any modifications (e.g. prepending messages).
 	 */
-	public popBatch(batchId?: BatchId): LocalBatch {
+	public popBatch(): LocalBatch {
 		assert(this.pendingBatch[0] !== undefined, 0xb8a /* expected non-empty batch */);
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,
@@ -141,7 +133,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch, batchId);
+		return batch;
 	}
 
 	/**

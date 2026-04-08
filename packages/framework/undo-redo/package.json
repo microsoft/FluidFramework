@@ -70,8 +70,7 @@
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -111,7 +110,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.91.0",
+		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.92.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^10.0.10",

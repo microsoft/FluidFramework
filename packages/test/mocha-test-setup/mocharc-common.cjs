@@ -5,7 +5,6 @@
 
 "use strict";
 
-const { existsSync } = require("fs");
 const path = require("path");
 
 /**
@@ -20,8 +19,6 @@ const path = require("path");
  * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
  */
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
-	const moduleDir = `${packageDir}/node_modules`;
-
 	const requiredModules = [
 		// General mocha setup e.g. suppresses console.log,
 		// This has to be before others (except logger) so that registerMochaTestWrapperFuncs is available
@@ -30,34 +27,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		...(additionalRequiredModules ? additionalRequiredModules : []),
 	];
 
-	// mocha install node_modules directory might not be the same as the module required because of hoisting
-	// We need to give the full path in that case.
-	// TODO: this path mapping might not be necessary once we move to pnpm, since it sets up node_modules differently
-	// from what Lerna does (all dependencies of a given package show up in its own node_modules folder and just symlink
-	// to the actual location of the installed package, instead of common dependencies being hoisted to a parent
-	// node_modules folder and not being present at all in the package's own node_modules).
-	const requiredModulePaths = requiredModules.map((mod) => {
-		// Just return if it is path already
-		if (existsSync(mod) || existsSync(`${mod}.js`)) {
-			return mod;
-		}
-
-		// Try to find it in the test package's directory
-		const modulePath = path.join(moduleDir, mod);
-		if (existsSync(modulePath)) {
-			return modulePath;
-		}
-
-		// Otherwise keep it as is
-		return mod;
-	});
-
 	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
-		const modulePath = path.join(moduleDir, process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		// Inject implementation of createTestLogger, put it first before mocha-test-setup
-		if (existsSync(modulePath)) {
-			requiredModulePaths.unshift(modulePath);
-		}
+		requiredModules.unshift(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 	}
 
 	let defaultSpec = "lib/test";
@@ -70,7 +42,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 
 	const config = {
 		"recursive": true,
-		"require": requiredModulePaths,
+		"require": requiredModules,
 		"unhandled-rejections": "strict",
 		// Fail the test run if no tests are found/run. This catches cases where test files fail to
 		// load silently (e.g. due to broken imports), which would otherwise produce a green "0 passing"

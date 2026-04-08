@@ -6,13 +6,12 @@ This codespace is pre-configured for AI-agent-assisted development of the Fluid 
 
 ## First-time Setup
 
-After creating a new AI-enabled Codespace, expect up to a dozen authentication prompts. This is excessive but anticipated — continue clicking through each prompt until they conclude.
+Agency **must** be installed manually after the Codespace starts. Run `pnpm install:agency` in the terminal — this requires Azure authentication and will open a browser window for sign-in.
 
-Agency **must** be installed manually after the Codespace starts:
-
-```bash
-pnpm install:agency
-```
+> [!NOTE]
+> `pnpm install:agency` is supported in **VS Code** (desktop or SSH). It may not work in a
+> browser-based Codespace because the OAuth redirect requires a local browser and authentication may
+> not complete correctly.
 
 Then open a **new terminal** for the agent aliases to be available.
 
@@ -38,11 +37,11 @@ These aliases are available in all terminal sessions (after installing agency):
 
 | Alias | Command | Purpose |
 |---|---|---|
-| `claude` | `repoverlay switch ff-claude && agency claude` | Default Claude Code model |
-| `haiku` | `repoverlay switch ff-claude && agency claude -- --model haiku` | Fastest, cheapest option |
-| `sonnet` | `repoverlay switch ff-claude && agency claude -- --model sonnet` | Balanced capabilities |
-| `opus` | `repoverlay switch ff-claude && agency claude -- --model opus` | Most capable model |
-| `nori` | `repoverlay switch nori && agency claude` | Switch to nori overlay and launch Claude |
+| `claude` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework'` | Default Claude Code model |
+| `haiku` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model haiku` | Fastest, cheapest option |
+| `sonnet` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model sonnet` | Balanced capabilities |
+| `opus` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model opus` | Most capable model |
+| `nori` | `repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework'` | Switch to nori overlay and launch Claude |
 
 ### Copilot
 
@@ -51,7 +50,7 @@ These aliases are available in all terminal sessions (after installing agency):
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
 | `copilot-ado` | `agency copilot --mcp 'ado --org fluidframework'` | Azure DevOps integration |
 | `copilot-kusto` | `agency copilot --mcp 'kusto ...'` | Telemetry queries |
-| `copilot-oce` | `repoverlay switch ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
+| `copilot-oce` | `repoverlay switch --copy ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
 | `copilot-work` | `agency copilot --mcp 'workiq'` | WorkIQ integration |
 
 ### Utility
@@ -78,7 +77,6 @@ This enables running AI agents locally while the Codespace provides computing po
 | Repoverlay | Overlay system for context files (agents, skills) |
 | GitHub CLI (`gh`) | Pre-installed for PR workflows and SSH access |
 | SSH daemon | Enables `gh codespace ssh` connections |
-| ADO Codespaces Auth | Authenticate to Azure DevOps |
 | Agent aliases | Shell shortcuts for common AI commands |
 | Higher compute | 32 CPUs / 64 GB RAM (vs 16 CPUs for Standard) |
 
