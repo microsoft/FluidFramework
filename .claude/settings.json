@@ -11,7 +11,7 @@
 					{
 						"type": "command",
 						"if": "Bash(git push*)",
-						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before pushing, check whether ci-readiness-check has been run this session. If not, run the full skill (load .claude/skills/ci-readiness-check/SKILL.md and follow its checklist) before proceeding. If it was already run and no further relevant changes were made since, you may proceed.\"}}'",
+						"command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"Before pushing: if ci-readiness-check has NOT been run this session, you MUST either (a) run it now by loading .claude/skills/ci-readiness-check/SKILL.md and following its checklist, or (b) explicitly tell the user you are skipping it and why before proceeding. Silent skips are not allowed.\"}}'",
 						"statusMessage": "Checking CI readiness..."
 					},
 					{
