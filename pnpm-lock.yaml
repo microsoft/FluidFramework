@@ -2140,7 +2140,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -7292,7 +7292,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -7776,7 +7776,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -8340,7 +8340,7 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -8464,7 +8464,7 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -8591,7 +8591,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -9012,7 +9012,7 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -9139,7 +9139,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -9581,7 +9581,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -12911,7 +12911,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -13254,7 +13254,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -14781,7 +14781,7 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -15026,7 +15026,7 @@ importers:
         specifier: workspace:~
         version: link:../test-version-utils
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
@@ -15564,7 +15564,7 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/benchmark':
-        specifier: 0.54.0-389934
+        specifier: ^0.54.0-389934
         version: 0.54.0-389934
       '@fluid-tools/version-tools':
         specifier: catalog:buildTools
