@@ -48,6 +48,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/**/*.spec.*js\" mocha",
+		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/**/*.spec.*js\" mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},

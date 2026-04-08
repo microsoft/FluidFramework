@@ -8,7 +8,7 @@
 /**
  * @fileoverview In this file, we will test the NodeProperty object described in properties/nodeProperty.js
  */
-import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { ChangeSet, PathHelper } from "@fluid-experimental/property-changeset";
 import { constants, GuidUtils } from "@fluid-experimental/property-common";
 const { generateGUID } = GuidUtils;
 const { MSG } = constants;
@@ -1776,11 +1776,7 @@ describe("NodeProperty", function () {
 
 	describe("_coveredByPaths", function () {
 		this.timeout(500);
-		let PathHelper, getPathCoverageSpy, paths, prop, propPath;
-
-		before(function () {
-			PathHelper = require("@fluid-experimental/property-changeset").PathHelper;
-		});
+		let getPathCoverageSpy, paths, prop, propPath;
 
 		beforeEach(function () {
 			getPathCoverageSpy = sinon.spy(PathHelper, "getPathCoverage");

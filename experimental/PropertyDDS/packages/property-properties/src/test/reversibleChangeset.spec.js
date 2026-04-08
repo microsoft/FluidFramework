@@ -12,6 +12,12 @@ import { Int64, Uint64 } from "@fluid-experimental/property-common";
 import _ from "lodash";
 
 import { PropertyFactory } from "../index.js";
+
+import {
+	parentChangeSet,
+	originalChangeSet,
+} from "./validation/reversibleChangeSetTestData.js";
+
 const deepCopy = _.cloneDeep;
 
 describe("Reversible ChangeSets", function () {
@@ -1851,11 +1857,6 @@ describe("Reversible ChangeSets", function () {
 	});
 
 	it("@regression should not fail when building reversible change sets", function () {
-		var parentChangeSet =
-			require("./validation/reversibleChangeSetTestData.js").parentChangeSet;
-		var originalChangeSet =
-			require("./validation/reversibleChangeSetTestData.js").originalChangeSet;
-
 		var changeSet = new ChangeSet(originalChangeSet);
 		changeSet._toReversibleChangeSet(parentChangeSet);
 	});
