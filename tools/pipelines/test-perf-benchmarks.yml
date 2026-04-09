@@ -88,8 +88,7 @@ stages:
       dependsOn: []
       ${{ if ne(coalesce(job.lockVariableGroupName, ''), '') }}:
         lockBehavior: sequential
-      variables:
-        ${{ if ne(coalesce(job.lockVariableGroupName, ''), '') }}:
+        variables:
           - group: ${{ job.lockVariableGroupName }}
       jobs:
       - job: run
