@@ -73,7 +73,10 @@ function telemetryEventInterestLevel(eventName: string): "none" | "basic" | "det
 	return "none";
 }
 
-function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+function selectiveVerboseLog(
+	event: ITelemetryBaseEvent,
+	logLevel: LogLevel | undefined,
+): void {
 	const interest = telemetryEventInterestLevel(event.eventName);
 	if (interest === "none") {
 		return;

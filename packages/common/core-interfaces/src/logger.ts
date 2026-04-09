@@ -71,13 +71,12 @@ export const LogLevel = {
 	/**
 	 * Essential information about the operation of Fluid. It is recommended that
 	 * these should always be collected, even in production, for diagnostic purposes.
+	 * @remarks If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
 	 */
 	essential: 30,
 
 	/**
-	 * Value to assume when not otherwise given.
-	 * @see {@link (LogLevel:variable).info}
-	 * @deprecated Use {@link (LogLevel:variable).info} to preserve prior treatment.
+	 * @deprecated Use {@link (LogLevel:variable).info}. If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/26969} for removal timeline.
 	 */
 	default: 20, // Default log level
