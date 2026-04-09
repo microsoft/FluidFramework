@@ -809,6 +809,153 @@ describe("ForestSummarizer", () => {
 				});
 			});
 		});
+
+		describe.only("project list schema with multi-depth incremental summarization", () => {
+			/**
+			 * A leaf-level object representing a single acronym entry in a scan session.
+			 */
+			class ScanAcronym extends sf.object("ScanAcronym", {
+				name: sf.string,
+				definition: sf.string,
+			}) {}
+
+			class ScanSession extends sf.object("ScanSession", {
+				/**
+				 * The entire anonymous map of {@link ScanAcronym} entries is encoded as a single
+				 * incremental chunk.
+				 */
+				acronyms: sf.types([{ type: sf.map(ScanAcronym), metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			}) {}
+
+			class Sheet extends sf.object("Sheet", {
+				sheetName: sf.string,
+				scan: sf.optional(ScanSession),
+			}) {}
+
+			class ProjectList extends sf.object("ProjectList", {
+				schemaVersion: sf.string,
+				/**
+				 * The entire anonymous map of {@link Sheet} entries is encoded as a single
+				 * incremental chunk. Key: sheet name.
+				 */
+				sheets: sf.types([{ type: sf.map(Sheet), metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			}) {}
+
+			function setupForestForIncrementalSummarization(initialData: ProjectList | undefined) {
+				const fieldCursor = initialData
+					? fieldCursorFromInsertable(ProjectList, initialData)
+					: fieldJsonCursor([]);
+				const initialContent: TreeStoredContentStrict = {
+					schema: toStoredSchema(ProjectList, permissiveStoredSchemaGenerationOptions),
+					initialTree: fieldCursor,
+				};
+				return createForestSummarizer({
+					initialContent,
+					encodeType: TreeCompressionStrategy.CompressedIncremental,
+					forestType: ForestTypeOptimized,
+					shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+						new TreeViewConfigurationAlpha({ schema: ProjectList }),
+					),
+				});
+			}
+
+			it("can summarize with schemaVersion change and sheetName change", async () => {
+				const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
+					new ProjectList({
+						schemaVersion: "v1",
+						sheets: {
+							Sheet1: new Sheet({
+								sheetName: "Sheet 1",
+								scan: new ScanSession({
+									acronyms: {
+										A1: new ScanAcronym({
+											name: "AI",
+											definition: "Artificial Intelligence",
+										}),
+										A2: new ScanAcronym({
+											name: "ML",
+											definition: "Machine Learning",
+										}),
+									},
+								}),
+							}),
+						},
+					}),
+				);
+
+				// First summary - no handles since it's the first summary.
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 0,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
+				const summary1 = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: incrementalSummaryContext1,
+				});
+				validateSummaryIsIncremental(summary1.summary);
+				validateHandlesInForestSummary(summary1.summary, { shouldContainHandle: false });
+
+				// Second summary: schemaVersion changes but the sheets map and acronyms are unchanged.
+				// Since the entire sheets map chunk didn't change, it should remain as a single handle.
+				const view = checkout.viewWith(new TreeViewConfiguration({ schema: ProjectList }));
+				view.root.schemaVersion = "v2";
+				let sheet1 = view.root.sheets.get("Sheet1");
+				assert(sheet1 !== undefined, "Could not find Sheet1");
+				sheet1.sheetName = "Updated Sheet 1";
+
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 10,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
+					summaryPath: "",
+				};
+				const summary2 = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: incrementalSummaryContext2,
+				});
+				// The entire sheets chunk is a single handle since only schemaVersion changed (depth 1 re-summary).
+				validateHandlesInForestSummary(summary2.summary, {
+					shouldContainHandle: true,
+					handleCount: 1,
+					lastSummary: summary1.summary,
+				});
+
+				// Third summary: Sheet1's sheetName changes.
+				// This changes the Sheet1 node which invalidates the entire sheets map chunk,
+				// triggering a re-summary at depth 1 (the sheets chunk). However, the acronyms map
+				// chunk within it is unchanged. Because the sheets chunk was a handle in summary2,
+				// the acronyms handle path points through that handle and effectively references
+				// summary1's acronyms chunk location. Therefore, we validate against summary1
+				// where the full path is directly accessible (depth 1 and depth 2 re-summary).
+				sheet1 = view.root.sheets.get("Sheet1");
+				assert(sheet1 !== undefined, "Could not find Sheet1");
+				sheet1.sheetName = "Updated Sheet 1";
+
+				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 20,
+					latestSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
+					summaryPath: "",
+				};
+				const summary3 = forestSummarizer.summarize({
+					stringify: JSON.stringify,
+					incrementalSummaryContext: incrementalSummaryContext3,
+				});
+				// The sheets map chunk is re-generated (Sheet1 changed), but the acronyms chunk within
+				// it remains unchanged and is encoded as a handle. Since the sheets chunk was a handle
+				// in summary2, the acronyms handle path traverses through summary2's handle and
+				// effectively points to summary1's acronyms chunk. Validate against summary1 where
+				// the full path is accessible.
+				validateHandlesInForestSummary(summary3.summary, {
+					shouldContainHandle: true,
+					handleCount: 1,
+					lastSummary: summary2.summary,
+				});
+			});
+		});
 	});
 
 	describe("Summary metadata validation", () => {

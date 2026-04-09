@@ -109,6 +109,18 @@ interface TrackedSummaryProperties {
 	 * Serializes content (including {@link (IFluidHandle:interface)}s) for adding to a summary blob.
 	 */
 	stringify: SummaryElementStringifier;
+	/**
+	 * Maps old summary paths to new summary paths for unchanged chunks whose position in the tree has shifted
+	 * because a parent chunk was re-encoded with a new {@link ChunkReferenceId}.
+	 *
+	 * @remarks
+	 * When an unchanged chunk is added as a handle its path in the current summary may differ from
+	 * its path in the previous summary (because its parent chunk changed and received a new reference ID).
+	 * This map is populated during {@link encodeIncrementalField} and consumed in
+	 * {@link completeSummary} to update the paths of any descendants that were not themselves
+	 * directly re-encoded (i.e. chunks nested under a handle chunk).
+	 */
+	readonly pathMappings: Map<string, string>;
 }
 
 /**
@@ -130,6 +142,41 @@ export enum ForestIncrementalSummaryBehavior {
 	 * in {@link ForestIncrementalSummaryBuilder}.
 	 */
 	SingleBlob,
+}
+
+/**
+ * Returns updated {@link ChunkSummaryProperties} whose `summaryPath` has been remapped using
+ * `pathMappings` if the chunk's path (or a prefix of it) changed in the current summary.
+ *
+ * @remarks
+ * When an unchanged chunk is added as a handle its `summaryPath` is updated to reflect the new
+ * position of that chunk in the current summary tree. However, chunks that are *nested inside* a
+ * handle chunk are never visited by {@link ForestIncrementalSummaryBuilder.encodeIncrementalField},
+ * so their `summaryPath` still reflects the previous summary layout.  This function corrects those
+ * stale paths by applying the longest-prefix match from `pathMappings`.
+ */
+function applyPathMappings(
+	chunkProperties: ChunkSummaryProperties,
+	pathMappings: Map<string, string>,
+): ChunkSummaryProperties {
+	const { summaryPath } = chunkProperties;
+	let bestMatch: { oldPath: string; newPath: string } | undefined;
+	for (const [oldPath, newPath] of pathMappings) {
+		if (
+			(summaryPath === oldPath || summaryPath.startsWith(`${oldPath}/`)) &&
+			(bestMatch === undefined || oldPath.length > bestMatch.oldPath.length)
+		) {
+			bestMatch = { oldPath, newPath };
+		}
+	}
+	if (bestMatch !== undefined) {
+		return {
+			...chunkProperties,
+			// Replace the matched prefix; for an exact match .slice() produces "".
+			summaryPath: bestMatch.newPath + summaryPath.slice(bestMatch.oldPath.length),
+		};
+	}
+	return chunkProperties;
 }
 
 /* eslint-disable jsdoc/check-indentation */
@@ -326,6 +373,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			parentSummaryBuilder: builder,
 			fullTree,
 			stringify,
+			pathMappings: new Map(),
 		};
 		return ForestIncrementalSummaryBehavior.Incremental;
 	}
@@ -355,11 +403,35 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				chunk,
 			);
 			if (previousChunkProperties !== undefined && !trackedSummaryProperties.fullTree) {
-				chunkProperties = previousChunkProperties;
+				// Compute the new summary path from the current encoding context.
+				// Even though this chunk is unchanged, its parent may have been re-encoded with a new
+				// referenceId, so its position in the current summary tree may differ from its position
+				// in the previous summary.
+				const newSummaryPath = [
+					...trackedSummaryProperties.chunkSummaryPath,
+					previousChunkProperties.referenceId,
+				].join("/");
+
+				chunkProperties = {
+					referenceId: previousChunkProperties.referenceId,
+					summaryPath: newSummaryPath,
+				};
+
+				// Record the mapping if the path changed so that completeSummary can update the paths of
+				// any descendants that are nested inside this handle and were not directly re-encoded.
+				if (newSummaryPath !== previousChunkProperties.summaryPath) {
+					trackedSummaryProperties.pathMappings.set(
+						previousChunkProperties.summaryPath,
+						newSummaryPath,
+					);
+				}
+
+				// The handle target is the chunk's location in the *previous* summary — that is where
+				// the actual content (or a prior handle to it) resides.
 				trackedSummaryProperties.parentSummaryBuilder.addHandle(
 					`${chunkProperties.referenceId}`,
 					SummaryType.Tree,
-					`${trackedSummaryProperties.latestSummaryBasePath}/${chunkProperties.summaryPath}`,
+					`${trackedSummaryProperties.latestSummaryBasePath}/${previousChunkProperties.summaryPath}`,
 				);
 			} else {
 				// Generate a new reference ID for the chunk.
@@ -455,9 +527,16 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			trackedSummaryProperties.summarySequenceNumber,
 		);
 		if (latestSummaryTrackingMap !== undefined && currentSummaryTrackingMap !== undefined) {
+			const { pathMappings } = trackedSummaryProperties;
 			for (const [chunk, chunkProperties] of latestSummaryTrackingMap.entries()) {
 				if (!currentSummaryTrackingMap.has(chunk)) {
-					currentSummaryTrackingMap.set(chunk, chunkProperties);
+					// Apply path mappings to fix up any chunk whose ancestor was added as a handle
+					// with an updated path. Such chunks were never directly visited by encodeIncrementalField,
+					// so their summaryPath still reflects the previous summary layout.
+					currentSummaryTrackingMap.set(
+						chunk,
+						applyPathMappings(chunkProperties, pathMappings),
+					);
 				}
 			}
 		}
