@@ -2043,6 +2043,278 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("Undo/redo", () => {
+		it("multiple column inserts should be undoable if no concurrent modifications occurred", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [],
+					rows: [{ id: "row-0", cells: {} }],
+				}),
+			);
+
+			view.root.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
+			});
+
+			view.root.insertColumns({
+				columns: [{ id: "column-1", props: {} }],
+			});
+
+			view.root.insertColumns({
+				columns: [{ id: "column-2", props: {} }],
+			});
+
+			// No changes happened concurrently, so we should be able to revert all of these changes.
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 3);
+			revertible.revert();
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 2);
+			revertible.revert();
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 1);
+			revertible.revert();
+
+			assert.equal(view.root.columns.length, 0);
+
+			unsubscribe();
+		});
+
+		it("multiple row inserts should be undoable if no concurrent modifications occurred", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(Table.create({ columns: [], rows: [] }));
+
+			view.root.insertRows({ rows: [{ id: "row-0", cells: {} }] });
+			view.root.insertRows({ rows: [{ id: "row-1", cells: {} }] });
+			assert.equal(view.root.rows.length, 2);
+
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.rows[0].id, "row-0");
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.rows.length, 0);
+
+			unsubscribe();
+		});
+
+		it("remove column, remove column, undo, undo", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [
+						new Column({ id: "column-0", props: {} }),
+						new Column({ id: "column-1", props: {} }),
+					],
+					rows: [],
+				}),
+			);
+
+			view.root.removeColumns(["column-0"]);
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.columns[0].id, "column-1");
+
+			view.root.removeColumns(["column-1"]);
+			assert.equal(view.root.columns.length, 0);
+
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.columns[0].id, "column-1");
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.columns.length, 2);
+
+			unsubscribe();
+		});
+
+		it("remove row, remove row, undo, undo", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [],
+					rows: [new Row({ id: "row-0", cells: {} }), new Row({ id: "row-1", cells: {} })],
+				}),
+			);
+
+			view.root.removeRows(["row-0"]);
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.rows[0].id, "row-1");
+
+			view.root.removeRows(["row-1"]);
+			assert.equal(view.root.rows.length, 0);
+
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.rows[0].id, "row-1");
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.rows.length, 2);
+
+			unsubscribe();
+		});
+
+		it("insert column, remove different column, undo, undo", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-a", props: {} })],
+					rows: [],
+				}),
+			);
+
+			view.root.insertColumns({ columns: [{ id: "column-b", props: {} }] });
+			assert.equal(view.root.columns.length, 2);
+
+			view.root.removeColumns(["column-a"]);
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.columns[0].id, "column-b");
+
+			// Undo the removal
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.columns.length, 2);
+
+			// Undo the insertion
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.columns[0].id, "column-a");
+
+			unsubscribe();
+		});
+
+		it("insert row, remove different row, undo, undo", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [],
+					rows: [new Row({ id: "row-a", cells: {} })],
+				}),
+			);
+
+			view.root.insertRows({ rows: [{ id: "row-b", cells: {} }] });
+			assert.equal(view.root.rows.length, 2);
+
+			view.root.removeRows(["row-a"]);
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.rows[0].id, "row-b");
+
+			// Undo the removal
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.rows.length, 2);
+
+			// Undo the insertion
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.rows[0].id, "row-a");
+
+			unsubscribe();
+		});
+	});
+
 	describe("Prevents orphan cells", () => {
 		it("column removal does not orphan cells from concurrently added rows", () => {
 			// Create a provider with minimum version support for noChange constraints
@@ -2504,62 +2776,6 @@ describe("TableFactory unit tests", () => {
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.columns.length, 0);
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
-
-			unsubscribe();
-		});
-
-		it("multiple inserts should be undoable if no concurrent modifications occurred", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-			view.initialize(
-				Table.create({
-					columns: [],
-					rows: [{ id: "row-0", cells: {} }],
-				}),
-			);
-
-			view.root.insertColumns({
-				columns: [{ id: "column-0", props: {} }],
-			});
-
-			view.root.insertColumns({
-				columns: [{ id: "column-1", props: {} }],
-			});
-
-			view.root.insertColumns({
-				columns: [{ id: "column-2", props: {} }],
-			});
-
-			// No changes happened concurrently, so we should be able to revert all of these changes.
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			assert.equal(view.root.columns.length, 3);
-			revertible.revert();
-
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			assert.equal(view.root.columns.length, 2);
-			revertible.revert();
-
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			assert.equal(view.root.columns.length, 1);
-			revertible.revert();
-
-			assert.equal(view.root.columns.length, 0);
 
 			unsubscribe();
 		});
