@@ -2,9 +2,6 @@
 # Return early if sourced by a shell that doesn't support these aliases (e.g. /bin/sh).
 [ -n "${BASH_VERSION:-}" ] || [ -n "${ZSH_VERSION:-}" ] || return 0
 
-# shopt -s expand_aliases is bash-only; zsh expands aliases by default in interactive shells.
-[ -n "${BASH_VERSION:-}" ] && shopt -s expand_aliases
-
 # Ensures agency is installed and in PATH; installs it (via the repo-approved pnpm script) if not.
 _ensure_agency() {
 	local AGENCY_DIR="$HOME/.config/agency/CurrentVersion"
@@ -23,9 +20,32 @@ _ensure_agency() {
 	fi
 }
 
-alias claude="_ensure_agency && { repoverlay remove --all 2>/dev/null; true; } && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
-alias dev="_ensure_agency && repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
-alias copilot="_ensure_agency && agency copilot"
-alias oce="_ensure_agency && repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce"
+# Agent launcher functions. Extra args (e.g. --mcp 'kusto ...') are inserted
+# before the -- separator so they reach agency, not Claude/Copilot directly.
+claude() {
+	_ensure_agency || return 1
+	{ repoverlay remove --all 2>/dev/null; true; }
+	agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
+}
 
-alias ai-reset="repoverlay remove --all"
+dev() {
+	_ensure_agency || return 1
+	repoverlay switch --copy nori
+	agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
+}
+
+copilot() {
+	_ensure_agency || return 1
+	{ repoverlay remove --all 2>/dev/null; true; }
+	agency copilot "$@"
+}
+
+oce() {
+	_ensure_agency || return 1
+	repoverlay switch --copy ff-oce
+	agency copilot "$@" -- --agent ff-oce
+}
+
+ai-reset() {
+	repoverlay remove --all
+}

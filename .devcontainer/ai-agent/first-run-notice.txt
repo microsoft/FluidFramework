@@ -14,11 +14,8 @@ Other agent aliases:
   copilot                Launch GitHub Copilot via agency
   oce                    Launch Copilot for on-call engineer workflows
 
-Choose your own MCP servers:
-  Use --mcp to launch an agent with specific MCP servers. Stack as many as you need:
-    agency claude --mcp 'ado --org fluidframework' --mcp 'kusto --service-uri ...'
-    agency copilot --mcp 'workiq'
-  Run `agency mcp --help` to see all available MCP servers.
+Custom MCP servers:
+  See GETTING_STARTED.md for how to launch agents with your own MCP servers.
 
 Other commands:
   pnpm install           Install all dependencies
