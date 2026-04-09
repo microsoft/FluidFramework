@@ -107,7 +107,7 @@
 		"typescript": "~5.4.5"
 	},
 	"engines": {
-		"node": ">=22.22.0"
+		"node": ">=22.22.2"
 	},
 	"oclif": {
 		"bin": "fluv",
