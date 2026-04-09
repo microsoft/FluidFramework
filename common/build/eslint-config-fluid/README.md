@@ -28,7 +28,6 @@ eslint-config-fluid/
 │   ├── settings.mts            # Plugin settings (import-x, jsdoc)
 │   ├── rules/
 │   │   ├── base.mts            # Base rules from eslint:recommended, typescript-eslint, etc.
-│   │   ├── minimal-deprecated.mts  # Additional rules for minimal-deprecated config
 │   │   ├── recommended.mts     # Rules for recommended config (unicorn, type safety)
 │   │   └── strict.mts          # Rules for strict config (jsdoc requirements, explicit access)
 │   └── configs/

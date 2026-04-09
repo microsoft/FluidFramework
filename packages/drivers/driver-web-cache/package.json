@@ -85,8 +85,7 @@
 		"test": "npm run test:jest",
 		"test:jest": "jest --ci",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",

@@ -92,7 +92,7 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
-		"chai": "^4.2.0",
+		"chai": "^4.5.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"easy-table": "^1.2.0",

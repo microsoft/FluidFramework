@@ -5,12 +5,12 @@
 # shopt -s expand_aliases is bash-only; zsh expands aliases by default in interactive shells.
 [ -n "${BASH_VERSION:-}" ] && shopt -s expand_aliases
 
-alias claude="repoverlay switch --copy ff-claude && agency claude"
-alias haiku="repoverlay switch --copy ff-claude && agency claude -- --model haiku"
-alias sonnet="repoverlay switch --copy ff-claude && agency claude -- --model sonnet"
-alias opus="repoverlay switch --copy ff-claude && agency claude -- --model opus"
+alias claude="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework'"
+alias haiku="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model haiku"
+alias sonnet="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model sonnet"
+alias opus="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model opus"
 
-alias nori="repoverlay switch --copy nori && agency claude"
+alias nori="repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework'"
 
 alias copilot="agency copilot"
 alias copilot-ado="agency copilot --mcp 'ado --org fluidframework'"

@@ -92,8 +92,7 @@
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:run": "npm run test:mocha:end-to-end",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
@@ -116,7 +115,7 @@
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^10.0.10",
 		"@types/sinon": "^17.0.3",
-		"chai": "^4.2.0",
+		"chai": "^4.5.0",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "catalog:eslint",
