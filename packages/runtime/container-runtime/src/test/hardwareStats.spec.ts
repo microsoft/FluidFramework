@@ -17,11 +17,28 @@ import {
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
+const originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+
 function setNavigator(
 	// eslint-disable-next-line @rushstack/no-new-null -- testing behavior with global
 	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,
 ) {
-	global.navigator = navigator as Navigator;
+	// In Node 22+, globalThis.navigator is a read-only getter, so direct
+	// assignment throws. Use Object.defineProperty to override it.
+	Object.defineProperty(globalThis, "navigator", {
+		value: navigator,
+		writable: true,
+		configurable: true,
+	});
+}
+
+function restoreNavigator() {
+	if (originalNavigatorDescriptor === undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- this branch can be removed after upgrading to Node 22, which always provides a built-in navigator descriptor (AB#68707)
+		delete (globalThis as Record<string, unknown>).navigator;
+	} else {
+		Object.defineProperty(globalThis, "navigator", originalNavigatorDescriptor);
+	}
 }
 
 describe("Hardware Stats", () => {
@@ -53,6 +70,10 @@ describe("Hardware Stats", () => {
 			}),
 			existing: false,
 		});
+
+	afterEach(() => {
+		restoreNavigator();
+	});
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();
