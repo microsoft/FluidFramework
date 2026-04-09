@@ -252,7 +252,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
+		logLevel: typeof LogLevel.verbose | typeof LogLevel.info = LogLevel.info,
 	): void {
 		const perfEvent = {
 			...event,
@@ -459,7 +459,7 @@ export class ChildLogger extends TelemetryLogger {
 	}
 
 	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
-		const eventLogLevel = logLevel ?? LogLevel.essential;
+		const eventLogLevel = logLevel ?? LogLevel.info;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.info;
 		// Filter out in case event log level is below what is wanted in config.
 		return eventLogLevel < configLogLevel;
