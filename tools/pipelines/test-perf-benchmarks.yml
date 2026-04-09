@@ -120,9 +120,6 @@ stages:
                 SourceBranch=$(Build.SourceBranch)
               "
 
-        # Setup .npmrc for authenticated package downloads from ADO feeds
-        - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
-
         # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
         - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
