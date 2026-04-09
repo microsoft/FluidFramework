@@ -67,9 +67,9 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 				while (state.continue()) {
 					await state.beforeAllocation();
 					{
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
 						const newLoader: ILoader = createLoader();
 						await state.whileAllocated();
+						assert(newLoader !== undefined);
 					}
 					await state.afterDeallocation();
 				}
@@ -84,9 +84,9 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 				while (state.continue()) {
 					await state.beforeAllocation();
 					{
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
 						const container: IContainer = await loader.createDetachedContainer(codeDetails);
 						await state.whileAllocated();
+						assert(container !== undefined);
 					}
 					await state.afterDeallocation();
 				}
@@ -123,9 +123,9 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 							containerUrl,
 						);
 						const testRequest: IRequest = { url: requestUrl };
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
 						const container = await loader.resolve(testRequest);
 						await state.whileAllocated();
+						assert(container !== undefined);
 					}
 					await state.afterDeallocation();
 				}

@@ -135,7 +135,7 @@ describe("SharedTree memory usage", () => {
 	});
 
 	const numbersOfEntriesForTests = isInPerformanceTestingMode
-		? [100, 10_000] // [1000, 10_000, 100_000]
+		? [100, 10_000]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[10];
 
