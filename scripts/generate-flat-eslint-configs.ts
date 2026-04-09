@@ -13,7 +13,6 @@
  *
  * Heuristic:
  *  - If .eslintrc.cjs extends "@fluidframework/eslint-config-fluid/strict" => use strict flat config.
- *  - If it extends "@fluidframework/eslint-config-fluid/minimal-deprecated" => use minimalDeprecated.
  *  - Otherwise (includes base or recommended) => use recommended.
  *  - Extracts local rules and overrides from .eslintrc.cjs and includes them in the flat config.
  *
@@ -43,7 +42,7 @@ const typescriptMode = args.includes("--typescript");
 interface PackageTarget {
 	packageDir: string;
 	legacyConfigPath: string;
-	flatVariant: "strict" | "minimalDeprecated" | "recommended";
+	flatVariant: "strict" | "recommended";
 	legacyConfig?: unknown;
 	eslintIgnorePatterns?: string[];
 	/** Rules and overrides merged from local extends (e.g., ../../.eslintrc.cjs) */
@@ -201,8 +200,6 @@ async function findLegacyConfigs(
 					const extendsContent = extendsMatch[1];
 					if (extendsContent.includes("eslint-config-fluid/strict")) {
 						variant = "strict";
-					} else if (extendsContent.includes("eslint-config-fluid/minimal-deprecated")) {
-						variant = "minimalDeprecated";
 					}
 				}
 
@@ -900,7 +897,7 @@ ${imports}
 			}
 
 			// Add react/react-hooks rules scoped to jsx/tsx files where the plugin is loaded
-			// The base config (minimal-deprecated.js) loads react and react-hooks plugins for *.jsx and *.tsx files
+			// The base config loads react and react-hooks plugins for *.jsx and *.tsx files
 			if (Object.keys(reactRules).length > 0) {
 				configContent += `\t{\n\t\tfiles: ["**/*.jsx", "**/*.tsx"],\n\t\trules: ${serializeValue(reactRules, "\t\t")},\n\t},\n`;
 			}

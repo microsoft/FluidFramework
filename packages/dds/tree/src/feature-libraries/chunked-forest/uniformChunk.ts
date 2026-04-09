@@ -548,16 +548,21 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	public get value(): Value {
-		const idCompressor = this.chunk.idCompressor;
 		const info = this.nodeInfo(CursorLocationType.Nodes);
-		// If the maybeDecompressedStringAsNumber flag is set to true, we check if the value is a number.
-		// This flag can only ever be set on string leaf nodes, so if the value is a number, we can assume it is a compressible, known stable id.
-		if (info.shape.hasValue && info.shape.maybeDecompressedStringAsNumber) {
+		if (info.shape.hasValue) {
 			const value = this.chunk.values[info.valueOffset];
-			if (typeof value === "number" && idCompressor !== undefined) {
+			// If the maybeDecompressedStringAsNumber flag is set to true, we check if the value is a number.
+			// This flag can only ever be set on string leaf nodes, so if the value is a number, we can assume it is a compressible, known stable id.
+			if (info.shape.maybeDecompressedStringAsNumber && typeof value === "number") {
+				const idCompressor = this.chunk.idCompressor;
+				assert(
+					idCompressor !== undefined,
+					"chunk required idCompressor but did not provide it",
+				);
 				return idCompressor.decompress(value as SessionSpaceCompressedId);
 			}
+			return value;
 		}
-		return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
+		return undefined;
 	}
 }

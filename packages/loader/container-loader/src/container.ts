@@ -1048,13 +1048,13 @@ export class Container
 			try {
 				// Raise event first, to ensure we capture _lifecycleState before transition.
 				// This gives us a chance to know what errors happened on open vs. on fully loaded container.
-				// Log generic events instead of error events if container is in loading state, as most errors are not really FF errors
-				// which can pollute telemetry for real bugs
+				// Log as error whenever an error is present. Some unrelated errors might get caught during load
+				// time (such as permission errors) and it's up to the client to decide what to do with the error.
+				// so keep this in mind when interpreting this info in telemetry
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerClose",
-						category:
-							this._lifecycleState !== "loading" && error !== undefined ? "error" : "generic",
+						category: error === undefined ? "generic" : "error",
 					},
 					error,
 				);
