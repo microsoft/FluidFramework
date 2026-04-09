@@ -4,70 +4,21 @@ description: Use when creating a pull request in the Fluid Framework repo. Compo
 ---
 
 <required>
-*CRITICAL* Do NOT run `gh pr create` until the user has explicitly confirmed via AskUserQuestion in step 6. Do not skip ahead.
+*CRITICAL* Do NOT run `gh pr create` until the user has explicitly confirmed via AskUserQuestion in step 5. Do not skip ahead.
 
 *CRITICAL* Add the following steps to your task/todo list using your available task tooling (TaskCreate for Claude, TodoWrite for Copilot):
 
-1. Run the ci-readiness-check skill. If the user skips it, continue. If it reports remaining issues, tell the user and ask whether to proceed with the PR anyway — but always continue with the PR skill regardless of their answer.
-2. Confirm you are NOT on `main` or any release branch. If you are, stop and tell the user: you cannot create a PR from a protected branch — they need to create or switch to a feature branch first.
-3. Verify that the `origin` remote does not point to `microsoft/FluidFramework`. If it does, stop and tell the user: pushing a branch directly to the main repo is not allowed — they should push to their fork instead.
-4. Compose the PR title following Fluid Framework conventions.
-5. Compose the PR body following the official template.
-6. Print the proposed title and body as text, then immediately use the `AskUserQuestion` tool to let the user choose what to do next. Use these exact options:
+1. Confirm you are NOT on `main` or any release branch. If you are, stop and tell the user: you cannot create a PR from a protected branch — they need to create or switch to a feature branch first.
+2. Verify that the `origin` remote does not point to `microsoft/FluidFramework`. If it does, stop and tell the user: pushing a branch directly to the main repo is not allowed — they should push to their fork instead.
+3. Compose the PR title following Fluid Framework conventions using the `fluid-pr-guide` skill.
+4. Compose the PR body following the official template using the `fluid-pr-guide` skill.
+5. Print the proposed title and body as text, then immediately use the `AskUserQuestion` tool to let the user choose what to do next. Use these exact options:
    - "Create PR" — Push the branch and open the pull request
    - "Create draft PR" — Push the branch and open a draft pull request
    - "Edit" — Revise the title or body before creating
    - "Cancel" — Don't create a PR
-7. If the user picks "Edit", apply their edits and re-present (go back to step 6). If "Create PR" or "Create draft PR", push and create accordingly. If "Cancel", stop.
+6. If the user picks "Edit", apply their edits and re-present (go back to step 5). If "Create PR" or "Create draft PR", push and create accordingly. If "Cancel", stop.
 </required>
-
-# PR Title Conventions
-
-There is no enforced title policy in this repo. Two styles appear in roughly equal proportion — use whichever fits the change. Do not mix them (e.g., don't add a `fix:` prefix to an otherwise plain-imperative title just because it's a bug fix).
-
-**Option A — Conventional Commits prefix:**
-
-```
-type(optional-scope): short imperative description
-```
-
-- Common types: `fix`, `feat`, `chore`, `build`, `docs`
-- Scope is a package or area name (e.g., `build-cli`, `id-compressor`, `eslint-config-fluid`)
-- Examples:
-  - `fix: Prompt copilot-oce to check for Teams channel replies`
-  - `fix(build-cli): remove flaky parallel changeset test`
-  - `feat(devcontainer): add agency installation and update host requirements`
-  - `chore: move misplaced @types/ packages from dependencies to devDependencies`
-  - `build(client): Update type tests after minor release 2.91.0`
-
-**Option B — Plain imperative:**
-
-```
-Short imperative or noun-phrase description
-```
-
-- No prefix, just a clear description of what changed
-- Examples:
-  - `Port MessageCodec to ClientVersionDispatchingCodecBuilder`
-  - `Remove tree checkout's branch method`
-  - `Ensure a summarizer stop request is respected after connecting`
-
-**Never use** the `[bump]` prefix — that is reserved for automated bot PRs.
-
-Always include a `## Description` section, even if it is brief and somewhat redundant with the title.
-
-# PR Body Template
-
-Read `.github/pull_request_template.md` from the repo root and use it as the starting point for the PR body. Fill in each relevant section, then **delete sections and placeholder text that don't apply** — do not leave empty sections.
-
-> CI requirement: the preamble line "Feel free to remove or alter parts of this template..." must be removed from the PR body. Leaving it in will cause the `.github/workflows/pr-validation.yml` check to fail.
-
-## Notes on body sections
-
-- **`## Description`**: Focus on *why* and *impact*, not just what lines changed. For bug fixes, include repro steps or a test that demonstrates the fix.
-- **`## Breaking Changes`**: Only include when a change removes or alters public API surface or behavior in a way that requires consumer action (like migration or build-time updates). Link the wiki page.
-- **`## Reviewer Guidance`**: Always include the wiki link line. Add content if you have specific asks; delete the placeholder bullets if you don't. If design questions are unresolved, mark the PR as a draft.
-- **Azure DevOps work items**: Reference inline in the body as `AB#<item-id>` if applicable (e.g. `AB#12345`). No dedicated section needed.
 
 # Pushing and Creating the PR
 
@@ -79,7 +30,7 @@ git remote get-url origin
 
 If the URL contains `microsoft/FluidFramework`, **stop** — pushing a branch directly to the main repo is almost certainly not intended. Tell the user they likely need to push to their fork instead. Do not proceed.
 
-Once the checks in steps 2–3 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 6. Aside from any prompt shown by `ci-readiness-check` in step 1, this is the only point where the `fluid-pr` flow asks the user a question.
+Once the checks in steps 1–2 pass silently, compose the title and body, print them as text, then use the `AskUserQuestion` tool with the four options as described in step 5. This is the only point where the `fluid-pr` flow asks the user a question.
 
 ```bash
 # Push branch (first time)

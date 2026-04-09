@@ -193,7 +193,7 @@
 		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+	"packageManager": "pnpm@10.29.2+sha512.bef43fa759d91fd2da4b319a5a0d13ef7a45bb985a3d7342058470f9d2051a3ba8674e629672654686ef9443ad13a82da2beb9eeb3e0221c87b8154fff9d74b8",
 	"engines": {
 		"node": ">=20.19.0",
 		"pnpm": "10"
@@ -371,7 +371,8 @@
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
 			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
 			"picomatch: overridden to patched versions to resolve a known security vulnerability.",
-			"node-forge: overridden to ^1.4.0 to resolve known security vulnerabilities."
+			"node-forge: overridden to ^1.4.0 to resolve known security vulnerabilities.",
+			"langsmith: overridden to ^0.5.15 to resolve a known security vulnerability. The consumer declares ^0.3.x so the override is needed to cross the minor version boundary."
 		],
 		"overrides": {
 			"@biomejs/biome": "~2.4.5",
@@ -403,7 +404,8 @@
 			"serialize-javascript@>=6 <7": "^7.0.4",
 			"express@>=4 <5": "^4.22.1",
 			"picomatch@>=2 <3": "^2.3.2",
-			"picomatch@>=4 <5": "^4.0.4"
+			"picomatch@>=4 <5": "^4.0.4",
+			"langsmith": "^0.5.15"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
