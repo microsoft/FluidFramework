@@ -48,7 +48,7 @@ const admin = new Person({ name: "Bob", age: 30, role: "admin" });
 default value:
 
 ```typescript
-class Config extends sf.object("Config", {
+class Config extends sf.objectAlpha("Config", {
   timeout: sf.withDefault(sf.optional(sf.number), 5000),
   retries: sf.withDefault(sf.optional(sf.number), 3),
 }) {}
@@ -68,12 +68,12 @@ const customConfig = new Config({ timeout: 10000 });
 When you provide a value directly, the data is copied for each use, ensuring each instance is independent:
 
 ```typescript
-class Metadata extends sf.object("Metadata", {
+class Metadata extends sf.objectAlpha("Metadata", {
   tags: sf.array(sf.string),
   version: sf.number,
 }) {}
 
-class Article extends sf.object("Article", {
+class Article extends sf.objectAlpha("Article", {
   title: sf.required(sf.string),
 
   // a node is provided directly, it is copied for each use
@@ -98,7 +98,7 @@ assert(article2.metadata.version === 1);
 Alternatively, you can use generator functions to explicitly create new instances:
 
 ```typescript
-class Article extends sf.object("Article", {
+class Article extends sf.objectAlpha("Article", {
   title: sf.required(sf.string),
 
   // generators are called each time to create a new instance
@@ -114,7 +114,7 @@ Insertable object literals, arrays, and map objects can be used in place of node
 and generator functions:
 
 ```typescript
-class Article extends sf.object("Article", {
+class Article extends sf.objectAlpha("Article", {
   title: sf.required(sf.string),
 
   // plain object literal instead of new Metadata(...)
@@ -135,7 +135,7 @@ class Article extends sf.object("Article", {
 Generator functions are called each time a new node is created, enabling dynamic defaults:
 
 ```typescript
-class Document extends sf.object("Document", {
+class Document extends sf.objectAlpha("Document", {
   id: sf.withDefault(sf.required(sf.string), () => crypto.randomUUID()),
   title: sf.required(sf.string),
 }) {}
@@ -150,7 +150,7 @@ Generator functions also work with primitive types:
 ```typescript
 let counter = 0;
 
-class GameState extends sf.object("GameState", {
+class GameState extends sf.objectAlpha("GameState", {
   playerId: sf.withDefault(
     sf.required(sf.string),
     () => `player-${counter++}`,
@@ -201,10 +201,10 @@ const DefaultTag = sf.objectRecursiveAlpha("Tag", {
 
 class TreeNode extends sf.objectRecursiveAlpha("TreeNode", {
   value: sf.number,
-  // ✅ Safe: default is a non-recursive node
+  // ✅ Safe: the default uses a different recursive type, not TreeNode itself
   tag: SchemaFactoryAlpha.withDefaultRecursive(
     sf.optional(DefaultTag),
-    () => new DefaultTag({ id: 0, child: new DefaultTag({ id: 1 }) }),
+    () => new DefaultTag({ id: 0 }),
   ),
   child: sf.optionalRecursive([() => TreeNode]),
 }) {}
