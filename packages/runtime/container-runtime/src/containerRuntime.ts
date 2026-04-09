@@ -4650,7 +4650,7 @@ export class ContainerRuntime
 			);
 			logger.sendErrorEvent(
 				{
-					eventName: "SkipFailingIncorrectSummary",
+					eventName: "PendingOpsDuringSummaryFinalAttempt",
 					referenceSequenceNumber,
 					minimumSequenceNumber,
 					beforeGenerate: beforeSummaryGeneration,
