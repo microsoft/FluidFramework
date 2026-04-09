@@ -198,7 +198,7 @@ describe("array node delta in nodeChanged", () => {
 
 		assert.equal(deltas.length, 1);
 		assert.deepEqual(deltas[0], [
-			{ type: "retain", count: 3 },
+			{ type: "retain", count: 3, contentChanged: false },
 			{ type: "insert", count: 1 },
 		]);
 	});
@@ -219,7 +219,7 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(
 			deltas[0],
 			[
-				{ type: "retain", count: 3 },
+				{ type: "retain", count: 3, contentChanged: false },
 				{ type: "insert", count: 1 },
 			],
 			"delta should carry the single batch's marks through the flush",
@@ -291,11 +291,11 @@ describe("array node delta in nodeChanged", () => {
 
 		assert.equal(deltas.length, 2, "nodeChanged should fire once per edit when unbuffered");
 		assert.deepEqual(deltas[0], [
-			{ type: "retain", count: 3 },
+			{ type: "retain", count: 3, contentChanged: false },
 			{ type: "insert", count: 1 },
 		]);
 		assert.deepEqual(deltas[1], [
-			{ type: "retain", count: 4 },
+			{ type: "retain", count: 4, contentChanged: false },
 			{ type: "insert", count: 1 },
 		]);
 	});
@@ -315,7 +315,7 @@ describe("array node delta in nodeChanged", () => {
 
 		assert.equal(deltas.length, 1);
 		assert.deepEqual(deltas[0], [
-			{ type: "retain", count: 1 },
+			{ type: "retain", count: 1, contentChanged: false },
 			{ type: "insert", count: 1 },
 		]);
 	});
@@ -334,7 +334,7 @@ describe("array node delta in nodeChanged", () => {
 
 		assert.equal(deltas.length, 1);
 		assert.deepEqual(deltas[0], [
-			{ type: "retain", count: 1 },
+			{ type: "retain", count: 1, contentChanged: false },
 			{ type: "remove", count: 1 },
 		]);
 	});
@@ -446,7 +446,7 @@ describe("array node delta in nodeChanged", () => {
 
 		assert.equal(deltas.length, 1);
 		assert.deepEqual(deltas[0], [
-			{ type: "retain", count: 1 },
+			{ type: "retain", count: 1, contentChanged: false },
 			{ type: "insert", count: 3 },
 		]);
 	});
@@ -463,7 +463,7 @@ describe("array node delta in nodeChanged", () => {
 
 		assert.equal(deltas.length, 1);
 		assert.deepEqual(deltas[0], [
-			{ type: "retain", count: 1 },
+			{ type: "retain", count: 1, contentChanged: false },
 			{ type: "remove", count: 3 },
 		]);
 	});
@@ -489,12 +489,12 @@ describe("array node delta in nodeChanged", () => {
 
 		assert.equal(delta1.length, 1);
 		assert.deepEqual(delta1[0], [
-			{ type: "retain", count: 2 },
+			{ type: "retain", count: 2, contentChanged: false },
 			{ type: "insert", count: 1 },
 		]);
 		assert.equal(delta2.length, 1);
 		assert.deepEqual(delta2[0], [
-			{ type: "retain", count: 2 },
+			{ type: "retain", count: 2, contentChanged: false },
 			{ type: "insert", count: 1 },
 		]);
 	});
@@ -602,7 +602,7 @@ describe("array move events", () => {
 			assert.deepEqual(deltas, [
 				[
 					{ type: "remove", count: 1 },
-					{ type: "retain", count: 2 },
+					{ type: "retain", count: 2, contentChanged: false },
 					{ type: "insert", count: 1 },
 				],
 			]);
@@ -625,7 +625,7 @@ describe("array move events", () => {
 			// Destination: retain the existing 3 elements, then insert the moved one.
 			assert.deepEqual(delta1, [
 				[
-					{ type: "retain", count: 3 },
+					{ type: "retain", count: 3, contentChanged: false },
 					{ type: "insert", count: 1 },
 				],
 			]);
@@ -643,9 +643,9 @@ describe("array move events", () => {
 
 			assert.equal(deltas.length, 1);
 			assert.deepEqual(deltas[0], [
-				{ type: "retain", count: 1 },
+				{ type: "retain", count: 1, contentChanged: false },
 				{ type: "remove", count: 2 },
-				{ type: "retain", count: 2 },
+				{ type: "retain", count: 2, contentChanged: false },
 				{ type: "insert", count: 2 },
 			]);
 		});
