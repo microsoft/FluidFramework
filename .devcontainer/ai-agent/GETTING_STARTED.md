@@ -71,27 +71,6 @@ copilot --mcp 'workiq'
 |---|---|---|
 | `ai-reset` | `repoverlay remove --all` | Remove all repoverlay overlays and reset to clean state |
 
-## Connecting via SSH
-
-Access a running AI-enabled Codespace from your local terminal:
-
-```bash
-gh codespace ssh
-```
-
-This enables running AI agents locally while the Codespace provides computing power and repository context.
-
-## What's Different from Standard?
-
-| Addition | Purpose |
-|---|---|
-| Agency CLI | Run AI agents (Claude, GitHub Copilot) from terminal |
-| Repoverlay | Overlay system for context files (agents, skills) |
-| GitHub CLI (`gh`) | Pre-installed for PR workflows and SSH access |
-| SSH daemon | Enables `gh codespace ssh` connections |
-| Agent aliases | Shell shortcuts for common AI commands |
-| Higher compute | 32 CPUs / 64 GB RAM (vs 16 CPUs for Standard) |
-
 ## More Information
 
 - [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace) — Full documentation for this codespace profile
