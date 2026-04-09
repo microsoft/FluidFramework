@@ -117,7 +117,7 @@ export class TreeShape {
 	 *
 	 * @param maybeCompressedIdLeaf - whether the value may have been compressed by the {@link UniformChunk.idCompressor}.
 	 * Can only be explicitly set to `true` on string leaf nodes; otherwise this constructor asserts.
-	 * For non-leaf nodes, mayContainCompressedIds is automatically derived from child shapes.
+	 * For non-leaf nodes, {@link TreeShape.mayContainCompressedIds} is automatically derived from child shapes.
 	 */
 	public constructor(
 		public readonly type: TreeNodeSchemaIdentifier,
