@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -152,10 +153,25 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	): void;
 }
 
+/**
+ * {@link TreeMapNode} with FluidReadonlyMap-based iteration.
+ *
+ * @remarks
+ * This is the same as {@link TreeMapNode} except that it extends FluidReadonlyMap
+ * instead of the built-in `ReadonlyMap`, insulating against breaking changes
+ * in TypeScript's standard library iterator types.
+ *
+ * @sealed @alpha
+ */
+export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
+	extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+		TreeNode,
+		Pick<TreeMapNode<T>, "set" | "delete"> {}
+
 // TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
 // This is not ideal, but no alternatives are possible.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const handler: ProxyHandler<TreeMapNode<any>> = {
+const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {
 	getPrototypeOf: () => {
 		return Map.prototype;
 	},
@@ -239,7 +255,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			yield value;
 		}
 	}
-	public forEach<TThis extends TreeMapNode<T>>(
+	public forEach<TThis extends TreeMapNodeAlpha<T>>(
 		this: TThis,
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
@@ -283,7 +299,8 @@ export function mapSchema<
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 	const persistedMetadata = nodeOptions.persistedMetadata;
 
-	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
+	class Schema extends CustomMapNodeBase<T> implements TreeMapNodeAlpha<T> {
+		public readonly [Symbol.toStringTag] = "TreeMapNodeSchema";
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
