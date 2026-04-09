@@ -187,7 +187,7 @@
 			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.11": "../../../patches/@microsoft__api-extractor@7.52.11.patch"
+			"@microsoft/api-extractor@7.58.1": "../../../patches/@microsoft__api-extractor@7.58.1.patch"
 		}
 	},
 	"typeValidation": {
