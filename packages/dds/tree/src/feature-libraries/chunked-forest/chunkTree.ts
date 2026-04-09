@@ -583,6 +583,7 @@ export function insertValues(
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
 		if (
+			shape.mayContainCompressedIds &&
 			typeof cursor.value === "string" &&
 			idCompressor !== undefined &&
 			isStableNodeIdentifier(cursor.value)
