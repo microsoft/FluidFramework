@@ -89,7 +89,7 @@ describe("uniformChunk", () => {
 			const leafWithIds = new TreeShape(brand(stringSchema.identifier), true, [], true);
 			const leafWithoutIds = new TreeShape(brand(stringSchema.identifier), true, [], false);
 
-			// Parent with a child that has mayContainCompressedIds should also have it.
+			// Parent with a child that has `mayContainCompressedIds` should also have it.
 			const parentWithCompressedChild = new TreeShape(
 				brand(JsonAsTree.JsonObject.identifier),
 				false,
@@ -97,7 +97,7 @@ describe("uniformChunk", () => {
 			);
 			assert.equal(parentWithCompressedChild.mayContainCompressedIds, true);
 
-			// Parent with no children that have mayContainCompressedIds should not have it.
+			// Parent with no children that have `mayContainCompressedIds` should not have it.
 			const parentWithoutCompressedChild = new TreeShape(
 				brand(JsonAsTree.JsonObject.identifier),
 				false,
@@ -111,7 +111,7 @@ describe("uniformChunk", () => {
 			]);
 			assert.equal(grandparent.mayContainCompressedIds, true);
 
-			// Mixed children: one with and one without compressed ids.
+			// Mixed children: one with and one without compressed IDs.
 			const parentWithMixedChildren = new TreeShape(
 				brand(JsonAsTree.JsonObject.identifier),
 				false,

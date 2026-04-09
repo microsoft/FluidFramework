@@ -566,7 +566,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		if (info.shape.hasValue) {
 			const value = this.chunk.values[info.valueOffset];
-			// If mayContainCompressedIds is set, check if the value is a number (i.e. a compressed id that needs decompression).
+			// If mayContainCompressedIds is set, check if the value is a number (i.e. a compressed ID that needs decompression).
 			if (info.shape.mayContainCompressedIds && typeof value === "number") {
 				const idCompressor = this.chunk.idCompressor;
 				assert(
