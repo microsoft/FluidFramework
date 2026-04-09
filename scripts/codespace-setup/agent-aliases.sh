@@ -11,7 +11,11 @@ _ensure_agency() {
 	if [[ ! -x "$AGENCY_DIR/agency" ]]; then
 		echo "Agency is not installed. Installing now..."
 		echo "  A browser window will open for authentication!"
-		pnpm install:agency
+		pnpm install:agency || return 1
+	fi
+	if [[ ! -x "$AGENCY_DIR/agency" ]]; then
+		echo "Agency is still not available at $AGENCY_DIR/agency after installation." >&2
+		return 1
 	fi
 	# Always ensure agency is in PATH (whether just installed or pre-existing).
 	if [[ ":$PATH:" != *":$AGENCY_DIR:"* ]]; then
@@ -22,6 +26,6 @@ _ensure_agency() {
 alias claude="_ensure_agency && repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
 alias dev="_ensure_agency && repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
 alias copilot="_ensure_agency && agency copilot"
-alias oce="_ensure_agency && repoverlay switch --copy ff-oce && copilot -- --agent ff-oce"
+alias oce="_ensure_agency && repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce"
 
 alias ai-reset="repoverlay remove --all"

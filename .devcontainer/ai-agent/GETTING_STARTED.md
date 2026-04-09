@@ -47,7 +47,7 @@ These aliases are available in all terminal sessions (after installing agency):
 | Alias | Command | Purpose |
 |---|---|---|
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
-| `oce` | `repoverlay switch --copy ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
+| `oce` | `repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce` | On-Call Engineer workflows |
 
 ### Custom MCP Servers
 
