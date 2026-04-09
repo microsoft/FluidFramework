@@ -285,7 +285,6 @@ const defaultTokenManager = new OdspTokenManager(odspTokensCache);
 export class OdspTestDriver implements ITestDriver {
 	// Share the driveId across multiple instances of the test driver.
 	private static readonly driveIdPCache = new Map<string, Promise<string>>();
-
 	// Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
 	private static readonly legacyDriverUserRandomIndex = Math.random();
 
