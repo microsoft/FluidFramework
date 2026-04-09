@@ -91,6 +91,13 @@ export type FieldShape = readonly [FieldKey, TreeShape, number];
  * Note that since this requires fields to have uniform shapes (see `FieldShape`),
  * not all trees can have their shape described using this type.
  */
+/**
+ * Maximum topLevelLength value (exclusive) for which {@link TreeShape.withTopLevelLength}
+ * caches the resulting {@link ChunkShape}. Values at or above this threshold always
+ * create a new instance to prevent unbounded cache growth.
+ */
+const chunkShapeCacheLimit = 8;
+
 export class TreeShape {
 	public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
 	public readonly fieldsOffsetArray: readonly OffsetShape[];
@@ -112,9 +119,10 @@ export class TreeShape {
 	/**
 	 *
 	 * Cache for ChunkShape instances created by {@link withTopLevelLength}.
-	 * Only caches shapes with topLevelLength less than 8 to prevent unbounded growth.
+	 * Only caches shapes with topLevelLength less than {@link chunkShapeCacheLimit} to prevent unbounded growth.
+	 * Lazy-initialized to avoid allocating a Map for TreeShape instances that never use caching.
 	 */
-	private readonly chunkShapeCache: Map<number, ChunkShape> = new Map();
+	private chunkShapeCache: Map<number, ChunkShape> | undefined;
 
 	/**
 	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
@@ -182,13 +190,13 @@ export class TreeShape {
 	}
 
 	public withTopLevelLength(topLevelLength: number): ChunkShape {
-		if (topLevelLength < 8) {
-			const cached = this.chunkShapeCache.get(topLevelLength);
+		if (topLevelLength < chunkShapeCacheLimit) {
+			const cached = this.chunkShapeCache?.get(topLevelLength);
 			if (cached !== undefined) {
 				return cached;
 			}
 			const shape = new ChunkShape(this, topLevelLength);
-			this.chunkShapeCache.set(topLevelLength, shape);
+			(this.chunkShapeCache ??= new Map()).set(topLevelLength, shape);
 			return shape;
 		}
 		return new ChunkShape(this, topLevelLength);
