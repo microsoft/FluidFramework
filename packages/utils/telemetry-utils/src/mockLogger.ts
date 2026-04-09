@@ -41,6 +41,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	public readonly minLogLevel: LogLevel;
 
 	public constructor(minLogLevel?: LogLevel) {
+		// Do we want to update this to essential?
 		this.minLogLevel = minLogLevel ?? LogLevel.info;
 	}
 
@@ -59,6 +60,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		// Do we want to update this to essential?
 		if ((logLevel ?? LogLevel.info) >= this.minLogLevel) {
 			this._events.push(event);
 		}

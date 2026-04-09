@@ -183,6 +183,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param error - optional error object to log
 	 * @param logLevel - optional level of the log. It category of event is set as error,
 	 * then the logLevel will be upgraded to be an error.
+	 *
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
 	 */
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
@@ -248,6 +250,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param error - optional error object to log
 	 * @param logLevel - optional level of the log. It category of event is set as error,
 	 * then the logLevel will be upgraded to be an error.
+	 *
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
 	 */
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
@@ -459,6 +463,7 @@ export class ChildLogger extends TelemetryLogger {
 	}
 
 	private shouldFilterOutEvent(event: ITelemetryBaseEvent, logLevel?: LogLevel): boolean {
+		// The default value for eventLogLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
 		const eventLogLevel = logLevel ?? LogLevel.info;
 		const configLogLevel = this.baseLogger.minLogLevel ?? LogLevel.info;
 		// Filter out in case event log level is below what is wanted in config.
