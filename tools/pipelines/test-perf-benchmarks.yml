@@ -13,13 +13,6 @@ trigger:
 pr: none
 
 parameters:
-
-- name: ffPipelineHostRef
-  type: string
-# After this pipeline is merged, the staging branch below can be merged, and this can be set to default to "main".
-  default: 'crmacomb/stagedBenchmarkUpgrade'
-  displayName: 'ff_pipeline_host ref (branch, tag, or commit SHA)'
-
 - name: poolBuild
   type: object
   default: Large-eastus2
@@ -66,7 +59,8 @@ resources:
   - repository: ff_pipeline_host
     type: git
     name: ff_pipeline_host
-    ref: ${{ parameters.ffPipelineHostRef }}
+     # After this pipeline is merged, the staging branch below can be merged, and this can be set to default to "main".
+    ref: 'crmacomb/stagedBenchmarkUpgrade'
 
 variables:
   - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
