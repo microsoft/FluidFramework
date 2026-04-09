@@ -40,7 +40,7 @@ These aliases are available in all terminal sessions (after installing agency):
 | Alias | Command | Purpose |
 |---|---|---|
 | `dev` | `repoverlay switch --copy nori && agency claude ... -- --model opus` | Launch Claude optimized for feature work and debugging |
-| `claude` | `repoverlay switch --copy ff-claude && agency claude ... -- --model opus` | General purpose Claude Code agent |
+| `claude` | `repoverlay remove --all && agency claude ... -- --model opus` | General purpose Claude Code agent |
 
 ### Copilot
 

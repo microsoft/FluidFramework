@@ -23,7 +23,7 @@ _ensure_agency() {
 	fi
 }
 
-alias claude="_ensure_agency && repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
+alias claude="_ensure_agency && { repoverlay remove --all 2>/dev/null; true; } && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
 alias dev="_ensure_agency && repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
 alias copilot="_ensure_agency && agency copilot"
 alias oce="_ensure_agency && repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce"
