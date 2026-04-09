@@ -6,7 +6,6 @@
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	LogLevel,
 } from "@fluidframework/core-interfaces";
 import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import structuredClone from "@ungap/structured-clone";
@@ -182,7 +181,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 * This method also uses the provided {@link FluidAppInsightsLoggerConfig} to
 	 * determine whether an event should be sent or not.
 	 */
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent): void {
 		if (this.shouldSendEvent(event)) {
 			this.baseLoggingClient.trackEvent({
 				name: event.eventName,
