@@ -849,6 +849,12 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
+// @beta @legacy
+export interface ISharedObjectKind<TSharedObject> {
+    create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
+    getFactory(): IChannelFactory<TSharedObject>;
+}
+
 // @beta @legacy (undocumented)
 export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, MergeTreeRevertibleDriver {
     annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
