@@ -111,6 +111,12 @@ export class TreeShape {
 
 	/**
 	 *
+	 * Cache for ChunkShape instances created by {@link withTopLevelLength}.
+	 * Only caches shapes with topLevelLength less than 8 to prevent unbounded growth.
+	 */
+	private readonly chunkShapeCache: Map<number, ChunkShape> = new Map();
+
+	/**
 	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
 	 * @param hasValue - whether or not the TreeShape has a value.
 	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
@@ -176,6 +182,15 @@ export class TreeShape {
 	}
 
 	public withTopLevelLength(topLevelLength: number): ChunkShape {
+		if (topLevelLength < 8) {
+			const cached = this.chunkShapeCache.get(topLevelLength);
+			if (cached !== undefined) {
+				return cached;
+			}
+			const shape = new ChunkShape(this, topLevelLength);
+			this.chunkShapeCache.set(topLevelLength, shape);
+			return shape;
+		}
 		return new ChunkShape(this, topLevelLength);
 	}
 }
