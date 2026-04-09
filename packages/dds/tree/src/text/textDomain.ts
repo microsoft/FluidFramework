@@ -36,26 +36,14 @@ class TextNode
 	})
 	implements TextAsTree.Members, IExposedMethods
 {
-	/**
-	 * Exposes the following methods to an LLM agent:
-	 *
-	 * - `insertAt` - Insert characters into the text at the given character index.
-	 *
-	 * - `removeRange` - Remove a range of characters from the text by character index.
-	 *
-	 * - `fullString` - Copy the content of this text node into a string.
-	 *
-	 * - `characterCount` - Gets the number of characters currently in the text.
-	 *
-	 * - `charactersCopy` - Optimized way to get a copy of the characters in an array.
-	 */
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 		methods.exposeMethod(
 			TextNode,
 			"insertAt",
 			buildFunc(
 				{
-					description: "Insert characters into the text at the given character index.",
+					description:
+						"Insert characters into the text at the given character index (Unicode code points).",
 					returns: tf.void(),
 				},
 				["index", tf.number()],
@@ -67,7 +55,8 @@ class TextNode
 			"removeRange",
 			buildFunc(
 				{
-					description: "Remove a range of characters from the text by character index.",
+					description:
+						"Remove a range of characters from the text by character index (Unicode code points). startIndex defaults to 0 and endIndex defaults to the length of the text.",
 					returns: tf.void(),
 				},
 				["startIndex", tf.union([tf.number(), tf.undefined()])],
@@ -78,7 +67,7 @@ class TextNode
 			TextNode,
 			"fullString",
 			buildFunc({
-				description: "Copy the content of this text node into a string.",
+				description: "Return a copy of this text node's content as a string.",
 				returns: tf.string(),
 			}),
 		);
@@ -86,7 +75,8 @@ class TextNode
 			TextNode,
 			"characterCount",
 			buildFunc({
-				description: "Gets the number of characters currently in the text.",
+				description:
+					"Gets the number of characters (Unicode code points) currently in the text. Joined emojis and other grapheme clusters count as multiple characters.",
 				returns: tf.number(),
 			}),
 		);
@@ -94,7 +84,8 @@ class TextNode
 			TextNode,
 			"charactersCopy",
 			buildFunc({
-				description: "Optimized way to get a copy of the characters in an array.",
+				description:
+					"Returns all characters in the text as an array, where each element is a single Unicode code point. Joined emojis and other grapheme clusters are split into separate elements.",
 				returns: tf.array(tf.string()),
 			}),
 		);
