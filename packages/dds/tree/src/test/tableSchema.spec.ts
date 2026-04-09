@@ -2313,6 +2313,194 @@ describe("TableFactory unit tests", () => {
 
 			unsubscribe();
 		});
+
+		// removeColumns internally calls removeCell for each populated cell in every row.
+		// Each removeCell call creates its own nested transaction carrying:
+		//   preconditionsOnRevert: [{ type: "nodeInDocument", node: column }]
+		// That constraint means: "when reverting this cell removal, the column must still
+		// be in the tree."
+		//
+		// This is correct for the concurrent case (you don't want to restore a cell whose
+		// column was removed by a peer), but it creates a problem for same-branch sequential
+		// undo: when the undo of removeColumns is rebased over any subsequent commit, the
+		// nodeInDocument check fires because the column is (correctly) absent at that point,
+		// and the undo is silently dropped.
+		//
+		// The key conditions required to hit this bug:
+		//   1. The removed column has at least one populated cell (triggering inner removeCell
+		//      transactions with nodeInDocument preconditionsOnRevert).
+		//   2. At least one other commit has been made after the removeColumns commit (causing
+		//      the undo to be rebased rather than applied directly).
+		//
+		// The tests below cover several combinations of interleaved operations to verify the
+		// undo works (or documents the known failure if it does not).
+		it("removeColumns (with cells) → insertRows → undo insertRows → undo removeColumns", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": { value: "Hello" } },
+						}),
+					],
+				}),
+			);
+
+			// Remove the column (also removes row-0's cell).
+			view.root.removeColumns(["column-0"]);
+			assert.equal(view.root.columns.length, 0);
+
+			// Insert an unrelated row after the column removal.
+			// This creates a subsequent commit that will force the removeColumns undo to rebase.
+			view.root.insertRows({ rows: [{ id: "row-1", cells: {} }] });
+
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo insertRows
+			assert.equal(view.root.rows.length, 1, "row-1 should have been removed");
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo removeColumns
+			assert.equal(view.root.columns.length, 1, "column-0 should be restored");
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"Hello",
+				"cell should be restored along with the column",
+			);
+
+			unsubscribe();
+		});
+
+		// Same root cause as the insertRows variant above; any subsequent commit triggers
+		// the bug, not just insertRows specifically.
+		it("removeColumns (with cells) → insertColumns → undo insertColumns → undo removeColumns", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": { value: "Hello" } },
+						}),
+					],
+				}),
+			);
+
+			view.root.removeColumns(["column-0"]);
+			assert.equal(view.root.columns.length, 0);
+
+			// Insert an unrelated column to create the subsequent commit.
+			view.root.insertColumns({ columns: [{ id: "column-1", props: {} }] });
+
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo insertColumns
+			assert.equal(view.root.columns.length, 0, "column-1 should have been removed");
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo removeColumns
+			assert.equal(view.root.columns.length, 1, "column-0 should be restored");
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"Hello",
+				"cell should be restored along with the column",
+			);
+
+			unsubscribe();
+		});
+
+		// Same root cause; a setCell on a different column is the subsequent commit.
+		it("removeColumns (with cells) → setCell → undo setCell → undo removeColumns", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [
+						new Column({ id: "column-0", props: {} }),
+						new Column({ id: "column-1", props: {} }),
+					],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": { value: "Hello" } },
+						}),
+					],
+				}),
+			);
+
+			view.root.removeColumns(["column-0"]);
+			assert.equal(view.root.columns.length, 1);
+
+			// Set a cell in the unrelated column to create the subsequent commit.
+			view.root.setCell({
+				key: { row: "row-0", column: "column-1" },
+				cell: { value: "World" },
+			});
+
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo setCell
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-1" }),
+				undefined,
+				"cell in column-1 should have been removed",
+			);
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo removeColumns
+			assert.equal(view.root.columns.length, 2, "both columns should be restored");
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"Hello",
+				"cell should be restored along with column-0",
+			);
+
+			unsubscribe();
+		});
 	});
 
 	describe("Prevents orphan cells", () => {
