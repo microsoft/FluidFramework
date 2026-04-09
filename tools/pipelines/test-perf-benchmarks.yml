@@ -183,7 +183,6 @@ stages:
               npm run ${{ job.testScript }}
           ${{ if ne(coalesce(job.endpointName, ''), '') }}:
             env:
-              FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger'
               FLUID_BUILD_ID: $(Build.BuildId)
               FLUID_ENDPOINTNAME: ${{ job.endpointName }}
               FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{ variables.pipelineIdentifierForTelemetry }}" }'
