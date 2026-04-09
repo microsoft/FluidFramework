@@ -42,24 +42,22 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
 /**
  * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements that were neither inserted nor removed from the array.
- * The {@link ArrayNodeRetainOp.contentChanged} flag may additionally be set when the element
- * has deep changes; see that field for details.
  * @sealed @alpha
  */
 export interface ArrayNodeRetainOp {
 	readonly type: "retain";
 	readonly count: number;
 	/**
-	 * Set if there are any changes in the subtree rooted at this retained element.
-	 * When absent, nothing in the element's subtree changed.
+	 * Whether there are any changes in the subtree rooted at this retained element.
+	 * `true` if the element's subtree changed; `false` if nothing changed within it.
 	 * @remarks
 	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details.
-	 * This flag appears in deltas from both {@link TreeChangeEventsAlpha.nodeChanged} and
+	 * This field appears in deltas from both {@link TreeChangeEventsAlpha.nodeChanged} and
 	 * {@link TreeChangeEventsAlpha.treeChanged}. It is not present in
 	 * {@link TreeChangeEventsBeta.nodeChanged}, which provides
 	 * {@link NodeChangedData.changedProperties} for non-array nodes instead.
 	 */
-	readonly contentChanged?: true;
+	readonly contentChanged: boolean;
 }
 
 /**
@@ -326,7 +324,7 @@ export const treeNodeApi: TreeNodeApi = {
  * array delta ops suitable for inclusion in {@link NodeChangedDataDelta.delta}.
  *
  * Each mark in the delta describes a contiguous run of positions in the original array:
- * - A mark with only `count` (no attach/detach) → `"retain"` (with `contentChanged: true` if `fields` is set)
+ * - A mark with only `count` (no attach/detach) → `"retain"` with `contentChanged: true` if `fields` is set, `false` otherwise
  * - A mark with only `attach` → `"insert"` (new elements added)
  * - A mark with only `detach` → `"remove"` (elements removed)
  * - A mark with both `attach` and `detach` → `"remove"` + `"insert"`
@@ -347,13 +345,12 @@ export function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDelt
 			ops.push({ type: "insert", count: mark.count });
 		} else if (mark.detach === undefined) {
 			// Retain: elements were not added or removed (but may have deep changes).
-			if (mark.fields === undefined) {
-				ops.push({ type: "retain", count: mark.count });
-			} else {
-				// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
-				// Set contentChanged to flag that the retained element has deep changes.
-				ops.push({ type: "retain", count: 1, contentChanged: true });
-			}
+			// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
+			ops.push({
+				type: "retain",
+				count: mark.count,
+				contentChanged: mark.fields !== undefined,
+			});
 		}
 	}
 	return ops;

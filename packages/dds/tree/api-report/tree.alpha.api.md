@@ -131,7 +131,7 @@ export interface ArrayNodeRemoveOp {
 
 // @alpha @sealed
 export interface ArrayNodeRetainOp {
-    readonly contentChanged?: true;
+    readonly contentChanged: boolean;
     // (undocumented)
     readonly count: number;
     // (undocumented)

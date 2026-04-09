@@ -2764,7 +2764,7 @@ describe("treeNodeApi", () => {
 
 				assert.deepEqual(deltas, [
 					[
-						{ type: "retain", count: 3 },
+						{ type: "retain", count: 3, contentChanged: false },
 						{ type: "insert", count: 1 },
 					],
 				]);
@@ -2808,7 +2808,7 @@ describe("treeNodeApi", () => {
 
 				assert.deepEqual(deltas, [
 					[
-						{ type: "retain", count: 2 },
+						{ type: "retain", count: 2, contentChanged: false },
 						{ type: "remove", count: 1 },
 					],
 				]);
@@ -2827,7 +2827,7 @@ describe("treeNodeApi", () => {
 				assert.deepEqual(deltas, [
 					[
 						{ type: "remove", count: 1 },
-						{ type: "retain", count: 2 },
+						{ type: "retain", count: 2, contentChanged: false },
 						{ type: "insert", count: 1 },
 					],
 				]);
@@ -2926,7 +2926,7 @@ describe("treeNodeApi", () => {
 					assert.equal(treeChangedCount, 1);
 					const expected = [
 						[
-							{ type: "retain", count: 2 },
+							{ type: "retain", count: 2, contentChanged: false },
 							{ type: "remove", count: 1 },
 						],
 					];
@@ -2951,7 +2951,7 @@ describe("treeNodeApi", () => {
 
 					const expected = [
 						[
-							{ type: "retain", count: 1 },
+							{ type: "retain", count: 1, contentChanged: false },
 							{ type: "retain", count: 1, contentChanged: true },
 							{ type: "remove", count: 1 },
 						],
@@ -2978,13 +2978,13 @@ describe("treeNodeApi", () => {
 					assert.deepEqual(treeChangedDeltas, [
 						[
 							{ type: "retain", count: 1, contentChanged: true },
-							{ type: "retain", count: 1 },
+							{ type: "retain", count: 1, contentChanged: false },
 							{ type: "retain", count: 1, contentChanged: true },
 						],
 					]);
 				});
 
-				it(`unmodified elements produce plain retain ops without contentChanged`, () => {
+				it(`unmodified elements produce retain ops with contentChanged: false`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }, { v: 3 }]);
 					const root = view.root;
@@ -2996,7 +2996,7 @@ describe("treeNodeApi", () => {
 
 					assert.deepEqual(treeChangedDeltas, [
 						[
-							{ type: "retain", count: 2 },
+							{ type: "retain", count: 2, contentChanged: false },
 							{ type: "remove", count: 1 },
 						],
 					]);
@@ -3014,7 +3014,7 @@ describe("treeNodeApi", () => {
 
 					assert.deepEqual(treeChangedDeltas, [
 						[
-							{ type: "retain", count: 2 },
+							{ type: "retain", count: 2, contentChanged: false },
 							{ type: "insert", count: 1 },
 						],
 					]);

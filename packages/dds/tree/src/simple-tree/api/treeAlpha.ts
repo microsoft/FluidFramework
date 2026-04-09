@@ -47,12 +47,13 @@ export interface NodeChangedDataDelta {
 	 * internal change passes in a single operation (for example, a data change combined with a
 	 * schema upgrade).
 	 *
-	 * @remarks
-	 * Note: for unhydrated array nodes (not yet inserted into a document), deep changes
-	 * on elements do not fire `treeChanged` at all — not even with `delta: undefined`. Only direct
-	 * changes (insert, remove, move) fire the event on unhydrated nodes (tracked in AB#63261).
+	 * For unhydrated array nodes, deep changes on elements do not fire `treeChanged` at all —
+	 * not even with `delta: undefined`. Only direct changes (insert, remove, move) fire the
+	 * event on unhydrated nodes.
 	 *
 	 * See {@link ArrayNodeDeltaOp} for op semantics.
+	 * @privateRemarks
+	 * Unhydrated array node deep change limitation tracked in AB#63261.
 	 */
 	readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
 }
@@ -89,7 +90,7 @@ export type NodeChangedDataAlpha<TNode extends TreeNode = TreeNode> =
 export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	extends TreeChangeEvents {
 	/**
-	 * Emitted when a shallow change occurs on this node.
+	 * Emitted when a shallow change occurs on this node, i.e., when the node's direct children change.
 	 *
 	 * @remarks
 	 * For array nodes: the event data includes a {@link NodeChangedDataDelta.delta | delta} payload
@@ -125,7 +126,7 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 *
 	 * For unhydrated array nodes (not yet inserted into a document), only direct changes
 	 * (insert, remove, move) fire this event. Deep changes on elements of unhydrated
-	 * arrays are not detected (tracked in AB#63261).
+	 * arrays are not detected.
 	 *
 	 * For non-array nodes: same as the base {@link TreeChangeEvents.treeChanged}.
 	 *
@@ -134,6 +135,8 @@ export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode>
 	 * and no delta payload is provided. Use a more specific schema type to get the delta.
 	 *
 	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
+	 * @privateRemarks
+	 * Unhydrated array node deep change limitation tracked in AB#63261.
 	 */
 	treeChanged: TNode extends WithType<string, NodeKind.Array>
 		? (data: NodeChangedDataDelta) => void
