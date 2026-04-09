@@ -184,7 +184,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param logLevel - optional level of the log. It category of event is set as error,
 	 * then the logLevel will be upgraded to be an error.
 	 *
-	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential}.
 	 */
 	public sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
@@ -251,7 +251,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param logLevel - optional level of the log. It category of event is set as error,
 	 * then the logLevel will be upgraded to be an error.
 	 *
-	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential} once issue #26910 is resolved.
+	 * @remarks The default value for logLevel will be updated to {@link @fluidframework/core-interfaces#LogLevel.essential}.
 	 */
 	public sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
