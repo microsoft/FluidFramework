@@ -33,7 +33,7 @@ type TestMap = Map<string, number> & {
     readonly metadata: Readonly<Record<string, string | number>>;
 };
 
-type TestArray = TestArrayItem[];
+type TestArray = TreeArray<(TestArrayItem | string), TestArrayItem>;
 
 interface TestArrayItem {
     value: number;

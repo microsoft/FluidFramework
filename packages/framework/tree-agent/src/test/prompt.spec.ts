@@ -10,6 +10,7 @@ import * as path from "node:path";
 import {
 	independentView,
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
@@ -325,7 +326,10 @@ describe("Prompt snapshot", () => {
 				return this.value.toString(radix);
 			}
 		}
-		class TestArray extends sf.array("TestArray", NumberValue) {}
+		class TestArray extends sf.array(
+			"TestArray",
+			SchemaFactoryBeta.types([NumberValue, SchemaFactoryBeta.staged(sf.string)]),
+		) {}
 		class Obj extends sf.object("Obj", {
 			map: TestMap,
 			array: TestArray,
