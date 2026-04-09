@@ -5,17 +5,27 @@
 # shopt -s expand_aliases is bash-only; zsh expands aliases by default in interactive shells.
 [ -n "${BASH_VERSION:-}" ] && shopt -s expand_aliases
 
-alias claude="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework'"
-alias haiku="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model haiku"
-alias sonnet="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model sonnet"
-alias opus="repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model opus"
+# Ensures agency is installed and in PATH; installs it (via the repo-approved pnpm script) if not.
+_ensure_agency() {
+	local AGENCY_DIR="$HOME/.config/agency/CurrentVersion"
+	if [[ ! -x "$AGENCY_DIR/agency" ]]; then
+		echo "Agency is not installed. Installing now..."
+		echo "  A browser window will open for authentication!"
+		pnpm install:agency || return 1
+	fi
+	if [[ ! -x "$AGENCY_DIR/agency" ]]; then
+		echo "Agency is still not available at $AGENCY_DIR/agency after installation." >&2
+		return 1
+	fi
+	# Always ensure agency is in PATH (whether just installed or pre-existing).
+	if [[ ":$PATH:" != *":$AGENCY_DIR:"* ]]; then
+		export PATH="$AGENCY_DIR:$PATH"
+	fi
+}
 
-alias nori="repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework'"
-
-alias copilot="agency copilot"
-alias copilot-ado="agency copilot --mcp 'ado --org fluidframework'"
-alias copilot-kusto="agency copilot --mcp 'kusto --service-uri https://kusto.aria.microsoft.com'"
-alias copilot-oce="repoverlay switch --copy ff-oce && copilot -- --agent ff-oce"
-alias copilot-work="agency copilot --mcp 'workiq'"
+alias claude="_ensure_agency && repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
+alias dev="_ensure_agency && repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' -- --model opus"
+alias copilot="_ensure_agency && agency copilot"
+alias oce="_ensure_agency && repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce"
 
 alias ai-reset="repoverlay remove --all"

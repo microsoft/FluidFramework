@@ -6,14 +6,16 @@ This codespace is pre-configured for AI-agent-assisted development of the Fluid 
 
 ## First-time Setup
 
-Agency **must** be installed manually after the Codespace starts. Run `pnpm install:agency` in the terminal — this requires Azure authentication and will open a browser window for sign-in.
+Agency is installed automatically the first time you run `dev`, `claude`, or any agent alias - watch for a browser authentication popup.
+If automatic installation fails, you can install agency manually via `pnpm install:agency`.
 
 > [!NOTE]
-> `pnpm install:agency` is supported in **VS Code** (desktop or SSH). It may not work in a
-> browser-based Codespace because the OAuth redirect requires a local browser and authentication may
-> not complete correctly.
+> Agency installation is supported in **VS Code** (desktop or SSH).
+> It may not work in a browser-based Codespace because the OAuth redirect requires a local browser and authentication may not complete correctly.
 
-Then open a **new terminal** for the agent aliases to be available.
+> [!TIP]
+> After creating a new AI-enabled Codespace you may be prompted to authenticate several times.
+> It may seem excessive, but is expected - just keep clicking through each prompt until they stop.
 
 ## Quick Start
 
@@ -37,21 +39,31 @@ These aliases are available in all terminal sessions (after installing agency):
 
 | Alias | Command | Purpose |
 |---|---|---|
-| `claude` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework'` | Default Claude Code model |
-| `haiku` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model haiku` | Fastest, cheapest option |
-| `sonnet` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model sonnet` | Balanced capabilities |
-| `opus` | `repoverlay switch --copy ff-claude && agency claude --mcp 'ado --org fluidframework' -- --model opus` | Most capable model |
-| `nori` | `repoverlay switch --copy nori && agency claude --mcp 'ado --org fluidframework'` | Switch to nori overlay and launch Claude |
+| `dev` | `repoverlay switch --copy nori && agency claude ... -- --model opus` | Launch Claude optimized for feature work and debugging |
+| `claude` | `repoverlay switch --copy ff-claude && agency claude ... -- --model opus` | General purpose Claude Code agent |
 
 ### Copilot
 
 | Alias | Command | Purpose |
 |---|---|---|
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
-| `copilot-ado` | `agency copilot --mcp 'ado --org fluidframework'` | Azure DevOps integration |
-| `copilot-kusto` | `agency copilot --mcp 'kusto ...'` | Telemetry queries |
-| `copilot-oce` | `repoverlay switch --copy ff-oce && copilot -- --agent ff-oce` | On-Call Engineer workflows |
-| `copilot-work` | `agency copilot --mcp 'workiq'` | WorkIQ integration |
+| `oce` | `repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce` | On-Call Engineer workflows |
+
+### Custom MCP Servers
+
+The built-in aliases include at least ADO, WorkIQ, and EngHub MCP servers.
+You can also launch an agent with your own combination of MCP servers using the `--mcp` flag.
+Stack as many as you need (and watch for browser authentication popups):
+
+```bash
+# Claude with ADO and Kusto
+agency claude --mcp 'ado --org fluidframework' --mcp 'kusto --service-uri https://kusto.aria.microsoft.com'
+
+# Copilot with WorkIQ
+agency copilot --mcp 'workiq'
+```
+
+> Run `agency mcp --help` to see all available MCP servers and their options.
 
 ### Utility
 
