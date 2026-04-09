@@ -54,7 +54,10 @@ interface BindingIntersectionResult {
 }
 
 interface TypeExpression {
-	staged?: boolean;
+	/**
+	 * True when this type expression includes any staged schema types.
+	 */
+	staged: boolean;
 	precedence: TypePrecedence;
 	text: string;
 }
@@ -180,7 +183,7 @@ export function renderSchemaTypeScript(
 
 		// When staged types are present, split into separate read/write types so
 		// staged types appear readable but not writeable.
-		if (elementTypes.staged === true) {
+		if (elementTypes.staged) {
 			const nonStagedTypes = [...schema.childTypes].filter(
 				(child) =>
 					typeof schema.simpleAllowedTypes.get(child.identifier)?.isStaged !== "object",
@@ -210,7 +213,7 @@ export function renderSchemaTypeScript(
 
 		// When staged types are present, split into separate read/write types so
 		// staged types appear readable but not writeable.
-		if (valueType.staged === true) {
+		if (valueType.staged) {
 			const nonStagedTypes = [...schema.childTypes].filter(
 				(child) =>
 					typeof schema.simpleAllowedTypes.get(child.identifier)?.isStaged !== "object",
@@ -241,7 +244,7 @@ export function renderSchemaTypeScript(
 		// Records don't support separate read/write types, so emit a warning
 		// listing the staged types that should not be used as values.
 		// A runtime error will occur if a a staged type is attempted to be written to a record.
-		if (valueType.staged === true) {
+		if (valueType.staged) {
 			const stagedTypes = [...schema.childTypes].filter(
 				(child) =>
 					typeof schema.simpleAllowedTypes.get(child.identifier)?.isStaged === "object",
@@ -321,7 +324,7 @@ export function renderSchemaTypeScript(
 
 		const description = field.metadata?.description;
 
-		if (allowedTypes.staged === true) {
+		if (allowedTypes.staged) {
 			const { types } = normalizedAllowedTypes.evaluate();
 			const nonStagedSchemas = types
 				.filter(({ metadata }) => metadata.stagedSchemaUpgrade === undefined)
@@ -396,12 +399,15 @@ export function renderSchemaTypeScript(
 			expressions.push(renderTypeReference(schema));
 		}
 		if (expressions.length === 0) {
-			return { precedence: TypePrecedence.Object, text: "never" };
+			return { staged: false, precedence: TypePrecedence.Object, text: "never" };
 		}
 		if (expressions.length === 1) {
-			return expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" };
+			return (
+				expressions[0] ?? { staged: false, precedence: TypePrecedence.Object, text: "never" }
+			);
 		}
 		return {
+			staged: false,
 			precedence: TypePrecedence.Union,
 			text: expressions
 				.map((expr) => formatExpression(expr, TypePrecedence.Union))
@@ -420,7 +426,7 @@ export function renderSchemaTypeScript(
 			let expr: TypeExpression;
 			if (isNamedSchema(childSchema.identifier)) {
 				expr = {
-					staged: isStaged ? true : undefined,
+					staged: isStaged,
 					precedence: TypePrecedence.Object,
 					text: resolver.resolve(childSchema),
 				};
@@ -431,12 +437,14 @@ export function renderSchemaTypeScript(
 			expressions.push(expr);
 		}
 		if (expressions.length === 0) {
-			return { precedence: TypePrecedence.Object, text: "never" };
+			return { staged: false, precedence: TypePrecedence.Object, text: "never" };
 		}
 		if (expressions.length === 1) {
-			return expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" };
+			return (
+				expressions[0] ?? { staged: false, precedence: TypePrecedence.Object, text: "never" }
+			);
 		}
-		const staged = expressions.some((e) => e.staged === true) ? (true as const) : undefined;
+		const staged = expressions.some((e) => e.staged);
 		return {
 			staged,
 			precedence: TypePrecedence.Union,
@@ -453,12 +461,14 @@ export function renderSchemaTypeScript(
 			expressions.push(renderTypeReference(type, metadata));
 		}
 		if (expressions.length === 0) {
-			return { precedence: TypePrecedence.Object, text: "never" };
+			return { staged: false, precedence: TypePrecedence.Object, text: "never" };
 		}
 		if (expressions.length === 1) {
-			return expressions[0] ?? { precedence: TypePrecedence.Object, text: "never" };
+			return (
+				expressions[0] ?? { staged: false, precedence: TypePrecedence.Object, text: "never" }
+			);
 		}
-		const staged = expressions.some((e) => e.staged === true) ? true : undefined;
+		const staged = expressions.some((e) => e.staged);
 		return {
 			staged,
 			precedence: TypePrecedence.Union,
@@ -472,7 +482,7 @@ export function renderSchemaTypeScript(
 		schema: TreeNodeSchema,
 		metadata?: AllowedTypeMetadata,
 	): TypeExpression {
-		const staged = metadata?.stagedSchemaUpgrade === undefined ? undefined : true;
+		const staged = metadata?.stagedSchemaUpgrade !== undefined;
 		if (isNamedSchema(schema.identifier)) {
 			return {
 				staged,
@@ -481,7 +491,7 @@ export function renderSchemaTypeScript(
 			};
 		}
 		const result = renderInlineSchema(schema);
-		return staged === undefined ? result : { ...result, staged };
+		return staged ? { ...result, staged } : result;
 	}
 
 	function renderInlineSchema(schema: TreeNodeSchema): TypeExpression {
@@ -499,11 +509,12 @@ export function renderSchemaTypeScript(
 		}
 		if (schema.kind === NodeKind.Leaf) {
 			return {
+				staged: false,
 				precedence: TypePrecedence.Object,
 				text: renderLeaf((schema as unknown as SimpleLeafNodeSchema).leafKind),
 			};
 		}
-		return { precedence: TypePrecedence.Object, text: "unknown" };
+		return { staged: false, precedence: TypePrecedence.Object, text: "unknown" };
 	}
 
 	function renderInlineObject(schema: ObjectNodeSchema): TypeExpression {
@@ -518,12 +529,13 @@ export function renderSchemaTypeScript(
 				: `{
 ${members}
 }`;
-		return { precedence: TypePrecedence.Object, text };
+		return { staged: false, precedence: TypePrecedence.Object, text };
 	}
 
 	function renderInlineArray(schema: ArrayNodeSchema): TypeExpression {
 		const elementTypes = renderAllowedTypes(schema.childTypes);
 		return {
+			staged: false,
 			precedence: TypePrecedence.Object,
 			text: `${formatExpression(elementTypes)}[]`,
 		};
@@ -532,6 +544,7 @@ ${members}
 	function renderInlineMap(schema: MapNodeSchema): TypeExpression {
 		const valueType = renderAllowedTypes(schema.childTypes);
 		return {
+			staged: false,
 			precedence: TypePrecedence.Object,
 			text: `Map<string, ${valueType.text}>`,
 		};
@@ -540,6 +553,7 @@ ${members}
 	function renderInlineRecord(schema: RecordNodeSchema): TypeExpression {
 		const valueType = renderAllowedTypes(schema.childTypes);
 		return {
+			staged: false,
 			precedence: TypePrecedence.Object,
 			text: `Record<string, ${valueType.text}>`,
 		};
