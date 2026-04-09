@@ -585,7 +585,7 @@ describeCompat(
 		);
 
 		itExpects(
-			"SkipFailingIncorrectSummary = true. Final summary attempt should pass when ops are sent during summarize",
+			"Final summary attempt should pass when ops are sent during summarize",
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
@@ -623,7 +623,6 @@ describeCompat(
 				},
 			],
 			async () => {
-				configProvider.set("Fluid.Summarizer.SkipFailingIncorrectSummary", true);
 				configProvider.set("Fluid.Summarizer.PendingOpsRetryDelayMs", 5);
 				const container = await createContainer(provider, false /* disableSummary */);
 				await waitForContainerConnection(container);
