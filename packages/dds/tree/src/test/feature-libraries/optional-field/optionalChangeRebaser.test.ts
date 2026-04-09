@@ -624,26 +624,6 @@ const generateChildStateForRebaseVersion = function* (
 			parent: state,
 		};
 	}
-
-	// Rollback
-	if (
-		state.mostRecentEdit !== undefined &&
-		!state.mostRecentEdit.description.startsWith("Rollback")
-	) {
-		const intention = mintIntention();
-		const revision = tagFromIntention(intention);
-		const modularEdit = defaultFamily.invert(state.mostRecentEdit.changeset, true, revision);
-
-		yield {
-			content: (state.parent ?? assert.fail()).content,
-			mostRecentEdit: {
-				changeset: tagChange(modularEdit, revision),
-				intention,
-				description: `Rollback:${state.mostRecentEdit.description}`,
-			},
-			parent: state,
-		};
-	}
 };
 
 // /**

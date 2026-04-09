@@ -4962,14 +4962,8 @@ function insertRootRename(
 		detachLocationEntry.value,
 	);
 
-	if (intermediateRenameEntry.value === undefined) {
-		const renameToOldId = areEqualChangeAtomIds(oldId, composedOldId) ? undefined : oldId;
-		const firstRenameId = renameToOldId ?? newIntermediateId ?? newId;
-		if (!areEqualChangeAtomIds(firstRenameId, composedNewId)) {
-			table.firstIntermediateRenames.set(composedOldId, countProcessed, firstRenameId);
-		}
-	}
-
+	// XXX: Review updating of output detach locations.
+	// Should remove as part of deleting rename entries?
 	if (areEqualChangeAtomIds(composedOldId, composedNewId)) {
 		// The renames cancelling out implies that the detach location of the root is not changed by the composed changeset.
 		table.outputDetachLocations.delete(composedNewId, countProcessed);
@@ -4997,7 +4991,17 @@ function insertRootRename(
 				);
 			}
 		}
+
+		const renameToOldId = areEqualChangeAtomIds(oldId, composedOldId) ? undefined : oldId;
+		const firstRenameId =
+			intermediateRenameEntry.value ?? renameToOldId ?? newIntermediateId ?? newId;
+		if (!areEqualChangeAtomIds(firstRenameId, composedNewId)) {
+			table.firstIntermediateRenames.set(composedOldId, countProcessed, firstRenameId);
+		}
 	}
+
+	tryRemoveDetachLocation(table, composedOldId, countProcessed);
+	tryRemoveDetachLocation(table, oldId, countProcessed);
 
 	const countRemaining = count - countProcessed;
 	if (countRemaining > 0) {
@@ -5144,6 +5148,7 @@ function deleteNodeRenameEntry(
 ): void {
 	roots.oldToNewId.delete(oldId, count);
 	roots.newToOldId.delete(newId, count);
+	roots.firstIntermediateRenames.delete(oldId, count);
 	tryRemoveDetachLocation(roots, oldId, count);
 }
 
