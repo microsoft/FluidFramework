@@ -100,8 +100,9 @@ export class TreeShape {
 	public readonly positions: readonly NodePositionInfo[];
 
 	/**
-	 * Whether this shape (or any descendant leaf within it) may contain values compressed by the idCompressor.
+	 * Whether chunks using this shape (including any descendant leaf within it) may contain values compressed by the {@link UniformChunk.idCompressor}.
 	 *
+	 * @remarks
 	 * For string leaf nodes, this can be explicitly set to `true` to indicate that the value may be a compressed id
 	 * stored as a number that needs to be decompressed back to a string.
 	 * For non-leaf nodes, this is automatically derived from whether any child shapes have it set.
@@ -114,8 +115,8 @@ export class TreeShape {
 	 * @param hasValue - whether or not the TreeShape has a value.
 	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
 	 *
-	 * @param maybeCompressedIdLeaf - whether the value may have been compressed by the idCompressor.
-	 * Can only be explicitly set to `true` on string leaf nodes; throws a usage error otherwise.
+	 * @param maybeCompressedIdLeaf - whether the value may have been compressed by the {@link UniformChunk.idCompressor}.
+	 * Can only be explicitly set to `true` on string leaf nodes; otherwise this constructor asserts.
 	 * For non-leaf nodes, mayContainCompressedIds is automatically derived from child shapes.
 	 */
 	public constructor(
@@ -167,7 +168,11 @@ export class TreeShape {
 		) {
 			return false;
 		}
-		return this.type === other.type && this.hasValue === other.hasValue;
+		return (
+			this.type === other.type &&
+			this.hasValue === other.hasValue &&
+			this.mayContainCompressedIds === other.mayContainCompressedIds
+		);
 	}
 
 	public withTopLevelLength(topLevelLength: number): ChunkShape {

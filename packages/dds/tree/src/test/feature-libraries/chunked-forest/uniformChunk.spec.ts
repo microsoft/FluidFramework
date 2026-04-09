@@ -75,6 +75,16 @@ describe("uniformChunk", () => {
 			);
 		});
 
+		it("equals distinguishes shapes differing only by mayContainCompressedIds", () => {
+			const withIds = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const withoutIds = new TreeShape(brand(stringSchema.identifier), true, [], false);
+			assert.equal(withIds.equals(withoutIds), false);
+			assert.equal(withoutIds.equals(withIds), false);
+			// Self-equality still holds
+			assert.equal(withIds.equals(withIds), true);
+			assert.equal(withoutIds.equals(withoutIds), true);
+		});
+
 		it("mayContainCompressedIds propagates from child shapes to parent shapes", () => {
 			const leafWithIds = new TreeShape(brand(stringSchema.identifier), true, [], true);
 			const leafWithoutIds = new TreeShape(brand(stringSchema.identifier), true, [], false);
