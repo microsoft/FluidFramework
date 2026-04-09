@@ -135,7 +135,7 @@ export const reactConfig = [
 		files: ["**/*.jsx", "**/*.tsx"],
 		...reactPlugin.configs.flat.recommended,
 	},
-	// react-hooks/recommended rules (from minimal-deprecated.js lines 451)
+	// react-hooks/recommended rules
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		plugins: {
@@ -154,7 +154,7 @@ export const reactConfig = [
 		files: ["**/*.jsx", "**/*.tsx"],
 		...reactPlugin.configs.flat["jsx-runtime"],
 	},
-	// Custom overrides from minimal-deprecated.js (lines 453-459)
+	// Custom overrides for react-hooks rules
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {

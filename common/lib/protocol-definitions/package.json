@@ -81,8 +81,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
@@ -104,7 +103,7 @@
 		"typescript": "~5.1.6",
 		"typescript-eslint": "~8.55.0"
 	},
-	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
 	"fluidBuild": {
 		"tasks": {
 			"tsc": [
@@ -122,7 +121,8 @@
 			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
 			"tar: overridden to ^7.5.11 to resolve multiple security vulnerabilities in tar 6.x (EOL, no backport).",
 			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
-			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support)."
+			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
 		],
 		"onlyBuiltDependencies": [
 			"core-js",
@@ -154,7 +154,9 @@
 			"minimatch@>=8 <9": "^8.0.7",
 			"minimatch@>=9 <10": "^9.0.9",
 			"minimatch@>=10 <11": "^10.2.4",
-			"serialize-javascript@>=6 <7": "^7.0.4"
+			"serialize-javascript@>=6 <7": "^7.0.4",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.52.11": "../../../patches/@microsoft__api-extractor@7.52.11.patch"

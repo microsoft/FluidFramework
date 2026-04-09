@@ -108,6 +108,9 @@ export {
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
+	areDetachedNodeIdsEqual,
+	deltaFieldMapHasVisibleChanges,
+	deltaFieldChangesHaveVisibleChanges,
 } from "./deltaUtil.js";
 
 export {

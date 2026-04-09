@@ -5,7 +5,7 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { ExecOptions, execFileSync, execFile } from "node:child_process";
+import { execFileSync, execFile, type ExecFileOptions } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -33,7 +33,9 @@ const getModulePath = (version: string): string => path.join(baseModulePath, ver
 const resolutionCache = new Map<string, string>();
 
 // Increment the revision if we want to force installation (e.g. package list changed)
-export const revision = 4;
+// Bumped to 5: switched from npm to pnpm with node-linker=hoisted; cached installs with the
+// old npm flat layout or the pnpm isolated layout must be reinstalled.
+export const revision = 5;
 
 interface InstalledJson {
 	revision: number;
@@ -122,8 +124,38 @@ async function removeInstalled(version: string): Promise<void> {
 
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
-const npmCmd =
-	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
+// pnpm is used instead of npm for package installation to enable security flags (--ignore-scripts, --prefer-offline).
+const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+
+// Minimum age (in minutes) a package version must have before pnpm will install it.
+const minimumReleaseAgeMinutes = 1 * 24 * 60;
+
+// Enforce reasonable security settings on compat package installs to mitigate risk of supply-chain attacks.
+// See https://pnpm.io/supply-chain-security for context on the flags used here.
+const pnpmWorkspaceYamlContent = `
+minimumReleaseAge: ${minimumReleaseAgeMinutes}
+
+# See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
+# Enabling this is additionally more complicated than coming up with a reasonable allow-list of packages, as Azure Artifact feeds don't seem to preserve trusted provenance metadata
+# depending on how packages are ingested. Note the "off" here is the default as well.
+trustPolicy: off
+
+packages:
+  - '.'
+`;
+
+// Queries the registry that pnpm is currently configured to use, so that the isolated install
+// directory can be explicitly pinned to the same registry. In CI, pnpm is configured via
+// NPM_CONFIG_USERCONFIG to use the Azure Artifacts feed; locally it falls back to the public registry.
+let cachedPnpmRegistry: string | undefined;
+function getPnpmRegistry(): string {
+	cachedPnpmRegistry ??= execFileSync(pnpmCmd, ["config", "get", "registry"], {
+		encoding: "utf8",
+		// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+		shell: true,
+	}).trim();
+	return cachedPnpmRegistry;
+}
 
 /**
  * Resolves a version range or alias to a specific version number.
@@ -166,18 +198,18 @@ export function resolveVersion(requested: string, installed: boolean): string {
 		let result: string | undefined;
 		try {
 			result = execFileSync(
-				npmCmd,
-				["v", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
+				pnpmCmd,
+				["view", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
 				{
 					encoding: "utf8",
-					// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+					// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
 					shell: true,
 				},
 			);
 		} catch (error: any) {
 			debugger;
 			throw new Error(
-				`Error while running: ${npmCmd} v "@fluidframework/container-loader@${requested}" version --json`,
+				`Error while running: ${pnpmCmd} view "@fluidframework/container-loader@${requested}" version --json`,
 			);
 		}
 		if (result === "" || result === undefined) {
@@ -252,9 +284,9 @@ export async function ensureInstalled(
 			await removeInstalled(version);
 		}
 
-		// Check installed status again under lock the modulePath lock
+		// Check installed status again under the modulePath lock
 		if (force || !(await isInstalled(version))) {
-			const options: ExecOptions = {
+			const options: ExecFileOptions = {
 				cwd: modulePath,
 				env: {
 					...process.env,
@@ -262,43 +294,44 @@ export async function ensureInstalled(
 					// will otherwise propagate to these commands but fail to resolve.
 					NODE_OPTIONS: "",
 				},
-				// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-				// @ts-expect-error ExecOptions does not acknowledge boolean for `shell` as a valid option (at least as of @types/node@18.19.1)
+				// When using pnpm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
 				shell: true,
 			};
-			// Install the packages
-			await new Promise<void>((resolve, reject) =>
-				execFile(
-					npmCmd,
-					// Added --verbose to try to troubleshoot AB#6195.
-					// We should probably remove it if when find the root cause and fix for that.
-					["init", "--yes", "--verbose"],
-					options,
-					(error, stdout, stderr) => {
-						if (error) {
-							const errorString =
-								error instanceof Error
-									? `${error.message}\n${error.stack}`
-									: JSON.stringify(error);
-							reject(
-								new Error(
-									`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
-								),
-							);
-						}
-						resolve();
-					},
-				),
+
+			// Pin the isolated install directory to the same registry pnpm is using in the parent
+			// process and enforce a minimum package age. Writing pnpm-workspace.yaml here
+			// makes pnpm treat modulePath as a workspace root so the settings are scoped here only.
+			const registry = getPnpmRegistry();
+			writeFileSync(
+				path.join(modulePath, ".npmrc"),
+				// node-linker=hoisted gives a flat node_modules layout (npm-compatible), which
+				// loadPackage() requires to resolve both direct and transitive dependencies by
+				// their package name. Without this, pnpm's default isolated layout places
+				// transitive deps under node_modules/.pnpm/ and they cannot be found.
+				`registry=${registry}\nnode-linker=hoisted\n`,
+				{ encoding: "utf8" },
+			);
+			writeFileSync(path.join(modulePath, "pnpm-workspace.yaml"), pnpmWorkspaceYamlContent, {
+				encoding: "utf8",
+			});
+
+			// Write a minimal package.json so pnpm add has a manifest to update.
+			// Done with writeFileSync rather than `pnpm init` so that it is idempotent:
+			// `pnpm init` fails if package.json already exists (e.g. force=true on a previously
+			// installed version, or a revision bump that clears installed.json but leaves the dir).
+			writeFileSync(
+				path.join(modulePath, "package.json"),
+				JSON.stringify({ name: "legacy-compat-install", version: "1.0.0" }, undefined, 2),
+				{ encoding: "utf8" },
 			);
 			await new Promise<void>((resolve, reject) =>
 				execFile(
-					npmCmd,
-					// Added --verbose to try to troubleshoot AB#6195.
-					// We should probably remove it when we find the root cause and fix for that.
+					pnpmCmd,
 					[
-						"i",
-						"--no-package-lock",
-						"--verbose",
+						"add",
+						// Use the pnpm content-addressable store cache when available, reducing
+						// exposure to packages published since the cache was last populated.
+						"--prefer-offline",
 						...adjustedPackageList.map((pkg) => `${pkg}@${version}`),
 					],
 					options,
@@ -324,10 +357,8 @@ export async function ensureInstalled(
 		}
 		return { version, modulePath };
 	} catch (e) {
-		// rmdirSync recursive flags introduced in Node v12.10
-		// Remove the `as any` cast once node typing is updated.
 		try {
-			(rmdirSync as any)(modulePath, { recursive: true });
+			rmdirSync(modulePath, { recursive: true });
 		} catch (ex) {
 			// TODO: document why we are ignoring the error here
 		}

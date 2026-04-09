@@ -1,5 +1,11 @@
 # @fluid-tools/benchmark
 
+## 0.55.0
+
+## 0.54.0
+
+-   Fixed `--parentProcess` mode incorrectly matching tests whose full title is a substring of another test's full title. The child process filter now uses an exact-match regex (`--grep ^title$`) instead of substring matching (`--fgrep title`). For example, if a suite contained tests named `foo` and `foobar` in the same suite, running `foo` in a child process with `--fgrep foo` would also match `foobar`, causing both tests to run and assuming both are benchmarks, produce an error (versions prior to 0.53 would produce incorrect results instead of an error).
+
 ## 0.53.0
 
 -   Memory benchmarks now have much more aggressive GC to collect more stable results.

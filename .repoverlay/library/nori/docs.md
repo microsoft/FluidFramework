@@ -35,8 +35,6 @@ This is one of the built-in profiles shipped with Nori at @/src/cli/features/cla
 
 **Default profile**: This is the default profile used when no profile is explicitly configured.
 
-**Template placeholders**: The CLAUDE.md and skill files use placeholders like `{{skills_dir}}` that are substituted with actual paths during installation.
-
 **Profile preservation**: Once copied to `~/.nori/profiles/senior-swe/`, this profile is never overwritten during subsequent installs.
 
 Created and maintained by Nori.
