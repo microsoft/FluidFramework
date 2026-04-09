@@ -555,7 +555,10 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 			// This flag can only ever be set on string leaf nodes, so if the value is a number, we can assume it is a compressible, known stable id.
 			if (info.shape.maybeDecompressedStringAsNumber && typeof value === "number") {
 				const idCompressor = this.chunk.idCompressor;
-				assert(idCompressor !== undefined, "chunk required idCompressor but did not provide it");
+				assert(
+					idCompressor !== undefined,
+					"chunk required idCompressor but did not provide it",
+				);
 				return idCompressor.decompress(value as SessionSpaceCompressedId);
 			}
 			return value;
