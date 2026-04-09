@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  commitizen>lodash: ^4.18.1
   '@types/glob>@types/minimatch': ~5.1.2
   diff@>=4 <5: ^4.0.4
   diff@>=7 <8: ^8.0.3
@@ -88,8 +89,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0(@types/node@22.19.17)(typescript@5.4.5)
       cz-customizable:
-        specifier: ^7.5.1
-        version: 7.5.1
+        specifier: ^7.5.4
+        version: 7.5.4
       eslint:
         specifier: ~9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -2835,8 +2836,8 @@ packages:
     resolution: {integrity: sha512-U466fIzU5U22eES5lTNiNbZ+d8dfcHcssH4o7QsdWaCcRs/feIPCxKYSWkYBNs5mny7MvEfwpTLWjvbm94hecw==}
     engines: {node: '>= 10'}
 
-  cz-customizable@7.5.1:
-    resolution: {integrity: sha512-eGUfpyD6/YdnPomAMMbbwmofeHAR9D4OsXS5Kmr9+uEOxdop32tdmHy6sx4Bhpms6V8HohQ17p/fYvlIllrdmQ==}
+  cz-customizable@7.5.4:
+    resolution: {integrity: sha512-vkNc7kLrWYBkr8VQKSZdDfy8athDZ2huIAWJwVxCrymBXRhB7q8hamkKd6JwAoLPwReS8fKi/kAjRpmy7VvL2w==}
     hasBin: true
 
   d@1.0.1:
@@ -4163,9 +4164,6 @@ packages:
 
   lodash.upperfirst@4.3.1:
     resolution: {integrity: sha512-sReKOYJIJf74dhJONhU4e0/shzi1trVbSWDOhKYE5XV2O+H7Sb2Dihwuc7xWxVl+DgFPyTqIN3zMfT9cq5iWDg==}
-
-  lodash@4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
@@ -8258,7 +8256,7 @@ snapshots:
       glob: 7.2.3
       inquirer: 8.2.5
       is-utf8: 0.2.1
-      lodash: 4.17.21
+      lodash: 4.18.1
       minimist: 1.2.7
       strip-bom: 4.0.0
       strip-json-comments: 3.1.1
@@ -8469,7 +8467,7 @@ snapshots:
       - '@types/node'
       - typescript
 
-  cz-customizable@7.5.1:
+  cz-customizable@7.5.4:
     dependencies:
       editor: 1.0.0
       find-config: 1.0.0
@@ -9919,8 +9917,6 @@ snapshots:
   lodash.uniqby@4.7.0: {}
 
   lodash.upperfirst@4.3.1: {}
-
-  lodash@4.17.21: {}
 
   lodash@4.18.1: {}
 
