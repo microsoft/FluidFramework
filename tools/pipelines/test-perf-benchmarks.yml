@@ -21,15 +21,15 @@ resources:
   - repository: ff_pipeline_host
     type: git
     name: ff_pipeline_host
-    ${{ if ne(parameters.ffPipelineHostRef, ' ') }}:
-      ref: ${{ parameters.ffPipelineHostRef }}
+    ref: ${{ parameters.ffPipelineHostRef }}
 
 parameters:
 
 - name: ffPipelineHostRef
   type: string
-  default: ' '
-  displayName: 'ff_pipeline_host ref (branch, tag, or commit SHA; leave blank for default)'
+# After this pipeline is merged, the staging branch below can be merged, and this can be set to default to "main".
+  default: 'crmacomb/stagedBenchmarkUpgrade'
+  displayName: 'ff_pipeline_host ref (branch, tag, or commit SHA)'
 
 - name: poolBuild
   type: object
