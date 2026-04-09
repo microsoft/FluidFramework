@@ -9547,6 +9547,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
+      '@fluidframework/type-factory':
+        specifier: workspace:~
+        version: link:../../framework/type-factory
       '@sinclair/typebox':
         specifier: ^0.34.13
         version: 0.34.13
