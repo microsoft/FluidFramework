@@ -1,15 +1,15 @@
 ---
 name: ci-readiness-check
-description: Use when the user explicitly asks for a CI check — e.g. "ci readiness", "check ci", "pre-push check", "ready for CI", "ci check", "ready to push". Catches common CI failures before pushing — formatting, stale API reports, missing changesets, policy violations.
+description: Use when the user explicitly asks for a CI check or to push their branch — e.g. "ci readiness", "check ci", "pre-push check", "ready for CI", "ci check", "ready to push", "push my changes", "push the branch", "let's push". Catches common CI failures before pushing — formatting, stale API reports, missing changesets, policy violations.
 ---
 
 <required>
-Step 1 asks the user to pick a mode. Immediately after they respond, use TaskCreate to create one task per applicable step based on their choice — before doing any other work. Mark each task in_progress when you start it and completed when you finish. This prevents steps from being silently skipped as context grows.
+Step 1 asks the user to pick a mode. Immediately after they respond, create one task/todo item per applicable step using your available task tooling (TaskCreate for Claude, TodoWrite for Copilot) — before doing any other work. Mark each task in_progress when you start it and completed when you finish. This prevents steps from being silently skipped as context grows.
 
 Tasks to create by mode:
 
 - Check: Run CI script → Review output → Report final status
-- Build: Run CI script → Review output → Build unbuilt packages → ESLint auto-fix → Regenerate API reports → Run build:docs → Regenerate type tests → Report final status
+- Build: Run CI script → Review output → Build unbuilt packages → ESLint auto-fix → Regenerate API reports → API changes review → Run build:docs → Regenerate type tests → Report final status
 - Test: same as Build, plus Run tests
 
 For Build/Test: if `@fluidframework/tree` is among the changed packages and its API surface likely changed, add a "Cascade API reports to aggregator packages" task after "Regenerate API reports".
@@ -24,9 +24,9 @@ Before doing anything, ask the user:
 > I can run a CI readiness check on your branch. Pick a mode (fastest to slowest):
 >
 > 1. Skip — skip the CI readiness check
-> 2. Check — auto-fix formatting, policy, and syncpack on changed packages (~5–10 seconds; always fast)
+> 2. Check (quick) — auto-fix formatting, policy, and syncpack on changed packages
 > 3. Build — Check + build unbuilt packages + ESLint + regenerate API reports and type tests
-> 4. Test — Build + run the test suite in changed packages (non-tree packages: ~10–30 seconds; tree: ~3+ minutes)
+> 4. Test (slower) — Build + run the test suite in changed packages
 
 Wait for the user's response. If they say skip (or anything clearly negative), stop here. Otherwise, note their choice and immediately create tasks for all remaining steps as described in the required block above before proceeding.
 
@@ -44,7 +44,7 @@ The script detects changed packages, installs dependencies if needed, runs `flui
 
 # Step 3: Review output
 
-Report to the user: packages changed, what was auto-fixed, any checks still failing, changeset status, and uncommitted files.
+Report to the user: packages changed, what was auto-fixed, any checks still failing, and uncommitted files. (Changeset guidance is handled by the `api-changes` skill if API reports changed; otherwise the script warning is sufficient.)
 
 If you see unexpected generated artifacts unrelated to the branch's changes, do a clean build first (set `PKG` to the package directory path):
 
@@ -88,7 +88,17 @@ cd $PKG && pnpm exec fluid-build . -t build:api-reports
 
 If API Extractor fails with `ae-missing-release-tag`, add a TSDoc release tag (`@alpha`, `@beta`, `@public`, or `@internal`) to the new export, rebuild, then retry.
 
-## 6b. Run `build:docs` to catch TSDoc errors
+## 6b. API changes review
+
+After regenerating reports, check whether any api-report files actually changed:
+
+```bash
+git diff --name-only HEAD -- | grep api-report
+```
+
+If any api-report files changed, run the `api-changes` skill. It will classify the changes by release tag, determine whether API Council approval is needed, flag any breaking changes that require process steps, and verify changeset and deprecation requirements.
+
+## 6c. Run `build:docs` to catch TSDoc errors
 
 `build:api-reports` suppresses `ae-unresolved-link` errors; CI catches these via `build:docs`. Run for each built changed package with a `build:docs` script, regardless of API surface change:
 
