@@ -21,7 +21,12 @@
 			]
 		}
 	},
-	"postCreateCommand": "bash scripts/codespace-setup/post-create.sh",
+	"onCreateCommand": {
+		"node-setup": "bash scripts/codespace-setup/on-create.sh"
+	},
+	"postCreateCommand": {
+		"welcome-notice": "sudo cp .devcontainer/lightweight/first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt"
+	},
 	"remoteUser": "node",
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {

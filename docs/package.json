@@ -110,7 +110,7 @@
 		"typescript": "~5.5.4",
 		"uuid": "^11.0.3"
 	},
-	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
 	"engines": {
 		"node": ">=18.0"
 	},
@@ -122,13 +122,14 @@
 			"qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.",
 			"js-yaml: overridden to fix a known vulnerability (prototype pollution via merge keys).",
 			"mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability (unsanitized class attribute injection).",
-			"node-forge: overridden to ^1.3.2 to fix known ASN.1 vulnerabilities.",
+			"node-forge: overridden to ^1.4.0 to resolve known security vulnerabilities.",
 			"simple-git: overridden to ^3.32.3 to resolve a CG alert.",
 			"diff: overridden to patched version to resolve a known ReDoS vulnerability.",
 			"minimatch: overridden to patched versions to resolve known security vulnerabilities across all major version ranges.",
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
 			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
-			"@azure/identity: overridden to ^4.13.0 to pull a patched @azure/msal-browser (no patched 3.x exists). Transitive dep of @azure/static-web-apps-cli; ^4.13.0 is API-compatible within the ^4.3.0 range it declares."
+			"@azure/identity: overridden to ^4.13.0 to pull a patched @azure/msal-browser (no patched 3.x exists). Transitive dep of @azure/static-web-apps-cli; ^4.13.0 is API-compatible within the ^4.3.0 range it declares.",
+			"picomatch: overridden to patched versions to resolve a known security vulnerability."
 		],
 		"overrides": {
 			"@azure/identity": "^4.13.0",
@@ -138,7 +139,7 @@
 			"js-yaml@>=4": "^4.1.1",
 			"jws": "^3.2.3",
 			"mdast-util-to-hast": "^13.2.1",
-			"node-forge": "^1.3.2",
+			"node-forge": "^1.4.0",
 			"qs": "^6.15.0",
 			"simple-git": "^3.32.3",
 			"validator": "^13.15.0",
@@ -150,7 +151,9 @@
 			"minimatch@>=9 <10": "^9.0.9",
 			"minimatch@>=10 <11": "^10.2.4",
 			"serialize-javascript@>=6 <7": "^7.0.4",
-			"express@>=4 <5": "^4.22.1"
+			"express@>=4 <5": "^4.22.1",
+			"picomatch@>=2 <3": "^2.3.2",
+			"picomatch@>=4 <5": "^4.0.4"
 		},
 		"onlyBuiltDependencies": [
 			"@parcel/watcher",

@@ -45,12 +45,15 @@ export { benchmarkIt } from "./mocha/index.js";
 export {
 	formatResultArrayTable,
 	finishLoggingReport,
+	fullName,
 	recordTestResult,
+	visitSuitesArray,
 	type ReportPath,
 	type ReportSuiteWithPath,
 	type SuiteData,
 } from "./reporterUtilities.js";
 export {
+	isResultError,
 	isSuiteNode,
 	parseBenchmarkResult,
 	parseReport,

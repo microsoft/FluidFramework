@@ -32,6 +32,8 @@ overrides:
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
   serialize-javascript@>=6 <7: ^7.0.4
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
 
 importers:
 
@@ -263,8 +265,8 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
       replace-in-file:
-        specifier: ^7.2.0
-        version: 7.2.0
+        specifier: ^8.4.0
+        version: 8.4.0
       resolve.exports:
         specifier: ^2.0.3
         version: 2.0.3
@@ -586,8 +588,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       picomatch:
-        specifier: ^4.0.3
-        version: 4.0.3
+        specifier: ^4.0.4
+        version: 4.0.4
       picospinner:
         specifier: ^2.1.0
         version: 2.1.0
@@ -2591,6 +2593,10 @@ packages:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
 
+  cliui@9.0.1:
+    resolution: {integrity: sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w==}
+    engines: {node: '>=20'}
+
   clone@1.0.4:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==}
     engines: {node: '>=0.8'}
@@ -3210,7 +3216,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^3 || ^4
+      picomatch: ^4.0.4
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -4857,12 +4863,12 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
+  picomatch@4.0.4:
+    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
   picospinner@2.1.0:
@@ -5064,6 +5070,11 @@ packages:
   replace-in-file@7.2.0:
     resolution: {integrity: sha512-CiLXVop3o8/h2Kd1PwKPPimmS9wUV0Ki6Fl8+1ITD35nB3Gl/PrW5IONpTE0AXk0z4v8WYcpEpdeZqMXvSnWpg==}
     engines: {node: '>=10'}
+    hasBin: true
+
+  replace-in-file@8.4.0:
+    resolution: {integrity: sha512-D28k8jy2LtUGbCzCnR3znajaTWIjJ/Uee3UdodzcHRxE7zn6NmYW/dcSqyivnsYU3W+MxdX6SbF28NvJ0GRoLA==}
+    engines: {node: '>=18'}
     hasBin: true
 
   require-directory@2.1.1:
@@ -5988,6 +5999,10 @@ packages:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
 
+  yargs-parser@22.0.0:
+    resolution: {integrity: sha512-rwu/ClNdSMpkSrUb+d6BRsSkLUq1fmfsY6TOpYzTwvwkg1/NRG85KBy3kq++A8LKQwX6lsu+aWad+2khvuXrqw==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=23}
+
   yargs-unparser@2.0.0:
     resolution: {integrity: sha512-7pRTIA9Qc1caZ0bZ6RYRGbHJthJWuakf+WmHK0rVeLkNrrGhfoabBNdue6kdINI6r4if7ocq9aD/n7xwKOdzOA==}
     engines: {node: '>=10'}
@@ -5999,6 +6014,10 @@ packages:
   yargs@17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
+
+  yargs@18.0.0:
+    resolution: {integrity: sha512-4UEqdc2RYGHZc7Doyqkrqiln3p9X2DZVxaGbwhn2pi7MrRagKaOcIKe8L3OxYcbhXLgLFUS3zAYuQjKBQgmuNg==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=23}
 
   yn@3.1.1:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
@@ -6433,7 +6452,7 @@ snapshots:
       lodash.isequal: 4.5.0
       multimatch: 5.0.0
       picocolors: 1.1.1
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       picospinner: 2.1.0
       rimraf: 6.1.3
       semver: 7.7.3
@@ -8130,6 +8149,12 @@ snapshots:
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
 
+  cliui@9.0.1:
+    dependencies:
+      string-width: 7.2.0
+      strip-ansi: 7.1.2
+      wrap-ansi: 9.0.2
+
   clone@1.0.4: {}
 
   code-block-writer@13.0.1: {}
@@ -8802,9 +8827,9 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fdir@6.5.0(picomatch@4.0.3):
+  fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   fflate@0.8.2: {}
 
@@ -10310,7 +10335,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   mime-db@1.52.0: {}
 
@@ -10895,9 +10920,9 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.1: {}
+  picomatch@2.3.2: {}
 
-  picomatch@4.0.3: {}
+  picomatch@4.0.4: {}
 
   picospinner@2.1.0: {}
 
@@ -11132,6 +11157,12 @@ snapshots:
       chalk: 4.1.2
       glob: 8.1.0
       yargs: 17.7.2
+
+  replace-in-file@8.4.0:
+    dependencies:
+      chalk: 5.6.2
+      glob: 13.0.5
+      yargs: 18.0.0
 
   require-directory@2.1.1: {}
 
@@ -11674,8 +11705,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tmp@0.0.33:
     dependencies:
@@ -12098,6 +12129,8 @@ snapshots:
 
   yargs-parser@21.1.1: {}
 
+  yargs-parser@22.0.0: {}
+
   yargs-unparser@2.0.0:
     dependencies:
       camelcase: 6.3.0
@@ -12124,6 +12157,15 @@ snapshots:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+
+  yargs@18.0.0:
+    dependencies:
+      cliui: 9.0.1
+      escalade: 3.2.0
+      get-caller-file: 2.0.5
+      string-width: 7.2.0
+      y18n: 5.0.8
+      yargs-parser: 22.0.0
 
   yn@3.1.1: {}
 

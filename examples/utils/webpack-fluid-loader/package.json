@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webpack-fluid-loader",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
@@ -56,8 +56,6 @@
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
 		"webpack": "webpack --color --config webpack.config.cjs"
 	},
 	"c8": {

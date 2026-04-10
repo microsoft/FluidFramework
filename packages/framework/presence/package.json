@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -96,8 +96,7 @@
 		"tsc": "npm run tsc:main && npm run tsc:experimental",
 		"tsc:experimental": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
 		"tsc:main": "fluid-tsc commonjs --project ./tsconfig.main.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,

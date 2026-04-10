@@ -1,160 +1,142 @@
 ---
 name: ci-readiness-check
-description: Quick pre-push check that catches common CI failures before you push. Use when the user says "ci readiness", "check ci", "pre-push check", "ready for CI", "prepare for push", "ci check", "ready to push", or wants to make sure their branch won't fail CI for silly reasons. This is NOT a full local CI run — it catches low-hanging fruit like forgotten formatting, stale API reports, missing changesets, and policy violations.
+description: Use when the user explicitly asks for a CI check or to push their branch — e.g. "ci readiness", "check ci", "pre-push check", "ready for CI", "ci check", "ready to push", "push my changes", "push the branch", "let's push". Catches common CI failures before pushing — formatting, stale API reports, missing changesets, policy violations.
 ---
 
 <required>
-*CRITICAL* Add the following steps to your Todo list using TodoWrite:
+Step 1 asks the user to pick a mode. Immediately after they respond, create one task/todo item per applicable step using your available task tooling (TaskCreate for Claude, TodoWrite for Copilot) — before doing any other work. Mark each task in_progress when you start it and completed when you finish. This prevents steps from being silently skipped as context grows.
 
-1. Confirm with the user before proceeding.
-2. Run the CI readiness script.
-3. Review script output and report results to the user.
-4. If the user chose Full or Thorough mode and there are unbuilt packages, build them.
-5. For each built changed package where the user-facing API surface changed, regenerate API reports and check for downstream cascade.
-6. For each built changed package, run ESLint auto-fix.
-7. For each built changed package where the user-facing API surface changed, regenerate type tests.
-8. If the user chose Thorough mode, run tests in changed packages.
-9. Report final status: what was fixed, what needs staging, any remaining issues.
+Tasks to create by mode:
+
+- Check: Run CI script → Review output → Report final status
+- Build: Run CI script → Review output → Build unbuilt packages → ESLint auto-fix → Regenerate API reports → API changes review → Run build:docs → Regenerate type tests → Report final status
+- Test: same as Build, plus Run tests
+
+For Build/Test: if `@fluidframework/tree` is among the changed packages and its API surface likely changed, add a "Cascade API reports to aggregator packages" task after "Regenerate API reports".
+
+Omit steps that don't apply (e.g. skip "Build unbuilt packages" if everything is already built; skip "Regenerate API reports" and "Regenerate type tests" if the API surface didn't change).
 </required>
 
 # Step 1: Confirm with the user
 
 Before doing anything, ask the user:
 
-> I'll run a CI readiness check on your branch. Pick a mode (fastest to slowest):
+> I can run a CI readiness check on your branch. Pick a mode (fastest to slowest):
 >
-> 1. **Cancel** — never mind, don't run checks
-> 2. **Quick** — auto-fix formatting only (Biome on changed files); skip all build-dependent checks (~15–20 seconds)
-> 3. **Full** — Quick + build unbuilt packages + regenerate API reports and type tests (~30 seconds – 2 minutes depending on package size)
-> 4. **Thorough** — Full + run tests in changed packages (~30 seconds – 5+ minutes; dominated by test suite size)
+> 1. Skip — skip the CI readiness check
+> 2. Check (quick) — auto-fix formatting, policy, and syncpack on changed packages
+> 3. Build — Check + build unbuilt packages + ESLint + regenerate API reports and type tests
+> 4. Test (slower) — Build + run the test suite in changed packages
 
-Wait for the user's response. If they say cancel (or anything clearly negative), stop here. Otherwise, note their choice and proceed.
+Wait for the user's response. If they say skip (or anything clearly negative), stop here. Otherwise, note their choice and immediately create tasks for all remaining steps as described in the required block above before proceeding.
 
 # Step 2: Run the script
 
 Run the bundled script from the repository root:
 
 ```bash
-bash .claude/skills/ci-readiness-check/ci-readiness-check.sh [--quick] [base-branch]
+bash .claude/skills/ci-readiness-check/ci-readiness-check.sh [base-branch]
 ```
 
 The base branch defaults to `main`. Pass a different branch if needed (e.g., `next`).
 
-Pass `--quick` for Quick mode. This skips the full `checks:fix` pipeline (policy is repo-wide and lint is too slow) and only runs Biome formatting on changed files.
-
-The script handles:
-- Detecting which packages have changes vs the base branch
-- Installing dependencies if `node_modules` is missing
-- **Quick mode:** Running `biome format --write` on changed files only
-- **Full/Thorough mode:** Running `fluid-build --task checks:fix` scoped to changed packages, which auto-fixes:
-  - Formatting (Biome)
-  - Policy violations (flub — copyright headers, package.json sorting, etc.)
-  - Dependency version consistency (syncpack)
-  - Build version consistency
-- **Full/Thorough mode:** Verifying all checks pass after auto-fix (`fluid-build --task checks`)
-- Checking for a changeset (via `flub check changeset`)
-- Reporting uncommitted changes, categorized (API reports, type tests, other)
-- Reporting which changed packages are built vs not built
+The script detects changed packages, installs dependencies if needed, runs `fluid-build --task checks:fix` (auto-fixing formatting, policy, syncpack, and build version consistency), verifies all checks pass, checks for a changeset, and reports uncommitted changes and build status.
 
 # Step 3: Review output
 
-Read the script output. Report to the user:
-- How many packages changed
-- What was auto-fixed (formatting, policy, syncpack, versions)
-- Any checks that still fail after auto-fix
-- Changeset status
-- Uncommitted files
+Report to the user: packages changed, what was auto-fixed, any checks still failing, and uncommitted files. (Changeset guidance is handled by the `api-changes` skill if API reports changed; otherwise the script warning is sufficient.)
 
-**Quick mode stops here.** In Quick mode, skip steps 4–8 entirely — even for packages that happen to be already built. Note what was skipped in the final report (step 9).
-
-# Step 4: Handle unbuilt packages (Full and Thorough only)
-
-If the script reports unbuilt packages, build them:
+If you see unexpected generated artifacts unrelated to the branch's changes, do a clean build first (set `PKG` to the package directory path):
 
 ```bash
-cd <package-dir> && pnpm exec fluid-build . --task compile
+cd $PKG && pnpm exec fluid-build . --task clean && pnpm exec fluid-build . --task compile
 ```
+
+Then re-run the CI readiness check. Stale build artifacts from a previous session are often the cause of false-positive diffs.
+
+Check mode stops here — skip steps 4–8 entirely. Note what was skipped in the final report.
+
+# Step 4: Handle unbuilt packages (Build and Test only)
+
+```bash
+cd $PKG && pnpm exec fluid-build . --task compile
+```
+
+# Step 5: ESLint auto-fix (Build and Test only)
+
+```bash
+cd $PKG && pnpm exec fluid-build . -t eslint:fix
+```
+
+`eslint:fix` ensures compilation is current before linting and uses incremental caching so it's fast when the package is already built. If it fails due to non-auto-fixable errors, note them but continue.
 
 # Determining if the public API surface changed
 
-Steps 5 and 7 require judging whether a package's public API surface changed. Use these criteria:
+Steps 6 and 7 only run if the public API surface changed. Proceed if: `src/index.ts` or any entry point (`src/alpha.ts`, `src/beta.ts`, `src/legacy.ts`, `src/internal.ts`) was modified; any exported type/interface/class/function signature changed; or `package.json` `exports` changed. Skip if only tests, internal implementation, comments, or function bodies (not signatures) changed.
 
-**API likely changed — proceed with the check:**
-- `src/index.ts` or any entry point file (`src/alpha.ts`, `src/beta.ts`, `src/legacy.ts`, `src/internal.ts`) was modified
-- Any file that defines an exported type, interface, class, or function whose **signature** changed (not just the implementation body)
-- The package's `package.json` `exports` field changed
+Running `build:api-reports` when nothing changed can introduce spurious diffs — especially for `@fluidframework/tree` and `fluid-framework`, which have a known API Extractor bug with non-deterministic type ordering.
 
-**API did not change — skip the check:**
-- Only test files changed (`src/test/`, `*.spec.ts`, `*.test.ts`)
-- Only internal implementation changed with no exported signature differences
-- Only comments, documentation, or non-code files changed
-- Only a function body changed (not its signature)
+# Step 6: API reports and cross-package cascade (Build and Test only)
 
-**Why be conservative:** There is a known bug in API Extractor where it non-deterministically reorders some generated types in the `@fluidframework/tree` package specifically. The output differs between local and CI, producing bogus diffs that look like real changes but aren't. Running API Extractor unnecessarily on that package can introduce these confusing phantom diffs. Only run it when you're confident the public API actually changed.
+If `@fluidframework/tree` is among the changed packages and its API surface likely changed, read `.claude/skills/ci-readiness-check/tree-api-checks.md` before proceeding with 6a.
 
-# Step 5: API reports and cross-package cascade (Full and Thorough only)
-
-For each built changed package that has a `build:api-reports` script, and where the public API surface likely changed (see criteria above):
+## 6a. Regenerate API reports
 
 ```bash
-cd <package-dir> && pnpm run build:api-reports
+cd $PKG && pnpm exec fluid-build . -t build:api-reports
 ```
 
-If API Extractor fails with `ae-missing-release-tag` (most commonly in `@fluidframework/tree`), the new export needs a TSDoc release tag (`@alpha`, `@beta`, `@public`, or `@internal`). Add the appropriate tag to the function/class/interface, rebuild the package, then retry `build:api-reports`. Check other exports in the same package to see which tag is conventional — most public exports use `@public`.
+If API Extractor fails with `ae-missing-release-tag`, add a TSDoc release tag (`@alpha`, `@beta`, `@public`, or `@internal`) to the new export, rebuild, then retry.
 
-**Cross-package cascade:** After regenerating API reports for a package, check if any "aggregator" packages re-export from it. If so, their API reports are now stale too.
+## 6b. API changes review
 
-Read the source index files of these aggregator packages and look for imports from the changed package:
-- `packages/framework/fluid-framework/src/index.ts`
-- `packages/service-clients/azure-client/src/index.ts`
-
-For example, if you changed `@fluidframework/tree` and `fluid-framework/src/index.ts` contains `export * from "@fluidframework/tree/alpha"`, then also run:
-```bash
-cd packages/framework/fluid-framework && pnpm run build:api-reports
-```
-
-Only do this if the source package's reports actually changed (check `git diff` on its `api-report/` directory). If the source reports are unchanged, the aggregator's won't be either.
-
-# Step 6: ESLint auto-fix (Full and Thorough only)
-
-For each built changed package, check its `package.json` for the available lint fix script and run it:
-```bash
-# Check which script exists — packages use different names
-cd <package-dir> && node -p "Object.keys(require('./package.json').scripts || {}).filter(s => /eslint.fix|lint.fix/.test(s))"
-cd <package-dir> && pnpm run <script-name>
-```
-
-Common script names: `eslint:fix`, `lint:fix`. Only run what exists. If the script fails due to non-auto-fixable errors, note them but do not block — CI will catch those.
-
-# Step 7: Type test regeneration (Full and Thorough only)
-
-For each built changed package that has a `typetests:gen` script in its `package.json`, and where the public API surface likely changed (see criteria above):
+After regenerating reports, check whether any api-report files actually changed:
 
 ```bash
-cd <package-dir> && pnpm run typetests:gen
+git diff --name-only HEAD -- | grep api-report
 ```
 
-Not all packages have type tests. Only run this where the script exists.
+If any api-report files changed, run the `api-changes` skill. It will classify the changes by release tag, determine whether API Council approval is needed, flag any breaking changes that require process steps, and verify changeset and deprecation requirements.
 
-# Step 8: Run tests (Thorough mode only)
+## 6c. Run `build:docs` to catch TSDoc errors
 
-If the user chose **Thorough** mode, run tests in each built changed package. Check the package's `package.json` for available test scripts and run whichever exist:
+`build:api-reports` suppresses `ae-unresolved-link` errors; CI catches these via `build:docs`. Run for each built changed package with a `build:docs` script, regardless of API surface change:
 
 ```bash
-cd <package-dir> && pnpm run test:mocha
-cd <package-dir> && pnpm run test:jest
+cd $PKG && pnpm run build:docs
 ```
 
-Some packages have both, some have one, some have neither. Only run what exists. Skip performance tests (`test:benchmark`, `test:stress`) and real service tests (`test:realsvc`) — those are too slow and flaky for a pre-push check. If tests fail, report the failures but continue with remaining packages — collect all results for the final report.
+If you see `ae-unresolved-link` errors, the `{@link}` or `{@inheritdoc}` tag references an ambiguous name. Fix by linking to an unambiguous target. The TSDoc `:instance`/`:static` selectors are not supported by this version of API Extractor.
+
+# Step 7: Type test regeneration (Build and Test only)
+
+For each built changed package with a `typetests:gen` script and where the public API surface likely changed:
+
+```bash
+cd $PKG && pnpm run typetests:gen
+```
+
+# Step 8: Run tests (Test mode only)
+
+Run whichever test scripts exist in each built changed package:
+
+```bash
+cd $PKG && pnpm run test:mocha
+cd $PKG && pnpm run test:jest
+```
+
+Skip `test:benchmark`, `test:stress`, and `test:realsvc` — too slow and flaky for a pre-push check. Report all results for the final report even if some fail.
 
 # Step 9: Final status
 
-Run `git status` and report to the user:
+Run `git status` and report:
 
-1. **Files auto-fixed** — formatting, policy, ESLint fixes. These are unstaged; the user should review and stage them.
-2. **Generated files updated** — API reports, type tests. These need to be committed with the PR.
-3. **Test results** — if Thorough mode, report pass/fail per package.
-4. **Remaining issues** — anything the skill couldn't auto-fix (check failures, missing changeset, etc.).
-5. **Skipped checks** — anything skipped due to mode choice or unbuilt packages.
+1. Files auto-fixed — formatting, policy, ESLint fixes (unstaged; user should review and stage)
+2. Generated files updated — API reports, type tests (need to be committed with the PR)
+3. Test results — if Test mode, pass/fail per package
+4. Remaining issues — anything the skill couldn't auto-fix
+5. Skipped checks — anything skipped due to mode choice or unbuilt packages
 
 End with a clear statement: "Your branch is ready to push" or "These issues remain: ..."
+
+If further code changes are made after this check, re-run ESLint and — if the API surface changed — regenerate API reports before pushing.

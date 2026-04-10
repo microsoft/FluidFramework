@@ -61,7 +61,13 @@ export type {
 	Off,
 	/* eslint-enable import-x/export */
 } from "@fluidframework/core-interfaces";
-export type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
+export type {
+	ErasedBaseType,
+	FluidIterable,
+	FluidIterableIterator,
+	FluidMap,
+	FluidReadonlyMap,
+} from "@fluidframework/core-interfaces/internal";
 
 // This is an alpha API, but this package doesn't have an alpha entry point so its imported from "internal".
 export { onAssertionFailure } from "@fluidframework/core-utils/internal";

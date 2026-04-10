@@ -1947,5 +1947,6 @@ export const shortCodeMap = {
 	"0xce9": "expected at least one node for each key in the index",
 	"0xcea": "childrenChangedAfterBatch requires arg",
 	"0xceb": "local schema change messages should never be generated when disableSchemaUpgrade is enabled",
-	"0xcec": "IdCompressor should not be operated normally when in a ghost session"
+	"0xcec": "IdCompressor should not be operated normally when in a ghost session",
+	"0xced": "Expected compressor to implement IIdCompressorCore"
 };

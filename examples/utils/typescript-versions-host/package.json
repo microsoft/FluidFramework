@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/typescript-versions-host",
-	"version": "2.92.0",
+	"version": "2.93.0",
 	"private": true,
 	"description": "Provides aliased TypeScript versions for build tests",
 	"homepage": "https://fluidframework.com",
@@ -17,7 +17,6 @@
 		"./package.json": "./package.json"
 	},
 	"devDependencies": {
-		"@fluid-example/typescript-versions-host-previous": "npm:@fluid-example/typescript-versions-host@2.91.0",
 		"typescript-5.4": "npm:typescript@~5.4.5",
 		"typescript-5.5": "npm:typescript@~5.5.4",
 		"typescript-5.6": "npm:typescript@~5.6.3",
@@ -26,6 +25,6 @@
 		"typescript-5.9": "npm:typescript@~5.9.2"
 	},
 	"typeValidation": {
-		"broken": {}
+		"disabled": true
 	}
 }
