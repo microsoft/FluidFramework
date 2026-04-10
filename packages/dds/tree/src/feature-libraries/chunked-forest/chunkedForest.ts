@@ -73,6 +73,7 @@ function splitFieldAtIndex(
 					idCompressor: forest.idCompressor,
 				}),
 			);
+			// TODO: this could fail for really long chunks being split (due to argument count limits).
 			chunks.splice(i, 1, ...expanded);
 			chunk.referenceRemoved();
 			return i + remaining;
@@ -102,13 +103,14 @@ function isolateNodeAt(chunks: TreeChunk[], nodeIndex: number, forest: ChunkedFo
 					idCompressor: forest.idCompressor,
 				}),
 			);
+			// TODO: this could fail for really long chunks being split (due to argument count limits).
 			chunks.splice(i, 1, ...expanded);
 			chunk.referenceRemoved();
 			return i + remaining;
 		}
 		remaining -= chunk.topLevelLength;
 	}
-	fail(0xaf7 /* missing edited node */);
+	fail("missing edited node");
 }
 
 interface StackNode {
@@ -254,6 +256,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
+				assert(source.start <= source.end, "detach range start must not exceed end");
 
 				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, this.forest);
 				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, this.forest);
@@ -289,7 +292,11 @@ export class ChunkedForest implements IEditableForest {
 				if (chunk instanceof BasicChunk) {
 					found = chunk;
 				} else {
-					// Convert single-node non-BasicChunk (e.g. UniformChunk) to BasicChunk for editing.
+					// TODO:Perf: support in place editing of other chunk formats when possible:
+					// 1. Support updating values in uniform chunks.
+					// 2. Support traversing sequence chunks.
+					//
+					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
 					const expanded = mapCursorField(chunk.cursor(), (cursor) =>
 						basicChunkTree(cursor, {
 							policy: this.forest.chunker,

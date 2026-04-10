@@ -484,10 +484,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.siblingStack.pop() ?? fail(0xaf0 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xaf1 /* Unexpected indexStack.length */);
 		this.indexOfChunk =
-			this.indexOfChunkStack.pop() ?? fail(0xaf4 /* Unexpected indexOfChunkStack.length */);
+			this.indexOfChunkStack.pop() ?? fail("Unexpected indexOfChunkStack.length");
 		this.indexWithinChunk =
-			this.indexWithinChunkStack.pop() ??
-			fail(0xaf5 /* Unexpected indexWithinChunkStack.length */);
+			this.indexWithinChunkStack.pop() ?? fail("Unexpected indexWithinChunkStack.length");
 	}
 
 	public exitNode(): void {
