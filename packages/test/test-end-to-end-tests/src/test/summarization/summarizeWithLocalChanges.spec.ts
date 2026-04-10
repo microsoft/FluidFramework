@@ -529,8 +529,7 @@ describeCompat(
 					error: "PendingOpsWhileSummarizing",
 				},
 				{
-					eventName:
-						"fluid:telemetry:Summarizer:Running:PendingOpsDuringSummaryFinalAttempt",
+					eventName: "fluid:telemetry:Summarizer:Running:PendingOpsDuringSummaryFinalAttempt",
 					summaryAttempts: 5,
 					finalAttempt: true,
 					error: "Pending ops during summarization",
