@@ -2314,6 +2314,61 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
+		it("remove column (with cells) → removeColumn → undo → undo", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [
+						new Column({ id: "column-0", props: {} }),
+						new Column({ id: "column-1", props: {} }),
+					],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": { value: "Hello" } },
+						}),
+					],
+				}),
+			);
+
+			// Remove column-0 (also removes corresponding cell in row-0).
+			view.root.removeColumns(["column-0"]);
+			assert.equal(view.root.columns.length, 1);
+
+			// Remove column-1
+			view.root.removeColumns(["column-1"]);
+
+			let revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo removeColumns
+			assert.equal(view.root.columns.length, 1, "column-1 should have been restored");
+
+			revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert(); // undo removeColumns
+			assert.equal(view.root.columns.length, 2, "column-0 should be restored");
+			assert.equal(
+				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
+				"Hello",
+				"cell should be restored along with the column",
+			);
+
+			unsubscribe();
+		});
+
 		// removeColumns internally calls removeCell for each populated cell in every row.
 		// Each removeCell call creates its own nested transaction carrying:
 		//   preconditionsOnRevert: [{ type: "nodeInDocument", node: column }]
