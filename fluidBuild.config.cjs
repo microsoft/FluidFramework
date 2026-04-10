@@ -455,11 +455,6 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 				"^packages/framework/quill-react/",
 				"^tools/api-markdown-documenter/",
-
-				// @fluid-internal packages that don't have external-facing APIs
-				"^packages/framework/presence-runtime/",
-				"^packages/framework/presence-utils/",
-				"^packages/framework/presence-workspace/",
 			],
 			"npm-package-exports-field": [
 				// This policy is no longer correct or applicable to our packages, so all files are excluded.
@@ -526,9 +521,6 @@ module.exports = {
 					"@fluid-internal/mocha-test-setup",
 					"@fluid-internal/presence-definitions",
 					"@fluid-internal/presence-runtime",
-					"@fluid-internal/presence-states",
-					"@fluid-internal/presence-utils",
-					"@fluid-internal/presence-workspace",
 					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],

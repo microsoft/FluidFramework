@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
@@ -12,6 +12,26 @@ const config: Linter.Config[] = [
 		rules: {
 			// The clarity of explicit index signatures is helpful in many places with this package.
 			"@typescript-eslint/consistent-indexed-object-style": "off",
+		},
+	},
+	{
+		files: ["**/*.ts"],
+		ignores: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						// Within Fluid Framework allow import of '/internal' from other FF packages.
+						// Note that `/internal/test**` is still restricted (disallowed) but uses
+						// customCondition of "allow-ff-test-exports" for enforcement.
+						"@fluidframework/*/internal{,/**}",
+
+						// Internal packages may structure their exports arbitrarily, so allow any imports from them.
+						"@fluid-internal/**",
+					],
+				},
+			],
 		},
 	},
 

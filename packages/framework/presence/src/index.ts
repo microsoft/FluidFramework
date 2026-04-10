@@ -72,11 +72,11 @@ export type {
 } from "@fluid-internal/presence-definitions";
 export { AttendeeStatus } from "@fluid-internal/presence-definitions";
 
-// Re-export from presence-states
+// Re-export from presence-runtime
 export {
 	Notifications,
 	StateFactory,
-} from "@fluid-internal/presence-states";
+} from "@fluid-internal/presence-runtime/states";
 
 // Local exports
 export {

@@ -13,6 +13,26 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-indexed-object-style": "off",
 		},
 	},
+	{
+		files: ["**/*.ts"],
+		ignores: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						// Within Fluid Framework allow import of '/internal' from other FF packages.
+						// Note that `/internal/test**` is still restricted (disallowed) but uses
+						// customCondition of "allow-ff-test-exports" for enforcement.
+						"@fluidframework/*/internal{,/**}",
+
+						// Internal packages may structure their exports arbitrarily, so allow any imports from them.
+						"@fluid-internal/**",
+					],
+				},
+			],
+		},
+	},
 
 	// Rules only for test files
 	{

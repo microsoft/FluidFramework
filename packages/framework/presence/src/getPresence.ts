@@ -7,7 +7,10 @@ import type {
 	Presence,
 	PresenceWithNotifications,
 } from "@fluid-internal/presence-definitions";
-import { ContainerPresenceFactory, extensionId } from "@fluid-internal/presence-runtime";
+import {
+	ContainerPresenceFactory,
+	extensionId,
+} from "@fluid-internal/presence-runtime/extension";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
