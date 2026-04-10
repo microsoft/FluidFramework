@@ -45,6 +45,22 @@ export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTy
 // @public
 export const fluidHandleSymbol: unique symbol;
 
+// @beta @sealed
+export interface FluidIterable<T> {
+    [Symbol.iterator](): FluidIterableIterator<T>;
+}
+
+// @beta @sealed
+export interface FluidIterableIterator<T> extends FluidIterable<T> {
+    next(): {
+        value: T;
+        done?: false;
+    } | {
+        value: any;
+        done: true;
+    };
+}
+
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
@@ -55,6 +71,19 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @beta @sealed
+export interface FluidReadonlyMap<K, V> {
+    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
+    readonly [Symbol.toStringTag]: string;
+    entries(): FluidIterableIterator<[K, V]>;
+    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): FluidIterableIterator<K>;
+    readonly size: number;
+    values(): FluidIterableIterator<V>;
+}
 
 // @public
 export interface IConfigProviderBase {
