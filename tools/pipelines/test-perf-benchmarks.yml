@@ -133,7 +133,7 @@ stages:
           parameters:
             packageManager: pnpm
             buildDirectory: $(FluidFrameworkDirectory)
-            packageManagerInstallCommand: pnpm install --frozen-lockfile
+            packageManagerInstallCommand: pnpm install
             primaryRegistry: $(ado-feeds-ff-download-only)
 
         # Build the workspace so compiled test code is available for benchmarks
