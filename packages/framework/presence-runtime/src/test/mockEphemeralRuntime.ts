@@ -11,7 +11,7 @@ import type { IClient, ISequencedClient } from "@fluidframework/driver-definitio
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 
-import type { IEphemeralRuntime } from "../runtimeTypes.js";
+import type { IEphemeralRuntime } from "@fluid-internal/presence-runtime/internal/test";
 
 /**
  * Mock {@link ClientConnectionId} for the local client in tests.

@@ -19,3 +19,5 @@ export type {
 	OutboundClientJoinMessage,
 	OutboundDatastoreUpdateMessage,
 } from "./protocol.js";
+
+export type { IEphemeralRuntime } from "./runtimeTypes.js";

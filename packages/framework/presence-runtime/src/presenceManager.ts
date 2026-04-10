@@ -32,9 +32,9 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
-import type { SignalMessages } from "./protocol.js";
+import type { SignalMessages, SystemWorkspaceDatastore } from "./protocol.js";
 import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./runtimeTypes.js";
-import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import type { SystemWorkspace } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
 
 /**

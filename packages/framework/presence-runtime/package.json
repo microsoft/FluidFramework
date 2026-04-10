@@ -23,28 +23,24 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./internal/protocol": {
+			"allow-ff-test-exports": {
+				"types": {
+					"import": "./lib/protocol.d.ts",
+					"require": "./dist/protocol.d.ts"
+				}
+			}
+		},
 		"./internal/test": {
 			"allow-ff-test-exports": {
-				"import": {
-					"types": "./lib/test.d.ts",
-					"default": "./lib/test.js"
-				},
-				"require": {
-					"types": "./dist/test.d.ts",
-					"default": "./dist/test.js"
-				}
+				"import": "./lib/test.js",
+				"require": "./dist/test.js"
 			}
 		},
 		"./internal/test-utils": {
 			"allow-ff-test-exports": {
-				"import": {
-					"types": "./lib/test/utils/index.d.ts",
-					"default": "./lib/test/utils/index.js"
-				},
-				"require": {
-					"types": "./dist/test/utils/index.d.ts",
-					"default": "./dist/test/utils/index.js"
-				}
+				"import": "./lib/test/utils/index.js",
+				"require": "./dist/test/utils/index.js"
 			}
 		}
 	},

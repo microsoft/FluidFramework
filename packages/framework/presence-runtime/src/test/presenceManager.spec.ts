@@ -17,20 +17,17 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
 import { createPresenceManager } from "@fluid-internal/presence-runtime/internal/test";
-
-import {
-	initialLocalClientConnectionId,
-	MockEphemeralRuntime,
-} from "./mockEphemeralRuntime.js";
-import type { ProcessSignalFunction } from "./testUtils.js";
+import type { ProcessSignalFunction } from "@fluid-internal/presence-runtime/internal/test-utils";
 import {
 	assertFinalExpectations,
+	initialLocalClientConnectionId,
 	localAttendeeId,
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
+	MockEphemeralRuntime,
 	prepareConnectedPresence,
 	prepareDisconnectedPresence,
-} from "./testUtils.js";
+} from "@fluid-internal/presence-runtime/internal/test-utils";
 
 const collateralSessionId = createSpecificAttendeeId("collateral-id");
 /**

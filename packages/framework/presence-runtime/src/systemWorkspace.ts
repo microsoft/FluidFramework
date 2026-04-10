@@ -23,24 +23,7 @@ import type { IAudience } from "@fluidframework/container-definitions";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
-/**
- * `ConnectionValueState` is known value state for `clientToSessionId` data.
- *
- * @remarks
- * It is {@link InternalTypes.ValueRequiredState} with a known value type.
- */
-interface ConnectionValueState extends InternalTypes.ValueStateMetadata {
-	value: AttendeeId;
-}
-
-/**
- * The system workspace's datastore structure.
- */
-export interface SystemWorkspaceDatastore {
-	clientToSessionId: {
-		[ConnectionId: ClientConnectionId]: ConnectionValueState;
-	};
-}
+import type { SystemWorkspaceDatastore } from "./protocol.js";
 
 class SessionClient implements Attendee {
 	private connectionStatus: AttendeeStatus = AttendeeStatus.Disconnected;
@@ -147,7 +130,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		remoteDatastore: {
 			clientToSessionId: {
 				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<
-					ConnectionValueState["value"]
+					AttendeeId
 				>;
 			};
 		},

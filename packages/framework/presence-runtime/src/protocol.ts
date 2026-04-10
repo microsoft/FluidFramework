@@ -8,13 +8,31 @@ import type {
 	ClientConnectionId,
 	WorkspaceAddress,
 } from "@fluid-internal/presence-definitions";
+import type { InternalTypes } from "@fluid-internal/presence-definitions/internal";
 import type { ClientUpdateEntry } from "@fluid-internal/presence-definitions/internal/workspace-runtime";
 import type {
 	OutboundExtensionMessage,
 	VerifiedInboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 
-import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
+/**
+ * `ConnectionValueState` is known value state for `clientToSessionId` data.
+ *
+ * @remarks
+ * It is {@link InternalTypes.ValueRequiredState} with a known value type.
+ */
+interface ConnectionValueState extends InternalTypes.ValueStateMetadata {
+	value: AttendeeId;
+}
+
+/**
+ * The system workspace's datastore structure.
+ */
+export interface SystemWorkspaceDatastore {
+	clientToSessionId: {
+		[ConnectionId: ClientConnectionId]: ConnectionValueState;
+	};
+}
 
 /**
  * Datastore that contains system workspace data

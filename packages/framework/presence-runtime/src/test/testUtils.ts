@@ -19,15 +19,17 @@ import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/inter
 import { spy } from "sinon";
 import type { SinonFakeTimers } from "sinon";
 
-import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
-import { createPresenceManager } from "../presenceManager.js";
 import type {
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
 	OutboundClientJoinMessage,
 	SignalMessages,
-} from "../protocol.js";
-import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
+	SystemWorkspaceDatastore,
+} from "@fluid-internal/presence-runtime/internal/protocol";
+import {
+	broadcastJoinResponseDelaysMs,
+	createPresenceManager,
+} from "@fluid-internal/presence-runtime/internal/test";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";

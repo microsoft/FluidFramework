@@ -25,18 +25,16 @@ import { createPresenceManager } from "../presenceManager.js";
 import type { InternalWorkspaceAddress, SignalMessages } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
-import {
-	initialLocalClientConnectionId,
-	MockEphemeralRuntime,
-} from "./mockEphemeralRuntime.js";
-import type { ProcessSignalFunction } from "./testUtils.js";
+import type { ProcessSignalFunction } from "@fluid-internal/presence-runtime/internal/test-utils";
 import {
 	assertFinalExpectations,
-	createSpecificAttendeeId,
-	prepareConnectedPresence,
 	attendeeId1,
+	initialLocalClientConnectionId,
 	localAttendeeId,
-} from "./testUtils.js";
+	createSpecificAttendeeId,
+	MockEphemeralRuntime,
+	prepareConnectedPresence,
+} from "@fluid-internal/presence-runtime/internal/test-utils";
 
 const attendee0SystemWorkspaceDatastore = {
 	"clientToSessionId": {
