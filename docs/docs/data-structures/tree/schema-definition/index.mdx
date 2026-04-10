@@ -9,10 +9,10 @@ A schema is defined using a `SchemaFactory` object which is created by passing a
 The `SchemaFactory` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes.
 It also has three methods for specifying internal nodes; `object()`, `array()`, and `map()`.
 Use the members of the class to build a schema.
-See [defining a schema](../../start/tree-start.mdx#defining-a-schema) for an example.
+See [defining a schema](../../../start/tree-start.mdx#defining-a-schema) for an example.
 
 :::note
-Once you have documents using your schema, see [Schema Evolution](./schema-evolution/index.mdx) for guidance on safely updating your schema over time.
+Once you have documents using your schema, see [Schema Evolution](../schema-evolution/index.mdx) for guidance on safely updating your schema over time.
 :::
 
 ## Object Schema
@@ -87,6 +87,10 @@ Do _not_ override the constructor of types that you derive from objects returned
 
 Create the schema for a group of notes. Note that the `array()` method is called inline, which means that the `Group.notes` property has the notional datatype of an array node. We'll change this to a genuine TypeScript type in the [Array schema](#array-schema) section.
 
+### Default Field Values
+
+Fields can be given default values using the `withDefault` API on `SchemaFactoryAlpha`, making them optional in the constructor even when they are required in the schema. See [Default Field Values](./default-field-values.mdx) for usage and examples.
+
 ```typescript
 class Group extends sf.object('Group', {
     id: sf.string,
@@ -97,7 +101,7 @@ class Group extends sf.object('Group', {
 
 ## Array Schema
 
-The app is going to need the type that is returned from `sf.array(Note)` in multiple places, including outside the context of `SchemaFactory`, so we create a TypeScript type for it as follows. Note that we include a method for adding a new note to the array of notes. The implementation is omitted, but it would wrap the constructor for the `Note` class and one or more methods in the [array node APIs](./reading-and-editing.mdx#array-node-apis).
+The app is going to need the type that is returned from `sf.array(Note)` in multiple places, including outside the context of `SchemaFactory`, so we create a TypeScript type for it as follows. Note that we include a method for adding a new note to the array of notes. The implementation is omitted, but it would wrap the constructor for the `Note` class and one or more methods in the [array node APIs](../reading-and-editing.mdx#array-node-apis).
 
 ```typescript
 class Notes extends sf.array("Notes", Note) {
@@ -141,7 +145,7 @@ class App extends sf.object("App", {
 }) {}
 ```
 
-The final step is to create a configuration object that will be used when a `SharedTree` object is created or loaded. See [creating a tree](../../start/tree-start.mdx#creating-a-tree). The following is an example of doing this.
+The final step is to create a configuration object that will be used when a `SharedTree` object is created or loaded. See [creating a tree](../../../start/tree-start.mdx#creating-a-tree). The following is an example of doing this.
 
 ```typescript
 export const appTreeConfiguration = new TreeViewConfiguration({
@@ -174,6 +178,8 @@ Due to limitations of TypeScript, recursive schema may not produce type errors w
 type _check = ValidateRecursiveSchema<typeof myRecursiveType>;
 ```
 
+To use [default field values](./default-field-values.mdx#recursive-types) within recursive schemas, use `withDefaultRecursive` and `objectRecursiveAlpha`.
+
 ## Setting Properties as Optional
 
 To specify that a property is not required, pass it to the `SchemaFactory.optional()` method inline. The following example shows a schema with an optional property.
@@ -184,6 +190,10 @@ class Proposal = sf.object('Proposal', {
     text: sf.optional(sf.string),
 });
 ```
+
+:::tip
+You can provide custom default values for both required and optional fields using the `withDefault` API on `SchemaFactoryAlpha`. This makes fields optional in the constructor while preserving their schema constraints. See [Default Field Values](./default-field-values.mdx) for details.
+:::
 
 ## Best Practices
 

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
 import {
@@ -66,15 +66,61 @@ describe("uniformChunk", () => {
 				validateShape(tree.dataFactory().shape);
 			});
 		}
-		it("shape with maybeCompressedStringAsNumber flag set to true fails if it is not a string leaf node.", () => {
+		it("shape with mayContainCompressedIds flag set to true fails if it is not a string leaf node.", () => {
 			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
-			// Test that a non string leaf node shape with maybeCompressedStringAsNumber set to true fails.
+			// Test that a non string leaf node shape with mayContainCompressedIds set to true fails.
 			assert.throws(
 				() => new TreeShape(brand(numberSchema.identifier), true, [], true),
-				validateUsageError(
-					/maybeDecompressedStringAsNumber flag can only be set to true for string leaf node./,
-				),
+				validateAssertionError("only strings can opt into maybeCompressedIdLeaf"),
 			);
+		});
+
+		it("equals distinguishes shapes differing only by mayContainCompressedIds", () => {
+			const withIds = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const withoutIds = new TreeShape(brand(stringSchema.identifier), true, [], false);
+			assert.equal(withIds.equals(withoutIds), false);
+			assert.equal(withoutIds.equals(withIds), false);
+			// Self-equality still holds
+			assert.equal(withIds.equals(withIds), true);
+			assert.equal(withoutIds.equals(withoutIds), true);
+		});
+
+		it("mayContainCompressedIds propagates from child shapes to parent shapes", () => {
+			const leafWithIds = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const leafWithoutIds = new TreeShape(brand(stringSchema.identifier), true, [], false);
+
+			// Parent with a child that has `mayContainCompressedIds` should also have it.
+			const parentWithCompressedChild = new TreeShape(
+				brand(JsonAsTree.JsonObject.identifier),
+				false,
+				[[xField, leafWithIds, 1]],
+			);
+			assert.equal(parentWithCompressedChild.mayContainCompressedIds, true);
+
+			// Parent with no children that have `mayContainCompressedIds` should not have it.
+			const parentWithoutCompressedChild = new TreeShape(
+				brand(JsonAsTree.JsonObject.identifier),
+				false,
+				[[xField, leafWithoutIds, 1]],
+			);
+			assert.equal(parentWithoutCompressedChild.mayContainCompressedIds, false);
+
+			// Propagation through multiple levels: grandparent should inherit from grandchild.
+			const grandparent = new TreeShape(brand(JsonAsTree.Array.identifier), false, [
+				[EmptyKey, parentWithCompressedChild, 1],
+			]);
+			assert.equal(grandparent.mayContainCompressedIds, true);
+
+			// Mixed children: one with and one without compressed IDs.
+			const parentWithMixedChildren = new TreeShape(
+				brand(JsonAsTree.JsonObject.identifier),
+				false,
+				[
+					[xField, leafWithoutIds, 1],
+					[yField, leafWithIds, 1],
+				],
+			);
+			assert.equal(parentWithMixedChildren.mayContainCompressedIds, true);
 		});
 	});
 

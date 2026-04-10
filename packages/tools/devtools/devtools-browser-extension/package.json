@@ -105,7 +105,7 @@
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/jsdom": "^21.1.1",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"@types/proxyquire": "^1.3.28",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
