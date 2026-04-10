@@ -936,14 +936,11 @@ export namespace System_TableSchema {
 						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
 						delete row.cells[column.id];
 					},
-					// Relevant invariant: each cell corresponds to an existing row and column.
-					// Prevents cell leaks from concurrently removed columns in earlier-sequenced
-					// edits when this cell removal is reverted.
-					// Example scenario: Client A removes a cell, then Client B removes the column
-					// for that cell. If A's cell removal is later reverted, the cell would be
-					// restored but B's column removal means there's no column for it.
-					// This constraint on revert ensures the column still exists, so restored cells
-					// always correspond to existing columns.
+					// Relevant invariant: each cell corresponds to an existing row and column
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell removal is reverted.
+					// Example scenario: Client A removes a cell, then Client B removes the column for that cell.
+					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
+					// This constraint on revert ensures the column still exists, ensuring restored cells correspond to existing columns.
 					preconditionsOnRevert: [{ type: "nodeInDocument", node: column }],
 				});
 
