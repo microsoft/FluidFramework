@@ -75,7 +75,7 @@ h3 {
 }
 `;
 
-// --- Tutorial-specific code fragments ---
+// #region Tutorial-specific code fragments
 
 const schemaBlock = `
 const sf = new SchemaFactory("dice-roller");
@@ -108,13 +108,15 @@ function DiceView() {
     </div>
   );
 }`;
+// #endregion
 
-// --- Shared scaffold files for every step ---
+// #region Shared scaffold files for every step
 
 const scaffoldFiles = {
 	"/main.tsx": mainTsx,
 	"/styles.css": stylesCss,
 };
+// #endregion
 
 export const diceRollerTutorial: TutorialModule = {
 	id: "dice-roller",

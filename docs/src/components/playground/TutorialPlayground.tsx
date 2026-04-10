@@ -13,21 +13,26 @@ import type { ValidationPattern } from "./data/types";
 import "@site/src/css/playground.css";
 
 /**
- * Path to the tutorial module index page (used for "Back to Tutorials" link).
- */
-const MODULE_INDEX_PATH = "/docs/start/interactive-tutorial/";
-
-/**
- * Runs validation patterns against code, stripping comments first.
+ * Runs validation patterns against user code to determine step completion.
+ *
+ * @remarks
+ * Validation is regex-based: each {@link ValidationPattern} contains a regex
+ * pattern string that is tested against the user's code. Comments are stripped
+ * first so that TODO comments in the starter template don't accidentally match.
+ * Sandpack handles compilation/runtime errors separately via its built-in
+ * error overlay — this function only checks whether the user has written the
+ * expected code constructs (e.g. imported the right symbol, called the right API).
+ *
+ * @returns An array of booleans, one per pattern, indicating whether each matched.
  * Returns false for any pattern that fails to compile as a regex.
  */
-function runValidation(code: string, patterns: ValidationPattern[]): boolean[] {
+function runValidation(code: string, patterns: readonly ValidationPattern[]): boolean[] {
 	const stripped = code
 		.replace(/\/\*[\s\S]*?\*\//g, "")
 		.replace(/\/\/.*$/gm, "");
-	return patterns.map((vp) => {
+	return patterns.map((validationPattern) => {
 		try {
-			const regex = new RegExp(vp.pattern, vp.flags ?? "s");
+			const regex = new RegExp(validationPattern.pattern, validationPattern.flags ?? "s");
 			return regex.test(stripped);
 		} catch {
 			return false;
@@ -42,7 +47,12 @@ export interface TutorialPlaygroundProps {
 	/**
 	 * The module to render (e.g. "dice-roller" or "shared-tree-todo").
 	 */
-	moduleId: string;
+	readonly moduleId: string;
+
+	/**
+	 * URL for the "Back to Tutorials" link (e.g. "/docs/start/interactive-tutorial/").
+	 */
+	readonly moduleIndexUrl: string;
 }
 
 /**
@@ -55,10 +65,15 @@ export interface TutorialPlaygroundProps {
  */
 export function TutorialPlayground({
 	moduleId,
+	moduleIndexUrl,
 }: TutorialPlaygroundProps): React.ReactElement {
+	/** Index of the currently active tutorial step. */
 	const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
+	/** Per-pattern pass/fail results for the current step's validation checks. */
 	const [validationResults, setValidationResults] = React.useState<boolean[]>([]);
+	/** Whether the solution code is currently displayed in the editor. */
 	const [showSolution, setShowSolution] = React.useState(false);
+	/** Bumped to force Sandpack to remount with the step's original template code. */
 	const [resetCounter, setResetCounter] = React.useState(0);
 
 	// Per-step saved code (user's own edits or last editor state)
@@ -187,7 +202,7 @@ export function TutorialPlayground({
 				validationResults={validationResults}
 				showSolution={showSolution}
 				completedSteps={completedStepsRef.current}
-				moduleIndexUrl={MODULE_INDEX_PATH}
+				moduleIndexUrl={moduleIndexUrl}
 				onNavigate={handleNavigate}
 				onToggleSolution={handleToggleSolution}
 				onResetStep={handleResetStep}
