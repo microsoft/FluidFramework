@@ -70,7 +70,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./tsconfig.test.cjs.json",
 		"build:test:esm": "tsc --project ./tsconfig.test.esm.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/test ./internal/test-utils",
+		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/protocol ./internal/test ./internal/test-utils",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:states:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-states-bundle.json",
