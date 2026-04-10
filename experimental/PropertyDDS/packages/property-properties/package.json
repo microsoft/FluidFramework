@@ -80,7 +80,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
 		"chai": "^4.5.0",
