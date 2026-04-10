@@ -2135,7 +2135,7 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		it("remove column, remove column, undo, undo", () => {
+		it("remove column → remove column → undo → undo", () => {
 			const provider = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2181,7 +2181,7 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		it("remove row, remove row, undo, undo", () => {
+		it("remove row → remove row → undo → undo", () => {
 			const provider = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2224,7 +2224,7 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		it("insert column, remove different column, undo, undo", () => {
+		it("insert column → remove different column → undo → undo", () => {
 			const provider = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2269,7 +2269,7 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		it("insert row, remove different row, undo, undo", () => {
+		it("insert row → remove different row → undo → undo", () => {
 			const provider = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2369,26 +2369,8 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		// removeColumns internally calls removeCell for each populated cell in every row.
-		// Each removeCell call creates its own nested transaction carrying:
-		//   preconditionsOnRevert: [{ type: "nodeInDocument", node: column }]
-		// That constraint means: "when reverting this cell removal, the column must still
-		// be in the tree."
-		//
-		// This is correct for the concurrent case (you don't want to restore a cell whose
-		// column was removed by a peer), but it creates a problem for same-branch sequential
-		// undo: when the undo of removeColumns is rebased over any subsequent commit, the
-		// nodeInDocument check fires because the column is (correctly) absent at that point,
-		// and the undo is silently dropped.
-		//
-		// The key conditions required to hit this bug:
-		//   1. The removed column has at least one populated cell (triggering inner removeCell
-		//      transactions with nodeInDocument preconditionsOnRevert).
-		//   2. At least one other commit has been made after the removeColumns commit (causing
-		//      the undo to be rebased rather than applied directly).
-		//
-		// The tests below cover several combinations of interleaved operations to verify the
-		// undo works (or documents the known failure if it does not).
+		// The below tests are regression tests reproing a bug where removing columns with associated cells caused constraints to be incorrectly applied and causing subsequent undo operations to be dropped.
+		// The existence of cells associated with the first column being removed is what caused the constraints to be applied, so we need to test both with and without cells to ensure the bug is fully fixed and doesn't regress.
 		it("removeColumns (with cells) → insertRows → undo insertRows → undo removeColumns", () => {
 			const provider = new TestTreeProviderLite(
 				1,
@@ -2442,8 +2424,6 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		// Same root cause as the insertRows variant above; any subsequent commit triggers
-		// the bug, not just insertRows specifically.
 		it("removeColumns (with cells) → insertColumns → undo insertColumns → undo removeColumns", () => {
 			const provider = new TestTreeProviderLite(
 				1,
@@ -2495,7 +2475,6 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		// Same root cause; a setCell on a different column is the subsequent commit.
 		it("removeColumns (with cells) → setCell → undo setCell → undo removeColumns", () => {
 			const provider = new TestTreeProviderLite(
 				1,
