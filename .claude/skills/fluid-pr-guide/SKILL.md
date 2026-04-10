@@ -1,6 +1,6 @@
 ---
 name: fluid-pr-guide
-description: Use when composing or reviewing a PR in Fluid Framework — provides title style, body template, and section guidance.
+description: Use when composing, writing, drafting, or reviewing a PR title, PR description, or PR body in Fluid Framework — provides title style, body template, and section guidance.
 ---
 
 There is no enforced title policy in this repo. Two styles appear in roughly equal proportion — use whichever fits the change. Do not mix them (e.g., don't add a `fix:` prefix to an otherwise plain-imperative title just because it's a bug fix).

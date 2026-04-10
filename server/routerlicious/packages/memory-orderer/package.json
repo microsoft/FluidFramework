@@ -62,7 +62,7 @@
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
-		"@types/node": "^22",
+		"@types/node": "~22.19.17",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",

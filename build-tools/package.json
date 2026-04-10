@@ -99,7 +99,7 @@
 	},
 	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
 	"engines": {
-		"node": ">=20.19.0"
+		"node": ">=22.22.2"
 	},
 	"dependenciesComments": {
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
@@ -165,7 +165,7 @@
 			"diff@>=4 <5": "^4.0.4",
 			"diff@>=7 <8": "^8.0.3",
 			"diff@>=8 <9": "^8.0.3",
-			"@types/node": "^22.19.1",
+			"@types/node": "~22.19.17",
 			"eslint": "~9.39.2",
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",

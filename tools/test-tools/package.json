@@ -35,7 +35,7 @@
 		"@fluidframework/build-tools": "^0.64.0",
 		"@fluidframework/eslint-config-fluid": "^6.1.0",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~22.19.17",
 		"eslint": "~8.57.0",
 		"eslint-config-prettier": "~10.1.8",
 		"mocha": "^10.8.2",

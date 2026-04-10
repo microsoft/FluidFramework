@@ -207,7 +207,7 @@
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"@types/sinon": "^17.0.3",
 		"@types/ungap__structured-clone": "^1.2.0",
 		"c8": "^10.1.3",

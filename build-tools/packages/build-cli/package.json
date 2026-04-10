@@ -162,7 +162,7 @@
 		"@types/issue-parser": "^3.0.5",
 		"@types/mdast": "^4.0.4",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^22.19.1",
+		"@types/node": "~22.19.17",
 		"@types/prettier": "^2.7.3",
 		"@types/prompts": "^2.4.9",
 		"@types/semver": "^7.7.1",
@@ -186,7 +186,7 @@
 		"typescript": "~5.4.5"
 	},
 	"engines": {
-		"node": ">=20.19.0"
+		"node": ">=22.22.2"
 	},
 	"fluidBuild": {
 		"tasks": {
