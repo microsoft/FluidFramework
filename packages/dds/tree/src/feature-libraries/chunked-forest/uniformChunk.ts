@@ -84,6 +84,13 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 export type FieldShape = readonly [FieldKey, TreeShape, number];
 
 /**
+ * Maximum topLevelLength value (exclusive) for which {@link TreeShape.withTopLevelLength}
+ * caches the resulting {@link ChunkShape}. Values at or above this threshold always
+ * create a new instance to prevent unbounded cache growth.
+ */
+const chunkShapeCacheLimit = 8;
+
+/**
  * The "shape" of a tree.
  * Does not contain the actual values from  the tree, but describes everything else,
  * including where the values would be found in a flat values array.
@@ -91,13 +98,6 @@ export type FieldShape = readonly [FieldKey, TreeShape, number];
  * Note that since this requires fields to have uniform shapes (see `FieldShape`),
  * not all trees can have their shape described using this type.
  */
-/**
- * Maximum topLevelLength value (exclusive) for which {@link TreeShape.withTopLevelLength}
- * caches the resulting {@link ChunkShape}. Values at or above this threshold always
- * create a new instance to prevent unbounded cache growth.
- */
-const chunkShapeCacheLimit = 8;
-
 export class TreeShape {
 	public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
 	public readonly fieldsOffsetArray: readonly OffsetShape[];
@@ -120,9 +120,8 @@ export class TreeShape {
 	 *
 	 * Cache for ChunkShape instances created by {@link withTopLevelLength}.
 	 * Only caches shapes with topLevelLength less than {@link chunkShapeCacheLimit} to prevent unbounded growth.
-	 * Lazy-initialized to avoid allocating a Map for TreeShape instances that never use caching.
 	 */
-	private chunkShapeCache: Map<number, ChunkShape> | undefined;
+	private readonly chunkShapeCache: Map<number, ChunkShape> = new Map();
 
 	/**
 	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
@@ -191,12 +190,12 @@ export class TreeShape {
 
 	public withTopLevelLength(topLevelLength: number): ChunkShape {
 		if (topLevelLength < chunkShapeCacheLimit) {
-			const cached = this.chunkShapeCache?.get(topLevelLength);
+			const cached = this.chunkShapeCache.get(topLevelLength);
 			if (cached !== undefined) {
 				return cached;
 			}
 			const shape = new ChunkShape(this, topLevelLength);
-			(this.chunkShapeCache ??= new Map()).set(topLevelLength, shape);
+			this.chunkShapeCache.set(topLevelLength, shape);
 			return shape;
 		}
 		return new ChunkShape(this, topLevelLength);
