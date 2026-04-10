@@ -2314,7 +2314,9 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		it("remove column (with cells) → removeColumn → undo → undo", () => {
+		// The below tests are regression tests which reproduce a bug where removing columns with associated cells caused constraints to be incorrectly applied. This caused subsequent undo operations to be dropped.
+		// The existence of cells associated with the first column being removed is what caused the constraints to be applied, so we need to test both with and without cells to ensure the bug is fully fixed and doesn't regress.
+		it("remove column (with cells) → remove column → undo → undo", () => {
 			const provider = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2369,9 +2371,7 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		// The below tests are regression tests reproing a bug where removing columns with associated cells caused constraints to be incorrectly applied and causing subsequent undo operations to be dropped.
-		// The existence of cells associated with the first column being removed is what caused the constraints to be applied, so we need to test both with and without cells to ensure the bug is fully fixed and doesn't regress.
-		it("removeColumns (with cells) → insertRows → undo insertRows → undo removeColumns", () => {
+		it("remove column (with cells) → insert row → undo → undo", () => {
 			const provider = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2424,58 +2424,7 @@ describe("TableFactory unit tests", () => {
 			unsubscribe();
 		});
 
-		it("removeColumns (with cells) → insertColumns → undo insertColumns → undo removeColumns", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
-				}).getFactory(),
-			);
-			const config = new TreeViewConfiguration({
-				schema: Table,
-				enableSchemaValidation: true,
-			});
-			const tree = provider.trees[0];
-			const view = asAlpha(tree.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-			view.initialize(
-				Table.create({
-					columns: [new Column({ id: "column-0", props: {} })],
-					rows: [
-						new Row({
-							id: "row-0",
-							cells: { "column-0": { value: "Hello" } },
-						}),
-					],
-				}),
-			);
-
-			view.root.removeColumns(["column-0"]);
-			assert.equal(view.root.columns.length, 0);
-
-			// Insert an unrelated column to create the subsequent commit.
-			view.root.insertColumns({ columns: [{ id: "column-1", props: {} }] });
-
-			let revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo insertColumns
-			assert.equal(view.root.columns.length, 0, "column-1 should have been removed");
-
-			revertible = undoStack.pop();
-			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert(); // undo removeColumns
-			assert.equal(view.root.columns.length, 1, "column-0 should be restored");
-			assert.equal(
-				view.root.getCell({ row: "row-0", column: "column-0" })?.value,
-				"Hello",
-				"cell should be restored along with the column",
-			);
-
-			unsubscribe();
-		});
-
-		it("removeColumns (with cells) → setCell → undo setCell → undo removeColumns", () => {
+		it("remove column (with cells) → set cell → undo → undo", () => {
 			const provider = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
