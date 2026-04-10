@@ -77,7 +77,7 @@ interface ChunkSummaryProperties {
 	 * Storing only the immediate parent (rather than the full path string) keeps every chunk's
 	 * tracking entry correct even when an ancestor is re-encoded and receives a new reference ID.
 	 * The full summary path is computed on demand by {@link ForestIncrementalSummaryBuilder.computeHandlePathInLatestSummary}
-	 * by walking up the parent chain through {@link ForestIncrementalSummaryBuilder.latestSummaryRefIdMap}.
+	 * by walking up the parent chain through {@link TrackedSummaryProperties.latestSummaryRefIdMap}.
 	 *
 	 * If a parent chunk is encoded as a handle in the current summary its reference ID is unchanged,
 	 * so its children's `parentReferenceId` values copied forward by `completeSummary` remain valid
