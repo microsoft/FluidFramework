@@ -57,21 +57,21 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 export const LogLevel = {
 	/**
 	 * Chatty logs useful for debugging.
-	 * They need not be collected in production.
+	 * @remarks They need not be collected in production.
 	 */
 	verbose: 10,
 
 	/**
-	 * Information about the session. These logs could be omitted in some sessions
-	 * if needed (e.g. to reduce overall telemetry volume). If any are collected
-	 * from a particular session, all should be.
+	 * Information about the session.
+	 * @remarks These logs could be omitted in some sessions if needed (e.g. to reduce overall telemetry volume).
+	 * If any are collected from a particular session, all should be.
 	 */
 	info: 20,
 
 	/**
-	 * Essential information about the operation of Fluid. It is recommended that
-	 * these should always be collected, even in production, for diagnostic purposes.
-	 * @remarks If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
+	 * Essential information about the operation of Fluid.
+	 * @remarks  It is recommended that these should always be collected, even in production, for diagnostic purposes.
+	 * If an event does not have a log level specified, it should be treated as if it were LogLevel.essential.
 	 */
 	essential: 30,
 

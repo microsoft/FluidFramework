@@ -3,7 +3,7 @@
 "@fluidframework/telemetry-utils": minor
 "__section": deprecation
 ---
-Deprecated `default` and `error` in LogLevel
+Deprecated default and error in LogLevel
 
 Two new `LogLevel` members have been added to `@fluidframework/core-interfaces` to better express intent:
 
