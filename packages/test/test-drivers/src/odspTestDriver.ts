@@ -38,10 +38,17 @@ const passwordLoginCredentials = (username: string, password: string): LoginCred
 	password,
 });
 
-const ficLoginCredentials = (username: string): LoginCredentials => {
+const ficLoginCredentials = (
+	username: string,
+	odspEndpointName: OdspEndpoint,
+): LoginCredentials => {
 	const fetchToken = async (scopeEndpoint: "storage" | "push"): Promise<string> => {
 		const testTenantCheckoutClient = await getTestTenantCheckoutClient();
-		const tokens = await testTenantCheckoutClient.fetchFicTokens([username], scopeEndpoint);
+		const tokens = await testTenantCheckoutClient.fetchFicTokens(
+			[username],
+			scopeEndpoint,
+			odspEndpointName,
+		);
 		if (!Array.isArray(tokens)) {
 			// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
 			// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
@@ -117,6 +124,7 @@ interface TestTenantCheckoutClient {
 	fetchFicTokens(
 		usernames: string[],
 		tokenScope: "push" | "storage",
+		odspEndpointName: OdspEndpoint,
 	): Promise<TokenCredentials[]>;
 }
 
@@ -188,7 +196,7 @@ export function getOdspCredentials(
 				"login__odsp__fic__test__users was defined but does not have any valid usernames.",
 			);
 		}
-		return usernames.map((username) => ficLoginCredentials(username));
+		return usernames.map((username) => ficLoginCredentials(username, odspEndpointName));
 	} else if (loginTenants !== undefined) {
 		/**
 		 * Parse login credentials using the new tenant format for e2e tests.
@@ -265,22 +273,34 @@ export function getOdspCredentials(
 	return creds.map((c) => passwordLoginCredentials(c.username, c.password));
 }
 
+// Default token manager — shared across all OdspTestDriver instances that don't supply their own.
+// Uses file-based cache to persist refresh tokens across runs.
+// Callers that need memory-only caching (e.g. stress tests running many child processes
+// simultaneously) can supply their own OdspTokenManager via createFromEnv's tokenManager option.
+const defaultTokenManager = new OdspTokenManager(odspTokensCache);
+
 /**
  * @internal
  */
 export class OdspTestDriver implements ITestDriver {
-	// Share the tokens and driverId across multiple instance of the test driver
-	private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
+	// Share the driveId across multiple instances of the test driver.
 	private static readonly driveIdPCache = new Map<string, Promise<string>>();
 	// Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
 	private static readonly legacyDriverUserRandomIndex = Math.random();
 
-	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
+	private static async getDriveIdFromConfig(
+		tokenConfig: TokenConfig,
+		tokenManager: OdspTokenManager,
+	): Promise<string> {
 		const { siteUrl } = tokenConfig;
 		return getDriveId(siteUrl, "", undefined, {
-			accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
+			accessToken: await this.getStorageToken(
+				{ siteUrl, refresh: false },
+				tokenConfig,
+				tokenManager,
+			),
 			refreshTokenFn: async () =>
-				this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+				this.getStorageToken({ siteUrl, refresh: true }, tokenConfig, tokenManager),
 		});
 	}
 
@@ -291,6 +311,7 @@ export class OdspTestDriver implements ITestDriver {
 			options?: HostStoragePolicy;
 			tenantIndex?: number;
 			odspEndpointName?: string;
+			tokenManager?: OdspTokenManager;
 		},
 		api: OdspDriverApiType = OdspDriverApi,
 	): Promise<OdspTestDriver> {
@@ -348,16 +369,21 @@ export class OdspTestDriver implements ITestDriver {
 			tenantName,
 			userIndex,
 			endpointName,
+			config?.tokenManager,
 		);
 	}
 
-	private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig): Promise<string> {
+	private static async getDriveId(
+		siteUrl: string,
+		tokenConfig: TokenConfig,
+		tokenManager: OdspTokenManager,
+	): Promise<string> {
 		let driveIdP = this.driveIdPCache.get(siteUrl);
 		if (driveIdP) {
 			return driveIdP;
 		}
 
-		driveIdP = this.getDriveIdFromConfig(tokenConfig);
+		driveIdP = this.getDriveIdFromConfig(tokenConfig, tokenManager);
 		this.driveIdPCache.set(siteUrl, driveIdP);
 		try {
 			return await driveIdP;
@@ -375,13 +401,14 @@ export class OdspTestDriver implements ITestDriver {
 		tenantName?: string,
 		userIndex?: number,
 		endpointName?: string,
+		tokenManager: OdspTokenManager = defaultTokenManager,
 	): Promise<OdspTestDriver> {
 		const tokenConfig: TokenConfig = {
 			...loginInfo,
 			...getMicrosoftConfiguration(),
 		};
 
-		const driveId = await this.getDriveId(loginInfo.siteUrl, tokenConfig);
+		const driveId = await this.getDriveId(loginInfo.siteUrl, tokenConfig, tokenManager);
 		const directoryParts = [directory];
 
 		// if we are in a azure dev ops build use the build id in the dir path
@@ -398,15 +425,23 @@ export class OdspTestDriver implements ITestDriver {
 			options,
 		};
 
-		return new OdspTestDriver(driverConfig, api, tenantName, userIndex, endpointName);
+		return new OdspTestDriver(
+			driverConfig,
+			api,
+			tenantName,
+			userIndex,
+			endpointName,
+			tokenManager,
+		);
 	}
 
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions,
 		config: TokenConfig,
+		tokenManager: OdspTokenManager,
 	): Promise<string> {
 		const host = new URL(options.siteUrl).host;
-		const tokens = await this.odspTokenManager.getOdspTokens(
+		const tokens = await tokenManager.getOdspTokens(
 			host,
 			config,
 			config.credentials,
@@ -427,6 +462,7 @@ export class OdspTestDriver implements ITestDriver {
 		public readonly tenantName?: string,
 		public readonly userIndex?: number,
 		public readonly endpointName?: string,
+		private readonly tokenManager: OdspTokenManager = defaultTokenManager,
 	) {}
 
 	/**
@@ -492,12 +528,12 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	private async getStorageToken(options: OdspResourceTokenFetchOptions): Promise<string> {
-		return OdspTestDriver.getStorageToken(options, this.config);
+		return OdspTestDriver.getStorageToken(options, this.config, this.tokenManager);
 	}
 
 	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
 		const host = new URL(options.siteUrl).host;
-		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
+		const tokens = await this.tokenManager.getPushTokens(
 			host,
 			this.config,
 			this.config.credentials,
