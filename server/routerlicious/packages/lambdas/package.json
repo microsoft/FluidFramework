@@ -86,7 +86,7 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^22",
+		"@types/node": "~22.19.17",
 		"@types/semver": "^7.7.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",

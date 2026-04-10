@@ -67,7 +67,7 @@
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
 		"expect-puppeteer": "^9.0.2",

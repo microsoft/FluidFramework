@@ -792,7 +792,12 @@ export namespace System_TableSchema {
 
 							// First, remove all cells that correspond to each column from each row:
 							for (const column of columnsToRemove) {
-								this.#removeCells(column);
+								for (const row of this.table.rows) {
+									// TypeScript is unable to narrow the row type correctly here, hence the cast.
+									// See: https://github.com/microsoft/TypeScript/issues/52144
+									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
+									delete (row as RowValueInternalType).cells[column.id];
+								}
 							}
 
 							// Second, remove the column nodes:
@@ -830,10 +835,8 @@ export namespace System_TableSchema {
 								for (const row of this.table.rows) {
 									// TypeScript is unable to narrow the row type correctly here, hence the cast.
 									// See: https://github.com/microsoft/TypeScript/issues/52144
-									this.removeCell({
-										column: columnToRemove,
-										row: row as RowValueType,
-									});
+									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
+									delete (row as RowValueInternalType).cells[columnToRemove.id];
 								}
 
 								// We have already validated that all of the columns exist above, so this is safe.
@@ -930,7 +933,7 @@ export namespace System_TableSchema {
 
 				this.#applyEditsInBatch({
 					applyEdits: () => {
-						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
 						delete row.cells[column.id];
 					},
 					// Relevant invariant: each cell corresponds to an existing row and column
@@ -938,29 +941,10 @@ export namespace System_TableSchema {
 					// Example scenario: Client A removes a cell, then Client B removes the column for that cell.
 					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
 					// This constraint on revert ensures the column still exists, ensuring restored cells correspond to existing columns.
-					preconditionsOnRevert: [
-						{
-							type: "nodeInDocument",
-							node: column,
-						},
-					],
+					preconditionsOnRevert: [{ type: "nodeInDocument", node: column }],
 				});
 
 				return cell;
-			}
-
-			/**
-			 * Removes the cell corresponding with the specified column from each row in the table.
-			 */
-			#removeCells(column: ColumnValueType): void {
-				for (const row of this.table.rows) {
-					// TypeScript is unable to narrow the row type correctly here, hence the cast.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					this.removeCell({
-						column,
-						row: row as RowValueType,
-					});
-				}
 			}
 
 			/**
