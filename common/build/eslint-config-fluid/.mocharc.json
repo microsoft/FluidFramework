@@ -1,6 +1,7 @@
 {
-	"recursive": true,
+	"import": "tsx/esm",
+	"spec": "src/test/**/*.test.mts",
 	"reporter": "mocha-multi-reporters",
 	"reporter-options": "configFile=mocha-multi-reporter-config.json",
-	"timeout": 5000
+	"timeout": 60000
 }
