@@ -847,102 +847,154 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describeHydration("setCell", (initializeTree) => {
-		it("Set cell in a valid location", () => {
-			const table = initializeTree(
+		// Shared table setup: 2 columns and 2 rows, all cells initially empty.
+		function makeTable() {
+			return initializeTree(
 				Table,
 				Table.create({
 					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
+						{ id: "column-0", props: {} },
+						{ id: "column-1", props: {} },
 					],
 					rows: [
-						{
-							id: "row-0",
-							cells: {},
-							props: {},
-						},
+						{ id: "row-0", cells: {}, props: {} },
+						{ id: "row-1", cells: {}, props: {} },
 					],
 				}),
 			);
+		}
 
-			// By not specifying an index, the column should be appended to the end of the list.
+		it("Set cell using string ID key", () => {
+			const table = makeTable();
+
 			table.setCell({
-				key: {
-					row: "row-0",
-					column: "column-0",
-				},
+				key: { row: "row-0", column: "column-0" },
 				cell: { value: "Hello world!" },
 			});
 
 			assertEqualTrees(table, {
 				table: {
 					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
+						{ id: "column-0", props: {} },
+						{ id: "column-1", props: {} },
 					],
 					rows: [
 						{
 							id: "row-0",
-							cells: {
-								"column-0": {
-									value: "Hello world!",
-								},
-							},
+							cells: { "column-0": { value: "Hello world!" } },
 							props: {},
 						},
+						{ id: "row-1", cells: {}, props: {} },
 					],
 				},
 			});
 		});
 
+		it("Set cell using index key", () => {
+			const table = makeTable();
+
+			// row: 1 → "row-1", column: 1 → "column-1"
+			table.setCell({ key: { row: 1, column: 1 }, cell: { value: "Hello world!" } });
+
+			assert.equal(table.getCell({ row: "row-1", column: "column-1" })?.value, "Hello world!");
+		});
+
+		it("Set cell using node key", () => {
+			const table = makeTable();
+			const column = table.getColumn("column-1") ?? fail("Column not found");
+			const row = table.getRow("row-1") ?? fail("Row not found");
+
+			table.setCell({ key: { row, column }, cell: { value: "Hello world!" } });
+
+			assert.equal(table.getCell({ row: "row-1", column: "column-1" })?.value, "Hello world!");
+		});
+
+		it("Set cell overwrites existing cell", () => {
+			const table = makeTable();
+			const cellKey = { row: "row-0", column: "column-0" };
+
+			table.setCell({ key: cellKey, cell: { value: "initial" } });
+			assert.equal(table.getCell(cellKey)?.value, "initial");
+
+			table.setCell({ key: cellKey, cell: { value: "updated" } });
+			assert.equal(table.getCell(cellKey)?.value, "updated");
+		});
+
 		it("Setting cell in an invalid location errors", () => {
-			const table = initializeTree(
-				Table,
-				Table.create({
-					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
-					],
-					rows: [
-						{
-							id: "row-0",
-							cells: {},
-							props: {},
-						},
-					],
-				}),
-			);
+			const table = makeTable();
 
-			// Invalid row
+			// Invalid row (by string ID)
 			assert.throws(
 				() =>
 					table.setCell({
-						key: {
-							row: "row-1",
-							column: "column-0",
-						},
-						cell: { value: "Hello world!" },
+						key: { row: "row-99", column: "column-0" },
+						cell: { value: "x" },
 					}),
-				validateUsageError(/No row with ID "row-1" exists in the table./),
+				validateUsageError(/No row with ID "row-99" exists in the table./),
 			);
 
-			// Invalid column
+			// Invalid column (by string ID)
 			assert.throws(
 				() =>
 					table.setCell({
-						key: {
-							row: "row-0",
-							column: "column-1",
-						},
-						cell: { value: "Hello world!" },
+						key: { row: "row-0", column: "column-99" },
+						cell: { value: "x" },
 					}),
-				validateUsageError(/No column with ID "column-1" exists in the table./),
+				validateUsageError(/No column with ID "column-99" exists in the table./),
+			);
+
+			// Invalid row (by index)
+			assert.throws(
+				() =>
+					table.setCell({
+						key: { row: 99, column: "column-0" },
+						cell: { value: "x" },
+					}),
+				validateUsageError(/No row exists at index 99./),
+			);
+
+			// Invalid column (by index)
+			assert.throws(
+				() =>
+					table.setCell({
+						key: { row: "row-0", column: 99 },
+						cell: { value: "x" },
+					}),
+				validateUsageError(/No column exists at index 99./),
+			);
+
+			// Negative row index
+			assert.throws(
+				() =>
+					table.setCell({
+						key: { row: -1, column: "column-0" },
+						cell: { value: "x" },
+					}),
+				validateUsageError(/No row exists at index -1./),
+			);
+
+			// Invalid column (node not in table)
+			assert.throws(
+				() =>
+					table.setCell({
+						key: { row: "row-0", column: new Column({ id: "column-99", props: {} }) },
+						cell: { value: "x" },
+					}),
+				validateUsageError(
+					/The specified column node with ID "column-99" does not exist in the table./,
+				),
+			);
+
+			// Invalid row (node not in table)
+			assert.throws(
+				() =>
+					table.setCell({
+						key: { row: new Row({ id: "row-99", cells: {}, props: {} }), column: "column-0" },
+						cell: { value: "x" },
+					}),
+				validateUsageError(
+					/The specified row node with ID "row-99" does not exist in the table./,
+				),
 			);
 		});
 	});
