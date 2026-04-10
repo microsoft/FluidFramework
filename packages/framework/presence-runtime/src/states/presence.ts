@@ -6,7 +6,7 @@
 import type { Attendee, AttendeeId } from "@fluid-internal/presence-definitions";
 
 /**
- * Utility type limiting to a specific attendee. (A attendee with
+ * Utility type limiting to a specific attendee. (An attendee with
  * a specific session ID - not just any session ID.)
  */
 export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =

@@ -15,7 +15,6 @@ const config: Linter.Config[] = [
 	},
 	{
 		files: ["**/*.ts"],
-		ignores: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
 		rules: {
 			"import-x/no-internal-modules": [
 				"error",
@@ -29,23 +28,6 @@ const config: Linter.Config[] = [
 						// Internal packages may structure their exports arbitrarily, so allow any imports from them.
 						"@fluid-internal/**",
 					],
-				},
-			],
-		},
-	},
-
-	// Rules only for test files
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			// TODO: There are several violations, mostly in test code. Set to warn to enable cleanup while unblocking lint upgrades.
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-
-			// Test files are run in node only so additional node libraries can be used.
-			"import-x/no-nodejs-modules": [
-				"error",
-				{
-					allow: ["node:assert"],
 				},
 			],
 		},

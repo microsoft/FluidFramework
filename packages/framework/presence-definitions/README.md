@@ -1,7 +1,7 @@
-# @fluid-internal/presence-definition
+# @fluid-internal/presence-definitions
 
 This is an internal package containing common interfaces for API and between internal layers.
-`presence` APIs should be access via `@fluidframework/presence` package.
+`presence` APIs should be accessed via `@fluidframework/presence` package.
 
 ## Exports and source organization
 

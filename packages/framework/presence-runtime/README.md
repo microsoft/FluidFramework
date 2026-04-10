@@ -1,7 +1,7 @@
 # @fluid-internal/presence-runtime
 
 This is an internal package containing implementations of `presence` APIs.
-`presence` APIs should be access via `@fluidframework/presence` package.
+`presence` APIs should be accessed via `@fluidframework/presence` package.
 
 ## Source organization
 
@@ -50,7 +50,8 @@ This is an internal package containing implementations of `presence` APIs.
 **Exposes:** extension elements `ContainerPresenceFactory` and `extensionId`
 
 **Files:**
-- `extension/containerPresence.ts` → `ContainerPresenceFactory`, `extensionId`- `presenceDatastoreManager.ts` → `PresenceDatastoreManagerImpl`
+- `extension/containerPresence.ts` → `ContainerPresenceFactory`, `extensionId`
+- `presenceDatastoreManager.ts` → `PresenceDatastoreManagerImpl`
 - `presenceManager.ts` → `PresenceManager` class, `createPresenceManager`
 - `protocol.ts` → Message type definitions, `joinMessageType`, `datastoreUpdateMessageType`, `acknowledgementMessageType`
 - `runtimeTypes.ts` → `IEphemeralRuntime`, `ExtensionHost`
