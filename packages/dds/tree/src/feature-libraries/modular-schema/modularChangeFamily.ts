@@ -3055,16 +3055,22 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 
 			if (newDetachId !== undefined) {
-				insertRootRename(
-					this.table.rebasedRootNodes,
-					baseAttachId,
+				for (const outputDetachEntry of this.table.newChange.rootNodes.outputDetachLocations.getAll2(
 					newDetachId,
-					undefined,
 					countToProcess,
-					undefined,
-					this.table.newChange.rootNodes,
-					(id, length) => ({ value: this.fieldId, length }),
-				);
+				)) {
+					insertRootRename(
+						this.table.rebasedRootNodes,
+						offsetChangeAtomId(baseAttachId, outputDetachEntry.offset),
+						offsetChangeAtomId(newDetachId, outputDetachEntry.offset),
+						undefined,
+						outputDetachEntry.value,
+						outputDetachEntry.length,
+						undefined,
+						this.table.newChange.rootNodes,
+						(_id, length) => ({ value: this.fieldId, length }),
+					);
+				}
 			}
 		}
 
@@ -3319,12 +3325,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				);
 
 			countToProcess = newOutputDetachLocationEntry.length;
-
-			this.table.composedRootNodes.outputDetachLocations.set(
-				newDetachId,
-				countToProcess,
-				newOutputDetachLocationEntry.value ?? this.fieldId,
-			);
 		}
 
 		if (countToProcess < count) {
@@ -4201,9 +4201,9 @@ function firstDetachIdFromAttachId(
 	roots: RootNodeTable,
 	attachId: ChangeAtomId,
 	count: number,
-): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
+): RangeQueryResult<ChangeAtomId> {
 	const result = roots.newToOldId.getFirst(attachId, count);
-	return { ...result, start: attachId, value: result.value ?? attachId };
+	return { ...result, value: result.value ?? attachId };
 }
 
 function rebaseCrossFieldKeys(
@@ -4482,9 +4482,6 @@ function composeRootTables(
 ): RootNodeTable {
 	const composedTable = cloneRootTable(change1.rootNodes);
 
-	// It's important that we compose output detach locations before calling `composeRootRenames`,
-	// because we delete output detach locations when finding that renames cancel out.
-	composeOutputDetachLocations(change1, change2, composedTable);
 	composeRootRenames(change1, change2, composedTable);
 
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
@@ -4525,114 +4522,59 @@ function composeRootTables(
 	return composedTable;
 }
 
-function composeOutputDetachLocations(
-	change1: ModularChangeset,
-	change2: ModularChangeset,
-	composedRoots: RootNodeTable,
-): void {
-	for (const outputDetachEntry of change1.rootNodes.outputDetachLocations.entries()) {
-		composeOutputDetachLocation(
-			outputDetachEntry.start,
-			outputDetachEntry.length,
-			outputDetachEntry.value,
-			change2,
-			composedRoots,
-		);
-	}
-
-	for (const entry of change2.rootNodes.outputDetachLocations.entries()) {
-		composedRoots.outputDetachLocations.set(entry.start, entry.length, entry.value);
-	}
-}
-
-function composeOutputDetachLocation(
-	outputDetachId1: ChangeAtomId,
-	count: number,
-	detachLocation: FieldId,
-	change2: ModularChangeset,
-	composedTable: RootNodeTable,
-): void {
-	let countToProcess = count;
-	const renameEntry = firstAttachIdFromDetachId(
-		change2.rootNodes,
-		outputDetachId1,
-		countToProcess,
-	);
-	countToProcess = renameEntry.length;
-
-	const attachEntry = getFirstAttachField(
-		change2.crossFieldKeys,
-		renameEntry.value,
-		countToProcess,
-	);
-	countToProcess = attachEntry.length;
-
-	composedTable.outputDetachLocations.delete(outputDetachId1, countToProcess);
-
-	if (attachEntry.value === undefined) {
-		// We update the key for the detach location to the renamed ID of the root in the composed output context.
-		composedTable.outputDetachLocations.set(renameEntry.value, countToProcess, detachLocation);
-	} else {
-		// These nodes are attached by `change2` and thus attached in the composed output context,
-		// so there should be no output detach location.
-	}
-
-	const countRemaining = count - countToProcess;
-	if (countRemaining > 0) {
-		composeOutputDetachLocation(
-			offsetChangeAtomId(outputDetachId1, countToProcess),
-			countRemaining,
-			detachLocation,
-			change2,
-			composedTable,
-		);
-	}
-}
-
 function composeRootRenames(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
 	composedRoots: RootNodeTable,
 ): void {
 	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
-		// Notes on the validity of overwriting apparently conflicting renames:
-		// It is possible for `change1` and `change2` to both have a rename from the same root ID,
-		// or for both to have a rename to the same root ID.
-		// These cases should only be possible when `change1` contains a rollback of a revision in `change2`,
-		// as otherwise detach IDs are not reused.
-		// These scenarios can be divided into two classes.
-		//
-		// 1. The conflicting renames refer to different nodes
-		// `change1` may rename node A to `renameEntry.value`, while `change2` renames node B to the same value.
-		// This is only legal if `change2` also renames node A to some other ID.
-		// If we process `change2`'s rename of node A before its rename of node B, we will not encounter a conflict.
-		// If we process the rename of node B first, we can safely overwrite change1's rename of node A,
-		// as it will be recovered when processing `change2`'s rename of node A.
-		//
-		// This case can occur when `change1` contains a rollback of an optional field clear,
-		// and `change2` contains a rebased version of that clear which detaches a different node.
-		//
-		// 2. The conflicting renames refer to the same node
-		// `change2` may rename node A from `renameEntry.start`, while `change1` also renames node A from `renameEntry.start`.
-		// This should only be possible if `change1` attaches node A after its rename, and `change2` detaches it before its rename.
-		// We can safely overwrite the first rename, as we `composeAttachDetach` should be called for this node,
-		// and the correct rename will be created then (and then overwrite this rename again in `applyPendingComposeRenames`).
-		//
-		// This case can happen when both changes contains a composite move,
-		// and the detach of `change1`'s move is a rollback of the detach part of `change2`'s composite move.
-		// The moves in both `change1` and `change2` will have the same detach ID, but different renames for that ID.
-		// For an example of the above scenario,
-		// see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]".
-		composeRootRename(
-			composedRoots,
-			renameEntry.start,
+		for (const outputDetachEntry of change2.rootNodes.outputDetachLocations.getAll2(
 			renameEntry.value,
 			renameEntry.length,
-			change1,
-			change2,
-			RenameSource.Change2,
-			RenameCollisionPolicy.Overwrite,
-		);
+		)) {
+			const offsetOldId = offsetChangeAtomId(renameEntry.start, outputDetachEntry.offset);
+			const offsetNewId = offsetChangeAtomId(renameEntry.value, outputDetachEntry.offset);
+
+			// Notes on the validity of overwriting apparently conflicting renames:
+			// It is possible for `change1` and `change2` to both have a rename from the same root ID,
+			// or for both to have a rename to the same root ID.
+			// These cases should only be possible when `change1` contains a rollback of a revision in `change2`,
+			// as otherwise detach IDs are not reused.
+			// These scenarios can be divided into two classes.
+			//
+			// 1. The conflicting renames refer to different nodes
+			// `change1` may rename node A to `renameEntry.value`, while `change2` renames node B to the same value.
+			// This is only legal if `change2` also renames node A to some other ID.
+			// If we process `change2`'s rename of node A before its rename of node B, we will not encounter a conflict.
+			// If we process the rename of node B first, we can safely overwrite change1's rename of node A,
+			// as it will be recovered when processing `change2`'s rename of node A.
+			//
+			// This case can occur when `change1` contains a rollback of an optional field clear,
+			// and `change2` contains a rebased version of that clear which detaches a different node.
+			//
+			// 2. The conflicting renames refer to the same node
+			// `change2` may rename node A from `renameEntry.start`, while `change1` also renames node A from `renameEntry.start`.
+			// This should only be possible if `change1` attaches node A after its rename, and `change2` detaches it before its rename.
+			// We can safely overwrite the first rename, as we `composeAttachDetach` should be called for this node,
+			// and the correct rename will be created then (and then overwrite this rename again in `applyPendingComposeRenames`).
+			//
+			// This case can happen when both changes contains a composite move,
+			// and the detach of `change1`'s move is a rollback of the detach part of `change2`'s composite move.
+			// The moves in both `change1` and `change2` will have the same detach ID, but different renames for that ID.
+			// For an example of the above scenario,
+			// see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]".
+			composeRootRename(
+				composedRoots,
+				offsetOldId,
+				offsetNewId,
+				outputDetachEntry.value,
+				outputDetachEntry.length,
+				change1,
+				change2,
+				RenameSource.Change2,
+				RenameCollisionPolicy.Overwrite,
+			);
+		}
 	}
 }
 
@@ -4644,16 +4586,23 @@ function applyPendingComposedRenames(
 	deletedRenames: ChangeAtomIdRangeMap<true>,
 ): void {
 	for (const entry of attachDetachRenames.entries()) {
-		composeRootRename(
-			composedRoots,
-			entry.start,
+		for (const outputDetachEntry of change2.rootNodes.outputDetachLocations.getAll2(
 			entry.value,
 			entry.length,
-			change1,
-			change2,
-			RenameSource.AttachDetach,
-			RenameCollisionPolicy.Error,
-		);
+		)) {
+			// XXX: When `outputDetachEntry.value` is undefined, we should use the detach location in change2
+			composeRootRename(
+				composedRoots,
+				offsetChangeAtomId(entry.start, outputDetachEntry.offset),
+				offsetChangeAtomId(entry.value, outputDetachEntry.offset),
+				outputDetachEntry.value,
+				outputDetachEntry.length,
+				change1,
+				change2,
+				RenameSource.AttachDetach,
+				RenameCollisionPolicy.Error,
+			);
+		}
 	}
 
 	for (const entry of deletedRenames.entries()) {
@@ -4895,6 +4844,7 @@ function insertRootRename(
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	newIntermediateId: ChangeAtomId | undefined,
+	outputDetachLocation: FieldId | undefined,
 	count: number,
 	renamesBefore: RootNodeTable | undefined,
 	renamesAfter: RootNodeTable | undefined,
@@ -4962,34 +4912,43 @@ function insertRootRename(
 		detachLocationEntry.value,
 	);
 
-	// XXX: Review updating of output detach locations.
-	// Should remove as part of deleting rename entries?
 	if (areEqualChangeAtomIds(composedOldId, composedNewId)) {
 		// The renames cancelling out implies that the detach location of the root is not changed by the composed changeset.
-		table.outputDetachLocations.delete(composedNewId, countProcessed);
-		table.outputDetachLocations.delete(newId, countProcessed);
+		if (!areEqualChangeAtomIds(composedOldId, oldId)) {
+			// We're removing a rename from `composedOldId` to `oldId`,
+			// so we also remove any output detach location listed under `oldId`.
+			table.outputDetachLocations.delete(oldId, countProcessed);
+		}
+
+		if (!areEqualChangeAtomIdOpts(composedNewId, newId)) {
+			// We're removing a rename from `newId` to `composedNewId`,
+			// so we also remove any output detach location listed under `composedNewId`.
+			table.outputDetachLocations.delete(composedNewId, countProcessed);
+		}
 	} else {
-		const outputDetachEntry = table.outputDetachLocations.getFirst(oldId, countProcessed);
-		countProcessed = outputDetachEntry.length;
-		if (outputDetachEntry.value !== undefined) {
-			const finalOutputDetachEntry = table.outputDetachLocations.getFirst(
+		const outputDetachEntry1 = table.outputDetachLocations.getFirst(oldId, countProcessed);
+		countProcessed = outputDetachEntry1.length;
+
+		const outputDetachEntry2 = table.outputDetachLocations.getFirst(
+			composedNewId,
+			countProcessed,
+		);
+		countProcessed = outputDetachEntry2.length;
+
+		// We've renamed the root for this output detach location, so we remove the existing entry.
+		table.outputDetachLocations.delete(oldId, countProcessed);
+
+		const composedOutputDetachLocation =
+			outputDetachEntry2.value ?? outputDetachLocation ?? outputDetachEntry1.value;
+
+		// If there is already an output detach location for `composedNewId`,
+		// we should keep that one, since it may reflect a different, later location.
+		if (composedOutputDetachLocation !== undefined) {
+			table.outputDetachLocations.set(
 				composedNewId,
 				countProcessed,
+				composedOutputDetachLocation,
 			);
-			countProcessed = finalOutputDetachEntry.length;
-
-			// We've renamed the root for this output detach location, so we remove the existing entry.
-			table.outputDetachLocations.delete(oldId, countProcessed);
-
-			// If there is already an output detach location for `composedNewId`,
-			// we should keep that one, since it may reflect a different, later location.
-			if (finalOutputDetachEntry.value === undefined) {
-				table.outputDetachLocations.set(
-					composedNewId,
-					countProcessed,
-					outputDetachEntry.value,
-				);
-			}
 		}
 
 		const renameToOldId = areEqualChangeAtomIds(oldId, composedOldId) ? undefined : oldId;
@@ -5015,6 +4974,7 @@ function insertRootRename(
 			offsetChangeAtomId(oldId, countProcessed),
 			offsetChangeAtomId(newId, countProcessed),
 			offsetIntermediateRename,
+			outputDetachLocation,
 			countRemaining,
 			renamesBefore,
 			renamesAfter,
@@ -5028,6 +4988,7 @@ function composeRootRename(
 	composedTable: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
+	outputDetachLocation: FieldId | undefined,
 	count: number,
 	change1: ModularChangeset,
 	change2: ModularChangeset,
@@ -5098,6 +5059,7 @@ function composeRootRename(
 			offsetOldId,
 			offsetNewId,
 			intermediateRenameEntry.value,
+			outputDetachLocation,
 			intermediateRenameEntry.length,
 			change1.rootNodes,
 			renamesAfter,
