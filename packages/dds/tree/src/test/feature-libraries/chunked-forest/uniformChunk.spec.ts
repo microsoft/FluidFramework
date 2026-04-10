@@ -87,7 +87,6 @@ describe("uniformChunk", () => {
 			assert.notEqual(c1, c2);
 		});
 
-
 		it("shape with mayContainCompressedIds flag set to true fails if it is not a string leaf node.", () => {
 			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
 			// Test that a non string leaf node shape with mayContainCompressedIds set to true fails.
