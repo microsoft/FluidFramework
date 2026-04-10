@@ -1,6 +1,6 @@
 ---
 name: agentic-cg-override
-description: Fix a vulnerable transitive dependency by applying pnpm overrides to affected lockfiles. Use when a CG alert identifies a vulnerable package version that needs to be bumped. Provide the package name, vulnerable version(s), and the fixed version.
+description: Fix a vulnerable transitive dependency by applying pnpm overrides to affected lockfiles. Use when a CG alert identifies a vulnerable package version that needs to be bumped. Can also fetch and display the current CG alert list from ADO. Provide the package name, vulnerable version(s), and the fixed version.
 ---
 
 # Vulnerable Dependency Override
@@ -12,15 +12,108 @@ This skill remediates a vulnerable transitive dependency across all pnpm lockfil
 glob patterns like `**/pnpm-workspace.yaml` that will match inside `node_modules`. There is never a
 reason to look inside `node_modules` during this workflow.
 
+## Fetching CG alerts
+
+Helper scripts in `.claude/skills/agentic-cg-override/scripts/` can fetch and parse the live CG alert
+data from ADO. The scripts use the `az` shim available in codespaces to get a Bearer token, then call
+the Component Governance SPA API directly.
+
+### Fetch the raw alert data
+
+```bash
+bash .claude/skills/agentic-cg-override/scripts/fetch-cg-alerts.sh [output-dir]
+```
+
+Downloads all CG alerts for the `main` branch to `/tmp/cg-alerts/` (or a custom directory). Produces
+two files:
+- `production.json` — alerts from production pipelines (`pipelinesTrackingFilter=0`)
+- `non-production.json` — alerts from non-production/stale pipelines (`pipelinesTrackingFilter=1`)
+
+Each response is large (20-60MB) and contains all alerts including fixed and dismissed ones. Run this
+once per session — the scripts below read from the saved files.
+
+### Summarize active alerts
+
+```bash
+python3 .claude/skills/agentic-cg-override/scripts/summarize-alerts.py [input-dir]
+```
+
+Filters to active (non-dismissed, non-fixed) alerts on `main` and prints two sections:
+- **Production alerts** — from the production pipeline data
+- **Non-production / stale alerts** — from the non-production pipeline data
+
+Within each section, legal alerts are shown first (these require manual review), then security alerts.
+
+### Get details for a specific package or CVE
+
+```bash
+python3 .claude/skills/agentic-cg-override/scripts/alert-details.py <query> [input-dir]
+```
+
+Shows full details for alerts matching a package name or CVE ID: severity, recommended action,
+advisory links, and which pipelines detected the alert, grouped by production vs non-production.
+
+### API details
+
+The CG alerts API is undocumented. The endpoint used by the SPA is:
+
+```
+GET https://governance.dev.azure.com/{org}/{project-id}/_apis/ComponentGovernance/GovernedRepositories/{repo-id}/Branches/{branch}/Alerts?includeHistory=false&includeDevelopmentDependencies=true&pipelinesTrackingFilter={filter}
+```
+
+The `pipelinesTrackingFilter` parameter controls which pipeline category is returned:
+- `0` — **Production** alerts (`externalTrackingState` = `production` or `productionByPolicy`)
+- `1` — **Non-production / stale** alerts (`externalTrackingState` = `nonProduction` or `nonProductionByPolicy`)
+
+The same alert ID can appear in both responses with different `stateDetails` entries.
+Production alerts are the primary focus; non-production alerts are lower priority.
+
+For this repo:
+- org: `fluidframework`
+- project-id: `235294da-091d-4c29-84fc-cdfc3d90890b`
+- repo-id: `17385` (CG registration ID)
+- Auth: Bearer token from `az account get-access-token`
+
+The response JSON has shape `{ count: number, value: Alert[] }`. Each alert has:
+- `id`, `title`, `severity` (critical/high/medium/low), `type` (security/legal)
+- `component.displayName`, `component.displayVersion`, `component.type`
+- `actionItems` — recommended fix (e.g., "Upgrade X from Y to Z")
+- `sources` — advisory info (e.g., `{ GitHubAdvisories: { url, identifier } }`)
+- `isDismissed`, `alertState`
+- `stateDetails[]` — per-branch/pipeline state; each entry has `alertState` (active/fixed),
+  `branchMoniker`, and `snapshotType.buildDisplayType` (pipeline name)
+
+An alert is considered **active on main** when: `isDismissed` is false AND at least one
+`stateDetails` entry has `alertState == "active"` and `branchMoniker` contains `"main"`.
+
+### Presenting alerts to the user
+
+When the user asks to see CG alerts, fetch the data and run the summarize script. Present the
+results in two top-level groups — **Production** first, then **Non-production / stale** — since
+production alerts are the primary focus. Within each group:
+
+1. **Legal alerts first.** These are license compliance issues (`type: legal`) that require human
+   judgment — there is nothing an agent can do programmatically to fix them. Present them clearly
+   and tell the user they need to handle these manually.
+
+2. **Security alerts second.** These are vulnerable dependency alerts (`type: security`) that can
+   be remediated with pnpm overrides using the workflow in this skill. For each alert, include the
+   package name, detected versions, the fix version (from `actionItems`), and the CVE/advisory ID.
+
+When the user asks about a specific package or CVE, use the `alert-details.py` script to show full
+details including the recommended action and advisory links.
+
 ## Inputs
 
-Before starting, confirm you have all three of these from the user:
+Before starting the override workflow, confirm you have all three of these from the user:
 
 1. **Package name** — the npm package with the vulnerability (e.g., `tar`)
 2. **Vulnerable versions** — the version(s) to eliminate (e.g., `<7.5.11`, or `6.2.0, 6.1.15`, or `all versions before 4.0.0`)
 3. **Fixed version** — the minimum safe version to override to (e.g., `^7.5.11`)
 
-If any input is missing or ambiguous, ask the user before proceeding.
+If any input is missing or ambiguous, ask the user before proceeding. If the user hasn't provided
+these but has named a package or CVE, use the alert-details script to look up the actionItems field
+which usually contains the recommended fix version.
 
 ## Step 1: Find affected lockfiles
 
