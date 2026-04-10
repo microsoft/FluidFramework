@@ -29,8 +29,8 @@ import {
 	MockEphemeralRuntime,
 	prepareConnectedPresence,
 } from "@fluid-internal/presence-runtime/internal/test-utils";
+import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 
-import { toOpaqueJson } from "../../utils/index.js";
 import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type {

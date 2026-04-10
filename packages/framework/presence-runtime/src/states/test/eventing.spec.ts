@@ -22,8 +22,7 @@ import type {
 	InternalWorkspaceAddress,
 } from "@fluid-internal/presence-runtime/internal/test";
 import { Notifications, StateFactory } from "@fluid-internal/presence-runtime/states";
-
-import { toOpaqueJson } from "../../utils/index.js";
+import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";

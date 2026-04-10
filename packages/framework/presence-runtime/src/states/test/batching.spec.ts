@@ -14,8 +14,7 @@ import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { Notifications, StateFactory } from "@fluid-internal/presence-runtime/states";
-
-import { toOpaqueJson } from "../../utils/index.js";
+import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {

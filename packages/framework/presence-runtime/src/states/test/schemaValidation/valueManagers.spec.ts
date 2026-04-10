@@ -18,8 +18,8 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
 import { StateFactory } from "@fluid-internal/presence-runtime/states";
+import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 
-import { toOpaqueJson } from "../../../utils/index.js";
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
 import type { InboundPresenceSignalMessage, ProcessSignalFunction } from "../testUtils.js";
 import {

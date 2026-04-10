@@ -13,8 +13,8 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 import type { OutboundDatastoreUpdateMessage } from "@fluid-internal/presence-runtime/internal/test";
 import { broadcastJoinResponseDelaysMs } from "@fluid-internal/presence-runtime/internal/test";
 import { StateFactory } from "@fluid-internal/presence-runtime/states";
+import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 
-import { toOpaqueJson } from "../../../utils/index.js";
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "../testUtils.js";
 import {
