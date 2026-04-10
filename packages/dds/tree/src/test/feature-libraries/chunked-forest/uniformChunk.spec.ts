@@ -72,11 +72,11 @@ describe("uniformChunk", () => {
 			// Small values (< 8) should return the same cached instance
 			const a1 = shape.withTopLevelLength(1);
 			const a2 = shape.withTopLevelLength(1);
-			assert.equal(a1, a2, "expected same instance for topLevelLength 1");
+			assert.equal(a1, a2);
 
 			const b1 = shape.withTopLevelLength(7);
 			const b2 = shape.withTopLevelLength(7);
-			assert.equal(b1, b2, "expected same instance for topLevelLength 7");
+			assert.equal(b1, b2);
 
 			// Different topLevelLength values should return different instances
 			assert.notEqual(a1, b1);
@@ -84,7 +84,7 @@ describe("uniformChunk", () => {
 			// Large values (>= 8) should not be cached
 			const c1 = shape.withTopLevelLength(8);
 			const c2 = shape.withTopLevelLength(8);
-			assert.notEqual(c1, c2, "expected different instances for topLevelLength 8");
+			assert.notEqual(c1, c2);
 		});
 
 

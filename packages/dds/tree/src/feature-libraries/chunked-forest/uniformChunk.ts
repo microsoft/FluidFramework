@@ -20,7 +20,7 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, hasSome } from "../../util/index.js";
+import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 /**
@@ -190,13 +190,11 @@ export class TreeShape {
 
 	public withTopLevelLength(topLevelLength: number): ChunkShape {
 		if (topLevelLength < chunkShapeCacheLimit) {
-			const cached = this.chunkShapeCache.get(topLevelLength);
-			if (cached !== undefined) {
-				return cached;
-			}
-			const shape = new ChunkShape(this, topLevelLength);
-			this.chunkShapeCache.set(topLevelLength, shape);
-			return shape;
+			return getOrCreate(
+				this.chunkShapeCache,
+				topLevelLength,
+				() => new ChunkShape(this, topLevelLength),
+			);
 		}
 		return new ChunkShape(this, topLevelLength);
 	}
