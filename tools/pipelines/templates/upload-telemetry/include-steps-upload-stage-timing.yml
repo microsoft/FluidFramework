@@ -24,6 +24,9 @@ steps:
     BUILD_ID: $(Build.BuildId)
     ADO_API_TOKEN: $(System.AccessToken)
     WORK_FOLDER: $(Agent.TempDirectory)/stageTimingAndResult
+  # Run for all possible pipeline triggers except manual
+  # (manual runs tend to be for testing and can fail repeatedly, we don't want that creating incidents)
+  condition: ne(variables['Build.Reason'], 'Manual')
   inputs:
     targetType: 'inline'
     script: |
@@ -45,6 +48,9 @@ steps:
       STAGE_ID: ${{ parameters.stageIdFilter }}
     PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
     WORK_FOLDER: $(Agent.TempDirectory)/stageTimingAndResult
+  # Run for all possible pipeline triggers except manual
+  # (manual runs tend to be for testing and can fail repeatedly, we don't want that creating incidents)
+  condition: ne(variables['Build.Reason'], 'Manual')
   inputs:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
