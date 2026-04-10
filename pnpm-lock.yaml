@@ -11434,6 +11434,12 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
+      '@fluid-internal/presence-definitions':
+        specifier: workspace:~
+        version: link:../presence-definitions
+      '@fluid-internal/presence-runtime':
+        specifier: workspace:~
+        version: link:../presence-runtime
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../aqueduct
