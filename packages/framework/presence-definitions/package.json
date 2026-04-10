@@ -78,7 +78,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@types/node": "~20.19.30",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
