@@ -414,7 +414,8 @@ describe("TableFactory unit tests", () => {
 		it("Insert empty columns list", () => {
 			const tree = initializeTree(Table, Table.create());
 
-			tree.insertColumns({ index: 0, columns: [] });
+			const inserted = tree.insertColumns({ index: 0, columns: [] });
+			assert.equal(inserted.length, 0);
 
 			assertEqualTrees(tree, {
 				table: {
@@ -427,7 +428,7 @@ describe("TableFactory unit tests", () => {
 		it("Insert single column into empty list", () => {
 			const table = initializeTree(Table, Table.create());
 
-			table.insertColumns({
+			const inserted = table.insertColumns({
 				index: 0,
 				columns: [
 					{
@@ -436,6 +437,8 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
+			assert.equal(inserted.length, 1);
+			assertEqualTrees(inserted[0], { id: "column-0", props: {} });
 
 			assertEqualTrees(table, {
 				table: {
@@ -468,7 +471,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.insertColumns({
+			const inserted = table.insertColumns({
 				index: 1,
 				columns: [
 					{
@@ -481,6 +484,9 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
+			assert.equal(inserted.length, 2);
+			assertEqualTrees(inserted[0], { id: "column-c", props: {} });
+			assertEqualTrees(inserted[1], { id: "column-d", props: {} });
 
 			assertEqualTrees(table, {
 				table: {
@@ -525,7 +531,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.insertColumns({
+			const inserted = table.insertColumns({
 				columns: [
 					{
 						id: "column-c",
@@ -537,6 +543,9 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
+			assert.equal(inserted.length, 2);
+			assertEqualTrees(inserted[0], { id: "column-c", props: {} });
+			assertEqualTrees(inserted[1], { id: "column-d", props: {} });
 
 			assertEqualTrees(table, {
 				table: {
@@ -598,7 +607,8 @@ describe("TableFactory unit tests", () => {
 		it("Insert empty rows list", () => {
 			const table = initializeTree(Table, Table.create());
 
-			table.insertRows({ index: 0, rows: [] });
+			const inserted = table.insertRows({ index: 0, rows: [] });
+			assert.equal(inserted.length, 0);
 
 			assertEqualTrees(table, {
 				table: {
@@ -611,7 +621,7 @@ describe("TableFactory unit tests", () => {
 		it("Insert single row into empty list", () => {
 			const table = initializeTree(Table, Table.create());
 
-			table.insertRows({
+			const inserted = table.insertRows({
 				index: 0,
 				rows: [
 					{
@@ -621,6 +631,8 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
+			assert.equal(inserted.length, 1);
+			assertEqualTrees(inserted[0], { id: "row-0", cells: {}, props: {} });
 
 			assertEqualTrees(table, {
 				table: {
@@ -656,7 +668,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.insertRows({
+			const inserted = table.insertRows({
 				index: 1,
 				rows: [
 					{
@@ -671,6 +683,9 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
+			assert.equal(inserted.length, 2);
+			assertEqualTrees(inserted[0], { id: "row-c", cells: {}, props: {} });
+			assertEqualTrees(inserted[1], { id: "row-d", cells: {}, props: {} });
 
 			assertEqualTrees(table, {
 				table: {
@@ -721,7 +736,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.insertRows({
+			const inserted = table.insertRows({
 				rows: [
 					{
 						id: "row-c",
@@ -735,6 +750,9 @@ describe("TableFactory unit tests", () => {
 					},
 				],
 			});
+			assert.equal(inserted.length, 2);
+			assertEqualTrees(inserted[0], { id: "row-c", cells: {}, props: {} });
+			assertEqualTrees(inserted[1], { id: "row-d", cells: {}, props: {} });
 
 			assertEqualTrees(table, {
 				table: {
@@ -952,7 +970,8 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.removeColumns([]);
+			const removed = table.removeColumns([]);
+			assert.equal(removed.length, 0);
 			assertEqualTrees(table, {
 				table: {
 					columns: [{ id: "column-0", props: {} }],
@@ -978,7 +997,8 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.removeColumns(0, 0);
+			const removed = table.removeColumns(0, 0);
+			assert.equal(removed.length, 0);
 			assertEqualTrees(table, {
 				table: {
 					columns: [{ id: "column-0", props: {} }],
@@ -1007,7 +1027,9 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Remove column0 (by node)
-			table.removeColumns([column0]);
+			const removed0 = table.removeColumns([column0]);
+			assert.equal(removed0.length, 1);
+			assertEqualTrees(removed0[0], { id: "column-0", props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [{ id: "column-1", props: {} }],
@@ -1022,7 +1044,9 @@ describe("TableFactory unit tests", () => {
 			});
 
 			// Remove column1 (by ID)
-			table.removeColumns(["column-1"]);
+			const removed1 = table.removeColumns(["column-1"]);
+			assert.equal(removed1.length, 1);
+			assertEqualTrees(removed1[0], { id: "column-1", props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1059,7 +1083,10 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Remove columns 1 and 3 (by node)
-			table.removeColumns([column1, column3]);
+			const removed0 = table.removeColumns([column1, column3]);
+			assert.equal(removed0.length, 2);
+			assertEqualTrees(removed0[0], { id: "column-1", props: {} });
+			assertEqualTrees(removed0[1], { id: "column-3", props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [
@@ -1079,7 +1106,10 @@ describe("TableFactory unit tests", () => {
 			});
 
 			// Remove columns 2 and 0 (by ID)
-			table.removeColumns([column2.id, column0.id]);
+			const removed1 = table.removeColumns([column2.id, column0.id]);
+			assert.equal(removed1.length, 2);
+			assertEqualTrees(removed1[0], { id: "column-2", props: {} });
+			assertEqualTrees(removed1[1], { id: "column-0", props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1116,7 +1146,10 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Remove columns 1-2
-			table.removeColumns(1, 2);
+			const removed = table.removeColumns(1, 2);
+			assert.equal(removed.length, 2);
+			assertEqualTrees(removed[0], { id: "column-1", props: {} });
+			assertEqualTrees(removed[1], { id: "column-2", props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [
@@ -1225,7 +1258,8 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.removeRows([]);
+			const removed = table.removeRows([]);
+			assert.equal(removed.length, 0);
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1251,7 +1285,9 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Remove row0 (by node)
-			table.removeRows([row0]);
+			const removed0 = table.removeRows([row0]);
+			assert.equal(removed0.length, 1);
+			assertEqualTrees(removed0[0], { id: "row-0", cells: {}, props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1260,7 +1296,9 @@ describe("TableFactory unit tests", () => {
 			});
 
 			// Remove row1 (by ID)
-			table.removeRows(["row-1"]);
+			const removed1 = table.removeRows(["row-1"]);
+			assert.equal(removed1.length, 1);
+			assertEqualTrees(removed1[0], { id: "row-1", cells: {}, props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1283,7 +1321,10 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Remove rows 1 and 3 (by node)
-			table.removeRows([row1, row3]);
+			const removed0 = table.removeRows([row1, row3]);
+			assert.equal(removed0.length, 2);
+			assertEqualTrees(removed0[0], { id: "row-1", cells: {}, props: {} });
+			assertEqualTrees(removed0[1], { id: "row-3", cells: {}, props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1303,7 +1344,10 @@ describe("TableFactory unit tests", () => {
 			});
 
 			// Remove rows 2 and 0 (by ID)
-			table.removeRows([row2.id, row0.id]);
+			const removed1 = table.removeRows([row2.id, row0.id]);
+			assert.equal(removed1.length, 2);
+			assertEqualTrees(removed1[0], { id: "row-2", cells: {}, props: {} });
+			assertEqualTrees(removed1[1], { id: "row-0", cells: {}, props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1359,7 +1403,8 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			table.removeRows(0, 0);
+			const removed = table.removeRows(0, 0);
+			assert.equal(removed.length, 0);
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1382,7 +1427,10 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Remove rows 1-2
-			table.removeRows(1, 2);
+			const removed = table.removeRows(1, 2);
+			assert.equal(removed.length, 2);
+			assertEqualTrees(removed[0], { id: "row-1", cells: {}, props: {} });
+			assertEqualTrees(removed[1], { id: "row-2", cells: {}, props: {} });
 			assertEqualTrees(table, {
 				table: {
 					columns: [],
@@ -1465,7 +1513,9 @@ describe("TableFactory unit tests", () => {
 				key: cellKey,
 				cell: { value: "Hello world!" },
 			});
-			table.removeCell(cellKey);
+			const removedCell = table.removeCell(cellKey);
+			assert(removedCell !== undefined);
+			assertEqualTrees(removedCell, { value: "Hello world!" });
 			assertEqualTrees(table, {
 				table: {
 					columns: [
@@ -1508,7 +1558,8 @@ describe("TableFactory unit tests", () => {
 				row: "row-0",
 				column: "column-0",
 			};
-			table.removeCell(cellKey);
+			const removedCell = table.removeCell(cellKey);
+			assert.equal(removedCell, undefined);
 			assertEqualTrees(table, {
 				table: {
 					columns: [
