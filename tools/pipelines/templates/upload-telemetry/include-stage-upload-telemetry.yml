@@ -27,7 +27,9 @@ parameters:
 stages:
 - stage: upload_telemetry_${{ parameters.stageIdFilter }}
   displayName: Upload telemetry to Kusto ('${{ parameters.stageIdFilter }}')
-  condition: succeededOrFailed()
+  # Run for all possible pipeline triggers except manual
+  # (manual runs tend to be for testing and can fail repeatedly, we don't want that creating incidents)
+  condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'Manual'))
   dependsOn:
     - ${{ if ne(parameters.stageIdFilter, 'all') }}:
       - ${{ parameters.stageIdFilter }}
