@@ -147,7 +147,11 @@ export class Chunker implements IChunker {
 		parentType: TreeNodeSchemaIdentifier,
 		fieldKey: FieldKey,
 	): boolean {
-		return this.shouldEncodeIncrementally(parentType, fieldKey);
+		try {
+			return this.shouldEncodeIncrementally(parentType, fieldKey);
+		} catch {
+			return false;
+		}
 	}
 
 	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
