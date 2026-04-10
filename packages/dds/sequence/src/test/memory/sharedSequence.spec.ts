@@ -20,12 +20,9 @@ describe("SharedSequence memory usage", () => {
 			benchmarkFn: async (state) => {
 				while (state.continue()) {
 					await state.beforeAllocation();
-					{
-						const segment = new SubSequence<number>([]);
-						await state.whileAllocated();
-						assert(segment !== undefined);
-					}
-					await state.afterDeallocation();
+					const segment = new SubSequence<number>([]);
+					await state.whileAllocated();
+					assert.equal(segment.cachedLength, 0);
 				}
 			},
 		}),
@@ -43,15 +40,13 @@ describe("SharedSequence memory usage", () => {
 				benchmarkFn: async (state) => {
 					while (state.continue()) {
 						await state.beforeAllocation();
-						{
-							const segment = new SubSequence<number>([]);
-							for (let i = 0; i < x; i++) {
-								segment.append(new SubSequence<number>([i]));
-								segment.removeRange(0, 1);
-							}
-							await state.whileAllocated();
+						const segment = new SubSequence<number>([]);
+						for (let i = 0; i < x; i++) {
+							segment.append(new SubSequence<number>([i]));
+							segment.removeRange(0, 1);
 						}
-						await state.afterDeallocation();
+						await state.whileAllocated();
+						assert.equal(segment.cachedLength, 0);
 					}
 				},
 			}),
