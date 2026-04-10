@@ -44,13 +44,13 @@ importers:
         version: 2.83.0
       '@microsoft/api-extractor':
         specifier: ^7.52.11
-        version: 7.52.11(@types/node@20.19.35)
+        version: 7.52.11(@types/node@22.19.17)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
       '@types/node':
-        specifier: ~20.19.30
-        version: 20.19.35
+        specifier: ~22.19.17
+        version: 22.19.17
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -232,8 +232,8 @@ packages:
   '@types/mocha@10.0.10':
     resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
 
-  '@types/node@20.19.35':
-    resolution: {integrity: sha512-Uarfe6J91b9HAUXxjvSOdiO2UPOKLm07Q1oh0JHxoZ1y8HoqxDAu3gVrsrOHeiio0kSsoVBt4wFrKOm0dKxVPQ==}
+  '@types/node@22.19.17':
+    resolution: {integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -1540,23 +1540,23 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@microsoft/api-extractor-model@7.30.7(@types/node@20.19.35)':
+  '@microsoft/api-extractor-model@7.30.7(@types/node@22.19.17)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@20.19.35)
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.11(@types/node@20.19.35)':
+  '@microsoft/api-extractor@7.52.11(@types/node@22.19.17)':
     dependencies:
-      '@microsoft/api-extractor-model': 7.30.7(@types/node@20.19.35)
+      '@microsoft/api-extractor-model': 7.30.7(@types/node@22.19.17)
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@20.19.35)
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
       '@rushstack/rig-package': 0.5.3
-      '@rushstack/terminal': 0.15.4(@types/node@20.19.35)
-      '@rushstack/ts-command-line': 5.0.2(@types/node@20.19.35)
+      '@rushstack/terminal': 0.15.4(@types/node@22.19.17)
+      '@rushstack/ts-command-line': 5.0.2(@types/node@22.19.17)
       lodash: 4.17.21
       minimatch: 10.2.4
       resolve: 1.22.11
@@ -1582,7 +1582,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@rushstack/node-core-library@5.14.0(@types/node@20.19.35)':
+  '@rushstack/node-core-library@5.14.0(@types/node@22.19.17)':
     dependencies:
       ajv: 8.13.0
       ajv-draft-04: 1.0.0(ajv@8.13.0)
@@ -1593,23 +1593,23 @@ snapshots:
       resolve: 1.22.11
       semver: 7.5.4
     optionalDependencies:
-      '@types/node': 20.19.35
+      '@types/node': 22.19.17
 
   '@rushstack/rig-package@0.5.3':
     dependencies:
       resolve: 1.22.11
       strip-json-comments: 3.1.1
 
-  '@rushstack/terminal@0.15.4(@types/node@20.19.35)':
+  '@rushstack/terminal@0.15.4(@types/node@22.19.17)':
     dependencies:
-      '@rushstack/node-core-library': 5.14.0(@types/node@20.19.35)
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
       supports-color: 8.1.1
     optionalDependencies:
-      '@types/node': 20.19.35
+      '@types/node': 22.19.17
 
-  '@rushstack/ts-command-line@5.0.2(@types/node@20.19.35)':
+  '@rushstack/ts-command-line@5.0.2(@types/node@22.19.17)':
     dependencies:
-      '@rushstack/terminal': 0.15.4(@types/node@20.19.35)
+      '@rushstack/terminal': 0.15.4(@types/node@22.19.17)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -1629,7 +1629,7 @@ snapshots:
 
   '@types/mocha@10.0.10': {}
 
-  '@types/node@20.19.35':
+  '@types/node@22.19.17':
     dependencies:
       undici-types: 6.21.0
 
