@@ -216,8 +216,8 @@ function runMemoryBenchmark({
 						});
 						beforeOperation?.(matrix, undoRedoStack);
 						operation(matrix, undoRedoStack);
-						afterOperation?.(matrix, undoRedoStack);
 						await state.whileAllocated();
+						afterOperation?.(matrix, undoRedoStack);
 						cleanUp();
 					}
 					await state.afterDeallocation();
