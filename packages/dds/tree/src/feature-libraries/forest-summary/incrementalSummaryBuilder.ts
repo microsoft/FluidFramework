@@ -200,7 +200,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * @remarks
 	 * `chunk` (the TreeChunk object) is used as the map key by object identity.
 	 * This assumes each chunk appears at exactly one position in the forest — an invariant that holds because every
-	 * every node in a tree has a single parent.
+	 * node in a tree has a single parent.
 	 * If the forest ever introduced structural sharing (two positions backed by the same TreeChunk object),
 	 * a second call here would silently overwrite the first entry, causing the first position's handle to point
 	 * to the second position's parent in subsequent summaries. In theory, this should be fine from summary perspective
