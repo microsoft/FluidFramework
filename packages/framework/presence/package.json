@@ -114,8 +114,7 @@
 				"^build:esnext"
 			],
 			"eslint": [
-				"api-extractor:esnext",
-				"^build:test:esm"
+				"api-extractor:esnext"
 			],
 			"tsc": [
 				"^api",
