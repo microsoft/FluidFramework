@@ -29,7 +29,10 @@ import { getOrCreate } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
-import type { IncrementalEncodingPolicy } from "./codec/index.js";
+import {
+	defaultIncrementalEncodingPolicy,
+	type IncrementalEncodingPolicy,
+} from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
@@ -63,6 +66,7 @@ export function makeTreeChunker(
 				},
 				type,
 			),
+		shouldEncodeIncrementally,
 	);
 }
 
@@ -122,6 +126,7 @@ export class Chunker implements IChunker {
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
+		private readonly shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {}
 
 	public clone(schema: TreeStoredSchemaSubscription): IChunker {
@@ -134,7 +139,19 @@ export class Chunker implements IChunker {
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
 			this.tryShapeFromNodeSchema,
+			this.shouldEncodeIncrementally,
 		);
+	}
+
+	public isFieldIncremental(
+		parentType: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean {
+		try {
+			return this.shouldEncodeIncrementally(parentType, fieldKey);
+		} catch {
+			return false;
+		}
 	}
 
 	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
@@ -179,13 +196,14 @@ export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkCompresso
 export function chunkField(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkCompressor,
+	maxNodesPerChunk?: number,
 ): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
 	debugAssert(
 		() => started === (length !== 0) || "only 0 length fields should not have nodes",
 	);
-	return chunkRange(cursor, policy, length, false);
+	return chunkRange(cursor, policy, length, false, maxNodesPerChunk);
 }
 
 /**
@@ -417,6 +435,12 @@ export interface ChunkPolicy {
 	 * Returns information about the shapes trees of type `schema` can take.
 	 */
 	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
+
+	/**
+	 * Returns true if the given field should produce single-node chunks
+	 * for incremental summary tracking.
+	 */
+	isFieldIncremental?(parentType: TreeNodeSchemaIdentifier, fieldKey: FieldKey): boolean;
 }
 
 export interface ChunkCompressor {
@@ -434,9 +458,17 @@ function newBasicChunkTree(
 	cursor: ITreeCursorSynchronous,
 	policy: ChunkCompressor,
 ): BasicChunk {
+	const parentType = cursor.type;
 	return new BasicChunk(
-		cursor.type,
-		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
+		parentType,
+		new Map(
+			mapCursorFields(cursor, () => {
+				const fieldKey = cursor.getFieldKey();
+				const maxPerChunk =
+					policy.policy.isFieldIncremental?.(parentType, fieldKey) === true ? 1 : undefined;
+				return [fieldKey, chunkField(cursor, policy, maxPerChunk)];
+			}),
+		),
 		cursor.value,
 	);
 }
@@ -454,6 +486,7 @@ export function chunkRange(
 	chunkCompressor: ChunkCompressor,
 	length: number,
 	skipLastNavigation: boolean,
+	maxNodesPerChunk?: number,
 ): TreeChunk[] {
 	assert(
 		!(skipLastNavigation && length === 0),
@@ -463,6 +496,8 @@ export function chunkRange(
 		(cursor.mode === CursorLocationType.Nodes) === length > 0,
 		0xb59 /* Should be in nodes mode if not past end */,
 	);
+	const effectiveMaxPerChunk =
+		maxNodesPerChunk ?? chunkCompressor.policy.uniformChunkNodeCount;
 	let output: TreeChunk[] = [];
 	let remaining = length;
 	while (remaining > 0) {
@@ -473,7 +508,10 @@ export function chunkRange(
 		// return existing chunk with a increased ref count if possible.
 		if (start === cursor.fieldIndex) {
 			const chunkLength = cursor.chunkLength;
-			if (chunkLength <= remaining) {
+			if (
+				chunkLength <= remaining &&
+				(chunkLength <= effectiveMaxPerChunk || chunkLength === 1)
+			) {
 				const chunk = tryGetChunk(cursor);
 				if (chunk !== undefined) {
 					if (
@@ -507,8 +545,9 @@ export function chunkRange(
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
-				const maxTopLevelLength = Math.ceil(
-					nodesPerTopLevelNode / chunkCompressor.policy.uniformChunkNodeCount,
+				const maxTopLevelLength = Math.max(
+					1,
+					Math.floor(effectiveMaxPerChunk / nodesPerTopLevelNode),
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(

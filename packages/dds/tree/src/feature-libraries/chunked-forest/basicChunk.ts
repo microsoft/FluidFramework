@@ -166,16 +166,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return this.nestedCursor.mode;
 		}
-		// Compute the number of nodes deep the current depth is.
-		// We want the floor of the result, which can computed using a bitwise shift assuming the depth is less than 2^31, which seems safe.
-		// eslint-disable-next-line no-bitwise
-		const halfHeight = (this.siblingStack.length + 1) >> 1;
 		assert(
-			this.indexOfChunkStack.length === halfHeight,
+			this.indexOfChunkStack.length === this.siblingStack.length,
 			0x51c /* unexpected indexOfChunkStack */,
 		);
 		assert(
-			this.indexWithinChunkStack.length === halfHeight,
+			this.indexWithinChunkStack.length === this.siblingStack.length,
 			0x51d /* unexpected indexWithinChunkStack */,
 		);
 		return this.siblingStack.length % 2 === 0
@@ -201,11 +197,6 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		assert(height % 2 === 1, 0x520 /* must be node height */);
 		assert(height >= 0, 0x521 /* must not be above root */);
 		return this.indexStack[height] ?? oob();
-	}
-
-	private getStackedNode(height: number): BasicChunk {
-		const index = this.getStackedNodeIndex(height);
-		return (this.siblingStack[height] as readonly TreeChunk[])[index] as BasicChunk;
 	}
 
 	public getFieldLength(): number {
@@ -322,6 +313,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		assert(this.mode === CursorLocationType.Nodes, 0x528 /* must be in nodes mode */);
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
+		// Save the chunk index of the current node so getField can find
+		// the parent BasicChunk even when the field contains multi-node chunks.
+		this.indexOfChunkStack.push(this.indexOfChunk);
+		this.indexWithinChunkStack.push(this.indexWithinChunk);
 
 		// For fields, siblings are only used for key lookup and
 		// nextField and which has arbitrary iteration order,
@@ -355,6 +350,8 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
+		this.indexOfChunkStack.push(this.indexOfChunk);
+		this.indexWithinChunkStack.push(this.indexWithinChunk);
 		this.index = 0;
 		this.siblings = [...fields.keys()]; // TODO: avoid this copy
 		return true;
@@ -486,6 +483,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		this.siblings =
 			this.siblingStack.pop() ?? fail(0xaf0 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xaf1 /* Unexpected indexStack.length */);
+		this.indexOfChunk =
+			this.indexOfChunkStack.pop() ?? fail(0xaf4 /* Unexpected indexOfChunkStack.length */);
+		this.indexWithinChunk =
+			this.indexWithinChunkStack.pop() ??
+			fail(0xaf5 /* Unexpected indexWithinChunkStack.length */);
 	}
 
 	public exitNode(): void {
@@ -511,7 +513,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getNode(): BasicChunk {
 		assert(this.mode === CursorLocationType.Nodes, 0x52f /* can only get node when in node */);
-		return (this.siblings as TreeChunk[])[this.index] as BasicChunk;
+		return (this.siblings as TreeChunk[])[this.indexOfChunk] as BasicChunk;
 	}
 
 	private getField(): readonly TreeChunk[] {
@@ -522,7 +524,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Fields,
 			0x530 /* can only get field when in fields */,
 		);
-		const parent = this.getStackedNode(this.indexStack.length - 1);
+		// The parent node is on the sibling stack at the level just below the current field.
+		// Use indexOfChunkStack to find it, since chunk arrays may contain multi-node chunks
+		// where the flat node index (indexStack) would not match the chunk array position.
+		const parentSiblings = this.siblingStack[
+			this.siblingStack.length - 1
+		] as readonly TreeChunk[];
+		const parentChunkIndex =
+			this.indexOfChunkStack[this.indexOfChunkStack.length - 1] ?? oob();
+		const parent = parentSiblings[parentChunkIndex] as BasicChunk;
 		const key: FieldKey = this.getFieldKey();
 		const field = parent.fields.get(key) ?? [];
 		return field;

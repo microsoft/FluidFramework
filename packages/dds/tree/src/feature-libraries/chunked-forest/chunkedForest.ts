@@ -36,7 +36,6 @@ import {
 	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
-	assertValidRange,
 	brand,
 	getLast,
 	getOrAddEmptyToMap,
@@ -49,6 +48,67 @@ import { type IChunker, basicChunkTree, chunkField, chunkTree } from "./chunkTre
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
+}
+
+/**
+ * Split the chunk containing `nodeIndex` so that the node falls at a chunk boundary.
+ * Only the single chunk that spans the boundary is split; all other chunks are untouched.
+ * Returns the chunk-array index where `nodeIndex` starts.
+ */
+function splitFieldAtIndex(
+	chunks: TreeChunk[],
+	nodeIndex: number,
+	forest: ChunkedForest,
+): number {
+	let remaining = nodeIndex;
+	for (let i = 0; i < chunks.length; i++) {
+		if (remaining === 0) {
+			return i;
+		}
+		const chunk = chunks[i] ?? oob();
+		if (remaining < chunk.topLevelLength) {
+			const expanded = mapCursorField(chunk.cursor(), (cursor) =>
+				basicChunkTree(cursor, {
+					policy: forest.chunker,
+					idCompressor: forest.idCompressor,
+				}),
+			);
+			chunks.splice(i, 1, ...expanded);
+			chunk.referenceRemoved();
+			return i + remaining;
+		}
+		remaining -= chunk.topLevelLength;
+	}
+	assert(remaining === 0, "node index out of bounds");
+	return chunks.length;
+}
+
+/**
+ * Isolate the node at `nodeIndex` into its own single-node chunk.
+ * Only the chunk containing that node is split; all other chunks are untouched.
+ * Returns the chunk-array index of the isolated single-node chunk.
+ */
+function isolateNodeAt(chunks: TreeChunk[], nodeIndex: number, forest: ChunkedForest): number {
+	let remaining = nodeIndex;
+	for (let i = 0; i < chunks.length; i++) {
+		const chunk = chunks[i] ?? oob();
+		if (remaining < chunk.topLevelLength) {
+			if (chunk.topLevelLength === 1) {
+				return i;
+			}
+			const expanded = mapCursorField(chunk.cursor(), (cursor) =>
+				basicChunkTree(cursor, {
+					policy: forest.chunker,
+					idCompressor: forest.idCompressor,
+				}),
+			);
+			chunks.splice(i, 1, ...expanded);
+			chunk.referenceRemoved();
+			return i + remaining;
+		}
+		remaining -= chunk.topLevelLength;
+	}
+	fail(0xaf7 /* missing edited node */);
 }
 
 interface StackNode {
@@ -173,8 +233,9 @@ export class ChunkedForest implements IEditableForest {
 
 				const parent = this.getParent();
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
+				const destChunkIndex = splitFieldAtIndex(destinationField, destination, this.forest);
 				// TODO: this will fail for very large moves due to argument limits.
-				destinationField.splice(destination, 0, ...sourceField);
+				destinationField.splice(destChunkIndex, 0, ...sourceField);
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -194,8 +255,9 @@ export class ChunkedForest implements IEditableForest {
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
 
-				assertValidRange(source, sourceField);
-				const newField = sourceField.splice(source.start, source.end - source.start);
+				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, this.forest);
+				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, this.forest);
+				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
 
 				if (destination === undefined) {
 					for (const child of newField) {
@@ -221,40 +283,25 @@ export class ChunkedForest implements IEditableForest {
 				const parent = this.getParent();
 				const chunks =
 					parent.mutableChunk.fields.get(parent.key) ?? fail(0xaf6 /* missing edited field */);
-				let indexWithinChunk = index;
-				let indexOfChunk = 0;
-				let chunk = chunks[indexOfChunk] ?? oob();
-				while (indexWithinChunk >= chunk.topLevelLength) {
-					chunk = chunks[indexOfChunk] ?? oob();
-					indexWithinChunk -= chunk.topLevelLength;
-					indexOfChunk++;
-					if (indexOfChunk === chunks.length) {
-						fail(0xaf7 /* missing edited node */);
-					}
-				}
-				let found = chunks[indexOfChunk] ?? oob();
-				if (!(found instanceof BasicChunk)) {
-					// TODO:Perf: support in place editing of other chunk formats when possible:
-					// 1. Support updating values in uniform chunks.
-					// 2. Support traversing sequence chunks.
-					//
-					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
-					const newChunks = mapCursorField(found.cursor(), (cursor) =>
+				const chunkIndex = isolateNodeAt(chunks, index, this.forest);
+				let found: BasicChunk;
+				const chunk = chunks[chunkIndex] ?? oob();
+				if (chunk instanceof BasicChunk) {
+					found = chunk;
+				} else {
+					// Convert single-node non-BasicChunk (e.g. UniformChunk) to BasicChunk for editing.
+					const expanded = mapCursorField(chunk.cursor(), (cursor) =>
 						basicChunkTree(cursor, {
 							policy: this.forest.chunker,
 							idCompressor: this.forest.idCompressor,
 						}),
 					);
-					// TODO: this could fail for really long chunks being split (due to argument count limits).
-					// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
-					chunks.splice(indexOfChunk, 1, ...newChunks);
-					found.referenceRemoved();
-
-					found = newChunks[indexWithinChunk] ?? oob();
+					found = expanded[0] ?? fail(0x536 /* chunk should have been normalized */);
+					chunks[chunkIndex] = found;
+					chunk.referenceRemoved();
 				}
-				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {
-					this.mutableChunk = chunks[indexOfChunk] = found.clone();
+					this.mutableChunk = chunks[chunkIndex] = found.clone();
 					found.referenceRemoved();
 				} else {
 					this.mutableChunk = found;
