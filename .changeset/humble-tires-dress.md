@@ -15,9 +15,9 @@ The following APIs have been promoted from `@alpha` to `@beta`:
 - `IdentifierIndex`
 - `createIdentifierIndex`
 
-Additionally, the following `@fluidframework/core-interfaces` types that `TreeIndex` depends on have been promoted
-from `@alpha` to `@beta`:
+Additionally, the following `@fluidframework/core-interfaces` types have been promoted from `@alpha` to `@beta`:
 
 - `FluidReadonlyMap`
 - `FluidIterable`
 - `FluidIterableIterator`
+- `FluidMap`

@@ -119,7 +119,7 @@ export interface FluidReadonlyMap<K, V> {
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `Map` type.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
 	/**
