@@ -338,6 +338,24 @@ describe("TableFactory unit tests", () => {
 		});
 
 		describeHydration("API tests", (initializeTree) => {
+			// Creates a table with 2 columns ("column-0", "column-1") and 2 rows ("row-0", "row-1").
+			// All cells are initially empty.
+			function create2x2Table() {
+				return initializeTree(
+					Table,
+					Table.create({
+						columns: [
+							{ id: "column-0", props: {} },
+							{ id: "column-1", props: {} },
+						],
+						rows: [
+							{ id: "row-0", cells: {}, props: {} },
+							{ id: "row-1", cells: {}, props: {} },
+						],
+					}),
+				);
+			}
+
 			describe("Initialization", () => {
 				it("Empty", () => {
 					class MyTable extends TableSchema.table({
@@ -847,25 +865,8 @@ describe("TableFactory unit tests", () => {
 			});
 
 			describe("setCell", () => {
-				// Shared table setup: 2 columns and 2 rows, all cells initially empty.
-				function makeTable() {
-					return initializeTree(
-						Table,
-						Table.create({
-							columns: [
-								{ id: "column-0", props: {} },
-								{ id: "column-1", props: {} },
-							],
-							rows: [
-								{ id: "row-0", cells: {}, props: {} },
-								{ id: "row-1", cells: {}, props: {} },
-							],
-						}),
-					);
-				}
-
 				it("Set cell using string ID key", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 
 					table.setCell({
 						key: { row: "row-0", column: "column-0" },
@@ -891,7 +892,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Set cell using index key", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 
 					// row: 1 → "row-1", column: 1 → "column-1"
 					table.setCell({ key: { row: 1, column: 1 }, cell: { value: "Hello world!" } });
@@ -903,7 +904,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Set cell using node key", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 					const column = table.getColumn("column-1") ?? fail("Column not found");
 					const row = table.getRow("row-1") ?? fail("Row not found");
 
@@ -916,7 +917,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Set cell overwrites existing cell", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 					const cellKey = { row: "row-0", column: "column-0" };
 
 					table.setCell({ key: cellKey, cell: { value: "initial" } });
@@ -927,7 +928,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Setting cell in an invalid location errors", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 
 					// Invalid row (by string ID)
 					assert.throws(
@@ -1549,25 +1550,8 @@ describe("TableFactory unit tests", () => {
 			});
 
 			describe("removeCell", () => {
-				// Shared table setup: 2 columns and 2 rows, all cells initially empty.
-				function makeTable() {
-					return initializeTree(
-						Table,
-						Table.create({
-							columns: [
-								{ id: "column-0", props: {} },
-								{ id: "column-1", props: {} },
-							],
-							rows: [
-								{ id: "row-0", cells: {}, props: {} },
-								{ id: "row-1", cells: {}, props: {} },
-							],
-						}),
-					);
-				}
-
 				it("Remove cell using string ID key", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 					const cellKey = { row: "row-0", column: "column-0" };
 					table.setCell({ key: cellKey, cell: { value: "Hello world!" } });
 
@@ -1590,7 +1574,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Remove cell using index key", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 					// row: 1 → "row-1", column: 1 → "column-1"
 					table.setCell({
 						key: { row: "row-1", column: "column-1" },
@@ -1605,7 +1589,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Remove cell using node key", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 					const column = table.getColumn("column-1") ?? fail("Column not found");
 					const row = table.getRow("row-1") ?? fail("Row not found");
 					table.setCell({
@@ -1621,7 +1605,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Remove cell with no existing data returns undefined", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 
 					const removedCell = table.removeCell({ row: "row-0", column: "column-0" });
 
@@ -1641,7 +1625,7 @@ describe("TableFactory unit tests", () => {
 				});
 
 				it("Removing cell from invalid location errors", () => {
-					const table = makeTable();
+					const table = create2x2Table();
 
 					// Invalid row (by string ID)
 					assert.throws(
