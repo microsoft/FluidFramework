@@ -455,9 +455,6 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 				"^packages/framework/quill-react/",
 				"^tools/api-markdown-documenter/",
-
-				// Temporary exclusion - APIs are linted via `presence`
-				"^packages/framework/presence-definitions/",
 			],
 			"npm-package-exports-field": [
 				// This policy is no longer correct or applicable to our packages, so all files are excluded.
