@@ -4,6 +4,7 @@
 "__section": deprecation
 ---
 `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release.
+
 Now `getPresence` is available for import from the `fluid-framework` package.
 
 To prepare, make changes following this pattern:
