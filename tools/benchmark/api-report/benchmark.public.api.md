@@ -152,7 +152,7 @@ export interface Measurement {
 // @public
 export function memoryAddedBy<TIn extends NonNullable<unknown>>(options: MemoryUseModifier<TIn>): MemoryUseBenchmark;
 
-// @public @input
+// @public
 export interface MemoryUseBenchmark {
     benchmarkFn(state: MemoryUseCallbacks): Promise<void>;
     enableAsyncGC?: boolean;
@@ -170,7 +170,7 @@ export interface MemoryUseCallbacks {
     whileAllocated(): Promise<void>;
 }
 
-// @public
+// @public @input
 export interface MemoryUseModifier<TIn> {
     modify(input: TIn): void | Promise<void>;
     setup(): TIn | Promise<TIn>;

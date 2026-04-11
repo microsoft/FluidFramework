@@ -9,6 +9,7 @@ import { type MemoryUseBenchmark } from "./configuration.js";
 /**
  * Options for {@link memoryAddedBy}.
  * @public
+ * @input
  */
 export interface MemoryUseModifier<TIn> {
 	/**

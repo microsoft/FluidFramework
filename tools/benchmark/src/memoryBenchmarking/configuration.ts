@@ -38,7 +38,6 @@ export interface MemoryUseCallbacks {
  * When implementing other cases, consider using {@link Box} to manage memory retention issues due to local variables.
  *
  * @public
- * @input
  */
 export interface MemoryUseBenchmark {
 	/**
