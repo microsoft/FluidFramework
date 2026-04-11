@@ -17,14 +17,6 @@ import type {
 } from "@fluid-internal/presence-definitions/internal";
 import type { ClientRecord } from "@fluid-internal/presence-definitions/internal/workspace";
 
-// import type { ClientConnectionId } from "../baseTypes.js";
-// import type { BroadcastControlSettings } from "../broadcastControlsTypes.js";
-// import type { InternalTypes } from "../exposedInternalTypes.js";
-// import type { AttendeeId } from "../presence.js";
-// import type { PostUpdateAction } from "../statesManagerTypes.js";
-// import type { AnyWorkspace, StatesWorkspaceSchema } from "../types.js";
-// import type { ValidatableValueDirectoryOrState } from "../validatableTypes.js";
-
 /**
  * Miscellaneous options for local state updates
  *
