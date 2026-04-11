@@ -147,8 +147,8 @@ export function memoryUseOfValue<TOut extends NonNullable<unknown>>(
 	return {
 		enableAsyncGC: false,
 		benchmarkFn: async (state) => {
+			const box = Box.empty<Awaited<TOut>>();
 			while (state.continue()) {
-				const box = Box.empty<Awaited<TOut>>();
 				await state.beforeAllocation();
 				// allocation window: hold the value until whileAllocated, then release
 				box.value = await factory();

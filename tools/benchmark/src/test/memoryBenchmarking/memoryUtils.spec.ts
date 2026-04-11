@@ -31,7 +31,7 @@ describe("memoryUtils", () => {
 			const box = Box.empty<string>();
 			assert.throws(
 				() => {
-					//@ts-expect-error testing compile time and runtime rejection of undefined
+					// @ts-expect-error testing compile time and runtime rejection of undefined
 					box.value = undefined;
 				},
 				{ message: /Box cannot be set to undefined/ },
