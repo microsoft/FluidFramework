@@ -3,7 +3,8 @@
 "@fluidframework/presence": minor
 "__section": deprecation
 ---
-getPresence is being relocated from @fluidframework/presence to the fluid-framework package
+`getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release.
+Now `getPresence` is available for import from the `fluid-framework` package.
 
 To prepare, make changes following this pattern:
 ```diff
