@@ -1538,137 +1538,140 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describeHydration("removeCell", (initializeTree) => {
-		it("Remove cell in valid location with existing data", () => {
-			const table = initializeTree(
+		// Shared table setup: 2 columns and 2 rows, all cells initially empty.
+		function makeTable() {
+			return initializeTree(
 				Table,
 				Table.create({
 					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
+						{ id: "column-0", props: {} },
+						{ id: "column-1", props: {} },
 					],
 					rows: [
-						{
-							id: "row-0",
-							cells: {},
-							props: {},
-						},
+						{ id: "row-0", cells: {}, props: {} },
+						{ id: "row-1", cells: {}, props: {} },
 					],
 				}),
 			);
-			const cellKey = {
-				row: "row-0",
-				column: "column-0",
-			};
-			table.setCell({
-				key: cellKey,
-				cell: { value: "Hello world!" },
-			});
+		}
+
+		it("Remove cell using string ID key", () => {
+			const table = makeTable();
+			const cellKey = { row: "row-0", column: "column-0" };
+			table.setCell({ key: cellKey, cell: { value: "Hello world!" } });
+
 			const removedCell = table.removeCell(cellKey);
+
 			assert(removedCell !== undefined);
 			assertEqualTrees(removedCell, { value: "Hello world!" });
 			assertEqualTrees(table, {
 				table: {
 					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
+						{ id: "column-0", props: {} },
+						{ id: "column-1", props: {} },
 					],
 					rows: [
-						{
-							id: "row-0",
-							cells: {},
-							props: {},
-						},
+						{ id: "row-0", cells: {}, props: {} },
+						{ id: "row-1", cells: {}, props: {} },
 					],
 				},
 			});
 		});
 
-		it("Remove cell in valid location with no data", () => {
-			const table = initializeTree(
-				Table,
-				Table.create({
-					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
-					],
-					rows: [
-						{
-							id: "row-0",
-							cells: {},
-							props: {},
-						},
-					],
-				}),
-			);
-			const cellKey = {
-				row: "row-0",
-				column: "column-0",
-			};
-			const removedCell = table.removeCell(cellKey);
+		it("Remove cell using index key", () => {
+			const table = makeTable();
+			// row: 1 → "row-1", column: 1 → "column-1"
+			table.setCell({ key: { row: "row-1", column: "column-1" }, cell: { value: "Hello world!" } });
+
+			const removedCell = table.removeCell({ row: 1, column: 1 });
+
+			assert(removedCell !== undefined);
+			assertEqualTrees(removedCell, { value: "Hello world!" });
+			assert.equal(table.getCell({ row: "row-1", column: "column-1" }), undefined);
+		});
+
+		it("Remove cell using node key", () => {
+			const table = makeTable();
+			const column = table.getColumn("column-1") ?? fail("Column not found");
+			const row = table.getRow("row-1") ?? fail("Row not found");
+			table.setCell({ key: { row: "row-1", column: "column-1" }, cell: { value: "Hello world!" } });
+
+			const removedCell = table.removeCell({ row, column });
+
+			assert(removedCell !== undefined);
+			assertEqualTrees(removedCell, { value: "Hello world!" });
+			assert.equal(table.getCell({ row: "row-1", column: "column-1" }), undefined);
+		});
+
+		it("Remove cell with no existing data returns undefined", () => {
+			const table = makeTable();
+
+			const removedCell = table.removeCell({ row: "row-0", column: "column-0" });
+
 			assert.equal(removedCell, undefined);
 			assertEqualTrees(table, {
 				table: {
 					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
+						{ id: "column-0", props: {} },
+						{ id: "column-1", props: {} },
 					],
 					rows: [
-						{
-							id: "row-0",
-							cells: {},
-							props: {},
-						},
+						{ id: "row-0", cells: {}, props: {} },
+						{ id: "row-1", cells: {}, props: {} },
 					],
 				},
 			});
 		});
 
-		it("Removing cell from nonexistent row and column errors", () => {
-			const table = initializeTree(
-				Table,
-				Table.create({
-					columns: [
-						{
-							id: "column-0",
-							props: {},
-						},
-					],
-					rows: [
-						{
-							id: "row-0",
-							cells: {},
-							props: {},
-						},
-					],
-				}),
-			);
+		it("Removing cell from invalid location errors", () => {
+			const table = makeTable();
 
-			// Invalid row
+			// Invalid row (by string ID)
 			assert.throws(
-				() =>
-					table.removeCell({
-						row: "row-1",
-						column: "column-0",
-					}),
-				validateUsageError(/No row with ID "row-1" exists in the table./),
+				() => table.removeCell({ row: "row-99", column: "column-0" }),
+				validateUsageError(/No row with ID "row-99" exists in the table./),
 			);
 
-			// Invalid column
+			// Invalid column (by string ID)
+			assert.throws(
+				() => table.removeCell({ row: "row-0", column: "column-99" }),
+				validateUsageError(/No column with ID "column-99" exists in the table./),
+			);
+
+			// Invalid row (by index)
+			assert.throws(
+				() => table.removeCell({ row: 99, column: "column-0" }),
+				validateUsageError(/No row exists at index 99./),
+			);
+
+			// Invalid column (by index)
+			assert.throws(
+				() => table.removeCell({ row: "row-0", column: 99 }),
+				validateUsageError(/No column exists at index 99./),
+			);
+
+			// Invalid column (node not in table)
 			assert.throws(
 				() =>
 					table.removeCell({
 						row: "row-0",
-						column: "column-1",
+						column: new Column({ id: "column-99", props: {} }),
 					}),
-				validateUsageError(/No column with ID "column-1" exists in the table./),
+				validateUsageError(
+					/The specified column node with ID "column-99" does not exist in the table./,
+				),
+			);
+
+			// Invalid row (node not in table)
+			assert.throws(
+				() =>
+					table.removeCell({
+						row: new Row({ id: "row-99", cells: {}, props: {} }),
+						column: "column-0",
+					}),
+				validateUsageError(
+					/The specified row node with ID "row-99" does not exist in the table./,
+				),
 			);
 		});
 	});
