@@ -132,12 +132,24 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"test:mocha:cjs:all": ["build:test:cjs"],
-			"test:mocha:cjs:end-to-end": ["build:test:cjs"],
-			"test:mocha:cjs:unit": ["build:test:cjs"],
-			"test:mocha:esm:all": ["build:test:esm"],
-			"test:mocha:esm:end-to-end": ["build:test:esm"],
-			"test:mocha:esm:unit": ["build:test:esm"]
+			"test:mocha:cjs:all": [
+				"build:test:cjs"
+			],
+			"test:mocha:cjs:end-to-end": [
+				"build:test:cjs"
+			],
+			"test:mocha:cjs:unit": [
+				"build:test:cjs"
+			],
+			"test:mocha:esm:all": [
+				"build:test:esm"
+			],
+			"test:mocha:esm:end-to-end": [
+				"build:test:esm"
+			],
+			"test:mocha:esm:unit": [
+				"build:test:esm"
+			]
 		}
 	},
 	"typeValidation": {
