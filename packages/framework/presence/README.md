@@ -203,7 +203,7 @@ function logOthersCounters(counterTracker: LatestMap<number, string>): void {
 To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 
 ```typescript
-import { getPresence } from "fluid-framework/beta";
+import { getPresence } from "fluid-framework";
 
 function usePresence(container: IFluidContainer): void {
    const presence = getPresence(container);
