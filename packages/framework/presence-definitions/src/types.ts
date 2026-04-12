@@ -23,14 +23,14 @@ import type { Presence, PresenceWithNotifications } from "./presence.js";
  *   "address:object0/sub-object2:pointers"
  * ```
  *
- * @beta
+ * @public
  */
 export type WorkspaceAddress = `${string}:${string}`;
 
 /**
  * Single entry in {@link StatesWorkspaceSchema} or  {@link NotificationsWorkspaceSchema}.
  *
- * @beta
+ * @public
  */
 export type StatesWorkspaceEntry<
 	TKey extends string,
@@ -45,7 +45,7 @@ export type StatesWorkspaceEntry<
  *
  * Keys of schema are the keys of the {@link StatesWorkspace} providing access to State objects.
  *
- * @beta
+ * @public
  */
 export type StatesWorkspaceSchema<Keys extends string = string> = {
 	/**
@@ -58,7 +58,7 @@ export type StatesWorkspaceSchema<Keys extends string = string> = {
  * Map of State objects registered with {@link StatesWorkspace}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export type StatesWorkspaceEntries<
 	TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,
@@ -82,7 +82,7 @@ export type StatesWorkspaceEntries<
  * each client's state is independent and may only be updated by originating client.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface StatesWorkspace<
 	TSchema extends Partial<StatesWorkspaceSchema<TSchemaKeys>>,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { AttendeeId, AttendeeStatus } from "@fluidframework/presence/beta";
+import type { AttendeeId, AttendeeStatus } from "@fluidframework/presence";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 import { getPresence } from "fluid-framework/beta";

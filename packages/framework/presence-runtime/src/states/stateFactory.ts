@@ -22,7 +22,7 @@ import { latest } from "./latestValueManager.js";
  * Use `latest` to create a {@link @fluidframework/presence#LatestRaw} State object.
  * Use `latestMap` to create a {@link @fluidframework/presence#LatestMapRaw} State object.
  *
- * @beta
+ * @public
  */
 export const StateFactory = {
 	latest,

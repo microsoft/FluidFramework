@@ -26,7 +26,7 @@ import {
 	type LatestRaw,
 	type LatestMapRaw,
 	type StatesWorkspace,
-} from "@fluidframework/presence/beta";
+} from "@fluidframework/presence";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 

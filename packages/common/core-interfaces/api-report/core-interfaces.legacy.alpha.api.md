@@ -4,7 +4,7 @@
 
 ```ts
 
-// @beta
+// @public
 export class BrandedType<out Brand> {
     static [Symbol.hasInstance](value: never): value is never;
     protected constructor();

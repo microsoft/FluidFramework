@@ -26,7 +26,7 @@ import type { Attendee, Presence } from "./presence.js";
  * Events from {@link LatestRaw}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestEvents<
 	T,
@@ -51,7 +51,7 @@ export interface LatestEvents<
  * Events from {@link LatestRaw}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
 
@@ -62,7 +62,7 @@ export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
  * @remarks Create using {@link @fluidframework/presence#StateFactory|StateFactory}.{@link LatestFactory|latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
 
@@ -73,7 +73,7 @@ export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
  * @remarks Create using {@link @fluidframework/presence#StateFactory|StateFactory}.{@link LatestFactory|latest} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface Latest<
 	T,
@@ -123,7 +123,7 @@ export interface Latest<
  * Arguments that are passed to the {@link @fluidframework/presence#StateFactory.latest} function to create a {@link LatestRaw} State object.
  *
  * @input
- * @beta
+ * @public
  */
 export interface LatestArgumentsRaw<T extends object | null> {
 	/**
@@ -145,7 +145,7 @@ export interface LatestArgumentsRaw<T extends object | null> {
  * Arguments that are passed to the {@link @fluidframework/presence#StateFactory.latest} function to create a {@link Latest} State object.
  *
  * @input
- * @beta
+ * @public
  */
 export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
 	/**
@@ -167,7 +167,7 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
  * Specification is recommended to highlight connection between schema and
  * factory when spread across modules.
  *
- * @beta
+ * @public
  * @sealed
  */
 export type LatestConfiguration<
@@ -193,7 +193,7 @@ export type LatestConfiguration<
  * Specification is recommended to highlight connection between schema and
  * factory when spread across modules.
  *
- * @beta
+ * @public
  * @sealed
  */
 export type LatestRawConfiguration<
@@ -209,7 +209,7 @@ export type LatestRawConfiguration<
 /**
  * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  *
- * @beta
+ * @public
  * @sealed
  */
 export interface LatestFactory {

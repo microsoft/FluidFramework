@@ -31,7 +31,7 @@ import type { Attendee, AttendeeId, Presence } from "./presence.js";
  *
  * @returns True if the key is valid.
  *
- * @beta
+ * @public
  */
 export type KeySchemaValidator<Keys extends string> = (
 	unvalidatedKey: string,
@@ -41,7 +41,7 @@ export type KeySchemaValidator<Keys extends string> = (
  * Collection of latest known values for a specific {@link Attendee}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestMapClientData<
 	T,
@@ -67,7 +67,7 @@ export interface LatestMapClientData<
  * State of a single item value, its key, and its metadata.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestMapItemUpdatedClientData<
 	T,
@@ -84,7 +84,7 @@ export interface LatestMapItemUpdatedClientData<
  * Identifier and metadata for a removed item.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestMapItemRemovedClientData<K extends string> {
 	/**
@@ -107,7 +107,7 @@ export interface LatestMapItemRemovedClientData<K extends string> {
  * Events from {@link LatestMapRaw}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestMapEvents<
 	T,
@@ -166,7 +166,7 @@ export interface LatestMapEvents<
  * Events from {@link LatestMapRaw}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export type LatestMapRawEvents<T, K extends string> = LatestMapEvents<
 	T,
@@ -178,7 +178,7 @@ export type LatestMapRawEvents<T, K extends string> = LatestMapEvents<
  * Map of local client's values. Modifications are transmitted to all other connected clients.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface StateMap<K extends string, V> {
 	/**
@@ -270,7 +270,7 @@ export interface StateMap<K extends string, V> {
  * @remarks Create using {@link @fluidframework/presence#StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export interface LatestMap<
 	T,
@@ -322,7 +322,7 @@ export interface LatestMap<
  * @remarks Create using {@link @fluidframework/presence#StateFactory.latestMap} registered to {@link StatesWorkspace}.
  *
  * @sealed
- * @beta
+ * @public
  */
 export type LatestMapRaw<T, Keys extends string = string> = LatestMap<
 	T,
@@ -334,7 +334,7 @@ export type LatestMapRaw<T, Keys extends string = string> = LatestMap<
  * Arguments that are passed to the {@link @fluidframework/presence#StateFactory|StateFactory}.{@link LatestMapFactory|latestMap} function.
  *
  * @input
- * @beta
+ * @public
  */
 export interface LatestMapArgumentsRaw<T, Keys extends string = string> {
 	/**
@@ -354,7 +354,7 @@ export interface LatestMapArgumentsRaw<T, Keys extends string = string> {
  * Arguments that are passed to the {@link @fluidframework/presence#StateFactory|StateFactory}.{@link LatestMapFactory|latestMap} function.
  *
  * @input
- * @beta
+ * @public
  */
 export interface LatestMapArguments<T, Keys extends string = string>
 	extends LatestMapArgumentsRaw<T, Keys> {
@@ -387,7 +387,7 @@ export interface LatestMapArguments<T, Keys extends string = string>
  * Specification is recommended to highlight connection between schema and
  * factory when spread across modules.
  *
- * @beta
+ * @public
  * @sealed
  */
 export type LatestMapConfiguration<
@@ -413,7 +413,7 @@ export type LatestMapConfiguration<
  * Specification is recommended to highlight connection between schema and
  * factory when spread across modules.
  *
- * @beta
+ * @public
  * @sealed
  */
 export type LatestMapRawConfiguration<
@@ -429,7 +429,7 @@ export type LatestMapRawConfiguration<
 /**
  * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
  *
- * @beta
+ * @public
  * @sealed
  */
 export interface LatestMapFactory {
