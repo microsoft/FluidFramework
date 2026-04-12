@@ -5,6 +5,10 @@ settings:
   excludeLinksFromLockfile: false
 
 catalogs:
+  benchmark:
+    '@fluid-tools/benchmark':
+      specifier: ^0.52.0
+      version: 0.52.0
   buildTools:
     '@fluid-tools/build-cli':
       specifier: ^0.64.0
@@ -2141,7 +2145,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -7293,7 +7297,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -7777,7 +7781,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -8341,7 +8345,7 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -8465,7 +8469,7 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -8592,7 +8596,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -9013,7 +9017,7 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -9585,7 +9589,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-drivers
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -13034,7 +13038,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -13377,7 +13381,7 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -14904,7 +14908,7 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
@@ -15149,7 +15153,7 @@ importers:
         specifier: workspace:~
         version: link:../test-version-utils
       '@fluid-tools/benchmark':
-        specifier: ^0.52.0
+        specifier: catalog:benchmark
         version: 0.52.0
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
