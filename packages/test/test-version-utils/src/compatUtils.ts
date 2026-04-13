@@ -105,6 +105,27 @@ export interface ITestDataObject extends IFluidLoadable {
 	_root: ISharedDirectory;
 }
 
+/**
+ * Map from DDS type string to the constructor of the current package version's default factory
+ * for that type. Used by {@link convertRegistry} to distinguish default factories (which should
+ * be swapped to the compat version) from custom-configured factories (which should be preserved).
+ *
+ * For example, `SharedTree.getFactory()` produces an instance whose constructor is recorded here.
+ * A factory returned by `configuredSharedTree(options).getFactory()` has a *different* constructor
+ * (because `makeChannelFactory` creates a new class per `SharedObjectKind`), so it won't match and
+ * will be passed through without conversion.
+ */
+const currentDefaultFactoryCtors: Map<string, Function> = new Map();
+{
+	const currentApi = getDataRuntimeApi(pkgVersion);
+	for (const value of Object.values(currentApi.dds)) {
+		if (value?.getFactory !== undefined) {
+			const f = value.getFactory();
+			currentDefaultFactoryCtors.set(f.type, f.constructor);
+		}
+	}
+}
+
 function createGetDataStoreFactoryFunction(
 	api: ReturnType<typeof getDataRuntimeApi>,
 ): (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory {
@@ -132,6 +153,14 @@ function createGetDataStoreFactoryFunction(
 		registryMapping[value.getFactory().type] = value.getFactory();
 	}
 
+	/**
+	 * Maps user-provided channel factory registry entries to the version-appropriate factories.
+	 *
+	 * Default factories (whose constructor matches the current package version's default for that
+	 * DDS type) are replaced with the compat version's factory so that cross-version tests use the
+	 * correct implementation. Custom-configured factories (e.g. from `configuredSharedTree(options)`)
+	 * have a different constructor and are passed through unchanged, preserving their options.
+	 */
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
@@ -139,7 +168,17 @@ function createGetDataStoreFactoryFunction(
 			if (oldFactory === undefined) {
 				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
 			}
-			oldRegistry.push([key, oldFactory]);
+			const currentDefaultCtor = currentDefaultFactoryCtors.get(factory.type);
+			if (
+				currentDefaultCtor !== undefined &&
+				factory.constructor === currentDefaultCtor
+			) {
+				// Factory matches a known current-version default — convert to compat version.
+				oldRegistry.push([key, oldFactory]);
+			} else {
+				// Custom-configured factory — preserve as-is.
+				oldRegistry.push([key, factory]);
+			}
 		}
 		return oldRegistry;
 	}
