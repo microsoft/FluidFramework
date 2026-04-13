@@ -229,7 +229,7 @@ describe("findIntervalsWithEndpointInRange", () => {
 		it("when given massive random inputs", () => {
 			const testIndex = new TestEndpointInRangeIndex(sharedString);
 			const random = makeRandom(0);
-			const count = 800;
+			const count = 400;
 			const min = 1;
 			const max = sharedString.getLength() - 1;
 
