@@ -26,7 +26,7 @@
       "file": "scripts/codespace-setup/agent-aliases.sh",
       "line": 37,
       "title": "Copilot Aliases",
-      "description": "These aliases launch GitHub Copilot:\n\n- **`copilot`** — Standard GitHub Copilot\n- **`copilot-oce`** — On-Call Engineer workflow (switches to ff-oce overlay)"
+      "description": "These aliases launch GitHub Copilot:\n\n- **`copilot`** — Standard GitHub Copilot\n- **`oce`** — On-Call Engineer workflow (switches to ff-oce agent)"
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
