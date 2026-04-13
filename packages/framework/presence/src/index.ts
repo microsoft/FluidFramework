@@ -81,6 +81,5 @@ export {
 // Local exports
 export {
 	getPresence,
-	getPresenceAlpha,
 	getPresenceFromDataStoreContext,
 } from "./getPresence.js";

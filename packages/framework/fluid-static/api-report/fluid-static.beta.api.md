@@ -16,6 +16,9 @@ export interface ContainerSchema {
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
 
+// @beta
+export const getPresence: (fluidContainer: IFluidContainer) => Presence;
+
 // @public
 export interface IConnection {
     readonly id: string;
