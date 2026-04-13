@@ -10,9 +10,12 @@ import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
 import execa from "execa";
+import matter from "gray-matter";
 import chalk from "picocolors";
 import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.js";
 import { BaseCommand } from "../library/commands/base.js";
+
+const HARDCODED_DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -31,8 +34,9 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 	static readonly flags = {
 		model: Flags.string({
-			description: "The AI model to use for the launcher assistant.",
-			default: "gpt-4.1",
+			description:
+				"The AI model to use for the launcher assistant. " +
+				"Defaults to the model specified in launcher-prompt.md frontmatter.",
 		}),
 		...BaseCommand.flags,
 	};
@@ -41,11 +45,18 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		const { flags } = this;
 
 		const repoRoot = await this.tryResolveRepoRoot();
-		const [aliasFilePath, gettingStartedContent] = await Promise.all([
+		const [aliasFilePath, gettingStartedContent, promptFile] = await Promise.all([
 			this.resolveAliasFile(repoRoot),
 			this.readGettingStarted(repoRoot),
+			this.loadPromptFile(repoRoot),
 		]);
 		const aliasFileContent = await readFile(aliasFilePath, "utf8");
+
+		const model =
+			flags.model ?? promptFile.model ?? HARDCODED_DEFAULT_MODEL;
+		const prompt = promptFile.template
+			.replaceAll("{{aliasFileContent}}", aliasFileContent)
+			.replaceAll("{{gettingStartedContent}}", gettingStartedContent);
 
 		const rl = readline.createInterface({
 			input: process.stdin,
@@ -54,12 +65,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		let proposal: AliasProposal | undefined;
 		try {
-			proposal = await runAiSession({
-				model: flags.model,
-				rl,
-				aliasFileContent,
-				gettingStartedContent,
-			});
+			proposal = await runAiSession({ model, rl, prompt });
 		} catch (error) {
 			this.error(`AI session failed: ${error}`, { exit: 1 });
 		} finally {
@@ -154,6 +160,42 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		this.verbose("GETTING_STARTED.md not found; AI will rely on alias script only.");
 		return "";
+	}
+
+	/**
+	 * Loads the launcher prompt template and its frontmatter config.
+	 * Falls back to a minimal default if the file is not found.
+	 */
+	private async loadPromptFile(
+		repoRoot: string | undefined,
+	): Promise<{ template: string; model?: string }> {
+		const candidates = [
+			resolve(process.cwd(), ".devcontainer/ai-agent/launcher-prompt.md"),
+		];
+
+		if (repoRoot !== undefined) {
+			candidates.push(resolve(repoRoot, ".devcontainer/ai-agent/launcher-prompt.md"));
+		}
+
+		for (const candidate of candidates) {
+			const raw = await tryReadFile(candidate);
+			if (raw !== undefined) {
+				const { data, content } = matter(raw);
+				return {
+					template: content.trim(),
+					model: typeof data.model === "string" ? data.model : undefined,
+				};
+			}
+		}
+
+		this.verbose("launcher-prompt.md not found; using hardcoded fallback prompt.");
+		return {
+			template:
+				"You are a launcher assistant. Ask the user what they want to do, " +
+				"then call select_alias with the best alias from the alias definitions.\n\n" +
+				"## Alias Definitions\n\n```bash\n{{aliasFileContent}}\n```\n\n" +
+				"## Getting Started Guide\n\n{{gettingStartedContent}}",
+		};
 	}
 }
 

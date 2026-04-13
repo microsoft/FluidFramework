@@ -14,7 +14,8 @@ USAGE
   $ flub ai [-v | --quiet] [--model <value>]
 
 FLAGS
-  --model=<value>  [default: gpt-4.1] The AI model to use for the launcher assistant.
+  --model=<value>  The AI model to use for the launcher assistant. Defaults to the
+                   model specified in launcher-prompt.md frontmatter.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
