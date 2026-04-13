@@ -1,5 +1,7 @@
 # @fluid-tools/benchmark
 
+## 0.56.0
+
 ## 0.55.0
 
 -   Added `memoryUseOfValue` and `memoryAddedBy` helper functions for constructing common `MemoryUseBenchmark` cases without hand-writing the callback loop.
